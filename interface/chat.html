@@ -23,6 +23,8 @@
         --warning: #e7bc69;
         --danger: #f07474;
         --purple: #8c7aff;
+        --metal-gradient: linear-gradient(105deg, #555961 0%, #f4f5f6 18%, #777c85 35%, #ffffff 48%, #4c515a 66%, #d9dde2 82%, #60656e 100%);
+        --gold-gradient: linear-gradient(105deg, #6d4b16 0%, #fff1a9 20%, #a9701e 38%, #fff7c4 50%, #8d5a15 68%, #e7b84c 84%, #6f4813 100%);
         --ease: cubic-bezier(0.22, 1, 0.36, 1);
         --sans: "Geist", "Inter", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       }
@@ -37,9 +39,11 @@
         --line-soft: rgba(0, 0, 0, 0.08);
         --text: #141416;
         --text-soft: #5e5e65;
-        --text-dim: #898991;
-        --accent: #171719;
+        --text-dim: #747780;
+        --accent: #17191d;
         --accent-ink: #ffffff;
+        --metal-gradient: linear-gradient(105deg, #69707b 0%, #16181c 18%, #8e959f 35%, #050608 48%, #59616b 66%, #252a31 82%, #6a727c 100%);
+        --gold-gradient: linear-gradient(105deg, #765112 0%, #b97812 20%, #fff0a0 38%, #8e5c12 50%, #d9a631 68%, #6a4310 84%, #b57b1d 100%);
       }
 
       * {
@@ -120,7 +124,7 @@
 
       .conversation-title {
         color: transparent;
-        background: linear-gradient(105deg, #555961 0%, #f4f5f6 18%, #777c85 35%, #ffffff 48%, #4c515a 66%, #d9dde2 82%, #60656e 100%);
+        background: var(--metal-gradient);
         background-size: 230% 100%;
         background-clip: text;
         -webkit-background-clip: text;
@@ -258,7 +262,7 @@
       .empty-word {
         margin: 0;
         color: transparent;
-        background: linear-gradient(105deg, #555961 0%, #f4f5f6 18%, #777c85 35%, #ffffff 48%, #4c515a 66%, #d9dde2 82%, #60656e 100%);
+        background: var(--metal-gradient);
         background-size: 230% 100%;
         background-clip: text;
         -webkit-background-clip: text;
@@ -484,7 +488,8 @@
       }
 
       .profile-popover,
-      .settings-popover {
+      .settings-popover,
+      .web-popover {
         position: absolute;
         z-index: 80;
         top: 76px;
@@ -493,7 +498,7 @@
         overflow: hidden;
         border: 1px solid var(--line);
         border-radius: 16px;
-        background: #171718;
+        background: var(--card);
         box-shadow: 0 20px 60px rgba(0, 0, 0, 0.55);
         opacity: 0;
         pointer-events: none;
@@ -502,7 +507,8 @@
       }
 
       .profile-popover.visible,
-      .settings-popover.visible {
+      .settings-popover.visible,
+      .web-popover.visible {
         opacity: 1;
         pointer-events: auto;
         transform: translateY(0) scale(1);
@@ -545,6 +551,102 @@
         border-top: 1px solid var(--line);
       }
 
+      .pro-action {
+        position: relative;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        width: 100%;
+        min-height: 74px;
+        padding: 10px 20px;
+        overflow: hidden;
+        border-bottom: 1px solid rgba(221, 174, 76, 0.24);
+        background: linear-gradient(105deg, rgba(117, 75, 13, 0.26), rgba(255, 220, 115, 0.08) 48%, rgba(117, 75, 13, 0.2));
+        color: #f4d27b;
+        text-align: left;
+        cursor: pointer;
+        transition: filter 160ms var(--ease), background 160ms var(--ease), transform 160ms var(--ease);
+      }
+
+      .pro-action::before {
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(105deg, transparent 18%, rgba(255, 247, 190, 0.22) 46%, transparent 70%);
+        background-size: 220% 100%;
+        content: "";
+        animation: gold-sheen 3.6s linear infinite;
+        pointer-events: none;
+      }
+
+      .pro-action:hover {
+        background: linear-gradient(105deg, rgba(145, 95, 19, 0.4), rgba(255, 220, 115, 0.14) 48%, rgba(145, 95, 19, 0.32));
+        filter: brightness(1.12);
+      }
+
+      .pro-badge {
+        position: relative;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 38px;
+        height: 38px;
+        flex: 0 0 auto;
+        border: 1px solid rgba(255, 230, 135, 0.5);
+        border-radius: 12px;
+        color: transparent;
+        background: var(--gold-gradient);
+        background-size: 220% 100%;
+        background-clip: text;
+        -webkit-background-clip: text;
+        font-size: 10px;
+        font-weight: 850;
+        letter-spacing: 0.08em;
+        box-shadow: inset 0 0 0 1px rgba(255, 220, 115, 0.1), 0 0 17px rgba(215, 157, 46, 0.2);
+        animation: gold-sheen 3.6s linear infinite;
+      }
+
+      .pro-badge::before {
+        position: absolute;
+        inset: 5px;
+        border: 1px solid rgba(255, 226, 126, 0.28);
+        border-radius: 8px;
+        content: "";
+      }
+
+      .pro-copy,
+      .pro-copy strong,
+      .pro-copy small {
+        position: relative;
+        display: block;
+      }
+
+      .pro-copy {
+        min-width: 0;
+        flex: 1;
+      }
+
+      .pro-copy strong {
+        color: transparent;
+        background: var(--gold-gradient);
+        background-size: 220% 100%;
+        background-clip: text;
+        -webkit-background-clip: text;
+        font-size: 14px;
+        font-weight: 700;
+        animation: gold-sheen 3.6s linear infinite;
+      }
+
+      .pro-copy small {
+        margin-top: 4px;
+        color: #b8985d;
+        font-size: 10px;
+      }
+
+      .pro-arrow {
+        position: relative;
+        color: #cfaa58 !important;
+      }
+
       .menu-action {
         display: flex;
         align-items: center;
@@ -575,24 +677,34 @@
         color: var(--text-soft);
       }
 
+      /* O histórico fica abaixo do perfil, como um menu pequeno e rolável. */
       .history-drawer {
-        position: absolute;
-        z-index: 70;
-        top: 0;
-        bottom: 0;
-        left: 0;
-        display: flex;
-        flex-direction: column;
-        width: min(390px, calc(100vw - 24px));
-        border-right: 1px solid var(--line);
-        background: var(--page-soft);
-        box-shadow: 24px 0 80px rgba(0, 0, 0, 0.4);
-        transform: translateX(-102%);
-        transition: transform 260ms var(--ease);
+        top: 145px;
+        right: clamp(16px, 4vw, 40px);
+        bottom: auto;
+        left: auto;
+        width: min(370px, calc(100vw - 32px));
+        max-height: min(510px, calc(100dvh - 165px));
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        background: var(--card);
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.55);
+        opacity: 0;
+        pointer-events: none;
+        transform: translateY(-8px) scale(0.98);
+        transition: opacity 170ms var(--ease), transform 190ms var(--ease);
       }
 
       .app.drawer-open .history-drawer {
-        transform: translateX(0);
+        opacity: 1;
+        pointer-events: auto;
+        transform: translateY(0) scale(1);
+      }
+
+      .drawer-backdrop,
+      .app.drawer-open .drawer-backdrop {
+        opacity: 0;
+        pointer-events: none;
       }
 
       .drawer-backdrop {
@@ -606,8 +718,7 @@
       }
 
       .app.drawer-open .drawer-backdrop {
-        opacity: 1;
-        pointer-events: auto;
+        display: none;
       }
 
       .drawer-head {
@@ -752,7 +863,29 @@
       }
 
       .future-item {
-        cursor: default;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        width: 100%;
+        min-height: 58px;
+        padding: 8px;
+        border: 1px solid transparent;
+        border-radius: 12px;
+        background: transparent;
+        color: var(--text-soft);
+        font: inherit;
+        text-align: left;
+      }
+
+      #kazerWebAction {
+        cursor: pointer;
+        transition: background 150ms var(--ease), border-color 150ms var(--ease), color 150ms var(--ease);
+      }
+
+      #kazerWebAction:hover {
+        border-color: var(--line);
+        background: var(--card);
+        color: var(--text);
       }
 
       .future-badge {
@@ -763,8 +896,112 @@
         font-size: 9px;
       }
 
-      .settings-popover {
+      .settings-popover,
+      .web-popover {
         padding: 18px 20px;
+      }
+
+      .web-popover {
+        width: min(470px, calc(100vw - 32px));
+      }
+
+      .web-popover h2 {
+        margin: 0;
+        font-size: 17px;
+        font-weight: 550;
+      }
+
+      .web-subtitle {
+        margin: 5px 0 15px;
+        color: var(--text-dim);
+        font-size: 11px;
+      }
+
+      .web-search {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        min-height: 44px;
+        padding: 0 10px 0 13px;
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        background: var(--page-soft);
+      }
+
+      .web-search .icon {
+        width: 17px;
+        height: 17px;
+        color: var(--text-dim);
+      }
+
+      .web-search input {
+        min-width: 0;
+        flex: 1;
+        border: 0;
+        outline: 0;
+        background: transparent;
+        color: var(--text);
+        font-size: 13px;
+      }
+
+      .web-search input::placeholder {
+        color: var(--text-dim);
+      }
+
+      .web-search button {
+        padding: 7px 10px;
+        border-radius: 9px;
+        background: var(--accent);
+        color: var(--accent-ink);
+        font-size: 11px;
+        cursor: pointer;
+      }
+
+      .web-sources {
+        display: grid;
+        gap: 6px;
+        max-height: 210px;
+        margin-top: 13px;
+        overflow-y: auto;
+      }
+
+      .web-source {
+        display: grid;
+        gap: 3px;
+        padding: 10px;
+        border: 1px solid var(--line-soft);
+        border-radius: 11px;
+        background: color-mix(in srgb, var(--page-soft) 80%, transparent);
+      }
+
+      .web-source strong {
+        color: var(--text);
+        font-size: 12px;
+        font-weight: 550;
+      }
+
+      .web-source span {
+        color: var(--text-dim);
+        font-size: 10px;
+      }
+
+      .web-source a {
+        width: fit-content;
+        margin-top: 2px;
+        color: var(--purple);
+        font-size: 10px;
+        text-decoration: none;
+      }
+
+      .web-source a:hover {
+        text-decoration: underline;
+      }
+
+      .web-empty {
+        margin: 14px 0 0;
+        color: var(--text-dim);
+        font-size: 11px;
+        line-height: 1.4;
       }
 
       .settings-popover h2 {
@@ -871,6 +1108,15 @@
         }
         to {
           background-position: -10% center;
+        }
+      }
+
+      @keyframes gold-sheen {
+        from {
+          background-position: 220% center;
+        }
+        to {
+          background-position: -20% center;
         }
       }
 
@@ -1000,12 +1246,6 @@
         }
       }
 
-      :root[data-motion="off"] *,
-      :root[data-motion="off"] *::before,
-      :root[data-motion="off"] *::after {
-        animation-play-state: paused !important;
-        transition: none !important;
-      }
     </style>
   </head>
   <body>
@@ -1022,6 +1262,7 @@
           <div><strong>jeanvicen</strong><small>jeanvicence@gmail.com</small></div>
         </div>
         <div class="menu-actions">
+          <button class="pro-action" id="proAction" type="button" aria-label="Obter Kazer Pro"><span class="pro-badge">PRO</span><span class="pro-copy"><strong>Kazer Pro</strong><small>Obter mais do KAZER</small></span><svg class="icon pro-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"></path></svg></button>
           <button class="menu-action" id="historyAction" type="button"><span>Histórico</span><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7"></path><path d="M3 4v5h5"></path><path d="M12 7v5l3 2"></path></svg></button>
           <button class="menu-action" id="settingsAction" type="button"><span>Settings</span><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6 7 7M17 17l1.4 1.4M18.4 5.6 17 7M7 17l-1.4 1.4"></path><circle cx="12" cy="12" r="3.5"></circle></svg></button>
           <button class="menu-action danger" id="logoutAction" type="button"><span>Log out</span><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 17l5-5-5-5M15 12H3"></path><path d="M21 19V5a2 2 0 0 0-2-2h-5"></path></svg></button>
@@ -1030,8 +1271,19 @@
 
       <div class="settings-popover" id="settingsPopover" role="dialog" aria-label="Settings">
         <h2>Settings</h2>
-        <div class="setting-row"><div><strong>Tema escuro</strong><small>Manter a experiência da referência</small></div><button class="switch on" id="themeSwitch" type="button" aria-label="Alternar tema" aria-pressed="true"></button></div>
-        <div class="setting-row"><div><strong>Animações</strong><small>Brilho e transições do KAZER</small></div><button class="switch on" id="motionSwitch" type="button" aria-label="Alternar animações" aria-pressed="true"></button></div>
+        <div class="setting-row"><div><strong>Tema</strong><small>Alternar entre modo escuro e claro</small></div><button class="switch on" id="themeSwitch" type="button" aria-label="Alternar tema" aria-pressed="true"></button></div>
+      </div>
+
+      <div class="web-popover" id="webPopover" role="dialog" aria-label="Kazer Web">
+        <h2>Kazer Web</h2>
+        <p class="web-subtitle">Pesquise, encontre fontes e traga contexto para o KAZER.</p>
+        <form class="web-search" id="webSearchForm">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-4-4"></path></svg>
+          <input id="webQuery" type="search" placeholder="Pesquisar na web..." autocomplete="off" />
+          <button type="submit">Buscar</button>
+        </form>
+        <div class="web-sources" id="webSources" aria-live="polite"></div>
+        <p class="web-empty" id="webEmpty">Digite um assunto para encontrar fontes e criar um resumo dentro do Kazer.</p>
       </div>
 
       <aside class="history-drawer" id="historyDrawer" aria-label="Histórico e ferramentas">
@@ -1050,7 +1302,7 @@
           </div></section>
           <section class="drawer-section"><div class="drawer-label"><span>Ferramentas</span></div><div class="future-items">
             <div class="future-item"><span class="drawer-icon"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 3h10v5H7zM5 8h14v13H5zM9 12h6M9 16h4"></path></svg></span><span class="drawer-copy"><strong>Artefatos</strong><small>Arquivos e entregas</small></span><span class="future-badge">em breve</span></div>
-            <div class="future-item"><span class="drawer-icon"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8"></circle><path d="M4 12h16M12 4a12 12 0 0 1 0 16M12 4a12 12 0 0 0 0 16"></path></svg></span><span class="drawer-copy"><strong>Pesquisa web</strong><small>Fontes e tendências</small></span><span class="future-badge">em breve</span></div>
+            <button class="future-item" id="kazerWebAction" type="button"><span class="drawer-icon"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8"></circle><path d="M4 12h16M12 4a12 12 0 0 1 0 16M12 4a12 12 0 0 0 0 16"></path></svg></span><span class="drawer-copy"><strong>Kazer Web</strong><small>Pesquisa e fontes</small></span><span class="future-badge">abrir</span></button>
             <div class="future-item"><span class="drawer-icon"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v18M3 12h18"></path><circle cx="12" cy="12" r="8"></circle></svg></span><span class="drawer-copy"><strong>Projetos</strong><small>Organização por contexto</small></span><span class="future-badge">em breve</span></div>
           </div></section>
         </div>
@@ -1082,7 +1334,10 @@
         const profileButton = document.getElementById("profileButton");
         const profilePopover = document.getElementById("profilePopover");
         const settingsPopover = document.getElementById("settingsPopover");
+        const webPopover = document.getElementById("webPopover");
         const historyAction = document.getElementById("historyAction");
+        const proAction = document.getElementById("proAction");
+        const kazerWebAction = document.getElementById("kazerWebAction");
         const settingsAction = document.getElementById("settingsAction");
         const logoutAction = document.getElementById("logoutAction");
         const historyDrawer = document.getElementById("historyDrawer");
@@ -1097,7 +1352,10 @@
         const sendButton = document.getElementById("sendButton");
         const stopButton = document.getElementById("stopButton");
         const themeSwitch = document.getElementById("themeSwitch");
-        const motionSwitch = document.getElementById("motionSwitch");
+        const webSearchForm = document.getElementById("webSearchForm");
+        const webQuery = document.getElementById("webQuery");
+        const webSources = document.getElementById("webSources");
+        const webEmpty = document.getElementById("webEmpty");
         const toast = document.getElementById("toast");
         let busy = false;
         let responseTimer = null;
@@ -1113,6 +1371,7 @@
         const closeMenus = () => {
           profilePopover.classList.remove("visible");
           settingsPopover.classList.remove("visible");
+          webPopover.classList.remove("visible");
           profileButton.setAttribute("aria-expanded", "false");
         };
 
@@ -1129,6 +1388,28 @@
           closeMenus();
           app.classList.add("drawer-open");
           historyDrawer.setAttribute("aria-hidden", "false");
+        };
+
+        const openWeb = () => {
+          closeHistoryDrawer();
+          closeMenus();
+          webPopover.classList.add("visible");
+          webQuery.focus();
+        };
+
+        const renderWebResults = (query) => {
+          const encoded = encodeURIComponent(query);
+          webSources.innerHTML = '<div class="web-source"><strong>' + query.replace(/[<>]/g, "") + '</strong><span>Pesquisa pronta para consultar fontes abertas.</span><a href="https://www.google.com/search?q=' + encoded + '" target="_blank" rel="noopener">Abrir resultados na web ↗</a></div><div class="web-source"><strong>Resumo no Kazer</strong><span>Use este assunto como contexto para criar, comparar ou saber mais.</span><a href="#" data-use-web="' + query.replace(/[<>]/g, "") + '">Usar como contexto</a></div>';
+          webEmpty.hidden = true;
+          const contextLink = webSources.querySelector("[data-use-web]");
+          contextLink?.addEventListener("click", (event) => {
+            event.preventDefault();
+            messageInput.value = "Crie um resumo com base neste tópico: " + query;
+            resizeInput();
+            updateSend();
+            webPopover.classList.remove("visible");
+            messageInput.focus();
+          });
         };
 
         const closeHistoryDrawer = () => {
@@ -1261,6 +1542,16 @@
           closeMenus();
           settingsPopover.classList.add("visible");
         });
+        proAction.addEventListener("click", () => {
+          closeMenus();
+          showToast("Kazer Pro: página de compra em breve");
+        });
+        kazerWebAction.addEventListener("click", openWeb);
+        webSearchForm.addEventListener("submit", (event) => {
+          event.preventDefault();
+          const query = webQuery.value.trim();
+          if (query) renderWebResults(query);
+        });
         logoutAction.addEventListener("click", () => {
           closeMenus();
           showToast("A saída da conta será conectada em breve");
@@ -1269,7 +1560,7 @@
         drawerBackdrop.addEventListener("click", closeHistoryDrawer);
         newChatButton.addEventListener("click", reset);
         document.addEventListener("click", (event) => {
-          if (!event.target.closest(".profile-popover") && !event.target.closest("#profileButton") && !event.target.closest(".settings-popover")) closeMenus();
+          if (!event.target.closest(".profile-popover") && !event.target.closest("#profileButton") && !event.target.closest(".settings-popover") && !event.target.closest(".web-popover") && !event.target.closest(".history-drawer")) closeMenus();
         });
 
         themeSwitch.addEventListener("click", () => {
@@ -1277,13 +1568,6 @@
           document.documentElement.dataset.theme = light ? "dark" : "light";
           themeSwitch.classList.toggle("on", light);
           themeSwitch.setAttribute("aria-pressed", String(light));
-        });
-
-        motionSwitch.addEventListener("click", () => {
-          const off = document.documentElement.dataset.motion === "off";
-          document.documentElement.dataset.motion = off ? "on" : "off";
-          motionSwitch.classList.toggle("on", off);
-          motionSwitch.setAttribute("aria-pressed", String(off));
         });
 
         composer.addEventListener("submit", (event) => {
