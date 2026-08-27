@@ -1945,6 +1945,7 @@
             showToast(choice.outcome === "accepted" ? "Kazer instalado" : "Instalação cancelada");
             return;
           }
+          hideInstallBanner(true);
           showToast("Use o menu do navegador e escolha Adicionar à tela inicial");
         };
 
