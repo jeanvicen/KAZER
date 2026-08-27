@@ -2,56 +2,44 @@
 <html lang="pt-BR">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
-    <meta name="theme-color" content="#08090b" />
-    <title>KAZER — arrumador</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#070707" />
+    <title>arrumador</title>
     <style>
       :root {
         color-scheme: dark;
-        --bg: #08090b;
-        --bg-soft: #0d0f12;
-        --surface: #111316;
-        --surface-2: #16191e;
-        --surface-3: #1b1f25;
-        --surface-hover: #20252c;
-        --line: rgba(255, 255, 255, 0.1);
-        --line-strong: rgba(255, 255, 255, 0.17);
-        --text: #f4f4f5;
-        --text-soft: #b6bac2;
-        --text-dim: #767c87;
-        --accent: #f4f4f5;
-        --accent-ink: #0b0c0e;
-        --purple: #8066ff;
-        --purple-soft: rgba(128, 102, 255, 0.14);
-        --green: #63dc9b;
-        --amber: #e6b45d;
-        --danger: #ff7777;
-        --shadow: 0 24px 70px rgba(0, 0, 0, 0.38);
-        --radius-xl: 28px;
-        --radius-lg: 20px;
-        --radius-md: 14px;
-        --ease: cubic-bezier(0.23, 1, 0.32, 1);
-        --font-sans: "Geist", "Inter", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-        --font-mono: "Geist Mono", "SFMono-Regular", Consolas, monospace;
+        --page: #070707;
+        --page-soft: #0d0d0f;
+        --card: #151516;
+        --card-2: #1b1b1d;
+        --line: rgba(255, 255, 255, 0.15);
+        --line-soft: rgba(255, 255, 255, 0.08);
+        --text: #f4f4f4;
+        --text-soft: #a7a7ab;
+        --text-dim: #6d6d72;
+        --accent: #f4f4f4;
+        --accent-ink: #090909;
+        --success: #69d2a1;
+        --warning: #e7bc69;
+        --danger: #f07474;
+        --purple: #8c7aff;
+        --ease: cubic-bezier(0.22, 1, 0.36, 1);
+        --sans: "Geist", "Inter", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       }
 
       :root[data-theme="light"] {
         color-scheme: light;
-        --bg: #f3f3f4;
-        --bg-soft: #eeeeef;
-        --surface: #ffffff;
-        --surface-2: #f8f8f9;
-        --surface-3: #e8e8eb;
-        --surface-hover: #e2e2e5;
-        --line: rgba(0, 0, 0, 0.1);
-        --line-strong: rgba(0, 0, 0, 0.17);
-        --text: #17181b;
-        --text-soft: #5c6069;
-        --text-dim: #878b93;
-        --accent: #191a1d;
-        --accent-ink: #f6f6f7;
-        --purple-soft: rgba(101, 78, 214, 0.12);
-        --shadow: 0 24px 70px rgba(38, 39, 45, 0.15);
+        --page: #f3f3f4;
+        --page-soft: #eaeaec;
+        --card: #ffffff;
+        --card-2: #ececef;
+        --line: rgba(0, 0, 0, 0.15);
+        --line-soft: rgba(0, 0, 0, 0.08);
+        --text: #141416;
+        --text-soft: #5e5e65;
+        --text-dim: #898991;
+        --accent: #171719;
+        --accent-ink: #ffffff;
       }
 
       * {
@@ -70,12 +58,12 @@
         min-height: 100%;
         margin: 0;
         overflow: hidden;
-        background: var(--bg);
+        background: var(--page);
       }
 
       body {
         color: var(--text);
-        font-family: var(--font-sans);
+        font-family: var(--sans);
         -webkit-font-smoothing: antialiased;
       }
 
@@ -91,305 +79,38 @@
 
       button:focus-visible,
       textarea:focus-visible,
-      input:focus-visible,
-      [tabindex]:focus-visible {
+      input:focus-visible {
         outline: 2px solid var(--purple);
         outline-offset: 3px;
       }
 
-      .sr-only {
-        position: absolute;
-        width: 1px;
-        height: 1px;
-        padding: 0;
-        overflow: hidden;
-        clip: rect(0, 0, 0, 0);
-        white-space: nowrap;
-        border: 0;
-      }
-
       .icon {
-        width: 18px;
-        height: 18px;
+        width: 20px;
+        height: 20px;
         flex: 0 0 auto;
         pointer-events: none;
       }
 
-      .kazer-shell {
+      .app {
         position: relative;
-        display: flex;
         width: 100%;
         height: 100dvh;
         min-height: 100%;
         overflow: hidden;
-        background: var(--bg);
-      }
-
-      .workspace-panel {
-        position: absolute;
-        z-index: 50;
-        top: 12px;
-        bottom: 12px;
-        left: 12px;
-        display: flex;
-        flex-direction: column;
-        width: min(330px, calc(100vw - 24px));
-        overflow: hidden;
-        border: 1px solid var(--line-strong);
-        border-radius: 24px;
-        background: color-mix(in srgb, var(--surface) 95%, transparent);
-        box-shadow: var(--shadow);
-        opacity: 0;
-        pointer-events: none;
-        transform: translateX(-22px) scale(0.98);
-        transition: opacity 220ms var(--ease), transform 260ms var(--ease);
-      }
-
-      .kazer-shell.panel-open .workspace-panel {
-        opacity: 1;
-        pointer-events: auto;
-        transform: translateX(0) scale(1);
-      }
-
-      .panel-backdrop {
-        position: fixed;
-        z-index: 40;
-        inset: 0;
-        background: rgba(0, 0, 0, 0.46);
-        opacity: 0;
-        pointer-events: none;
-        transition: opacity 220ms var(--ease);
-      }
-
-      .kazer-shell.panel-open .panel-backdrop {
-        opacity: 1;
-        pointer-events: auto;
-      }
-
-      .panel-head {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding: 18px 18px 14px;
-        border-bottom: 1px solid var(--line);
-      }
-
-      .panel-brand {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        color: var(--text);
-        font-size: 13px;
-        font-weight: 700;
-        letter-spacing: 0.18em;
-      }
-
-      .panel-brand-mark {
-        position: relative;
-        width: 26px;
-        height: 26px;
-        border: 1px solid var(--line-strong);
-        border-radius: 9px;
-        background: linear-gradient(145deg, #fff 0%, #757a86 44%, #1a1c21 78%);
-        box-shadow: inset 0 0 0 3px var(--surface), 0 0 20px rgba(255, 255, 255, 0.12);
-      }
-
-      .panel-brand-mark::after {
-        position: absolute;
-        inset: 7px;
-        border-radius: 50%;
-        background: var(--surface);
-        content: "";
-      }
-
-      .icon-button {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        width: 38px;
-        height: 38px;
-        border: 1px solid transparent;
-        border-radius: 12px;
-        background: transparent;
-        color: var(--text-soft);
-        cursor: pointer;
-        transition: color 160ms var(--ease), background 160ms var(--ease), border-color 160ms var(--ease), transform 160ms var(--ease);
-      }
-
-      .icon-button:hover {
-        border-color: var(--line);
-        background: var(--surface-hover);
-        color: var(--text);
-      }
-
-      .icon-button:active,
-      .primary-button:active,
-      .trend-card:active,
-      .send-button:active {
-        transform: scale(0.96);
-      }
-
-      .panel-scroll {
-        flex: 1;
-        padding: 14px 10px 18px;
-        overflow-y: auto;
-        scrollbar-width: thin;
-        scrollbar-color: var(--line-strong) transparent;
-      }
-
-      .panel-scroll::-webkit-scrollbar,
-      .chat-scroll::-webkit-scrollbar {
-        width: 7px;
-      }
-
-      .panel-scroll::-webkit-scrollbar-thumb,
-      .chat-scroll::-webkit-scrollbar-thumb {
-        border-radius: 999px;
-        background: var(--line-strong);
-      }
-
-      .panel-section {
-        margin-bottom: 22px;
-      }
-
-      .panel-section-title {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding: 0 10px 8px;
-        color: var(--text-dim);
-        font-size: 10px;
-        font-weight: 700;
-        letter-spacing: 0.14em;
-        text-transform: uppercase;
-      }
-
-      .panel-section-title .live-dot {
-        width: 6px;
-        height: 6px;
-        border-radius: 50%;
-        background: var(--green);
-        box-shadow: 0 0 0 4px rgba(99, 220, 155, 0.1), 0 0 14px var(--green);
-      }
-
-      .history-list,
-      .future-list {
-        display: grid;
-        gap: 4px;
-      }
-
-      .history-item,
-      .future-item {
-        display: flex;
-        align-items: center;
-        gap: 11px;
-        width: 100%;
-        padding: 11px 10px;
-        border: 1px solid transparent;
-        border-radius: 13px;
-        background: transparent;
-        color: var(--text-soft);
-        text-align: left;
-        cursor: pointer;
-        transition: background 160ms var(--ease), border-color 160ms var(--ease), color 160ms var(--ease), transform 160ms var(--ease);
-      }
-
-      .history-item:hover,
-      .future-item:hover {
-        border-color: var(--line);
-        background: var(--surface-hover);
-        color: var(--text);
-      }
-
-      .history-item.active {
-        border-color: color-mix(in srgb, var(--purple) 40%, var(--line));
-        background: var(--purple-soft);
-        color: var(--text);
-      }
-
-      .history-item .history-icon,
-      .future-item .future-icon {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        width: 30px;
-        height: 30px;
-        flex: 0 0 auto;
-        border: 1px solid var(--line);
-        border-radius: 9px;
-        background: var(--surface-2);
-        color: var(--text-dim);
-      }
-
-      .history-item.active .history-icon {
-        color: var(--purple);
-      }
-
-      .history-copy,
-      .future-copy {
-        min-width: 0;
-        flex: 1;
-      }
-
-      .history-copy strong,
-      .future-copy strong {
-        display: block;
-        overflow: hidden;
-        color: inherit;
-        font-size: 12px;
-        font-weight: 550;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-      }
-
-      .history-copy small,
-      .future-copy small {
-        display: block;
-        margin-top: 3px;
-        overflow: hidden;
-        color: var(--text-dim);
-        font-size: 10px;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-      }
-
-      .future-item {
-        cursor: default;
-      }
-
-      .future-item .future-icon {
-        color: var(--text-soft);
-      }
-
-      .future-badge {
-        padding: 4px 6px;
-        border: 1px solid var(--line);
-        border-radius: 999px;
-        color: var(--text-dim);
-        font-size: 9px;
-        letter-spacing: 0.04em;
-      }
-
-      .main-stage {
-        position: relative;
-        display: flex;
-        flex: 1;
-        flex-direction: column;
-        min-width: 0;
-        height: 100%;
+        background: var(--page);
       }
 
       .topbar {
         position: absolute;
-        z-index: 30;
+        z-index: 20;
         top: 0;
         right: 0;
         left: 0;
         display: flex;
         align-items: center;
-        justify-content: space-between;
-        height: 76px;
-        padding: 0 clamp(18px, 4vw, 48px);
+        justify-content: center;
+        height: 74px;
+        padding: env(safe-area-inset-top) 18px 0;
         pointer-events: none;
       }
 
@@ -397,467 +118,163 @@
         pointer-events: auto;
       }
 
-      .topbar-left,
-      .topbar-right {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-      }
-
-      .topbar-left {
-        gap: 13px;
-      }
-
-      .menu-button {
-        display: inline-flex;
-      }
-
-      .topbar-brand {
-        display: flex;
-        align-items: baseline;
-        gap: 9px;
-        user-select: none;
-      }
-
-      .topbar-brand .brand-word {
+      .conversation-title {
+        color: var(--text-soft);
         font-size: 18px;
-        font-weight: 850;
-        letter-spacing: 0.18em;
+        font-weight: 400;
+        letter-spacing: -0.03em;
+        opacity: 0;
+        transform: translateY(-5px);
+        transition: opacity 240ms var(--ease), transform 240ms var(--ease);
       }
 
-      .metal-word {
-        color: transparent;
-        background: linear-gradient(106deg, #434750 0%, #f7f8fb 17%, #777d88 33%, #ffffff 47%, #444952 64%, #dce0e6 79%, #60656e 100%);
-        background-size: 220% 100%;
-        background-clip: text;
-        -webkit-background-clip: text;
-        animation: metal-sheen 4.2s linear infinite;
+      .app.in-conversation .conversation-title {
+        opacity: 1;
+        transform: translateY(0);
       }
 
-      .topbar-brand .brand-sub {
-        color: var(--text-dim);
-        font-size: 12px;
-        letter-spacing: 0.03em;
-      }
-
-      .avatar-button {
-        position: relative;
+      .profile-button {
+        position: absolute;
+        top: max(18px, env(safe-area-inset-top));
+        right: clamp(18px, 4vw, 40px);
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        width: 42px;
-        height: 42px;
+        width: 48px;
+        height: 48px;
         padding: 0;
-        border: 1px solid var(--line-strong);
+        border: 1px solid var(--line);
         border-radius: 50%;
-        background: linear-gradient(145deg, #242932, #0d0f13);
+        background: var(--page);
         color: var(--text);
         cursor: pointer;
-        box-shadow: 0 0 0 5px color-mix(in srgb, var(--bg) 84%, transparent), inset 0 0 0 1px rgba(255, 255, 255, 0.04);
-        transition: border-color 160ms var(--ease), transform 160ms var(--ease), box-shadow 160ms var(--ease);
+        box-shadow: 0 0 0 5px color-mix(in srgb, var(--page) 78%, transparent), 0 4px 20px rgba(0, 0, 0, 0.18);
+        transition: border-color 180ms var(--ease), transform 180ms var(--ease), box-shadow 180ms var(--ease);
       }
 
-      .avatar-button:hover {
-        border-color: rgba(255, 255, 255, 0.4);
-        box-shadow: 0 0 0 5px color-mix(in srgb, var(--bg) 84%, transparent), 0 0 24px rgba(128, 102, 255, 0.24);
+      .profile-button:hover {
+        border-color: rgba(255, 255, 255, 0.45);
+        box-shadow: 0 0 0 5px color-mix(in srgb, var(--page) 78%, transparent), 0 0 25px rgba(255, 255, 255, 0.14);
       }
 
-      .avatar-face {
+      .profile-button:active,
+      .new-chat-button:active,
+      .send-button:active,
+      .menu-action:active {
+        transform: scale(0.96);
+      }
+
+      .avatar-photo {
         position: relative;
         display: flex;
         align-items: flex-end;
         justify-content: center;
-        width: 27px;
-        height: 27px;
+        width: 34px;
+        height: 34px;
         overflow: hidden;
-        border: 1px solid rgba(255, 255, 255, 0.26);
+        border: 1px solid rgba(255, 255, 255, 0.28);
         border-radius: 50%;
-        background: radial-gradient(circle at 50% 32%, #e9d4bd 0 16%, transparent 17%), linear-gradient(150deg, #171b23 0 40%, #7b63ed 41% 70%, #2a3348 71%);
+        background: radial-gradient(circle at 50% 34%, #efe0ce 0 18%, transparent 19%), linear-gradient(145deg, #101116 2%, #343946 40%, #8b7aff 70%, #171921 100%);
       }
 
-      .avatar-face::before {
+      .avatar-photo::before {
         position: absolute;
         top: 4px;
-        width: 14px;
-        height: 9px;
-        border-radius: 60% 60% 40% 40%;
-        background: #171923;
+        width: 19px;
+        height: 12px;
+        border-radius: 65% 65% 40% 40%;
+        background: #11121a;
         content: "";
       }
 
-      .avatar-face::after {
-        width: 18px;
-        height: 10px;
+      .avatar-photo::after {
+        width: 24px;
+        height: 13px;
         border-radius: 50% 50% 0 0;
-        background: rgba(246, 239, 231, 0.9);
+        background: rgba(241, 237, 230, 0.88);
         content: "";
       }
 
-      .popover {
+      .new-chat-button {
         position: absolute;
-        z-index: 80;
-        top: 64px;
-        right: clamp(18px, 4vw, 48px);
-        width: min(300px, calc(100vw - 30px));
-        padding: 8px;
-        border: 1px solid var(--line-strong);
-        border-radius: 18px;
-        background: var(--surface);
-        box-shadow: var(--shadow);
-        opacity: 0;
-        pointer-events: none;
-        transform: translateY(-7px) scale(0.98);
-        transition: opacity 160ms var(--ease), transform 180ms var(--ease);
-      }
-
-      .popover.visible {
-        opacity: 1;
-        pointer-events: auto;
-        transform: translateY(0) scale(1);
-      }
-
-      .account-summary {
-        display: flex;
+        top: max(20px, env(safe-area-inset-top));
+        right: clamp(78px, 12vw, 118px);
+        display: inline-flex;
         align-items: center;
-        gap: 12px;
-        padding: 12px;
-        border-bottom: 1px solid var(--line);
-      }
-
-      .account-summary .avatar-button {
+        justify-content: center;
         width: 40px;
         height: 40px;
-        box-shadow: none;
-        pointer-events: none;
-      }
-
-      .account-summary strong,
-      .account-summary small {
-        display: block;
-      }
-
-      .account-summary strong {
-        color: var(--text);
-        font-size: 13px;
-      }
-
-      .account-summary small {
-        margin-top: 4px;
-        color: var(--text-dim);
-        font-size: 11px;
-      }
-
-      .popover-action {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        width: 100%;
-        margin-top: 4px;
-        padding: 11px 12px;
-        border-radius: 11px;
-        background: transparent;
-        color: var(--text-soft);
-        font-size: 12px;
-        text-align: left;
-        cursor: pointer;
-        transition: background 160ms var(--ease), color 160ms var(--ease);
-      }
-
-      .popover-action:hover {
-        background: var(--surface-hover);
-        color: var(--text);
-      }
-
-      .popover-action.danger:hover {
-        color: var(--danger);
-      }
-
-      .settings-card {
-        padding: 12px;
-      }
-
-      .settings-title {
-        margin: 0 0 11px;
-        color: var(--text);
-        font-size: 13px;
-        font-weight: 700;
-      }
-
-      .setting-row {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 16px;
-        padding: 10px 0;
-        border-top: 1px solid var(--line);
-      }
-
-      .setting-row:first-of-type {
-        border-top: 0;
-      }
-
-      .setting-row strong,
-      .setting-row small {
-        display: block;
-      }
-
-      .setting-row strong {
-        color: var(--text-soft);
-        font-size: 12px;
-        font-weight: 550;
-      }
-
-      .setting-row small {
-        margin-top: 3px;
-        color: var(--text-dim);
-        font-size: 10px;
-      }
-
-      .switch {
-        position: relative;
-        width: 39px;
-        height: 23px;
-        flex: 0 0 auto;
-        border-radius: 999px;
-        background: var(--surface-3);
-        cursor: pointer;
-        transition: background 160ms var(--ease);
-      }
-
-      .switch::after {
-        position: absolute;
-        top: 4px;
-        left: 4px;
-        width: 15px;
-        height: 15px;
+        padding: 0;
         border-radius: 50%;
-        background: var(--text-dim);
-        content: "";
-        transition: transform 180ms var(--ease), background 160ms var(--ease);
+        background: transparent;
+        color: var(--text);
+        font-size: 31px;
+        font-weight: 250;
+        line-height: 1;
+        cursor: pointer;
+        transition: background 160ms var(--ease), transform 160ms var(--ease);
       }
 
-      .switch.on {
-        background: var(--purple);
+      .new-chat-button:hover {
+        background: var(--card);
       }
 
-      .switch.on::after {
-        background: #fff;
-        transform: translateX(16px);
-      }
-
-      .chat-scroll {
+      .conversation-area {
         position: relative;
         display: flex;
-        flex: 1;
         flex-direction: column;
-        min-height: 0;
+        width: 100%;
+        height: 100%;
         overflow-y: auto;
-        scroll-behavior: smooth;
         scrollbar-width: thin;
-        scrollbar-color: var(--line-strong) transparent;
+        scrollbar-color: var(--line) transparent;
+        scroll-behavior: smooth;
+      }
+
+      .conversation-area::-webkit-scrollbar {
+        width: 6px;
+      }
+
+      .conversation-area::-webkit-scrollbar-thumb {
+        border-radius: 999px;
+        background: var(--line);
       }
 
       .empty-state {
-        display: flex;
-        flex: 1;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        gap: clamp(30px, 6vh, 58px);
-        padding: 92px 22px 190px;
-        animation: empty-in 540ms var(--ease) both;
-      }
-
-      .brand-lockup {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        text-align: center;
-      }
-
-      .brand-star {
-        position: relative;
-        width: 48px;
-        height: 48px;
-        margin-bottom: 19px;
-        filter: drop-shadow(0 0 15px rgba(255, 255, 255, 0.3));
-        animation: star-pulse 3s ease-in-out infinite;
-      }
-
-      .brand-star::before,
-      .brand-star::after {
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        border-radius: 999px;
-        background: linear-gradient(180deg, #fff, #737983 72%, transparent);
-        content: "";
-        transform: translate(-50%, -50%);
-      }
-
-      .brand-star::before {
-        width: 3px;
-        height: 48px;
-      }
-
-      .brand-star::after {
-        width: 48px;
-        height: 3px;
-        background: linear-gradient(90deg, transparent, #fff 30%, #8b919d 72%, transparent);
-      }
-
-      .brand-star-core {
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        width: 15px;
-        height: 15px;
-        border-radius: 50%;
-        background: #fff;
-        box-shadow: 0 0 0 5px rgba(255, 255, 255, 0.1), 0 0 24px 7px rgba(255, 255, 255, 0.55);
-        transform: translate(-50%, -50%);
-      }
-
-      .brand-lockup h1 {
-        margin: 0;
-        color: transparent;
-        font-size: clamp(4rem, 14vw, 8.8rem);
-        font-weight: 850;
-        letter-spacing: -0.075em;
-        line-height: 0.88;
-        background: linear-gradient(106deg, #3b3f47 0%, #f3f4f6 16%, #777c86 32%, #ffffff 45%, #444850 61%, #dfe2e7 77%, #555a64 100%);
-        background-size: 240% 100%;
-        background-clip: text;
-        -webkit-background-clip: text;
-        filter: drop-shadow(0 12px 30px rgba(0, 0, 0, 0.3));
-        animation: metal-sheen 5.5s linear infinite;
-      }
-
-      .brand-lockup p {
-        margin: 14px 0 0;
-        color: var(--text-dim);
-        font-size: 12px;
-        letter-spacing: 0.18em;
-        text-transform: uppercase;
-      }
-
-      .pulse-area {
-        width: min(760px, 100%);
-      }
-
-      .pulse-heading {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 9px;
-        margin-bottom: 13px;
-        color: var(--text-dim);
-        font-size: 10px;
-        font-weight: 700;
-        letter-spacing: 0.16em;
-        text-transform: uppercase;
-      }
-
-      .pulse-heading::before,
-      .pulse-heading::after {
-        width: min(72px, 11vw);
-        height: 1px;
-        background: var(--line);
-        content: "";
-      }
-
-      .pulse-heading .pulse-live {
-        display: inline-flex;
-        align-items: center;
-        gap: 5px;
-        color: var(--green);
-        letter-spacing: 0.08em;
-      }
-
-      .pulse-live i {
-        width: 5px;
-        height: 5px;
-        border-radius: 50%;
-        background: var(--green);
-        box-shadow: 0 0 0 4px rgba(99, 220, 155, 0.1);
-      }
-
-      .trend-grid {
         display: grid;
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-        gap: 9px;
+        flex: 1;
+        place-items: start center;
+        width: 100%;
+        min-height: 100%;
+        padding: 33vh 18px 182px;
+        animation: enter-up 650ms var(--ease) both;
       }
 
-      .trend-card {
-        display: flex;
-        flex-direction: column;
-        min-height: 102px;
-        padding: 13px;
-        border: 1px solid var(--line);
-        border-radius: 16px;
-        background: linear-gradient(145deg, color-mix(in srgb, var(--surface) 94%, transparent), color-mix(in srgb, var(--surface-2) 85%, transparent));
-        color: var(--text-soft);
-        text-align: left;
-        cursor: pointer;
-        transition: border-color 170ms var(--ease), background 170ms var(--ease), transform 170ms var(--ease), color 170ms var(--ease);
-      }
-
-      .trend-card:hover {
-        border-color: color-mix(in srgb, var(--purple) 50%, var(--line-strong));
-        background: linear-gradient(145deg, var(--purple-soft), var(--surface-2));
+      .empty-word {
+        margin: 0;
         color: var(--text);
-        transform: translateY(-3px);
-      }
-
-      .trend-topline {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        margin-bottom: 12px;
-        color: var(--text-dim);
-        font-family: var(--font-mono);
-        font-size: 9px;
-      }
-
-      .trend-source {
-        display: inline-flex;
-        align-items: center;
-        gap: 4px;
-        color: var(--green);
-        font-family: var(--font-sans);
-        font-size: 9px;
-      }
-
-      .trend-source i {
-        width: 4px;
-        height: 4px;
-        border-radius: 50%;
-        background: currentColor;
-      }
-
-      .trend-card strong {
-        display: block;
-        margin-top: auto;
-        color: inherit;
-        font-size: 12px;
-        font-weight: 550;
-        line-height: 1.35;
+        font-size: clamp(3.6rem, 12vw, 8.4rem);
+        font-weight: 400;
+        letter-spacing: -0.085em;
+        line-height: 0.9;
+        text-align: center;
+        white-space: nowrap;
       }
 
       .message-list {
         display: flex;
         flex-direction: column;
-        gap: 28px;
-        width: min(840px, calc(100% - 34px));
+        gap: 31px;
+        width: min(670px, calc(100% - 38px));
         margin: 0 auto;
-        padding: 104px 0 210px;
+        padding: 104px 0 205px;
       }
 
       .message-row {
         display: flex;
         flex-direction: column;
         max-width: 84%;
-        animation: message-in 300ms var(--ease) both;
+        animation: enter-up 300ms var(--ease) both;
       }
 
       .message-row.user {
@@ -872,26 +289,23 @@
       }
 
       .message-bubble {
-        padding: 13px 17px;
-        border: 1px solid var(--line);
-        border-radius: 21px;
+        padding: 14px 20px;
+        border-radius: 22px;
+        background: var(--card-2);
         color: var(--text);
-        font-size: 15px;
-        line-height: 1.55;
+        font-size: clamp(16px, 3vw, 22px);
+        line-height: 1.4;
         overflow-wrap: anywhere;
       }
 
       .message-row.user .message-bubble {
-        border-color: transparent;
-        border-bottom-right-radius: 7px;
-        background: var(--surface-3);
+        border-bottom-right-radius: 8px;
       }
 
       .message-row.assistant .message-bubble {
-        max-width: 720px;
         padding: 0;
-        border: 0;
-        border-radius: 0;
+        background: transparent;
+        color: var(--text-soft);
       }
 
       .message-meta {
@@ -903,71 +317,63 @@
         font-size: 10px;
       }
 
-      .assistant-orb {
-        position: relative;
-        width: 17px;
-        height: 17px;
-        margin-right: 2px;
-        border: 1px solid var(--line-strong);
+      .assistant-dot {
+        width: 14px;
+        height: 14px;
+        border: 1px solid var(--line);
         border-radius: 50%;
-        background: radial-gradient(circle at 35% 30%, #fff, #737985 26%, #15171c 67%);
-        box-shadow: 0 0 13px rgba(255, 255, 255, 0.15);
+        background: radial-gradient(circle at 35% 30%, #fff, #787c84 28%, #18191d 72%);
       }
 
       .thinking-row {
         display: inline-flex;
         align-items: center;
-        gap: 10px;
+        gap: 12px;
         color: var(--text-soft);
-        font-size: 15px;
+        font-size: clamp(18px, 4.5vw, 25px);
+        line-height: 1.2;
+        animation: enter-up 300ms var(--ease) both;
       }
 
-      .thinking-orb {
-        position: relative;
-        width: 22px;
-        height: 22px;
-        border: 1px solid var(--line-strong);
-        border-radius: 50%;
-        background: radial-gradient(circle at 38% 28%, #ffffff, #707682 26%, #101216 68%);
-        box-shadow: 0 0 18px rgba(255, 255, 255, 0.14);
-        animation: orb-breathe 1.35s ease-in-out infinite;
-      }
-
-      .thinking-orb::after {
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        width: 4px;
-        height: 4px;
-        border-radius: 50%;
-        background: #fff;
-        box-shadow: 7px 0 0 rgba(255, 255, 255, 0.6), 14px 0 0 rgba(255, 255, 255, 0.23);
-        content: "";
-        transform: translate(-10px, -50%);
-        animation: thinking-dots 1.1s ease-in-out infinite;
+      .thinking-brain {
+        width: 27px;
+        height: 27px;
+        color: var(--text-soft);
       }
 
       .thinking-label {
-        color: var(--text-soft);
-        background: linear-gradient(90deg, var(--text-soft), #fff, var(--text-soft));
+        min-width: 92px;
+        color: transparent;
+        background: linear-gradient(90deg, var(--text-soft), #f8f8f8, var(--text-soft));
         background-size: 210% 100%;
         background-clip: text;
         -webkit-background-clip: text;
-        color: transparent;
-        animation: text-shimmer 1.2s linear infinite;
+        animation: text-shimmer 1.3s linear infinite;
       }
 
       .composer-dock {
         position: absolute;
-        z-index: 25;
+        z-index: 15;
         right: 0;
         bottom: 0;
         left: 0;
         display: flex;
         justify-content: center;
-        padding: 15px clamp(17px, 4vw, 48px) 25px;
+        padding: 0 18px max(24px, env(safe-area-inset-bottom));
         pointer-events: none;
-        background: linear-gradient(to top, var(--bg) 12%, color-mix(in srgb, var(--bg) 92%, transparent) 55%, transparent 100%);
+        background: linear-gradient(to top, var(--page) 24%, color-mix(in srgb, var(--page) 92%, transparent) 68%, transparent 100%);
+      }
+
+      .app:not(.in-conversation) .composer-dock {
+        top: 54%;
+        bottom: auto;
+        padding-bottom: 0;
+        background: transparent;
+        transform: translateY(-50%);
+      }
+
+      .app:not(.in-conversation) .composer-caption {
+        display: none;
       }
 
       .composer-dock > * {
@@ -975,123 +381,57 @@
       }
 
       .composer {
-        width: min(840px, 100%);
-      }
-
-      .attachment-strip {
-        display: flex;
-        gap: 7px;
-        margin-bottom: 8px;
-        overflow-x: auto;
-      }
-
-      .attachment-pill {
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-        padding: 7px 9px;
-        border: 1px solid var(--line);
-        border-radius: 10px;
-        background: var(--surface);
-        color: var(--text-soft);
-        font-size: 10px;
-      }
-
-      .attachment-pill button {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        width: 16px;
-        height: 16px;
-        border-radius: 50%;
-        background: var(--surface-3);
-        color: var(--text-dim);
-        cursor: pointer;
+        width: min(640px, 100%);
       }
 
       .composer-box {
         position: relative;
         display: flex;
-        flex-direction: column;
-        min-height: 122px;
+        align-items: stretch;
+        min-height: 140px;
         overflow: hidden;
-        border: 1px solid var(--line-strong);
-        border-radius: var(--radius-xl);
-        background: color-mix(in srgb, var(--surface) 95%, transparent);
-        box-shadow: 0 12px 38px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.03);
+        border: 1px solid var(--line);
+        border-radius: 26px;
+        background: var(--card);
+        box-shadow: 0 8px 34px rgba(0, 0, 0, 0.2);
         transition: border-color 180ms var(--ease), box-shadow 180ms var(--ease);
       }
 
       .composer-box:focus-within {
-        border-color: color-mix(in srgb, var(--purple) 55%, var(--line-strong));
-        box-shadow: 0 12px 38px rgba(0, 0, 0, 0.2), 0 0 0 4px var(--purple-soft);
+        border-color: rgba(255, 255, 255, 0.32);
+        box-shadow: 0 8px 34px rgba(0, 0, 0, 0.2), 0 0 0 4px rgba(255, 255, 255, 0.04);
       }
 
       .message-input {
         width: 100%;
-        min-height: 74px;
-        max-height: 190px;
-        padding: 18px 20px 8px;
+        min-height: 140px;
+        max-height: 260px;
+        padding: 24px 90px 21px 28px;
         resize: none;
         border: 0;
         outline: 0;
         overflow-y: auto;
         background: transparent;
         color: var(--text);
-        font-size: 16px;
-        line-height: 1.45;
+        font-size: clamp(22px, 4.7vw, 32px);
+        font-weight: 350;
+        line-height: 1.26;
       }
 
       .message-input::placeholder {
-        color: var(--text-dim);
-      }
-
-      .composer-footer {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 10px;
-        padding: 6px 12px 11px 14px;
-      }
-
-      .composer-tools {
-        display: flex;
-        align-items: center;
-        gap: 3px;
-      }
-
-      .tool-button {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        width: 34px;
-        height: 34px;
-        border-radius: 11px;
-        background: transparent;
-        color: var(--text-dim);
-        cursor: pointer;
-        transition: background 160ms var(--ease), color 160ms var(--ease), transform 160ms var(--ease);
-      }
-
-      .tool-button:hover {
-        background: var(--surface-hover);
-        color: var(--text);
-      }
-
-      .composer-hint {
-        margin: 0;
-        color: var(--text-dim);
-        font-size: 10px;
-        text-align: center;
-        white-space: nowrap;
+        color: var(--text-soft);
+        opacity: 1;
       }
 
       .send-button {
+        position: absolute;
+        right: 17px;
+        bottom: 17px;
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        width: 42px;
-        height: 42px;
+        width: clamp(54px, 12vw, 72px);
+        height: clamp(54px, 12vw, 72px);
         border-radius: 50%;
         background: var(--accent);
         color: var(--accent-ink);
@@ -1099,13 +439,19 @@
         transition: opacity 160ms var(--ease), transform 160ms var(--ease), filter 160ms var(--ease);
       }
 
+      .send-button .icon {
+        width: clamp(26px, 5vw, 32px);
+        height: clamp(26px, 5vw, 32px);
+        stroke-width: 1.55;
+      }
+
       .send-button:hover {
-        filter: brightness(1.1);
+        filter: brightness(1.08);
       }
 
       .send-button:disabled {
         cursor: default;
-        opacity: 0.32;
+        opacity: 0.96;
       }
 
       .stop-button {
@@ -1121,30 +467,376 @@
       }
 
       .composer-caption {
-        margin: 9px 0 0;
+        margin: 8px 0 0;
         color: var(--text-dim);
         font-size: 10px;
-        line-height: 1.3;
         text-align: center;
       }
 
-      .toast {
-        position: fixed;
-        z-index: 100;
-        bottom: 24px;
-        left: 50%;
-        max-width: calc(100vw - 38px);
-        padding: 10px 14px;
-        border: 1px solid var(--line-strong);
-        border-radius: 999px;
-        background: var(--surface-3);
-        color: var(--text);
-        font-size: 12px;
-        box-shadow: var(--shadow);
+      .profile-popover,
+      .settings-popover {
+        position: absolute;
+        z-index: 80;
+        top: 76px;
+        right: clamp(16px, 4vw, 40px);
+        width: min(354px, calc(100vw - 32px));
+        overflow: hidden;
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        background: #171718;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.55);
         opacity: 0;
         pointer-events: none;
-        transform: translate(-50%, 16px);
-        transition: opacity 180ms var(--ease), transform 220ms var(--ease);
+        transform: translateY(-8px) scale(0.98);
+        transition: opacity 170ms var(--ease), transform 190ms var(--ease);
+      }
+
+      .profile-popover.visible,
+      .settings-popover.visible {
+        opacity: 1;
+        pointer-events: auto;
+        transform: translateY(0) scale(1);
+      }
+
+      .profile-summary {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        padding: 21px 20px 19px;
+      }
+
+      .profile-summary .profile-button {
+        position: static;
+        width: 48px;
+        height: 48px;
+        flex: 0 0 auto;
+        box-shadow: none;
+        pointer-events: none;
+      }
+
+      .profile-summary strong,
+      .profile-summary small {
+        display: block;
+      }
+
+      .profile-summary strong {
+        color: var(--text);
+        font-size: 18px;
+        font-weight: 600;
+      }
+
+      .profile-summary small {
+        margin-top: 4px;
+        color: var(--text-soft);
+        font-size: 16px;
+      }
+
+      .menu-actions {
+        border-top: 1px solid var(--line);
+      }
+
+      .menu-action {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        width: 100%;
+        min-height: 61px;
+        padding: 0 20px;
+        border-bottom: 1px solid var(--line-soft);
+        background: transparent;
+        color: var(--text);
+        font-size: 16px;
+        text-align: left;
+        cursor: pointer;
+        transition: background 150ms var(--ease), color 150ms var(--ease);
+      }
+
+      .menu-action:hover {
+        background: var(--card-2);
+      }
+
+      .menu-action.danger {
+        color: var(--text);
+      }
+
+      .menu-action .icon {
+        width: 23px;
+        height: 23px;
+        color: var(--text-soft);
+      }
+
+      .history-drawer {
+        position: absolute;
+        z-index: 70;
+        top: 0;
+        bottom: 0;
+        left: 0;
+        display: flex;
+        flex-direction: column;
+        width: min(390px, calc(100vw - 24px));
+        border-right: 1px solid var(--line);
+        background: var(--page-soft);
+        box-shadow: 24px 0 80px rgba(0, 0, 0, 0.4);
+        transform: translateX(-102%);
+        transition: transform 260ms var(--ease);
+      }
+
+      .app.drawer-open .history-drawer {
+        transform: translateX(0);
+      }
+
+      .drawer-backdrop {
+        position: absolute;
+        z-index: 60;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.6);
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 220ms var(--ease);
+      }
+
+      .app.drawer-open .drawer-backdrop {
+        opacity: 1;
+        pointer-events: auto;
+      }
+
+      .drawer-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: max(22px, env(safe-area-inset-top)) 18px 16px;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .drawer-head h2 {
+        margin: 0;
+        font-size: 18px;
+        font-weight: 500;
+      }
+
+      .drawer-scroll {
+        flex: 1;
+        padding: 22px 14px 30px;
+        overflow-y: auto;
+        scrollbar-width: thin;
+        scrollbar-color: var(--line) transparent;
+      }
+
+      .drawer-scroll::-webkit-scrollbar {
+        width: 6px;
+      }
+
+      .drawer-scroll::-webkit-scrollbar-thumb {
+        border-radius: 999px;
+        background: var(--line);
+      }
+
+      .drawer-section {
+        margin-bottom: 27px;
+      }
+
+      .drawer-label {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 9px 9px;
+        color: var(--text-dim);
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+      }
+
+      .drawer-label .live {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        color: var(--success);
+        font-size: 9px;
+        letter-spacing: 0.06em;
+      }
+
+      .drawer-label .live i {
+        width: 5px;
+        height: 5px;
+        border-radius: 50%;
+        background: currentColor;
+      }
+
+      .history-items,
+      .future-items,
+      .trend-items {
+        display: grid;
+        gap: 5px;
+      }
+
+      .history-item,
+      .future-item,
+      .trend-item {
+        display: flex;
+        align-items: center;
+        gap: 11px;
+        width: 100%;
+        min-height: 51px;
+        padding: 8px 10px;
+        border: 1px solid transparent;
+        border-radius: 12px;
+        background: transparent;
+        color: var(--text-soft);
+        text-align: left;
+        cursor: pointer;
+        transition: background 150ms var(--ease), border-color 150ms var(--ease), color 150ms var(--ease);
+      }
+
+      .history-item:hover,
+      .history-item.active,
+      .trend-item:hover {
+        border-color: var(--line);
+        background: var(--card);
+        color: var(--text);
+      }
+
+      .drawer-icon {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 31px;
+        height: 31px;
+        flex: 0 0 auto;
+        border: 1px solid var(--line-soft);
+        border-radius: 9px;
+        color: var(--text-dim);
+      }
+
+      .drawer-copy {
+        min-width: 0;
+        flex: 1;
+      }
+
+      .drawer-copy strong,
+      .drawer-copy small {
+        display: block;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .drawer-copy strong {
+        color: inherit;
+        font-size: 12px;
+        font-weight: 550;
+      }
+
+      .drawer-copy small {
+        margin-top: 3px;
+        color: var(--text-dim);
+        font-size: 10px;
+      }
+
+      .trend-item {
+        cursor: pointer;
+      }
+
+      .trend-item .drawer-icon {
+        color: var(--success);
+      }
+
+      .future-item {
+        cursor: default;
+      }
+
+      .future-badge {
+        padding: 4px 6px;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        color: var(--text-dim);
+        font-size: 9px;
+      }
+
+      .settings-popover {
+        padding: 18px 20px;
+      }
+
+      .settings-popover h2 {
+        margin: 0 0 14px;
+        font-size: 17px;
+        font-weight: 550;
+      }
+
+      .setting-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 18px;
+        min-height: 57px;
+        border-top: 1px solid var(--line-soft);
+      }
+
+      .setting-row strong,
+      .setting-row small {
+        display: block;
+      }
+
+      .setting-row strong {
+        color: var(--text);
+        font-size: 13px;
+        font-weight: 500;
+      }
+
+      .setting-row small {
+        margin-top: 4px;
+        color: var(--text-dim);
+        font-size: 10px;
+      }
+
+      .switch {
+        position: relative;
+        width: 39px;
+        height: 23px;
+        flex: 0 0 auto;
+        border-radius: 99px;
+        background: var(--card-2);
+        cursor: pointer;
+      }
+
+      .switch::after {
+        position: absolute;
+        top: 4px;
+        left: 4px;
+        width: 15px;
+        height: 15px;
+        border-radius: 50%;
+        background: var(--text-dim);
+        content: "";
+        transition: transform 170ms var(--ease), background 150ms var(--ease);
+      }
+
+      .switch.on {
+        background: var(--purple);
+      }
+
+      .switch.on::after {
+        background: #fff;
+        transform: translateX(16px);
+      }
+
+      .toast {
+        position: absolute;
+        z-index: 100;
+        bottom: max(183px, calc(env(safe-area-inset-bottom) + 160px));
+        left: 50%;
+        max-width: calc(100% - 36px);
+        padding: 10px 15px;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        background: var(--card-2);
+        color: var(--text);
+        font-size: 12px;
+        box-shadow: 0 14px 40px rgba(0, 0, 0, 0.4);
+        opacity: 0;
+        pointer-events: none;
+        transform: translate(-50%, 12px);
+        transition: opacity 180ms var(--ease), transform 200ms var(--ease);
       }
 
       .toast.visible {
@@ -1152,41 +844,10 @@
         transform: translate(-50%, 0);
       }
 
-      @keyframes metal-sheen {
-        from {
-          background-position: 220% center;
-        }
-        to {
-          background-position: -20% center;
-        }
-      }
-
-      @keyframes star-pulse {
-        0%, 100% {
-          transform: scale(0.96);
-          opacity: 0.82;
-        }
-        50% {
-          transform: scale(1.07);
-          opacity: 1;
-        }
-      }
-
-      @keyframes empty-in {
+      @keyframes enter-up {
         from {
           opacity: 0;
-          transform: translateY(12px);
-        }
-        to {
-          opacity: 1;
-          transform: translateY(0);
-        }
-      }
-
-      @keyframes message-in {
-        from {
-          opacity: 0;
-          transform: translateY(8px);
+          transform: translateY(9px);
         }
         to {
           opacity: 1;
@@ -1196,166 +857,59 @@
 
       @keyframes text-shimmer {
         from {
-          background-position: 115% center;
+          background-position: 110% center;
         }
         to {
-          background-position: -15% center;
+          background-position: -10% center;
         }
       }
 
-      @keyframes thinking-dots {
-        0%, 100% {
-          opacity: 0.34;
-          transform: translate(-10px, -50%);
-        }
-        50% {
-          opacity: 1;
-          transform: translate(-3px, -50%);
-        }
-      }
-
-      @keyframes orb-breathe {
-        0%, 100% {
-          box-shadow: 0 0 18px rgba(255, 255, 255, 0.12);
-        }
-        50% {
-          box-shadow: 0 0 27px rgba(255, 255, 255, 0.3);
-        }
-      }
-
-      @media (min-width: 900px) {
-        .workspace-panel {
-          position: relative;
-          top: 0;
-          bottom: 0;
-          left: 0;
-          width: 292px;
-          min-width: 292px;
-          height: 100%;
-          border: 0;
-          border-right: 1px solid var(--line);
-          border-radius: 0;
-          background: var(--bg-soft);
-          box-shadow: none;
-          opacity: 1;
-          pointer-events: auto;
-          transform: none;
-        }
-
-        .panel-backdrop {
-          display: none;
-        }
-
-        .menu-button {
-          display: none;
-        }
-
+      @media (max-width: 520px) {
         .topbar {
-          padding-left: 36px;
+          height: 66px;
         }
 
-        .kazer-shell.panel-open .workspace-panel {
-          transform: none;
-        }
-      }
-
-      @media (max-width: 680px) {
-        .topbar {
-          height: 68px;
-          padding: 0 16px;
+        .profile-button {
+          top: max(17px, env(safe-area-inset-top));
+          right: 17px;
+          width: 42px;
+          height: 42px;
         }
 
-        .topbar-brand .brand-word {
-          font-size: 15px;
+        .avatar-photo {
+          width: 30px;
+          height: 30px;
         }
 
-        .topbar-brand .brand-sub {
-          display: none;
-        }
-
-        .topbar-right {
-          gap: 2px;
-        }
-
-        .topbar-right .icon-button {
+        .new-chat-button {
+          top: max(18px, env(safe-area-inset-top));
+          right: 66px;
           width: 35px;
           height: 35px;
+          font-size: 28px;
         }
 
-        .avatar-button {
-          width: 38px;
-          height: 38px;
-        }
-
-        .avatar-face {
-          width: 25px;
-          height: 25px;
+        .conversation-title {
+          font-size: 17px;
         }
 
         .empty-state {
-          justify-content: center;
-          gap: 33px;
-          padding: 80px 15px 175px;
+          padding: 38vh 12px 176px;
         }
 
-        .brand-star {
-          width: 38px;
-          height: 38px;
-          margin-bottom: 15px;
+        .app:not(.in-conversation) .composer-dock {
+          top: 59%;
         }
 
-        .brand-star::before {
-          height: 38px;
-        }
-
-        .brand-star::after {
-          width: 38px;
-        }
-
-        .brand-lockup h1 {
-          font-size: clamp(3.4rem, 18vw, 6rem);
-        }
-
-        .brand-lockup p {
-          margin-top: 11px;
-          font-size: 9px;
-          letter-spacing: 0.13em;
-        }
-
-        .pulse-area {
-          width: 100%;
-        }
-
-        .trend-grid {
-          grid-template-columns: 1fr;
-          gap: 7px;
-        }
-
-        .trend-card {
-          flex-direction: row;
-          align-items: center;
-          min-height: 0;
-          gap: 10px;
-          padding: 11px 12px;
-        }
-
-        .trend-topline {
-          flex-direction: column;
-          align-items: flex-start;
-          gap: 2px;
-          min-width: 54px;
-          margin: 0;
-        }
-
-        .trend-card strong {
-          margin: 0;
+        .empty-word {
+          font-size: clamp(3.35rem, 14vw, 6rem);
         }
 
         .message-list {
-          width: calc(100% - 28px);
-          gap: 23px;
-          padding-top: 86px;
-          padding-bottom: 194px;
+          width: calc(100% - 33px);
+          gap: 25px;
+          padding-top: 90px;
+          padding-bottom: 190px;
         }
 
         .message-row {
@@ -1363,45 +917,56 @@
         }
 
         .message-bubble {
-          font-size: 14px;
+          padding: 13px 17px;
+          font-size: 18px;
         }
 
         .composer-dock {
-          padding: 10px 13px 14px;
+          padding-right: 17px;
+          padding-left: 17px;
+          padding-bottom: max(24px, env(safe-area-inset-bottom));
         }
 
-        .composer-box {
-          min-height: 106px;
-          border-radius: 22px;
+        .composer-box,
+        .message-input {
+          min-height: 140px;
         }
 
         .message-input {
-          min-height: 62px;
-          padding: 15px 17px 6px;
-          font-size: 16px;
-        }
-
-        .composer-footer {
-          padding: 4px 9px 9px 10px;
-        }
-
-        .composer-hint {
-          display: none;
+          padding: 23px 84px 18px 27px;
         }
 
         .send-button {
-          width: 40px;
-          height: 40px;
+          right: 17px;
+          bottom: 17px;
         }
 
         .composer-caption {
-          margin-top: 7px;
-          font-size: 9px;
+          display: none;
         }
 
-        .popover {
-          top: 58px;
-          right: 12px;
+        .profile-popover,
+        .settings-popover {
+          top: 68px;
+          right: 16px;
+        }
+
+        .profile-summary strong {
+          font-size: 17px;
+        }
+
+        .profile-summary small {
+          font-size: 15px;
+        }
+      }
+
+      @media (min-width: 900px) {
+        .empty-state {
+          padding-bottom: 198px;
+        }
+
+        .composer-dock {
+          padding-bottom: 28px;
         }
       }
 
@@ -1416,168 +981,108 @@
         }
       }
 
-      :root[data-reduced-motion="true"] *,
-      :root[data-reduced-motion="true"] *::before,
-      :root[data-reduced-motion="true"] *::after {
+      :root[data-motion="off"] *,
+      :root[data-motion="off"] *::before,
+      :root[data-motion="off"] *::after {
         animation-play-state: paused !important;
         transition: none !important;
       }
     </style>
   </head>
   <body>
-    <main class="kazer-shell" id="kazerShell">
-      <aside class="workspace-panel" id="workspacePanel" aria-label="Navegação do espaço de trabalho">
-        <div class="panel-head">
-          <div class="panel-brand"><span class="panel-brand-mark" aria-hidden="true"></span><span>KAZER</span></div>
-          <button class="icon-button" id="closePanel" type="button" aria-label="Fechar painel">
-            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"></path></svg>
-          </button>
-        </div>
-        <div class="panel-scroll">
-          <section class="panel-section">
-            <div class="panel-section-title"><span>Histórico</span><span class="live-dot" aria-label="Sincronizado"></span></div>
-            <div class="history-list" id="historyList">
-              <button class="history-item active" type="button" data-history="nova-conversa">
-                <span class="history-icon"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3h11A2.5 2.5 0 0 1 20 5.5v8a2.5 2.5 0 0 1-2.5 2.5H11l-5.5 4v-4h-1A2.5 2.5 0 0 1 2 13.5v-8A2.5 2.5 0 0 1 4.5 3"></path></svg></span>
-                <span class="history-copy"><strong>Nova conversa</strong><small>Agora</small></span>
-              </button>
-              <button class="history-item" type="button" data-history="interface-kazer">
-                <span class="history-icon"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3h11A2.5 2.5 0 0 1 20 5.5v8a2.5 2.5 0 0 1-2.5 2.5H11l-5.5 4v-4h-1A2.5 2.5 0 0 1 2 13.5v-8A2.5 2.5 0 0 1 4.5 3"></path></svg></span>
-                <span class="history-copy"><strong>Interface do KAZER</strong><small>Hoje, 10:24</small></span>
-              </button>
-              <button class="history-item" type="button" data-history="tendencias-web">
-                <span class="history-icon"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m4 16 5-5 4 4 7-8"></path><path d="M15 7h5v5"></path></svg></span>
-                <span class="history-copy"><strong>Tendências da web</strong><small>Ontem, 19:42</small></span>
-              </button>
-              <button class="history-item" type="button" data-history="ideias-criativas">
-                <span class="history-icon"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18h6"></path><path d="M10 22h4"></path><path d="M15.5 14.5c1.6-1.1 2.5-2.8 2.5-4.7A6 6 0 0 0 6 9.8c0 1.9.9 3.6 2.5 4.7.9.6 1.5 1.5 1.5 2.5h4c0-1 .6-1.9 1.5-2.5Z"></path></svg></span>
-                <span class="history-copy"><strong>Ideias criativas</strong><small>23 de ago., 14:08</small></span>
-              </button>
-            </div>
-          </section>
+    <main class="app" id="app">
+      <header class="topbar" aria-label="Barra de conversa">
+        <span class="conversation-title">arrumador</span>
+        <button class="new-chat-button" id="newChatButton" type="button" aria-label="Nova conversa" hidden>+</button>
+        <button class="profile-button" id="profileButton" type="button" aria-label="Abrir perfil" aria-expanded="false"><span class="avatar-photo" aria-hidden="true"></span></button>
+      </header>
 
-          <section class="panel-section">
-            <div class="panel-section-title"><span>Espaço de trabalho</span></div>
-            <div class="future-list">
-              <div class="future-item"><span class="future-icon"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 3h10v5H7z"></path><path d="M5 8h14v13H5z"></path><path d="M9 12h6M9 16h4"></path></svg></span><span class="future-copy"><strong>Artefatos</strong><small>Arquivos e entregas</small></span><span class="future-badge">em breve</span></div>
-              <div class="future-item"><span class="future-icon"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8"></circle><path d="M4 12h16M12 4a12 12 0 0 1 0 16M12 4a12 12 0 0 0 0 16"></path></svg></span><span class="future-copy"><strong>Pesquisa web</strong><small>Fontes e tendências</small></span><span class="future-badge">em breve</span></div>
-              <div class="future-item"><span class="future-icon"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v18M3 12h18"></path><circle cx="12" cy="12" r="8"></circle></svg></span><span class="future-copy"><strong>Projetos</strong><small>Organize por contexto</small></span><span class="future-badge">em breve</span></div>
-            </div>
-          </section>
+      <div class="profile-popover" id="profilePopover" role="dialog" aria-label="Perfil">
+        <div class="profile-summary">
+          <button class="profile-button" type="button" aria-hidden="true"><span class="avatar-photo"></span></button>
+          <div><strong>jeanvicen</strong><small>jeanvicence@gmail.com</small></div>
+        </div>
+        <div class="menu-actions">
+          <button class="menu-action" id="historyAction" type="button"><span>Histórico</span><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7"></path><path d="M3 4v5h5"></path><path d="M12 7v5l3 2"></path></svg></button>
+          <button class="menu-action" id="settingsAction" type="button"><span>Settings</span><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6 7 7M17 17l1.4 1.4M18.4 5.6 17 7M7 17l-1.4 1.4"></path><circle cx="12" cy="12" r="3.5"></circle></svg></button>
+          <button class="menu-action danger" id="logoutAction" type="button"><span>Log out</span><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 17l5-5-5-5M15 12H3"></path><path d="M21 19V5a2 2 0 0 0-2-2h-5"></path></svg></button>
+        </div>
+      </div>
+
+      <div class="settings-popover" id="settingsPopover" role="dialog" aria-label="Settings">
+        <h2>Settings</h2>
+        <div class="setting-row"><div><strong>Tema escuro</strong><small>Manter a experiência da referência</small></div><button class="switch on" id="themeSwitch" type="button" aria-label="Alternar tema" aria-pressed="true"></button></div>
+        <div class="setting-row"><div><strong>Animações</strong><small>Brilho e transições do arrumador</small></div><button class="switch on" id="motionSwitch" type="button" aria-label="Alternar animações" aria-pressed="true"></button></div>
+      </div>
+
+      <aside class="history-drawer" id="historyDrawer" aria-label="Histórico e ferramentas">
+        <div class="drawer-head"><h2>Histórico</h2><button class="icon-button" id="closeHistory" type="button" aria-label="Fechar histórico"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"></path></svg></button></div>
+        <div class="drawer-scroll">
+          <section class="drawer-section"><div class="drawer-label"><span>Conversas</span><span class="live"><i></i> sincronizado</span></div><div class="history-items" id="historyItems">
+            <button class="history-item active" type="button" data-history="nova"><span class="drawer-icon"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg></span><span class="drawer-copy"><strong>Nova conversa</strong><small>Agora</small></span></button>
+            <button class="history-item" type="button" data-history="interface"><span class="drawer-icon"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3h11A2.5 2.5 0 0 1 20 5.5v8a2.5 2.5 0 0 1-2.5 2.5H11l-5.5 4v-4h-1A2.5 2.5 0 0 1 2 13.5v-8A2.5 2.5 0 0 1 4.5 3"></path></svg></span><span class="drawer-copy"><strong>Interface do KAZER</strong><small>Hoje, 10:24</small></span></button>
+            <button class="history-item" type="button" data-history="tendencias"><span class="drawer-icon"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m4 16 5-5 4 4 7-8"></path><path d="M15 7h5v5"></path></svg></span><span class="drawer-copy"><strong>Tendências da web</strong><small>Ontem, 19:42</small></span></button>
+            <button class="history-item" type="button" data-history="ideias"><span class="drawer-icon"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18h6M10 22h4M15.5 14.5c1.6-1.1 2.5-2.8 2.5-4.7A6 6 0 0 0 6 9.8c0 1.9.9 3.6 2.5 4.7.9.6 1.5 1.5 1.5 2.5h4c0-1 .6-1.9 1.5-2.5Z"></path></svg></span><span class="drawer-copy"><strong>Ideias criativas</strong><small>23 de ago., 14:08</small></span></button>
+          </div></section>
+          <section class="drawer-section"><div class="drawer-label"><span>Tópicos em alta</span><span class="live"><i></i> web</span></div><div class="trend-items">
+            <button class="trend-item" type="button" data-prompt="O que está acontecendo com GTA 6?"><span class="drawer-icon"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v18M3 12h18"></path><circle cx="12" cy="12" r="8"></circle></svg></span><span class="drawer-copy"><strong>O que está acontecendo com GTA 6?</strong><small>assunto em alta</small></span></button>
+            <button class="trend-item" type="button" data-prompt="Quais são as principais notícias de tecnologia hoje?"><span class="drawer-icon"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="14" rx="2"></rect><path d="M8 21h8M12 18v3"></path></svg></span><span class="drawer-copy"><strong>Notícias de tecnologia hoje</strong><small>atualização rápida</small></span></button>
+            <button class="trend-item" type="button" data-prompt="Me explique o tópico que todo mundo está comentando."><span class="drawer-icon"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3h11A2.5 2.5 0 0 1 20 5.5v8a2.5 2.5 0 0 1-2.5 2.5H11l-5.5 4v-4h-1A2.5 2.5 0 0 1 2 13.5v-8A2.5 2.5 0 0 1 4.5 3"></path></svg></span><span class="drawer-copy"><strong>O assunto do momento</strong><small>pergunta sugerida</small></span></button>
+          </div></section>
+          <section class="drawer-section"><div class="drawer-label"><span>Ferramentas</span></div><div class="future-items">
+            <div class="future-item"><span class="drawer-icon"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 3h10v5H7zM5 8h14v13H5zM9 12h6M9 16h4"></path></svg></span><span class="drawer-copy"><strong>Artefatos</strong><small>Arquivos e entregas</small></span><span class="future-badge">em breve</span></div>
+            <div class="future-item"><span class="drawer-icon"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8"></circle><path d="M4 12h16M12 4a12 12 0 0 1 0 16M12 4a12 12 0 0 0 0 16"></path></svg></span><span class="drawer-copy"><strong>Pesquisa web</strong><small>Fontes e tendências</small></span><span class="future-badge">em breve</span></div>
+            <div class="future-item"><span class="drawer-icon"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v18M3 12h18"></path><circle cx="12" cy="12" r="8"></circle></svg></span><span class="drawer-copy"><strong>Projetos</strong><small>Organização por contexto</small></span><span class="future-badge">em breve</span></div>
+          </div></section>
         </div>
       </aside>
+      <div class="drawer-backdrop" id="drawerBackdrop"></div>
 
-      <div class="panel-backdrop" id="panelBackdrop"></div>
-
-      <section class="main-stage">
-        <header class="topbar">
-          <div class="topbar-left">
-            <button class="icon-button menu-button" id="menuButton" type="button" aria-label="Abrir histórico">
-              <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"></path></svg>
-            </button>
-            <div class="topbar-brand" aria-label="KAZER arrumador"><span class="brand-word metal-word">KAZER</span><span class="brand-sub">arrumador</span></div>
-          </div>
-          <div class="topbar-right">
-            <button class="icon-button" id="settingsButton" type="button" aria-label="Abrir Settings" aria-expanded="false">
-              <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.64 5.64l1.42 1.42M16.94 16.94l1.42 1.42M18.36 5.64l-1.42 1.42M7.06 16.94l-1.42 1.42"></path><circle cx="12" cy="12" r="3.5"></circle></svg>
-            </button>
-            <button class="icon-button" id="newChatTopButton" type="button" aria-label="Começar nova conversa">
-              <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>
-            </button>
-            <button class="avatar-button" id="profileButton" type="button" aria-label="Abrir perfil" aria-expanded="false"><span class="avatar-face" aria-hidden="true"></span></button>
-          </div>
-        </header>
-
-        <div class="popover" id="profilePopover" role="dialog" aria-label="Perfil">
-          <div class="account-summary"><button class="avatar-button" type="button" aria-hidden="true"><span class="avatar-face"></span></button><div><strong>Jean Vicen</strong><small>jeanvicence@gmail.com</small></div></div>
-          <button class="popover-action" id="profileSettingsAction" type="button"><span>Settings</span><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.64 5.64l1.42 1.42M16.94 16.94l1.42 1.42M18.36 5.64l-1.42 1.42M7.06 16.94l1.42 1.42"></path><circle cx="12" cy="12" r="3.5"></circle></svg></button>
-          <button class="popover-action danger" id="signOutAction" type="button"><span>Sair</span><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 17l5-5-5-5M15 12H3"></path><path d="M21 19V5a2 2 0 0 0-2-2h-5"></path></svg></button>
-        </div>
-
-        <div class="popover" id="settingsPopover" role="dialog" aria-label="Settings">
-          <div class="settings-card">
-            <h2 class="settings-title">Settings</h2>
-            <div class="setting-row"><div><strong>Tema escuro</strong><small>Conforto visual do KAZER</small></div><button class="switch on" id="themeSwitch" type="button" aria-label="Alternar tema escuro" aria-pressed="true"></button></div>
-            <div class="setting-row"><div><strong>Movimento</strong><small>Animar brilho e transições</small></div><button class="switch on" id="motionSwitch" type="button" aria-label="Alternar animações" aria-pressed="true"></button></div>
-          </div>
-        </div>
-
-        <section class="chat-scroll" id="chatScroll" aria-label="Conversa">
-          <section class="empty-state" id="emptyState">
-            <div class="brand-lockup">
-              <div class="brand-star" aria-hidden="true"><span class="brand-star-core"></span></div>
-              <h1 class="metal-word">KAZER</h1>
-              <p>seu espaço para organizar ideias</p>
-            </div>
-            <div class="pulse-area" aria-label="Sugestões e tendências">
-              <div class="pulse-heading"><span>Radar de assuntos</span><span class="pulse-live"><i></i> ao vivo</span></div>
-              <div class="trend-grid">
-                <button class="trend-card" type="button" data-prompt="O que está acontecendo com GTA 6?"><span class="trend-topline"><span>#01</span><span class="trend-source"><i></i> tendência</span></span><strong>O que está acontecendo com GTA 6?</strong></button>
-                <button class="trend-card" type="button" data-prompt="Quais são as principais notícias de tecnologia hoje?"><span class="trend-topline"><span>#02</span><span class="trend-source"><i></i> tecnologia</span></span><strong>As principais notícias de tecnologia hoje</strong></button>
-                <button class="trend-card" type="button" data-prompt="Me explique a tendência que todo mundo está comentando."><span class="trend-topline"><span>#03</span><span class="trend-source"><i></i> agora</span></span><strong>O assunto que todo mundo está comentando</strong></button>
-              </div>
-            </div>
-          </section>
-          <div class="message-list" id="messageList" hidden></div>
-        </section>
-
-        <div class="composer-dock">
-          <form class="composer" id="composer" autocomplete="off">
-            <div class="attachment-strip" id="attachmentStrip" hidden></div>
-            <div class="composer-box">
-              <textarea class="message-input" id="messageInput" name="message" rows="1" placeholder="Send a message..." aria-label="Mensagem"></textarea>
-              <div class="composer-footer">
-                <div class="composer-tools">
-                  <button class="tool-button" id="attachButton" type="button" aria-label="Adicionar arquivo"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m21.4 11.6-8.7 8.7a6 6 0 0 1-8.5-8.5l8.7-8.7a4 4 0 0 1 5.7 5.7l-8.8 8.7a2 2 0 0 1-2.8-2.8l8-8"></path></svg></button>
-                  <button class="tool-button" id="webButton" type="button" aria-label="Pesquisar na web"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8"></circle><path d="M4 12h16M12 4a12 12 0 0 1 0 16M12 4a12 12 0 0 0 0 16"></path></svg></button>
-                  <input id="fileInput" type="file" hidden multiple />
-                </div>
-                <p class="composer-hint">Enter para enviar · Shift + Enter para nova linha</p>
-                <button class="send-button" id="sendButton" type="submit" aria-label="Enviar" disabled><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 14-7-4 14-3-6-7-1Z"></path><path d="M12 13 19 5"></path></svg></button>
-                <button class="send-button stop-button" id="stopButton" type="button" aria-label="Parar resposta"><svg class="icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="2"></rect></svg></button>
-              </div>
-            </div>
-            <p class="composer-caption">O KAZER organiza contexto, ideias e próximos passos em um só lugar.</p>
-          </form>
-        </div>
+      <section class="conversation-area" id="conversationArea" aria-label="Conversa">
+        <section class="empty-state" id="emptyState"><h1 class="empty-word">arrumador</h1></section>
+        <section class="message-list" id="messageList" hidden aria-live="polite"></section>
       </section>
-    </main>
 
-    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+      <div class="composer-dock">
+        <form class="composer" id="composer" autocomplete="off">
+          <div class="composer-box">
+            <textarea class="message-input" id="messageInput" rows="1" placeholder="Send a message..." aria-label="Mensagem"></textarea>
+            <button class="send-button" id="sendButton" type="submit" aria-label="Enviar" disabled><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"></path></svg></button>
+            <button class="send-button stop-button" id="stopButton" type="button" aria-label="Parar resposta"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="7" y="7" width="10" height="10" rx="1.5"></rect></svg></button>
+          </div>
+          <p class="composer-caption">arrumador organiza seus próximos passos</p>
+        </form>
+      </div>
+
+      <div class="toast" id="toast" role="status" aria-live="polite"></div>
+    </main>
 
     <script>
       (() => {
-        const shell = document.getElementById("kazerShell");
-        const panelBackdrop = document.getElementById("panelBackdrop");
-        const menuButton = document.getElementById("menuButton");
-        const closePanel = document.getElementById("closePanel");
+        const app = document.getElementById("app");
         const profileButton = document.getElementById("profileButton");
         const profilePopover = document.getElementById("profilePopover");
-        const settingsButton = document.getElementById("settingsButton");
         const settingsPopover = document.getElementById("settingsPopover");
-        const profileSettingsAction = document.getElementById("profileSettingsAction");
-        const signOutAction = document.getElementById("signOutAction");
-        const themeSwitch = document.getElementById("themeSwitch");
-        const motionSwitch = document.getElementById("motionSwitch");
-        const chatScroll = document.getElementById("chatScroll");
+        const historyAction = document.getElementById("historyAction");
+        const settingsAction = document.getElementById("settingsAction");
+        const logoutAction = document.getElementById("logoutAction");
+        const historyDrawer = document.getElementById("historyDrawer");
+        const drawerBackdrop = document.getElementById("drawerBackdrop");
+        const closeHistory = document.getElementById("closeHistory");
+        const newChatButton = document.getElementById("newChatButton");
+        const conversationArea = document.getElementById("conversationArea");
         const emptyState = document.getElementById("emptyState");
         const messageList = document.getElementById("messageList");
         const composer = document.getElementById("composer");
         const messageInput = document.getElementById("messageInput");
         const sendButton = document.getElementById("sendButton");
         const stopButton = document.getElementById("stopButton");
-        const newChatTopButton = document.getElementById("newChatTopButton");
-        const historyList = document.getElementById("historyList");
-        const attachButton = document.getElementById("attachButton");
-        const webButton = document.getElementById("webButton");
-        const fileInput = document.getElementById("fileInput");
-        const attachmentStrip = document.getElementById("attachmentStrip");
+        const themeSwitch = document.getElementById("themeSwitch");
+        const motionSwitch = document.getElementById("motionSwitch");
         const toast = document.getElementById("toast");
-
         let busy = false;
         let responseTimer = null;
         let toastTimer = null;
-        let attachments = [];
 
         const showToast = (message) => {
           toast.textContent = message;
@@ -1586,49 +1091,53 @@
           toastTimer = window.setTimeout(() => toast.classList.remove("visible"), 2300);
         };
 
-        const closePopovers = () => {
+        const closeMenus = () => {
           profilePopover.classList.remove("visible");
           settingsPopover.classList.remove("visible");
           profileButton.setAttribute("aria-expanded", "false");
-          settingsButton.setAttribute("aria-expanded", "false");
         };
 
-        const setPanelOpen = (open) => {
-          shell.classList.toggle("panel-open", open);
-        };
-
-        const togglePopover = (popover, button) => {
-          const isVisible = popover.classList.contains("visible");
-          closePopovers();
-          if (!isVisible) {
-            popover.classList.add("visible");
-            button.setAttribute("aria-expanded", "true");
+        const toggleProfile = () => {
+          const open = profilePopover.classList.contains("visible");
+          closeMenus();
+          if (!open) {
+            profilePopover.classList.add("visible");
+            profileButton.setAttribute("aria-expanded", "true");
           }
+        };
+
+        const openHistory = () => {
+          closeMenus();
+          app.classList.add("drawer-open");
+          historyDrawer.setAttribute("aria-hidden", "false");
+        };
+
+        const closeHistoryDrawer = () => {
+          app.classList.remove("drawer-open");
+          historyDrawer.setAttribute("aria-hidden", "true");
         };
 
         const resizeInput = () => {
           messageInput.style.height = "auto";
-          const height = Math.min(Math.max(messageInput.scrollHeight, 62), 190);
-          messageInput.style.height = height + "px";
+          messageInput.style.height = Math.min(Math.max(messageInput.scrollHeight, 140), 260) + "px";
         };
 
-        const updateSendState = () => {
+        const updateSend = () => {
           sendButton.disabled = busy || messageInput.value.trim().length === 0;
         };
 
-        const scrollToBottom = () => {
-          requestAnimationFrame(() => {
-            chatScroll.scrollTo({ top: chatScroll.scrollHeight, behavior: "smooth" });
-          });
+        const scrollBottom = () => {
+          requestAnimationFrame(() => conversationArea.scrollTo({ top: conversationArea.scrollHeight, behavior: "smooth" }));
         };
 
-        const setConversationMode = () => {
+        const conversationMode = () => {
+          app.classList.add("in-conversation");
           emptyState.hidden = true;
           messageList.hidden = false;
-          scrollToBottom();
+          newChatButton.hidden = false;
         };
 
-        const formatTime = () => new Intl.DateTimeFormat("pt-BR", { hour: "2-digit", minute: "2-digit" }).format(new Date());
+        const timeNow = () => new Intl.DateTimeFormat("pt-BR", { hour: "2-digit", minute: "2-digit" }).format(new Date());
 
         const createMessage = (role, text) => {
           const row = document.createElement("article");
@@ -1641,10 +1150,10 @@
           meta.className = "message-meta";
           if (role === "assistant") {
             const orb = document.createElement("span");
-            orb.className = "assistant-orb";
-            meta.append(orb, document.createTextNode("arrumador · " + formatTime()));
+            orb.className = "assistant-dot";
+            meta.append(orb, document.createTextNode("arrumador · " + timeNow()));
           } else {
-            meta.textContent = "Você · " + formatTime();
+            meta.textContent = "Você · " + timeNow();
           }
           row.appendChild(meta);
           return row;
@@ -1653,132 +1162,95 @@
         const createThinking = () => {
           const row = document.createElement("article");
           row.className = "message-row assistant";
-          const thinking = document.createElement("div");
-          thinking.className = "thinking-row";
-          thinking.innerHTML = '<span class="thinking-orb" aria-hidden="true"></span><span class="thinking-label">Thinking</span>';
-          row.appendChild(thinking);
+          row.innerHTML = '<div class="thinking-row"><svg class="thinking-brain" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9.3 4.2A3.2 3.2 0 0 0 6 7.4c0 .4.1.8.2 1.1A3.1 3.1 0 0 0 5 14.4a3.1 3.1 0 0 0 2.8 4.4c.5 0 1-.1 1.4-.3.6.9 1.6 1.5 2.8 1.5V4.1a3.2 3.2 0 0 0-2.7.1Z"></path><path d="M14.7 4.2A3.2 3.2 0 0 1 18 7.4c0 .4-.1.8-.2 1.1a3.1 3.1 0 0 1 1.2 5.9 3.1 3.1 0 0 1-2.8 4.4c-.5 0-1-.1-1.4-.3-.6.9-1.6 1.5-2.8 1.5V4.1a3.2 3.2 0 0 1 2.7.1Z"></path><path d="M9.5 9.5h2M12.5 14.5h2M8.2 14.4h2.2M13.6 8.9h2.1"></path></svg><span class="thinking-label">Thinking</span></div>';
           return row;
         };
 
-        const appendNode = (node) => {
+        const append = (node) => {
           messageList.appendChild(node);
-          scrollToBottom();
+          scrollBottom();
         };
 
         const setBusy = (state) => {
           busy = state;
           composer.classList.toggle("is-busy", state);
           messageInput.disabled = state;
-          updateSendState();
+          updateSend();
         };
 
-        const answerFor = (text) => {
-          const lower = text.toLowerCase();
-          if (lower.includes("gta 6")) return "Posso organizar esse assunto em um panorama rápido: novidades, rumores, datas e o que já foi confirmado. Esta tela está pronta para receber a pesquisa web quando a conexão for ativada.";
-          if (lower.includes("tecnologia") || lower.includes("notícia")) return "Boa pauta. O KAZER pode separar sinais recentes, fontes e próximos passos em blocos fáceis de revisar. Aqui está apenas a prévia visual desse fluxo.";
-          return "Entendi. O espaço de conversa está pronto para organizar contexto, ideias e próximos passos com você.";
+        const responseText = (text) => {
+          const query = text.toLowerCase();
+          if (query.includes("gta 6")) return "Vou organizar o tópico em novidades, rumores e o que já foi confirmado. A pesquisa web fica separada no histórico para você encontrar quando quiser.";
+          if (query.includes("tecnologia") || query.includes("notícia")) return "Posso separar as notícias por fonte, assunto e prioridade. Este é o estado visual do fluxo do arrumador.";
+          return "Entendi. Vou organizar o contexto e os próximos passos para você.";
         };
 
-        const submitMessage = () => {
+        const submit = () => {
           if (busy) return;
           const text = messageInput.value.trim();
-          if (!text && attachments.length === 0) return;
-          setConversationMode();
-          if (text) appendNode(createMessage("user", text));
-          if (attachments.length > 0) {
-            const names = attachments.map((file) => file.name).join(", ");
-            appendNode(createMessage("user", "Anexos: " + names));
-          }
+          if (!text) return;
+          conversationMode();
+          append(createMessage("user", text));
           messageInput.value = "";
           resizeInput();
-          renderAttachments();
           const thinking = createThinking();
-          appendNode(thinking);
+          append(thinking);
           setBusy(true);
           responseTimer = window.setTimeout(() => {
             responseTimer = null;
             if (thinking.isConnected) thinking.remove();
-            appendNode(createMessage("assistant", answerFor(text)));
+            append(createMessage("assistant", responseText(text)));
             setBusy(false);
             messageInput.focus();
-          }, 1150);
+          }, 1550);
         };
 
-        const stopResponse = () => {
+        const stop = () => {
           if (!busy) return;
           window.clearTimeout(responseTimer);
           responseTimer = null;
           const thinking = messageList.querySelector(".thinking-row")?.closest(".message-row");
           if (thinking) thinking.remove();
-          appendNode(createMessage("assistant", "Resposta interrompida. Podemos retomar quando quiser."));
+          append(createMessage("assistant", "Resposta interrompida. Podemos continuar quando quiser."));
           setBusy(false);
           messageInput.focus();
         };
 
-        const resetConversation = () => {
+        const reset = () => {
           window.clearTimeout(responseTimer);
           responseTimer = null;
           setBusy(false);
           messageList.replaceChildren();
           messageList.hidden = true;
           emptyState.hidden = false;
-          attachments = [];
-          renderAttachments();
+          app.classList.remove("in-conversation");
+          newChatButton.hidden = true;
           messageInput.value = "";
           resizeInput();
-          closePopovers();
-          document.querySelectorAll(".history-item").forEach((item) => item.classList.toggle("active", item.dataset.history === "nova-conversa"));
+          closeMenus();
+          document.querySelectorAll(".history-item").forEach((item) => item.classList.toggle("active", item.dataset.history === "nova"));
           showToast("Nova conversa pronta");
           messageInput.focus();
         };
 
-        const renderAttachments = () => {
-          attachmentStrip.replaceChildren();
-          attachmentStrip.hidden = attachments.length === 0;
-          attachments.forEach((file, index) => {
-            const pill = document.createElement("span");
-            pill.className = "attachment-pill";
-            pill.innerHTML = '<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m21.4 11.6-8.7 8.7a6 6 0 0 1-8.5-8.5l8.7-8.7a4 4 0 0 1 5.7 5.7l-8.8 8.7a2 2 0 0 1-2.8-2.8l8-8"></path></svg>';
-            const label = document.createElement("span");
-            label.textContent = file.name;
-            const remove = document.createElement("button");
-            remove.type = "button";
-            remove.setAttribute("aria-label", "Remover " + file.name);
-            remove.textContent = "×";
-            remove.addEventListener("click", () => {
-              attachments.splice(index, 1);
-              renderAttachments();
-              updateSendState();
-            });
-            pill.append(label, remove);
-            attachmentStrip.appendChild(pill);
-          });
-          updateSendState();
-        };
-
-        menuButton.addEventListener("click", () => setPanelOpen(true));
-        closePanel.addEventListener("click", () => setPanelOpen(false));
-        panelBackdrop.addEventListener("click", () => setPanelOpen(false));
         profileButton.addEventListener("click", (event) => {
           event.stopPropagation();
-          togglePopover(profilePopover, profileButton);
+          toggleProfile();
         });
-        settingsButton.addEventListener("click", (event) => {
-          event.stopPropagation();
-          togglePopover(settingsPopover, settingsButton);
-        });
-        profileSettingsAction.addEventListener("click", () => {
-          closePopovers();
+        historyAction.addEventListener("click", openHistory);
+        settingsAction.addEventListener("click", () => {
+          closeMenus();
           settingsPopover.classList.add("visible");
-          settingsButton.setAttribute("aria-expanded", "true");
         });
-        signOutAction.addEventListener("click", () => {
-          closePopovers();
-          showToast("A saída será conectada à sua conta em breve");
+        logoutAction.addEventListener("click", () => {
+          closeMenus();
+          showToast("A saída da conta será conectada em breve");
         });
-        newChatTopButton.addEventListener("click", resetConversation);
+        closeHistory.addEventListener("click", closeHistoryDrawer);
+        drawerBackdrop.addEventListener("click", closeHistoryDrawer);
+        newChatButton.addEventListener("click", reset);
         document.addEventListener("click", (event) => {
-          if (!event.target.closest(".popover") && !event.target.closest("#profileButton") && !event.target.closest("#settingsButton")) closePopovers();
+          if (!event.target.closest(".profile-popover") && !event.target.closest("#profileButton") && !event.target.closest(".settings-popover")) closeMenus();
         });
 
         themeSwitch.addEventListener("click", () => {
@@ -1786,76 +1258,61 @@
           document.documentElement.dataset.theme = light ? "dark" : "light";
           themeSwitch.classList.toggle("on", light);
           themeSwitch.setAttribute("aria-pressed", String(light));
-          themeSwitch.setAttribute("aria-label", light ? "Ativar tema escuro" : "Ativar tema claro");
         });
 
         motionSwitch.addEventListener("click", () => {
-          const reduced = document.documentElement.dataset.reducedMotion === "true";
-          document.documentElement.dataset.reducedMotion = String(!reduced);
-          motionSwitch.classList.toggle("on", reduced);
-          motionSwitch.setAttribute("aria-pressed", String(reduced));
+          const off = document.documentElement.dataset.motion === "off";
+          document.documentElement.dataset.motion = off ? "on" : "off";
+          motionSwitch.classList.toggle("on", off);
+          motionSwitch.setAttribute("aria-pressed", String(off));
         });
 
         composer.addEventListener("submit", (event) => {
           event.preventDefault();
-          submitMessage();
+          submit();
         });
-
         messageInput.addEventListener("input", () => {
           resizeInput();
-          updateSendState();
+          updateSend();
         });
-
         messageInput.addEventListener("keydown", (event) => {
           if (event.key === "Enter" && !event.shiftKey && !event.isComposing) {
             event.preventDefault();
-            submitMessage();
+            submit();
           }
         });
+        stopButton.addEventListener("click", stop);
 
-        stopButton.addEventListener("click", stopResponse);
-        attachButton.addEventListener("click", () => fileInput.click());
-        fileInput.addEventListener("change", () => {
-          attachments = [...attachments, ...[...fileInput.files]];
-          fileInput.value = "";
-          renderAttachments();
-          if (attachments.length) showToast(attachments.length + " anexo(s) pronto(s)");
-        });
-        webButton.addEventListener("click", () => {
-          messageInput.value = messageInput.value.trim() ? messageInput.value + " — pesquise na web" : "Pesquise na web sobre ";
-          messageInput.focus();
-          resizeInput();
-          updateSendState();
-        });
-
-        document.querySelectorAll(".trend-card").forEach((card) => {
-          card.addEventListener("click", () => {
-            messageInput.value = card.dataset.prompt || "";
-            messageInput.focus();
+        document.querySelectorAll(".trend-item").forEach((item) => {
+          item.addEventListener("click", () => {
+            messageInput.value = item.dataset.prompt || "";
+            closeHistoryDrawer();
             resizeInput();
-            updateSendState();
+            updateSend();
+            messageInput.focus();
           });
         });
 
-        historyList.addEventListener("click", (event) => {
+        document.getElementById("historyItems").addEventListener("click", (event) => {
           const item = event.target.closest(".history-item");
           if (!item) return;
           document.querySelectorAll(".history-item").forEach((entry) => entry.classList.toggle("active", entry === item));
-          if (item.dataset.history === "nova-conversa") {
-            resetConversation();
+          if (item.dataset.history === "nova") {
+            reset();
+            closeHistoryDrawer();
             return;
           }
-          setConversationMode();
+          conversationMode();
           messageList.replaceChildren();
           const title = item.querySelector("strong")?.textContent || "Conversa";
-          appendNode(createMessage("user", "Retomar: " + title));
-          appendNode(createMessage("assistant", "Este histórico está pronto para receber o conteúdo completo da conversa."));
-          setPanelOpen(false);
+          append(createMessage("user", "Retomar: " + title));
+          append(createMessage("assistant", "Este histórico está pronto para receber o conteúdo da conversa."));
+          closeHistoryDrawer();
         });
 
         window.addEventListener("resize", resizeInput);
         resizeInput();
-        updateSendState();
+        updateSend();
       })();
     </script>
   </body>
