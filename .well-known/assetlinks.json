@@ -1,0 +1,14 @@
+[
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.kazer.app",
+      "sha256_cert_fingerprints": [
+        "95:3D:B7:9E:C6:67:E5:4D:FE:41:DF:BE:5A:7C:B9:31:6B:91:83:57:58:C5:2E:33:54:ED:B2:E4:DD:9B:02:17"
+      ]
+    }
+  }
+]

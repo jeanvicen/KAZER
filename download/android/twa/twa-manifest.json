@@ -1,0 +1,51 @@
+{
+  "packageId": "com.kazer.app",
+  "host": "kazer.vercel.app",
+  "name": "Kazer",
+  "launcherName": "Kazer",
+  "display": "standalone",
+  "themeColor": "#070707",
+  "themeColorDark": "#000000",
+  "navigationColor": "#000000",
+  "navigationColorDark": "#000000",
+  "navigationDividerColor": "#000000",
+  "navigationDividerColorDark": "#000000",
+  "backgroundColor": "#070707",
+  "enableNotifications": true,
+  "startUrl": "/chat",
+  "iconUrl": "https://kazer.vercel.app/download/assets/kazer-login-symbol.png",
+  "splashScreenFadeOutDuration": 300,
+  "signingKey": {
+    "path": ".secrets/kazer-dev.keystore",
+    "alias": "kazer-dev"
+  },
+  "appVersionName": "2",
+  "appVersionCode": 2,
+  "shortcuts": [],
+  "generatorApp": "bubblewrap-cli",
+  "webManifestUrl": "https://kazer.vercel.app/download/manifest.webmanifest",
+  "fallbackType": "customtabs",
+  "features": {},
+  "alphaDependencies": {
+    "enabled": false
+  },
+  "enableSiteSettingsShortcut": true,
+  "isChromeOSOnly": false,
+  "isMetaQuest": false,
+  "fullScopeUrl": "https://kazer.vercel.app/",
+  "minSdkVersion": 21,
+  "orientation": "portrait-primary",
+  "fingerprints": [
+    {
+      "name": "local-development",
+      "value": "95:3D:B7:9E:C6:67:E5:4D:FE:41:DF:BE:5A:7C:B9:31:6B:91:83:57:58:C5:2E:33:54:ED:B2:E4:DD:9B:02:17"
+    }
+  ],
+  "additionalTrustedOrigins": [],
+  "retainedBundles": [],
+  "protocolHandlers": [],
+  "fileHandlers": [],
+  "launchHandlerClientMode": "",
+  "displayOverride": [],
+  "appVersion": "2"
+}

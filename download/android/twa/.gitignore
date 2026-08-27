@@ -1,0 +1,18 @@
+# Credenciais de assinatura nunca entram no repositório.
+.secrets/
+*.keystore
+*.jks
+*.p12
+
+# Artefatos gerados localmente.
+/build/
+/app/build/
+*.apk
+*.aab
+*.apks
+*.idsig
+
+# Estado local do Gradle/Android Studio.
+.gradle/
+.idea/
+local.properties
