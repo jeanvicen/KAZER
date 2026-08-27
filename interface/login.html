@@ -1,0 +1,861 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover, user-scalable=no">
+<title>KAZER</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=UnifrakturMaguntia&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --purple: #6C4CF1;
+    --purple-2: #7B5CFF;
+    --bg: #000000;
+    --text: #ffffff;
+    --text-dim: rgba(255,255,255,0.55);
+    --border: rgba(255,255,255,0.22);
+    --vh: 1vh;
+  }
+
+  *{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  html, body{
+    height:100%;
+    background: var(--bg);
+    overflow:hidden;
+  }
+
+  body{
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    color: var(--text);
+    height: calc(var(--vh, 1vh) * 100);
+    width: 100%;
+    position: fixed;
+    inset: 0;
+  }
+
+  /* ---------- CONTAINER GERAL ---------- */
+  .screen{
+    position: absolute;
+    inset: 0;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    width:100%;
+    height:100%;
+    padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* ---------- SPLASH (ANIMAÇÃO INICIAL) ---------- */
+  #splash{
+    z-index: 20;
+    background: var(--bg);
+    transition: opacity 0.6s ease;
+  }
+
+  .brand-block{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap: clamp(2px, 0.8vw, 6px);
+    opacity: 0;
+    transform: scale(0.94);
+    animation: brandIn 0.7s cubic-bezier(.2,.9,.25,1) forwards;
+  }
+
+  @keyframes brandIn{
+    to{ opacity: 1; transform: scale(1); }
+  }
+
+  .star-wrap{
+    width: clamp(52px, 13vw, 70px);
+    height: clamp(52px, 13vw, 70px);
+    flex-shrink: 0;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    margin-right: clamp(-6px, -1vw, -2px);
+  }
+
+  .star{
+    width: 100%;
+    height: 100%;
+    animation: starPulse 2.6s ease-in-out infinite;
+  }
+
+  @keyframes starPulse{
+    0%, 100%{ filter: brightness(1); }
+    50%{ filter: brightness(1.35); }
+  }
+
+  .metal-canvas{
+    display:block;
+    width: min(58vw, 250px);
+    height: auto;
+  }
+
+  #loginCanvas{
+    width: min(78vw, 380px);
+    margin: 0 auto;
+    opacity: 0;
+    animation: fadeUp 0.8s ease 0.9s forwards;
+  }
+
+  .footer-brand{
+    position: absolute;
+    bottom: clamp(36px, 9vh, 64px);
+    left: 0;
+    right: 0;
+    display:flex;
+    justify-content:center;
+    padding: 0 24px;
+  }
+
+  .footer-brand span{
+    font-size: clamp(12px, 3.4vw, 14px);
+    font-weight: 700;
+    letter-spacing: clamp(2px, 1vw, 4px);
+    color: var(--text-dim);
+    text-transform: uppercase;
+    opacity: 0;
+    animation: fadeIn 1s ease 0.4s forwards;
+  }
+
+  @keyframes fadeIn{
+    from{ opacity: 0; }
+    to{ opacity: 1; }
+  }
+
+  @keyframes fadeUp{
+    from{ opacity:0; transform: translateY(10px); }
+    to{ opacity:1; transform: translateY(0); }
+  }
+
+  /* ---------- TELA DE LOGIN / CRIAR CONTA ---------- */
+  #login{
+    z-index: 10;
+    opacity: 0;
+    padding: max(env(safe-area-inset-top), 24px) 24px max(env(safe-area-inset-bottom), 24px);
+    justify-content: flex-start;
+  }
+
+  #login.visible{
+    animation: fadeUp 0.7s ease forwards;
+  }
+
+  .login-inner{
+    width: 100%;
+    max-width: 400px;
+    margin: auto;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+  }
+
+  .login-header{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    margin-bottom: clamp(28px, 6vh, 44px);
+  }
+
+  .mini-star{
+    width: clamp(52px, 16vw, 70px);
+    height: clamp(52px, 16vw, 70px);
+    margin-bottom: 16px;
+  }
+
+  .login-title{
+    margin-bottom: 2px;
+  }
+
+  .login-sub{
+    margin-top: 8px;
+    font-size: clamp(13px, 3.4vw, 14px);
+    color: var(--text-dim);
+    letter-spacing: 0.5px;
+    text-align: center;
+  }
+
+  form{
+    width:100%;
+    display:flex;
+    flex-direction:column;
+    gap: 14px;
+  }
+
+  .field{
+    position:relative;
+    display:flex;
+    align-items:center;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 0 16px;
+    height: 54px;
+    background: rgba(255,255,255,0.02);
+    transition: border-color 0.2s ease;
+    flex-shrink: 0;
+  }
+
+  .field:focus-within{
+    border-color: var(--purple-2);
+  }
+
+  .field svg{
+    flex-shrink:0;
+    margin-right: 12px;
+    opacity: 0.7;
+  }
+
+  .field input{
+    flex:1;
+    min-width: 0;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: var(--text);
+    font-size: 16px;
+    height: 100%;
+  }
+
+  .field input::placeholder{
+    color: var(--text-dim);
+  }
+
+  .toggle-eye{
+    background:none;
+    border:none;
+    padding: 4px;
+    cursor:pointer;
+    opacity:0.7;
+    display:flex;
+    align-items:center;
+    flex-shrink: 0;
+  }
+
+  .eye-icon{
+    overflow: visible;
+  }
+
+  .eye-pupil{
+    transition: transform 0.28s cubic-bezier(.5,0,.5,1), opacity 0.15s ease;
+    transform-origin: center;
+    transform-box: fill-box;
+  }
+
+  .eye-icon.is-closed .eye-pupil{
+    transform: scaleY(0.05);
+    opacity: 0;
+  }
+
+  .eye-outline{
+    transition: transform 0.28s cubic-bezier(.5,0,.5,1);
+    transform-origin: center;
+    transform-box: fill-box;
+  }
+
+  .eye-icon.is-closed .eye-outline{
+    transform: scaleY(0.12);
+  }
+
+  .hint{
+    font-size: 12px;
+    color: var(--text-dim);
+    padding: 0 2px;
+    line-height: 1.4;
+  }
+
+  .hint .ok{ color: #6de68a; }
+
+  /* ---------- FORÇA DA SENHA ---------- */
+  .strength-wrap{
+    display:none;
+    flex-direction: column;
+    gap: 6px;
+    padding: 0 2px;
+    margin-top: -2px;
+  }
+
+  body.mode-signup .strength-wrap.show{
+    display:flex;
+  }
+
+  .strength-bar{
+    width: 100%;
+    height: 5px;
+    border-radius: 3px;
+    background: rgba(255,255,255,0.12);
+    overflow: hidden;
+  }
+
+  .strength-fill{
+    height: 100%;
+    width: 0%;
+    border-radius: 3px;
+    background: #ff5b5b;
+    transition: width 0.45s cubic-bezier(.4,1.4,.4,1), background-color 0.45s ease;
+  }
+
+  .strength-fill.pulse{
+    animation: strengthPulse 0.5s ease;
+  }
+
+  @keyframes strengthPulse{
+    0%{ transform: scaleY(1); }
+    40%{ transform: scaleY(1.8); }
+    100%{ transform: scaleY(1); }
+  }
+
+  .strength-label{
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+    color: var(--text-dim);
+    transition: color 0.3s ease;
+    display:flex;
+    align-items:center;
+    gap: 6px;
+  }
+
+  .strength-label .icon{
+    display:inline-flex;
+    transition: transform 0.35s cubic-bezier(.4,1.6,.4,1);
+  }
+
+  .strength-label.pop .icon{
+    transform: scale(1.3) rotate(-8deg);
+  }
+
+  .btn-primary{
+    margin-top: 6px;
+    height: 54px;
+    border-radius: 14px;
+    border: none;
+    background: linear-gradient(180deg, var(--purple-2), var(--purple));
+    color: #fff;
+    font-size: 16px;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+    cursor: pointer;
+    transition: transform 0.15s ease, filter 0.2s ease, opacity 0.2s ease;
+    flex-shrink: 0;
+  }
+
+  .btn-primary:active{
+    transform: scale(0.98);
+    filter: brightness(0.95);
+  }
+
+  .btn-primary:disabled{
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  .switch-mode{
+    margin-top: 20px;
+    text-align:center;
+    font-size: 14px;
+    color: var(--text-dim);
+  }
+
+  .switch-mode a{
+    color: var(--text);
+    text-decoration: underline;
+    cursor:pointer;
+  }
+
+  .error-msg{
+    font-size: 13px;
+    color: #ff6b6b;
+    min-height: 16px;
+    text-align:center;
+  }
+
+  /* campos exclusivos de cada modo */
+  .signup-only{ display:none; }
+  body.mode-signup .signup-only{ display:flex; }
+  body.mode-signup .signup-only.hint{ display:block; }
+
+  /* pequenas telas: reduzir respiros */
+  @media (max-height: 640px){
+    .login-header{ margin-bottom: 20px; }
+    .field{ height: 48px; }
+    .btn-primary{ height: 48px; }
+  }
+</style>
+</head>
+<body>
+
+  <!-- ================= SPLASH / TELA DE ENTRADA ================= -->
+  <div id="splash" class="screen">
+    <div class="brand-block">
+      <div class="star-wrap">
+        <svg class="star" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <radialGradient id="core" cx="50%" cy="50%" r="50%">
+              <stop offset="0%" stop-color="#ffffff" stop-opacity="1"/>
+              <stop offset="15%" stop-color="#ffffff" stop-opacity="1"/>
+              <stop offset="45%" stop-color="#ffffff" stop-opacity="0.55"/>
+              <stop offset="100%" stop-color="#ffffff" stop-opacity="0"/>
+            </radialGradient>
+            <linearGradient id="rayLong" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stop-color="#ffffff" stop-opacity="0"/>
+              <stop offset="45%" stop-color="#ffffff" stop-opacity="0.9"/>
+              <stop offset="50%" stop-color="#ffffff" stop-opacity="1"/>
+              <stop offset="55%" stop-color="#ffffff" stop-opacity="0.9"/>
+              <stop offset="100%" stop-color="#ffffff" stop-opacity="0"/>
+            </linearGradient>
+          </defs>
+
+          <g transform="translate(200,200)">
+            <!-- glow de fundo -->
+            <circle r="130" fill="url(#core)"/>
+
+            <!-- 4 raios principais (longos, mais grossos) -->
+            <g fill="#ffffff">
+              <path d="M0,-190 C 3,-90 6,-6 0,0 C -6,-6 -3,-90 0,-190 Z"/>
+              <path d="M0,190 C 3,90 6,6 0,0 C -6,6 -3,90 0,190 Z"/>
+              <path d="M-190,0 C -90,-3 -6,-6 0,0 C -6,6 -90,3 -190,0 Z"/>
+              <path d="M190,0 C 90,3 6,6 0,0 C 6,-6 90,-3 190,0 Z"/>
+            </g>
+
+            <!-- 4 raios diagonais (médios) -->
+            <g fill="#ffffff" transform="rotate(45)">
+              <path d="M0,-150 C 2.5,-70 5,-5 0,0 C -5,-5 -2.5,-70 0,-150 Z"/>
+              <path d="M0,150 C 2.5,70 5,5 0,0 C -5,5 -2.5,70 0,150 Z"/>
+              <path d="M-150,0 C -70,-2.5 -5,-5 0,0 C -5,5 -70,2.5 -150,0 Z"/>
+              <path d="M150,0 C 70,2.5 5,5 0,0 C 5,-5 70,-2.5 150,0 Z"/>
+            </g>
+
+            <!-- 8 raios finos intermediários -->
+            <g fill="#ffffff" opacity="0.95">
+              <g transform="rotate(22.5)"><path d="M0,-165 C 1.6,-75 3,-4 0,0 C -3,-4 -1.6,-75 0,-165 Z"/></g>
+              <g transform="rotate(67.5)"><path d="M0,-165 C 1.6,-75 3,-4 0,0 C -3,-4 -1.6,-75 0,-165 Z"/></g>
+              <g transform="rotate(112.5)"><path d="M0,-165 C 1.6,-75 3,-4 0,0 C -3,-4 -1.6,-75 0,-165 Z"/></g>
+              <g transform="rotate(157.5)"><path d="M0,-165 C 1.6,-75 3,-4 0,0 C -3,-4 -1.6,-75 0,-165 Z"/></g>
+              <g transform="rotate(202.5)"><path d="M0,-165 C 1.6,-75 3,-4 0,0 C -3,-4 -1.6,-75 0,-165 Z"/></g>
+              <g transform="rotate(247.5)"><path d="M0,-165 C 1.6,-75 3,-4 0,0 C -3,-4 -1.6,-75 0,-165 Z"/></g>
+              <g transform="rotate(292.5)"><path d="M0,-165 C 1.6,-75 3,-4 0,0 C -3,-4 -1.6,-75 0,-165 Z"/></g>
+              <g transform="rotate(337.5)"><path d="M0,-165 C 1.6,-75 3,-4 0,0 C -3,-4 -1.6,-75 0,-165 Z"/></g>
+            </g>
+
+            <!-- núcleo brilhante -->
+            <circle r="12" fill="#ffffff"/>
+          </g>
+        </svg>
+      </div>
+      <canvas class="metal-canvas" id="splashCanvas" width="360" height="90"></canvas>
+    </div>
+
+    <div class="footer-brand">
+      <span>Klipza Studio</span>
+    </div>
+  </div>
+
+  <!-- ================= LOGIN / CRIAR CONTA ================= -->
+  <div id="login" class="screen">
+    <div class="login-inner">
+      <div class="login-header">
+        <svg class="mini-star" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <radialGradient id="core2" cx="50%" cy="50%" r="50%">
+              <stop offset="0%" stop-color="#ffffff" stop-opacity="1"/>
+              <stop offset="15%" stop-color="#ffffff" stop-opacity="1"/>
+              <stop offset="45%" stop-color="#ffffff" stop-opacity="0.55"/>
+              <stop offset="100%" stop-color="#ffffff" stop-opacity="0"/>
+            </radialGradient>
+          </defs>
+          <g transform="translate(200,200)">
+            <circle r="130" fill="url(#core2)"/>
+            <g fill="#ffffff">
+              <path d="M0,-190 C 3,-90 6,-6 0,0 C -6,-6 -3,-90 0,-190 Z"/>
+              <path d="M0,190 C 3,90 6,6 0,0 C -6,6 -3,90 0,190 Z"/>
+              <path d="M-190,0 C -90,-3 -6,-6 0,0 C -6,6 -90,3 -190,0 Z"/>
+              <path d="M190,0 C 90,3 6,6 0,0 C 6,-6 90,-3 190,0 Z"/>
+            </g>
+            <g fill="#ffffff" transform="rotate(45)">
+              <path d="M0,-150 C 2.5,-70 5,-5 0,0 C -5,-5 -2.5,-70 0,-150 Z"/>
+              <path d="M0,150 C 2.5,70 5,5 0,0 C -5,5 -2.5,70 0,150 Z"/>
+              <path d="M-150,0 C -70,-2.5 -5,-5 0,0 C -5,5 -70,2.5 -150,0 Z"/>
+              <path d="M150,0 C 70,2.5 5,5 0,0 C 5,-5 70,-2.5 150,0 Z"/>
+            </g>
+            <g fill="#ffffff" opacity="0.95">
+              <g transform="rotate(22.5)"><path d="M0,-165 C 1.6,-75 3,-4 0,0 C -3,-4 -1.6,-75 0,-165 Z"/></g>
+              <g transform="rotate(67.5)"><path d="M0,-165 C 1.6,-75 3,-4 0,0 C -3,-4 -1.6,-75 0,-165 Z"/></g>
+              <g transform="rotate(112.5)"><path d="M0,-165 C 1.6,-75 3,-4 0,0 C -3,-4 -1.6,-75 0,-165 Z"/></g>
+              <g transform="rotate(157.5)"><path d="M0,-165 C 1.6,-75 3,-4 0,0 C -3,-4 -1.6,-75 0,-165 Z"/></g>
+              <g transform="rotate(202.5)"><path d="M0,-165 C 1.6,-75 3,-4 0,0 C -3,-4 -1.6,-75 0,-165 Z"/></g>
+              <g transform="rotate(247.5)"><path d="M0,-165 C 1.6,-75 3,-4 0,0 C -3,-4 -1.6,-75 0,-165 Z"/></g>
+              <g transform="rotate(292.5)"><path d="M0,-165 C 1.6,-75 3,-4 0,0 C -3,-4 -1.6,-75 0,-165 Z"/></g>
+              <g transform="rotate(337.5)"><path d="M0,-165 C 1.6,-75 3,-4 0,0 C -3,-4 -1.6,-75 0,-165 Z"/></g>
+            </g>
+            <circle r="12" fill="#ffffff"/>
+          </g>
+        </svg>
+        <canvas class="login-title metal-canvas" id="loginCanvas" width="380" height="70"></canvas>
+        <div class="login-sub" id="subText">Entrar para continuar</div>
+      </div>
+
+      <form id="authForm">
+        <!-- Nome (apenas no cadastro) -->
+        <div class="field signup-only">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="1.8"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4.4 3.6-7 8-7s8 2.6 8 7"/></svg>
+          <input type="text" id="displayName" placeholder="Como devemos te chamar?" autocomplete="name">
+        </div>
+
+        <!-- Email -->
+        <div class="field">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="1.8"><path d="M3 6l9 7 9-7"/><rect x="3" y="5" width="18" height="14" rx="2"/></svg>
+          <input type="email" id="email" placeholder="Email" required autocomplete="email">
+        </div>
+
+        <!-- Senha -->
+        <div class="field">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="1.8"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
+          <input type="password" id="password" placeholder="Senha" required autocomplete="current-password">
+          <button type="button" class="toggle-eye" id="eyeBtnPassword" onclick="togglePassword('password')" aria-label="Mostrar senha">
+            <svg class="eye-icon is-open" id="eyeIconPassword" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="1.8">
+              <path class="eye-outline" d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/>
+              <circle class="eye-pupil" cx="12" cy="12" r="3"/>
+            </svg>
+          </button>
+        </div>
+
+        <!-- Indicador de força da senha (apenas no cadastro) -->
+        <div class="strength-wrap" id="strengthWrap">
+          <div class="strength-bar">
+            <div class="strength-fill" id="strengthFill"></div>
+          </div>
+          <div class="strength-label" id="strengthLabel">
+            <span id="strengthText">Digite uma senha</span>
+          </div>
+        </div>
+
+        <!-- Regra de senha (apenas no cadastro) -->
+        <div class="hint signup-only" id="passwordHint">
+          A senha precisa ter 1 letra maiúscula e 1 caractere especial.
+        </div>
+
+        <!-- Confirmar senha (apenas no cadastro) -->
+        <div class="field signup-only">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="1.8"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
+          <input type="password" id="confirmPassword" placeholder="Confirmar senha" autocomplete="new-password">
+          <button type="button" class="toggle-eye" id="eyeBtnConfirmPassword" onclick="togglePassword('confirmPassword')" aria-label="Mostrar senha">
+            <svg class="eye-icon is-open" id="eyeIconConfirmPassword" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="1.8">
+              <path class="eye-outline" d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/>
+              <circle class="eye-pupil" cx="12" cy="12" r="3"/>
+            </svg>
+          </button>
+        </div>
+
+        <div class="error-msg" id="errorMsg"></div>
+
+        <button type="submit" class="btn-primary" id="submitBtn">Sign in</button>
+      </form>
+
+      <div class="switch-mode">
+        <span id="switchText">Não tem conta?</span>
+        <a id="switchLink" onclick="toggleMode()">Criar conta</a>
+      </div>
+    </div>
+  </div>
+
+<script>
+  // ---------- ajusta altura real da viewport (evita bug de barra do navegador mobile) ----------
+  function setVH(){
+    document.documentElement.style.setProperty('--vh', (window.innerHeight * 0.01) + 'px');
+  }
+  setVH();
+  window.addEventListener('resize', setVH);
+  window.addEventListener('orientationchange', setVH);
+
+  // ---------- controla exibição do olho da senha (com animação de piscar) ----------
+  function togglePassword(id){
+    const input = document.getElementById(id);
+    const btn = document.getElementById('eyeBtn' + capitalize(id));
+    const icon = document.getElementById('eyeIcon' + capitalize(id));
+    const isHidden = input.type === 'password';
+
+    input.type = isHidden ? 'text' : 'password';
+
+    if(isHidden){
+      icon.classList.remove('is-open');
+      icon.classList.add('is-closed');
+    } else {
+      icon.classList.remove('is-closed');
+      icon.classList.add('is-open');
+    }
+    btn.setAttribute('aria-label', isHidden ? 'Ocultar senha' : 'Mostrar senha');
+  }
+
+  function capitalize(str){
+    return str.charAt(0).toUpperCase() + str.slice(1);
+  }
+
+  // ---------- alterna entre login e criar conta ----------
+  let isSignup = false;
+  function toggleMode(){
+    isSignup = !isSignup;
+    const body = document.body;
+    const sub = document.getElementById('subText');
+    const submitBtn = document.getElementById('submitBtn');
+    const switchText = document.getElementById('switchText');
+    const switchLink = document.getElementById('switchLink');
+    const confirmInput = document.getElementById('confirmPassword');
+    const nameInput = document.getElementById('displayName');
+
+    if(isSignup){
+      body.classList.add('mode-signup');
+      sub.textContent = 'Criar sua conta';
+      submitBtn.textContent = 'Criar conta';
+      switchText.textContent = 'Já tem conta?';
+      switchLink.textContent = 'Entrar';
+      confirmInput.setAttribute('required', 'true');
+      nameInput.setAttribute('required', 'true');
+    } else {
+      body.classList.remove('mode-signup');
+      sub.textContent = 'Entrar para continuar';
+      submitBtn.textContent = 'Sign in';
+      switchText.textContent = 'Não tem conta?';
+      switchLink.textContent = 'Criar conta';
+      confirmInput.removeAttribute('required');
+      nameInput.removeAttribute('required');
+      strengthWrap.classList.remove('show');
+    }
+    document.getElementById('errorMsg').textContent = '';
+    document.getElementById('errorMsg').dataset.type = '';
+  }
+
+  // ---------- validação da senha: 1 maiúscula + 1 caractere especial ----------
+  function isPasswordValid(pw){
+    const hasUpper = /[A-Z]/.test(pw);
+    const hasSpecial = /[^A-Za-z0-9]/.test(pw);
+    return hasUpper && hasSpecial;
+  }
+
+  // ---------- calcula a força da senha (0 a 4) ----------
+  function getPasswordStrength(pw){
+    if(!pw) return 0;
+    let score = 0;
+    if(pw.length >= 6) score++;
+    if(pw.length >= 10) score++;
+    if(/[A-Z]/.test(pw)) score++;
+    if(/[^A-Za-z0-9]/.test(pw)) score++;
+    if(/[0-9]/.test(pw)) score++;
+    if(pw.length < 6) score = Math.min(score, 1);
+    return Math.min(score, 4);
+  }
+
+  const strengthConfig = {
+    0: { pct: 4,   color: '#ff5b5b', text: 'Digite uma senha' },
+    1: { pct: 25,  color: '#ff5b5b', text: 'Senha fraca — capriche mais' },
+    2: { pct: 50,  color: '#ffb14e', text: 'Quase lá, dá pra melhorar' },
+    3: { pct: 75,  color: '#ffd84e', text: 'Boa senha!' },
+    4: { pct: 100, color: '#6de68a', text: 'Senha forte, mandou bem!' }
+  };
+
+  const strengthWrap = document.getElementById('strengthWrap');
+  const strengthFill = document.getElementById('strengthFill');
+  const strengthLabel = document.getElementById('strengthLabel');
+  const strengthText = document.getElementById('strengthText');
+
+  function updateStrengthUI(pw){
+    if(!pw){
+      strengthWrap.classList.remove('show');
+      return;
+    }
+    strengthWrap.classList.add('show');
+
+    const level = getPasswordStrength(pw);
+    const cfg = strengthConfig[level];
+
+    strengthFill.style.width = cfg.pct + '%';
+    strengthFill.style.backgroundColor = cfg.color;
+    strengthText.textContent = cfg.text;
+    strengthLabel.style.color = cfg.color;
+
+    // pequena animação de "pulso" a cada mudança de nível
+    strengthFill.classList.remove('pulse');
+    strengthLabel.classList.remove('pop');
+    void strengthFill.offsetWidth; // reflow pra reiniciar a animação
+    strengthFill.classList.add('pulse');
+    strengthLabel.classList.add('pop');
+  }
+
+  document.getElementById('password').addEventListener('input', function(){
+    if(isSignup){
+      updateStrengthUI(this.value);
+    }
+    checkPasswordsMatch();
+  });
+
+  // ---------- checa em tempo real se as senhas coincidem ----------
+  const confirmField = document.getElementById('confirmPassword');
+  function checkPasswordsMatch(){
+    const errorMsg = document.getElementById('errorMsg');
+    const pw = document.getElementById('password').value;
+    const confirmPw = confirmField.value;
+
+    if(!isSignup || !confirmPw){
+      if(errorMsg.dataset.type === 'mismatch') errorMsg.textContent = '';
+      return;
+    }
+
+    if(pw !== confirmPw){
+      errorMsg.textContent = 'Acho que a senha de confirmação não ficou igual à primeira';
+      errorMsg.dataset.type = 'mismatch';
+    } else if(errorMsg.dataset.type === 'mismatch'){
+      errorMsg.textContent = '';
+      errorMsg.dataset.type = '';
+    }
+  }
+  confirmField.addEventListener('input', checkPasswordsMatch);
+
+  // ---------- validação e envio do form ----------
+  document.getElementById('authForm').addEventListener('submit', function(e){
+    e.preventDefault();
+    const errorMsg = document.getElementById('errorMsg');
+    const name = document.getElementById('displayName').value.trim();
+    const email = document.getElementById('email').value.trim();
+    const password = document.getElementById('password').value;
+    const confirmPassword = document.getElementById('confirmPassword').value;
+
+    if(isSignup){
+      if(!name){
+        errorMsg.textContent = 'Nos diga como devemos te chamar.';
+        return;
+      }
+      if(!isPasswordValid(password)){
+        errorMsg.textContent = 'Sua senha ainda tá fraca — coloca 1 letra maiúscula e 1 caractere especial.';
+        return;
+      }
+      if(password !== confirmPassword){
+        errorMsg.textContent = 'Acho que a senha de confirmação não ficou igual à primeira';
+        return;
+      }
+    }
+
+    errorMsg.textContent = '';
+    // Aqui depois entra a integração com o Supabase (login/cadastro real)
+    // Após sucesso: redirecionar para index.html
+    // window.location.href = 'index.html';
+  });
+
+  // ---------- transição splash -> login ----------
+  // ---------- efeito de metal líquido animado no texto KAZER ----------
+  function initMetalText(canvas, text, fontFamily, fontSizeRatio){
+    const ctx = canvas.getContext('2d');
+    const W = canvas.width;
+    const H = canvas.height;
+    let running = true;
+
+    // paleta de reflexos do metal (tons prata/branco com toque frio, tipo cromo)
+    const stops = [
+      { pos: 0.00, c: '#3a3d45' },
+      { pos: 0.18, c: '#c9ccd4' },
+      { pos: 0.32, c: '#ffffff' },
+      { pos: 0.46, c: '#8b8f99' },
+      { pos: 0.60, c: '#f2f3f6' },
+      { pos: 0.75, c: '#5a5d66' },
+      { pos: 0.90, c: '#e8eaef' },
+      { pos: 1.00, c: '#3a3d45' }
+    ];
+
+    function draw(t){
+      if(!running) return;
+      ctx.clearRect(0, 0, W, H);
+
+      // desenha o texto pra usar como máscara
+      ctx.save();
+      ctx.font = `${Math.floor(H * fontSizeRatio)}px "${fontFamily}", cursive`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+
+      // cria o gradiente "líquido" que se desloca ao longo do tempo, como reflexo de luz correndo no metal
+      const shift = (t * 0.00035) % 1;
+      const shifted = stops.map(function(s){
+        let pos = (s.pos + shift) % 1;
+        return { pos: pos, c: s.c };
+      }).sort(function(a, b){ return a.pos - b.pos; });
+
+      const grad = ctx.createLinearGradient(0, 0, W, 0);
+      shifted.forEach(function(s){
+        grad.addColorStop(s.pos, s.c);
+      });
+      ctx.fillStyle = grad;
+      ctx.fillText(text, W / 2, H / 2 + H * 0.04);
+
+      // leve brilho superior pra dar volume metálico
+      const sheen = ctx.createLinearGradient(0, 0, 0, H);
+      sheen.addColorStop(0, 'rgba(255,255,255,0.35)');
+      sheen.addColorStop(0.45, 'rgba(255,255,255,0)');
+      sheen.addColorStop(1, 'rgba(0,0,0,0.25)');
+      ctx.globalCompositeOperation = 'source-atop';
+      ctx.fillStyle = sheen;
+      ctx.fillRect(0, 0, W, H);
+      ctx.restore();
+
+      requestAnimationFrame(draw);
+    }
+
+    requestAnimationFrame(draw);
+    return { stop: function(){ running = false; } };
+  }
+
+  // espera a fonte gótica carregar antes de desenhar, senão usa fallback do navegador
+  if(document.fonts && document.fonts.ready){
+    document.fonts.load('90px "UnifrakturMaguntia"').then(function(){
+      return document.fonts.ready;
+    }).then(function(){
+      initMetalText(document.getElementById('splashCanvas'), 'KAZER', 'UnifrakturMaguntia', 0.72);
+      initMetalText(document.getElementById('loginCanvas'), 'KAZER', 'UnifrakturMaguntia', 0.72);
+    });
+  } else {
+    setTimeout(function(){
+      initMetalText(document.getElementById('splashCanvas'), 'KAZER', 'UnifrakturMaguntia', 0.72);
+      initMetalText(document.getElementById('loginCanvas'), 'KAZER', 'UnifrakturMaguntia', 0.72);
+    }, 300);
+  }
+
+  // ---------- checa sessão e decide o próximo passo ----------
+  // Aqui depois entra a checagem real de sessão (Supabase, token salvo, etc.)
+  // Exemplo de uso futuro:
+  // const session = await supabase.auth.getSession();
+  // const isLoggedIn = !!session;
+  const isLoggedIn = false; // trocar pela checagem real quando integrar o Supabase
+
+  window.addEventListener('load', function(){
+    const splash = document.getElementById('splash');
+    const login = document.getElementById('login');
+
+    if(isLoggedIn){
+      // pessoa já logada: fica na tela com a estrela + KAZER + Klipza Studio
+      // e segue direto pro index.html
+      setTimeout(function(){
+        // window.location.href = 'index.html';
+      }, 1800);
+      return;
+    }
+
+    // pessoa não logada: mostra o splash e transiciona pra tela de login
+    setTimeout(function(){
+      splash.style.opacity = '0';
+      setTimeout(function(){
+        splash.style.display = 'none';
+        login.classList.add('visible');
+      }, 600);
+    }, 2200);
+  });
+</script>
+
+</body>
+</html>
