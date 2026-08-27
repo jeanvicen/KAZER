@@ -7,7 +7,8 @@ Este diretório reúne os arquivos necessários para instalar o Kazer como PWA e
 - `manifest.webmanifest`: identidade, cores, ícones e rota inicial.
 - `sw.js`: cache básico do app shell e suporte offline.
 - `assets/kazer-logo.jpg`: logo principal enviada pelo criador.
-- `icons/kazer-192.png` e `icons/kazer-512.png`: ícones para instalação.
+- `assets/kazer-login-symbol.png`: símbolo transparente usado no lançamento do PWA.
+- `icons/kazer-192.png` e `icons/kazer-512.png`: ícones legados/apoio visual do app, preservados separadamente do lançamento.
 
 ## Integração web
 
