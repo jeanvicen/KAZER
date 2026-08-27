@@ -84,6 +84,13 @@ function cleanExtractedText(value) {
     .slice(0, MAX_EXTRACTED_FILE_CHARS);
 }
 
+function cleanModelContent(value) {
+  return String(value || "")
+    .replace(/<think>[\s\S]*?<\/think>/gi, "")
+    .replace(/<analysis>[\s\S]*?<\/analysis>/gi, "")
+    .trim();
+}
+
 function isTextFile(attachment, parsed) {
   if (parsed.mimeType.startsWith("text/")) return true;
   const name = String(attachment.name || "").toLowerCase();
@@ -282,8 +289,8 @@ module.exports = async function handler(request, response) {
   }
 
   const { data, model } = result;
-  const content = data?.choices?.[0]?.message?.content;
-    if (typeof content !== "string" || !content.trim()) {
+  const content = cleanModelContent(data?.choices?.[0]?.message?.content);
+  if (!content) {
       console.error("Groq returned an empty response", { model });
       return sendJson(response, 502, { error: "A resposta recebida estava vazia. Tente novamente." });
     }
