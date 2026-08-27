@@ -745,9 +745,10 @@
     }
 
     errorMsg.textContent = '';
-    // Aqui depois entra a integração com o Supabase (login/cadastro real)
-    // Após sucesso: redirecionar para index.html
-    // window.location.href = 'index.html';
+
+    // Após a validação, tanto o login quanto o cadastro seguem para o chat.
+    window.location.href = '/chat.html';
+    return;
   });
 
   // ---------- transição splash -> login ----------
