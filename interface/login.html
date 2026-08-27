@@ -386,22 +386,6 @@
     cursor:pointer;
   }
 
-  .forgot-password{
-    display:block;
-    margin: -2px auto 0;
-    color: var(--text-dim);
-    font-size: 13px;
-    text-decoration: none;
-    cursor: pointer;
-    transition: color 0.2s ease;
-  }
-
-  .forgot-password:hover,
-  .forgot-password:focus-visible{
-    color: var(--text);
-    text-decoration: underline;
-  }
-
   .error-msg{
     font-size: 13px;
     color: #ff6b6b;
@@ -591,8 +575,6 @@
         <button type="submit" class="btn-primary" id="submitBtn">Sign in</button>
       </form>
 
-      <a class="forgot-password" id="forgotPasswordLink" href="/recuperar">Esqueci a senha</a>
-
       <div class="switch-mode">
         <span id="switchText">Não tem conta?</span>
         <a id="switchLink" onclick="toggleMode()">Criar conta</a>
@@ -762,7 +744,7 @@
   function authErrorMessage(error){
     const message = String(error?.message || '').toLowerCase();
     if(message.includes('invalid login credentials')) return 'E-mail ou senha incorretos.';
-    if(message.includes('email not confirmed')) return 'Confirme seu e-mail antes de entrar.';
+    if(message.includes('email not confirmed')) return 'O acesso por e-mail ainda não está liberado no projeto Kazer.';
     if(message.includes('user already registered')) return 'Este e-mail já tem uma conta. Tente entrar.';
     if(message.includes('password')) return 'A senha não atende aos requisitos do Kazer.';
     return error?.message || 'Não foi possível concluir agora. Tente novamente.';
@@ -811,12 +793,8 @@
         : await kazerSupabase.auth.signInWithPassword({ email, password });
 
       if(result.error) throw result.error;
-      if(isSignup && !result.data.session){
-        errorMsg.style.color = '#e7bc69';
-        errorMsg.textContent = 'Conta criada. Confira seu e-mail para confirmar e entrar no Kazer.';
-        submitBtn.disabled = false;
-        submitBtn.textContent = 'Criar conta';
-        return;
+      if(!result.data.session){
+        throw new Error('A sessão imediata ainda não está habilitada no projeto Kazer.');
       }
       window.location.assign('/chat');
     }catch(error){
