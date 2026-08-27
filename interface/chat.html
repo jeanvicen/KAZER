@@ -259,7 +259,7 @@
         place-items: start center;
         width: 100%;
         min-height: 100%;
-        padding: 24vh 18px 240px;
+        padding: 35vh 18px 240px;
         animation: enter-up 650ms var(--ease) both;
       }
 
@@ -270,7 +270,7 @@
         background-size: 230% 100%;
         background-clip: text;
         -webkit-background-clip: text;
-        font-size: clamp(3.6rem, 12vw, 8.4rem);
+        font-size: clamp(3.35rem, 8vw, 4.1rem);
         font-weight: 400;
         letter-spacing: -0.085em;
         line-height: 0.9;
@@ -383,7 +383,7 @@
       }
 
       .app:not(.in-conversation) .composer-dock {
-        top: 64%;
+        top: calc(35vh + clamp(48px, 7vw, 60px) + 44px);
         bottom: auto;
         padding-bottom: 0;
         background: transparent;
@@ -400,6 +400,10 @@
 
       .composer {
         width: min(640px, 100%);
+      }
+
+      .app:not(.in-conversation) .composer {
+        width: min(270px, calc(100vw - 32px));
       }
 
       .composer-box {
@@ -441,6 +445,17 @@
         opacity: 1;
       }
 
+      .app:not(.in-conversation) .composer-box,
+      .app:not(.in-conversation) .message-input {
+        min-height: 60px;
+      }
+
+      .app:not(.in-conversation) .message-input {
+        padding: 12px 55px 11px 13px;
+        font-size: clamp(12px, 3.2vw, 16px);
+        line-height: 1.25;
+      }
+
       .send-button {
         position: absolute;
         right: 17px;
@@ -461,6 +476,18 @@
         width: clamp(26px, 5vw, 32px);
         height: clamp(26px, 5vw, 32px);
         stroke-width: 1.55;
+      }
+
+      .app:not(.in-conversation) .send-button {
+        right: 8px;
+        bottom: 8px;
+        width: 32px;
+        height: 32px;
+      }
+
+      .app:not(.in-conversation) .send-button .icon {
+        width: 16px;
+        height: 16px;
       }
 
       .send-button:hover {
@@ -1502,15 +1529,15 @@
         }
 
         .empty-state {
-          padding: 31vh 12px 176px;
+          padding: 35vh 12px 176px;
         }
 
         .app:not(.in-conversation) .composer-dock {
-          top: 61%;
+          top: calc(35vh + clamp(48px, 7vw, 60px) + 44px);
         }
 
         .empty-word {
-          font-size: clamp(3.35rem, 14vw, 6rem);
+          font-size: clamp(3.35rem, 8vw, 4.1rem);
         }
 
         .message-list {
@@ -1601,12 +1628,12 @@
 
       @media (min-width: 900px) {
         .empty-state {
-          padding-top: 22vh;
+          padding-top: 35vh;
           padding-bottom: 250px;
         }
 
         .app:not(.in-conversation) .composer-dock {
-          top: 66%;
+          top: calc(35vh + clamp(48px, 7vw, 60px) + 44px);
         }
 
         .composer-dock {
@@ -1841,7 +1868,8 @@
 
         const resizeInput = () => {
           messageInput.style.height = "auto";
-          messageInput.style.height = Math.min(Math.max(messageInput.scrollHeight, 140), 260) + "px";
+          const minimumHeight = app.classList.contains("in-conversation") ? 140 : 60;
+          messageInput.style.height = Math.min(Math.max(messageInput.scrollHeight, minimumHeight), 260) + "px";
         };
 
         const updateSend = () => {
