@@ -259,7 +259,7 @@
         place-items: start center;
         width: 100%;
         min-height: 100%;
-        padding: 33vh 18px 182px;
+        padding: 24vh 18px 240px;
         animation: enter-up 650ms var(--ease) both;
       }
 
@@ -383,7 +383,7 @@
       }
 
       .app:not(.in-conversation) .composer-dock {
-        top: 54%;
+        top: 64%;
         bottom: auto;
         padding-bottom: 0;
         background: transparent;
@@ -782,121 +782,6 @@
         scrollbar-color: var(--line) transparent;
       }
 
-      .restore-card {
-        display: flex;
-        align-items: center;
-        gap: 13px;
-        width: 100%;
-        min-height: 82px;
-        padding: 14px 18px;
-        border: 1px solid var(--line);
-        border-radius: 22px;
-        background: var(--card-2);
-        color: var(--text);
-        text-align: left;
-        cursor: pointer;
-        transition: border-color 150ms var(--ease), background 150ms var(--ease), transform 150ms var(--ease);
-      }
-
-      .restore-card:hover {
-        border-color: var(--text-dim);
-        background: var(--card);
-        transform: translateY(-1px);
-      }
-
-      .restore-symbol {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        width: 42px;
-        height: 42px;
-        flex: 0 0 auto;
-        border-radius: 13px;
-        background: var(--card);
-        color: var(--text-soft);
-      }
-
-      .restore-card strong,
-      .restore-card small {
-        display: block;
-      }
-
-      .restore-card strong {
-        font-size: 15px;
-        font-weight: 550;
-      }
-
-      .restore-card small {
-        margin-top: 4px;
-        color: var(--text-dim);
-        font-size: 11px;
-      }
-
-      .restore-arrow {
-        width: 20px;
-        height: 20px;
-        margin-left: auto;
-        color: var(--text-dim);
-      }
-
-      .history-quick-row {
-        display: grid;
-        grid-auto-flow: column;
-        grid-auto-columns: minmax(148px, 1fr);
-        gap: 13px;
-        margin-top: 20px;
-        overflow-x: auto;
-        scrollbar-width: none;
-      }
-
-      .history-quick-row::-webkit-scrollbar {
-        display: none;
-      }
-
-      .history-quick-card {
-        display: flex;
-        flex-direction: column;
-        align-items: flex-start;
-        min-height: 144px;
-        padding: 17px;
-        border: 1px solid var(--line);
-        border-radius: 20px;
-        background: var(--card-2);
-        color: var(--text);
-        text-align: left;
-        cursor: pointer;
-        transition: border-color 150ms var(--ease), transform 150ms var(--ease), background 150ms var(--ease);
-      }
-
-      .history-quick-card:hover {
-        border-color: var(--text-dim);
-        background: var(--card);
-        transform: translateY(-2px);
-      }
-
-      .quick-icon {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        width: 39px;
-        height: 39px;
-        margin-bottom: auto;
-        border-radius: 12px;
-        background: var(--card);
-        color: var(--text-soft);
-      }
-
-      .history-quick-card strong {
-        font-size: 15px;
-        font-weight: 600;
-      }
-
-      .history-quick-card small {
-        margin-top: 4px;
-        color: var(--text-dim);
-        font-size: 10px;
-      }
-
       .history-screen-title {
         display: flex;
         align-items: end;
@@ -931,6 +816,48 @@
       .history-items {
         display: grid;
         gap: 9px;
+      }
+
+      .history-empty {
+        display: grid;
+        place-items: center;
+        gap: 10px;
+        min-height: 210px;
+        padding: 30px 20px;
+        border: 1px dashed var(--line);
+        border-radius: 20px;
+        background: color-mix(in srgb, var(--card) 45%, transparent);
+        text-align: center;
+      }
+
+      .history-empty-icon {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 52px;
+        height: 52px;
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        background: var(--card-2);
+        color: var(--text-dim);
+      }
+
+      .history-empty-icon .icon {
+        width: 25px;
+        height: 25px;
+      }
+
+      .history-empty strong {
+        color: var(--text);
+        font-size: 15px;
+        font-weight: 550;
+      }
+
+      .history-empty small {
+        max-width: 260px;
+        color: var(--text-dim);
+        font-size: 11px;
+        line-height: 1.45;
       }
 
       .history-items .history-item {
@@ -1001,70 +928,6 @@
       .history-delete .icon {
         width: 17px;
         height: 17px;
-      }
-
-      .history-tool-strip {
-        margin-top: 30px;
-        padding: 16px;
-        border: 1px solid var(--line);
-        border-radius: 18px;
-        background: var(--card-2);
-      }
-
-      .history-tool-label span,
-      .history-tool-label small {
-        display: block;
-      }
-
-      .history-tool-label span {
-        color: var(--text);
-        font-size: 14px;
-        font-weight: 550;
-      }
-
-      .history-tool-label small {
-        margin-top: 4px;
-        color: var(--text-dim);
-        font-size: 10px;
-      }
-
-      .history-tool-chips {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 8px;
-        margin-top: 13px;
-      }
-
-      .history-tool-chips > span,
-      .history-tool-chips > button {
-        display: inline-flex;
-        align-items: center;
-        gap: 7px;
-        min-height: 30px;
-        padding: 0 10px;
-        border: 1px solid var(--line);
-        border-radius: 999px;
-        background: var(--card);
-        color: var(--text-soft);
-        font: inherit;
-        font-size: 10px;
-      }
-
-      .history-tool-chips > button {
-        cursor: pointer;
-      }
-
-      .history-tool-chips > button:hover {
-        border-color: var(--text-dim);
-        color: var(--text);
-      }
-
-      .web-dot {
-        width: 6px;
-        height: 6px;
-        border-radius: 50%;
-        background: var(--success);
-        box-shadow: 0 0 10px var(--success);
       }
 
       .history-limit-note {
@@ -1257,17 +1120,6 @@
         color: var(--text-soft);
         font: inherit;
         text-align: left;
-      }
-
-      #kazerWebAction {
-        cursor: pointer;
-        transition: background 150ms var(--ease), border-color 150ms var(--ease), color 150ms var(--ease);
-      }
-
-      #kazerWebAction:hover {
-        border-color: var(--line);
-        background: var(--card);
-        color: var(--text);
       }
 
       .future-badge {
@@ -1650,11 +1502,11 @@
         }
 
         .empty-state {
-          padding: 38vh 12px 176px;
+          padding: 31vh 12px 176px;
         }
 
         .app:not(.in-conversation) .composer-dock {
-          top: 59%;
+          top: 61%;
         }
 
         .empty-word {
@@ -1732,10 +1584,6 @@
           padding-left: 14px;
         }
 
-        .history-quick-row {
-          grid-auto-columns: 145px;
-        }
-
         .history-new-button {
           right: 22px;
           width: 62px;
@@ -1753,7 +1601,12 @@
 
       @media (min-width: 900px) {
         .empty-state {
-          padding-bottom: 198px;
+          padding-top: 22vh;
+          padding-bottom: 250px;
+        }
+
+        .app:not(.in-conversation) .composer-dock {
+          top: 66%;
         }
 
         .composer-dock {
@@ -1828,20 +1681,9 @@
           <button class="history-search-button icon-button" id="historySearchButton" type="button" aria-label="Pesquisar histórico"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-4-4"></path></svg></button>
         </div>
         <div class="history-screen-scroll">
-          <button class="restore-card" id="restoreCard" type="button"><span class="restore-symbol"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h11M4 12h8M4 17h6"></path><path d="M17 8v8M13 12h8"></path></svg></span><span><strong>Restaurar dados da sessão</strong><small>Continue de onde você parou</small></span><svg class="icon restore-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"></path></svg></button>
-          <div class="history-quick-row" aria-label="Atalhos do histórico">
-            <button class="history-quick-card trend-item" type="button" data-prompt="O que está acontecendo com GTA 6?"><span class="quick-icon"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 15 4-4 3 3 6-7"></path><path d="M14 7h4v4"></path></svg></span><strong>Atualizações</strong><small>Assuntos em alta</small></button>
-            <button class="history-quick-card trend-item" type="button" data-prompt="Organize minha agenda da semana."><span class="quick-icon"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8"></circle><path d="M12 8v5l3 2"></path></svg></span><strong>Agenda</strong><small>Planeje tarefas</small></button>
-            <button class="history-quick-card trend-item" type="button" data-prompt="Monte uma biblioteca de referências para este projeto."><span class="quick-icon"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 4h4v16H5zM10 4h4v16h-4zM15 4h4v16h-4z"></path></svg></span><strong>Biblioteca</strong><small>Suas referências</small></button>
-            <button class="history-quick-card trend-item" type="button" data-prompt="Organize este projeto em etapas."><span class="quick-icon"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h16M4 12h10M4 18h7"></path></svg></span><strong>Projetos</strong><small>Por contexto</small></button>
-          </div>
-          <div class="history-screen-title"><div><span class="history-eyebrow">CONVERSAS</span><h2>Suas conversas</h2></div><span class="history-count" id="historyCount">3/10</span></div>
-          <div class="history-items" id="historyItems">
-            <article class="history-item active" data-history="interface"><button class="history-open" type="button"><span class="history-ai-icon">AI</span><span class="drawer-copy"><strong>Interface do KAZER</strong><small>Hoje, 10:24</small></span></button><button class="history-delete" type="button" aria-label="Apagar conversa"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7l1-3h4l1 3"></path></svg></button></article>
-            <article class="history-item" data-history="tendencias"><button class="history-open" type="button"><span class="history-ai-icon">AI</span><span class="drawer-copy"><strong>Tendências da web</strong><small>Ontem, 19:42</small></span></button><button class="history-delete" type="button" aria-label="Apagar conversa"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7l1-3h4l1 3"></path></svg></button></article>
-            <article class="history-item" data-history="ideias"><button class="history-open" type="button"><span class="history-ai-icon">AI</span><span class="drawer-copy"><strong>Ideias criativas</strong><small>23 de ago., 14:08</small></span></button><button class="history-delete" type="button" aria-label="Apagar conversa"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7l1-3h4l1 3"></path></svg></button></article>
-          </div>
-          <div class="history-tool-strip"><div class="history-tool-label"><span>Ferramentas</span><small>organizadas para você</small></div><div class="history-tool-chips"><span>Artefatos</span><button id="kazerWebAction" type="button"><span class="web-dot"></span>Kazer Web</button><span>Projetos</span></div></div>
+          <div class="history-screen-title"><div><span class="history-eyebrow">CONVERSAS</span><h2>Suas conversas</h2></div><span class="history-count" id="historyCount">0/10</span></div>
+          <div class="history-items" id="historyItems"></div>
+          <div class="history-empty" id="historyEmpty"><span class="history-empty-icon"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 6.5h10A2.5 2.5 0 0 1 19.5 9v6a2.5 2.5 0 0 1-2.5 2.5h-6l-3.5 3v-3A2.5 2.5 0 0 1 5.5 15V9A2.5 2.5 0 0 1 8 6.5"></path><path d="M9 11h6M9 14h4"></path></svg></span><strong>Nenhuma conversa ainda</strong><small>As conversas que você iniciar aparecerão aqui.</small></div>
           <p class="history-limit-note" id="historyLimitNote">Você pode manter até 10 conversas. Apague uma para liberar espaço.</p>
         </div>
         <button class="history-new-button" id="historyNewChat" type="button" aria-label="Criar nova conversa"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path><path d="M19 15.5V19l-3.5.5"></path></svg></button>
@@ -1876,7 +1718,6 @@
         const webPopover = document.getElementById("webPopover");
         const historyAction = document.getElementById("historyAction");
         const proAction = document.getElementById("proAction");
-        const kazerWebAction = document.getElementById("kazerWebAction");
         const settingsAction = document.getElementById("settingsAction");
         const logoutAction = document.getElementById("logoutAction");
         const historyDrawer = document.getElementById("historyDrawer");
@@ -1885,8 +1726,8 @@
         const newChatButton = document.getElementById("newChatButton");
         const historyNewChat = document.getElementById("historyNewChat");
         const historySearchButton = document.getElementById("historySearchButton");
-        const restoreCard = document.getElementById("restoreCard");
         const historyCount = document.getElementById("historyCount");
+        const historyEmpty = document.getElementById("historyEmpty");
         const historyLimitNote = document.getElementById("historyLimitNote");
         const historyItems = document.getElementById("historyItems");
         const conversationArea = document.getElementById("conversationArea");
@@ -1908,7 +1749,7 @@
         const installDismiss = document.getElementById("installDismiss");
         let deferredInstallPrompt = null;
         const MAX_CHATS = 10;
-        let chatCount = 3;
+        let chatCount = 0;
         let currentChatId = "nova";
         let currentChatRegistered = false;
         let busy = false;
@@ -2013,9 +1854,13 @@
 
         const updateHistoryLimit = () => {
           historyCount.textContent = chatCount + "/" + MAX_CHATS;
+          historyEmpty.hidden = chatCount > 0;
           if (chatCount >= MAX_CHATS) {
             historyLimitNote.textContent = "Limite de 10 conversas atingido. Apague uma conversa para criar outra.";
             historyNewChat.classList.add("at-limit");
+          } else if (chatCount === 0) {
+            historyLimitNote.textContent = "Comece uma conversa para preencher seu Histórico.";
+            historyNewChat.classList.remove("at-limit");
           } else {
             historyLimitNote.textContent = "Você pode manter até 10 conversas. Apague uma para liberar espaço.";
             historyNewChat.classList.remove("at-limit");
@@ -2029,6 +1874,7 @@
             return false;
           }
           chatCount += 1;
+          historyEmpty.hidden = true;
           currentChatId = "chat-" + Date.now();
           currentChatRegistered = true;
           const article = document.createElement("article");
@@ -2167,26 +2013,28 @@
           messageInput.focus();
         };
 
+        const requestNewChat = () => {
+          if (chatCount >= MAX_CHATS) {
+            showToast("Limite de 10 conversas atingido. Apague uma anterior para liberar espaço.");
+            openHistory();
+            return;
+          }
+          reset();
+          closeHistoryDrawer();
+        };
+
         profileButton.addEventListener("click", (event) => {
           event.stopPropagation();
           toggleProfile();
         });
         historyAction.addEventListener("click", openHistory);
-        historyNewChat.addEventListener("click", () => {
-          if (chatCount >= MAX_CHATS) {
-            showToast("Limite de 10 conversas atingido. Apague uma anterior para criar outra.");
-            return;
-          }
-          reset();
-          closeHistoryDrawer();
-        });
+        historyNewChat.addEventListener("click", requestNewChat);
         historySearchButton.addEventListener("click", () => {
           closeHistoryDrawer();
           closeMenus();
           webPopover.classList.add("visible");
           webQuery.focus();
         });
-        restoreCard.addEventListener("click", () => showToast("Nenhuma sessão pendente para restaurar"));
         document.querySelectorAll(".history-tab").forEach((tab) => {
           tab.addEventListener("click", () => {
             document.querySelectorAll(".history-tab").forEach((entry) => {
@@ -2204,7 +2052,6 @@
           closeMenus();
           showToast("Kazer Pro: página de compra em breve");
         });
-        kazerWebAction.addEventListener("click", openWeb);
         webSearchForm.addEventListener("submit", (event) => {
           event.preventDefault();
           const query = webQuery.value.trim();
@@ -2216,7 +2063,7 @@
         });
         closeHistory.addEventListener("click", closeHistoryDrawer);
         drawerBackdrop.addEventListener("click", closeHistoryDrawer);
-        newChatButton.addEventListener("click", reset);
+        newChatButton.addEventListener("click", requestNewChat);
         document.addEventListener("click", (event) => {
           if (!event.target.closest(".profile-popover") && !event.target.closest("#profileButton") && !event.target.closest(".settings-popover") && !event.target.closest(".web-popover") && !event.target.closest(".history-drawer")) closeMenus();
         });
