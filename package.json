@@ -1,0 +1,13 @@
+{
+  "name": "kazer",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Kazer static interface with a secure Groq chat function",
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "mammoth": "^1.8.0",
+    "pdf-parse": "^1.1.1"
+  }
+}
