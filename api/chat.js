@@ -1,5 +1,8 @@
 const DEFAULT_TEXT_MODEL = "openai/gpt-oss-120b";
 const DEFAULT_VISION_MODEL = "qwen/qwen3.8-27b";
+const DEFAULT_VISION_FALLBACK_MODEL = "qwen/qwen3.6-27b";
+const MAX_GROQ_ATTEMPTS_PER_MODEL = 2;
+const RETRYABLE_GROQ_STATUSES = new Set([429, 500, 502, 503, 504]);
 const MAX_MESSAGES = 24;
 const MAX_MESSAGE_CHARS = 8000;
 const MAX_TOTAL_CHARS = 32000;
@@ -160,6 +163,54 @@ async function prepareAttachments(attachments) {
   };
 }
 
+function wait(milliseconds) {
+  return new Promise((resolve) => setTimeout(resolve, milliseconds));
+}
+
+async function callGroq({ apiKey, models, messages, hasImages }) {
+  let lastFailure = null;
+
+  for (const model of models) {
+    for (let attempt = 0; attempt < MAX_GROQ_ATTEMPTS_PER_MODEL; attempt += 1) {
+      try {
+        const groqResponse = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${apiKey}`,
+          },
+          body: JSON.stringify({
+            model,
+            messages: [{ role: "system", content: SYSTEM_PROMPT }, ...messages],
+            temperature: hasImages ? 0.7 : 0.6,
+            reasoning_effort: process.env.GROQ_REASONING_EFFORT || "medium",
+            max_completion_tokens: 1200,
+          }),
+        });
+
+        const data = await groqResponse.json().catch(() => null);
+        if (groqResponse.ok) return { data, model };
+
+        lastFailure = {
+          status: groqResponse.status,
+          model,
+          error: data?.error?.message || "unknown",
+        };
+
+        if (!RETRYABLE_GROQ_STATUSES.has(groqResponse.status)) break;
+      } catch (error) {
+        lastFailure = { status: 0, model, error: error?.message || "network_error" };
+      }
+
+      if (attempt < MAX_GROQ_ATTEMPTS_PER_MODEL - 1) {
+        await wait(250 * 2 ** attempt);
+      }
+    }
+  }
+
+  return { failure: lastFailure };
+}
+
 module.exports = async function handler(request, response) {
   if (request.method !== "POST") {
     response.setHeader("Allow", "POST");
@@ -199,9 +250,12 @@ module.exports = async function handler(request, response) {
   }
 
   const hasImages = prepared.imageParts.length > 0;
-  const model = hasImages
-    ? process.env.GROQ_VISION_MODEL || DEFAULT_VISION_MODEL
-    : process.env.GROQ_MODEL || DEFAULT_TEXT_MODEL;
+  const models = hasImages
+    ? [
+        process.env.GROQ_VISION_MODEL || DEFAULT_VISION_MODEL,
+        process.env.GROQ_VISION_FALLBACK_MODEL || DEFAULT_VISION_FALLBACK_MODEL,
+      ].filter((value, index, values) => values.indexOf(value) === index)
+    : [process.env.GROQ_MODEL || DEFAULT_TEXT_MODEL];
   const lastMessage = messages[messages.length - 1];
   const fileInstruction = prepared.fileContext
     ? `\n\nUse os anexos abaixo como contexto para responder:\n\n${prepared.fileContext}`
@@ -215,41 +269,22 @@ module.exports = async function handler(request, response) {
     { role: "user", content: latestContent },
   ];
 
-  try {
-    const groqResponse = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify({
-        model,
-        messages: [{ role: "system", content: SYSTEM_PROMPT }, ...apiMessages],
-        temperature: hasImages ? 0.7 : 0.6,
-        reasoning_effort: process.env.GROQ_REASONING_EFFORT || "medium",
-        max_completion_tokens: 1200,
-      }),
-    });
+  const result = await callGroq({ apiKey, models, messages: apiMessages, hasImages });
+  if (result.failure) {
+    console.error("Groq request failed", result.failure);
+    return sendJson(response, 502, { error: "A Groq não conseguiu responder agora. Tente novamente." });
+  }
 
-    const data = await groqResponse.json().catch(() => null);
-    if (!groqResponse.ok) {
-      console.error("Groq request failed", { status: groqResponse.status, model, error: data?.error?.message || "unknown" });
-      return sendJson(response, 502, { error: "A Groq não conseguiu responder agora. Tente novamente." });
-    }
-
-    const content = data?.choices?.[0]?.message?.content;
+  const { data, model } = result;
+  const content = data?.choices?.[0]?.message?.content;
     if (typeof content !== "string" || !content.trim()) {
       console.error("Groq returned an empty response", { model });
       return sendJson(response, 502, { error: "A resposta recebida estava vazia. Tente novamente." });
     }
 
-    return sendJson(response, 200, {
-      model,
-      message: { role: "assistant", content: content.trim() },
-      attachments: prepared.fileNames,
-    });
-  } catch (error) {
-    console.error("Chat request failed", { model, error: error?.message || "unknown" });
-    return sendJson(response, 502, { error: "Não foi possível conectar ao serviço de chat." });
-  }
+  return sendJson(response, 200, {
+    model,
+    message: { role: "assistant", content: content.trim() },
+    attachments: prepared.fileNames,
+  });
 };
