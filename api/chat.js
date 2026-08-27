@@ -173,19 +173,25 @@ async function callGroq({ apiKey, models, messages, hasImages }) {
   for (const model of models) {
     for (let attempt = 0; attempt < MAX_GROQ_ATTEMPTS_PER_MODEL; attempt += 1) {
       try {
+        const requestBody = {
+          model,
+          messages: [{ role: "system", content: SYSTEM_PROMPT }, ...messages],
+          temperature: hasImages ? 0.7 : 0.6,
+          max_completion_tokens: 1200,
+        };
+
+        // GPT OSS aceita níveis como medium; os modelos Qwen exigem none/default.
+        if (!model.startsWith("qwen/")) {
+          requestBody.reasoning_effort = process.env.GROQ_REASONING_EFFORT || "medium";
+        }
+
         const groqResponse = await fetch("https://api.groq.com/openai/v1/chat/completions", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${apiKey}`,
           },
-          body: JSON.stringify({
-            model,
-            messages: [{ role: "system", content: SYSTEM_PROMPT }, ...messages],
-            temperature: hasImages ? 0.7 : 0.6,
-            reasoning_effort: process.env.GROQ_REASONING_EFFORT || "medium",
-            max_completion_tokens: 1200,
-          }),
+          body: JSON.stringify(requestBody),
         });
 
         const data = await groqResponse.json().catch(() => null);
