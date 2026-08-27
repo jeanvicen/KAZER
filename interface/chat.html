@@ -1,0 +1,1013 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
+    <meta name="theme-color" content="#f7f7f7" />
+    <title>arrumador</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --background: oklch(0.971 0 0);
+        --foreground: oklch(0.16 0 0);
+        --card: oklch(1 0 0);
+        --card-foreground: oklch(0.16 0 0);
+        --popover: oklch(1 0 0);
+        --popover-foreground: oklch(0.16 0 0);
+        --primary: oklch(0.19 0 0);
+        --primary-foreground: oklch(0.985 0 0);
+        --secondary: oklch(0.94 0 0);
+        --secondary-foreground: oklch(0.19 0 0);
+        --muted: oklch(0.94 0 0);
+        --muted-foreground: oklch(0.6 0 0);
+        --accent: oklch(0.94 0 0);
+        --accent-foreground: oklch(0.19 0 0);
+        --destructive: oklch(0.577 0.245 27.325);
+        --border: oklch(0.916 0 0);
+        --input: oklch(0.916 0 0);
+        --ring: oklch(0.708 0 0);
+        --radius: 0.625rem;
+        --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+      }
+
+      @media (prefers-color-scheme: dark) {
+        :root {
+          color-scheme: dark;
+          --background: oklch(0.145 0 0);
+          --foreground: oklch(0.985 0 0);
+          --card: oklch(0.205 0 0);
+          --card-foreground: oklch(0.985 0 0);
+          --popover: oklch(0.205 0 0);
+          --popover-foreground: oklch(0.985 0 0);
+          --primary: oklch(0.922 0 0);
+          --primary-foreground: oklch(0.205 0 0);
+          --secondary: oklch(0.269 0 0);
+          --secondary-foreground: oklch(0.985 0 0);
+          --muted: oklch(0.269 0 0);
+          --muted-foreground: oklch(0.708 0 0);
+          --accent: oklch(0.269 0 0);
+          --accent-foreground: oklch(0.985 0 0);
+          --destructive: oklch(0.704 0.191 22.216);
+          --border: oklch(1 0 0 / 10%);
+          --input: oklch(1 0 0 / 15%);
+          --ring: oklch(0.556 0 0);
+        }
+      }
+
+      * {
+        box-sizing: border-box;
+        border-color: var(--border);
+      }
+
+      [hidden] {
+        display: none !important;
+      }
+
+      html,
+      body {
+        width: 100%;
+        height: 100%;
+        min-height: 100%;
+        margin: 0;
+        overflow: hidden;
+        background: var(--background);
+      }
+
+      body,
+      button,
+      textarea {
+        font-family: "Geist", "Geist Fallback", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+          "Segoe UI", sans-serif;
+      }
+
+      body {
+        color: var(--foreground);
+      }
+
+      button,
+      textarea {
+        font: inherit;
+      }
+
+      button {
+        border: 0;
+      }
+
+      button:focus-visible,
+      textarea:focus-visible,
+      summary:focus-visible {
+        outline: 2px solid var(--ring);
+        outline-offset: 2px;
+      }
+
+      .icon {
+        width: 1rem;
+        height: 1rem;
+        flex: 0 0 auto;
+        pointer-events: none;
+      }
+
+      .chat-app {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+        height: 100dvh;
+        min-height: 100%;
+        overflow: hidden;
+        background: var(--background);
+        color: var(--foreground);
+      }
+
+      .chat-header {
+        position: fixed;
+        z-index: 20;
+        top: 0;
+        right: 0;
+        left: 0;
+        height: 3.5rem;
+        pointer-events: none;
+      }
+
+      .header-inner {
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        max-width: 48rem;
+        height: 100%;
+        margin: 0 auto;
+        padding: 0 6rem;
+        background: var(--background);
+      }
+
+      .agent-label {
+        overflow: hidden;
+        color: var(--muted-foreground);
+        font-size: 0.875rem;
+        line-height: 1.25rem;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .new-chat-button {
+        position: fixed;
+        top: 0.5rem;
+        right: 1.5rem;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.45rem;
+        height: 2.25rem;
+        padding: 0 0.7rem;
+        border-radius: 0.375rem;
+        background: transparent;
+        color: var(--foreground);
+        font-size: 0.875rem;
+        line-height: 1.25rem;
+        cursor: pointer;
+        pointer-events: auto;
+        transition: background-color 160ms var(--ease-out), color 160ms var(--ease-out), transform 160ms var(--ease-out);
+      }
+
+      .new-chat-button:hover {
+        background: var(--accent);
+      }
+
+      .new-chat-button:active,
+      .send-button:active,
+      .scroll-button:active {
+        transform: scale(0.97);
+      }
+
+      .new-chat-button .icon {
+        width: 1rem;
+        height: 1rem;
+      }
+
+      .conversation {
+        position: relative;
+        display: flex;
+        flex: 1 1 auto;
+        min-height: 0;
+        overflow-y: auto;
+        overscroll-behavior: contain;
+        scrollbar-width: thin;
+        scrollbar-color: var(--border) transparent;
+        scroll-behavior: smooth;
+      }
+
+      .conversation::-webkit-scrollbar {
+        width: 0.55rem;
+      }
+
+      .conversation::-webkit-scrollbar-thumb {
+        border: 0.15rem solid transparent;
+        border-radius: 999px;
+        background: var(--border);
+        background-clip: padding-box;
+      }
+
+      .conversation-content {
+        display: flex;
+        flex-direction: column;
+        gap: 2rem;
+        width: 100%;
+        max-width: 48rem;
+        min-height: 100%;
+        margin: 0 auto;
+        padding: 5rem 1rem 9rem;
+      }
+
+      .message-row {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+        width: 100%;
+        max-width: 95%;
+        animation: message-in 260ms var(--ease-out) both;
+      }
+
+      .message-row.user {
+        align-items: flex-end;
+        margin-left: auto;
+      }
+
+      .message-row.assistant {
+        align-items: flex-start;
+        max-width: 100%;
+      }
+
+      .message-content {
+        min-width: 0;
+        max-width: 100%;
+        overflow: hidden;
+        font-size: 0.875rem;
+        line-height: 1.5;
+      }
+
+      .message-row.user .message-content {
+        width: fit-content;
+        margin-left: auto;
+        padding: 0.625rem 1rem;
+        border-radius: 1rem;
+        background: var(--primary);
+        color: var(--primary-foreground);
+      }
+
+      .message-row.user.optimistic .message-content {
+        opacity: 0.7;
+      }
+
+      .message-row.assistant .message-content {
+        width: 100%;
+        color: var(--foreground);
+      }
+
+      .assistant-text {
+        margin: 0;
+        white-space: pre-wrap;
+        overflow-wrap: anywhere;
+      }
+
+      .assistant-text + .assistant-text {
+        margin-top: 0.75rem;
+      }
+
+      .thinking-row {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        width: 100%;
+        color: var(--muted-foreground);
+        font-size: 0.875rem;
+        line-height: 1.25rem;
+        animation: message-in 260ms var(--ease-out) both;
+      }
+
+      .thinking-row .icon {
+        width: 1rem;
+        height: 1rem;
+      }
+
+      .shimmer {
+        position: relative;
+        display: inline-block;
+        overflow: hidden;
+        color: transparent;
+        background-image: linear-gradient(
+            90deg,
+            transparent calc(50% - 2.5rem),
+            var(--background),
+            transparent calc(50% + 2.5rem)
+          ),
+          linear-gradient(var(--muted-foreground), var(--muted-foreground));
+        background-repeat: no-repeat;
+        background-size: 250% 100%, auto;
+        background-clip: text;
+        -webkit-background-clip: text;
+        animation: shimmer 1s linear infinite;
+      }
+
+      .caret::after {
+        display: inline-block;
+        width: 0.45rem;
+        height: 1.1em;
+        margin-left: 0.1rem;
+        vertical-align: -0.16em;
+        border-radius: 0.12rem;
+        background: currentColor;
+        content: "";
+        animation: caret-blink 1s steps(2, jump-none) infinite;
+      }
+
+      .prompt-wrap {
+        position: relative;
+        z-index: 10;
+        display: flex;
+        flex: 1 1 auto;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 2rem;
+        width: 100%;
+        max-width: 36rem;
+        margin: 0 auto;
+        padding: 0 1rem 10vh;
+      }
+
+      .prompt-wrap.has-conversation {
+        position: fixed;
+        right: auto;
+        bottom: 0;
+        left: 50%;
+        display: block;
+        max-width: 48rem;
+        margin: 0;
+        padding: 1rem 1rem 1.5rem;
+        background: linear-gradient(to top, var(--background) 0%, var(--background) 48%, transparent 100%);
+        transform: translateX(-50%);
+      }
+
+      .empty-intro {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.75rem;
+        text-align: center;
+        animation: empty-in 420ms var(--ease-out) both;
+      }
+
+      .empty-intro h1 {
+        margin: 0;
+        color: var(--foreground);
+        font-size: clamp(3rem, 8vw, 4.5rem);
+        font-weight: 500;
+        letter-spacing: -0.075em;
+        line-height: 1;
+      }
+
+      .composer {
+        width: 100%;
+      }
+
+      .input-group {
+        position: relative;
+        display: flex;
+        align-items: center;
+        width: 100%;
+        min-width: 0;
+        min-height: 4.5rem;
+        overflow: hidden;
+        border: 1px solid var(--input);
+        border-radius: 1rem;
+        background: var(--card);
+        box-shadow: 0 1px 2px rgb(0 0 0 / 0.05);
+        transition: border-color 160ms var(--ease-out), box-shadow 160ms var(--ease-out);
+      }
+
+      .input-group:focus-within {
+        border-color: var(--foreground);
+        box-shadow: 0 0 0 3px color-mix(in oklab, var(--ring) 50%, transparent);
+      }
+
+      .message-input {
+        display: block;
+        flex: 1 1 auto;
+        width: 100%;
+        min-width: 0;
+        min-height: 4.5rem;
+        max-height: 12rem;
+        padding: 0.75rem 3.5rem 0.75rem 1rem;
+        resize: none;
+        border: 0;
+        outline: 0;
+        overflow-y: auto;
+        background: transparent;
+        color: var(--foreground);
+        font-size: 0.9375rem;
+        line-height: 1.5;
+      }
+
+      .message-input::placeholder {
+        color: var(--muted-foreground);
+        opacity: 1;
+      }
+
+      .send-button {
+        position: absolute;
+        right: 0.625rem;
+        bottom: 0.625rem;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 2rem;
+        height: 2rem;
+        border-radius: 999px;
+        background: var(--primary);
+        color: var(--primary-foreground);
+        cursor: pointer;
+        transition: filter 160ms var(--ease-out), opacity 160ms var(--ease-out), transform 160ms var(--ease-out);
+      }
+
+      .send-button:hover {
+        filter: brightness(1.12);
+      }
+
+      .send-button:disabled {
+        cursor: default;
+        opacity: 0.45;
+      }
+
+      .send-button .icon {
+        width: 1rem;
+        height: 1rem;
+      }
+
+      .stop-button {
+        display: none;
+      }
+
+      .conversation.is-busy .send-button {
+        display: none;
+      }
+
+      .conversation.is-busy .stop-button {
+        display: inline-flex;
+        background: var(--primary);
+      }
+
+      .scroll-button {
+        position: absolute;
+        bottom: 8rem;
+        left: 50%;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 2.5rem;
+        height: 2.5rem;
+        border: 1px solid var(--border);
+        border-radius: 999px;
+        background: var(--card);
+        color: var(--foreground);
+        box-shadow: 0 1px 2px rgb(0 0 0 / 0.05);
+        cursor: pointer;
+        transform: translateX(-50%);
+        transition: background-color 160ms var(--ease-out), transform 160ms var(--ease-out);
+      }
+
+      .scroll-button:hover {
+        background: var(--muted);
+      }
+
+      .scroll-button .icon {
+        width: 1rem;
+        height: 1rem;
+      }
+
+      .reasoning,
+      .tool-card,
+      .question-card,
+      .attachment-card,
+      .error-card {
+        width: 100%;
+        margin-bottom: 1rem;
+      }
+
+      .reasoning summary,
+      .tool-header {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        width: 100%;
+        color: var(--muted-foreground);
+        font-size: 0.875rem;
+        line-height: 1.25rem;
+        cursor: pointer;
+        list-style: none;
+        transition: color 160ms var(--ease-out);
+      }
+
+      .reasoning summary::-webkit-details-marker {
+        display: none;
+      }
+
+      .reasoning summary:hover,
+      .tool-header:hover {
+        color: var(--foreground);
+      }
+
+      .reasoning summary .chevron,
+      .tool-header .chevron {
+        margin-left: auto;
+        transition: transform 180ms var(--ease-out);
+      }
+
+      .reasoning[open] summary .chevron,
+      .tool-card[open] .tool-header .chevron {
+        transform: rotate(180deg);
+      }
+
+      .reasoning-content {
+        margin-top: 1rem;
+        padding-left: 1.5rem;
+        color: var(--muted-foreground);
+        font-size: 0.875rem;
+        line-height: 1.5;
+        animation: panel-in 180ms var(--ease-out) both;
+      }
+
+      .tool-card {
+        overflow: hidden;
+        border: 1px solid var(--border);
+        border-radius: 0.375rem;
+      }
+
+      .tool-header {
+        justify-content: space-between;
+        padding: 0.75rem;
+        color: var(--foreground);
+      }
+
+      .tool-title {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        min-width: 0;
+      }
+
+      .tool-title > span {
+        overflow: hidden;
+        font-weight: 500;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .tool-status {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        padding: 0.2rem 0.55rem;
+        border-radius: 999px;
+        background: var(--secondary);
+        color: var(--muted-foreground);
+        font-size: 0.75rem;
+        font-weight: 500;
+        white-space: nowrap;
+      }
+
+      .tool-status .status-dot {
+        width: 0.45rem;
+        height: 0.45rem;
+        border-radius: 999px;
+        background: #3ca86b;
+      }
+
+      .tool-body {
+        display: grid;
+        gap: 1rem;
+        padding: 1rem;
+        border-top: 1px solid var(--border);
+        animation: panel-in 180ms var(--ease-out) both;
+      }
+
+      .code-label {
+        margin: 0 0 0.5rem;
+        color: var(--muted-foreground);
+        font-size: 0.6875rem;
+        font-weight: 600;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      .code-block {
+        margin: 0;
+        padding: 0.75rem;
+        overflow-x: auto;
+        border-radius: 0.375rem;
+        background: color-mix(in oklab, var(--muted) 60%, transparent);
+        color: var(--foreground);
+        font-family: "Geist Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-size: 0.75rem;
+        line-height: 1.5;
+        white-space: pre-wrap;
+      }
+
+      .question-card {
+        display: grid;
+        gap: 1rem;
+        padding: 1rem;
+        border: 1px solid var(--border);
+        border-radius: 0.625rem;
+        background: var(--background);
+      }
+
+      .question-card p {
+        margin: 0;
+        font-size: 0.875rem;
+        line-height: 1.4;
+      }
+
+      .question-options {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+      }
+
+      .question-option,
+      .question-submit {
+        min-height: 2.25rem;
+        padding: 0.5rem 0.75rem;
+        border: 1px solid var(--border);
+        border-radius: 0.375rem;
+        background: transparent;
+        color: var(--foreground);
+        font-size: 0.875rem;
+        text-align: left;
+        cursor: pointer;
+        transition: background-color 160ms var(--ease-out), border-color 160ms var(--ease-out);
+      }
+
+      .question-option:hover,
+      .question-option.selected {
+        border-color: var(--foreground);
+        background: var(--accent);
+      }
+
+      .question-option small {
+        display: block;
+        margin-top: 0.2rem;
+        color: var(--muted-foreground);
+        font-size: 0.75rem;
+      }
+
+      .question-footer {
+        display: flex;
+        justify-content: flex-end;
+      }
+
+      .question-submit {
+        border-color: var(--primary);
+        background: var(--primary);
+        color: var(--primary-foreground);
+        text-align: center;
+      }
+
+      .attachment-card {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        max-width: 24rem;
+        padding: 0.5rem;
+        border: 1px solid var(--border);
+        border-radius: 0.375rem;
+        background: color-mix(in oklab, var(--background) 60%, transparent);
+        font-size: 0.875rem;
+      }
+
+      .attachment-icon {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 2.5rem;
+        height: 2.5rem;
+        border-radius: 0.25rem;
+        background: var(--muted);
+        color: var(--muted-foreground);
+      }
+
+      .attachment-copy {
+        min-width: 0;
+        flex: 1;
+      }
+
+      .attachment-name,
+      .attachment-meta {
+        display: block;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .attachment-name {
+        font-weight: 500;
+      }
+
+      .attachment-meta {
+        margin-top: 0.15rem;
+        color: var(--muted-foreground);
+        font-size: 0.75rem;
+      }
+
+      .error-card {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.75rem;
+        padding: 0.625rem 0.75rem;
+        border: 1px solid color-mix(in oklab, var(--destructive) 30%, transparent);
+        border-radius: 0.5rem;
+        background: color-mix(in oklab, var(--destructive) 5%, transparent);
+        color: var(--foreground);
+        font-size: 0.875rem;
+      }
+
+      .error-card .icon {
+        margin-top: 0.125rem;
+        color: var(--destructive);
+      }
+
+      .error-card strong,
+      .error-card span {
+        display: block;
+      }
+
+      .error-card span {
+        margin-top: 0.125rem;
+        color: var(--muted-foreground);
+      }
+
+      .sr-only {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        border: 0;
+      }
+
+      @keyframes message-in {
+        from {
+          opacity: 0;
+          transform: translateY(0.45rem);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      @keyframes empty-in {
+        from {
+          opacity: 0;
+          transform: translateY(0.5rem);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      @keyframes shimmer {
+        from {
+          background-position: 100% center, 0 0;
+        }
+        to {
+          background-position: 0% center, 0 0;
+        }
+      }
+
+      @keyframes caret-blink {
+        0%,
+        45% {
+          opacity: 1;
+        }
+        46%,
+        100% {
+          opacity: 0;
+        }
+      }
+
+      @keyframes panel-in {
+        from {
+          opacity: 0;
+          transform: translateY(-0.35rem);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      @media (min-width: 40rem) {
+        .conversation-content {
+          padding-right: 1.5rem;
+          padding-left: 1.5rem;
+        }
+
+        .prompt-wrap {
+          padding-right: 1.5rem;
+          padding-left: 1.5rem;
+        }
+
+        .prompt-wrap.has-conversation {
+          padding-right: 1.5rem;
+          padding-left: 1.5rem;
+        }
+      }
+
+      @media (max-width: 30rem) {
+        .header-inner {
+          padding-right: 5.25rem;
+          padding-left: 5.25rem;
+        }
+
+        .new-chat-button {
+          right: 0.75rem;
+          padding: 0 0.55rem;
+        }
+
+        .new-chat-button span {
+          display: none;
+        }
+      }
+
+      @media (max-height: 40rem) {
+        .prompt-wrap {
+          gap: 1.25rem;
+          padding-bottom: 5vh;
+        }
+
+        .empty-intro h1 {
+          font-size: clamp(2.5rem, 9vw, 3.5rem);
+        }
+
+        .input-group,
+        .message-input {
+          min-height: 3.75rem;
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+          scroll-behavior: auto !important;
+          animation-duration: 0.01ms !important;
+          animation-iteration-count: 1 !important;
+          transition-duration: 0.01ms !important;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="chat-app" aria-label="Arrumador chat interface">
+      <header class="chat-header" id="chatHeader" hidden>
+        <div class="header-inner">
+          <span class="agent-label">arrumador</span>
+          <button class="new-chat-button" id="newChatButton" type="button" aria-label="Start a new chat">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M12 5v14"></path>
+              <path d="M5 12h14"></path>
+            </svg>
+            <span>New chat</span>
+          </button>
+        </div>
+      </header>
+
+      <section class="conversation" id="conversation" role="log" aria-live="polite" hidden>
+        <div class="conversation-content" id="conversationContent"></div>
+        <button class="scroll-button" id="scrollButton" type="button" aria-label="Scroll to bottom" hidden>
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M12 5v14"></path>
+            <path d="m19 12-7 7-7-7"></path>
+          </svg>
+        </button>
+      </section>
+
+      <section class="prompt-wrap" id="promptWrap">
+        <div class="empty-intro" id="emptyIntro">
+          <h1>arrumador</h1>
+        </div>
+        <form class="composer" id="composer" autocomplete="off">
+          <div class="input-group">
+            <textarea
+              class="message-input"
+              id="messageInput"
+              name="message"
+              rows="1"
+              placeholder="Send a message…"
+              aria-label="Message"
+              spellcheck="true"
+            ></textarea>
+            <button class="send-button" id="sendButton" type="submit" aria-label="Submit">
+              <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="m5 12 14-7-4 14-3-6-7-1Z"></path>
+                <path d="M12 13 19 5"></path>
+              </svg>
+            </button>
+            <button class="send-button stop-button" id="stopButton" type="button" aria-label="Stop">
+              <svg class="icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <rect x="6" y="6" width="12" height="12" rx="2"></rect>
+              </svg>
+            </button>
+          </div>
+        </form>
+      </section>
+    </main>
+
+    <template id="visualStates">
+      <details class="reasoning">
+        <summary>
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M9 18h6"></path>
+            <path d="M10 22h4"></path>
+            <path d="M15.5 14.5c1.6-1.1 2.5-2.8 2.5-4.7A6 6 0 0 0 6 9.8c0 1.9.9 3.6 2.5 4.7.9.6 1.5 1.5 1.5 2.5h4c0-1 .6-1.9 1.5-2.5Z"></path>
+          </svg>
+          <span>Thought for a few seconds</span>
+          <svg class="icon chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="m6 9 6 6 6-6"></path>
+          </svg>
+        </summary>
+        <div class="reasoning-content">Planning the response and checking the available context.</div>
+      </details>
+
+      <details class="tool-card">
+        <summary class="tool-header">
+          <span class="tool-title">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="m14.7 6.3 3 3"></path>
+              <path d="M4 20h4l10.5-10.5a2.1 2.1 0 0 0-3-3L5 17v3Z"></path>
+              <path d="m12 8-1.5-1.5a2 2 0 0 0-3 0L6 8l3 3"></path>
+            </svg>
+            <span>web_search</span>
+            <span class="tool-status"><i class="status-dot"></i>Completed</span>
+          </span>
+          <svg class="icon chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="m6 9 6 6 6-6"></path>
+          </svg>
+        </summary>
+        <div class="tool-body">
+          <div>
+            <p class="code-label">Parameters</p>
+            <pre class="code-block">{
+  "query": "arrumador"
+}</pre>
+          </div>
+          <div>
+            <p class="code-label">Result</p>
+            <pre class="code-block">{
+  "status": "ok"
+}</pre>
+          </div>
+        </div>
+      </details>
+
+      <div class="question-card">
+        <p><strong>Which direction should we take?</strong></p>
+        <div class="question-options" role="radiogroup" aria-label="Which direction should we take?">
+          <button class="question-option" type="button">Keep it concise<small>A focused answer with the essentials.</small></button>
+          <button class="question-option" type="button">Go deeper<small>More context and step-by-step detail.</small></button>
+        </div>
+        <div class="question-footer"><button class="question-submit" type="button">Answer</button></div>
+      </div>
+
+      <div class="attachment-card">
+        <span class="attachment-icon">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2Z"></path>
+            <path d="M14 2v6h6"></path>
+          </svg>
+        </span>
+        <span class="attachment-copy"><span class="attachment-name">reference.pdf</span><span class="attachment-meta">application/pdf · 214 KB</span></span>
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M14 3h7v7"></path>
+          <path d="M10 14 21 3"></path>
+          <path d="M21 14v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5"></path>
+        </svg>
+      </div>
+
+      <div class="error-card" role="alert">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="12" cy="12" r="10"></circle>
+          <path d="M12 8v4"></path>
+          <path d="M12 16h.01"></path>
+        </svg>
+        <div><strong>Request failed</strong><span>The model is temporarily unavailable. Please try again.</span></div>
+      </div>
+    </template>
+
+  </body>
+</html>
