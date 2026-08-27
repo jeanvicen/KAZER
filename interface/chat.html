@@ -5,6 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover" />
     <meta name="theme-color" content="#070707" />
     <title>KAZER</title>
+    <meta name="description" content="Kazer: converse, organize e crie em um espaço inteligente." />
+    <link rel="manifest" href="../download/manifest.webmanifest" />
+    <link rel="icon" href="../download/assets/kazer-logo.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="../download/icons/kazer-192.png" />
     <style>
       :root {
         color-scheme: dark;
@@ -1445,6 +1449,115 @@
         transform: translateX(16px);
       }
 
+      .install-banner {
+        position: fixed;
+        z-index: 110;
+        top: 86px;
+        right: clamp(16px, 4vw, 40px);
+        display: flex;
+        align-items: center;
+        gap: 13px;
+        width: min(390px, calc(100vw - 32px));
+        padding: 13px;
+        border: 1px solid var(--line);
+        border-radius: 17px;
+        background: color-mix(in srgb, var(--card) 94%, transparent);
+        box-shadow: 0 18px 48px rgba(0, 0, 0, 0.42);
+        opacity: 0;
+        pointer-events: none;
+        transform: translateY(-12px) scale(0.98);
+        transition: opacity 190ms var(--ease), transform 220ms var(--ease);
+        backdrop-filter: blur(18px);
+      }
+
+      .install-banner.visible {
+        opacity: 1;
+        pointer-events: auto;
+        transform: translateY(0) scale(1);
+      }
+
+      .install-logo {
+        width: 44px;
+        height: 44px;
+        flex: 0 0 auto;
+        border-radius: 13px;
+        box-shadow: 0 8px 18px rgba(0, 0, 0, 0.32);
+      }
+
+      .install-copy {
+        min-width: 0;
+        flex: 1;
+      }
+
+      .install-copy strong,
+      .install-copy small {
+        display: block;
+      }
+
+      .install-copy strong {
+        color: var(--text);
+        font-size: 13px;
+        font-weight: 650;
+      }
+
+      .install-copy small {
+        margin-top: 4px;
+        color: var(--text-dim);
+        font-size: 10px;
+        line-height: 1.35;
+      }
+
+      .install-actions {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        margin-top: 8px;
+      }
+
+      .install-actions button {
+        min-height: 30px;
+        padding: 0 10px;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        background: var(--card-2);
+        color: var(--text-soft);
+        font: inherit;
+        font-size: 10px;
+        cursor: pointer;
+      }
+
+      .install-actions .install-primary {
+        border-color: transparent;
+        background: var(--text);
+        color: var(--page);
+      }
+
+      .install-actions button:hover {
+        border-color: var(--text-dim);
+        color: var(--text);
+      }
+
+      .install-actions .install-primary:hover {
+        background: var(--text-soft);
+        color: var(--page);
+      }
+
+      .install-dismiss {
+        align-self: flex-start;
+        width: 25px;
+        height: 25px;
+        padding: 0 !important;
+        border: 0 !important;
+        background: transparent !important;
+        color: var(--text-dim) !important;
+        font-size: 18px !important;
+        line-height: 1;
+      }
+
+      .install-dismiss:hover {
+        color: var(--text) !important;
+      }
+
       .toast {
         position: absolute;
         z-index: 100;
@@ -1663,6 +1776,15 @@
   </head>
   <body>
     <main class="app" id="app">
+      <aside class="install-banner" id="installBanner" aria-live="polite" hidden>
+        <img class="install-logo" src="../download/icons/kazer-192.png" alt="Logo Kazer" />
+        <div class="install-copy">
+          <strong>Instalar Kazer?</strong>
+          <small>Tenha o Kazer na sua tela inicial para abrir mais rápido.</small>
+          <div class="install-actions"><button class="install-primary" id="installNow" type="button">Instalar agora</button><button id="installLater" type="button">Agora não</button></div>
+        </div>
+        <button class="install-dismiss" id="installDismiss" type="button" aria-label="Fechar aviso">×</button>
+      </aside>
       <header class="topbar" aria-label="Barra de conversa">
         <span class="conversation-title">KAZER</span>
         <button class="new-chat-button" id="newChatButton" type="button" aria-label="Nova conversa" hidden>+</button>
@@ -1780,6 +1902,11 @@
         const webSources = document.getElementById("webSources");
         const webEmpty = document.getElementById("webEmpty");
         const toast = document.getElementById("toast");
+        const installBanner = document.getElementById("installBanner");
+        const installNow = document.getElementById("installNow");
+        const installLater = document.getElementById("installLater");
+        const installDismiss = document.getElementById("installDismiss");
+        let deferredInstallPrompt = null;
         const MAX_CHATS = 10;
         let chatCount = 3;
         let currentChatId = "nova";
@@ -1793,6 +1920,32 @@
           toast.classList.add("visible");
           window.clearTimeout(toastTimer);
           toastTimer = window.setTimeout(() => toast.classList.remove("visible"), 2300);
+        };
+
+        const isStandalone = () => window.matchMedia?.("(display-mode: standalone)").matches || window.navigator.standalone === true;
+
+        const showInstallBanner = () => {
+          if (isStandalone() || sessionStorage.getItem("kazer-install-dismissed") === "1") return;
+          installBanner.hidden = false;
+          requestAnimationFrame(() => installBanner.classList.add("visible"));
+        };
+
+        const hideInstallBanner = (remember = false) => {
+          installBanner.classList.remove("visible");
+          if (remember) sessionStorage.setItem("kazer-install-dismissed", "1");
+          window.setTimeout(() => { installBanner.hidden = true; }, 230);
+        };
+
+        const installKazer = async () => {
+          if (deferredInstallPrompt) {
+            deferredInstallPrompt.prompt();
+            const choice = await deferredInstallPrompt.userChoice;
+            deferredInstallPrompt = null;
+            hideInstallBanner(true);
+            showToast(choice.outcome === "accepted" ? "Kazer instalado" : "Instalação cancelada");
+            return;
+          }
+          showToast("Use o menu do navegador e escolha Adicionar à tela inicial");
         };
 
         const closeMenus = () => {
@@ -2127,6 +2280,24 @@
         });
 
         updateHistoryLimit();
+
+        installNow.addEventListener("click", installKazer);
+        installLater.addEventListener("click", () => hideInstallBanner(true));
+        installDismiss.addEventListener("click", () => hideInstallBanner(true));
+        window.addEventListener("beforeinstallprompt", (event) => {
+          event.preventDefault();
+          deferredInstallPrompt = event;
+          showInstallBanner();
+        });
+        window.addEventListener("appinstalled", () => {
+          deferredInstallPrompt = null;
+          hideInstallBanner(true);
+          showToast("Kazer instalado com sucesso");
+        });
+        window.setTimeout(showInstallBanner, 1400);
+        if ("serviceWorker" in navigator && /^https?:$/.test(window.location.protocol)) {
+          navigator.serviceWorker.register("/sw.js").catch(() => showToast("O modo instalável será ativado no próximo acesso"));
+        }
 
         window.addEventListener("resize", resizeInput);
         resizeInput();

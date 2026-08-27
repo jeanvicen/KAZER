@@ -19,6 +19,14 @@
     {
       "source": "/chat.html",
       "destination": "/interface/chat.html"
+    },
+    {
+      "source": "/manifest.webmanifest",
+      "destination": "/download/manifest.webmanifest"
+    },
+    {
+      "source": "/sw.js",
+      "destination": "/download/sw.js"
     }
   ]
 }
