@@ -9,6 +9,9 @@
     <link rel="manifest" href="../download/manifest.webmanifest" />
     <link rel="icon" href="../download/assets/kazer-logo.jpg" type="image/jpeg" />
     <link rel="apple-touch-icon" href="../download/icons/kazer-192.png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=UnifrakturMaguntia&display=swap" rel="stylesheet" />
     <style>
       :root {
         color-scheme: dark;
@@ -106,6 +109,93 @@
         min-height: 100%;
         overflow: hidden;
         background: var(--page);
+      }
+
+      .app-splash {
+        position: fixed;
+        z-index: 200;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        height: 100%;
+        padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+        overflow: hidden;
+        background: #000;
+        color: #fff;
+        opacity: 1;
+        visibility: visible;
+        transition: opacity 600ms ease, visibility 0s linear 600ms;
+      }
+
+      .app-splash.is-hidden {
+        opacity: 0;
+        visibility: hidden;
+        pointer-events: none;
+      }
+
+      .app-splash-brand {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: clamp(2px, 0.8vw, 6px);
+        opacity: 0;
+        transform: scale(0.94);
+        animation: app-splash-brand-in 700ms cubic-bezier(.2, .9, .25, 1) 80ms forwards;
+      }
+
+      .app-splash-symbol {
+        display: block;
+        width: clamp(48px, 13vw, 72px);
+        height: clamp(48px, 13vw, 72px);
+        flex: 0 0 auto;
+        margin-right: clamp(-6px, -1vw, -2px);
+        background: url("../download/assets/kazer-login-symbol.png") center / contain no-repeat;
+        animation: app-splash-symbol-pulse 2600ms ease-in-out infinite;
+      }
+
+      .app-splash-title {
+        display: block;
+        width: min(58vw, 250px);
+        height: auto;
+        opacity: 0;
+        animation: app-splash-fade-up 800ms ease 900ms forwards;
+      }
+
+      .app-splash-credit {
+        position: absolute;
+        right: 24px;
+        bottom: clamp(36px, 9vh, 64px);
+        left: 24px;
+        display: flex;
+        justify-content: center;
+        color: rgba(255, 255, 255, 0.55);
+        font-size: clamp(12px, 3.4vw, 14px);
+        font-weight: 700;
+        letter-spacing: clamp(2px, 1vw, 4px);
+        text-transform: uppercase;
+        opacity: 0;
+        animation: app-splash-fade-in 1000ms ease 400ms forwards;
+      }
+
+      @keyframes app-splash-brand-in {
+        to { opacity: 1; transform: scale(1); }
+      }
+
+      @keyframes app-splash-symbol-pulse {
+        0%, 100% { filter: brightness(1); }
+        50% { filter: brightness(1.35); }
+      }
+
+      @keyframes app-splash-fade-up {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+
+      @keyframes app-splash-fade-in {
+        from { opacity: 0; }
+        to { opacity: 1; }
       }
 
       .topbar {
@@ -1799,6 +1889,13 @@
   </head>
   <body>
     <main class="app" id="app">
+      <div class="app-splash" id="appSplash" role="status" aria-label="Abertura do Kazer">
+        <div class="app-splash-brand">
+          <span class="app-splash-symbol" aria-hidden="true"></span>
+          <canvas class="app-splash-title" id="appSplashTitle" width="360" height="90" aria-label="KAZER">KAZER</canvas>
+        </div>
+        <span class="app-splash-credit">Klipza Studio</span>
+      </div>
       <aside class="install-banner" id="installBanner" aria-live="polite" hidden>
         <img class="install-logo" src="../download/icons/kazer-192.png" alt="Logo Kazer" />
         <div class="install-copy">
@@ -1957,6 +2054,62 @@
         }
 
         const persistSettings = () => localStorage.setItem(settingsStorageKey, JSON.stringify(settingsState));
+
+        const startAppSplash = () => {
+          const splash = document.getElementById("appSplash");
+          const canvas = document.getElementById("appSplashTitle");
+          if (!splash || !canvas) return;
+          const context = canvas.getContext("2d");
+          const width = canvas.width;
+          const height = canvas.height;
+          let running = true;
+
+          const draw = (time) => {
+            if (!running) return;
+            context.clearRect(0, 0, width, height);
+            context.save();
+            context.font = `${Math.floor(height * 0.72)}px "UnifrakturMaguntia", cursive`;
+            context.textAlign = "center";
+            context.textBaseline = "middle";
+            const shift = (time * 0.00035) % 1;
+            const gradient = context.createLinearGradient(width * (-0.3 + shift), 0, width * (1.2 + shift), 0);
+            gradient.addColorStop(0, "#3a3d45");
+            gradient.addColorStop(0.18, "#c9ccd4");
+            gradient.addColorStop(0.32, "#ffffff");
+            gradient.addColorStop(0.46, "#8b8f99");
+            gradient.addColorStop(0.60, "#f2f3f6");
+            gradient.addColorStop(0.75, "#5a5d66");
+            gradient.addColorStop(0.90, "#e8eaef");
+            gradient.addColorStop(1, "#3a3d45");
+            context.fillStyle = gradient;
+            context.fillText("KAZER", width / 2, height / 2 + height * 0.04);
+            context.globalCompositeOperation = "source-atop";
+            const sheen = context.createLinearGradient(0, 0, 0, height);
+            sheen.addColorStop(0, "rgba(255,255,255,0.35)");
+            sheen.addColorStop(0.45, "rgba(255,255,255,0)");
+            sheen.addColorStop(1, "rgba(0,0,0,0.25)");
+            context.fillStyle = sheen;
+            context.fillRect(0, 0, width, height);
+            context.restore();
+            window.requestAnimationFrame(draw);
+          };
+
+          const begin = () => window.requestAnimationFrame(draw);
+          if (document.fonts?.load) {
+            document.fonts.load('90px "UnifrakturMaguntia"').catch(() => {}).finally(begin);
+          } else {
+            begin();
+          }
+
+          const reducedMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+          window.setTimeout(() => {
+            splash.classList.add("is-hidden");
+            window.setTimeout(() => {
+              running = false;
+              splash.remove();
+            }, reducedMotion ? 80 : 650);
+          }, reducedMotion ? 520 : 2200);
+        };
 
         const showToast = (message) => {
           if (settingsState.notifications === false) return;
@@ -2399,6 +2552,7 @@
         window.addEventListener("resize", resizeInput);
         resizeInput();
         updateSend();
+        startAppSplash();
       })();
     </script>
   </body>
