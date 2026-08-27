@@ -622,6 +622,96 @@
         opacity: 0.96;
       }
 
+      .attach-button {
+        position: absolute;
+        bottom: 17px;
+        left: 17px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 40px;
+        height: 40px;
+        border: 1px solid var(--line);
+        border-radius: 50%;
+        background: var(--page-soft);
+        color: var(--text-soft);
+        cursor: pointer;
+        transition: background 160ms var(--ease), color 160ms var(--ease), border-color 160ms var(--ease), transform 160ms var(--ease);
+      }
+
+      .attach-button:hover {
+        border-color: rgba(255, 255, 255, 0.35);
+        background: var(--card-2);
+        color: var(--text);
+      }
+
+      .attach-button:active {
+        transform: scale(0.96);
+      }
+
+      .attach-button .icon {
+        width: 19px;
+        height: 19px;
+      }
+
+      .app:not(.in-conversation) .attach-button {
+        bottom: 8px;
+        left: 8px;
+        width: 32px;
+        height: 32px;
+        border: 0;
+        background: transparent;
+      }
+
+      .app:not(.in-conversation) .attach-button .icon {
+        width: 16px;
+        height: 16px;
+      }
+
+      .attachment-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin: 8px 2px 0;
+      }
+
+      .attachment-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        max-width: 100%;
+        padding: 7px 10px;
+        overflow: hidden;
+        border: 1px solid var(--line-soft);
+        border-radius: 10px;
+        background: var(--card-2);
+        color: var(--text-soft);
+        font-size: 11px;
+      }
+
+      .attachment-chip span {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .attachment-remove {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        background: transparent;
+        color: var(--text-dim);
+        cursor: pointer;
+      }
+
+      .attachment-remove:hover {
+        background: var(--line-soft);
+        color: var(--text);
+      }
+
       .stop-button {
         display: none;
       }
@@ -1987,9 +2077,12 @@
         <form class="composer" id="composer" autocomplete="off">
           <div class="composer-box">
             <textarea class="message-input" id="messageInput" rows="1" placeholder="Send a message..." aria-label="Mensagem"></textarea>
+            <button class="attach-button" id="attachButton" type="button" aria-label="Anexar arquivos" title="Anexar arquivos"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m21.4 11.6-8.9 8.9a6 6 0 0 1-8.5-8.5l9.2-9.2a4 4 0 0 1 5.7 5.7l-9.2 9.2a2 2 0 0 1-2.8-2.8l8.4-8.4"></path></svg></button>
+            <input class="file-input" id="fileInput" type="file" accept="image/jpeg,image/png,image/webp,image/gif,.pdf,.docx,.txt,.md,.csv,.json,.xml,.html,.htm,.js,.ts,.tsx,.jsx,.css,.py,.java,.sql,.yaml,.yml,.log" multiple hidden />
             <button class="send-button" id="sendButton" type="submit" aria-label="Enviar" disabled><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"></path></svg></button>
             <button class="send-button stop-button" id="stopButton" type="button" aria-label="Parar resposta"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="7" y="7" width="10" height="10" rx="1.5"></rect></svg></button>
           </div>
+          <div class="attachment-list" id="attachmentList" hidden aria-live="polite"></div>
           <p class="composer-caption">KAZER organiza seus próximos passos</p>
         </form>
       </div>
@@ -2022,6 +2115,9 @@
         const messageInput = document.getElementById("messageInput");
         const sendButton = document.getElementById("sendButton");
         const stopButton = document.getElementById("stopButton");
+        const attachButton = document.getElementById("attachButton");
+        const fileInput = document.getElementById("fileInput");
+        const attachmentList = document.getElementById("attachmentList");
         const settingsBackdrop = document.getElementById("settingsBackdrop");
         const closeSettings = document.getElementById("closeSettings");
         const closeSettingsDesktop = document.getElementById("closeSettingsDesktop");
@@ -2057,8 +2153,11 @@
         const installDismiss = document.getElementById("installDismiss");
         let deferredInstallPrompt = null;
         let busy = false;
-        let responseTimer = null;
+        let activeRequestController = null;
         let toastTimer = null;
+        let conversationMessages = [];
+        let selectedFiles = [];
+        const maxClientFileBytes = 4 * 1024 * 1024;
         const settingsStorageKey = "kazer-settings";
         const draftStorageKey = "kazer-draft";
         const defaultSettings = { appearance: "dark", language: "pt-BR", notifications: true, installPrompt: true };
@@ -2362,7 +2461,7 @@
         };
 
         const updateSend = () => {
-          sendButton.disabled = busy || messageInput.value.trim().length === 0;
+          sendButton.disabled = busy || (messageInput.value.trim().length === 0 && selectedFiles.length === 0);
         };
 
         const scrollBottom = () => {
@@ -2433,48 +2532,130 @@
           updateSend();
         };
 
-        const responseText = (text) => {
-          const query = text.toLowerCase();
-          if (query.includes("gta 6")) return "Vou organizar o tópico em novidades, rumores e o que já foi confirmado. A pesquisa web fica separada no histórico para você encontrar quando quiser.";
-          if (query.includes("tecnologia") || query.includes("notícia")) return "Posso separar as notícias por fonte, assunto e prioridade. Este é o estado visual do fluxo do KAZER.";
-          return "Entendi. Vou organizar o contexto e os próximos passos com o KAZER.";
+        const renderAttachments = () => {
+          attachmentList.replaceChildren();
+          attachmentList.hidden = selectedFiles.length === 0;
+          selectedFiles.forEach((file, index) => {
+            const chip = document.createElement("div");
+            chip.className = "attachment-chip";
+            const name = document.createElement("span");
+            name.textContent = file.name;
+            const remove = document.createElement("button");
+            remove.className = "attachment-remove";
+            remove.type = "button";
+            remove.setAttribute("aria-label", "Remover " + file.name);
+            remove.textContent = "×";
+            remove.addEventListener("click", () => {
+              selectedFiles.splice(index, 1);
+              renderAttachments();
+              updateSend();
+            });
+            chip.append(name, remove);
+            attachmentList.appendChild(chip);
+          });
         };
 
-        const submit = () => {
+        const addFiles = (fileList) => {
+          const incoming = [...fileList];
+          const totalBytes = selectedFiles.reduce((sum, file) => sum + file.size, 0);
+          for (const file of incoming) {
+            if (selectedFiles.length >= 5) {
+              showToast("Você pode anexar até 5 arquivos por mensagem");
+              break;
+            }
+            if (file.size > maxClientFileBytes || totalBytes + file.size > maxClientFileBytes) {
+              showToast("Cada envio pode ter até 4 MB em anexos");
+              continue;
+            }
+            if (selectedFiles.some((current) => current.name === file.name && current.size === file.size)) continue;
+            selectedFiles.push(file);
+          }
+          fileInput.value = "";
+          renderAttachments();
+          updateSend();
+        };
+
+        const fileToDataUrl = (file) => new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve({ name: file.name, type: file.type || "application/octet-stream", data: reader.result });
+          reader.onerror = () => reject(new Error("Não foi possível ler o anexo."));
+          reader.readAsDataURL(file);
+        });
+
+        const submit = async () => {
           if (busy) return;
           const text = messageInput.value.trim();
-          if (!text) return;
+          const files = [...selectedFiles];
+          if (!text && files.length === 0) return;
+
+          const prompt = text || "Analise os arquivos anexados e explique os pontos principais.";
+          const attachmentLabel = files.length ? "\n\nAnexos enviados: " + files.map((file) => file.name).join(", ") : "";
+          const historyText = prompt + attachmentLabel;
+          const displayText = prompt + attachmentLabel;
           conversationMode();
-          append(createMessage("user", text));
+          append(createMessage("user", displayText));
+          conversationMessages.push({ role: "user", content: historyText });
           messageInput.value = "";
+          selectedFiles = [];
+          renderAttachments();
           resizeInput();
           const thinking = createThinking();
           append(thinking);
           setBusy(true);
-          responseTimer = window.setTimeout(() => {
-            responseTimer = null;
+          const controller = new AbortController();
+          activeRequestController = controller;
+
+          try {
+            const attachments = await Promise.all(files.map(fileToDataUrl));
+            if (activeRequestController !== controller) return;
+            const result = await fetch("/api/chat", {
+              method: "POST",
+              headers: { "Content-Type": "application/json", Accept: "application/json" },
+              body: JSON.stringify({ messages: conversationMessages, attachments }),
+              signal: controller.signal,
+            });
+            const data = await result.json().catch(() => ({}));
+            if (!result.ok) throw new Error(data.error || "Não foi possível obter uma resposta.");
+            if (activeRequestController !== controller) return;
+            const answer = data.message?.content;
+            if (typeof answer !== "string" || !answer.trim()) throw new Error("A resposta recebida estava vazia.");
+            conversationMessages.push({ role: "assistant", content: answer.trim() });
             if (thinking.isConnected) thinking.remove();
-            append(createMessage("assistant", responseText(text)));
-            setBusy(false);
-            messageInput.focus();
-          }, 1550);
+            append(createMessage("assistant", answer.trim()));
+          } catch (error) {
+            if (error.name === "AbortError" || activeRequestController !== controller) return;
+            if (thinking.isConnected) thinking.remove();
+            append(createMessage("assistant", error.message || "Não foi possível conectar ao chat agora."));
+          } finally {
+            if (activeRequestController === controller) {
+              activeRequestController = null;
+              if (thinking.isConnected) thinking.remove();
+              setBusy(false);
+              messageInput.focus();
+            }
+          }
         };
 
         const stop = () => {
           if (!busy) return;
-          window.clearTimeout(responseTimer);
-          responseTimer = null;
+          if (activeRequestController) activeRequestController.abort();
+          activeRequestController = null;
           const thinking = messageList.querySelector(".thinking-row")?.closest(".message-row");
           if (thinking) thinking.remove();
-          append(createMessage("assistant", "Resposta interrompida. Podemos continuar quando quiser."));
+          const stopped = "Resposta interrompida. Podemos continuar quando quiser.";
+          conversationMessages.push({ role: "assistant", content: stopped });
+          append(createMessage("assistant", stopped));
           setBusy(false);
           messageInput.focus();
         };
 
         const reset = () => {
-          window.clearTimeout(responseTimer);
-          responseTimer = null;
+          if (activeRequestController) activeRequestController.abort();
+          activeRequestController = null;
           setBusy(false);
+          conversationMessages = [];
+          selectedFiles = [];
+          renderAttachments();
           messageList.replaceChildren();
           messageList.hidden = true;
           emptyState.hidden = false;
@@ -2588,6 +2769,8 @@
           event.preventDefault();
           submit();
         });
+        attachButton.addEventListener("click", () => fileInput.click());
+        fileInput.addEventListener("change", () => addFiles(fileInput.files));
         messageInput.addEventListener("input", () => {
           resizeInput();
           updateSend();
