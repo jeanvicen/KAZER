@@ -1094,61 +1094,12 @@
         border-color: var(--purple);
       }
 
-      .settings-control-column {
-        display: block;
-      }
-
-      .settings-textarea {
-        display: block;
-        width: 100%;
-        min-height: 116px;
-        margin-top: 13px;
-        padding: 12px;
-        resize: vertical;
-        border: 1px solid var(--line);
-        border-radius: 11px;
-        outline: 0;
-        background: var(--page-soft);
-        color: var(--text);
-        font-size: 12px;
-        line-height: 1.45;
-      }
-
-      .settings-textarea:focus {
-        border-color: var(--purple);
-      }
-
-      .settings-field-footer {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 12px;
-        margin-top: 9px;
-      }
-
-      .settings-field-footer small {
-        margin: 0;
-      }
-
-      .settings-save {
-        padding: 8px 11px;
-        border: 1px solid var(--line);
-        border-radius: 9px;
-        background: var(--text);
-        color: var(--page);
-        font-size: 11px;
-        cursor: pointer;
-      }
-
-      .settings-save:hover {
-        opacity: 0.86;
-      }
-
       .settings-action-row {
         width: 100%;
         background: transparent;
         color: var(--text);
         text-align: left;
+        text-decoration: none;
         cursor: pointer;
       }
 
@@ -1271,15 +1222,6 @@
       .switch.on::after {
         background: #fff;
         transform: translateX(16px);
-      }
-
-      html[data-reduced-motion="true"] *,
-      html[data-reduced-motion="true"] *::before,
-      html[data-reduced-motion="true"] *::after {
-        animation-duration: 0.01ms !important;
-        animation-iteration-count: 1 !important;
-        scroll-behavior: auto !important;
-        transition-duration: 0.01ms !important;
       }
 
       .install-banner {
@@ -1732,9 +1674,9 @@
           <label class="settings-search"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-4-4"></path></svg><input id="settingsSearch" type="search" placeholder="Pesquisar configuração" autocomplete="off" /></label>
           <nav class="settings-nav-list" aria-label="Categorias de configurações">
             <button class="settings-nav-item active" type="button" data-settings-section="general"><span class="settings-nav-icon">◌</span><span>Geral</span></button>
-            <button class="settings-nav-item" type="button" data-settings-section="personalization"><span class="settings-nav-icon">✦</span><span>Personalização</span></button>
             <button class="settings-nav-item" type="button" data-settings-section="notifications"><span class="settings-nav-icon">◔</span><span>Notificações</span></button>
             <button class="settings-nav-item" type="button" data-settings-section="data"><span class="settings-nav-icon">▣</span><span>Dados e privacidade</span></button>
+            <button class="settings-nav-item" type="button" data-settings-section="documents"><span class="settings-nav-icon">▤</span><span>Documentos</span></button>
             <button class="settings-nav-item" type="button" data-settings-section="account"><span class="settings-nav-icon">◎</span><span>Conta e segurança</span></button>
           </nav>
         </aside>
@@ -1743,19 +1685,20 @@
           <div class="settings-panel-scroll">
             <section class="settings-section" data-settings-panel="general">
               <p class="settings-section-intro">Controle como o Kazer aparece e responde neste dispositivo.</p>
-              <div class="settings-group"><div class="settings-group-title">Interface</div><div class="settings-control"><div><strong>Aparência</strong><small>Escolha o tema usado pelo Kazer.</small></div><select class="settings-select" id="appearanceSelect"><option value="dark">Escuro</option><option value="light">Claro</option><option value="system">Sistema</option></select></div><div class="settings-control"><div><strong>Idioma</strong><small>Idioma dos controles e mensagens da interface.</small></div><select class="settings-select" id="languageSelect"><option value="pt-BR">Português (Brasil)</option><option value="en-US">English</option></select></div><div class="settings-control"><div><strong>Reduzir movimento</strong><small>Diminui transições e animações visuais.</small></div><button class="switch" id="motionSwitch" type="button" aria-label="Alternar redução de movimento" aria-pressed="false"></button></div></div>
-            </section>
-            <section class="settings-section" data-settings-panel="personalization" hidden>
-              <p class="settings-section-intro">Defina como o agente deve considerar suas preferências em novos chats.</p>
-              <div class="settings-group"><div class="settings-group-title">Instruções do agente</div><div class="settings-control settings-control-column"><div><strong>Personalização</strong><small>Essas instruções ficam salvas apenas neste navegador enquanto a conta real não estiver conectada.</small></div><textarea class="settings-textarea" id="customInstructions" maxlength="1500" placeholder="Ex.: responda em português, seja direto e organize os próximos passos."></textarea><div class="settings-field-footer"><small id="instructionsCount">0/1500</small><button class="settings-save" id="savePersonalization" type="button">Salvar instruções</button></div></div><div class="settings-control"><div><strong>Usar personalização</strong><small>Aplica suas instruções quando iniciar uma nova conversa.</small></div><button class="switch on" id="personalizationSwitch" type="button" aria-label="Alternar personalização" aria-pressed="true"></button></div></div>
+              <div class="settings-group"><div class="settings-group-title">Interface</div><div class="settings-control"><div><strong>Aparência</strong><small>Escolha o tema usado pelo Kazer.</small></div><select class="settings-select" id="appearanceSelect"><option value="dark">Escuro</option><option value="light">Claro</option><option value="system">Sistema</option></select></div><div class="settings-control"><div><strong>Idioma</strong><small>Idioma dos controles e mensagens da interface.</small></div><select class="settings-select" id="languageSelect"><option value="pt-BR">Português (Brasil)</option><option value="en-US">English</option></select></div></div>
             </section>
             <section class="settings-section" data-settings-panel="notifications" hidden>
               <p class="settings-section-intro">Escolha quais avisos locais o Kazer pode exibir neste dispositivo.</p>
               <div class="settings-group"><div class="settings-group-title">Avisos</div><div class="settings-control"><div><strong>Avisos do Kazer</strong><small>Permite mensagens de confirmação e orientação dentro da interface.</small></div><button class="switch on" id="notificationsSwitch" type="button" aria-label="Alternar avisos" aria-pressed="true"></button></div><div class="settings-control"><div><strong>Mostrar instalação</strong><small>Exibe o aviso para instalar o Kazer quando disponível.</small></div><button class="switch on" id="installSwitch" type="button" aria-label="Alternar aviso de instalação" aria-pressed="true"></button></div></div>
             </section>
             <section class="settings-section" data-settings-panel="data" hidden>
-              <p class="settings-section-intro">Gerencie dados que ficam somente no navegador atual.</p>
-              <div class="settings-group"><div class="settings-group-title">Dados locais</div><div class="settings-control"><div><strong>Modo temporário</strong><small>Não mantém rascunhos ou preferências de conversa neste dispositivo.</small></div><button class="switch" id="temporarySwitch" type="button" aria-label="Alternar modo temporário" aria-pressed="false"></button></div><button class="settings-action-row" id="clearLocalData" type="button"><span><strong>Limpar preferências locais</strong><small>Remove tema, personalização e opções salvas neste navegador.</small></span><span class="settings-row-arrow">›</span></button></div></section>
+              <p class="settings-section-intro">Gerencie as preferências salvas neste navegador.</p>
+              <div class="settings-group"><div class="settings-group-title">Dados locais</div><button class="settings-action-row" id="clearLocalData" type="button"><span><strong>Limpar preferências locais</strong><small>Remove tema e opções salvas neste navegador.</small></span><span class="settings-row-arrow">›</span></button></div>
+            </section>
+            <section class="settings-section" data-settings-panel="documents" hidden>
+              <p class="settings-section-intro">Consulte os documentos públicos do Kazer em uma única página.</p>
+              <div class="settings-group"><div class="settings-group-title">Central de documentos</div><a class="settings-action-row" href="/documentos#privacidade"><span><strong>Privacidade</strong><small>Como os dados do navegador e as informações enviadas são tratados.</small></span><span class="settings-row-arrow">›</span></a><a class="settings-action-row" href="/documentos#termos"><span><strong>Termos de uso</strong><small>Regras para usar o Kazer com segurança e respeito.</small></span><span class="settings-row-arrow">›</span></a><a class="settings-action-row" href="/documentos#seguranca"><span><strong>Segurança</strong><small>Boas práticas para proteger sua conta, sessão e dados.</small></span><span class="settings-row-arrow">›</span></a></div>
+            </section>
             <section class="settings-section" data-settings-panel="account" hidden>
               <p class="settings-section-intro">Veja a sessão atual e saia da conta quando terminar.</p>
               <div class="settings-group"><div class="settings-group-title">Sessão</div><div class="settings-account-card"><span class="settings-account-avatar">J</span><div><strong>jeanvicen</strong><small>jeanvicence@gmail.com</small></div><span class="settings-session-badge">LOCAL</span></div><div class="settings-control"><div><strong>Status da sessão</strong><small>A sessão visual está ativa neste navegador.</small></div><span class="settings-status-dot">Ativa</span></div><button class="settings-logout" id="settingsLogoutAction" type="button">Sair da conta<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 17l5-5-5-5M15 12H3"></path><path d="M21 19V5a2 2 0 0 0-2-2h-5"></path></svg></button></div></section>
@@ -1821,14 +1764,8 @@
         const settingsPanels = document.querySelectorAll("[data-settings-panel]");
         const appearanceSelect = document.getElementById("appearanceSelect");
         const languageSelect = document.getElementById("languageSelect");
-        const motionSwitch = document.getElementById("motionSwitch");
-        const customInstructions = document.getElementById("customInstructions");
-        const instructionsCount = document.getElementById("instructionsCount");
-        const savePersonalization = document.getElementById("savePersonalization");
-        const personalizationSwitch = document.getElementById("personalizationSwitch");
         const notificationsSwitch = document.getElementById("notificationsSwitch");
         const installSwitch = document.getElementById("installSwitch");
-        const temporarySwitch = document.getElementById("temporarySwitch");
         const clearLocalData = document.getElementById("clearLocalData");
         const settingsLogoutAction = document.getElementById("settingsLogoutAction");
         const webSearchForm = document.getElementById("webSearchForm");
@@ -1846,7 +1783,7 @@
         let toastTimer = null;
         const settingsStorageKey = "kazer-settings";
         const draftStorageKey = "kazer-draft";
-        const defaultSettings = { appearance: "dark", language: "pt-BR", reducedMotion: false, personalization: true, notifications: true, installPrompt: true, temporary: false };
+        const defaultSettings = { appearance: "dark", language: "pt-BR", notifications: true, installPrompt: true };
         let settingsState = { ...defaultSettings };
         try {
           settingsState = { ...defaultSettings, ...JSON.parse(localStorage.getItem(settingsStorageKey) || "{}") };
@@ -1911,7 +1848,7 @@
           }
         };
 
-        const settingsLabels = { general: "Geral", personalization: "Personalização", notifications: "Notificações", data: "Dados e privacidade", account: "Conta e segurança" };
+        const settingsLabels = { general: "Geral", notifications: "Notificações", data: "Dados e privacidade", documents: "Documentos", account: "Conta e segurança" };
 
         const setSwitch = (element, value) => {
           if (!element) return;
@@ -1924,16 +1861,10 @@
           const systemLight = window.matchMedia?.("(prefers-color-scheme: light)").matches;
           document.documentElement.dataset.theme = appearance === "system" ? (systemLight ? "light" : "dark") : appearance;
           document.documentElement.lang = settingsState.language || "pt-BR";
-          document.documentElement.dataset.reducedMotion = settingsState.reducedMotion ? "true" : "false";
           appearanceSelect.value = appearance;
           languageSelect.value = settingsState.language || "pt-BR";
-          setSwitch(motionSwitch, settingsState.reducedMotion);
-          setSwitch(personalizationSwitch, settingsState.personalization);
           setSwitch(notificationsSwitch, settingsState.notifications);
           setSwitch(installSwitch, settingsState.installPrompt);
-          setSwitch(temporarySwitch, settingsState.temporary);
-          customInstructions.value = settingsState.instructions || "";
-          instructionsCount.textContent = customInstructions.value.length + "/1500";
         };
 
         const renderSettingsSection = (section) => {
@@ -2130,7 +2061,10 @@
         const logout = () => {
           closeSettingsModal();
           closeMenus();
-          window.setTimeout(() => window.location.assign("login.html"), 80);
+          window.setTimeout(() => {
+            const openedFromInterfaceFolder = window.location.pathname.includes("/interface/");
+            window.location.assign(openedFromInterfaceFolder ? "login.html" : "/login");
+          }, 80);
         };
 
         logoutAction.addEventListener("click", logout);
@@ -2163,24 +2097,6 @@
           applySettings();
           showToast("Idioma da interface atualizado");
         });
-        motionSwitch.addEventListener("click", () => {
-          settingsState.reducedMotion = !settingsState.reducedMotion;
-          persistSettings();
-          applySettings();
-        });
-        customInstructions.addEventListener("input", () => {
-          instructionsCount.textContent = customInstructions.value.length + "/1500";
-        });
-        savePersonalization.addEventListener("click", () => {
-          settingsState.instructions = customInstructions.value.trim();
-          persistSettings();
-          showToast("Instruções do agente salvas neste dispositivo");
-        });
-        personalizationSwitch.addEventListener("click", () => {
-          settingsState.personalization = !settingsState.personalization;
-          persistSettings();
-          applySettings();
-        });
         notificationsSwitch.addEventListener("click", () => {
           settingsState.notifications = !settingsState.notifications;
           persistSettings();
@@ -2191,13 +2107,6 @@
           persistSettings();
           applySettings();
           if (!settingsState.installPrompt) hideInstallBanner(true);
-        });
-        temporarySwitch.addEventListener("click", () => {
-          settingsState.temporary = !settingsState.temporary;
-          if (settingsState.temporary) localStorage.removeItem(draftStorageKey);
-          persistSettings();
-          applySettings();
-          showToast(settingsState.temporary ? "Modo temporário ativado" : "Modo temporário desativado");
         });
         clearLocalData.addEventListener("click", () => {
           localStorage.removeItem(settingsStorageKey);

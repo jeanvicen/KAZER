@@ -746,8 +746,9 @@
 
     errorMsg.textContent = '';
 
-    // Após a validação, tanto o login quanto o cadastro seguem para o chat.
-    window.location.href = '/chat.html';
+    // Após a validação, tanto o login quanto o cadastro seguem para a rota pública do chat.
+    const openedFromInterfaceFolder = window.location.pathname.includes('/interface/');
+    window.location.href = openedFromInterfaceFolder ? 'chat.html' : '/chat';
     return;
   });
 

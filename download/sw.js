@@ -1,6 +1,8 @@
-const CACHE_NAME = "kazer-shell-v2";
+const CACHE_NAME = "kazer-shell-v3";
 const APP_SHELL = [
+  "/chat",
   "/chat.html",
+  "/login",
   "/login.html",
   "/download/manifest.webmanifest",
   "/download/assets/kazer-logo.svg",
@@ -33,7 +35,7 @@ self.addEventListener("fetch", (event) => {
       }
       return response;
     }).catch(() => {
-      return caches.match(request).then((cached) => cached || caches.match(url.pathname) || caches.match("/chat.html"));
+          return caches.match(request).then((cached) => cached || caches.match(url.pathname) || caches.match("/chat") || caches.match("/chat.html"));
     })
   );
 });

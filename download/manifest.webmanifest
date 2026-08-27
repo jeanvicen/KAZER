@@ -4,7 +4,7 @@
   "description": "Seu espaço inteligente para conversar, organizar e criar.",
   "lang": "pt-BR",
   "dir": "ltr",
-  "start_url": "/chat.html",
+  "start_url": "/chat",
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait-primary",

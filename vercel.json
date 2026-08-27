@@ -21,6 +21,14 @@
       "destination": "/interface/chat.html"
     },
     {
+      "source": "/documentos",
+      "destination": "/interface/documentos/documento.html"
+    },
+    {
+      "source": "/documentos/",
+      "destination": "/interface/documentos/documento.html"
+    },
+    {
       "source": "/manifest.webmanifest",
       "destination": "/download/manifest.webmanifest"
     },
