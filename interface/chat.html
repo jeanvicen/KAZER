@@ -102,6 +102,10 @@
         pointer-events: none;
       }
 
+      .app[data-auth-pending="true"] > :not(.app-splash) {
+        visibility: hidden;
+      }
+
       .app {
         position: relative;
         width: 100%;
@@ -1888,7 +1892,7 @@
     </style>
   </head>
   <body>
-    <main class="app" id="app">
+    <main class="app" id="app" data-auth-pending="true">
       <div class="app-splash" id="appSplash" role="status" aria-label="Abertura do Kazer">
         <div class="app-splash-brand">
           <span class="app-splash-symbol" aria-hidden="true"></span>
@@ -1914,7 +1918,7 @@
       <div class="profile-popover" id="profilePopover" role="dialog" aria-label="Perfil">
         <div class="profile-summary">
           <button class="profile-button" type="button" aria-hidden="true"><span class="avatar-photo"></span></button>
-          <div><strong>jeanvicen</strong><small>jeanvicence@gmail.com</small></div>
+          <div><strong id="profileDisplayName">Kazer</strong><small id="profileEmail">Conta conectada</small></div>
         </div>
         <div class="menu-actions">
           <button class="pro-action" id="proAction" type="button" aria-label="Obter Kazer Pro"><span class="pro-badge">PRO</span><span class="pro-copy"><strong>Kazer Pro</strong><small>Obter mais do KAZER</small></span><svg class="icon pro-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"></path></svg></button>
@@ -1957,7 +1961,7 @@
             </section>
             <section class="settings-section" data-settings-panel="account" hidden>
               <p class="settings-section-intro">Veja a sessão atual e saia da conta quando terminar.</p>
-              <div class="settings-group"><div class="settings-group-title">Sessão</div><div class="settings-account-card"><span class="settings-account-avatar">J</span><div><strong>jeanvicen</strong><small>jeanvicence@gmail.com</small></div><span class="settings-session-badge">LOCAL</span></div><div class="settings-control"><div><strong>Status da sessão</strong><small>A sessão visual está ativa neste navegador.</small></div><span class="settings-status-dot">Ativa</span></div><button class="settings-logout" id="settingsLogoutAction" type="button">Sair da conta<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 17l5-5-5-5M15 12H3"></path><path d="M21 19V5a2 2 0 0 0-2-2h-5"></path></svg></button></div></section>
+              <div class="settings-group"><div class="settings-group-title">Sessão</div><div class="settings-account-card"><span class="settings-account-avatar" id="settingsAccountAvatar">K</span><div><strong id="settingsAccountName">Kazer</strong><small id="settingsAccountEmail">Conta conectada</small></div><span class="settings-session-badge">ATIVA</span></div><div class="settings-control"><div><strong>Status da sessão</strong><small>A sessão visual está ativa neste navegador.</small></div><span class="settings-status-dot">Ativa</span></div><button class="settings-logout" id="settingsLogoutAction" type="button">Sair da conta<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 17l5-5-5-5M15 12H3"></path><path d="M21 19V5a2 2 0 0 0-2-2h-5"></path></svg></button></div></section>
           </div>
         </section>
       </section>
@@ -1993,9 +1997,16 @@
       <div class="toast" id="toast" role="status" aria-live="polite"></div>
     </main>
 
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
       (() => {
         const app = document.getElementById("app");
+        const KAZER_SUPABASE_URL = "https://mqjunopzycdezzjmlhip.supabase.co";
+        const KAZER_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1xanVub3B6eWNkZXp6am1saGlwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc4Mzg3NDksImV4cCI6MjEwMzQxNDc0OX0.Y_o2_QQhZzuCjvHdEfxaR5VrAxo7NFenPaDmdHN3bwM";
+        const kazerSupabase = window.supabase?.createClient(KAZER_SUPABASE_URL, KAZER_SUPABASE_ANON_KEY, {
+          auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
+        });
+        let currentUser = null;
         const profileButton = document.getElementById("profileButton");
         const profilePopover = document.getElementById("profilePopover");
         const settingsPopover = document.getElementById("settingsPopover");
@@ -2030,6 +2041,11 @@
         const installSwitch = document.getElementById("installSwitch");
         const clearLocalData = document.getElementById("clearLocalData");
         const settingsLogoutAction = document.getElementById("settingsLogoutAction");
+        const profileDisplayName = document.getElementById("profileDisplayName");
+        const profileEmail = document.getElementById("profileEmail");
+        const settingsAccountName = document.getElementById("settingsAccountName");
+        const settingsAccountEmail = document.getElementById("settingsAccountEmail");
+        const settingsAccountAvatar = document.getElementById("settingsAccountAvatar");
         const webSearchForm = document.getElementById("webSearchForm");
         const webQuery = document.getElementById("webQuery");
         const webSources = document.getElementById("webSources");
@@ -2053,7 +2069,60 @@
           settingsState = { ...defaultSettings };
         }
 
-        const persistSettings = () => localStorage.setItem(settingsStorageKey, JSON.stringify(settingsState));
+        const persistSettings = () => {
+          localStorage.setItem(settingsStorageKey, JSON.stringify(settingsState));
+          if (currentUser && kazerSupabase) {
+            kazerSupabase.from("user_settings").update({
+              notifications_enabled: settingsState.notifications,
+              install_prompt_enabled: settingsState.installPrompt,
+              appearance: settingsState.appearance,
+              language: settingsState.language
+            }).eq("user_id", currentUser.id).then(({ error }) => {
+              if (error) console.warn("Kazer settings sync failed", error.message);
+            });
+          }
+        };
+
+        const updateAccountUI = (user, profile) => {
+          const displayName = profile?.display_name || user?.user_metadata?.display_name || user?.email?.split("@")[0] || "Kazer";
+          const email = user?.email || "Conta conectada";
+          const initial = displayName.trim().charAt(0).toUpperCase() || "K";
+          [profileDisplayName, settingsAccountName].forEach((element) => { if (element) element.textContent = displayName; });
+          [profileEmail, settingsAccountEmail].forEach((element) => { if (element) element.textContent = email; });
+          if (settingsAccountAvatar) settingsAccountAvatar.textContent = initial;
+        };
+
+        const loadAccount = async () => {
+          if (!kazerSupabase) {
+            window.location.assign("/login");
+            return false;
+          }
+          const { data, error } = await kazerSupabase.auth.getSession();
+          if (error || !data?.session) {
+            window.location.assign("/login");
+            return false;
+          }
+          currentUser = data.session.user;
+          const [profileResult, settingsResult] = await Promise.all([
+            kazerSupabase.from("profiles").select("display_name").eq("id", currentUser.id).maybeSingle(),
+            kazerSupabase.from("user_settings").select("notifications_enabled,install_prompt_enabled,appearance,language").eq("user_id", currentUser.id).maybeSingle()
+          ]);
+          updateAccountUI(currentUser, profileResult.data);
+          if (settingsResult.data) {
+            settingsState = {
+              ...settingsState,
+              notifications: settingsResult.data.notifications_enabled,
+              installPrompt: settingsResult.data.install_prompt_enabled,
+              appearance: settingsResult.data.appearance,
+              language: settingsResult.data.language
+            };
+            persistSettings();
+            applySettings();
+          }
+          await kazerSupabase.rpc("touch_user_activity").catch(() => {});
+          app.dataset.authPending = "false";
+          return true;
+        };
 
         const startAppSplash = () => {
           const splash = document.getElementById("appSplash");
@@ -2436,9 +2505,10 @@
           const query = webQuery.value.trim();
           if (query) renderWebResults(query);
         });
-        const logout = () => {
+        const logout = async () => {
           closeSettingsModal();
           closeMenus();
+          try { await kazerSupabase?.auth.signOut(); } catch (error) { console.warn("Kazer logout failed", error); }
           window.setTimeout(() => {
             const openedFromInterfaceFolder = window.location.pathname.includes("/interface/");
             window.location.assign(openedFromInterfaceFolder ? "login.html" : "/login");
@@ -2553,6 +2623,7 @@
         resizeInput();
         updateSend();
         startAppSplash();
+        loadAccount();
       })();
     </script>
   </body>

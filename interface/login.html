@@ -386,6 +386,22 @@
     cursor:pointer;
   }
 
+  .forgot-password{
+    display:block;
+    margin: -2px auto 0;
+    color: var(--text-dim);
+    font-size: 13px;
+    text-decoration: none;
+    cursor: pointer;
+    transition: color 0.2s ease;
+  }
+
+  .forgot-password:hover,
+  .forgot-password:focus-visible{
+    color: var(--text);
+    text-decoration: underline;
+  }
+
   .error-msg{
     font-size: 13px;
     color: #ff6b6b;
@@ -575,6 +591,8 @@
         <button type="submit" class="btn-primary" id="submitBtn">Sign in</button>
       </form>
 
+      <a class="forgot-password" id="forgotPasswordLink" href="/recuperar">Esqueci a senha</a>
+
       <div class="switch-mode">
         <span id="switchText">Não tem conta?</span>
         <a id="switchLink" onclick="toggleMode()">Criar conta</a>
@@ -582,6 +600,7 @@
     </div>
   </div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
   // ---------- ajusta altura real da viewport (evita bug de barra do navegador mobile) ----------
   function setVH(){
@@ -733,20 +752,38 @@
   }
   confirmField.addEventListener('input', checkPasswordsMatch);
 
+  // ---------- cliente Supabase público e autenticação real ----------
+  const KAZER_SUPABASE_URL = 'https://mqjunopzycdezzjmlhip.supabase.co';
+  const KAZER_SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1xanVub3B6eWNkZXp6am1saGlwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc4Mzg3NDksImV4cCI6MjEwMzQxNDc0OX0.Y_o2_QQhZzuCjvHdEfxaR5VrAxo7NFenPaDmdHN3bwM';
+  const kazerSupabase = window.supabase?.createClient(KAZER_SUPABASE_URL, KAZER_SUPABASE_ANON_KEY, {
+    auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
+  });
+
+  function authErrorMessage(error){
+    const message = String(error?.message || '').toLowerCase();
+    if(message.includes('invalid login credentials')) return 'E-mail ou senha incorretos.';
+    if(message.includes('email not confirmed')) return 'Confirme seu e-mail antes de entrar.';
+    if(message.includes('user already registered')) return 'Este e-mail já tem uma conta. Tente entrar.';
+    if(message.includes('password')) return 'A senha não atende aos requisitos do Kazer.';
+    return error?.message || 'Não foi possível concluir agora. Tente novamente.';
+  }
+
   // ---------- validação e envio do form ----------
-  document.getElementById('authForm').addEventListener('submit', function(e){
+  document.getElementById('authForm').addEventListener('submit', async function(e){
     e.preventDefault();
     const errorMsg = document.getElementById('errorMsg');
+    const submitBtn = document.getElementById('submitBtn');
     const name = document.getElementById('displayName').value.trim();
     const email = document.getElementById('email').value.trim();
     const password = document.getElementById('password').value;
     const confirmPassword = document.getElementById('confirmPassword').value;
 
+    if(!kazerSupabase){
+      errorMsg.textContent = 'A conexão segura do Kazer não carregou. Atualize a página.';
+      return;
+    }
     if(isSignup){
-      if(!name){
-        errorMsg.textContent = 'Nos diga como devemos te chamar.';
-        return;
-      }
+      if(!name){ errorMsg.textContent = 'Nos diga como devemos te chamar.'; return; }
       if(!isPasswordValid(password)){
         errorMsg.textContent = 'Sua senha ainda tá fraca — coloca 1 letra maiúscula e 1 caractere especial.';
         return;
@@ -758,11 +795,36 @@
     }
 
     errorMsg.textContent = '';
+    submitBtn.disabled = true;
+    submitBtn.textContent = isSignup ? 'Criando conta…' : 'Entrando…';
 
-    // Após a validação, tanto o login quanto o cadastro seguem para a rota pública do chat.
-    const openedFromInterfaceFolder = window.location.pathname.includes('/interface/');
-    window.location.href = openedFromInterfaceFolder ? 'chat.html' : '/chat';
-    return;
+    try{
+      const result = isSignup
+        ? await kazerSupabase.auth.signUp({
+            email,
+            password,
+            options: {
+              data: { display_name: name },
+              emailRedirectTo: `${window.location.origin}/chat`
+            }
+          })
+        : await kazerSupabase.auth.signInWithPassword({ email, password });
+
+      if(result.error) throw result.error;
+      if(isSignup && !result.data.session){
+        errorMsg.style.color = '#e7bc69';
+        errorMsg.textContent = 'Conta criada. Confira seu e-mail para confirmar e entrar no Kazer.';
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Criar conta';
+        return;
+      }
+      window.location.assign('/chat');
+    }catch(error){
+      errorMsg.style.color = '#ff6b6b';
+      errorMsg.textContent = authErrorMessage(error);
+      submitBtn.disabled = false;
+      submitBtn.textContent = isSignup ? 'Criar conta' : 'Sign in';
+    }
   });
 
   // ---------- transição splash -> login ----------
@@ -842,26 +904,22 @@
   }
 
   // ---------- checa sessão e decide o próximo passo ----------
-  // Aqui depois entra a checagem real de sessão (Supabase, token salvo, etc.)
-  // Exemplo de uso futuro:
-  // const session = await supabase.auth.getSession();
-  // const isLoggedIn = !!session;
-  const isLoggedIn = false; // trocar pela checagem real quando integrar o Supabase
-
-  window.addEventListener('load', function(){
+  window.addEventListener('load', async function(){
     const splash = document.getElementById('splash');
     const login = document.getElementById('login');
+    let session = null;
+    try{
+      const result = await kazerSupabase?.auth.getSession();
+      session = result?.data?.session || null;
+    }catch(error){
+      session = null;
+    }
 
-    if(isLoggedIn){
-      // pessoa já logada: fica na tela com a estrela + KAZER + Klipza Studio
-      // e segue direto pro index.html
-      setTimeout(function(){
-        // window.location.href = 'index.html';
-      }, 1800);
+    if(session){
+      setTimeout(function(){ window.location.assign('/chat'); }, 1800);
       return;
     }
 
-    // pessoa não logada: mostra o splash e transiciona pra tela de login
     setTimeout(function(){
       splash.style.opacity = '0';
       setTimeout(function(){

@@ -13,6 +13,14 @@
       "destination": "/interface/login.html"
     },
     {
+      "source": "/recuperar",
+      "destination": "/interface/reset-password.html"
+    },
+    {
+      "source": "/recuperar.html",
+      "destination": "/interface/reset-password.html"
+    },
+    {
       "source": "/chat",
       "destination": "/interface/chat.html"
     },
