@@ -2192,19 +2192,33 @@
         };
 
         const loadAccount = async () => {
+          const releaseChat = () => { app.dataset.authPending = "false"; };
           if (!kazerSupabase) {
             window.location.assign("/login");
             return false;
           }
-          const { data, error } = await kazerSupabase.auth.getSession();
-          if (error || !data?.session) {
+          let sessionResult = null;
+          try {
+            sessionResult = await Promise.race([
+              kazerSupabase.auth.getSession(),
+              new Promise((resolve) => window.setTimeout(() => resolve(null), 5000))
+            ]);
+          } catch (error) {
+            sessionResult = null;
+          }
+          if (!sessionResult?.data?.session) {
             window.location.assign("/login");
             return false;
           }
-          currentUser = data.session.user;
+          currentUser = sessionResult.data.session.user;
+          releaseChat();
+          const safeQuery = (query) => Promise.race([
+            query,
+            new Promise((resolve) => window.setTimeout(() => resolve({ data: null, error: { message: "timeout" } }), 2500))
+          ]).catch(() => ({ data: null, error: { message: "unavailable" } }));
           const [profileResult, settingsResult] = await Promise.all([
-            kazerSupabase.from("profiles").select("display_name").eq("id", currentUser.id).maybeSingle(),
-            kazerSupabase.from("user_settings").select("notifications_enabled,install_prompt_enabled,appearance,language").eq("user_id", currentUser.id).maybeSingle()
+            safeQuery(kazerSupabase.from("profiles").select("display_name").eq("id", currentUser.id).maybeSingle()),
+            safeQuery(kazerSupabase.from("user_settings").select("notifications_enabled,install_prompt_enabled,appearance,language").eq("user_id", currentUser.id).maybeSingle())
           ]);
           updateAccountUI(currentUser, profileResult.data);
           if (settingsResult.data) {
@@ -2218,8 +2232,7 @@
             persistSettings();
             applySettings();
           }
-          await kazerSupabase.rpc("touch_user_activity").catch(() => {});
-          app.dataset.authPending = "false";
+          safeQuery(kazerSupabase.rpc("touch_user_activity"));
           return true;
         };
 
