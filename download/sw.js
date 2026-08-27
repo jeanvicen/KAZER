@@ -1,11 +1,11 @@
-const CACHE_NAME = "kazer-shell-v3";
+const CACHE_NAME = "kazer-shell-v4";
 const APP_SHELL = [
   "/chat",
   "/chat.html",
   "/login",
   "/login.html",
   "/download/manifest.webmanifest",
-  "/download/assets/kazer-logo.svg",
+  "/download/assets/kazer-logo.jpg",
   "/download/icons/kazer-192.png",
   "/download/icons/kazer-512.png"
 ];

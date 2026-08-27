@@ -4,6 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="theme-color" content="#090a0e" />
+  <link rel="icon" href="../../download/assets/kazer-logo.jpg" type="image/jpeg" />
+  <link rel="apple-touch-icon" href="../../download/icons/kazer-192.png" />
   <meta name="description" content="Central de documentos do Kazer: termos de uso, privacidade, segurança e contato." />
   <meta property="og:title" content="Documentos do Kazer" />
   <meta property="og:description" content="Termos de uso, privacidade, segurança e informações importantes para usar o Kazer." />
@@ -115,13 +117,13 @@
       overflow: hidden;
       border: 1px solid var(--line);
       border-radius: 11px;
-      background: linear-gradient(145deg, #3b3f4b 0%, #171a21 45%, #08090d 100%);
+      background: #111216 url("../../download/icons/kazer-192.png") center / cover no-repeat;
       box-shadow: inset 0 1px 0 rgba(255,255,255,.16), 0 9px 24px rgba(0,0,0,.26);
-      color: #f5f6fb;
-      font-size: 15px;
+      color: transparent;
+      font-size: 0;
       letter-spacing: 0;
     }
-    .brand-mark::after { position: absolute; inset: -60% 28% 40% -40%; transform: rotate(25deg); background: rgba(255,255,255,.26); content: ""; }
+    .brand-mark::after { display: none; }
     .topbar-actions { display: flex; align-items: center; gap: 10px; }
     .creator-link {
       display: inline-flex;

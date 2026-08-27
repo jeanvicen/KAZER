@@ -1,38 +1,5 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title desc">
-  <title id="title">Kazer</title>
-  <desc id="desc">Marca geométrica metálica do Kazer</desc>
-  <defs>
-    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#08090b"/>
-      <stop offset="1" stop-color="#1f2228"/>
-    </linearGradient>
-    <linearGradient id="metal" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#555b66"/>
-      <stop offset=".2" stop-color="#f7f8fb"/>
-      <stop offset=".42" stop-color="#7b828d"/>
-      <stop offset=".55" stop-color="#fff"/>
-      <stop offset=".76" stop-color="#4a505a"/>
-      <stop offset="1" stop-color="#e1e5e9"/>
-    </linearGradient>
-    <linearGradient id="shine" x1="0" y1="0" x2="1" y2="0">
-      <stop offset="0" stop-color="#fff" stop-opacity="0"/>
-      <stop offset=".48" stop-color="#fff" stop-opacity=".7"/>
-      <stop offset=".58" stop-color="#fff" stop-opacity="0"/>
-      <stop offset="1" stop-color="#fff" stop-opacity="0"/>
-    </linearGradient>
-    <filter id="shadow" x="-30%" y="-30%" width="160%" height="160%">
-      <feDropShadow dx="0" dy="12" stdDeviation="12" flood-color="#000" flood-opacity=".45"/>
-    </filter>
-    <clipPath id="markClip"><path d="M116 90h76v108l106-108h96L279 232l122 190h-96l-98-150-15 16v134h-76z"/></clipPath>
-  </defs>
-  <rect width="512" height="512" rx="118" fill="url(#bg)"/>
-  <circle cx="256" cy="256" r="190" fill="none" stroke="#ffffff" stroke-opacity=".13" stroke-width="2"/>
-  <circle cx="256" cy="256" r="174" fill="none" stroke="#ffffff" stroke-opacity=".06" stroke-width="1" stroke-dasharray="3 13"/>
-  <path d="M116 90h76v108l106-108h96L279 232l122 190h-96l-98-150-15 16v134h-76z" fill="url(#metal)" filter="url(#shadow)"/>
-  <g clip-path="url(#markClip)">
-    <rect x="0" y="0" width="512" height="512" fill="url(#shine)" opacity=".75">
-      <animate attributeName="x" values="-520;520" dur="3.8s" repeatCount="indefinite"/>
-    </rect>
-  </g>
-  <circle cx="388" cy="124" r="7" fill="#e6e9ed"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 332 308" role="img" aria-labelledby="title desc">
+  <title id="title">Logo Kazer</title>
+  <desc id="desc">Estrela branca com círculo central sobre fundo escuro.</desc>
+  <image href="kazer-logo.jpg" width="332" height="308" preserveAspectRatio="none" />
 </svg>

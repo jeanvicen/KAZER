@@ -7,7 +7,7 @@
     <title>KAZER</title>
     <meta name="description" content="Kazer: converse, organize e crie em um espaço inteligente." />
     <link rel="manifest" href="../download/manifest.webmanifest" />
-    <link rel="icon" href="../download/assets/kazer-logo.svg" type="image/svg+xml" />
+    <link rel="icon" href="../download/assets/kazer-logo.jpg" type="image/jpeg" />
     <link rel="apple-touch-icon" href="../download/icons/kazer-192.png" />
     <style>
       :root {
@@ -180,32 +180,20 @@
       .avatar-photo {
         position: relative;
         display: flex;
-        align-items: flex-end;
+        align-items: center;
         justify-content: center;
         width: 34px;
         height: 34px;
         overflow: hidden;
         border: 1px solid rgba(255, 255, 255, 0.28);
         border-radius: 50%;
-        background: radial-gradient(circle at 50% 34%, #efe0ce 0 18%, transparent 19%), linear-gradient(145deg, #101116 2%, #343946 40%, #8b7aff 70%, #171921 100%);
+        background: #111216 url("../download/icons/kazer-192.png") center / cover no-repeat;
+        box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08), 0 4px 16px rgba(0, 0, 0, 0.22);
       }
 
-      .avatar-photo::before {
-        position: absolute;
-        top: 4px;
-        width: 19px;
-        height: 12px;
-        border-radius: 65% 65% 40% 40%;
-        background: #11121a;
-        content: "";
-      }
-
+      .avatar-photo::before,
       .avatar-photo::after {
-        width: 24px;
-        height: 13px;
-        border-radius: 50% 50% 0 0;
-        background: rgba(241, 237, 230, 0.88);
-        content: "";
+        display: none;
       }
 
       .new-chat-button {
