@@ -708,7 +708,6 @@
         color: var(--text-soft);
       }
 
-      .settings-popover,
       .web-popover {
         padding: 18px 20px;
       }
@@ -816,36 +815,431 @@
         line-height: 1.4;
       }
 
-      .settings-popover h2 {
-        margin: 0 0 14px;
-        font-size: 17px;
-        font-weight: 550;
+      .settings-backdrop {
+        position: fixed;
+        z-index: 79;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.62);
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 190ms var(--ease);
+        backdrop-filter: blur(5px);
       }
 
-      .setting-row {
+      .settings-backdrop.visible {
+        opacity: 1;
+        pointer-events: auto;
+      }
+
+      section.settings-popover {
+        position: fixed;
+        z-index: 90;
+        top: 50%;
+        right: auto;
+        left: 50%;
+        display: grid;
+        grid-template-columns: 250px minmax(0, 1fr);
+        width: min(960px, calc(100vw - 40px));
+        height: min(720px, calc(100vh - 40px));
+        max-height: calc(100vh - 40px);
+        overflow: hidden;
+        border: 1px solid var(--line);
+        border-radius: 22px;
+        background: var(--card);
+        box-shadow: 0 30px 90px rgba(0, 0, 0, 0.6);
+        opacity: 0;
+        pointer-events: none;
+        transform: translate(-50%, -48%) scale(0.985);
+        transition: opacity 190ms var(--ease), transform 220ms var(--ease);
+      }
+
+      section.settings-popover.visible {
+        opacity: 1 !important;
+        pointer-events: auto;
+        transform: translate(-50%, -50%) scale(1);
+        isolation: isolate;
+      }
+
+      .settings-nav {
+        display: flex;
+        flex-direction: column;
+        min-width: 0;
+        padding: 16px 12px 14px;
+        border-right: 1px solid var(--line-soft);
+        background: var(--card-2);
+      }
+
+      .settings-mobile-head {
         display: flex;
         align-items: center;
         justify-content: space-between;
+        min-height: 42px;
+        padding: 0 4px 10px;
+      }
+
+      .settings-mobile-title {
+        color: var(--text);
+        font-size: 16px;
+        font-weight: 650;
+        letter-spacing: -0.02em;
+      }
+
+      .settings-close {
+        width: 34px;
+        height: 34px;
+        color: var(--text-soft);
+      }
+
+      .settings-search {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        min-height: 42px;
+        padding: 0 11px;
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        background: var(--page-soft);
+      }
+
+      .settings-search .icon {
+        width: 16px;
+        height: 16px;
+        color: var(--text-dim);
+      }
+
+      .settings-search input {
+        min-width: 0;
+        flex: 1;
+        border: 0;
+        outline: 0;
+        background: transparent;
+        color: var(--text);
+        font-size: 12px;
+      }
+
+      .settings-search input::placeholder {
+        color: var(--text-dim);
+      }
+
+      .settings-nav-list {
+        display: grid;
+        gap: 4px;
+        margin-top: 14px;
+        overflow-y: auto;
+        scrollbar-width: thin;
+        scrollbar-color: var(--line) transparent;
+      }
+
+      .settings-nav-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        min-height: 42px;
+        padding: 0 11px;
+        border: 1px solid transparent;
+        border-radius: 11px;
+        background: transparent;
+        color: var(--text-soft);
+        font: inherit;
+        font-size: 12px;
+        text-align: left;
+        cursor: pointer;
+        transition: background 150ms var(--ease), border-color 150ms var(--ease), color 150ms var(--ease);
+      }
+
+      .settings-nav-item:hover,
+      .settings-nav-item.active {
+        border-color: var(--line-soft);
+        background: var(--card);
+        color: var(--text);
+      }
+
+      .settings-nav-icon {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 22px;
+        flex: 0 0 auto;
+        color: var(--text-dim);
+        font-size: 18px;
+        line-height: 1;
+      }
+
+      .settings-panel {
+        display: flex;
+        flex-direction: column;
+        min-width: 0;
+        min-height: 0;
+        background: var(--card);
+      }
+
+      .settings-panel-head {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
         gap: 18px;
-        min-height: 57px;
+        padding: 27px 34px 18px;
+        border-bottom: 1px solid var(--line-soft);
+      }
+
+      .settings-eyebrow {
+        display: block;
+        margin-bottom: 7px;
+        color: var(--text-dim);
+        font-size: 9px;
+        font-weight: 700;
+        letter-spacing: 0.18em;
+      }
+
+      .settings-panel-head h2 {
+        margin: 0;
+        color: var(--text);
+        font-size: clamp(24px, 3vw, 30px);
+        font-weight: 600;
+        letter-spacing: -0.045em;
+      }
+
+      .settings-panel-close {
+        width: 36px;
+        height: 36px;
+        color: var(--text-soft);
+      }
+
+      .settings-panel-scroll {
+        flex: 1;
+        min-height: 0;
+        padding: 22px 34px 38px;
+        overflow-y: auto;
+        scrollbar-width: thin;
+        scrollbar-color: var(--line) transparent;
+      }
+
+      .settings-section-intro {
+        max-width: 610px;
+        margin: 0 0 18px;
+        color: var(--text-soft);
+        font-size: 12px;
+        line-height: 1.55;
+      }
+
+      .settings-group {
+        overflow: hidden;
+        border: 1px solid var(--line-soft);
+        border-radius: 16px;
+        background: color-mix(in srgb, var(--card-2) 58%, transparent);
+      }
+
+      .settings-group-title {
+        padding: 15px 17px 9px;
+        color: var(--text-dim);
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+      }
+
+      .settings-control,
+      .settings-action-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 22px;
+        min-height: 70px;
+        padding: 13px 17px;
         border-top: 1px solid var(--line-soft);
       }
 
-      .setting-row strong,
-      .setting-row small {
+      .settings-control > div,
+      .settings-action-row > span:first-child {
+        min-width: 0;
+        flex: 1;
+      }
+
+      .settings-control strong,
+      .settings-control small,
+      .settings-action-row strong,
+      .settings-action-row small {
         display: block;
       }
 
-      .setting-row strong {
+      .settings-control strong,
+      .settings-action-row strong {
         color: var(--text);
         font-size: 13px;
-        font-weight: 500;
+        font-weight: 550;
       }
 
-      .setting-row small {
+      .settings-control small,
+      .settings-action-row small {
+        max-width: 560px;
         margin-top: 4px;
         color: var(--text-dim);
         font-size: 10px;
+        line-height: 1.45;
+      }
+
+      .settings-select {
+        min-width: 126px;
+        padding: 9px 28px 9px 10px;
+        border: 1px solid var(--line);
+        border-radius: 9px;
+        outline: 0;
+        background: var(--page-soft);
+        color: var(--text);
+        font-size: 11px;
+        cursor: pointer;
+      }
+
+      .settings-select:focus {
+        border-color: var(--purple);
+      }
+
+      .settings-control-column {
+        display: block;
+      }
+
+      .settings-textarea {
+        display: block;
+        width: 100%;
+        min-height: 116px;
+        margin-top: 13px;
+        padding: 12px;
+        resize: vertical;
+        border: 1px solid var(--line);
+        border-radius: 11px;
+        outline: 0;
+        background: var(--page-soft);
+        color: var(--text);
+        font-size: 12px;
+        line-height: 1.45;
+      }
+
+      .settings-textarea:focus {
+        border-color: var(--purple);
+      }
+
+      .settings-field-footer {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        margin-top: 9px;
+      }
+
+      .settings-field-footer small {
+        margin: 0;
+      }
+
+      .settings-save {
+        padding: 8px 11px;
+        border: 1px solid var(--line);
+        border-radius: 9px;
+        background: var(--text);
+        color: var(--page);
+        font-size: 11px;
+        cursor: pointer;
+      }
+
+      .settings-save:hover {
+        opacity: 0.86;
+      }
+
+      .settings-action-row {
+        width: 100%;
+        background: transparent;
+        color: var(--text);
+        text-align: left;
+        cursor: pointer;
+      }
+
+      .settings-action-row:hover {
+        background: var(--card);
+      }
+
+      .settings-row-arrow {
+        color: var(--text-dim);
+        font-size: 23px;
+      }
+
+      .settings-account-card {
+        display: flex;
+        align-items: center;
+        gap: 11px;
+        padding: 16px 17px;
+        border-top: 1px solid var(--line-soft);
+      }
+
+      .settings-account-avatar {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 38px;
+        height: 38px;
+        border-radius: 50%;
+        background: var(--purple);
+        color: #fff;
+        font-size: 14px;
+        font-weight: 700;
+      }
+
+      .settings-account-card > div {
+        min-width: 0;
+        flex: 1;
+      }
+
+      .settings-account-card strong,
+      .settings-account-card small {
+        display: block;
+      }
+
+      .settings-account-card strong {
+        color: var(--text);
+        font-size: 13px;
+      }
+
+      .settings-account-card small {
+        margin-top: 3px;
+        color: var(--text-dim);
+        font-size: 10px;
+      }
+
+      .settings-session-badge {
+        padding: 4px 7px;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        color: var(--text-dim);
+        font-size: 9px;
+        letter-spacing: 0.08em;
+      }
+
+      .settings-status-dot {
+        color: var(--success);
+        font-size: 11px;
+        font-weight: 600;
+      }
+
+      .settings-logout {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        width: 100%;
+        min-height: 52px;
+        padding: 0 17px;
+        border-top: 1px solid rgba(228, 116, 116, 0.25);
+        background: transparent;
+        color: var(--danger);
+        font-size: 12px;
+        text-align: left;
+        cursor: pointer;
+      }
+
+      .settings-logout:hover {
+        background: rgba(228, 116, 116, 0.08);
+      }
+
+      .settings-logout .icon {
+        width: 18px;
+        height: 18px;
       }
 
       .switch {
@@ -877,6 +1271,15 @@
       .switch.on::after {
         background: #fff;
         transform: translateX(16px);
+      }
+
+      html[data-reduced-motion="true"] *,
+      html[data-reduced-motion="true"] *::before,
+      html[data-reduced-motion="true"] *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        scroll-behavior: auto !important;
+        transition-duration: 0.01ms !important;
       }
 
       .install-banner {
@@ -1177,6 +1580,109 @@
         transform: translateX(-50%);
       }
 
+      @media (max-width: 680px) {
+        section.settings-popover {
+          top: 0;
+          right: 0;
+          bottom: 0;
+          left: 0;
+          grid-template-columns: 1fr;
+          width: 100%;
+          height: 100%;
+          max-height: none;
+          border: 0;
+          border-radius: 0;
+          transform: translateY(12px);
+        }
+
+        section.settings-popover.visible {
+          opacity: 1 !important;
+          transform: translateY(0);
+          background: var(--card);
+        }
+
+        .settings-nav {
+          padding: max(12px, env(safe-area-inset-top)) 16px 0;
+          border-right: 0;
+          background: var(--card);
+        }
+
+        .settings-mobile-head {
+          min-height: 48px;
+          padding: 0 0 8px;
+        }
+
+        .settings-search {
+          margin-bottom: 13px;
+        }
+
+        .settings-nav-list {
+          display: flex;
+          gap: 6px;
+          margin: 0 -2px;
+          padding: 0 2px 13px;
+          overflow-x: auto;
+        }
+
+        .settings-nav-item {
+          min-width: max-content;
+          min-height: 38px;
+          padding: 0 13px;
+          white-space: nowrap;
+        }
+
+        .settings-nav-icon {
+          display: none;
+        }
+
+        .settings-panel {
+          border-top: 1px solid var(--line-soft);
+        }
+
+        .settings-panel-head {
+          padding: 18px 17px 14px;
+        }
+
+        .settings-panel-close {
+          display: none;
+        }
+
+        .settings-panel-scroll {
+          padding: 17px 16px calc(26px + env(safe-area-inset-bottom));
+        }
+
+        .settings-section-intro {
+          margin-bottom: 14px;
+          font-size: 11px;
+        }
+
+        .settings-control,
+        .settings-action-row {
+          min-height: 66px;
+          gap: 12px;
+          padding: 12px 14px;
+        }
+
+        .settings-control strong,
+        .settings-action-row strong {
+          font-size: 12px;
+        }
+
+        .settings-select {
+          min-width: 110px;
+          max-width: 45%;
+        }
+
+        .settings-account-card {
+          padding: 14px;
+        }
+
+        .settings-logout {
+          min-height: 54px;
+          padding: 0 14px;
+        }
+      }
+
       @media (prefers-reduced-motion: reduce) {
         *,
         *::before,
@@ -1219,10 +1725,43 @@
         </div>
       </div>
 
-      <div class="settings-popover" id="settingsPopover" role="dialog" aria-label="Settings">
-        <h2>Settings</h2>
-        <div class="setting-row"><div><strong>Tema</strong><small>Alternar entre modo escuro e claro</small></div><button class="switch on" id="themeSwitch" type="button" aria-label="Alternar tema" aria-pressed="true"></button></div>
-      </div>
+      <div class="settings-backdrop" id="settingsBackdrop" hidden></div>
+      <section class="settings-popover" id="settingsPopover" role="dialog" aria-modal="true" aria-label="Configurações" aria-hidden="true" hidden>
+        <aside class="settings-nav">
+          <div class="settings-mobile-head"><span class="settings-mobile-title">Configurações</span><button class="icon-button settings-close" id="closeSettings" type="button" aria-label="Fechar configurações"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"></path></svg></button></div>
+          <label class="settings-search"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-4-4"></path></svg><input id="settingsSearch" type="search" placeholder="Pesquisar configuração" autocomplete="off" /></label>
+          <nav class="settings-nav-list" aria-label="Categorias de configurações">
+            <button class="settings-nav-item active" type="button" data-settings-section="general"><span class="settings-nav-icon">◌</span><span>Geral</span></button>
+            <button class="settings-nav-item" type="button" data-settings-section="personalization"><span class="settings-nav-icon">✦</span><span>Personalização</span></button>
+            <button class="settings-nav-item" type="button" data-settings-section="notifications"><span class="settings-nav-icon">◔</span><span>Notificações</span></button>
+            <button class="settings-nav-item" type="button" data-settings-section="data"><span class="settings-nav-icon">▣</span><span>Dados e privacidade</span></button>
+            <button class="settings-nav-item" type="button" data-settings-section="account"><span class="settings-nav-icon">◎</span><span>Conta e segurança</span></button>
+          </nav>
+        </aside>
+        <section class="settings-panel">
+          <header class="settings-panel-head"><div><span class="settings-eyebrow">PREFERÊNCIAS DO KAZER</span><h2 id="settingsPanelTitle">Geral</h2></div><button class="icon-button settings-panel-close" id="closeSettingsDesktop" type="button" aria-label="Fechar configurações"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"></path></svg></button></header>
+          <div class="settings-panel-scroll">
+            <section class="settings-section" data-settings-panel="general">
+              <p class="settings-section-intro">Controle como o Kazer aparece e responde neste dispositivo.</p>
+              <div class="settings-group"><div class="settings-group-title">Interface</div><div class="settings-control"><div><strong>Aparência</strong><small>Escolha o tema usado pelo Kazer.</small></div><select class="settings-select" id="appearanceSelect"><option value="dark">Escuro</option><option value="light">Claro</option><option value="system">Sistema</option></select></div><div class="settings-control"><div><strong>Idioma</strong><small>Idioma dos controles e mensagens da interface.</small></div><select class="settings-select" id="languageSelect"><option value="pt-BR">Português (Brasil)</option><option value="en-US">English</option></select></div><div class="settings-control"><div><strong>Reduzir movimento</strong><small>Diminui transições e animações visuais.</small></div><button class="switch" id="motionSwitch" type="button" aria-label="Alternar redução de movimento" aria-pressed="false"></button></div></div>
+            </section>
+            <section class="settings-section" data-settings-panel="personalization" hidden>
+              <p class="settings-section-intro">Defina como o agente deve considerar suas preferências em novos chats.</p>
+              <div class="settings-group"><div class="settings-group-title">Instruções do agente</div><div class="settings-control settings-control-column"><div><strong>Personalização</strong><small>Essas instruções ficam salvas apenas neste navegador enquanto a conta real não estiver conectada.</small></div><textarea class="settings-textarea" id="customInstructions" maxlength="1500" placeholder="Ex.: responda em português, seja direto e organize os próximos passos."></textarea><div class="settings-field-footer"><small id="instructionsCount">0/1500</small><button class="settings-save" id="savePersonalization" type="button">Salvar instruções</button></div></div><div class="settings-control"><div><strong>Usar personalização</strong><small>Aplica suas instruções quando iniciar uma nova conversa.</small></div><button class="switch on" id="personalizationSwitch" type="button" aria-label="Alternar personalização" aria-pressed="true"></button></div></div>
+            </section>
+            <section class="settings-section" data-settings-panel="notifications" hidden>
+              <p class="settings-section-intro">Escolha quais avisos locais o Kazer pode exibir neste dispositivo.</p>
+              <div class="settings-group"><div class="settings-group-title">Avisos</div><div class="settings-control"><div><strong>Avisos do Kazer</strong><small>Permite mensagens de confirmação e orientação dentro da interface.</small></div><button class="switch on" id="notificationsSwitch" type="button" aria-label="Alternar avisos" aria-pressed="true"></button></div><div class="settings-control"><div><strong>Mostrar instalação</strong><small>Exibe o aviso para instalar o Kazer quando disponível.</small></div><button class="switch on" id="installSwitch" type="button" aria-label="Alternar aviso de instalação" aria-pressed="true"></button></div></div>
+            </section>
+            <section class="settings-section" data-settings-panel="data" hidden>
+              <p class="settings-section-intro">Gerencie dados que ficam somente no navegador atual.</p>
+              <div class="settings-group"><div class="settings-group-title">Dados locais</div><div class="settings-control"><div><strong>Modo temporário</strong><small>Não mantém rascunhos ou preferências de conversa neste dispositivo.</small></div><button class="switch" id="temporarySwitch" type="button" aria-label="Alternar modo temporário" aria-pressed="false"></button></div><button class="settings-action-row" id="clearLocalData" type="button"><span><strong>Limpar preferências locais</strong><small>Remove tema, personalização e opções salvas neste navegador.</small></span><span class="settings-row-arrow">›</span></button></div></section>
+            <section class="settings-section" data-settings-panel="account" hidden>
+              <p class="settings-section-intro">Veja a sessão atual e saia da conta quando terminar.</p>
+              <div class="settings-group"><div class="settings-group-title">Sessão</div><div class="settings-account-card"><span class="settings-account-avatar">J</span><div><strong>jeanvicen</strong><small>jeanvicence@gmail.com</small></div><span class="settings-session-badge">LOCAL</span></div><div class="settings-control"><div><strong>Status da sessão</strong><small>A sessão visual está ativa neste navegador.</small></div><span class="settings-status-dot">Ativa</span></div><button class="settings-logout" id="settingsLogoutAction" type="button">Sair da conta<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 17l5-5-5-5M15 12H3"></path><path d="M21 19V5a2 2 0 0 0-2-2h-5"></path></svg></button></div></section>
+          </div>
+        </section>
+      </section>
 
       <div class="web-popover" id="webPopover" role="dialog" aria-label="Kazer Web">
         <h2>Kazer Web</h2>
@@ -1273,7 +1812,25 @@
         const messageInput = document.getElementById("messageInput");
         const sendButton = document.getElementById("sendButton");
         const stopButton = document.getElementById("stopButton");
-        const themeSwitch = document.getElementById("themeSwitch");
+        const settingsBackdrop = document.getElementById("settingsBackdrop");
+        const closeSettings = document.getElementById("closeSettings");
+        const closeSettingsDesktop = document.getElementById("closeSettingsDesktop");
+        const settingsSearch = document.getElementById("settingsSearch");
+        const settingsPanelTitle = document.getElementById("settingsPanelTitle");
+        const settingsNavItems = document.querySelectorAll("[data-settings-section]");
+        const settingsPanels = document.querySelectorAll("[data-settings-panel]");
+        const appearanceSelect = document.getElementById("appearanceSelect");
+        const languageSelect = document.getElementById("languageSelect");
+        const motionSwitch = document.getElementById("motionSwitch");
+        const customInstructions = document.getElementById("customInstructions");
+        const instructionsCount = document.getElementById("instructionsCount");
+        const savePersonalization = document.getElementById("savePersonalization");
+        const personalizationSwitch = document.getElementById("personalizationSwitch");
+        const notificationsSwitch = document.getElementById("notificationsSwitch");
+        const installSwitch = document.getElementById("installSwitch");
+        const temporarySwitch = document.getElementById("temporarySwitch");
+        const clearLocalData = document.getElementById("clearLocalData");
+        const settingsLogoutAction = document.getElementById("settingsLogoutAction");
         const webSearchForm = document.getElementById("webSearchForm");
         const webQuery = document.getElementById("webQuery");
         const webSources = document.getElementById("webSources");
@@ -1287,8 +1844,20 @@
         let busy = false;
         let responseTimer = null;
         let toastTimer = null;
+        const settingsStorageKey = "kazer-settings";
+        const draftStorageKey = "kazer-draft";
+        const defaultSettings = { appearance: "dark", language: "pt-BR", reducedMotion: false, personalization: true, notifications: true, installPrompt: true, temporary: false };
+        let settingsState = { ...defaultSettings };
+        try {
+          settingsState = { ...defaultSettings, ...JSON.parse(localStorage.getItem(settingsStorageKey) || "{}") };
+        } catch (error) {
+          settingsState = { ...defaultSettings };
+        }
+
+        const persistSettings = () => localStorage.setItem(settingsStorageKey, JSON.stringify(settingsState));
 
         const showToast = (message) => {
+          if (settingsState.notifications === false) return;
           toast.textContent = message;
           toast.classList.add("visible");
           window.clearTimeout(toastTimer);
@@ -1298,7 +1867,7 @@
         const isStandalone = () => window.matchMedia?.("(display-mode: standalone)").matches || window.navigator.standalone === true;
 
         const showInstallBanner = () => {
-          if (isStandalone() || sessionStorage.getItem("kazer-install-dismissed") === "1") return;
+          if (isStandalone() || !settingsState.installPrompt || !settingsPopover.hidden || sessionStorage.getItem("kazer-install-dismissed") === "1") return;
           installBanner.hidden = false;
           requestAnimationFrame(() => installBanner.classList.add("visible"));
         };
@@ -1325,6 +1894,10 @@
         const closeMenus = () => {
           profilePopover.classList.remove("visible");
           settingsPopover.classList.remove("visible");
+          settingsBackdrop.classList.remove("visible");
+          settingsPopover.hidden = true;
+          settingsBackdrop.hidden = true;
+          settingsPopover.setAttribute("aria-hidden", "true");
           webPopover.classList.remove("visible");
           profileButton.setAttribute("aria-expanded", "false");
         };
@@ -1336,6 +1909,67 @@
             profilePopover.classList.add("visible");
             profileButton.setAttribute("aria-expanded", "true");
           }
+        };
+
+        const settingsLabels = { general: "Geral", personalization: "Personalização", notifications: "Notificações", data: "Dados e privacidade", account: "Conta e segurança" };
+
+        const setSwitch = (element, value) => {
+          if (!element) return;
+          element.classList.toggle("on", Boolean(value));
+          element.setAttribute("aria-pressed", String(Boolean(value)));
+        };
+
+        const applySettings = () => {
+          const appearance = settingsState.appearance;
+          const systemLight = window.matchMedia?.("(prefers-color-scheme: light)").matches;
+          document.documentElement.dataset.theme = appearance === "system" ? (systemLight ? "light" : "dark") : appearance;
+          document.documentElement.lang = settingsState.language || "pt-BR";
+          document.documentElement.dataset.reducedMotion = settingsState.reducedMotion ? "true" : "false";
+          appearanceSelect.value = appearance;
+          languageSelect.value = settingsState.language || "pt-BR";
+          setSwitch(motionSwitch, settingsState.reducedMotion);
+          setSwitch(personalizationSwitch, settingsState.personalization);
+          setSwitch(notificationsSwitch, settingsState.notifications);
+          setSwitch(installSwitch, settingsState.installPrompt);
+          setSwitch(temporarySwitch, settingsState.temporary);
+          customInstructions.value = settingsState.instructions || "";
+          instructionsCount.textContent = customInstructions.value.length + "/1500";
+        };
+
+        const renderSettingsSection = (section) => {
+          const selected = settingsLabels[section] ? section : "general";
+          settingsNavItems.forEach((item) => item.classList.toggle("active", item.dataset.settingsSection === selected));
+          settingsPanels.forEach((panel) => { panel.hidden = panel.dataset.settingsPanel !== selected; });
+          settingsPanelTitle.textContent = settingsLabels[selected];
+        };
+
+        const openSettings = (section = "general") => {
+          closeMenus();
+          hideInstallBanner(false);
+          toast.classList.remove("visible");
+          window.clearTimeout(toastTimer);
+          settingsPopover.hidden = false;
+          settingsBackdrop.hidden = false;
+          settingsPopover.setAttribute("aria-hidden", "false");
+          requestAnimationFrame(() => {
+            settingsBackdrop.classList.add("visible");
+            settingsPopover.classList.add("visible");
+          });
+          settingsSearch.value = "";
+          settingsNavItems.forEach((item) => { item.hidden = false; });
+          renderSettingsSection(section);
+          applySettings();
+          window.setTimeout(() => (window.innerWidth > 680 ? settingsSearch.focus() : closeSettings.focus()), 80);
+        };
+
+        const closeSettingsModal = () => {
+          settingsPopover.classList.remove("visible");
+          settingsBackdrop.classList.remove("visible");
+          settingsPopover.setAttribute("aria-hidden", "true");
+          window.setTimeout(() => {
+            settingsPopover.hidden = true;
+            settingsBackdrop.hidden = true;
+          }, 230);
         };
 
         const openWeb = () => {
@@ -1483,10 +2117,7 @@
           event.stopPropagation();
           toggleProfile();
         });
-        settingsAction.addEventListener("click", () => {
-          closeMenus();
-          settingsPopover.classList.add("visible");
-        });
+        settingsAction.addEventListener("click", () => openSettings());
         proAction.addEventListener("click", () => {
           closeMenus();
           showToast("Kazer Pro: página de compra em breve");
@@ -1496,20 +2127,87 @@
           const query = webQuery.value.trim();
           if (query) renderWebResults(query);
         });
-        logoutAction.addEventListener("click", () => {
+        const logout = () => {
+          closeSettingsModal();
           closeMenus();
-          showToast("A saída da conta será conectada em breve");
-        });
+          window.setTimeout(() => window.location.assign("login.html"), 80);
+        };
+
+        logoutAction.addEventListener("click", logout);
+        settingsLogoutAction.addEventListener("click", logout);
         newChatButton.addEventListener("click", requestNewChat);
         document.addEventListener("click", (event) => {
           if (!event.target.closest(".profile-popover") && !event.target.closest("#profileButton") && !event.target.closest(".settings-popover") && !event.target.closest(".web-popover")) closeMenus();
         });
 
-        themeSwitch.addEventListener("click", () => {
-          const light = document.documentElement.dataset.theme === "light";
-          document.documentElement.dataset.theme = light ? "dark" : "light";
-          themeSwitch.classList.toggle("on", light);
-          themeSwitch.setAttribute("aria-pressed", String(light));
+        closeSettings.addEventListener("click", closeSettingsModal);
+        closeSettingsDesktop.addEventListener("click", closeSettingsModal);
+        settingsBackdrop.addEventListener("click", closeSettingsModal);
+        settingsNavItems.forEach((item) => {
+          item.addEventListener("click", () => renderSettingsSection(item.dataset.settingsSection));
+        });
+        settingsSearch.addEventListener("input", () => {
+          const query = settingsSearch.value.trim().toLocaleLowerCase();
+          settingsNavItems.forEach((item) => {
+            item.hidden = query.length > 0 && !item.textContent.toLocaleLowerCase().includes(query);
+          });
+        });
+        appearanceSelect.addEventListener("change", () => {
+          settingsState.appearance = appearanceSelect.value;
+          persistSettings();
+          applySettings();
+        });
+        languageSelect.addEventListener("change", () => {
+          settingsState.language = languageSelect.value;
+          persistSettings();
+          applySettings();
+          showToast("Idioma da interface atualizado");
+        });
+        motionSwitch.addEventListener("click", () => {
+          settingsState.reducedMotion = !settingsState.reducedMotion;
+          persistSettings();
+          applySettings();
+        });
+        customInstructions.addEventListener("input", () => {
+          instructionsCount.textContent = customInstructions.value.length + "/1500";
+        });
+        savePersonalization.addEventListener("click", () => {
+          settingsState.instructions = customInstructions.value.trim();
+          persistSettings();
+          showToast("Instruções do agente salvas neste dispositivo");
+        });
+        personalizationSwitch.addEventListener("click", () => {
+          settingsState.personalization = !settingsState.personalization;
+          persistSettings();
+          applySettings();
+        });
+        notificationsSwitch.addEventListener("click", () => {
+          settingsState.notifications = !settingsState.notifications;
+          persistSettings();
+          applySettings();
+        });
+        installSwitch.addEventListener("click", () => {
+          settingsState.installPrompt = !settingsState.installPrompt;
+          persistSettings();
+          applySettings();
+          if (!settingsState.installPrompt) hideInstallBanner(true);
+        });
+        temporarySwitch.addEventListener("click", () => {
+          settingsState.temporary = !settingsState.temporary;
+          if (settingsState.temporary) localStorage.removeItem(draftStorageKey);
+          persistSettings();
+          applySettings();
+          showToast(settingsState.temporary ? "Modo temporário ativado" : "Modo temporário desativado");
+        });
+        clearLocalData.addEventListener("click", () => {
+          localStorage.removeItem(settingsStorageKey);
+          localStorage.removeItem(draftStorageKey);
+          settingsState = { ...defaultSettings };
+          applySettings();
+          showToast("Preferências locais limpas");
+        });
+        document.addEventListener("keydown", (event) => {
+          if (event.key === "Escape" && !settingsPopover.hidden) closeSettingsModal();
         });
 
         composer.addEventListener("submit", (event) => {
@@ -1527,7 +2225,7 @@
           }
         });
         stopButton.addEventListener("click", stop);
-
+        applySettings();
 
         installNow.addEventListener("click", installKazer);
         installLater.addEventListener("click", () => hideInstallBanner(true));
