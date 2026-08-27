@@ -1107,20 +1107,136 @@
         line-height: 1.45;
       }
 
-      .settings-select {
+      .settings-custom-select {
+        position: relative;
+        flex: 0 0 auto;
+        width: min(45%, 160px);
         min-width: 126px;
-        padding: 9px 28px 9px 10px;
-        border: 1px solid var(--line);
-        border-radius: 9px;
-        outline: 0;
-        background: var(--page-soft);
-        color: var(--text);
-        font-size: 11px;
-        cursor: pointer;
       }
 
-      .settings-select:focus {
-        border-color: var(--purple);
+      .settings-select-native {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        opacity: 0;
+        pointer-events: none;
+      }
+
+      .settings-select-trigger {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        width: 100%;
+        min-height: 39px;
+        padding: 9px 10px;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        background: var(--page-soft);
+        color: var(--text);
+        font: inherit;
+        font-size: 11px;
+        text-align: left;
+        cursor: pointer;
+        transition: border-color 160ms var(--ease), background 160ms var(--ease), transform 160ms var(--ease);
+      }
+
+      .settings-select-trigger:hover,
+      .settings-custom-select.open .settings-select-trigger {
+        border-color: color-mix(in srgb, var(--purple) 72%, var(--line));
+        background: color-mix(in srgb, var(--purple) 8%, var(--page-soft));
+      }
+
+      .settings-select-trigger:active {
+        transform: scale(0.98);
+      }
+
+      .settings-select-chevron {
+        width: 14px;
+        height: 14px;
+        flex: 0 0 auto;
+        margin-left: 8px;
+        color: var(--text-dim);
+        transition: transform 160ms var(--ease);
+      }
+
+      .settings-custom-select.open .settings-select-chevron {
+        transform: rotate(180deg);
+      }
+
+      .settings-select-menu {
+        position: absolute;
+        right: 0;
+        bottom: calc(100% + 8px);
+        z-index: 40;
+        display: grid;
+        width: max-content;
+        min-width: 100%;
+        max-width: min(250px, calc(100vw - 40px));
+        padding: 5px;
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        background: var(--card);
+        box-shadow: 0 18px 44px rgba(0, 0, 0, 0.32), 0 0 0 1px rgba(255, 255, 255, 0.025);
+        opacity: 0;
+        visibility: hidden;
+        transform: translateY(5px) scale(0.98);
+        transform-origin: bottom right;
+        transition: opacity 170ms var(--ease), transform 170ms var(--ease), visibility 170ms var(--ease);
+      }
+
+      .settings-custom-select.open .settings-select-menu {
+        opacity: 1;
+        visibility: visible;
+        transform: translateY(0) scale(1);
+      }
+
+      .settings-custom-select.open-down .settings-select-menu {
+        top: calc(100% + 8px);
+        bottom: auto;
+        transform-origin: top right;
+        transform: translateY(-5px) scale(0.98);
+      }
+
+      .settings-custom-select.open-down.open .settings-select-menu {
+        transform: translateY(0) scale(1);
+      }
+
+      .settings-select-option {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 28px;
+        min-height: 40px;
+        padding: 0 10px;
+        border: 0;
+        border-radius: 9px;
+        background: transparent;
+        color: var(--text-soft);
+        font: inherit;
+        font-size: 11px;
+        text-align: left;
+        white-space: nowrap;
+        cursor: pointer;
+        transition: background 140ms var(--ease), color 140ms var(--ease);
+      }
+
+      .settings-select-option:hover,
+      .settings-select-option:focus-visible,
+      .settings-select-option[aria-selected="true"] {
+        background: var(--purple-soft);
+        color: var(--text);
+      }
+
+      .settings-option-check {
+        color: var(--purple);
+        font-size: 15px;
+        line-height: 1;
+        opacity: 0;
+      }
+
+      .settings-select-option[aria-selected="true"] .settings-option-check {
+        opacity: 1;
       }
 
       .settings-action-row {
@@ -1643,9 +1759,19 @@
           font-size: 12px;
         }
 
-        .settings-select {
+        .settings-custom-select {
+          width: min(45%, 160px);
           min-width: 110px;
-          max-width: 45%;
+        }
+
+        .settings-select-trigger {
+          min-height: 42px;
+          padding: 9px;
+        }
+
+        .settings-select-option {
+          min-height: 44px;
+          padding: 0 11px;
         }
 
         .settings-account-card {
@@ -1718,7 +1844,7 @@
           <div class="settings-panel-scroll">
             <section class="settings-section" data-settings-panel="general">
               <p class="settings-section-intro">Controle como o Kazer aparece e responde neste dispositivo.</p>
-              <div class="settings-group"><div class="settings-group-title">Interface</div><div class="settings-control"><div><strong>Aparência</strong><small>Escolha o tema usado pelo Kazer.</small></div><select class="settings-select" id="appearanceSelect"><option value="dark">Escuro</option><option value="light">Claro</option><option value="system">Sistema</option></select></div><div class="settings-control"><div><strong>Idioma</strong><small>Idioma dos controles e mensagens da interface.</small></div><select class="settings-select" id="languageSelect"><option value="pt-BR">Português (Brasil)</option><option value="en-US">English</option></select></div></div>
+              <div class="settings-group"><div class="settings-group-title">Interface</div><div class="settings-control"><div><strong>Aparência</strong><small>Escolha o tema usado pelo Kazer.</small></div><div class="settings-custom-select" data-custom-select="appearance"><select class="settings-select-native" id="appearanceSelect" tabindex="-1" aria-hidden="true"><option value="dark">Escuro</option><option value="light">Claro</option><option value="system">Sistema</option></select><button class="settings-select-trigger" id="appearanceTrigger" type="button" aria-haspopup="listbox" aria-expanded="false"><span data-select-label>Escuro</span><svg class="settings-select-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg></button><div class="settings-select-menu" data-select-menu role="listbox" aria-label="Aparência"><button class="settings-select-option" type="button" data-select-value="dark" role="option" aria-selected="false"><span>Escuro</span><span class="settings-option-check" aria-hidden="true">✓</span></button><button class="settings-select-option" type="button" data-select-value="light" role="option" aria-selected="false"><span>Claro</span><span class="settings-option-check" aria-hidden="true">✓</span></button><button class="settings-select-option" type="button" data-select-value="system" role="option" aria-selected="false"><span>Sistema</span><span class="settings-option-check" aria-hidden="true">✓</span></button></div></div></div><div class="settings-control"><div><strong>Idioma</strong><small>Idioma dos controles e mensagens da interface.</small></div><div class="settings-custom-select" data-custom-select="language"><select class="settings-select-native" id="languageSelect" tabindex="-1" aria-hidden="true"><option value="pt-BR">Português (Brasil)</option><option value="en-US">English</option></select><button class="settings-select-trigger" id="languageTrigger" type="button" aria-haspopup="listbox" aria-expanded="false"><span data-select-label>Português (Brasil)</span><svg class="settings-select-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg></button><div class="settings-select-menu" data-select-menu role="listbox" aria-label="Idioma"><button class="settings-select-option" type="button" data-select-value="pt-BR" role="option" aria-selected="false"><span>Português (Brasil)</span><span class="settings-option-check" aria-hidden="true">✓</span></button><button class="settings-select-option" type="button" data-select-value="en-US" role="option" aria-selected="false"><span>English</span><span class="settings-option-check" aria-hidden="true">✓</span></button></div></div></div></div>
             </section>
             <section class="settings-section" data-settings-panel="notifications" hidden>
               <p class="settings-section-intro">Escolha quais avisos locais o Kazer pode exibir neste dispositivo.</p>
@@ -1797,6 +1923,12 @@
         const settingsPanels = document.querySelectorAll("[data-settings-panel]");
         const appearanceSelect = document.getElementById("appearanceSelect");
         const languageSelect = document.getElementById("languageSelect");
+        const appearanceTrigger = document.getElementById("appearanceTrigger");
+        const languageTrigger = document.getElementById("languageTrigger");
+        const customSelects = [
+          { key: "appearance", root: document.querySelector('[data-custom-select="appearance"]'), native: appearanceSelect, trigger: appearanceTrigger },
+          { key: "language", root: document.querySelector('[data-custom-select="language"]'), native: languageSelect, trigger: languageTrigger }
+        ].map((config) => ({ ...config, menu: config.root?.querySelector("[data-select-menu]"), options: [...(config.root?.querySelectorAll("[data-select-value]") || [])] }));
         const notificationsSwitch = document.getElementById("notificationsSwitch");
         const installSwitch = document.getElementById("installSwitch");
         const clearLocalData = document.getElementById("clearLocalData");
@@ -1861,7 +1993,49 @@
           showToast("Use o menu do navegador e escolha Adicionar à tela inicial");
         };
 
+        const closeCustomSelects = () => {
+          customSelects.forEach(({ root, trigger }) => {
+            root?.classList.remove("open", "open-down");
+            trigger?.setAttribute("aria-expanded", "false");
+          });
+        };
+
+        const syncCustomSelect = (config, value) => {
+          if (!config?.root) return;
+          const selected = config.options.find((option) => option.dataset.selectValue === value) || config.options[0];
+          if (!selected) return;
+          const label = config.root.querySelector("[data-select-label]");
+          if (label) label.textContent = selected.firstElementChild?.textContent || selected.textContent.trim();
+          config.options.forEach((option) => {
+            const isSelected = option === selected;
+            option.setAttribute("aria-selected", String(isSelected));
+          });
+        };
+
+        const openCustomSelect = (config) => {
+          if (!config?.root || !config.trigger) return;
+          const isOpen = config.root.classList.contains("open");
+          closeCustomSelects();
+          if (isOpen) return;
+          config.root.classList.add("open");
+          const triggerRect = config.trigger.getBoundingClientRect();
+          const menuHeight = config.menu?.scrollHeight || 0;
+          const spaceBelow = window.innerHeight - triggerRect.bottom;
+          const spaceAbove = triggerRect.top;
+          config.root.classList.toggle("open-down", spaceBelow < menuHeight + 20 && spaceAbove > spaceBelow);
+          config.trigger.setAttribute("aria-expanded", "true");
+        };
+
+        const chooseCustomOption = (config, value) => {
+          if (!config?.native) return;
+          config.native.value = value;
+          config.native.dispatchEvent(new Event("change", { bubbles: true }));
+          closeCustomSelects();
+          config.trigger?.focus();
+        };
+
         const closeMenus = () => {
+          closeCustomSelects();
           profilePopover.classList.remove("visible");
           settingsPopover.classList.remove("visible");
           settingsBackdrop.classList.remove("visible");
@@ -1896,6 +2070,8 @@
           document.documentElement.lang = settingsState.language || "pt-BR";
           appearanceSelect.value = appearance;
           languageSelect.value = settingsState.language || "pt-BR";
+          syncCustomSelect(customSelects.find((config) => config.key === "appearance"), appearance);
+          syncCustomSelect(customSelects.find((config) => config.key === "language"), settingsState.language || "pt-BR");
           setSwitch(notificationsSwitch, settingsState.notifications);
           setSwitch(installSwitch, settingsState.installPrompt);
         };
@@ -2146,6 +2322,18 @@
           applySettings();
           showToast("Idioma da interface atualizado");
         });
+        customSelects.forEach((config) => {
+          config.trigger?.addEventListener("click", (event) => {
+            event.stopPropagation();
+            openCustomSelect(config);
+          });
+          config.options.forEach((option) => {
+            option.addEventListener("click", (event) => {
+              event.stopPropagation();
+              chooseCustomOption(config, option.dataset.selectValue);
+            });
+          });
+        });
         notificationsSwitch.addEventListener("click", () => {
           settingsState.notifications = !settingsState.notifications;
           persistSettings();
@@ -2165,7 +2353,12 @@
           showToast("Preferências locais limpas");
         });
         document.addEventListener("keydown", (event) => {
-          if (event.key === "Escape" && !settingsPopover.hidden) closeSettingsModal();
+          if (event.key !== "Escape") return;
+          if (customSelects.some(({ root }) => root?.classList.contains("open"))) {
+            closeCustomSelects();
+            return;
+          }
+          if (!settingsPopover.hidden) closeSettingsModal();
         });
 
         composer.addEventListener("submit", (event) => {
