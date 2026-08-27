@@ -326,6 +326,43 @@
         color: var(--text-soft);
       }
 
+      .assistant-response {
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+        max-width: 100%;
+      }
+
+      .assistant-marker,
+      .thinking-symbol {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        flex: 0 0 auto;
+        width: 19px;
+        height: 19px;
+        margin-top: 4px;
+        color: var(--purple);
+        opacity: .9;
+      }
+
+      .assistant-marker svg,
+      .thinking-symbol svg {
+        width: 16px;
+        height: 16px;
+        overflow: visible;
+        filter: drop-shadow(0 0 6px rgba(140, 122, 255, .34));
+      }
+
+      .assistant-marker svg {
+        animation: assistant-symbol-float 3.2s var(--ease) infinite;
+      }
+
+      @keyframes assistant-symbol-float {
+        0%, 100% { opacity: .62; transform: rotate(0deg) scale(.9); }
+        50% { opacity: 1; transform: rotate(90deg) scale(1.04); }
+      }
+
       .message-meta {
         display: flex;
         align-items: center;
@@ -333,14 +370,6 @@
         margin-top: 8px;
         color: var(--text-dim);
         font-size: 10px;
-      }
-
-      .assistant-dot {
-        width: 14px;
-        height: 14px;
-        border: 1px solid var(--line);
-        border-radius: 50%;
-        background: radial-gradient(circle at 35% 30%, #fff, #787c84 28%, #18191d 72%);
       }
 
       .thinking-row {
@@ -353,10 +382,22 @@
         animation: enter-up 300ms var(--ease) both;
       }
 
-      .thinking-brain {
-        width: 27px;
-        height: 27px;
+      .thinking-symbol {
+        width: 23px;
+        height: 23px;
+        margin-top: 0;
         color: var(--text-soft);
+      }
+
+      .thinking-symbol svg {
+        width: 21px;
+        height: 21px;
+        animation: assistant-symbol-thinking 1.15s var(--ease) infinite;
+      }
+
+      @keyframes assistant-symbol-thinking {
+        0%, 100% { opacity: .42; transform: rotate(0deg) scale(.82); }
+        50% { opacity: 1; transform: rotate(180deg) scale(1.06); }
       }
 
       .thinking-label {
@@ -1447,6 +1488,10 @@
           max-width: 91%;
         }
 
+        .assistant-response { gap: 8px; }
+        .assistant-marker { width: 17px; height: 17px; margin-top: 3px; }
+        .assistant-marker svg { width: 14px; height: 14px; }
+
         .message-bubble {
           padding: 13px 17px;
           font-size: 18px;
@@ -1947,22 +1992,32 @@
 
         const timeNow = () => new Intl.DateTimeFormat("pt-BR", { hour: "2-digit", minute: "2-digit" }).format(new Date());
 
+        const assistantSymbolMarkup = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.55" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2.6 13.8 10.2 21.4 12l-7.6 1.8L12 21.4l-1.8-7.6L2.6 12l7.6-1.8L12 2.6Z"></path><circle cx="12" cy="12" r="1.1" fill="currentColor" stroke="none"></circle></svg>';
+
+        const createAssistantSymbol = (className) => {
+          const symbol = document.createElement("span");
+          symbol.className = className;
+          symbol.innerHTML = assistantSymbolMarkup;
+          return symbol;
+        };
+
         const createMessage = (role, text) => {
           const row = document.createElement("article");
           row.className = "message-row " + role;
           const bubble = document.createElement("div");
           bubble.className = "message-bubble";
           bubble.textContent = text;
-          row.appendChild(bubble);
+          if (role === "assistant") {
+            const response = document.createElement("div");
+            response.className = "assistant-response";
+            response.append(createAssistantSymbol("assistant-marker"), bubble);
+            row.appendChild(response);
+          } else {
+            row.appendChild(bubble);
+          }
           const meta = document.createElement("div");
           meta.className = "message-meta";
-          if (role === "assistant") {
-            const orb = document.createElement("span");
-            orb.className = "assistant-dot";
-            meta.append(orb, document.createTextNode("KAZER · " + timeNow()));
-          } else {
-            meta.textContent = "Você · " + timeNow();
-          }
+          meta.textContent = role === "assistant" ? "KAZER · " + timeNow() : "Você · " + timeNow();
           row.appendChild(meta);
           return row;
         };
@@ -1970,7 +2025,13 @@
         const createThinking = () => {
           const row = document.createElement("article");
           row.className = "message-row assistant";
-          row.innerHTML = '<div class="thinking-row"><svg class="thinking-brain" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9.3 4.2A3.2 3.2 0 0 0 6 7.4c0 .4.1.8.2 1.1A3.1 3.1 0 0 0 5 14.4a3.1 3.1 0 0 0 2.8 4.4c.5 0 1-.1 1.4-.3.6.9 1.6 1.5 2.8 1.5V4.1a3.2 3.2 0 0 0-2.7.1Z"></path><path d="M14.7 4.2A3.2 3.2 0 0 1 18 7.4c0 .4-.1.8-.2 1.1a3.1 3.1 0 0 1 1.2 5.9 3.1 3.1 0 0 1-2.8 4.4c-.5 0-1-.1-1.4-.3-.6.9-1.6 1.5-2.8 1.5V4.1a3.2 3.2 0 0 1 2.7.1Z"></path><path d="M9.5 9.5h2M12.5 14.5h2M8.2 14.4h2.2M13.6 8.9h2.1"></path></svg><span class="thinking-label">Thinking</span></div>';
+          const thinking = document.createElement("div");
+          thinking.className = "thinking-row";
+          const label = document.createElement("span");
+          label.className = "thinking-label";
+          label.textContent = "Thinking";
+          thinking.append(createAssistantSymbol("thinking-symbol"), label);
+          row.appendChild(thinking);
           return row;
         };
 
