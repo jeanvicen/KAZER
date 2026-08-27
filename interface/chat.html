@@ -270,7 +270,7 @@
         background-size: 230% 100%;
         background-clip: text;
         -webkit-background-clip: text;
-        font-size: clamp(3.35rem, 8vw, 4.1rem);
+        font-size: clamp(3.85rem, 8.6vw, 4.8rem);
         font-weight: 400;
         letter-spacing: -0.085em;
         line-height: 0.9;
@@ -1088,7 +1088,7 @@
         }
 
         .empty-word {
-          font-size: clamp(3.35rem, 8vw, 4.1rem);
+          font-size: clamp(3.85rem, 10.2vw, 4.5rem);
         }
 
         .message-list {
@@ -1172,7 +1172,7 @@
 
       .app:not(.in-conversation) .empty-word {
         position: absolute;
-        top: calc(50% - 4.2rem);
+        top: calc(50% - clamp(4.5rem, 5.4vw, 5rem));
         left: 50%;
         transform: translateX(-50%);
       }
