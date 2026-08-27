@@ -7,7 +7,20 @@
   <meta name="description" content="Central de documentos do Kazer: termos de uso, privacidade, segurança e contato." />
   <meta property="og:title" content="Documentos do Kazer" />
   <meta property="og:description" content="Termos de uso, privacidade, segurança e informações importantes para usar o Kazer." />
-  <title>Documentos do Kazer</title>
+    <title data-i18n-head="documentTitle">Documentos do Kazer</title>
+  <script>
+    (() => {
+      try {
+        const settings = JSON.parse(localStorage.getItem("kazer-settings") || "{}");
+        const systemLight = window.matchMedia?.("(prefers-color-scheme: light)").matches;
+        const appearance = settings.appearance === "light" || (settings.appearance === "system" && systemLight) ? "light" : "dark";
+        document.documentElement.dataset.theme = appearance;
+        document.documentElement.lang = settings.language === "en" ? "en" : "pt-BR";
+      } catch (error) {
+        document.documentElement.dataset.theme = "dark";
+      }
+    })();
+  </script>
   <style>
     :root {
       color-scheme: dark;
@@ -31,6 +44,25 @@
       --ease: cubic-bezier(.23, 1, .32, 1);
     }
 
+    :root[data-theme="light"] {
+      color-scheme: light;
+      --page: #f4f5f7;
+      --page-deep: #e9ebef;
+      --surface: rgba(255, 255, 255, .84);
+      --surface-solid: #ffffff;
+      --surface-raised: #f7f8fa;
+      --line: rgba(20, 22, 28, .15);
+      --line-soft: rgba(20, 22, 28, .085);
+      --text: #15171c;
+      --text-soft: #5d626e;
+      --text-muted: #747985;
+      --text-faint: #8b909a;
+      --accent: #6459d8;
+      --accent-strong: #5146c0;
+      --accent-soft: rgba(100, 89, 216, .11);
+      --green: #287a50;
+    }
+
     * { box-sizing: border-box; }
     html { scroll-behavior: smooth; background: var(--page); }
     body {
@@ -38,8 +70,8 @@
       margin: 0;
       overflow-x: hidden;
       background:
-        radial-gradient(900px 520px at 74% -12%, rgba(104, 92, 232, .18), transparent 65%),
-        radial-gradient(720px 480px at -10% 34%, rgba(60, 69, 120, .12), transparent 70%),
+        radial-gradient(900px 520px at 74% -12%, color-mix(in srgb, var(--accent-strong) 18%, transparent), transparent 65%),
+        radial-gradient(720px 480px at -10% 34%, color-mix(in srgb, var(--accent) 12%, transparent), transparent 70%),
         var(--page);
       color: var(--text);
       font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
@@ -66,12 +98,12 @@
       top: 0;
       z-index: 20;
       border-bottom: 1px solid var(--line-soft);
-      background: rgba(9, 10, 14, .76);
+      background: color-mix(in srgb, var(--page) 78%, transparent);
       backdrop-filter: blur(22px) saturate(135%);
       overflow: hidden;
     }
     .topbar-inner { display: flex; align-items: center; justify-content: space-between; gap: 22px; min-height: 76px; }
-    .scroll-progress { position: absolute; right: 0; bottom: 0; left: 0; height: 2px; background: var(--accent); box-shadow: 0 0 14px rgba(185,178,255,.7); transform: scaleX(0); transform-origin: left center; transition: transform 120ms linear; }
+    .scroll-progress { position: absolute; right: 0; bottom: 0; left: 0; height: 2px; background: var(--accent); box-shadow: 0 0 14px color-mix(in srgb, var(--accent) 70%, transparent); transform: scaleX(0); transform-origin: left center; transition: transform 120ms linear; }
     .brand { display: inline-flex; align-items: center; gap: 11px; font-size: 13px; font-weight: 750; letter-spacing: .16em; text-decoration: none; }
     .brand-mark {
       position: relative;
@@ -81,7 +113,7 @@
       width: 34px;
       height: 34px;
       overflow: hidden;
-      border: 1px solid rgba(255,255,255,.22);
+      border: 1px solid var(--line);
       border-radius: 11px;
       background: linear-gradient(145deg, #3b3f4b 0%, #171a21 45%, #08090d 100%);
       box-shadow: inset 0 1px 0 rgba(255,255,255,.16), 0 9px 24px rgba(0,0,0,.26);
@@ -91,7 +123,33 @@
     }
     .brand-mark::after { position: absolute; inset: -60% 28% 40% -40%; transform: rotate(25deg); background: rgba(255,255,255,.26); content: ""; }
     .topbar-actions { display: flex; align-items: center; gap: 10px; }
-    .back-link, .contact-link {
+    .creator-link {
+      display: inline-flex;
+      align-items: center;
+      min-height: 38px;
+      padding: 0 13px;
+      border: 1px solid color-mix(in srgb, var(--accent) 35%, transparent);
+      border-radius: 10px;
+      background: color-mix(in srgb, var(--accent-soft) 84%, transparent);
+      color: transparent;
+      background-image: linear-gradient(105deg, var(--accent-strong), var(--text), var(--accent), var(--text), var(--accent-strong));
+      background-size: 240% 100%;
+      background-clip: text;
+      -webkit-background-clip: text;
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: .08em;
+      text-decoration: none;
+      text-shadow: 0 0 18px color-mix(in srgb, var(--accent) 35%, transparent);
+      transition: border-color 180ms var(--ease), background-color 180ms var(--ease), transform 180ms var(--ease), filter 180ms var(--ease);
+      animation: creator-shine 4.2s linear infinite;
+    }
+    .creator-link:hover { border-color: color-mix(in srgb, var(--accent) 70%, transparent); background-color: var(--accent-soft); filter: brightness(1.15); transform: translateY(-1px); }
+    .creator-credit { display: block; margin-top: 16px !important; color: var(--text-muted) !important; font-size: 11px !important; }
+    .creator-credit .creator-link { min-height: 0; margin-left: 3px; padding: 0; border: 0; border-radius: 0; background-color: transparent; font-size: 11px; vertical-align: baseline; }
+    .creator-credit .creator-link:hover { border: 0; background-color: transparent; transform: none; }
+    @keyframes creator-shine { from { background-position: 210% center; } to { background-position: -30% center; } }
+    .back-link {
       display: inline-flex;
       align-items: center;
       gap: 8px;
@@ -104,8 +162,7 @@
       text-decoration: none;
       transition: color 180ms var(--ease), border-color 180ms var(--ease), background 180ms var(--ease), transform 180ms var(--ease);
     }
-    .contact-link { border-color: var(--line); background: rgba(255,255,255,.035); color: var(--text); }
-    .back-link:hover, .contact-link:hover { border-color: var(--line); background: var(--accent-soft); color: var(--text); transform: translateY(-1px); }
+    .back-link:hover { border-color: var(--line); background: var(--accent-soft); color: var(--text); transform: translateY(-1px); }
     .arrow { color: var(--accent); font-size: 16px; line-height: 0; }
 
     .hero { position: relative; padding: 92px 0 76px; border-bottom: 1px solid var(--line-soft); }
@@ -120,7 +177,7 @@
     .meta-label { display: block; margin-bottom: 8px; color: var(--text-faint); font-size: 10px; font-weight: 750; letter-spacing: .16em; text-transform: uppercase; }
     .hero-meta strong { display: block; color: var(--text); font-size: 13px; font-weight: 580; }
     .hero-meta span { display: block; margin-top: 5px; color: var(--text-muted); font-size: 11px; }
-    .meta-status { display: inline-flex !important; align-items: center; gap: 7px; margin-bottom: 12px; padding: 5px 8px; border: 1px solid rgba(168, 232, 192, .24); border-radius: 999px; background: rgba(168, 232, 192, .08); color: var(--green) !important; font-size: 10px !important; font-weight: 700; letter-spacing: .04em; }
+    .meta-status { display: inline-flex !important; align-items: center; gap: 7px; margin-bottom: 12px; padding: 5px 8px; border: 1px solid color-mix(in srgb, var(--green) 24%, transparent); border-radius: 999px; background: color-mix(in srgb, var(--green) 9%, transparent); color: var(--green) !important; font-size: 10px !important; font-weight: 700; letter-spacing: .04em; }
     .meta-status::before { width: 6px; height: 6px; border-radius: 50%; background: currentColor; box-shadow: 0 0 12px currentColor; content: ""; }
 
     .quick-links { padding: 21px 0; border-bottom: 1px solid var(--line-soft); }
@@ -128,7 +185,7 @@
     .quick-label { flex: 0 0 auto; color: var(--text-faint); font-size: 10px; font-weight: 750; letter-spacing: .16em; text-transform: uppercase; }
     .quick-list { display: flex; justify-content: flex-end; gap: 8px; margin: 0; padding: 0; list-style: none; }
     .quick-list a { display: inline-flex; align-items: center; gap: 8px; padding: 8px 11px; border: 1px solid var(--line-soft); border-radius: 9px; color: var(--text-soft); font-size: 12px; text-decoration: none; transition: border-color 180ms var(--ease), background 180ms var(--ease), color 180ms var(--ease); }
-    .quick-list a:hover, .quick-list a.active { border-color: rgba(185,178,255,.4); background: var(--accent-soft); color: var(--text); }
+    .quick-list a:hover, .quick-list a.active { border-color: color-mix(in srgb, var(--accent) 40%, transparent); background: var(--accent-soft); color: var(--text); }
     .quick-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 12px var(--accent); }
 
     .document-layout { display: grid; grid-template-columns: 245px minmax(0, var(--copy)); justify-content: space-between; gap: 74px; padding: 62px 0 112px; }
@@ -139,7 +196,7 @@
     .sidebar-nav a::after { color: var(--accent); content: "→"; opacity: 0; transform: translateX(-5px); transition: opacity 180ms var(--ease), transform 180ms var(--ease); }
     .sidebar-nav a:hover, .sidebar-nav a:focus-visible, .sidebar-nav a.active { border-color: var(--line); background: var(--accent-soft); color: var(--text); padding-left: 15px; outline: 0; }
     .sidebar-nav a:hover::after, .sidebar-nav a:focus-visible::after, .sidebar-nav a.active::after { opacity: 1; transform: translateX(0); }
-    .sidebar-note { margin: 28px 0 0; padding: 17px; border: 1px solid var(--line-soft); border-radius: 14px; background: linear-gradient(145deg, rgba(255,255,255,.05), rgba(255,255,255,.015)); }
+    .sidebar-note { margin: 28px 0 0; padding: 17px; border: 1px solid var(--line-soft); border-radius: 14px; background: linear-gradient(145deg, color-mix(in srgb, var(--text) 5%, transparent), color-mix(in srgb, var(--text) 1.5%, transparent)); }
     .sidebar-note strong { display: block; margin-bottom: 5px; color: var(--text); font-size: 12px; }
     .sidebar-note span { display: block; color: var(--text-muted); font-size: 11px; line-height: 1.5; }
     .document-content { min-width: 0; }
@@ -148,28 +205,27 @@
     .document-section:nth-child(3) { animation-delay: 100ms; }
     .document-section:nth-child(4) { animation-delay: 150ms; }
     .document-section:nth-child(5) { animation-delay: 200ms; }
-    .document-section + .document-section { padding-top: 76px; border-top: 1px solid var(--line-soft); }
     @keyframes section-in { from { opacity: 0; transform: translateY(9px); } to { opacity: 1; transform: translateY(0); } }
+    .document-section + .document-section { padding-top: 76px; border-top: 1px solid var(--line-soft); }
     h2 { max-width: 700px; font-size: clamp(30px, 4.6vw, 52px); font-weight: 640; }
     h3 { margin: 37px 0 11px; font-size: 19px; font-weight: 650; letter-spacing: -.025em; }
     p { margin: 0 0 17px; color: var(--text-soft); font-size: 15px; }
     .lead { max-width: 650px; margin: 20px 0 31px; color: var(--text); font-size: 18px; line-height: 1.55; }
-    .section-intro { max-width: 650px; margin-top: 20px; }
-    .notice { display: grid; grid-template-columns: 30px 1fr; gap: 14px; align-items: start; margin: 28px 0 34px; padding: 19px 20px; border: 1px solid rgba(185,178,255,.3); border-radius: 16px; background: linear-gradient(135deg, rgba(153,143,255,.15), rgba(153,143,255,.05)); color: var(--text-soft); font-size: 13px; }
-    .notice-icon { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 50%; background: rgba(185,178,255,.16); color: var(--accent); font-size: 14px; font-weight: 800; }
+    .notice { display: grid; grid-template-columns: 30px 1fr; gap: 14px; align-items: start; margin: 28px 0 34px; padding: 19px 20px; border: 1px solid color-mix(in srgb, var(--accent) 30%, transparent); border-radius: 16px; background: linear-gradient(135deg, color-mix(in srgb, var(--accent-strong) 15%, transparent), color-mix(in srgb, var(--accent) 5%, transparent)); color: var(--text-soft); font-size: 13px; }
+    .notice-icon { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 50%; background: var(--accent-soft); color: var(--accent); font-size: 14px; font-weight: 800; }
     .notice strong { color: var(--text); }
     .principles { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin: 28px 0 4px; }
-    .principle { min-height: 126px; padding: 18px; border: 1px solid var(--line-soft); border-radius: 15px; background: linear-gradient(145deg, rgba(255,255,255,.052), rgba(255,255,255,.015)); transition: transform 220ms var(--ease), border-color 220ms var(--ease), background 220ms var(--ease); }
-    .principle:hover { border-color: rgba(185,178,255,.3); background: linear-gradient(145deg, rgba(185,178,255,.11), rgba(255,255,255,.025)); transform: translateY(-3px); }
-    .principle-mark { display: inline-flex; align-items: center; justify-content: center; width: 25px; height: 25px; margin-bottom: 16px; border: 1px solid rgba(185,178,255,.28); border-radius: 8px; color: var(--accent); font-size: 11px; }
+    .principle { min-height: 126px; padding: 18px; border: 1px solid var(--line-soft); border-radius: 15px; background: linear-gradient(145deg, color-mix(in srgb, var(--text) 5.2%, transparent), color-mix(in srgb, var(--text) 1.5%, transparent)); transition: transform 220ms var(--ease), border-color 220ms var(--ease), background 220ms var(--ease); }
+    .principle:hover { border-color: color-mix(in srgb, var(--accent) 30%, transparent); background: linear-gradient(145deg, color-mix(in srgb, var(--accent) 11%, transparent), color-mix(in srgb, var(--text) 2.5%, transparent)); transform: translateY(-3px); }
+    .principle-mark { display: inline-flex; align-items: center; justify-content: center; width: 25px; height: 25px; margin-bottom: 16px; border: 1px solid color-mix(in srgb, var(--accent) 28%, transparent); border-radius: 8px; color: var(--accent); font-size: 11px; }
     .principle strong { display: block; margin-bottom: 6px; color: var(--text); font-size: 13px; }
     .principle span { display: block; color: var(--text-muted); font-size: 12px; line-height: 1.5; }
     .content-list { margin: 13px 0 25px; padding-left: 22px; color: var(--text-soft); }
     .content-list li { margin: 8px 0; padding-left: 4px; }
     .content-list li::marker { color: var(--accent); }
     .subtle { color: var(--text-muted); font-size: 13px; }
-    .contact-panel { position: relative; overflow: hidden; margin-top: 30px; padding: 25px; border: 1px solid rgba(185,178,255,.28); border-radius: 18px; background: linear-gradient(135deg, rgba(153,143,255,.16), rgba(20,22,29,.72) 58%); }
-    .contact-panel::after { position: absolute; top: -90px; right: -70px; width: 240px; height: 240px; border: 1px solid rgba(185,178,255,.2); border-radius: 50%; box-shadow: 0 0 0 24px rgba(185,178,255,.035), 0 0 0 48px rgba(185,178,255,.02); content: ""; }
+    .contact-panel { position: relative; overflow: hidden; margin-top: 30px; padding: 25px; border: 1px solid color-mix(in srgb, var(--accent) 28%, transparent); border-radius: 18px; background: linear-gradient(135deg, color-mix(in srgb, var(--accent-strong) 16%, transparent), color-mix(in srgb, var(--surface-solid) 72%, transparent) 58%); }
+    .contact-panel::after { position: absolute; top: -90px; right: -70px; width: 240px; height: 240px; border: 1px solid color-mix(in srgb, var(--accent) 20%, transparent); border-radius: 50%; box-shadow: 0 0 0 24px color-mix(in srgb, var(--accent) 3.5%, transparent), 0 0 0 48px color-mix(in srgb, var(--accent) 2%, transparent); content: ""; }
     .contact-panel strong { position: relative; z-index: 1; display: block; margin-bottom: 7px; color: var(--text); font-size: 15px; }
     .contact-panel p { position: relative; z-index: 1; max-width: 560px; margin-bottom: 17px; font-size: 13px; }
     .email-link { position: relative; z-index: 1; display: inline-flex; align-items: center; gap: 8px; color: var(--accent); font-size: 14px; font-weight: 650; text-decoration: none; }
@@ -178,7 +234,9 @@
     .footer { padding: 30px 0 52px; border-top: 1px solid var(--line-soft); }
     .footer-inner { display: flex; align-items: flex-start; justify-content: space-between; gap: 30px; }
     .footer-brand { color: var(--text-soft); font-size: 12px; font-weight: 700; letter-spacing: .12em; }
-    .footer-copy { max-width: 560px; margin: 0; color: var(--text-faint); font-size: 11px; line-height: 1.55; text-align: right; }
+    .footer-copy { max-width: 620px; margin: 0; color: var(--text-faint); font-size: 11px; line-height: 1.55; text-align: right; }
+    .footer-copy a { color: var(--text-soft); text-decoration: none; }
+    .footer-copy a:hover { color: var(--accent); text-decoration: underline; }
 
     @media (max-width: 900px) {
       .shell { width: min(var(--max), calc(100% - 42px)); }
@@ -190,24 +248,22 @@
       .shell { width: min(var(--max), calc(100% - 30px)); }
       .topbar-inner { min-height: 66px; }
       .topbar-actions { gap: 2px; }
-      .back-link { padding: 0 8px; font-size: 11px; }
-      .contact-link { display: none; }
+      .creator-link, .back-link { padding: 0 8px; font-size: 11px; }
       .hero { padding: 62px 0 50px; }
       .hero-copy { font-size: 16px; }
       .quick-links { padding: 14px 0; }
       .quick-links-inner { display: block; }
       .quick-label { display: block; margin-bottom: 10px; }
       .quick-list { justify-content: flex-start; margin-right: -15px; padding-right: 15px; overflow-x: auto; scrollbar-width: none; }
-      .quick-list::-webkit-scrollbar { display: none; }
+      .quick-list::-webkit-scrollbar, .sidebar-nav::-webkit-scrollbar { display: none; }
       .quick-list a { flex: 0 0 auto; }
       .document-layout { display: block; padding: 37px 0 75px; }
       .document-sidebar { position: static; margin-bottom: 43px; }
       .sidebar-heading { display: none; }
       .sidebar-nav { display: flex; gap: 6px; margin-right: -15px; padding-right: 15px; overflow-x: auto; scrollbar-width: none; }
-      .sidebar-nav::-webkit-scrollbar { display: none; }
-      .sidebar-nav a { flex: 0 0 auto; min-height: 38px; padding: 0 12px; border-color: var(--line-soft); background: rgba(255,255,255,.025); font-size: 11px; white-space: nowrap; }
+      .sidebar-nav a { flex: 0 0 auto; min-height: 38px; padding: 0 12px; border-color: var(--line-soft); background: color-mix(in srgb, var(--text) 2.5%, transparent); font-size: 11px; white-space: nowrap; }
       .sidebar-nav a::after { display: none; }
-      .sidebar-nav a:hover, .sidebar-nav a:focus-visible { padding-left: 12px; }
+      .sidebar-nav a:hover, .sidebar-nav a:focus-visible, .sidebar-nav a.active { padding-left: 12px; }
       .sidebar-note { display: none; }
       .document-section { scroll-margin-top: 84px; padding-bottom: 55px; }
       .document-section + .document-section { padding-top: 54px; }
@@ -233,13 +289,13 @@
 </head>
 <body>
   <header class="topbar">
-      <div class="shell topbar-inner">
-      <a class="brand" href="/chat" aria-label="Voltar ao Kazer"><span class="brand-mark" aria-hidden="true">K</span><span>KAZER</span></a>
+    <div class="shell topbar-inner">
+      <a class="brand" href="/chat" aria-label="Voltar ao Kazer" data-i18n-aria="backToKazer"><span class="brand-mark" aria-hidden="true">K</span><span>KAZER</span></a>
       <div class="topbar-actions">
-        <a class="contact-link" href="mailto:klipzastudio@gmail.com?subject=Kazer%20-%20Contato"><span aria-hidden="true">✦</span> Falar com a Klipza Studio</a>
-        <a class="back-link" href="/chat"><span class="arrow" aria-hidden="true">‹</span> Voltar ao Kazer</a>
+        <a class="creator-link" href="https://instagram.com/0neajx" target="_blank" rel="noopener noreferrer" aria-label="Abrir o Instagram de 0neajx" data-i18n-aria="creatorAria"><span data-i18n="creatorName">0neajx</span></a>
+        <a class="back-link" href="/chat"><span class="arrow" aria-hidden="true">‹</span><span data-i18n="backToKazer">Voltar ao Kazer</span></a>
       </div>
-      </div>
+    </div>
     <div class="scroll-progress" id="scrollProgress" aria-hidden="true"></div>
   </header>
 
@@ -247,133 +303,136 @@
     <section class="hero">
       <div class="shell hero-grid">
         <div>
-          <span class="eyebrow">Kazer · Central de documentos</span>
-          <h1>Clareza para usar o Kazer com confiança.</h1>
-          <p class="hero-copy">Termos de uso, privacidade e segurança reunidos em uma experiência simples de consultar, com linguagem direta e compromisso com o que o produto realmente oferece.</p>
+          <span class="eyebrow" data-i18n="heroEyebrow">Kazer · Central de documentos</span>
+          <h1 data-i18n="heroTitle">Clareza para usar o Kazer com confiança.</h1>
+          <p class="hero-copy" data-i18n="heroCopy">Termos de uso, privacidade e segurança reunidos em uma experiência simples de consultar, com linguagem direta e compromisso com o que o produto realmente oferece.</p>
         </div>
-        <div class="hero-meta" aria-label="Informações de atualização">
-          <span class="meta-status">Rascunho para revisão jurídica</span>
-          <span class="meta-label">Documento público</span>
-          <strong>Versão informativa 1.0</strong>
-          <span>Atualizado em 27 de agosto de 2026</span>
+        <div class="hero-meta" aria-label="Informações de atualização" data-i18n-aria="metaAria">
+          <span class="meta-status" data-i18n="draftStatus">Rascunho para revisão jurídica</span>
+          <span class="meta-label" data-i18n="publicDocument">Documento público</span>
+          <strong data-i18n="versionInfo">Versão informativa 1.0</strong>
+          <span data-i18n="updatedDate">Atualizado em 27 de agosto de 2026</span>
+          <span class="creator-credit"><span data-i18n="createdBy">Criado por</span> <a class="creator-link" href="https://instagram.com/0neajx" target="_blank" rel="noopener noreferrer" aria-label="Abrir o Instagram de 0neajx" data-i18n-aria="creatorAria"><span data-i18n="creatorName">0neajx</span></a></span>
         </div>
       </div>
     </section>
 
-    <section class="quick-links" aria-label="Acesso rápido">
+    <section class="quick-links" aria-label="Acesso rápido" data-i18n-aria="quickAria">
       <div class="shell quick-links-inner">
-        <span class="quick-label">Acesso rápido</span>
-        <ul class="quick-list">
-          <li><a href="#privacidade"><span class="quick-dot" aria-hidden="true"></span>Privacidade</a></li>
-          <li><a href="#termos"><span class="quick-dot" aria-hidden="true"></span>Termos de uso</a></li>
-          <li><a href="#seguranca"><span class="quick-dot" aria-hidden="true"></span>Segurança</a></li>
-          <li><a href="#contato"><span class="quick-dot" aria-hidden="true"></span>Contato</a></li>
+        <span class="quick-label" data-i18n="quickAccess">Acesso rápido</span>
+        <ul class="quick-list" data-i18n-aria="quickListAria" aria-label="Navegação rápida">
+          <li><a href="#privacidade"><span class="quick-dot" aria-hidden="true"></span><span data-i18n="privacyShort">Privacidade</span></a></li>
+          <li><a href="#termos"><span class="quick-dot" aria-hidden="true"></span><span data-i18n="termsShort">Termos de uso</span></a></li>
+          <li><a href="#seguranca"><span class="quick-dot" aria-hidden="true"></span><span data-i18n="securityShort">Segurança</span></a></li>
+          <li><a href="#contato"><span class="quick-dot" aria-hidden="true"></span><span data-i18n="contactShort">Contato</span></a></li>
         </ul>
       </div>
     </section>
 
     <div class="shell document-layout">
-      <aside class="document-sidebar" aria-label="Navegação dos documentos">
-        <p class="sidebar-heading">Nesta página</p>
+      <aside class="document-sidebar" aria-label="Navegação dos documentos" data-i18n-aria="sidebarAria">
+        <p class="sidebar-heading" data-i18n="onThisPage">Nesta página</p>
         <nav>
           <ul class="sidebar-nav">
-            <li><a href="#visao-geral">Visão geral</a></li>
-            <li><a href="#privacidade">Privacidade</a></li>
-            <li><a href="#termos">Termos de uso</a></li>
-            <li><a href="#seguranca">Segurança</a></li>
-            <li><a href="#contato">Contato</a></li>
+            <li><a href="#visao-geral" data-i18n="overviewShort">Visão geral</a></li>
+            <li><a href="#privacidade" data-i18n="privacyShort">Privacidade</a></li>
+            <li><a href="#termos" data-i18n="termsShort">Termos de uso</a></li>
+            <li><a href="#seguranca" data-i18n="securityShort">Segurança</a></li>
+            <li><a href="#contato" data-i18n="contactShort">Contato</a></li>
           </ul>
         </nav>
-        <div class="sidebar-note"><strong>Uma única referência</strong><span>Consulte as seções e compartilhe o link da página com a parte necessária em destaque.</span></div>
+        <div class="sidebar-note"><strong data-i18n="oneReferenceTitle">Uma única referência</strong><span data-i18n="oneReferenceCopy">Consulte as seções e compartilhe o link da página com a parte necessária em destaque.</span></div>
       </aside>
 
       <article class="document-content">
         <section class="document-section" id="visao-geral" aria-labelledby="visao-geral-titulo">
-          <span class="eyebrow">01 · Visão geral</span>
-          <h2 id="visao-geral-titulo">Como ler esta central</h2>
-          <p class="lead">O Kazer é um espaço para conversar, organizar ideias e transformar pedidos em próximos passos.</p>
-          <p>Esta central reúne as regras de uso, os princípios de privacidade e as boas práticas de segurança que orientam a experiência do Kazer. O texto foi organizado para facilitar a consulta no computador e no celular, sem esconder as informações importantes em páginas separadas.</p>
-          <div class="notice" role="note"><span class="notice-icon" aria-hidden="true">i</span><div><strong>Leia antes de usar em decisões importantes.</strong> Respostas produzidas por um agente de inteligência artificial podem conter erros, omissões ou interpretações incompletas. Revise informações relevantes e não use o Kazer como substituto de orientação profissional, atendimento de emergência ou decisão humana responsável.</div></div>
-          <div class="principles" aria-label="Princípios da central">
-            <div class="principle"><span class="principle-mark" aria-hidden="true">01</span><strong>Transparência</strong><span>Explicamos o tratamento de informações com linguagem compreensível e sem prometer além do que está disponível.</span></div>
-            <div class="principle"><span class="principle-mark" aria-hidden="true">02</span><strong>Controle</strong><span>Preferências locais podem ser ajustadas e limpas no Settings quando esse controle estiver disponível.</span></div>
-            <div class="principle"><span class="principle-mark" aria-hidden="true">03</span><strong>Uso responsável</strong><span>O serviço deve ser usado de maneira legal, segura, respeitosa e sem prejudicar outras pessoas.</span></div>
-            <div class="principle"><span class="principle-mark" aria-hidden="true">04</span><strong>Atualização contínua</strong><span>Esta central pode mudar quando o produto, os controles oferecidos ou as regras aplicáveis forem atualizados.</span></div>
+          <span class="eyebrow" data-i18n="overviewEyebrow">01 · Visão geral</span>
+          <h2 id="visao-geral-titulo" data-i18n="overviewTitle">Como ler esta central</h2>
+          <p class="lead" data-i18n="overviewLead">O Kazer é um espaço para conversar, organizar ideias e transformar pedidos em próximos passos.</p>
+          <p data-i18n="overviewP1">Esta central reúne as regras de uso, os princípios de privacidade e as boas práticas de segurança que orientam a experiência do Kazer. O texto foi organizado para facilitar a consulta no computador e no celular, sem esconder as informações importantes em páginas separadas.</p>
+          <div class="notice" role="note"><span class="notice-icon" aria-hidden="true">i</span><div data-i18n-html="overviewNotice"><strong>Leia antes de usar em decisões importantes.</strong> Respostas produzidas por um agente de inteligência artificial podem conter erros, omissões ou interpretações incompletas. Revise informações relevantes e não use o Kazer como substituto de orientação profissional, atendimento de emergência ou decisão humana responsável.</div></div>
+          <div class="principles" aria-label="Princípios da central" data-i18n-aria="principlesAria">
+            <div class="principle"><span class="principle-mark" aria-hidden="true">01</span><strong data-i18n="principle1Title">Transparência</strong><span data-i18n="principle1Copy">Explicamos o tratamento de informações com linguagem compreensível e sem prometer além do que está disponível.</span></div>
+            <div class="principle"><span class="principle-mark" aria-hidden="true">02</span><strong data-i18n="principle2Title">Controle</strong><span data-i18n="principle2Copy">Preferências locais podem ser ajustadas e limpas no Settings quando esse controle estiver disponível.</span></div>
+            <div class="principle"><span class="principle-mark" aria-hidden="true">03</span><strong data-i18n="principle3Title">Uso responsável</strong><span data-i18n="principle3Copy">O serviço deve ser usado de maneira legal, segura, respeitosa e sem prejudicar outras pessoas.</span></div>
+            <div class="principle"><span class="principle-mark" aria-hidden="true">04</span><strong data-i18n="principle4Title">Atualização contínua</strong><span data-i18n="principle4Copy">Esta central pode mudar quando o produto, os controles oferecidos ou as regras aplicáveis forem atualizados.</span></div>
           </div>
         </section>
 
         <section class="document-section" id="privacidade" aria-labelledby="privacidade-titulo">
-          <span class="eyebrow">02 · Privacidade</span>
-          <h2 id="privacidade-titulo">Política de privacidade</h2>
-          <p class="lead">Esta política descreve, de forma direta, como as informações podem ser tratadas durante o uso do Kazer.</p>
-          <h3>1. Informações que podem existir</h3>
-          <p>Dependendo da forma de uso e dos recursos publicados, o Kazer pode lidar com informações de cadastro fornecidas voluntariamente, mensagens, arquivos enviados pelo usuário, preferências da interface e informações técnicas necessárias para carregar a página, proteger a sessão e manter o serviço funcionando.</p>
-          <p>Algumas preferências podem permanecer apenas no armazenamento local do navegador. Esses dados podem desaparecer quando o armazenamento do site for limpo, quando o navegador for redefinido ou quando outro dispositivo for utilizado.</p>
-          <h3>2. Finalidades</h3>
-          <p>As informações podem ser usadas para exibir a interface, responder a solicitações, manter preferências escolhidas, corrigir falhas, prevenir abusos, proteger o serviço, cumprir obrigações legais e comunicar mudanças importantes. O uso deve permanecer vinculado à finalidade informada ou a outra finalidade permitida pela legislação aplicável.</p>
-          <h3>3. Serviços externos e compartilhamento</h3>
-          <p>Quando uma função depender de um serviço externo, dados poderão ser enviados somente na medida necessária para executar a solicitação correspondente, observadas as regras aplicáveis e os avisos apresentados no momento do uso. O usuário deve evitar inserir senhas, documentos sensíveis ou dados de terceiros sem autorização.</p>
-          <h3>4. Retenção e exclusão</h3>
-          <p>As informações devem ser mantidas pelo período necessário à finalidade informada, à segurança do serviço ou ao cumprimento de obrigações legais. Preferências que ficam no navegador podem ser removidas em <strong>Settings &gt; Dados e privacidade &gt; Limpar preferências locais</strong>. A exclusão de informações mantidas em um fluxo de conta seguirá o procedimento disponibilizado pelo serviço, quando aplicável.</p>
-          <h3>5. Direitos e escolhas</h3>
-          <p>Dependendo da legislação e da situação, você pode solicitar informações sobre o tratamento de seus dados, pedir correção, exclusão ou outras medidas cabíveis. Também pode deixar de enviar informações, desativar recursos opcionais ou sair da sessão. Algumas escolhas podem impedir o funcionamento de um recurso específico.</p>
-          <h3>6. Crianças e adolescentes</h3>
-          <p>O Kazer não deve ser usado para contornar regras de idade, consentimento ou proteção aplicáveis. Responsáveis devem acompanhar o uso por menores quando isso for exigido pela legislação ou pelas condições do serviço.</p>
+          <span class="eyebrow" data-i18n="privacyEyebrow">02 · Privacidade</span>
+          <h2 id="privacidade-titulo" data-i18n="privacyTitle">Política de privacidade</h2>
+          <p class="lead" data-i18n="privacyLead">Esta política descreve, de forma direta, como as informações podem ser tratadas durante o uso do Kazer.</p>
+          <h3 data-i18n="privacyH1">1. Informações que podem existir</h3>
+          <p data-i18n="privacyP1">Dependendo da forma de uso e dos recursos publicados, o Kazer pode lidar com informações de cadastro fornecidas voluntariamente, mensagens, arquivos enviados pelo usuário, preferências da interface e informações técnicas necessárias para carregar a página, proteger a sessão e manter o serviço funcionando.</p>
+          <p data-i18n="privacyP2">Algumas preferências podem permanecer apenas no armazenamento local do navegador. Esses dados podem desaparecer quando o armazenamento do site for limpo, quando o navegador for redefinido ou quando outro dispositivo for utilizado.</p>
+          <h3 data-i18n="privacyH2">2. Finalidades</h3>
+          <p data-i18n="privacyP3">As informações podem ser usadas para exibir a interface, responder a solicitações, manter preferências escolhidas, corrigir falhas, prevenir abusos, proteger o serviço, cumprir obrigações legais e comunicar mudanças importantes. O uso deve permanecer vinculado à finalidade informada ou a outra finalidade permitida pela legislação aplicável.</p>
+          <h3 data-i18n="privacyH3">3. Serviços externos e compartilhamento</h3>
+          <p data-i18n="privacyP4">Quando uma função depender de um serviço externo, dados poderão ser enviados somente na medida necessária para executar a solicitação correspondente, observadas as regras aplicáveis e os avisos apresentados no momento do uso. O usuário deve evitar inserir senhas, documentos sensíveis ou dados de terceiros sem autorização.</p>
+          <h3 data-i18n="privacyH4">4. Retenção e exclusão</h3>
+          <p data-i18n="privacyP5">As informações devem ser mantidas pelo período necessário à finalidade informada, à segurança do serviço ou ao cumprimento de obrigações legais. Preferências que ficam no navegador podem ser removidas em Settings &gt; Dados e privacidade &gt; Limpar preferências locais. A exclusão de informações mantidas em um fluxo de conta seguirá o procedimento disponibilizado pelo serviço, quando aplicável.</p>
+          <h3 data-i18n="privacyH5">5. Direitos e escolhas</h3>
+          <p data-i18n="privacyP6">Dependendo da legislação e da situação, você pode solicitar informações sobre o tratamento de seus dados, pedir correção, exclusão ou outras medidas cabíveis. Também pode deixar de enviar informações, desativar recursos opcionais ou sair da sessão. Algumas escolhas podem impedir o funcionamento de um recurso específico.</p>
+          <h3 data-i18n="privacyH6">6. Crianças e adolescentes</h3>
+          <p data-i18n="privacyP7">O Kazer não deve ser usado para contornar regras de idade, consentimento ou proteção aplicáveis. Responsáveis devem acompanhar o uso por menores quando isso for exigido pela legislação ou pelas condições do serviço.</p>
         </section>
 
         <section class="document-section" id="termos" aria-labelledby="termos-titulo">
-          <span class="eyebrow">03 · Termos</span>
-          <h2 id="termos-titulo">Termos de uso</h2>
-          <p class="lead">Ao acessar ou usar o Kazer, você se compromete a utilizar o serviço de forma legal, responsável e respeitosa.</p>
-          <h3>1. Escopo do serviço</h3>
-          <p>O Kazer oferece uma interface para conversar, organizar informações, consultar recursos disponíveis e criar materiais a partir das instruções do usuário. Recursos podem ser adicionados, alterados, limitados ou retirados para manter a qualidade e a segurança do serviço.</p>
-          <h3>2. Conta, acesso e responsabilidade</h3>
-          <p>Quando houver um fluxo de conta, você é responsável por fornecer informações verdadeiras, proteger suas credenciais e avisar sobre uso não autorizado. Não compartilhe códigos, senhas ou acessos individuais. O uso em dispositivo compartilhado exige cuidado adicional e encerramento da sessão ao terminar.</p>
-          <h3>3. Conteúdo e conduta</h3>
-          <p>Você é responsável pelo conteúdo enviado, pelas instruções fornecidas e pelas decisões tomadas com base em uma resposta. Não use o Kazer para:</p>
+          <span class="eyebrow" data-i18n="termsEyebrow">03 · Termos</span>
+          <h2 id="termos-titulo" data-i18n="termsTitle">Termos de uso</h2>
+          <p class="lead" data-i18n="termsLead">Ao acessar ou usar o Kazer, você se compromete a utilizar o serviço de forma legal, responsável e respeitosa.</p>
+          <h3 data-i18n="termsH1">1. Escopo do serviço</h3>
+          <p data-i18n="termsP1">O Kazer oferece uma interface para conversar, organizar informações, consultar recursos disponíveis e criar materiais a partir das instruções do usuário. Recursos podem ser adicionados, alterados, limitados ou retirados para manter a qualidade e a segurança do serviço.</p>
+          <h3 data-i18n="termsH2">2. Conta, acesso e responsabilidade</h3>
+          <p data-i18n="termsP2">Quando houver um fluxo de conta, você é responsável por fornecer informações verdadeiras, proteger suas credenciais e avisar sobre uso não autorizado. Não compartilhe códigos, senhas ou acessos individuais. O uso em dispositivo compartilhado exige cuidado adicional e encerramento da sessão ao terminar.</p>
+          <h3 data-i18n="termsH3">3. Conteúdo e conduta</h3>
+          <p data-i18n="termsP3">Você é responsável pelo conteúdo enviado, pelas instruções fornecidas e pelas decisões tomadas com base em uma resposta. Não use o Kazer para:</p>
           <ul class="content-list">
-            <li>praticar ou facilitar atividade ilegal, fraude, ameaça, assédio ou discriminação;</li>
-            <li>obter credenciais, explorar vulnerabilidades, distribuir código malicioso ou prejudicar sistemas;</li>
-            <li>violar privacidade, direitos autorais, marcas, imagem ou outros direitos de terceiros;</li>
-            <li>se passar por outra pessoa, manipular alguém ou criar conteúdo com finalidade enganosa;</li>
-            <li>tomar decisões de alto impacto sem revisão humana, verificação independente e responsabilidade adequada.</li>
+            <li data-i18n="termsLi1">praticar ou facilitar atividade ilegal, fraude, ameaça, assédio ou discriminação;</li>
+            <li data-i18n="termsLi2">obter credenciais, explorar vulnerabilidades, distribuir código malicioso ou prejudicar sistemas;</li>
+            <li data-i18n="termsLi3">violar privacidade, direitos autorais, marcas, imagem ou outros direitos de terceiros;</li>
+            <li data-i18n="termsLi4">se passar por outra pessoa, manipular alguém ou criar conteúdo com finalidade enganosa;</li>
+            <li data-i18n="termsLi5">tomar decisões de alto impacto sem revisão humana, verificação independente e responsabilidade adequada.</li>
           </ul>
-          <h3>4. Respostas do agente</h3>
-          <p>Um agente pode interpretar mal uma solicitação, produzir informação incompleta ou apresentar uma resposta com confiança indevida. Verifique fatos, fontes, cálculos e consequências antes de usar qualquer resposta em uma decisão profissional, financeira, jurídica, médica, de segurança ou de alto impacto.</p>
-          <h3>5. Conteúdo enviado e propriedade intelectual</h3>
-          <p>Você mantém os direitos que já possuía sobre o conteúdo enviado, observadas as permissões necessárias para que o serviço processe a solicitação. Não envie material de terceiros sem autorização. A identidade visual, a interface e os materiais próprios do Kazer não podem ser copiados ou usados para confundir outras pessoas.</p>
-          <h3>6. Disponibilidade, suspensão e encerramento</h3>
-          <p>O serviço pode ficar temporariamente indisponível para manutenção, atualização ou motivos fora do controle do Kazer. O acesso pode ser limitado ou encerrado em caso de violação destes termos, risco de segurança, exigência legal ou uso que prejudique o serviço e outras pessoas. Você pode interromper o uso a qualquer momento.</p>
-          <p class="subtle">Qualquer cláusula de limitação de responsabilidade, indenização, garantias, foro ou resolução de conflitos deve ser ajustada ao país aplicável e aos direitos obrigatórios do consumidor antes da publicação definitiva.</p>
+          <h3 data-i18n="termsH4">4. Respostas do agente</h3>
+          <p data-i18n="termsP4">Um agente pode interpretar mal uma solicitação, produzir informação incompleta ou apresentar uma resposta com confiança indevida. Verifique fatos, fontes, cálculos e consequências antes de usar qualquer resposta em uma decisão profissional, financeira, jurídica, médica, de segurança ou de alto impacto.</p>
+          <h3 data-i18n="termsH5">5. Conteúdo enviado e propriedade intelectual</h3>
+          <p data-i18n="termsP5">Você mantém os direitos que já possuía sobre o conteúdo enviado, observadas as permissões necessárias para que o serviço processe a solicitação. Não envie material de terceiros sem autorização. A identidade visual, a interface e os materiais próprios do Kazer não podem ser copiados ou usados para confundir outras pessoas.</p>
+          <h3 data-i18n="termsH6">6. Disponibilidade, suspensão e encerramento</h3>
+          <p data-i18n="termsP6">O serviço pode ficar temporariamente indisponível para manutenção, atualização ou motivos fora do controle do Kazer. O acesso pode ser limitado ou encerrado em caso de violação destes termos, risco de segurança, exigência legal ou uso que prejudique o serviço e outras pessoas. Você pode interromper o uso a qualquer momento.</p>
+          <h3 data-i18n="termsH7">7. Licença limitada para operar o serviço</h3>
+          <p data-i18n="termsP7">Para executar uma solicitação, você autoriza o Kazer, quando tecnicamente necessário, a receber, hospedar temporariamente, reproduzir de forma técnica, adaptar para formatos do serviço e transmitir o conteúdo que você enviar aos prestadores necessários à execução da função. Essa permissão é limitada, não transfere a titularidade do seu conteúdo e não autoriza automaticamente uma finalidade adicional. Qualquer uso diferente deve ser explicado de forma clara e aprovado conforme a legislação aplicável.</p>
+          <p class="subtle" data-i18n="termsSubtle">Qualquer cláusula de limitação de responsabilidade, indenização, garantias, foro ou resolução de conflitos deve ser ajustada ao país aplicável e aos direitos obrigatórios do consumidor antes da publicação definitiva.</p>
         </section>
 
         <section class="document-section" id="seguranca" aria-labelledby="seguranca-titulo">
-          <span class="eyebrow">04 · Segurança</span>
-          <h2 id="seguranca-titulo">Práticas de segurança</h2>
-          <p class="lead">Segurança depende da proteção do serviço e também dos cuidados de cada pessoa que o utiliza.</p>
-          <h3>1. Proteja sua sessão</h3>
-          <p>Use dispositivos confiáveis, mantenha o navegador atualizado, evite compartilhar sua sessão e saia da conta ao terminar em um computador compartilhado. Se perceber atividade estranha, interrompa o uso, revise suas credenciais no fluxo disponível e procure o suporte indicado nesta central.</p>
-          <h3>2. Não envie segredos desnecessários</h3>
-          <p>Não coloque no chat senhas, códigos de autenticação, chaves privadas, dados bancários completos, informações médicas desnecessárias ou documentos de outras pessoas. Antes de enviar um arquivo, confirme se ele é realmente necessário para o objetivo da conversa.</p>
-          <h3>3. Verifique respostas, links e arquivos</h3>
-          <p>Trate links, arquivos e instruções recebidos durante uma conversa como conteúdo que precisa ser verificado. Não execute uma ação irreversível apenas porque uma resposta recomendou fazê-lo. Confira o destino, a fonte e a consequência antes de continuar.</p>
-          <h3>4. Relate problemas</h3>
-          <p>Se encontrar um comportamento que possa expor dados, permitir acesso indevido ou prejudicar usuários, informe o problema pelo canal de contato abaixo. Descreva os passos para reprodução sem enviar segredos ou dados pessoais desnecessários.</p>
-          <div class="notice" role="note"><span class="notice-icon" aria-hidden="true">✓</span><div><strong>Sem garantias absolutas.</strong> Nenhum serviço conectado à internet é completamente imune a falhas. Esta seção apresenta cuidados de uso e não constitui certificação, promessa de inviolabilidade ou garantia de disponibilidade contínua.</div></div>
+          <span class="eyebrow" data-i18n="securityEyebrow">04 · Segurança</span>
+          <h2 id="seguranca-titulo" data-i18n="securityTitle">Práticas de segurança</h2>
+          <p class="lead" data-i18n="securityLead">Segurança depende da proteção do serviço e também dos cuidados de cada pessoa que o utiliza.</p>
+          <h3 data-i18n="securityH1">1. Proteja sua sessão</h3>
+          <p data-i18n="securityP1">Use dispositivos confiáveis, mantenha o navegador atualizado, evite compartilhar sua sessão e saia da conta ao terminar em um computador compartilhado. Se perceber atividade estranha, interrompa o uso, revise suas credenciais no fluxo disponível e procure o suporte indicado nesta central.</p>
+          <h3 data-i18n="securityH2">2. Não envie segredos desnecessários</h3>
+          <p data-i18n="securityP2">Não coloque no chat senhas, códigos de autenticação, chaves privadas, dados bancários completos, informações médicas desnecessárias ou documentos de outras pessoas. Antes de enviar um arquivo, confirme se ele é realmente necessário para o objetivo da conversa.</p>
+          <h3 data-i18n="securityH3">3. Verifique respostas, links e arquivos</h3>
+          <p data-i18n="securityP3">Trate links, arquivos e instruções recebidos durante uma conversa como conteúdo que precisa ser verificado. Não execute uma ação irreversível apenas porque uma resposta recomendou fazê-lo. Confira o destino, a fonte e a consequência antes de continuar.</p>
+          <h3 data-i18n="securityH4">4. Relate problemas</h3>
+          <p data-i18n="securityP4">Se encontrar um comportamento que possa expor dados, permitir acesso indevido ou prejudicar usuários, informe o problema pelo canal de contato abaixo. Descreva os passos para reprodução sem enviar segredos ou dados pessoais desnecessários.</p>
+          <div class="notice" role="note"><span class="notice-icon" aria-hidden="true">✓</span><div data-i18n-html="securityNotice"><strong>Sem garantias absolutas.</strong> Nenhum serviço conectado à internet é completamente imune a falhas. Esta seção apresenta cuidados de uso e não constitui certificação, promessa de inviolabilidade ou garantia de disponibilidade contínua.</div></div>
         </section>
 
         <section class="document-section" id="contato" aria-labelledby="contato-titulo">
-          <span class="eyebrow">05 · Contato</span>
-          <h2 id="contato-titulo">Fale com a Klipza Studio</h2>
-          <p class="lead">Dúvidas sobre estes documentos, privacidade, segurança ou uso do Kazer podem ser encaminhadas pelo canal abaixo.</p>
-          <p>Ao escrever, inclua somente as informações necessárias para entender a solicitação. Não envie senhas, códigos de autenticação ou dados sensíveis por e-mail.</p>
+          <span class="eyebrow" data-i18n="contactEyebrow">05 · Contato</span>
+          <h2 id="contato-titulo" data-i18n="contactTitle">Fale com o criador</h2>
+          <p class="lead" data-i18n="contactLead">Dúvidas sobre estes documentos, privacidade, segurança ou uso do Kazer podem ser encaminhadas pelo canal abaixo.</p>
+          <p data-i18n="contactP1">Ao escrever, inclua somente as informações necessárias para entender a solicitação. Não envie senhas, códigos de autenticação ou dados sensíveis por e-mail.</p>
           <div class="contact-panel">
-            <strong>Canal oficial de contato</strong>
-            <p>Use este endereço para dúvidas gerais, solicitações relacionadas à privacidade e relatos de possíveis problemas de segurança.</p>
-            <a class="email-link" href="mailto:klipzastudio@gmail.com?subject=Kazer%20-%20Privacidade%20ou%20Segurança">klipzastudio@gmail.com <span aria-hidden="true">↗</span></a>
+            <strong data-i18n="contactPanelTitle">Canal de contato do projeto</strong>
+            <p data-i18n="contactPanelCopy">Use este endereço para dúvidas gerais, solicitações relacionadas à privacidade e relatos de possíveis problemas de segurança.</p>
+            <a class="email-link" data-contact-link href="mailto:klipzastudio@gmail.com?subject=Kazer%20-%20Privacidade%20ou%20Segurança">klipzastudio@gmail.com <span aria-hidden="true">↗</span></a>
           </div>
-          <h3>Revisão e vigência</h3>
-          <p>Esta página pode ser atualizada para refletir mudanças no produto, na legislação aplicável ou nos controles oferecidos. A data no início da página indica a última revisão publicada. Antes de adoção oficial, o conteúdo deve ser revisado e aprovado juridicamente pela Klipza Studio, com a identificação legal, jurisdição e procedimentos operacionais definitivos.</p>
+          <h3 data-i18n="reviewTitle">Revisão e vigência</h3>
+          <p data-i18n="reviewCopy">Esta página pode ser atualizada para refletir mudanças no produto, na legislação aplicável ou nos controles oferecidos. A data no início da página indica a última revisão publicada. Antes de adoção oficial, o conteúdo deve ser revisado e aprovado juridicamente, com a identificação legal, jurisdição e procedimentos operacionais definitivos.</p>
         </section>
       </article>
     </div>
@@ -381,13 +440,57 @@
 
   <footer class="footer">
     <div class="shell footer-inner">
-      <div class="footer-brand">KAZER · KLIPZA STUDIO</div>
-      <p class="footer-copy">Documentos públicos · Versão informativa 1.0 · Atualizado em 27 de agosto de 2026 · <a href="/chat">Voltar ao Kazer</a></p>
+      <div class="footer-brand">KAZER · 0neajx</div>
+      <p class="footer-copy"><span data-i18n="footerCopy">Documentos públicos · Versão informativa 1.0 · Atualizado em 27 de agosto de 2026</span> · <a href="https://instagram.com/0neajx" target="_blank" rel="noopener noreferrer" aria-label="Abrir o Instagram de 0neajx" data-i18n-aria="creatorAria"><span data-i18n="creatorName">0neajx</span></a> · <a href="/chat" data-i18n="backToKazer">Voltar ao Kazer</a></p>
     </div>
   </footer>
 
   <script>
     (() => {
+      const translations = {
+        pt: {
+          documentTitle: "Documentos do Kazer", metaDescription: "Central de documentos do Kazer: termos de uso, privacidade, segurança e contato.", ogDescription: "Termos de uso, privacidade, segurança e informações importantes para usar o Kazer.", metaAria: "Informações de atualização", quickAria: "Acesso rápido", quickListAria: "Navegação rápida", sidebarAria: "Navegação dos documentos", principlesAria: "Princípios da central", creatorAria: "Abrir o Instagram de 0neajx", contactSubject: "Kazer - Privacidade ou Segurança", creatorName: "0neajx", backToKazer: "Voltar ao Kazer", heroEyebrow: "Kazer · Central de documentos", heroTitle: "Clareza para usar o Kazer com confiança.", heroCopy: "Termos de uso, privacidade e segurança reunidos em uma experiência simples de consultar, com linguagem direta e compromisso com o que o produto realmente oferece.", draftStatus: "Rascunho para revisão jurídica", publicDocument: "Documento público", versionInfo: "Versão informativa 1.0", updatedDate: "Atualizado em 27 de agosto de 2026", createdBy: "Criado por", quickAccess: "Acesso rápido", privacyShort: "Privacidade", termsShort: "Termos de uso", securityShort: "Segurança", contactShort: "Contato", overviewShort: "Visão geral", onThisPage: "Nesta página", oneReferenceTitle: "Uma única referência", oneReferenceCopy: "Consulte as seções e compartilhe o link da página com a parte necessária em destaque.", overviewEyebrow: "01 · Visão geral", overviewTitle: "Como ler esta central", overviewLead: "O Kazer é um espaço para conversar, organizar ideias e transformar pedidos em próximos passos.", overviewP1: "Esta central reúne as regras de uso, os princípios de privacidade e as boas práticas de segurança que orientam a experiência do Kazer. O texto foi organizado para facilitar a consulta no computador e no celular, sem esconder as informações importantes em páginas separadas.", overviewNotice: "<strong>Leia antes de usar em decisões importantes.</strong> Respostas produzidas por um agente de inteligência artificial podem conter erros, omissões ou interpretações incompletas. Revise informações relevantes e não use o Kazer como substituto de orientação profissional, atendimento de emergência ou decisão humana responsável.", principle1Title: "Transparência", principle1Copy: "Explicamos o tratamento de informações com linguagem compreensível e sem prometer além do que está disponível.", principle2Title: "Controle", principle2Copy: "Preferências locais podem ser ajustadas e limpas no Settings quando esse controle estiver disponível.", principle3Title: "Uso responsável", principle3Copy: "O serviço deve ser usado de maneira legal, segura, respeitosa e sem prejudicar outras pessoas.", principle4Title: "Atualização contínua", principle4Copy: "Esta central pode mudar quando o produto, os controles oferecidos ou as regras aplicáveis forem atualizados.", privacyEyebrow: "02 · Privacidade", privacyTitle: "Política de privacidade", privacyLead: "Esta política descreve, de forma direta, como as informações podem ser tratadas durante o uso do Kazer.", privacyH1: "1. Informações que podem existir", privacyP1: "Dependendo da forma de uso e dos recursos publicados, o Kazer pode lidar com informações de cadastro fornecidas voluntariamente, mensagens, arquivos enviados pelo usuário, preferências da interface e informações técnicas necessárias para carregar a página, proteger a sessão e manter o serviço funcionando.", privacyP2: "Algumas preferências podem permanecer apenas no armazenamento local do navegador. Esses dados podem desaparecer quando o armazenamento do site for limpo, quando o navegador for redefinido ou quando outro dispositivo for utilizado.", privacyH2: "2. Finalidades", privacyP3: "As informações podem ser usadas para exibir a interface, responder a solicitações, manter preferências escolhidas, corrigir falhas, prevenir abusos, proteger o serviço, cumprir obrigações legais e comunicar mudanças importantes. O uso deve permanecer vinculado à finalidade informada ou a outra finalidade permitida pela legislação aplicável.", privacyH3: "3. Serviços externos e compartilhamento", privacyP4: "Quando uma função depender de um serviço externo, dados poderão ser enviados somente na medida necessária para executar a solicitação correspondente, observadas as regras aplicáveis e os avisos apresentados no momento do uso. O usuário deve evitar inserir senhas, documentos sensíveis ou dados de terceiros sem autorização.", privacyH4: "4. Retenção e exclusão", privacyP5: "As informações devem ser mantidas pelo período necessário à finalidade informada, à segurança do serviço ou ao cumprimento de obrigações legais. Preferências que ficam no navegador podem ser removidas em Settings > Dados e privacidade > Limpar preferências locais. A exclusão de informações mantidas em um fluxo de conta seguirá o procedimento disponibilizado pelo serviço, quando aplicável.", privacyH5: "5. Direitos e escolhas", privacyP6: "Dependendo da legislação e da situação, você pode solicitar informações sobre o tratamento de seus dados, pedir correção, exclusão ou outras medidas cabíveis. Também pode deixar de enviar informações, desativar recursos opcionais ou sair da sessão. Algumas escolhas podem impedir o funcionamento de um recurso específico.", privacyH6: "6. Crianças e adolescentes", privacyP7: "O Kazer não deve ser usado para contornar regras de idade, consentimento ou proteção aplicáveis. Responsáveis devem acompanhar o uso por menores quando isso for exigido pela legislação ou pelas condições do serviço.", termsEyebrow: "03 · Termos", termsTitle: "Termos de uso", termsLead: "Ao acessar ou usar o Kazer, você se compromete a utilizar o serviço de forma legal, responsável e respeitosa.", termsH1: "1. Escopo do serviço", termsP1: "O Kazer oferece uma interface para conversar, organizar informações, consultar recursos disponíveis e criar materiais a partir das instruções do usuário. Recursos podem ser adicionados, alterados, limitados ou retirados para manter a qualidade e a segurança do serviço.", termsH2: "2. Conta, acesso e responsabilidade", termsP2: "Quando houver um fluxo de conta, você é responsável por fornecer informações verdadeiras, proteger suas credenciais e avisar sobre uso não autorizado. Não compartilhe códigos, senhas ou acessos individuais. O uso em dispositivo compartilhado exige cuidado adicional e encerramento da sessão ao terminar.", termsH3: "3. Conteúdo e conduta", termsP3: "Você é responsável pelo conteúdo enviado, pelas instruções fornecidas e pelas decisões tomadas com base em uma resposta. Não use o Kazer para:", termsLi1: "praticar ou facilitar atividade ilegal, fraude, ameaça, assédio ou discriminação;", termsLi2: "obter credenciais, explorar vulnerabilidades, distribuir código malicioso ou prejudicar sistemas;", termsLi3: "violar privacidade, direitos autorais, marcas, imagem ou outros direitos de terceiros;", termsLi4: "se passar por outra pessoa, manipular alguém ou criar conteúdo com finalidade enganosa;", termsLi5: "tomar decisões de alto impacto sem revisão humana, verificação independente e responsabilidade adequada.", termsH4: "4. Respostas do agente", termsP4: "Um agente pode interpretar mal uma solicitação, produzir informação incompleta ou apresentar uma resposta com confiança indevida. Verifique fatos, fontes, cálculos e consequências antes de usar qualquer resposta em uma decisão profissional, financeira, jurídica, médica, de segurança ou de alto impacto.", termsH5: "5. Conteúdo enviado e propriedade intelectual", termsP5: "Você mantém os direitos que já possuía sobre o conteúdo enviado, observadas as permissões necessárias para que o serviço processe a solicitação. Não envie material de terceiros sem autorização. A identidade visual, a interface e os materiais próprios do Kazer não podem ser copiados ou usados para confundir outras pessoas.", termsH6: "6. Disponibilidade, suspensão e encerramento", termsP6: "O serviço pode ficar temporariamente indisponível para manutenção, atualização ou motivos fora do controle do Kazer. O acesso pode ser limitado ou encerrado em caso de violação destes termos, risco de segurança, exigência legal ou uso que prejudique o serviço e outras pessoas. Você pode interromper o uso a qualquer momento.", termsH7: "7. Licença limitada para operar o serviço", termsP7: "Para executar uma solicitação, você autoriza o Kazer, quando tecnicamente necessário, a receber, hospedar temporariamente, reproduzir de forma técnica, adaptar para formatos do serviço e transmitir o conteúdo que você enviar aos prestadores necessários à execução da função. Essa permissão é limitada, não transfere a titularidade do seu conteúdo e não autoriza automaticamente uma finalidade adicional. Qualquer uso diferente deve ser explicado de forma clara e aprovado conforme a legislação aplicável.", termsSubtle: "Qualquer cláusula de limitação de responsabilidade, indenização, garantias, foro ou resolução de conflitos deve ser ajustada ao país aplicável e aos direitos obrigatórios do consumidor antes da publicação definitiva.", securityEyebrow: "04 · Segurança", securityTitle: "Práticas de segurança", securityLead: "Segurança depende da proteção do serviço e também dos cuidados de cada pessoa que o utiliza.", securityH1: "1. Proteja sua sessão", securityP1: "Use dispositivos confiáveis, mantenha o navegador atualizado, evite compartilhar sua sessão e saia da conta ao terminar em um computador compartilhado. Se perceber atividade estranha, interrompa o uso, revise suas credenciais no fluxo disponível e procure o suporte indicado nesta central.", securityH2: "2. Não envie segredos desnecessários", securityP2: "Não coloque no chat senhas, códigos de autenticação, chaves privadas, dados bancários completos, informações médicas desnecessárias ou documentos de outras pessoas. Antes de enviar um arquivo, confirme se ele é realmente necessário para o objetivo da conversa.", securityH3: "3. Verifique respostas, links e arquivos", securityP3: "Trate links, arquivos e instruções recebidos durante uma conversa como conteúdo que precisa ser verificado. Não execute uma ação irreversível apenas porque uma resposta recomendou fazê-lo. Confira o destino, a fonte e a consequência antes de continuar.", securityH4: "4. Relate problemas", securityP4: "Se encontrar um comportamento que possa expor dados, permitir acesso indevido ou prejudicar usuários, informe o problema pelo canal de contato abaixo. Descreva os passos para reprodução sem enviar segredos ou dados pessoais desnecessários.", securityNotice: "<strong>Sem garantias absolutas.</strong> Nenhum serviço conectado à internet é completamente imune a falhas. Esta seção apresenta cuidados de uso e não constitui certificação, promessa de inviolabilidade ou garantia de disponibilidade contínua.", contactEyebrow: "05 · Contato", contactTitle: "Fale com o criador", contactLead: "Dúvidas sobre estes documentos, privacidade, segurança ou uso do Kazer podem ser encaminhadas pelo canal abaixo.", contactP1: "Ao escrever, inclua somente as informações necessárias para entender a solicitação. Não envie senhas, códigos de autenticação ou dados sensíveis por e-mail.", contactPanelTitle: "Canal de contato do projeto", contactPanelCopy: "Use este endereço para dúvidas gerais, solicitações relacionadas à privacidade e relatos de possíveis problemas de segurança.", reviewTitle: "Revisão e vigência", reviewCopy: "Esta página pode ser atualizada para refletir mudanças no produto, na legislação aplicável ou nos controles oferecidos. A data no início da página indica a última revisão publicada. Antes de adoção oficial, o conteúdo deve ser revisado e aprovado juridicamente, com a identificação legal, jurisdição e procedimentos operacionais definitivos.", footerCopy: "Documentos públicos · Versão informativa 1.0 · Atualizado em 27 de agosto de 2026"
+        },
+        en: {
+          documentTitle: "Kazer documents", metaDescription: "Kazer document center: terms of use, privacy, security and contact.", ogDescription: "Terms of use, privacy, security and important information for using Kazer.", metaAria: "Update information", quickAria: "Quick access", quickListAria: "Quick navigation", sidebarAria: "Document navigation", principlesAria: "Center principles", creatorAria: "Open 0neajx's Instagram", contactSubject: "Kazer - Privacy or Security", creatorName: "0neajx", backToKazer: "Back to Kazer", heroEyebrow: "Kazer · Document center", heroTitle: "Clarity for using Kazer with confidence.", heroCopy: "Terms of use, privacy and security gathered in one simple reference, with direct language and a commitment to describe what the product actually offers.", draftStatus: "Draft for legal review", publicDocument: "Public document", versionInfo: "Informational version 1.0", updatedDate: "Updated on August 27, 2026", createdBy: "Created by", quickAccess: "Quick access", privacyShort: "Privacy", termsShort: "Terms of use", securityShort: "Security", contactShort: "Contact", overviewShort: "Overview", onThisPage: "On this page", oneReferenceTitle: "One reference", oneReferenceCopy: "Browse the sections and share the page with the relevant section highlighted.", overviewEyebrow: "01 · Overview", overviewTitle: "How to read this center", overviewLead: "Kazer is a space to talk, organize ideas and turn requests into next steps.", overviewP1: "This center brings together the usage rules, privacy principles and security practices that guide the Kazer experience. It is organized for easy reading on desktop and mobile, without hiding important information across separate pages.", overviewNotice: "<strong>Read before using it for important decisions.</strong> Responses produced by an artificial intelligence agent may contain errors, omissions or incomplete interpretations. Review relevant information and do not use Kazer as a substitute for professional advice, emergency assistance or responsible human judgment.", principle1Title: "Transparency", principle1Copy: "We explain how information is handled in understandable language without promising more than is available.", principle2Title: "Control", principle2Copy: "Local preferences can be adjusted and cleared in Settings when that control is available.", principle3Title: "Responsible use", principle3Copy: "The service must be used lawfully, safely, respectfully and without harming others.", principle4Title: "Continuous updates", principle4Copy: "This center may change when the product, available controls or applicable rules are updated.", privacyEyebrow: "02 · Privacy", privacyTitle: "Privacy policy", privacyLead: "This policy describes, directly, how information may be handled while using Kazer.", privacyH1: "1. Information that may exist", privacyP1: "Depending on how the service and its published features are used, Kazer may handle voluntarily provided account information, messages, files sent by the user, interface preferences and technical information needed to load the page, protect the session and keep the service working.", privacyP2: "Some preferences may remain only in the browser's local storage. This data may disappear when site storage is cleared, the browser is reset or another device is used.", privacyH2: "2. Purposes", privacyP3: "Information may be used to display the interface, respond to requests, maintain chosen preferences, fix failures, prevent abuse, protect the service, comply with legal obligations and communicate important changes. Use should remain connected to the stated purpose or another purpose permitted by applicable law.", privacyH3: "3. External services and sharing", privacyP4: "When a feature depends on an external service, data may be sent only to the extent needed to perform the corresponding request, subject to applicable rules and notices shown when the feature is used. Avoid entering passwords, sensitive documents or other people's data without authorization.", privacyH4: "4. Retention and deletion", privacyP5: "Information should be kept for the period needed for the stated purpose, service security or legal obligations. Preferences kept in the browser can be removed through Settings > Data and privacy > Clear local preferences. Deletion of information held in an account flow will follow the procedure made available by the service, when applicable.", privacyH5: "5. Rights and choices", privacyP6: "Depending on the law and the situation, you may request information about how your data is handled, ask for correction, deletion or other applicable measures. You may also stop sending information, disable optional features or end your session. Some choices may prevent a feature from working.", privacyH6: "6. Children and teenagers", privacyP7: "Kazer must not be used to bypass applicable age, consent or protection rules. Guardians should supervise use by minors when required by law or the service conditions.", termsEyebrow: "03 · Terms", termsTitle: "Terms of use", termsLead: "By accessing or using Kazer, you agree to use the service lawfully, responsibly and respectfully.", termsH1: "1. Service scope", termsP1: "Kazer provides an interface for conversation, information organization, access to available resources and creation of materials from user instructions. Features may be added, changed, limited or removed to maintain service quality and safety.", termsH2: "2. Account, access and responsibility", termsP2: "When an account flow is available, you are responsible for providing truthful information, protecting your credentials and reporting unauthorized use. Do not share codes, passwords or individual access. Use on a shared device requires extra care and ending the session when finished.", termsH3: "3. Content and conduct", termsP3: "You are responsible for the content you send, the instructions you provide and decisions based on a response. Do not use Kazer to:", termsLi1: "practice or facilitate illegal activity, fraud, threats, harassment or discrimination;", termsLi2: "obtain credentials, exploit vulnerabilities, distribute malicious code or harm systems;", termsLi3: "violate privacy, copyrights, trademarks, image rights or other third-party rights;", termsLi4: "impersonate someone, manipulate people or create content for a deceptive purpose;", termsLi5: "make high-impact decisions without human review, independent verification and appropriate responsibility.", termsH4: "4. Agent responses", termsP4: "An agent may misunderstand a request, produce incomplete information or present an answer with unwarranted confidence. Check facts, sources, calculations and consequences before using any response for a professional, financial, legal, medical, security or other high-impact decision.", termsH5: "5. User content and intellectual property", termsP5: "You retain the rights you already held in the content you send, subject to the permissions needed for the service to process the request. Do not send third-party material without authorization. Kazer's identity, interface and original materials may not be copied or used to mislead others.", termsH6: "6. Availability, suspension and termination", termsP6: "The service may be temporarily unavailable for maintenance, updates or reasons outside Kazer's control. Access may be limited or terminated for violating these terms, creating a security risk, following a legal requirement or harming the service and others. You may stop using the service at any time.", termsH7: "7. Limited license to operate the service", termsP7: "To perform a request, you authorize Kazer, when technically necessary, to receive, temporarily host, technically reproduce, adapt into service formats and transmit the content you send to providers needed to perform the feature. This permission is limited, does not transfer ownership of your content and does not automatically authorize an additional purpose. Any different use must be clearly explained and approved under applicable law.", termsSubtle: "Any clause on limitation of liability, indemnification, warranties, venue or dispute resolution must be adjusted to the applicable country and mandatory consumer rights before final publication.", securityEyebrow: "04 · Security", securityTitle: "Security practices", securityLead: "Security depends on protecting the service and on the care of every person who uses it.", securityH1: "1. Protect your session", securityP1: "Use trusted devices, keep your browser updated, avoid sharing your session and sign out when finished on a shared computer. If you notice unusual activity, stop using the service, review your credentials through the available flow and contact the support channel in this center.", securityH2: "2. Do not send unnecessary secrets", securityP2: "Do not put passwords, authentication codes, private keys, complete banking details, unnecessary medical information or other people's documents in the chat. Before sending a file, confirm that it is truly needed for the conversation's purpose.", securityH3: "3. Check responses, links and files", securityP3: "Treat links, files and instructions received during a conversation as content that needs verification. Do not take an irreversible action just because a response recommended it. Check the destination, source and consequence first.", securityH4: "4. Report problems", securityP4: "If you find behavior that could expose data, allow unauthorized access or harm users, report it through the contact channel below. Describe reproduction steps without sending secrets or unnecessary personal data.", securityNotice: "<strong>No absolute guarantees.</strong> No internet-connected service is completely immune to failures. This section presents usage guidance and is not a certification, promise of invulnerability or guarantee of continuous availability.", contactEyebrow: "05 · Contact", contactTitle: "Contact the creator", contactLead: "Questions about these documents, privacy, security or Kazer use can be sent through the channel below.", contactP1: "Include only the information needed to understand your request. Do not send passwords, authentication codes or sensitive data by email.", contactPanelTitle: "Project contact channel", contactPanelCopy: "Use this address for general questions, privacy requests and reports of possible security issues.", reviewTitle: "Review and effective date", reviewCopy: "This page may be updated to reflect product changes, applicable law or available controls. The date at the beginning of the page indicates the latest published review. Before official adoption, the content must be legally reviewed and approved with final legal identity, jurisdiction and operational procedures.", footerCopy: "Public documents · Informational version 1.0 · Updated on August 27, 2026"
+        }
+      };
+
+      const readSettings = () => {
+        try { return JSON.parse(localStorage.getItem("kazer-settings") || "{}"); } catch (error) { return {}; }
+      };
+      const applyPreferences = () => {
+        const settings = readSettings();
+        const systemLight = window.matchMedia?.("(prefers-color-scheme: light)").matches;
+        const theme = settings.appearance === "light" || (settings.appearance === "system" && systemLight) ? "light" : "dark";
+        const language = settings.language === "en" ? "en" : "pt";
+        document.documentElement.dataset.theme = theme;
+        document.documentElement.lang = language === "en" ? "en" : "pt-BR";
+        document.title = translations[language].documentTitle;
+        document.querySelector('meta[name="description"]')?.setAttribute("content", translations[language].metaDescription);
+        document.querySelector('meta[property="og:title"]')?.setAttribute("content", translations[language].documentTitle);
+        document.querySelector('meta[property="og:description"]')?.setAttribute("content", translations[language].ogDescription);
+        document.querySelectorAll("[data-i18n-aria]").forEach((element) => {
+          const value = translations[language][element.dataset.i18nAria];
+          if (value !== undefined) element.setAttribute("aria-label", value);
+        });
+        document.querySelectorAll("[data-i18n-head]").forEach((element) => {
+          const value = translations[language][element.dataset.i18nHead];
+          if (value !== undefined) element.textContent = value;
+        });
+        document.querySelectorAll("[data-i18n]").forEach((element) => {
+          const value = translations[language][element.dataset.i18n];
+          if (value !== undefined) element.textContent = value;
+        });
+        document.querySelectorAll("[data-i18n-html]").forEach((element) => {
+          const value = translations[language][element.dataset.i18nHtml];
+          if (value !== undefined) element.innerHTML = value;
+        });
+        document.querySelectorAll("[data-i18n='privacyP5'], [data-i18n='termsP5'], [data-i18n='securityP2']").forEach((element) => { element.lang = language === "en" ? "en" : "pt-BR"; });
+        document.querySelectorAll("[data-contact-link]").forEach((link) => { link.href = `mailto:klipzastudio@gmail.com?subject=${encodeURIComponent(translations[language].contactSubject)}`; });
+        document.querySelector('meta[name="theme-color"]')?.setAttribute("content", theme === "light" ? "#f4f5f7" : "#090a0e");
+      };
+
       const sections = [...document.querySelectorAll('.document-section[id]')];
       const links = [...document.querySelectorAll('.sidebar-nav a, .quick-list a')];
       const progress = document.getElementById('scrollProgress');
@@ -403,6 +506,7 @@
         const scrollable = document.documentElement.scrollHeight - window.innerHeight;
         progress.style.transform = `scaleX(${scrollable > 0 ? window.scrollY / scrollable : 0})`;
       };
+      applyPreferences();
       if ('IntersectionObserver' in window) {
         const observer = new IntersectionObserver((entries) => {
           const visible = entries.filter((entry) => entry.isIntersecting).sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
@@ -414,6 +518,7 @@
       window.addEventListener('hashchange', () => setActive(location.hash.slice(1) || 'visao-geral'));
       window.addEventListener('scroll', updateProgress, { passive: true });
       window.addEventListener('resize', updateProgress);
+      window.addEventListener('storage', applyPreferences);
       updateProgress();
     })();
   </script>
