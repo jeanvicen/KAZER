@@ -383,11 +383,11 @@
       }
 
       .app:not(.in-conversation) .composer-dock {
-        top: calc(35vh + clamp(48px, 7vw, 60px) + 44px);
+        top: calc(50% - 1px);
         bottom: auto;
         padding-bottom: 0;
         background: transparent;
-        transform: translateY(-50%);
+        transform: none;
       }
 
       .app:not(.in-conversation) .composer-caption {
@@ -1529,11 +1529,11 @@
         }
 
         .empty-state {
-          padding: 35vh 12px 176px;
+          padding: 0 12px 176px;
         }
 
         .app:not(.in-conversation) .composer-dock {
-          top: calc(35vh + clamp(48px, 7vw, 60px) + 44px);
+          top: calc(50% - 1px);
         }
 
         .empty-word {
@@ -1628,17 +1628,32 @@
 
       @media (min-width: 900px) {
         .empty-state {
-          padding-top: 35vh;
+          padding-top: 0;
           padding-bottom: 250px;
         }
 
         .app:not(.in-conversation) .composer-dock {
-          top: calc(35vh + clamp(48px, 7vw, 60px) + 44px);
+          top: calc(50% - 1px);
         }
 
         .composer-dock {
           padding-bottom: 28px;
         }
+      }
+
+      .app:not(.in-conversation) .empty-state {
+        position: absolute;
+        inset: 0;
+        display: block;
+        min-height: 0;
+        padding: 0;
+      }
+
+      .app:not(.in-conversation) .empty-word {
+        position: absolute;
+        top: calc(50% - 4.2rem);
+        left: 50%;
+        transform: translateX(-50%);
       }
 
       @media (prefers-reduced-motion: reduce) {
