@@ -1,4 +1,4 @@
-const CACHE_NAME = "kazer-shell-v1";
+const CACHE_NAME = "kazer-shell-v2";
 const APP_SHELL = [
   "/chat.html",
   "/login.html",
@@ -19,19 +19,21 @@ self.addEventListener("activate", (event) => {
 });
 
 self.addEventListener("fetch", (event) => {
-  if (event.request.method !== "GET" || new URL(event.request.url).origin !== self.location.origin) return;
+  const request = event.request;
+  const url = new URL(request.url);
+  const isSameOrigin = url.origin === self.location.origin;
+  const isAppShellRequest = APP_SHELL.includes(url.pathname) || request.mode === "navigate";
+  if (request.method !== "GET" || !isSameOrigin || !isAppShellRequest) return;
+
   event.respondWith(
-    caches.match(event.request).then((cached) => {
-      if (cached) return cached;
-      return fetch(event.request).then((response) => {
-        if (!response || response.status !== 200 || response.type === "opaque") return response;
+    fetch(request).then((response) => {
+      if (response && response.status === 200 && response.type !== "opaque") {
         const copy = response.clone();
-        caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy));
-        return response;
-      }).catch(() => {
-        if (event.request.mode === "navigate") return caches.match("/chat.html");
-        return Response.error();
-      });
+        caches.open(CACHE_NAME).then((cache) => cache.put(url.pathname, copy));
+      }
+      return response;
+    }).catch(() => {
+      return caches.match(request).then((cached) => cached || caches.match(url.pathname) || caches.match("/chat.html"));
     })
   );
 });
