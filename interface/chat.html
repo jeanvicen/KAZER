@@ -1900,6 +1900,103 @@
         color: var(--text) !important;
       }
 
+      .retention-banner {
+        position: fixed;
+        z-index: 111;
+        top: 86px;
+        left: 50%;
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        width: min(440px, calc(100vw - 32px));
+        padding: 13px;
+        border: 1px solid color-mix(in srgb, var(--warning) 58%, var(--line));
+        border-radius: 17px;
+        background: color-mix(in srgb, var(--card) 96%, transparent);
+        box-shadow: 0 18px 48px rgba(0, 0, 0, 0.44);
+        opacity: 0;
+        pointer-events: none;
+        transform: translate(-50%, -12px) scale(0.98);
+        transition: opacity 190ms var(--ease), transform 220ms var(--ease);
+        backdrop-filter: blur(18px);
+      }
+
+      .retention-banner.visible {
+        opacity: 1;
+        pointer-events: auto;
+        transform: translate(-50%, 0) scale(1);
+      }
+
+      .retention-icon {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 28px;
+        height: 28px;
+        flex: 0 0 auto;
+        border: 1px solid color-mix(in srgb, var(--warning) 68%, transparent);
+        border-radius: 50%;
+        color: var(--warning);
+        font-size: 15px;
+        font-weight: 750;
+      }
+
+      .retention-copy {
+        min-width: 0;
+        flex: 1;
+      }
+
+      .retention-copy strong,
+      .retention-copy small {
+        display: block;
+      }
+
+      .retention-copy strong {
+        color: var(--text);
+        font-size: 13px;
+        font-weight: 650;
+      }
+
+      .retention-copy small {
+        margin-top: 4px;
+        color: var(--text-dim);
+        font-size: 10px;
+        line-height: 1.45;
+      }
+
+      .retention-action {
+        min-height: 29px;
+        margin-top: 9px;
+        padding: 0 11px;
+        border: 1px solid color-mix(in srgb, var(--warning) 55%, var(--line));
+        border-radius: 999px;
+        background: transparent;
+        color: var(--text-soft);
+        font-size: 10px;
+        cursor: pointer;
+      }
+
+      .retention-action:hover {
+        color: var(--text);
+        background: color-mix(in srgb, var(--warning) 10%, transparent);
+      }
+
+      .retention-dismiss {
+        align-self: flex-start;
+        width: 25px;
+        height: 25px;
+        padding: 0;
+        background: transparent;
+        color: var(--text-dim);
+        font-size: 18px;
+        line-height: 1;
+        cursor: pointer;
+      }
+
+      .retention-dismiss:hover {
+        color: var(--text);
+      }
+
       .toast {
         position: absolute;
         z-index: 100;
@@ -2094,6 +2191,11 @@
       }
 
       @media (max-width: 680px) {
+        .retention-banner {
+          top: max(78px, calc(env(safe-area-inset-top) + 70px));
+          width: calc(100vw - 24px);
+        }
+
         section.settings-popover {
           top: 0;
           right: 0;
@@ -2236,6 +2338,15 @@
           <div class="install-actions"><button class="install-primary" id="installNow" type="button">Instalar agora</button><button id="installLater" type="button">Agora não</button></div>
         </div>
         <button class="install-dismiss" id="installDismiss" type="button" aria-label="Fechar aviso">×</button>
+      </aside>
+      <aside class="retention-banner" id="retentionBanner" aria-live="polite" hidden>
+        <span class="retention-icon" aria-hidden="true">!</span>
+        <div class="retention-copy">
+          <strong id="retentionTitle">Aviso da sua conta</strong>
+          <small id="retentionMessage"></small>
+          <button class="retention-action" id="retentionKeepActive" type="button">Manter conta ativa</button>
+        </div>
+        <button class="retention-dismiss" id="retentionDismiss" type="button" aria-label="Fechar aviso">×</button>
       </aside>
       <header class="topbar" aria-label="Barra de conversa">
         <span class="conversation-title">KAZER</span>
@@ -2410,6 +2521,11 @@
         const webSources = document.getElementById("webSources");
         const webEmpty = document.getElementById("webEmpty");
         const toast = document.getElementById("toast");
+        const retentionBanner = document.getElementById("retentionBanner");
+        const retentionTitle = document.getElementById("retentionTitle");
+        const retentionMessage = document.getElementById("retentionMessage");
+        const retentionKeepActive = document.getElementById("retentionKeepActive");
+        const retentionDismiss = document.getElementById("retentionDismiss");
         const installBanner = document.getElementById("installBanner");
         const installNow = document.getElementById("installNow");
         const installLater = document.getElementById("installLater");
@@ -2495,7 +2611,8 @@
             persistSettings();
             applySettings();
           }
-          safeQuery(kazerSupabase.rpc("touch_user_activity"));
+          await safeQuery(kazerSupabase.rpc("touch_user_activity"));
+          await loadRetentionNotice();
           return true;
         };
 
@@ -2561,6 +2678,26 @@
           toast.classList.add("visible");
           window.clearTimeout(toastTimer);
           toastTimer = window.setTimeout(() => toast.classList.remove("visible"), 2300);
+        };
+
+        const hideRetentionNotice = async (notificationId) => {
+          retentionBanner.classList.remove("visible");
+          window.setTimeout(() => { retentionBanner.hidden = true; }, 230);
+          if (notificationId && currentUser && kazerSupabase) {
+            await kazerSupabase.from("account_notifications").update({ read_at: new Date().toISOString() }).eq("id", notificationId).eq("user_id", currentUser.id);
+          }
+        };
+
+        const loadRetentionNotice = async () => {
+          if (!currentUser || !kazerSupabase || settingsState.notifications === false || !retentionBanner) return;
+          const result = await kazerSupabase.from("account_notifications").select("id,title,message,warning_days").is("read_at", null).order("created_at", { ascending: false }).limit(1);
+          const notification = result.data?.[0];
+          if (result.error || !notification) return;
+          retentionTitle.textContent = notification.title;
+          retentionMessage.textContent = notification.message;
+          retentionBanner.dataset.notificationId = notification.id;
+          retentionBanner.hidden = false;
+          requestAnimationFrame(() => retentionBanner.classList.add("visible"));
         };
 
         const isStandalone = () => window.matchMedia?.("(display-mode: standalone)").matches || window.navigator.standalone === true;
@@ -3132,6 +3269,8 @@
           settingsState.notifications = !settingsState.notifications;
           persistSettings();
           applySettings();
+          if (settingsState.notifications) loadRetentionNotice();
+          else if (retentionBanner) hideRetentionNotice();
         });
         installSwitch.addEventListener("click", () => {
           settingsState.installPrompt = !settingsState.installPrompt;
@@ -3201,6 +3340,12 @@
         installNow.addEventListener("click", installKazer);
         installLater.addEventListener("click", () => hideInstallBanner(true));
         installDismiss.addEventListener("click", () => hideInstallBanner(true));
+        retentionDismiss.addEventListener("click", () => hideRetentionNotice(retentionBanner.dataset.notificationId));
+        retentionKeepActive.addEventListener("click", async () => {
+          if (kazerSupabase && currentUser) await kazerSupabase.rpc("touch_user_activity");
+          await hideRetentionNotice(retentionBanner.dataset.notificationId);
+          showToast("Conta mantida ativa");
+        });
         window.addEventListener("beforeinstallprompt", (event) => {
           event.preventDefault();
           deferredInstallPrompt = event;
