@@ -1411,6 +1411,27 @@
         line-height: 1.4;
       }
 
+      .web-loading {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        margin-top: 14px;
+        color: var(--text-dim);
+        font-size: 11px;
+      }
+
+      .web-loading::before {
+        width: 10px;
+        height: 10px;
+        border: 2px solid var(--line-soft);
+        border-top-color: var(--accent);
+        border-radius: 50%;
+        animation: web-spin .8s linear infinite;
+        content: "";
+      }
+
+      @keyframes web-spin { to { transform: rotate(360deg); } }
+
       .settings-backdrop {
         position: fixed;
         z-index: 79;
@@ -3106,28 +3127,44 @@
           webQuery.focus();
         };
 
-        const renderWebResults = (query) => {
-          const cleanQuery = query.replace(/[<>]/g, "");
-          const encoded = encodeURIComponent(cleanQuery);
-          const sources = {
-            all: [['Web', 'https://www.google.com/search?q=', 'Resultados gerais na web'], ['Imagens', 'https://www.google.com/search?tbm=isch&q=', 'Fotos e imagens'], ['Vídeos', 'https://www.youtube.com/results?search_query=', 'Vídeos no YouTube'], ['Notícias', 'https://news.google.com/search?q=', 'Notícias recentes'], ['Bing', 'https://www.bing.com/search?q=', 'Outra fonte de pesquisa']],
-            web: [['Web', 'https://www.google.com/search?q=', 'Resultados gerais na web'], ['Bing', 'https://www.bing.com/search?q=', 'Outra fonte de pesquisa']],
-            images: [['Imagens', 'https://www.google.com/search?tbm=isch&q=', 'Fotos e imagens']],
-            videos: [['Vídeos', 'https://www.youtube.com/results?search_query=', 'Vídeos no YouTube']],
-            news: [['Notícias', 'https://news.google.com/search?q=', 'Notícias recentes']]
-          };
-          const cards = (sources[webMode] || sources.all).map(([label, base, description]) => '<div class="web-source"><strong>' + label + '</strong><span>' + description + ' para “' + cleanQuery + '”.</span><a href="' + base + encoded + '" target="_blank" rel="noopener noreferrer">Abrir pesquisa ↗</a></div>').join('');
-          webSources.innerHTML = cards + '<div class="web-source"><strong>Usar no KAZER</strong><span>Levar o assunto para uma conversa e pedir um resumo.</span><a href="#" data-use-web="' + cleanQuery + '">Usar como contexto</a></div>';
+        const escapeHtml = (value) => String(value || "").replace(/[&<>\"']/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&#39;" }[character]));
+
+        const renderWebResults = (query, result) => {
+          const cleanQuery = escapeHtml(query);
+          const summary = escapeHtml(result?.summary || "A pesquisa retornou fontes, mas não foi possível gerar um resumo.");
+          const sourceCards = (result?.sources || []).map((source, index) => '<div class="web-source"><strong>' + (index + 1) + '. ' + escapeHtml(source.title || "Fonte") + '</strong><span>Fonte encontrada na pesquisa do WebKazer.</span><a href="' + escapeHtml(source.uri) + '" target="_blank" rel="noopener noreferrer">Abrir fonte ↗</a></div>').join('');
+          const encoded = encodeURIComponent(query);
+          const quickLinks = [['Web', 'https://www.google.com/search?q='], ['Imagens', 'https://www.google.com/search?tbm=isch&q='], ['Vídeos', 'https://www.youtube.com/results?search_query='], ['Notícias', 'https://news.google.com/search?q=']].map(([label, base]) => '<a class="web-source" href="' + base + encoded + '" target="_blank" rel="noopener noreferrer"><strong>' + label + '</strong><span>Abrir resultados externos para “' + cleanQuery + '” ↗</span></a>').join('');
+          webSources.innerHTML = '<div class="web-source"><strong>Resumo da pesquisa</strong><span>' + summary + '</span><a href="#" data-use-web="' + cleanQuery + '">Enviar para o KAZER →</a></div>' + sourceCards + quickLinks;
           webEmpty.hidden = true;
           const contextLink = webSources.querySelector("[data-use-web]");
           contextLink?.addEventListener("click", (event) => {
             event.preventDefault();
-            messageInput.value = "Crie um resumo com base neste tópico: " + query;
+            const sourceText = (result?.sources || []).slice(0, 8).map((source) => `${source.title}: ${source.uri}`).join("\\n");
+            messageInput.value = `Analise esta pesquisa do WebKazer sobre “${query}” e use os dados abaixo como contexto:\\n\\n${result?.summary || ""}\\n\\nFontes:\\n${sourceText}`.slice(0, 8000);
             resizeInput();
             updateSend();
             webPopover.classList.remove("visible");
             messageInput.focus();
           });
+        };
+
+        const searchWebKazer = async (query) => {
+          webEmpty.hidden = true;
+          webSources.innerHTML = '<div class="web-loading">Consultando fontes atuais…</div>';
+          const startedAt = Date.now();
+          try {
+            const response = await fetch("/api/web-search", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ query, mode: webMode }) });
+            const result = await response.json().catch(() => null);
+            const remaining = Math.max(0, 650 - (Date.now() - startedAt));
+            await new Promise((resolve) => window.setTimeout(resolve, remaining));
+            if (!response.ok) throw new Error(result?.error || "Pesquisa indisponível");
+            renderWebResults(query, result);
+          } catch (error) {
+            webSources.innerHTML = '<div class="web-source"><strong>Não foi possível concluir a pesquisa</strong><span>' + escapeHtml(error?.message || "Tente novamente em instantes.") + '</span><a href="#" data-retry-web="' + escapeHtml(query) + '">Tentar novamente</a></div>';
+            webEmpty.hidden = true;
+            webSources.querySelector("[data-retry-web]")?.addEventListener("click", (event) => { event.preventDefault(); searchWebKazer(query); });
+          }
         };
 
         const resizeInput = () => {
@@ -3456,12 +3493,12 @@
           webModes.querySelectorAll("[data-web-mode]").forEach((item) => item.classList.toggle("active", item === button));
           webModes.querySelectorAll("[data-web-mode]").forEach((item) => item.setAttribute("aria-selected", String(item === button)));
           const query = webQuery.value.trim();
-          if (query) renderWebResults(query);
+          if (query) searchWebKazer(query);
         });
         webSearchForm.addEventListener("submit", (event) => {
           event.preventDefault();
           const query = webQuery.value.trim();
-          if (query) renderWebResults(query);
+          if (query) searchWebKazer(query);
         });
         const logout = async () => {
           closeSettingsModal();
