@@ -61,10 +61,11 @@
     .visual-label { position:absolute; top:16px; left:16px; z-index:1; padding:7px 9px; border:1px solid rgba(255,255,255,.14); border-radius:999px; color:#d8d3ff; background:rgba(6,7,11,.75); font-size:9px; font-weight:800; letter-spacing:.12em; }
     .visual-caption { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:14px 16px; color:var(--muted); font-size:11px; }
     .visual-caption strong { color:var(--text); font-size:12px; }
-    .welcome-card { width:min(660px,100%); padding:clamp(30px,6vw,64px); border:1px solid var(--line); border-radius:24px; background:linear-gradient(145deg,rgba(20,22,30,.96),rgba(9,10,14,.96)); text-align:center; box-shadow:0 30px 100px rgba(0,0,0,.4); }
+    .welcome-card { width:min(760px,100%); padding:clamp(34px,7vw,82px) clamp(24px,6vw,72px); border:1px solid rgba(255,255,255,.12); border-radius:28px; background:radial-gradient(circle at 50% 0%,rgba(112,86,245,.16),transparent 30rem),linear-gradient(145deg,rgba(19,20,27,.98),rgba(5,6,9,.98)); text-align:center; box-shadow:0 30px 100px rgba(0,0,0,.55); }
     .welcome-orbit { display:grid; place-items:center; width:76px; height:76px; margin:0 auto 26px; border:1px solid rgba(156,135,255,.45); border-radius:24px; color:var(--violet); background:radial-gradient(circle,rgba(156,135,255,.2),transparent 70%); box-shadow:0 0 48px rgba(119,91,255,.18); font-size:30px; animation:orbit 4s ease-in-out infinite; }
     @keyframes orbit { 50%{transform:translateY(-5px) rotate(4deg)} }
-    .welcome-card p { margin-top:18px; color:var(--muted); line-height:1.65; }
+    .welcome-card p { max-width:520px; margin:18px auto 0; color:var(--muted); line-height:1.65; }
+    .welcome-name { display:block; margin-top:10px; color:transparent; background:linear-gradient(110deg,#fff 15%,#b5a7ff 52%,#72b9ff 92%); background-clip:text; -webkit-background-clip:text; }
     .coder-layout { display:grid; grid-template-columns:230px minmax(0,1fr); width:min(1280px,100%); min-height:620px; overflow:hidden; border:1px solid var(--line); border-radius:20px; background:var(--panel); box-shadow:0 28px 90px rgba(0,0,0,.4); }
     .coder-sidebar { padding:20px 14px; border-right:1px solid var(--line); background:#0a0b0e; }
     .project-label { margin:6px 10px 18px; color:var(--dim); font-size:10px; font-weight:800; letter-spacing:.14em; text-transform:uppercase; }
@@ -108,7 +109,7 @@
       </div>
     </section>
 
-    <section class="screen" id="welcomeScreen" aria-labelledby="welcomeTitle"><div class="welcome-card"><div class="welcome-orbit" aria-hidden="true">⌘</div><span class="eyebrow">Sessão preparada</span><h2 id="welcomeTitle">Olá, <span id="userName">criador</span>.</h2><p>Você está entrando no espaço experimental do KAZER CODER. Comece pelo ambiente inicial; as ferramentas avançadas serão liberadas conforme o Laboratory evoluir.</p><div class="cta-row" style="justify-content:center"><button class="primary" id="startCoder">Começar</button><a class="secondary" href="/chat">Voltar ao KAZER</a></div></div></section>
+    <section class="screen" id="welcomeScreen" aria-labelledby="welcomeTitle"><div class="welcome-card"><div class="welcome-orbit" aria-hidden="true">⌘</div><span class="eyebrow">KAZER CODER · BETA</span><h2 id="welcomeTitle">Bem-vindo<span class="welcome-name" id="userName">criador</span></h2><p>Este é o seu ponto de entrada no ambiente de programação do KAZER. O espaço ainda está em desenvolvimento e mostra somente o que já está preparado.</p><div class="cta-row" style="justify-content:center"><button class="primary" id="startCoder">Começar</button><a class="secondary" href="/chat">Voltar ao Laboratory</a></div></div></section>
 
     <section class="screen" id="workspaceScreen" aria-labelledby="workspaceTitle"><div class="coder-layout"><aside class="coder-sidebar"><div class="project-label">Projeto beta</div><button class="tree-item active">⌁ &nbsp; Visão geral</button><button class="tree-item disabled" disabled>▸ &nbsp; src <span class="coming-soon">·</span></button><button class="tree-item disabled" disabled>▸ &nbsp; components</button><button class="tree-item disabled" disabled>▣ &nbsp; terminal</button><div style="height:24px"></div><div class="project-label">Laboratory</div><button class="tree-item disabled" disabled>◌ &nbsp; Em breve</button><button class="tree-item disabled" disabled>◇ &nbsp; Ferramentas</button></aside><section class="coder-main"><div class="coder-toolbar"><span id="workspaceTitle">kazer-coder / overview</span><span class="status"><i></i> Ambiente beta</span></div><div class="editor"><div class="line-numbers">1<br>2<br>3<br>4<br>5<br>6<br>7<br>8<br>9<br>10<br>11<br>12</div><div class="code"><span class="cm">// KAZER CODER · espaço inicial do Laboratory</span><br><span class="kw">const</span> <span class="fn">workspace</span> = {<br>  <span class="const">status</span>: <span class="str">"beta"</span>,<br>  <span class="const">tools</span>: <span class="str">"em breve"</span>,<br>  <span class="const">focus</span>: <span class="str">"construir com clareza"</span>,<br>};<br><br><span class="cm">// As próximas ferramentas serão adicionadas aqui.</span><br><span class="kw">export default</span> workspace;</div></div><div class="preview-bar"><span>Prévia do ambiente · somente leitura</span><span class="coming-soon">Mais recursos em breve</span></div></section></div></section>
   </main>
@@ -128,7 +129,7 @@
       const consent = document.getElementById("consentBackdrop");
       const userName = document.getElementById("userName");
       const show = (screen) => [laboratory,intro,welcome,workspace].forEach((item) => item.classList.toggle("active", item === screen));
-      const safeName = (user) => (user?.user_metadata?.display_name || user?.user_metadata?.full_name || user?.email?.split("@")[0] || "criador").trim().split(/\s+/)[0];
+      const safeName = (user) => (user?.user_metadata?.display_name || user?.user_metadata?.full_name || user?.email?.split("@")[0] || "criador").trim();
       const boot = async () => {
         let session = null;
         try {

@@ -796,6 +796,11 @@
       if(!result.data.session){
         throw new Error('A sessão imediata ainda não está habilitada no projeto Kazer.');
       }
+      if (isSignup && result.data.user?.id) {
+        try {
+          await kazerSupabase.from('profiles').update({ display_name: name }).eq('id', result.data.user.id);
+        } catch (_) {}
+      }
       try { await kazerSupabase.rpc('touch_user_activity'); } catch (_) {}
       window.location.assign('/chat');
     }catch(error){
