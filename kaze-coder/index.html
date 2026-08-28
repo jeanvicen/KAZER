@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <meta name="theme-color" content="#050507" />
-  <title>KAZER CODER · Laboratory</title>
+  <title>KAZER LABORATORY · ferramentas beta</title>
   <link rel="icon" href="../download/assets/kazer-logo.jpg" type="image/jpeg" />
   <style>
     :root { color-scheme: dark; --bg:#050507; --panel:#0d0e12; --panel2:#12141a; --line:rgba(255,255,255,.12); --text:#f2f3f7; --muted:#9297a7; --dim:#666b7b; --violet:#9c87ff; --blue:#62a4ff; --green:#7ee2a8; --ease:cubic-bezier(.22,1,.36,1); }
@@ -22,6 +22,23 @@
     .beta-pill { padding:7px 10px; border:1px solid rgba(156,135,255,.35); border-radius:999px; color:#cfc7ff; background:rgba(156,135,255,.1); font-size:10px; font-weight:800; letter-spacing:.12em; }
     .screen { display:none; min-height:calc(100vh - 79px); padding:clamp(32px,7vw,90px) clamp(18px,5vw,72px); }
     .screen.active { display:grid; place-items:center; animation:screen-in .35s var(--ease) both; }
+    .laboratory-shell { width:min(1180px,100%); }
+    .laboratory-heading { display:flex; align-items:flex-end; justify-content:space-between; gap:22px; margin-bottom:28px; }
+    .laboratory-heading p { max-width:420px; color:var(--muted); font-size:13px; line-height:1.6; }
+    .laboratory-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:16px; }
+    .laboratory-card { position:relative; display:flex; min-height:238px; flex-direction:column; justify-content:space-between; padding:22px; overflow:hidden; border:1px solid var(--line); border-radius:20px; background:linear-gradient(145deg,rgba(18,20,27,.96),rgba(9,10,14,.96)); color:var(--text); text-align:left; box-shadow:0 18px 50px rgba(0,0,0,.24); transition:transform .18s var(--ease),border-color .18s var(--ease),background .18s var(--ease); }
+    .laboratory-card::after { position:absolute; inset:auto -30% -55% 20%; height:150px; border-radius:50%; background:radial-gradient(circle,rgba(118,97,255,.18),transparent 68%); content:""; pointer-events:none; }
+    .laboratory-card:not(.disabled):hover { transform:translateY(-4px); border-color:rgba(156,135,255,.5); background:linear-gradient(145deg,rgba(28,28,42,.98),rgba(10,11,17,.98)); }
+    .laboratory-card.disabled { cursor:not-allowed; opacity:.62; }
+    .laboratory-card-top { display:flex; align-items:center; justify-content:space-between; gap:14px; }
+    .laboratory-card-icon { display:grid; place-items:center; width:44px; height:44px; border:1px solid rgba(156,135,255,.4); border-radius:14px; color:var(--violet); background:rgba(156,135,255,.1); font-size:20px; }
+    .laboratory-card-status { color:#b7aaff; font-size:9px; font-weight:800; letter-spacing:.12em; text-transform:uppercase; }
+    .laboratory-card h2 { margin-top:28px; font-size:21px; letter-spacing:-.04em; }
+    .laboratory-card p { margin-top:9px; color:var(--muted); font-size:12px; line-height:1.55; }
+    .laboratory-card-footer { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-top:24px; color:var(--text-soft); font-size:11px; }
+    .laboratory-card-footer b { color:var(--violet); font-weight:700; }
+    .laboratory-back { display:inline-flex; align-items:center; gap:8px; margin-top:28px; color:var(--muted); font-size:12px; text-decoration:none; }
+    .laboratory-back:hover { color:var(--text); }
     @keyframes screen-in { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:none} }
     .intro-layout { display:grid; grid-template-columns:minmax(0,1.08fr) minmax(320px,.92fr); align-items:center; gap:clamp(34px,7vw,100px); width:min(1180px,100%); }
     .eyebrow { color:var(--violet); font-size:11px; font-weight:800; letter-spacing:.18em; text-transform:uppercase; }
@@ -73,15 +90,18 @@
     .consent-list li::before { margin-right:8px; color:var(--violet); content:"✓"; }
     .consent-foot { display:flex; flex-wrap:wrap; align-items:center; gap:12px; margin-top:28px; }
     .consent-foot small { color:var(--dim); font-size:10px; }
-    @media (max-width:800px) { .intro-layout{grid-template-columns:1fr}.visual-card{max-width:680px}.coder-layout{grid-template-columns:1fr}.coder-sidebar{display:none}.coder-layout{min-height:560px} }
+    @media (max-width:800px) { .intro-layout{grid-template-columns:1fr}.visual-card{max-width:680px}.coder-layout{grid-template-columns:1fr}.coder-sidebar{display:none}.coder-layout{min-height:560px}.laboratory-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.laboratory-heading{align-items:flex-start;flex-direction:column} }
+    @media (max-width:520px) { .laboratory-grid{grid-template-columns:1fr}.laboratory-card{min-height:210px} }
     @media (max-width:520px) { .coder-topbar{padding:16px 18px}.screen{min-height:calc(100vh - 67px);padding:28px 16px}.beta-pill{font-size:9px}.brand-copy span{font-size:10px}.cta-row>*{width:100%}.visual-caption{align-items:flex-start;flex-direction:column}.editor{grid-template-columns:38px 1fr;font-size:11px}.line-numbers{padding-left:8px;padding-right:8px}.code{padding:0 12px}.welcome-card{padding:30px 20px} }
   </style>
 </head>
 <body>
   <main class="coder-app" id="coderApp">
-    <header class="coder-topbar"><a class="brand" href="/chat" aria-label="Voltar ao KAZER"><span class="brand-mark" aria-hidden="true"></span><span class="brand-copy"><strong>KAZER CODER</strong><span>Laboratory · acesso beta</span></span></a><span class="beta-pill">BETA</span></header>
+    <header class="coder-topbar"><a class="brand" href="/chat" aria-label="Voltar ao KAZER"><span class="brand-mark" aria-hidden="true"></span><span class="brand-copy"><strong>KAZER LABORATORY</strong><span>Ferramentas beta do KAZER</span></span></a><span class="beta-pill">BETA</span></header>
 
-    <section class="screen active" id="introScreen" aria-labelledby="introTitle">
+    <section class="screen active" id="laboratoryScreen" aria-labelledby="laboratoryTitle"><div class="laboratory-shell"><div class="laboratory-heading"><div><span class="eyebrow">KAZER / Laboratory</span><h2 id="laboratoryTitle" style="margin-top:14px">Ferramentas para construir.</h2></div><p>Um espaço separado para experiências e ferramentas do KAZER. O que ainda não existe aparece claramente como <b>Em breve</b>.</p></div><div class="laboratory-grid"><button class="laboratory-card" id="openCoder" type="button"><span><span class="laboratory-card-top"><span class="laboratory-card-icon" aria-hidden="true">⌘</span><span class="laboratory-card-status">Disponível para experimentar</span></span><h2>KAZER CODER</h2><p>Ambiente inicial de programação em beta, com estrutura preparada para evoluir.</p></span><span class="laboratory-card-footer"><b>Abrir experiência</b><span>↗</span></span></button><button class="laboratory-card" id="openKazerWeb" type="button"><span><span class="laboratory-card-top"><span class="laboratory-card-icon" aria-hidden="true">⌕</span><span class="laboratory-card-status">Disponível no KAZER</span></span><h2>KAZER WEB</h2><p>Pesquisa e contexto para encontrar fontes abertas e trazer informação para o KAZER.</p></span><span class="laboratory-card-footer"><b>Abrir ferramenta</b><span>↗</span></span></button><button class="laboratory-card disabled" type="button" disabled><span><span class="laboratory-card-top"><span class="laboratory-card-icon" aria-hidden="true">◇</span><span class="laboratory-card-status">Em breve</span></span><h2>Mais ferramentas</h2><p>Novas experiências do Laboratory serão adicionadas aqui quando estiverem prontas.</p></span><span class="laboratory-card-footer"><b>Em desenvolvimento</b><span>—</span></span></button></div><a class="laboratory-back" href="/chat">← Voltar ao KAZER</a></div></section>
+
+    <section class="screen" id="introScreen" aria-labelledby="introTitle">
       <div class="intro-layout">
         <div><span class="eyebrow">Laboratory / experiência beta</span><h1 id="introTitle">Um espaço para <span class="gradient-text">construir</span> com o KAZER.</h1><p class="lead">O KAZER CODER está em desenvolvimento. Esta primeira experiência apresenta a direção do produto e prepara o espaço para ferramentas de programação que serão liberadas gradualmente.</p><div class="honesty"><b>Beta em desenvolvimento.</b><span>Alguns recursos ainda não estão disponíveis. Nada nesta tela representa uma função liberada antes da hora.</span></div><div class="cta-row"><button class="primary" id="acceptCoder">Aceito usar o KAZER CODER</button><a class="secondary" href="/chat">Voltar ao KAZER</a></div></div>
           <div class="visual-card"><span class="visual-label">APRESENTAÇÃO VISUAL · SEM VOZ</span><img src="coder-demo-reference.png" alt="Computador exibindo uma interface de programação escura do KAZER CODER" /><div class="visual-caption"><span><strong>Direção visual do laboratório</strong><br />Uma prévia realista do ambiente em construção.</span><span class="coming-soon">BETA</span></div></div>
@@ -103,10 +123,11 @@
       const consentKey = "kazer-coder-beta-consent-v1";
       const intro = document.getElementById("introScreen");
       const welcome = document.getElementById("welcomeScreen");
+      const laboratory = document.getElementById("laboratoryScreen");
       const workspace = document.getElementById("workspaceScreen");
       const consent = document.getElementById("consentBackdrop");
       const userName = document.getElementById("userName");
-      const show = (screen) => [intro,welcome,workspace].forEach((item) => item.classList.toggle("active", item === screen));
+      const show = (screen) => [laboratory,intro,welcome,workspace].forEach((item) => item.classList.toggle("active", item === screen));
       const safeName = (user) => (user?.user_metadata?.display_name || user?.user_metadata?.full_name || user?.email?.split("@")[0] || "criador").trim().split(/\s+/)[0];
       const boot = async () => {
         let session = null;
@@ -117,8 +138,10 @@
         } catch (error) { console.warn("Kazer Coder session check failed", error); }
         if (!session) { window.location.replace("/login"); return; }
         userName.textContent = safeName(session.user);
-        if (localStorage.getItem(consentKey) === "accepted") show(welcome); else { show(intro); consent.hidden = false; }
+        show(laboratory);
       };
+      document.getElementById("openCoder").addEventListener("click", () => { if (localStorage.getItem(consentKey) === "accepted") show(welcome); else { show(intro); consent.hidden = false; } });
+      document.getElementById("openKazerWeb").addEventListener("click", () => { window.location.assign("/chat?tool=web"); });
       document.getElementById("acceptCoder").addEventListener("click", () => { localStorage.setItem(consentKey, "accepted"); consent.hidden = true; show(welcome); });
       document.getElementById("confirmConsent").addEventListener("click", () => { localStorage.setItem(consentKey, "accepted"); consent.hidden = true; show(welcome); });
       document.getElementById("startCoder").addEventListener("click", () => show(workspace));

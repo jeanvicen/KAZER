@@ -2728,6 +2728,7 @@
           }
           await safeQuery(kazerSupabase.rpc("touch_user_activity"));
           await loadRetentionNotice();
+          if (new URLSearchParams(window.location.search).get("tool") === "web") window.setTimeout(openWeb, 180);
           return true;
         };
 
