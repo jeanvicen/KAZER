@@ -1207,6 +1207,74 @@
         color: var(--text-soft);
       }
 
+      .profile-more {
+        border-top: 1px solid var(--line-soft);
+      }
+
+      .profile-more-toggle {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        width: 100%;
+        min-height: 48px;
+        padding: 0 20px;
+        background: transparent;
+        color: var(--text-soft);
+        font-size: 12px;
+        text-align: left;
+        cursor: pointer;
+      }
+
+      .profile-more-toggle:hover,
+      .profile-more.open .profile-more-toggle {
+        color: var(--text);
+        background: var(--card-2);
+      }
+
+      .profile-more-toggle .icon {
+        width: 16px;
+        height: 16px;
+        transition: transform 160ms var(--ease);
+      }
+
+      .profile-more.open .profile-more-toggle .icon {
+        transform: rotate(180deg);
+      }
+
+      .profile-more-options {
+        display: none;
+        padding: 0 10px 10px;
+        background: color-mix(in srgb, var(--card) 88%, #000);
+      }
+
+      .profile-more.open .profile-more-options {
+        display: block;
+      }
+
+      .profile-more-option {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        width: 100%;
+        min-height: 45px;
+        padding: 0 10px;
+        border-radius: 9px;
+        background: transparent;
+        color: var(--text);
+        font-size: 12px;
+        text-align: left;
+        cursor: pointer;
+      }
+
+      .profile-more-option:hover {
+        background: var(--card-2);
+      }
+
+      .profile-more-option small {
+        color: var(--text-dim);
+        font-size: 10px;
+      }
+
       .web-popover {
         padding: 18px 20px;
       }
@@ -1259,12 +1327,41 @@
       }
 
       .web-search button {
+
         padding: 7px 10px;
         border-radius: 9px;
         background: var(--accent);
         color: var(--accent-ink);
         font-size: 11px;
         cursor: pointer;
+      }
+
+      .web-modes {
+        display: flex;
+        gap: 6px;
+        margin-top: 12px;
+        overflow-x: auto;
+        scrollbar-width: none;
+      }
+
+      .web-modes::-webkit-scrollbar { display: none; }
+
+      .web-mode {
+        flex: 0 0 auto;
+        padding: 6px 9px;
+        border: 1px solid var(--line-soft);
+        border-radius: 999px;
+        background: transparent;
+        color: var(--text-dim);
+        font-size: 10px;
+        cursor: pointer;
+      }
+
+      .web-mode.active,
+      .web-mode:hover {
+        border-color: color-mix(in srgb, var(--accent) 70%, transparent);
+        background: color-mix(in srgb, var(--accent) 14%, transparent);
+        color: var(--text);
       }
 
       .web-sources {
@@ -2475,8 +2572,8 @@
         <div class="menu-actions">
           <button class="pro-action" id="proAction" type="button" aria-label="Obter Kazer Pro"><span class="pro-badge">PRO</span><span class="pro-copy"><strong>Kazer Pro</strong><small>Obter mais do KAZER</small></span><svg class="icon pro-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"></path></svg></button>
           <button class="laboratory-action" id="laboratoryAction" type="button" aria-label="Abrir Laboratory"><span class="laboratory-badge" aria-hidden="true">⌘</span><span class="laboratory-copy"><strong>Laboratory</strong><small>KAZER CODER em beta</small></span><svg class="icon laboratory-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"></path></svg></button>
+          <div class="profile-more" id="profileMore"><button class="profile-more-toggle" id="profileMoreToggle" type="button" aria-expanded="false"><span>Mais opções</span><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg></button><div class="profile-more-options"><button class="profile-more-option" id="webKazerAction" type="button"><span>WebKazer<br><small>Pesquisa na web</small></span><span aria-hidden="true">↗</span></button></div></div>
           <button class="menu-action" id="settingsAction" type="button"><span>Settings</span><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6 7 7M17 17l1.4 1.4M18.4 5.6 17 7M7 17l-1.4 1.4"></path><circle cx="12" cy="12" r="3.5"></circle></svg></button>
-          <button class="menu-action danger" id="logoutAction" type="button"><span>Log out</span><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 17l5-5-5-5M15 12H3"></path><path d="M21 19V5a2 2 0 0 0-2-2h-5"></path></svg></button>
         </div>
       </div>
 
@@ -2519,14 +2616,15 @@
         </section>
       </section>
 
-      <div class="web-popover" id="webPopover" role="dialog" aria-label="Kazer Web">
-        <h2>Kazer Web</h2>
-        <p class="web-subtitle">Pesquise, encontre fontes e traga contexto para o KAZER.</p>
+      <div class="web-popover" id="webPopover" role="dialog" aria-label="WebKazer">
+        <h2>WebKazer</h2>
+        <p class="web-subtitle">Pesquise na web, imagens, vídeos e notícias; traga contexto para o KAZER.</p>
         <form class="web-search" id="webSearchForm">
           <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-4-4"></path></svg>
           <input id="webQuery" type="search" placeholder="Pesquisar na web..." autocomplete="off" />
           <button type="submit">Buscar</button>
         </form>
+        <div class="web-modes" id="webModes" role="tablist" aria-label="Tipo de pesquisa"><button class="web-mode active" type="button" data-web-mode="all" role="tab" aria-selected="true">Tudo</button><button class="web-mode" type="button" data-web-mode="web" role="tab" aria-selected="false">Web</button><button class="web-mode" type="button" data-web-mode="images" role="tab" aria-selected="false">Imagens</button><button class="web-mode" type="button" data-web-mode="videos" role="tab" aria-selected="false">Vídeos</button><button class="web-mode" type="button" data-web-mode="news" role="tab" aria-selected="false">Notícias</button></div>
         <div class="web-sources" id="webSources" aria-live="polite"></div>
         <p class="web-empty" id="webEmpty">Digite um assunto para encontrar fontes e criar um resumo dentro do Kazer.</p>
       </div>
@@ -2586,6 +2684,9 @@
         const webPopover = document.getElementById("webPopover");
         const proAction = document.getElementById("proAction");
         const laboratoryAction = document.getElementById("laboratoryAction");
+        const profileMore = document.getElementById("profileMore");
+        const profileMoreToggle = document.getElementById("profileMoreToggle");
+        const webKazerAction = document.getElementById("webKazerAction");
         const settingsAction = document.getElementById("settingsAction");
         const logoutAction = document.getElementById("logoutAction");
         const newChatButton = document.getElementById("newChatButton");
@@ -2635,6 +2736,8 @@
         const webQuery = document.getElementById("webQuery");
         const webSources = document.getElementById("webSources");
         const webEmpty = document.getElementById("webEmpty");
+        const webModes = document.getElementById("webModes");
+        let webMode = "all";
         const toast = document.getElementById("toast");
         const retentionBanner = document.getElementById("retentionBanner");
         const retentionTitle = document.getElementById("retentionTitle");
@@ -2926,6 +3029,8 @@
           settingsBackdrop.hidden = true;
           settingsPopover.setAttribute("aria-hidden", "true");
           webPopover.classList.remove("visible");
+          profileMore?.classList.remove("open");
+          profileMoreToggle?.setAttribute("aria-expanded", "false");
           profileButton.setAttribute("aria-expanded", "false");
         };
 
@@ -3002,8 +3107,17 @@
         };
 
         const renderWebResults = (query) => {
-          const encoded = encodeURIComponent(query);
-          webSources.innerHTML = '<div class="web-source"><strong>' + query.replace(/[<>]/g, "") + '</strong><span>Pesquisa pronta para consultar fontes abertas.</span><a href="https://www.google.com/search?q=' + encoded + '" target="_blank" rel="noopener">Abrir resultados na web ↗</a></div><div class="web-source"><strong>Resumo no Kazer</strong><span>Use este assunto como contexto para criar, comparar ou saber mais.</span><a href="#" data-use-web="' + query.replace(/[<>]/g, "") + '">Usar como contexto</a></div>';
+          const cleanQuery = query.replace(/[<>]/g, "");
+          const encoded = encodeURIComponent(cleanQuery);
+          const sources = {
+            all: [['Web', 'https://www.google.com/search?q=', 'Resultados gerais na web'], ['Imagens', 'https://www.google.com/search?tbm=isch&q=', 'Fotos e imagens'], ['Vídeos', 'https://www.youtube.com/results?search_query=', 'Vídeos no YouTube'], ['Notícias', 'https://news.google.com/search?q=', 'Notícias recentes'], ['Bing', 'https://www.bing.com/search?q=', 'Outra fonte de pesquisa']],
+            web: [['Web', 'https://www.google.com/search?q=', 'Resultados gerais na web'], ['Bing', 'https://www.bing.com/search?q=', 'Outra fonte de pesquisa']],
+            images: [['Imagens', 'https://www.google.com/search?tbm=isch&q=', 'Fotos e imagens']],
+            videos: [['Vídeos', 'https://www.youtube.com/results?search_query=', 'Vídeos no YouTube']],
+            news: [['Notícias', 'https://news.google.com/search?q=', 'Notícias recentes']]
+          };
+          const cards = (sources[webMode] || sources.all).map(([label, base, description]) => '<div class="web-source"><strong>' + label + '</strong><span>' + description + ' para “' + cleanQuery + '”.</span><a href="' + base + encoded + '" target="_blank" rel="noopener noreferrer">Abrir pesquisa ↗</a></div>').join('');
+          webSources.innerHTML = cards + '<div class="web-source"><strong>Usar no KAZER</strong><span>Levar o assunto para uma conversa e pedir um resumo.</span><a href="#" data-use-web="' + cleanQuery + '">Usar como contexto</a></div>';
           webEmpty.hidden = true;
           const contextLink = webSources.querySelector("[data-use-web]");
           contextLink?.addEventListener("click", (event) => {
@@ -3320,6 +3434,12 @@
           toggleProfile();
         });
         settingsAction.addEventListener("click", () => openSettings());
+        profileMoreToggle.addEventListener("click", (event) => {
+          event.stopPropagation();
+          const isOpen = profileMore.classList.toggle("open");
+          profileMoreToggle.setAttribute("aria-expanded", String(isOpen));
+        });
+        webKazerAction.addEventListener("click", () => openWeb());
         laboratoryAction.addEventListener("click", () => {
           closeMenus();
           const coderPath = window.location.pathname.includes("/interface/") ? "../kaze-coder/" : "/kaze-coder/";
@@ -3328,6 +3448,15 @@
         proAction.addEventListener("click", () => {
           closeMenus();
           showToast("Kazer Pro: página de compra em breve");
+        });
+        webModes.addEventListener("click", (event) => {
+          const button = event.target.closest("[data-web-mode]");
+          if (!button) return;
+          webMode = button.dataset.webMode || "all";
+          webModes.querySelectorAll("[data-web-mode]").forEach((item) => item.classList.toggle("active", item === button));
+          webModes.querySelectorAll("[data-web-mode]").forEach((item) => item.setAttribute("aria-selected", String(item === button)));
+          const query = webQuery.value.trim();
+          if (query) renderWebResults(query);
         });
         webSearchForm.addEventListener("submit", (event) => {
           event.preventDefault();
@@ -3344,7 +3473,6 @@
           }, 80);
         };
 
-        logoutAction.addEventListener("click", logout);
         settingsLogoutAction.addEventListener("click", logout);
         newChatButton.addEventListener("click", requestNewChat);
         document.addEventListener("click", (event) => {
