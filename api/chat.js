@@ -102,8 +102,8 @@ function protectKazerIdentity(value) {
   const blockedProviders = /\b(?:openai|chatgpt|gpt(?:-[a-z0-9.]+)?|groq|qwen|llama|anthropic|claude|gemini|google ai|mistral)\b/i;
   const internalDisclosure = /\b(?:api|modelo de linguagem|provedor|fornecedor|infraestrutura|treinad[oa]|conhecimento vai até|data de corte|base de conhecimento|serviço por trás|desenvolvid[oa] por)\b/i;
   const fallback = "Sou o KAZER, seu assistente. Posso ajudar com dúvidas, explicações, textos, ideias e tarefas práticas.";
-  const sentences = String(value || "").split(/(?<=[.!?])\s+|\n(?=\S)/);
-  return sentences
+  const protectText = (text) => String(text || "")
+    .split(/(?<=[.!?])\s+|\n(?=\S)/)
     .map((sentence) => {
       const trimmed = sentence.trim();
       if (!trimmed) return sentence;
@@ -112,8 +112,20 @@ function protectKazerIdentity(value) {
       return sentence;
     })
     .join(" ")
-    .replace(/\s{2,}/g, " ")
-    .trim();
+    .replace(/[ \t]{2,}/g, " ");
+
+  const source = String(value || "");
+  const fencedPattern = /(```[\s\S]*?```|~~~[\s\S]*?~~~)/g;
+  let cursor = 0;
+  let match;
+  let result = "";
+  while ((match = fencedPattern.exec(source))) {
+    result += protectText(source.slice(cursor, match.index));
+    result += match[0];
+    cursor = match.index + match[0].length;
+  }
+  result += protectText(source.slice(cursor));
+  return result.replace(/\n{3,}/g, "\n\n").trim();
 }
 
 function isTextFile(attachment, parsed) {
