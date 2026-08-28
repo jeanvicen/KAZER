@@ -50,7 +50,7 @@ async function fetchPublicSearch(query, mode) {
   if (!response.ok) throw new Error(`public_search_${response.status}`);
   const html = await response.text();
   const results = [];
-  const pattern = /<a[^>]+class="result__a"[^>]+href="([^"]+)"[^>]*>([\s\S]*?)<\/a>[\s\S]*?<a[^>]+class="result__snippet"[^>]*>([\s\S]*?)<\/a>/gi;
+  const pattern = /<a[^>]*class="result__a"[^>]*href="([^"]+)"[^>]*>([\s\S]*?)<\/a>[\s\S]*?<a[^>]*class="result__snippet"[^>]*>([\s\S]*?)<\/a>/gi;
   let match;
   while ((match = pattern.exec(html)) && results.length < MAX_RESULTS) {
     let uri = match[1];
