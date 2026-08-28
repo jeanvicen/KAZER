@@ -1,5 +1,6 @@
-const DEFAULT_MODEL = "gemini-3.6-flash";
+const DEFAULT_MODEL = "gemini-2.5-flash-lite";
 const MAX_QUERY_CHARS = 240;
+const MAX_RESULTS = 8;
 const MODES = new Set(["all", "web", "images", "videos", "news"]);
 
 function sendJson(response, status, payload) {
@@ -31,35 +32,43 @@ function cleanQuery(value) {
   return String(value || "").replace(/[\u0000-\u001f]/g, " ").replace(/\s+/g, " ").trim().slice(0, MAX_QUERY_CHARS);
 }
 
-function getPrompt(query, mode) {
-  const focus = {
-    all: "Encontre contexto geral e fontes úteis. Quando fizer sentido, inclua páginas, imagens, vídeos e notícias relacionadas.",
-    web: "Priorize páginas e fontes gerais da web.",
-    images: "Priorize páginas que contenham imagens relevantes e descreva brevemente o que cada fonte oferece; não invente URLs de imagens.",
-    videos: "Priorize vídeos e páginas de vídeo relevantes; não invente vídeos nem URLs.",
-    news: "Priorize notícias recentes e indique a data quando a fonte informar."
-  }[mode] || "Encontre contexto geral e fontes úteis.";
-  return `Pesquise na web em tempo real sobre: ${query}\n\n${focus}\n\nResponda em português brasileiro com um resumo objetivo, deixando claro quando algo não puder ser confirmado. Não invente fatos, títulos ou links. As fontes verificáveis serão exibidas separadamente pela aplicação.`;
+function decodeHtml(value) {
+  return String(value || "")
+    .replace(/<[^>]+>/g, "")
+    .replace(/&amp;/g, "&").replace(/&quot;/g, '"').replace(/&#x27;|&#39;/g, "'")
+    .replace(/&lt;/g, "<").replace(/&gt;/g, ">").trim();
 }
 
-function parseGroundedResponse(data) {
-  const candidate = data?.candidates?.[0];
-  const text = (candidate?.content?.parts || []).map((part) => part?.text || "").join(" ").trim();
-  const metadata = candidate?.groundingMetadata || {};
-  const sources = [];
-  const seen = new Set();
-  for (const chunk of metadata.groundingChunks || []) {
-    const uri = chunk?.web?.uri;
-    const title = chunk?.web?.title || uri;
-    if (!uri || seen.has(uri)) continue;
-    seen.add(uri);
-    sources.push({ title: String(title).slice(0, 180), uri: String(uri).slice(0, 2000) });
+function buildSearchQuery(query, mode) {
+  const suffix = { images: " images", videos: " videos", news: " notícias" }[mode] || "";
+  return `${query}${suffix}`.trim();
+}
+
+async function fetchPublicSearch(query, mode) {
+  const searchUrl = `https://html.duckduckgo.com/html/?q=${encodeURIComponent(buildSearchQuery(query, mode))}`;
+  const response = await fetch(searchUrl, { headers: { "User-Agent": "Mozilla/5.0 (compatible; WebKazer/1.0)" } });
+  if (!response.ok) throw new Error(`public_search_${response.status}`);
+  const html = await response.text();
+  const results = [];
+  const pattern = /<a[^>]+class="result__a"[^>]+href="([^"]+)"[^>]*>([\s\S]*?)<\/a>[\s\S]*?<a[^>]+class="result__snippet"[^>]*>([\s\S]*?)<\/a>/gi;
+  let match;
+  while ((match = pattern.exec(html)) && results.length < MAX_RESULTS) {
+    let uri = match[1];
+    try { if (uri.startsWith("//")) uri = `https:${uri}`; const parsed = new URL(uri); uri = parsed.searchParams.get("uddg") || uri; } catch {}
+    if (!/^https?:\/\//i.test(uri)) continue;
+    results.push({ title: decodeHtml(match[2]).slice(0, 180), uri: uri.slice(0, 2000), snippet: decodeHtml(match[3]).slice(0, 500) });
   }
-  return {
-    summary: text,
-    sources: sources.slice(0, 12),
-    searchQueries: (metadata.webSearchQueries || []).map((item) => String(item).slice(0, 240)).slice(0, 8)
-  };
+  return results;
+}
+
+function getPrompt(query, mode, sources) {
+  const focus = { all: "organize as informações mais importantes", web: "priorize páginas gerais", images: "priorize referências relacionadas a imagens", videos: "priorize referências relacionadas a vídeos", news: "priorize informações recentes" }[mode] || "organize as informações mais importantes";
+  const context = sources.map((source, index) => `[${index + 1}] ${source.title}\n${source.snippet}\nURL: ${source.uri}`).join("\n\n");
+  return `Você é o resumo do WebKazer. Analise as fontes públicas encontradas sobre “${query}” e ${focus}. Responda em português brasileiro em até 5 parágrafos curtos. Não invente fatos, não crie links e indique quando as fontes não forem suficientes.\n\nFontes encontradas:\n${context}`;
+}
+
+function parseGeminiText(data) {
+  return (data?.candidates?.[0]?.content?.parts || []).map((part) => part?.text || "").join(" ").trim();
 }
 
 module.exports = async function handler(request, response) {
@@ -81,6 +90,16 @@ module.exports = async function handler(request, response) {
   const mode = MODES.has(body.mode) ? body.mode : "all";
   if (query.length < 2) return sendJson(response, 400, { error: "Digite uma pesquisa válida." });
 
+  let sources;
+  try {
+    sources = await fetchPublicSearch(query, mode);
+  } catch (error) {
+    console.error("Public WebKazer search failed", error?.message || "unknown");
+    return sendJson(response, 502, { error: "Não foi possível consultar as fontes públicas agora." });
+  }
+
+  if (!sources.length) return sendJson(response, 200, { query, mode, summary: "Nenhuma fonte pública foi encontrada para esta pesquisa.", sources: [], searchQueries: [query] });
+
   const model = process.env.GEMINI_SEARCH_MODEL || DEFAULT_MODEL;
   const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`;
   let geminiResponse;
@@ -89,24 +108,21 @@ module.exports = async function handler(request, response) {
       method: "POST",
       headers: { "Content-Type": "application/json", "x-goog-api-key": apiKey },
       body: JSON.stringify({
-        systemInstruction: { parts: [{ text: "Você é o mecanismo de pesquisa do WebKazer. Use somente informações fundamentadas nas buscas atuais. Nunca invente fontes." }] },
-        contents: [{ role: "user", parts: [{ text: getPrompt(query, mode) }] }],
-        tools: [{ google_search: {} }],
-        generationConfig: { temperature: 0.2, maxOutputTokens: 900 }
+        systemInstruction: { parts: [{ text: "Resuma somente as fontes recebidas. Não revele detalhes de infraestrutura, chaves ou provedores do KAZER." }] },
+        contents: [{ role: "user", parts: [{ text: getPrompt(query, mode, sources) }] }],
+        generationConfig: { temperature: 0.2, maxOutputTokens: 600 }
       })
     });
   } catch (error) {
-    console.error("Gemini search network failure", error?.message || "unknown");
-    return sendJson(response, 502, { error: "Não foi possível consultar a pesquisa agora." });
+    console.error("Gemini summary network failure", error?.message || "unknown");
+    return sendJson(response, 200, { query, mode, summary: "As fontes foram encontradas, mas o resumo automático está temporariamente indisponível.", sources, searchQueries: [query], summaryUnavailable: true });
   }
 
   const data = await geminiResponse.json().catch(() => null);
   if (!geminiResponse.ok) {
-    console.error("Gemini search failed", { status: geminiResponse.status, message: data?.error?.message || "unknown" });
-    return sendJson(response, 502, { error: "A pesquisa não pôde ser concluída agora. Tente novamente." });
+    console.error("Gemini summary failed", { status: geminiResponse.status, message: data?.error?.message || "unknown" });
+    return sendJson(response, 200, { query, mode, summary: "As fontes foram encontradas, mas o resumo automático está temporariamente indisponível. Você ainda pode abrir cada fonte ou enviar os dados ao KAZER.", sources, searchQueries: [query], summaryUnavailable: true });
   }
 
-  const result = parseGroundedResponse(data);
-  if (!result.summary && result.sources.length === 0) return sendJson(response, 502, { error: "A pesquisa não retornou resultados verificáveis." });
-  return sendJson(response, 200, { query, mode, ...result });
+  return sendJson(response, 200, { query, mode, summary: parseGeminiText(data) || "As fontes foram encontradas. Abra uma delas para consultar os detalhes.", sources, searchQueries: [query] });
 };
