@@ -36,7 +36,7 @@ function decodeHtml(value) {
   return String(value || "")
     .replace(/<[^>]+>/g, "")
     .replace(/&amp;/g, "&").replace(/&quot;/g, '"').replace(/&#x27;|&#39;/g, "'")
-    .replace(/&lt;/g, "<").replace(/&gt;/g, ">").trim();
+    .replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&nbsp;|&#183;/g, " ").trim();
 }
 
 function buildSearchQuery(query, mode) {
@@ -45,6 +45,7 @@ function buildSearchQuery(query, mode) {
 }
 
 function decodeBingRedirect(uri) {
+  uri = decodeHtml(uri).replace(/&amp;/g, "&");
   try {
     const parsed = new URL(uri);
     const encoded = parsed.searchParams.get("u");
