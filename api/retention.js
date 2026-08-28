@@ -121,11 +121,11 @@ module.exports = async function handler(request, response) {
     for (const user of warningCandidates) {
       const copy = warningText(user.warningDays);
       const notificationUrl = new URL('/rest/v1/account_notifications', `${supabaseUrl}/`).toString();
-      await supabaseRequest(notificationUrl, {
+      const createdRows = await supabaseRequest(notificationUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Prefer: 'resolution=ignore-duplicates,return=minimal',
+          Prefer: 'resolution=ignore-duplicates,return=representation',
         },
         body: JSON.stringify({
           user_id: user.user_id,
@@ -135,7 +135,7 @@ module.exports = async function handler(request, response) {
           message: copy.message,
         }),
       }, serviceKey);
-      warningsCreated += 1;
+      warningsCreated += Array.isArray(createdRows) ? createdRows.length : 0;
     }
 
     const deleted = [];
