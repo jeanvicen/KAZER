@@ -22,6 +22,7 @@
   --text-dim: #6d6d72;
   --purple: #8c7aff;
   --success: #69d2a1;
+  --danger: #f07474;
   --metal-gradient: linear-gradient(105deg,#555961 0%,#f4f5f6 18%,#777c85 35%,#ffffff 48%,#4c515a 66%,#d9dde2 82%,#60656e 100%);
   --ease: cubic-bezier(0.22,1,0.36,1);
   --sans: "Inter", ui-sans-serif, system-ui, sans-serif;
@@ -80,7 +81,6 @@ html,body{height:100%;overflow:hidden;background:var(--page);color:var(--text);f
 .file-empty{padding:12px 8px;color:#4a4a52;font-size:12px;text-align:center;font-style:italic}
 .file-row{display:flex;align-items:center;gap:6px;padding:4px 8px;border-radius:6px;cursor:pointer;color:#9090a0;font-size:12.5px;transition:background .1s;font-family:var(--mono)}
 .file-row:hover{background:rgba(255,255,255,.04);color:#c0c0cc}
-.file-row.folder{color:#c0c0cc;font-family:var(--sans);font-weight:500}
 
 .sidebar-user{padding:12px 14px;border-top:1px solid rgba(255,255,255,.05);display:flex;align-items:center;gap:10px}
 .user-avatar{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#8c7aff,#4a38cc);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:13px;font-weight:700;color:#fff}
@@ -141,6 +141,12 @@ html,body{height:100%;overflow:hidden;background:var(--page);color:var(--text);f
 .send-btn.active:active{transform:scale(.95)}
 .send-btn.inactive{background:rgba(140,122,255,.2);color:#8c7aff;cursor:not-allowed;opacity:.5}
 
+/* Attachments */
+.attachments-list{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.attachment-item{display:flex;align-items:center;gap:6px;padding:6px 10px;border-radius:8px;background:rgba(140,122,255,.1);border:1px solid rgba(140,122,255,.2);font-size:12px;color:#c4beff}
+.attachment-remove{background:transparent;border:none;color:#8a8a8e;cursor:pointer;padding:2px;display:flex;align-items:center}
+.attachment-remove:hover{color:#f07474}
+
 /* Chat */
 #chat-view{display:none;flex:1;flex-direction:column;overflow:hidden}
 #chat-area{flex:1;overflow-y:auto;padding:20px 28px;display:flex;flex-direction:column;gap:20px}
@@ -187,6 +193,7 @@ pre.code-pre.is-streaming::after{content:"▋";display:inline-block;color:#8c7af
 .connector-copy strong{display:block;font-size:13px;font-weight:500;color:#e0e0e8}
 .connector-copy small{display:block;font-size:11px;color:#5a5a62;margin-top:2px}
 .connector-status{font-size:11px;color:#8c7aff;font-weight:500}
+.connector-status.connected{color:#69d2a1}
 
 svg{display:block}
 </style>
@@ -241,7 +248,7 @@ svg{display:block}
         <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M3.5 2l3 3-3 3" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
         <em id="topbar-file">workspace</em>
       </div>
-      <div class="file-tabs" id="file-tabs">
+      <div class="file-tabs" id="file_tabs">
         <button class="ftab active">
           <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M9 1H3a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1V6L9 1z" stroke="#82aaff" stroke-width="1.2"/><path d="M9 1v5h5" stroke="#82aaff" stroke-width="1.2"/></svg>
           <span id="active-tab-name">Nova conversa</span>
@@ -281,7 +288,7 @@ svg{display:block}
             <div class="composer-footer">
               <button class="connectors-btn" id="connectors-btn-empty">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
-                Conectores
+                Anexos
               </button>
               <div class="composer-right">
                 <span class="hint">Enter para enviar</span>
@@ -290,6 +297,7 @@ svg{display:block}
                 </button>
               </div>
             </div>
+            <div class="attachments-list" id="attachments-empty"></div>
           </div>
         </div>
         <div class="suggestions fade-in d4">
@@ -321,7 +329,7 @@ svg{display:block}
             <div class="composer-footer">
               <button class="connectors-btn" id="connectors-btn-chat">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
-                Conectores
+                Anexos
               </button>
               <div class="composer-right">
                 <span class="hint">Enter para enviar</span>
@@ -330,6 +338,7 @@ svg{display:block}
                 </button>
               </div>
             </div>
+            <div class="attachments-list" id="attachments-chat"></div>
           </div>
         </div>
       </div>
@@ -342,31 +351,19 @@ svg{display:block}
 <div class="connectors-sheet" id="connectorsSheet" role="dialog" aria-modal="true" hidden>
   <div class="connectors-handle"></div>
   <header class="connectors-head">
-    <h2>Conectores</h2>
+    <h2>Anexar Arquivos</h2>
     <button class="connectors-close" id="connectorsClose" type="button">×</button>
   </header>
   <div class="connectors-scroll">
-    <button class="connector-action" data-connector="gdrive">
-      <span class="connector-icon" style="color:#4285F4;font-weight:700;font-size:18px">G</span>
-      <span class="connector-copy"><strong>Google Drive</strong><small>Conecte seus arquivos do Drive</small></span>
-      <span class="connector-status">Conectar</span>
-    </button>
-    <button class="connector-action" data-connector="github">
-      <span class="connector-icon" style="color:#f0f0f0">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.477 2 2 6.477 2 12c0 4.42 2.865 8.166 6.839 9.489.5.092.682-.217.682-.482 0-.237-.008-.866-.013-1.7-2.782.603-3.369-1.34-3.369-1.34-.454-1.156-1.11-1.462-1.11-1.462-.908-.62.069-.608.069-.608 1.003.07 1.531 1.03 1.531 1.03.892 1.529 2.341 1.087 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.029-2.683-.103-.253-.446-1.27.098-2.647 0 0 .84-.269 2.75 1.025A9.578 9.578 0 0 1 12 6.836c.85.004 1.705.114 2.504.336 1.909-1.294 2.747-1.025 2.747-1.025.546 1.377.203 2.394.1 2.647.64.699 1.028 1.592 1.028 2.683 0 3.842-2.339 4.687-4.566 4.935.359.309.678.919.678 1.852 0 1.336-.012 2.415-.012 2.743 0 .267.18.578.688.48C19.138 20.161 22 16.416 22 12c0-5.523-4.477-10-10-10z"/></svg>
-      </span>
-      <span class="connector-copy"><strong>GitHub</strong><small>Sincronize seus repositórios</small></span>
-      <span class="connector-status">Conectar</span>
-    </button>
     <button class="connector-action" data-connector="local">
       <span class="connector-icon" style="color:#8c7aff">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M14 3H6.5A1.5 1.5 0 0 0 5 4.5v15A1.5 1.5 0 0 0 6.5 21h11a1.5 1.5 0 0 0 1.5-1.5V8Z"/><path d="M14 3v5h5"/></svg>
       </span>
-      <span class="connector-copy"><strong>Arquivo Local</strong><small>Importe do seu computador</small></span>
+      <span class="connector-copy"><strong>Arquivo Local</strong><small>Selecione do seu computador (máx 4MB)</small></span>
       <span class="connector-status">Selecionar</span>
     </button>
   </div>
-  <input type="file" id="localFileInput" hidden multiple />
+  <input type="file" id="localFileInput" hidden multiple accept=".txt,.md,.js,.ts,.tsx,.jsx,.py,.html,.css,.json,.xml,.yaml,.yml,.sh,.sql" />
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -393,11 +390,15 @@ svg{display:block}
   const fileEmptyMsg = $("file-empty-msg");
   const topbarFile = $("topbar-file");
   const activeTabName = $("active-tab-name");
+  const attachmentsEmpty = $("attachments-empty");
+  const attachmentsChat = $("attachments-chat");
 
   let messages = [];
   let busy = false;
   let activeController = null;
-  const generatedFiles = new Map(); // path -> { lang, content }
+  const generatedFiles = new Map();
+  let selectedFiles = [];
+  const MAX_FILE_SIZE = 4 * 1024 * 1024; // 4MB
 
   // ── User Auth ──────────────────────────────────────────────────────────────
   const loadUser = async () => {
@@ -414,6 +415,66 @@ svg{display:block}
     userEmail.textContent = email;
     userAvatar.textContent = initial;
   };
+
+  // ── File Handling ──────────────────────────────────────────────────────────
+  const fileToDataUrl = (file) => new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve({ name: file.name, type: file.type || "application/octet-stream", data: reader.result });
+    reader.onerror = () => reject(new Error("Não foi possível ler o arquivo."));
+    reader.readAsDataURL(file);
+  });
+
+  function addFiles(files) {
+    const totalBytes = selectedFiles.reduce((sum, f) => sum + f.size, 0);
+    
+    for (const file of files) {
+      if (selectedFiles.length >= 5) {
+        alert("Você pode anexar até 5 arquivos por mensagem");
+        break;
+      }
+      if (file.size > MAX_FILE_SIZE || totalBytes + file.size > MAX_FILE_SIZE) {
+        alert(`Arquivo "${file.name}" excede o limite de 4MB`);
+        continue;
+      }
+      if (selectedFiles.some(f => f.name === file.name && f.size === file.size)) continue;
+      selectedFiles.push(file);
+    }
+    
+    renderAttachments();
+    updateSendState();
+  }
+
+  function removeFile(index) {
+    selectedFiles.splice(index, 1);
+    renderAttachments();
+    updateSendState();
+  }
+
+  function renderAttachments() {
+    const container = emptyState.style.display !== "none" ? attachmentsEmpty : attachmentsChat;
+    
+    if (selectedFiles.length === 0) {
+      container.innerHTML = "";
+      return;
+    }
+
+    container.innerHTML = selectedFiles.map((file, index) => `
+      <div class="attachment-item">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M14 3H6.5A1.5 1.5 0 0 0 5 4.5v15A1.5 1.5 0 0 0 6.5 21h11a1.5 1.5 0 0 0 1.5-1.5V8Z"/><path d="M14 3v5h5"/></svg>
+        <span>${file.name}</span>
+        <button class="attachment-remove" data-index="${index}">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg>
+        </button>
+      </div>
+    `).join("");
+
+    container.querySelectorAll(".attachment-remove").forEach(btn => {
+      btn.addEventListener("click", (e) => {
+        const index = parseInt(e.currentTarget.dataset.index);
+        removeFile(index);
+      });
+    });
+  }
 
   // ── Helpers ────────────────────────────────────────────────────────────────
   function now() { return new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}); }
@@ -484,7 +545,6 @@ svg{display:block}
     };
 
     for (const line of lines) {
-      // Match: ```lang filename="path/to/file.ext"
       const open = line.match(/^\s{0,3}(`{3,}|~{3,})\s*([^\s`~]*)?(?:\s+filename=["']([^"']+)["'])?\s*$/);
       if (!fenceType && open) {
         flushMd();
@@ -579,10 +639,11 @@ svg{display:block}
     chatView.style.display = "flex";
   }
 
-  function appendUserMessage(text) {
+  function appendUserMessage(text, files) {
     const row = document.createElement("div");
     row.className = "msg-wrap user msg-in";
-    row.innerHTML = `<div class="msg-body"><div class="msg-bubble user">${escapeHtml(text)}</div><span class="msg-ts">${now()}</span></div>`;
+    const filesLabel = files.length > 0 ? `<br><small style="opacity:0.7">Anexos: ${files.map(f => f.name).join(", ")}</small>` : "";
+    row.innerHTML = `<div class="msg-body"><div class="msg-bubble user">${escapeHtml(text)}${filesLabel}</div><span class="msg-ts">${now()}</span></div>`;
     messageList.appendChild(row);
     scrollBottom();
   }
@@ -622,13 +683,26 @@ svg{display:block}
 
   // ── Core Logic ─────────────────────────────────────────────────────────────
   async function submit(text) {
-    if (!text.trim() || busy) return;
+    if ((!text.trim() && selectedFiles.length === 0) || busy) return;
+    
     enterChat();
-    appendUserMessage(text);
-    messages.push({ role: "user", content: text });
+    const files = [...selectedFiles];
+    appendUserMessage(text || "Analise os arquivos anexados", files);
+    
+    // Preparar arquivos para envio
+    const attachments = await Promise.all(files.map(fileToDataUrl));
+    const prompt = text || "Analise os arquivos anexados e explique os pontos principais.";
+    
+    messages.push({ 
+      role: "user", 
+      content: prompt,
+      attachments: attachments
+    });
     
     const thinkingEl = appendThinking();
     busy = true;
+    selectedFiles = [];
+    renderAttachments();
     updateSendState();
     activeController = new AbortController();
 
@@ -683,8 +757,10 @@ svg{display:block}
     if (activeController) activeController.abort();
     messages = [];
     busy = false;
+    selectedFiles = [];
     generatedFiles.clear();
     renderFileTree();
+    renderAttachments();
     messageList.innerHTML = '';
     chatView.style.display = "none";
     emptyState.style.display = "flex";
@@ -698,8 +774,10 @@ svg{display:block}
   function updateSendState() {
     const valEmpty = messageInputEmpty.value.trim();
     const valChat = messageInputChat.value.trim();
-    sendBtnEmpty.className = 'send-btn ' + ((valEmpty && !busy) ? 'active' : 'inactive');
-    sendBtnChat.className = 'send-btn ' + ((valChat && !busy) ? 'active' : 'inactive');
+    const hasContent = valEmpty || valChat || selectedFiles.length > 0;
+    
+    sendBtnEmpty.className = 'send-btn ' + ((hasContent && !busy) ? 'active' : 'inactive');
+    sendBtnChat.className = 'send-btn ' + ((hasContent && !busy) ? 'active' : 'inactive');
   }
 
   function setupComposer(ta, btn) {
@@ -712,7 +790,7 @@ svg{display:block}
       if (e.key === 'Enter' && !e.shiftKey) {
         e.preventDefault();
         const val = ta.value.trim();
-        if (!val || busy) return;
+        if ((!val && selectedFiles.length === 0) || busy) return;
         submit(val);
         ta.value = '';
         ta.style.height = 'auto';
@@ -721,7 +799,7 @@ svg{display:block}
     });
     btn.addEventListener('click', () => {
       const val = ta.value.trim();
-      if (!val || busy) return;
+      if ((!val && selectedFiles.length === 0) || busy) return;
       submit(val);
       ta.value = '';
       ta.style.height = 'auto';
@@ -763,25 +841,13 @@ svg{display:block}
       const type = action.dataset.connector;
       if (type === 'local') {
         localFileInput.click();
-      } else {
-        // Simulação de conexão
-        const statusEl = action.querySelector('.connector-status');
-        const originalText = statusEl.textContent;
-        statusEl.textContent = "Conectando...";
-        statusEl.style.color = "#a7a7ab";
-        setTimeout(() => {
-          statusEl.textContent = "Conectado ✓";
-          statusEl.style.color = "#69d2a1";
-          setTimeout(closeConnectors, 600);
-        }, 1200);
       }
     });
   });
 
   localFileInput.addEventListener('change', (e) => {
     if (e.target.files.length > 0) {
-      const fileNames = Array.from(e.target.files).map(f => f.name).join(", ");
-      submit(`Analise os arquivos locais: ${fileNames}`);
+      addFiles(Array.from(e.target.files));
       closeConnectors();
       localFileInput.value = "";
     }
