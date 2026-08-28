@@ -18,4 +18,8 @@ O chat lê o perfil da tabela `profiles` e as preferências da tabela `user_sett
 
 ## Retenção
 
-A coluna `user_settings.last_activity_at` permite acompanhar a última atividade. A exclusão após dois anos deve ser executada por uma rotina agendada e protegida, com os avisos definidos pelo proprietário antes da exclusão. Não existe rotina destrutiva automática neste arquivo.
+A coluna `user_settings.last_activity_at` registra o último login ou uso registrado no Kazer. A migração `002_inactivity_retention.sql` adiciona um índice para a consulta de retenção sem alterar usuários existentes.
+
+O endpoint protegido `/api/retention` procura contas com **três anos completos** sem atividade e exclui cada usuário pelo endpoint administrativo do Supabase. Como a exclusão é permanente e os e-mails de confirmação foram desativados, a rotina só executa quando `CRON_SECRET`, `SUPABASE_URL` e `SUPABASE_SERVICE_ROLE_KEY` estão configurados nas variáveis privadas do Vercel. Sem essas variáveis, ela falha de forma segura e não apaga nada.
+
+O agendamento diário está em `vercel.json`, às 04:00 UTC. A exclusão é limitada a 100 contas por execução e usa a data calculada no momento da execução; qualquer login ou uso registrado antes da verificação reinicia o prazo. O arquivo `002_inactivity_retention.sql` precisa ser aplicado no SQL Editor do projeto Supabase antes do primeiro uso do endpoint.

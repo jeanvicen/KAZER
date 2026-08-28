@@ -796,6 +796,7 @@
       if(!result.data.session){
         throw new Error('A sessão imediata ainda não está habilitada no projeto Kazer.');
       }
+      try { await kazerSupabase.rpc('touch_user_activity'); } catch (_) {}
       window.location.assign('/chat');
     }catch(error){
       errorMsg.style.color = '#ff6b6b';

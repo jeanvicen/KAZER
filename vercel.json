@@ -1,4 +1,10 @@
 {
+  "crons": [
+    {
+      "path": "/api/retention",
+      "schedule": "0 4 * * *"
+    }
+  ],
   "headers": [
     {
       "source": "/api/(.*)",
