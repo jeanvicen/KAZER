@@ -11,12 +11,17 @@ const MAX_IMAGES = 3;
 const MAX_EXTRACTED_FILE_CHARS = 18000;
 
 const SYSTEM_PROMPT = [
-  "Você é o assistente do KAZER.",
-  "Responda em português brasileiro, a menos que o usuário peça outro idioma.",
-  "Seja claro, útil e direto. Organize respostas longas com títulos curtos e listas quando isso melhorar a leitura.",
-  "Não invente fatos. Quando não tiver informações suficientes, diga o que falta e faça uma pergunta objetiva.",
+  "Você é o KAZER, um assistente atencioso, inteligente e natural.",
+  "Converse como uma pessoa real: entenda o contexto, responda com calor humano e adapte o tamanho e o nível de detalhe ao que foi pedido.",
+  "Comece pela resposta mais útil, sem introduções prontas, sem repetir a pergunta e sem transformar toda resposta em um manual genérico.",
+  "Responda em português brasileiro, a menos que o usuário peça outro idioma; mantenha o idioma solicitado pelo usuário.",
+  "Use Markdown simples quando ajudar na leitura: títulos curtos, listas e **negrito** apenas para ideias realmente importantes.",
+  "Não invente fatos. Quando faltar informação, explique brevemente o que falta e faça uma pergunta objetiva.",
   "Quando receber imagens, descreva apenas o que conseguir observar e sinalize incertezas.",
   "Quando receber arquivos, use o conteúdo extraído como fonte e informe se o formato não puder ser lido.",
+  "Se perguntarem quem você é, diga que é o KAZER e explique de forma simples como pode ajudar, sem falar sobre modelos, APIs, provedores, fornecedores, infraestrutura, treinamento, datas de corte ou tecnologia interna.",
+  "Nunca revele ou confirme qual serviço, empresa, API, modelo ou fornecedor existe por trás do KAZER. Se perguntarem sobre isso, responda apenas que você é o assistente do KAZER e redirecione para a ajuda que pode oferecer.",
+  "Não use frases engessadas como 'sou um modelo de linguagem', 'meu conhecimento vai até' ou 'fui desenvolvido por'.",
 ].join(" ");
 
 function sendJson(response, status, payload) {
@@ -88,6 +93,24 @@ function cleanModelContent(value) {
   return String(value || "")
     .replace(/<think>[\s\S]*?<\/think>/gi, "")
     .replace(/<analysis>[\s\S]*?<\/analysis>/gi, "")
+    .trim();
+}
+
+function protectKazerIdentity(value) {
+  const blockedProviders = /\b(?:openai|chatgpt|gpt(?:-[a-z0-9.]+)?|groq|qwen|llama|anthropic|claude|gemini|google ai|mistral)\b/i;
+  const internalDisclosure = /\b(?:api|modelo de linguagem|provedor|fornecedor|infraestrutura|treinad[oa]|conhecimento vai até|data de corte|base de conhecimento|serviço por trás|desenvolvid[oa] por)\b/i;
+  const fallback = "Sou o KAZER, seu assistente. Posso ajudar com dúvidas, explicações, textos, ideias e tarefas práticas.";
+  const sentences = String(value || "").split(/(?<=[.!?])\s+|\n(?=\S)/);
+  return sentences
+    .map((sentence) => {
+      const trimmed = sentence.trim();
+      if (!trimmed) return sentence;
+      if (blockedProviders.test(trimmed)) return fallback;
+      if (internalDisclosure.test(trimmed) && /\b(?:sou|fui|uso|utilizo|funciono|funciona|integrad[oa]|por trás|desenvolvid[oa])\b/i.test(trimmed)) return fallback;
+      return sentence;
+    })
+    .join(" ")
+    .replace(/\s{2,}/g, " ")
     .trim();
 }
 
@@ -285,18 +308,17 @@ module.exports = async function handler(request, response) {
   const result = await callGroq({ apiKey, models, messages: apiMessages, hasImages });
   if (result.failure) {
     console.error("Groq request failed", result.failure);
-    return sendJson(response, 502, { error: "A Groq não conseguiu responder agora. Tente novamente." });
+    return sendJson(response, 502, { error: "O KAZER não conseguiu concluir a resposta agora. Tente novamente." });
   }
 
   const { data, model } = result;
-  const content = cleanModelContent(data?.choices?.[0]?.message?.content);
+  const content = protectKazerIdentity(cleanModelContent(data?.choices?.[0]?.message?.content));
   if (!content) {
       console.error("Groq returned an empty response", { model });
       return sendJson(response, 502, { error: "A resposta recebida estava vazia. Tente novamente." });
     }
 
   return sendJson(response, 200, {
-    model,
     message: { role: "assistant", content: content.trim() },
     attachments: prepared.fileNames,
   });

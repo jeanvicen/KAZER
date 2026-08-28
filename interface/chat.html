@@ -408,6 +408,46 @@
         color: var(--text-soft);
       }
 
+      .assistant-content {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+
+      .assistant-content p {
+        margin: 0;
+      }
+
+      .assistant-content strong {
+        color: var(--text);
+        font-weight: 650;
+      }
+
+      .assistant-content em {
+        color: var(--text);
+        font-style: italic;
+      }
+
+      .assistant-content ul,
+      .assistant-content ol {
+        margin: 0;
+        padding-left: 1.25em;
+      }
+
+      .assistant-content li + li {
+        margin-top: 6px;
+      }
+
+      .assistant-content code {
+        padding: 2px 5px;
+        border: 1px solid var(--line-soft);
+        border-radius: 5px;
+        background: var(--card-2);
+        color: var(--text);
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        font-size: 0.86em;
+      }
+
       .assistant-response {
         display: flex;
         align-items: flex-start;
@@ -2755,12 +2795,91 @@
           return symbol;
         };
 
+        const escapeMarkup = (value) => String(value || "").replace(/[&<>"']/g, (character) => ({
+          "&": "&amp;",
+          "<": "&lt;",
+          ">": "&gt;",
+          "\"": "&quot;",
+          "'": "&#39;",
+        }[character]));
+
+        const renderAssistantContent = (text) => {
+          const safeText = escapeMarkup(text).replace(/\r\n?/g, "\n").trim();
+          const lines = safeText.split("\n");
+          const fragment = document.createDocumentFragment();
+          let paragraphLines = [];
+          let listType = null;
+          let listElement = null;
+
+          const inline = (value) => value
+            .replace(/`([^`\n]+)`/g, "<code>$1</code>")
+            .replace(/\*\*([^*\n]+)\*\*/g, "<strong>$1</strong>")
+            .replace(/__([^_\n]+)__/g, "<strong>$1</strong>")
+            .replace(/(^|[^*])\*([^*\n]+)\*(?!\*)/g, "$1<em>$2</em>")
+            .replace(/(^|[^_])_([^_\n]+)_(?!_)/g, "$1<em>$2</em>");
+
+          const flushParagraph = () => {
+            if (!paragraphLines.length) return;
+            const paragraph = document.createElement("p");
+            paragraph.innerHTML = paragraphLines.map(inline).join("<br>");
+            fragment.appendChild(paragraph);
+            paragraphLines = [];
+          };
+
+          const closeList = () => {
+            if (!listElement) return;
+            fragment.appendChild(listElement);
+            listElement = null;
+            listType = null;
+          };
+
+          lines.forEach((line) => {
+            const trimmed = line.trim();
+            const unordered = trimmed.match(/^[-*]\s+(.+)$/);
+            const ordered = trimmed.match(/^\d+[.)]\s+(.+)$/);
+            if (!trimmed) {
+              flushParagraph();
+              closeList();
+              return;
+            }
+            if (unordered || ordered) {
+              flushParagraph();
+              const nextType = unordered ? "ul" : "ol";
+              if (listType !== nextType) {
+                closeList();
+                listType = nextType;
+                listElement = document.createElement(nextType);
+              }
+              const item = document.createElement("li");
+              item.innerHTML = inline((unordered || ordered)[1]);
+              listElement.appendChild(item);
+              return;
+            }
+            closeList();
+            paragraphLines.push(trimmed);
+          });
+
+          flushParagraph();
+          closeList();
+          if (!fragment.childNodes.length) {
+            const paragraph = document.createElement("p");
+            paragraph.textContent = "Não consegui preparar essa resposta agora.";
+            fragment.appendChild(paragraph);
+          }
+          return fragment;
+        };
+
         const createMessage = (role, text) => {
           const row = document.createElement("article");
           row.className = "message-row " + role;
           const bubble = document.createElement("div");
           bubble.className = "message-bubble";
-          bubble.textContent = text;
+          if (role === "assistant") {
+            bubble.classList.add("assistant-content");
+            bubble.appendChild(renderAssistantContent(text));
+          } else {
+            bubble.textContent = text;
+          }
           if (role === "assistant") {
             const response = document.createElement("div");
             response.className = "assistant-response";
