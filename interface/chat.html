@@ -3470,29 +3470,109 @@
           return fragment;
         };
 
+        const inferCodeLanguage = (code) => {
+          const source = String(code || "").trim();
+          if (/^<!doctype html|^<html|^<[a-z][^>]*>/i.test(source)) return "html";
+          if (/^\s*(SELECT|INSERT|UPDATE|DELETE|CREATE TABLE|ALTER TABLE)\b/i.test(source)) return "sql";
+          if (/^\s*(def |from |import |class .*:|print\s*\()/m.test(source)) return "python";
+          if (/^\s*(body\s*\{|\.[a-z][\w-]*\s*\{|#[a-z][\w-]*\s*\{)/m.test(source)) return "css";
+          if (/^\s*(#!\/bin\/|echo |npm |pnpm |yarn |curl )/m.test(source)) return "bash";
+          if (/\b(const|let|var|function|async|await|=>|document\.|console\.)\b/.test(source)) return "javascript";
+          if (/^\s*[\\[{][\\s\\S]*[\\]}]\s*$/m.test(source)) return "json";
+          return "";
+        };
+
+        const parseAssistantSegments = (text) => {
+          const source = String(text || "").replace(/\r\n?/g, "\n").replace(/\u200b/g, "");
+          const lines = source.split("\n");
+          const segments = [];
+          let markdownLines = [];
+          let codeLines = null;
+          let fenceType = null;
+          let fenceLength = 0;
+          let language = "";
+
+          const flushMarkdown = () => {
+            if (!markdownLines.length) return;
+            segments.push({ type: "markdown", text: markdownLines.join("\n") });
+            markdownLines = [];
+          };
+
+          lines.forEach((line) => {
+            const opening = line.match(/^\s{0,3}(`{3,}|~{3,})\s*([^\s`~]*)?\s*$/);
+            if (!fenceType && opening) {
+              flushMarkdown();
+              fenceType = opening[1][0];
+              fenceLength = opening[1].length;
+              language = (opening[2] || "").trim();
+              codeLines = [];
+              return;
+            }
+
+            if (fenceType) {
+              const trimmed = line.trim();
+              const closeToken = fenceType.repeat(fenceLength);
+              const isClosing = trimmed.length >= fenceLength && trimmed.startsWith(closeToken) && trimmed.slice(fenceLength).trim() === "";
+              if (isClosing) {
+                segments.push({ type: "code", language, code: codeLines.join("\n"), complete: true });
+                fenceType = null;
+                fenceLength = 0;
+                language = "";
+                codeLines = null;
+              } else {
+                codeLines.push(line);
+              }
+              return;
+            }
+
+            markdownLines.push(line);
+          });
+
+          if (fenceType) {
+            segments.push({ type: "code", language, code: codeLines.join("\n"), complete: false });
+          } else {
+            flushMarkdown();
+          }
+          return segments;
+        };
+
+        const splitBareCode = (text) => {
+          const source = String(text || "").replace(/\r\n?/g, "\n");
+          const lines = source.split("\n");
+          const codeStart = lines.findIndex((line) => /^\s*(?:const |let |var |function |async function |class |import |export |def |from |#include|<!doctype|<html|SELECT |CREATE TABLE|#!\/bin\/)/i.test(line));
+          if (codeStart < 0 || lines.length - codeStart < 2) return null;
+          const before = lines.slice(0, codeStart).join("\n").trim();
+          const code = lines.slice(codeStart).join("\n").trim();
+          return [
+            ...(before ? [{ type: "markdown", text: before }] : []),
+            { type: "code", language: inferCodeLanguage(code), code, complete: true },
+          ];
+        };
+
         const renderAssistantContent = (container, text, { writing = false } = {}) => {
           container.replaceChildren();
           const source = String(text || "");
-          const fencePattern = /```([^\n`]*)\n([\s\S]*?)(```|$)/g;
-          let cursor = 0;
-          let match;
+          let segments = parseAssistantSegments(source);
+          if (segments.length === 1 && segments[0].type === "markdown") {
+            segments = splitBareCode(source) || segments;
+          }
           let hasContent = false;
-          const appendMarkdown = (value) => {
-            if (!value) return;
-            const fragment = renderAssistantMarkdown(value);
+          segments.forEach((segment) => {
+            if (segment.type === "code") {
+              const language = segment.language || inferCodeLanguage(segment.code);
+              container.appendChild(createCodeBlock(language, segment.code, {
+                writing,
+                complete: segment.complete,
+              }));
+              hasContent = true;
+              return;
+            }
+            const fragment = renderAssistantMarkdown(segment.text);
             if (fragment.childNodes.length) {
               container.appendChild(fragment);
               hasContent = true;
             }
-          };
-          while ((match = fencePattern.exec(source))) {
-            appendMarkdown(source.slice(cursor, match.index));
-            const complete = match[3] === "```";
-            container.appendChild(createCodeBlock(match[1], match[2], { writing, complete }));
-            hasContent = true;
-            cursor = match.index + match[0].length;
-          }
-          appendMarkdown(source.slice(cursor));
+          });
           if (!hasContent && !writing) {
             const paragraph = document.createElement("p");
             paragraph.textContent = "Não consegui preparar essa resposta agora.";
