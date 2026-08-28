@@ -44,11 +44,34 @@ function buildSearchQuery(query, mode) {
   return `${query}${suffix}`.trim();
 }
 
-async function fetchPublicSearch(query, mode) {
-  const searchUrl = `https://html.duckduckgo.com/html/?q=${encodeURIComponent(buildSearchQuery(query, mode))}`;
-  const response = await fetch(searchUrl, { headers: { "User-Agent": "Mozilla/5.0 (compatible; WebKazer/1.0)" } });
-  if (!response.ok) throw new Error(`public_search_${response.status}`);
-  const html = await response.text();
+function decodeBingRedirect(uri) {
+  try {
+    const parsed = new URL(uri);
+    const encoded = parsed.searchParams.get("u");
+    if (encoded && encoded.startsWith("a1")) {
+      const base64 = encoded.slice(2).replace(/-/g, "+").replace(/_/g, "/");
+      return Buffer.from(base64, "base64").toString("utf8");
+    }
+  } catch {}
+  return uri;
+}
+
+function parseBingResults(html) {
+  const results = [];
+  const blocks = html.match(/<li[^>]*class="b_algo"[\s\S]*?<\/li>/gi) || [];
+  for (const block of blocks) {
+    const titleMatch = block.match(/<h2[^>]*>[\s\S]*?<a[^>]*href="([^"]+)"[^>]*>([\s\S]*?)<\/a>/i);
+    if (!titleMatch) continue;
+    const snippetMatch = block.match(/<p[^>]*>([\s\S]*?)<\/p>/i);
+    const uri = decodeBingRedirect(titleMatch[1]);
+    if (!/^https?:\/\//i.test(uri)) continue;
+    results.push({ title: decodeHtml(titleMatch[2]).slice(0, 180), uri: uri.slice(0, 2000), snippet: decodeHtml(snippetMatch?.[1] || "").slice(0, 500) });
+    if (results.length >= MAX_RESULTS) break;
+  }
+  return results;
+}
+
+function parseDuckResults(html) {
   const results = [];
   const pattern = /<a[^>]*class="result__a"[^>]*href="([^"]+)"[^>]*>([\s\S]*?)<\/a>[\s\S]*?<a[^>]*class="result__snippet"[^>]*>([\s\S]*?)<\/a>/gi;
   let match;
@@ -59,6 +82,25 @@ async function fetchPublicSearch(query, mode) {
     results.push({ title: decodeHtml(match[2]).slice(0, 180), uri: uri.slice(0, 2000), snippet: decodeHtml(match[3]).slice(0, 500) });
   }
   return results;
+}
+
+async function fetchPublicSearch(query, mode) {
+  const encodedQuery = encodeURIComponent(buildSearchQuery(query, mode));
+  const headers = { "User-Agent": "Mozilla/5.0 (compatible; WebKazer/1.0)" };
+  const providers = [
+    { url: `https://www.bing.com/search?q=${encodedQuery}`, parse: parseBingResults },
+    { url: `https://html.duckduckgo.com/html/?q=${encodedQuery}`, parse: parseDuckResults }
+  ];
+  let lastError;
+  for (const provider of providers) {
+    try {
+      const response = await fetch(provider.url, { headers });
+      if (!response.ok) { lastError = new Error(`public_search_${response.status}`); continue; }
+      const results = provider.parse(await response.text());
+      if (results.length) return results;
+    } catch (error) { lastError = error; }
+  }
+  throw lastError || new Error("public_search_empty");
 }
 
 function getPrompt(query, mode, sources) {
