@@ -1,4 +1,4 @@
-const DEFAULT_MODEL = "gemini-2.5-flash";
+const DEFAULT_MODEL = "gemini-3.6-flash";
 const MAX_QUERY_CHARS = 240;
 const MODES = new Set(["all", "web", "images", "videos", "news"]);
 
