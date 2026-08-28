@@ -455,6 +455,116 @@
         max-width: 100%;
       }
 
+      .assistant-content {
+        display: grid;
+        gap: 14px;
+        min-width: 0;
+        max-width: 100%;
+      }
+
+      .assistant-text {
+        color: var(--text-soft);
+        white-space: pre-wrap;
+        overflow-wrap: anywhere;
+      }
+
+      .code-block {
+        width: min(100%, 670px);
+        overflow: hidden;
+        border: 1px solid rgba(140, 122, 255, 0.3);
+        border-radius: 14px;
+        background: #0c0c10;
+        color: #f2f2f5;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+      }
+
+      .code-block-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        min-height: 38px;
+        padding: 0 10px 0 14px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.09);
+        background: linear-gradient(90deg, rgba(140, 122, 255, 0.13), rgba(255, 255, 255, 0.025));
+      }
+
+      .code-block-label {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        min-width: 0;
+        color: #c9c5ff;
+        font-family: var(--sans);
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      .code-block-label::before {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: var(--purple);
+        box-shadow: 0 0 10px rgba(140, 122, 255, 0.85);
+        content: "";
+      }
+
+      .code-block-label.is-writing::before {
+        animation: code-dot-pulse 900ms ease-in-out infinite;
+      }
+
+      @keyframes code-dot-pulse {
+        0%, 100% { opacity: .4; transform: scale(.8); }
+        50% { opacity: 1; transform: scale(1.15); }
+      }
+
+      .code-copy-button {
+        min-height: 26px;
+        padding: 4px 9px;
+        border: 1px solid rgba(255, 255, 255, 0.13);
+        border-radius: 7px;
+        background: rgba(255, 255, 255, 0.06);
+        color: #d7d7dd;
+        font-family: var(--sans);
+        font-size: 10px;
+        cursor: pointer;
+        transition: background 150ms var(--ease), color 150ms var(--ease), border-color 150ms var(--ease), transform 150ms var(--ease);
+      }
+
+      .code-copy-button:hover:not(:disabled) {
+        border-color: rgba(140, 122, 255, 0.7);
+        background: rgba(140, 122, 255, 0.2);
+        color: #fff;
+      }
+
+      .code-copy-button:active:not(:disabled) {
+        transform: scale(.96);
+      }
+
+      .code-copy-button:disabled {
+        cursor: wait;
+        opacity: .45;
+      }
+
+      .code-block pre {
+        max-width: 100%;
+        margin: 0;
+        padding: 16px;
+        overflow-x: auto;
+        color: #f5f5f7;
+        font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+        font-size: clamp(12px, 2.5vw, 14px);
+        line-height: 1.62;
+        tab-size: 2;
+        white-space: pre;
+      }
+
+      .code-block code {
+        font: inherit;
+      }
+
       .assistant-marker,
       .thinking-symbol {
         display: inline-flex;
@@ -3199,6 +3309,92 @@
           return symbol;
         };
 
+        const codeLanguageLabels = {
+          js: "JavaScript",
+          javascript: "JavaScript",
+          ts: "TypeScript",
+          typescript: "TypeScript",
+          jsx: "JSX",
+          tsx: "TSX",
+          py: "Python",
+          python: "Python",
+          html: "HTML",
+          css: "CSS",
+          json: "JSON",
+          bash: "Bash",
+          sh: "Shell",
+          shell: "Shell",
+          sql: "SQL",
+          yaml: "YAML",
+          yml: "YAML",
+          md: "Markdown",
+          markdown: "Markdown",
+          java: "Java",
+          c: "C",
+          cpp: "C++",
+          go: "Go",
+          rust: "Rust",
+        };
+
+        const codeLanguageLabel = (value) => {
+          const normalized = String(value || "").trim().toLowerCase().replace(/[^a-z0-9#+.-]/g, "");
+          return codeLanguageLabels[normalized] || (normalized ? normalized.toUpperCase() : "Código");
+        };
+
+        const copyText = async (value) => {
+          if (navigator.clipboard?.writeText) {
+            await navigator.clipboard.writeText(value);
+            return;
+          }
+          const helper = document.createElement("textarea");
+          helper.value = value;
+          helper.setAttribute("readonly", "");
+          helper.style.position = "fixed";
+          helper.style.opacity = "0";
+          document.body.appendChild(helper);
+          helper.select();
+          const copied = document.execCommand("copy");
+          helper.remove();
+          if (!copied) throw new Error("Não foi possível copiar o código.");
+        };
+
+        const createCodeBlock = (language, code, { writing = false, complete = true } = {}) => {
+          const block = document.createElement("section");
+          block.className = "code-block";
+          const head = document.createElement("header");
+          head.className = "code-block-head";
+          const label = document.createElement("span");
+          label.className = "code-block-label";
+          label.textContent = writing && !complete ? "Criando código…" : codeLanguageLabel(language);
+          label.classList.toggle("is-writing", writing && !complete);
+          const copy = document.createElement("button");
+          copy.type = "button";
+          copy.className = "code-copy-button";
+          copy.textContent = writing && !complete ? "Aguarde" : "Copiar";
+          copy.disabled = writing || !complete;
+          copy.setAttribute("aria-label", "Copiar código " + codeLanguageLabel(language));
+          copy.addEventListener("click", async () => {
+            if (copy.disabled) return;
+            const originalLabel = copy.textContent;
+            try {
+              await copyText(code);
+              copy.textContent = "Copiado";
+              showToast("Código copiado");
+              window.setTimeout(() => { if (copy.isConnected) copy.textContent = originalLabel; }, 1600);
+            } catch {
+              showToast("Não foi possível copiar o código");
+            }
+          });
+          head.append(label, copy);
+          const pre = document.createElement("pre");
+          const codeElement = document.createElement("code");
+          codeElement.textContent = code;
+          codeElement.dataset.language = String(language || "").trim().toLowerCase();
+          pre.appendChild(codeElement);
+          block.append(head, pre);
+          return block;
+        };
+
         const escapeMarkup = (value) => String(value || "").replace(/[&<>"']/g, (character) => ({
           "&": "&amp;",
           "<": "&lt;",
@@ -3207,9 +3403,9 @@
           "'": "&#39;",
         }[character]));
 
-        const renderAssistantContent = (text) => {
+        const renderAssistantMarkdown = (text) => {
           const safeText = escapeMarkup(text).replace(/\r\n?/g, "\n").trim();
-          const lines = safeText.split("\n");
+          const lines = safeText ? safeText.split("\n") : [];
           const fragment = document.createDocumentFragment();
           let paragraphLines = [];
           let listType = null;
@@ -3265,31 +3461,54 @@
 
           flushParagraph();
           closeList();
-          if (!fragment.childNodes.length) {
-            const paragraph = document.createElement("p");
-            paragraph.textContent = "Não consegui preparar essa resposta agora.";
-            fragment.appendChild(paragraph);
-          }
           return fragment;
         };
 
-        const createMessage = (role, text) => {
+        const renderAssistantContent = (container, text, { writing = false } = {}) => {
+          container.replaceChildren();
+          const source = String(text || "");
+          const fencePattern = /```([^\n`]*)\n([\s\S]*?)(```|$)/g;
+          let cursor = 0;
+          let match;
+          let hasContent = false;
+          const appendMarkdown = (value) => {
+            if (!value) return;
+            const fragment = renderAssistantMarkdown(value);
+            if (fragment.childNodes.length) {
+              container.appendChild(fragment);
+              hasContent = true;
+            }
+          };
+          while ((match = fencePattern.exec(source))) {
+            appendMarkdown(source.slice(cursor, match.index));
+            const complete = match[3] === "```";
+            container.appendChild(createCodeBlock(match[1], match[2], { writing, complete }));
+            hasContent = true;
+            cursor = match.index + match[0].length;
+          }
+          appendMarkdown(source.slice(cursor));
+          if (!hasContent && !writing) {
+            const paragraph = document.createElement("p");
+            paragraph.textContent = "Não consegui preparar essa resposta agora.";
+            container.appendChild(paragraph);
+          }
+        };
+
+        const createMessage = (role, text, options = {}) => {
           const row = document.createElement("article");
           row.className = "message-row " + role;
-          const bubble = document.createElement("div");
-          bubble.className = "message-bubble";
-          if (role === "assistant") {
-            bubble.classList.add("assistant-content");
-            bubble.appendChild(renderAssistantContent(text));
-          } else {
-            bubble.textContent = text;
-          }
           if (role === "assistant") {
             const response = document.createElement("div");
             response.className = "assistant-response";
-            response.append(createAssistantSymbol("assistant-marker"), bubble);
+            const content = document.createElement("div");
+            content.className = "assistant-content";
+            renderAssistantContent(content, text, options);
+            response.append(createAssistantSymbol("assistant-marker"), content);
             row.appendChild(response);
           } else {
+            const bubble = document.createElement("div");
+            bubble.className = "message-bubble";
+            bubble.textContent = text;
             row.appendChild(bubble);
           }
           const meta = document.createElement("div");
@@ -3297,6 +3516,21 @@
           meta.textContent = role === "assistant" ? "KAZER · " + timeNow() : "Você · " + timeNow();
           row.appendChild(meta);
           return row;
+        };
+
+        const revealAssistantMessage = async (row, text, signal) => {
+          const content = row.querySelector(".assistant-content");
+          if (!content) return;
+          const total = text.length;
+          let index = 0;
+          while (index < total) {
+            if (signal.aborted) throw new DOMException("A geração foi interrompida.", "AbortError");
+            index = Math.min(total, index + Math.max(2, Math.ceil(total / 150)));
+            renderAssistantContent(content, text.slice(0, index), { writing: index < total });
+            scrollBottom();
+            await new Promise((resolve) => window.setTimeout(resolve, index < total ? 18 : 0));
+          }
+          renderAssistantContent(content, text, { writing: false });
         };
 
         const createThinking = () => {
@@ -3397,6 +3631,7 @@
           append(thinking);
           setBusy(true);
           const controller = new AbortController();
+          let assistantRow = null;
           activeRequestController = controller;
 
           try {
@@ -3413,12 +3648,18 @@
             if (activeRequestController !== controller) return;
             const answer = data.message?.content;
             if (typeof answer !== "string" || !answer.trim()) throw new Error("A resposta recebida estava vazia.");
+            if (thinking.isConnected) thinking.remove();
+            assistantRow = createMessage("assistant", "");
+            append(assistantRow);
+            await revealAssistantMessage(assistantRow, answer.trim(), controller.signal);
             conversationMessages.push({ role: "assistant", content: answer.trim() });
-            if (thinking.isConnected) thinking.remove();
-            append(createMessage("assistant", answer.trim()));
           } catch (error) {
-            if (error.name === "AbortError" || activeRequestController !== controller) return;
+            if (error.name === "AbortError" || activeRequestController !== controller) {
+              if (assistantRow?.isConnected) assistantRow.remove();
+              return;
+            }
             if (thinking.isConnected) thinking.remove();
+            if (assistantRow?.isConnected) assistantRow.remove();
             append(createMessage("assistant", error.message || "Não foi possível conectar ao chat agora."));
           } finally {
             if (activeRequestController === controller) {
