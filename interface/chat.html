@@ -2278,6 +2278,38 @@
           padding: 12px 14px;
         }
 
+        .settings-control:has(.settings-custom-select) {
+          align-items: flex-start;
+        }
+
+        .settings-control .settings-custom-select {
+          display: flex;
+          flex-direction: column;
+          align-items: stretch;
+          width: min(45%, 160px);
+        }
+
+        .settings-control .settings-select-menu {
+          position: static;
+          display: none;
+          width: 100%;
+          min-width: 0;
+          max-width: none;
+          margin-top: 6px;
+          padding: 4px;
+          transform: none;
+          transform-origin: initial;
+          opacity: 1;
+          visibility: visible;
+          box-shadow: none;
+        }
+
+        .settings-control .settings-custom-select.open .settings-select-menu,
+        .settings-control .settings-custom-select.open-down .settings-select-menu {
+          display: grid;
+          transform: none;
+        }
+
         .settings-control strong,
         .settings-action-row strong {
           font-size: 12px;
