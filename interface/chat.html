@@ -3649,7 +3649,7 @@
             const answer = data.message?.content;
             if (typeof answer !== "string" || !answer.trim()) throw new Error("A resposta recebida estava vazia.");
             if (thinking.isConnected) thinking.remove();
-            assistantRow = createMessage("assistant", "");
+            assistantRow = createMessage("assistant", "", { writing: true });
             append(assistantRow);
             await revealAssistantMessage(assistantRow, answer.trim(), controller.signal);
             conversationMessages.push({ role: "assistant", content: answer.trim() });
