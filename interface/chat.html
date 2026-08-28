@@ -2190,6 +2190,39 @@
         transform: translateX(-50%);
       }
 
+      /* Os seletores permanecem no fluxo em qualquer viewport para nunca cobrir o conteúdo. */
+      .settings-control:has(.settings-custom-select) {
+        align-items: flex-start;
+      }
+
+      .settings-control .settings-custom-select {
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+        width: min(45%, 160px);
+      }
+
+      .settings-control .settings-select-menu {
+        position: static;
+        display: none;
+        width: 100%;
+        min-width: 0;
+        max-width: none;
+        margin-top: 6px;
+        padding: 4px;
+        transform: none;
+        transform-origin: initial;
+        opacity: 1;
+        visibility: visible;
+        box-shadow: none;
+      }
+
+      .settings-control .settings-custom-select.open .settings-select-menu,
+      .settings-control .settings-custom-select.open-down .settings-select-menu {
+        display: grid;
+        transform: none;
+      }
+
       @media (max-width: 680px) {
         .retention-banner {
           top: max(78px, calc(env(safe-area-inset-top) + 70px));
