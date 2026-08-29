@@ -2812,8 +2812,13 @@
         const KAZER_SUPABASE_URL = "https://mqjunopzycdezzjmlhip.supabase.co";
         const KAZER_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1xanVub3B6eWNkZXp6am1saGlwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc4Mzg3NDksImV4cCI6MjEwMzQxNDc0OX0.Y_o2_QQhZzuCjvHdEfxaR5VrAxo7NFenPaDmdHN3bwM";
         const kazerSupabase = window.supabase?.createClient(KAZER_SUPABASE_URL, KAZER_SUPABASE_ANON_KEY, {
-          auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
+          auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: false }
         });
+        const getApiHeaders = async () => {
+          const { data: { session } = {} } = await kazerSupabase?.auth.getSession() || {};
+          if (!session?.access_token) throw new Error("Sessão inválida ou expirada.");
+          return { "Content-Type": "application/json", Accept: "application/json", Authorization: `Bearer ${session.access_token}` };
+        };
         let currentUser = null;
         const profileButton = document.getElementById("profileButton");
         const profilePopover = document.getElementById("profilePopover");
@@ -3270,7 +3275,7 @@
           webSources.innerHTML = '<div class="web-loading">Consultando fontes atuais…</div>';
           const startedAt = Date.now();
           try {
-            const response = await fetch("/api/web-search", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ query, mode: webMode }) });
+            const response = await fetch("/api/web-search", { method: "POST", headers: await getApiHeaders(), body: JSON.stringify({ query, mode: webMode }) });
             const result = await response.json().catch(() => null);
             const remaining = Math.max(0, 650 - (Date.now() - startedAt));
             await new Promise((resolve) => window.setTimeout(resolve, remaining));
@@ -3725,7 +3730,7 @@
             if (activeRequestController !== controller) return;
             const result = await fetch("/api/chat", {
               method: "POST",
-              headers: { "Content-Type": "application/json", Accept: "application/json" },
+              headers: await getApiHeaders(),
               body: JSON.stringify({ messages: conversationMessages, attachments }),
               signal: controller.signal,
             });

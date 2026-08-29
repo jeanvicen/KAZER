@@ -1,14 +1,18 @@
+const {
+  hasSafeFetchMetadata,
+  readTextWithLimit,
+  redactSensitiveText,
+  sendJson,
+  supabaseBaseUrl,
+  timingSafeEqualText,
+} = require("./_security");
+
 const INACTIVITY_YEARS = 3;
 const WARNING_DAYS = [50, 30, 5];
+const UPSTREAM_TIMEOUT_MS = 15_000;
+const MAX_UPSTREAM_BYTES = 2 * 1024 * 1024;
 const MAX_USERS_PER_RUN = 500;
 const MAX_DELETIONS_PER_RUN = 100;
-
-function sendJson(response, status, payload) {
-  response.status(status);
-  response.setHeader('Content-Type', 'application/json; charset=utf-8');
-  response.setHeader('Cache-Control', 'no-store');
-  response.end(JSON.stringify(payload));
-}
 
 function subtractYears(date, years) {
   const result = new Date(date);
@@ -37,26 +41,31 @@ function warningForRemainingDays(remainingDays) {
 }
 
 function authorized(request) {
-  const expected = process.env.CRON_SECRET;
-  if (!expected) return false;
-  const authorization = request.headers.authorization || '';
-  return authorization === `Bearer ${expected}`;
+  const expected = String(process.env.CRON_SECRET || "");
+  const authorization = String(request.headers.authorization || "");
+  const match = authorization.match(/^Bearer\s+(.+)$/i);
+  return Boolean(expected && match && timingSafeEqualText(match[1], expected));
 }
 
 async function supabaseRequest(url, options, serviceKey) {
   const response = await fetch(url, {
     ...options,
+    signal: options.signal || AbortSignal.timeout(UPSTREAM_TIMEOUT_MS),
     headers: {
       apikey: serviceKey,
       Authorization: `Bearer ${serviceKey}`,
       ...(options.headers || {}),
     },
   });
-  const body = await response.text();
+  const body = await readTextWithLimit(response, MAX_UPSTREAM_BYTES);
   if (!response.ok) {
-    throw new Error(`Supabase request failed (${response.status}): ${body.slice(0, 240)}`);
+    throw new Error(`Supabase request failed (${response.status}): ${redactSensitiveText(body).slice(0, 240)}`);
   }
-  return body ? JSON.parse(body) : null;
+  try {
+    return body ? JSON.parse(body) : null;
+  } catch {
+    throw new Error("Supabase returned invalid JSON");
+  }
 }
 
 function warningText(days) {
@@ -83,11 +92,11 @@ module.exports = async function handler(request, response) {
     response.setHeader('Allow', 'GET');
     return sendJson(response, 405, { error: 'Método não permitido.' });
   }
-  if (!authorized(request)) {
+  if (!hasSafeFetchMetadata(request) || !authorized(request)) {
     return sendJson(response, 401, { error: 'Não autorizado.' });
   }
 
-  const supabaseUrl = process.env.SUPABASE_URL;
+  const supabaseUrl = supabaseBaseUrl();
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SECRET_KEY;
   if (!supabaseUrl || !serviceKey) {
     return sendJson(response, 503, { error: 'A retenção ainda não foi configurada.' });
@@ -138,11 +147,14 @@ module.exports = async function handler(request, response) {
       warningsCreated += Array.isArray(createdRows) ? createdRows.length : 0;
     }
 
+    const deleteEnabled = process.env.RETENTION_DELETE_ENABLED === 'true';
     const deleted = [];
-    for (const user of deletionCandidates) {
-      const deleteUrl = `${supabaseUrl.replace(/\/$/, '')}/auth/v1/admin/users/${encodeURIComponent(user.user_id)}`;
-      await supabaseRequest(deleteUrl, { method: 'DELETE' }, serviceKey);
-      deleted.push(user.user_id);
+    if (deleteEnabled) {
+      for (const user of deletionCandidates) {
+        const deleteUrl = `${supabaseUrl}/auth/v1/admin/users/${encodeURIComponent(user.user_id)}`;
+        await supabaseRequest(deleteUrl, { method: 'DELETE' }, serviceKey);
+        deleted.push(user.user_id);
+      }
     }
 
     return sendJson(response, 200, {
@@ -152,10 +164,11 @@ module.exports = async function handler(request, response) {
       warningCandidates: warningCandidates.length,
       warningsCreated,
       deletionCandidates: deletionCandidates.length,
+      deleteEnabled,
       deleted: deleted.length,
     });
   } catch (error) {
-    console.error('Retention job failed', error?.message || 'unknown');
+    console.error('Retention job failed', redactSensitiveText(error?.message || 'unknown'));
     return sendJson(response, 502, { error: 'A rotina de retenção não pôde ser concluída.' });
   }
 };

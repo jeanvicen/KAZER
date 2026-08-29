@@ -522,20 +522,20 @@
         <!-- Nome (apenas no cadastro) -->
         <div class="field signup-only">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="1.8"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4.4 3.6-7 8-7s8 2.6 8 7"/></svg>
-          <input type="text" id="displayName" placeholder="Como devemos te chamar?" autocomplete="name">
+          <input type="text" id="displayName" placeholder="Como devemos te chamar?" autocomplete="name" maxlength="80" spellcheck="false">
         </div>
 
         <!-- Email -->
         <div class="field">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="1.8"><path d="M3 6l9 7 9-7"/><rect x="3" y="5" width="18" height="14" rx="2"/></svg>
-          <input type="email" id="email" placeholder="Email" required autocomplete="email">
+          <input type="email" id="email" placeholder="Email" required autocomplete="email" maxlength="254" inputmode="email">
         </div>
 
         <!-- Senha -->
         <div class="field">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="1.8"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
-          <input type="password" id="password" placeholder="Senha" required autocomplete="current-password">
-          <button type="button" class="toggle-eye" id="eyeBtnPassword" onclick="togglePassword('password')" aria-label="Mostrar senha">
+          <input type="password" id="password" placeholder="Senha" required autocomplete="current-password" minlength="10" maxlength="256">
+          <button type="button" class="toggle-eye" id="eyeBtnPassword" aria-label="Mostrar senha">
             <svg class="eye-icon is-open" id="eyeIconPassword" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="1.8">
               <path class="eye-outline" d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/>
               <circle class="eye-pupil" cx="12" cy="12" r="3"/>
@@ -555,14 +555,14 @@
 
         <!-- Regra de senha (apenas no cadastro) -->
         <div class="hint signup-only" id="passwordHint">
-          A senha precisa ter 1 letra maiúscula e 1 caractere especial.
+          A senha precisa ter pelo menos 10 caracteres, 1 letra maiúscula e 1 caractere especial.
         </div>
 
         <!-- Confirmar senha (apenas no cadastro) -->
         <div class="field signup-only">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="1.8"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
-          <input type="password" id="confirmPassword" placeholder="Confirmar senha" autocomplete="new-password">
-          <button type="button" class="toggle-eye" id="eyeBtnConfirmPassword" onclick="togglePassword('confirmPassword')" aria-label="Mostrar senha">
+          <input type="password" id="confirmPassword" placeholder="Confirmar senha" autocomplete="new-password" minlength="10" maxlength="256">
+          <button type="button" class="toggle-eye" id="eyeBtnConfirmPassword" aria-label="Mostrar senha">
             <svg class="eye-icon is-open" id="eyeIconConfirmPassword" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="1.8">
               <path class="eye-outline" d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/>
               <circle class="eye-pupil" cx="12" cy="12" r="3"/>
@@ -577,7 +577,7 @@
 
       <div class="switch-mode">
         <span id="switchText">Não tem conta?</span>
-        <a id="switchLink" onclick="toggleMode()">Criar conta</a>
+        <a id="switchLink" href="#signup">Criar conta</a>
       </div>
     </div>
   </div>
@@ -614,6 +614,9 @@
   function capitalize(str){
     return str.charAt(0).toUpperCase() + str.slice(1);
   }
+
+  document.getElementById('eyeBtnPassword').addEventListener('click', () => togglePassword('password'));
+  document.getElementById('eyeBtnConfirmPassword').addEventListener('click', () => togglePassword('confirmPassword'));
 
   // ---------- alterna entre login e criar conta ----------
   let isSignup = false;
@@ -653,7 +656,7 @@
   function isPasswordValid(pw){
     const hasUpper = /[A-Z]/.test(pw);
     const hasSpecial = /[^A-Za-z0-9]/.test(pw);
-    return hasUpper && hasSpecial;
+    return pw.length >= 10 && pw.length <= 256 && hasUpper && hasSpecial;
   }
 
   // ---------- calcula a força da senha (0 a 4) ----------
@@ -705,6 +708,11 @@
     strengthLabel.classList.add('pop');
   }
 
+  document.getElementById('switchLink').addEventListener('click', (event) => {
+    event.preventDefault();
+    toggleMode();
+  });
+
   document.getElementById('password').addEventListener('input', function(){
     if(isSignup){
       updateStrengthUI(this.value);
@@ -738,7 +746,7 @@
   const KAZER_SUPABASE_URL = 'https://mqjunopzycdezzjmlhip.supabase.co';
   const KAZER_SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1xanVub3B6eWNkZXp6am1saGlwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc4Mzg3NDksImV4cCI6MjEwMzQxNDc0OX0.Y_o2_QQhZzuCjvHdEfxaR5VrAxo7NFenPaDmdHN3bwM';
   const kazerSupabase = window.supabase?.createClient(KAZER_SUPABASE_URL, KAZER_SUPABASE_ANON_KEY, {
-    auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
+    auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: false }
   });
 
   function authErrorMessage(error){
@@ -747,7 +755,7 @@
     if(message.includes('email not confirmed')) return 'O acesso por e-mail ainda não está liberado no projeto Kazer.';
     if(message.includes('user already registered')) return 'Este e-mail já tem uma conta. Tente entrar.';
     if(message.includes('password')) return 'A senha não atende aos requisitos do Kazer.';
-    return error?.message || 'Não foi possível concluir agora. Tente novamente.';
+    return 'Não foi possível concluir agora. Tente novamente.';
   }
 
   // ---------- validação e envio do form ----------
@@ -765,9 +773,9 @@
       return;
     }
     if(isSignup){
-      if(!name){ errorMsg.textContent = 'Nos diga como devemos te chamar.'; return; }
+      if(!name || name.length > 80){ errorMsg.textContent = 'Informe um nome válido de até 80 caracteres.'; return; }
       if(!isPasswordValid(password)){
-        errorMsg.textContent = 'Sua senha ainda tá fraca — coloca 1 letra maiúscula e 1 caractere especial.';
+        errorMsg.textContent = 'Sua senha ainda tá fraca — use pelo menos 10 caracteres, 1 letra maiúscula e 1 caractere especial.';
         return;
       }
       if(password !== confirmPassword){

@@ -3,6 +3,10 @@
   "private": true,
   "version": "1.0.0",
   "description": "Kazer static interface with a secure Groq chat function",
+  "scripts": {
+    "security:check": "node scripts/security-check.mjs",
+    "security:audit": "npm audit --omit=dev"
+  },
   "engines": {
     "node": ">=20"
   },

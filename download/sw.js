@@ -1,4 +1,4 @@
-const CACHE_NAME = "kazer-shell-v8";
+const CACHE_NAME = "kazer-shell-v9";
 const APP_SHELL = [
   "/chat",
   "/chat.html",
@@ -25,18 +25,18 @@ self.addEventListener("fetch", (event) => {
   const request = event.request;
   const url = new URL(request.url);
   const isSameOrigin = url.origin === self.location.origin;
-  const isAppShellRequest = APP_SHELL.includes(url.pathname) || request.mode === "navigate";
+  const isAppShellRequest = APP_SHELL.includes(url.pathname);
   if (request.method !== "GET" || !isSameOrigin || !isAppShellRequest) return;
 
   event.respondWith(
     fetch(request).then((response) => {
       if (response && response.status === 200 && response.type !== "opaque") {
         const copy = response.clone();
-        caches.open(CACHE_NAME).then((cache) => cache.put(url.pathname, copy));
+        caches.open(CACHE_NAME).then((cache) => cache.put(request, copy));
       }
       return response;
     }).catch(() => {
-          return caches.match(request).then((cached) => cached || caches.match(url.pathname) || caches.match("/chat") || caches.match("/chat.html"));
+          return caches.match(request).then((cached) => cached || caches.match(url.pathname));
     })
   );
 });

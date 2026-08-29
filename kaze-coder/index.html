@@ -770,7 +770,14 @@ pre.code-pre.is-streaming::after{
 (() => {
   const SUPABASE_URL = "https://mqjunopzycdezzjmlhip.supabase.co";
   const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1xanVub3B6eWNkZXp6am1saGlwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc4Mzg3NDksImV4cCI6MjEwMzQxNDc0OX0.Y_o2_QQhZzuCjvHdEfxaR5VrAxo7NFenPaDmdHN3bwM";
-  const supa = window.supabase?.createClient(SUPABASE_URL, SUPABASE_KEY);
+  const supa = window.supabase?.createClient(SUPABASE_URL, SUPABASE_KEY, {
+    auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: false }
+  });
+  const getApiHeaders = async () => {
+    const { data: { session } = {} } = await supa?.auth.getSession() || {};
+    if (!session?.access_token) throw new Error("Sessão inválida ou expirada.");
+    return { "Content-Type": "application/json", Accept: "application/json", Authorization: `Bearer ${session.access_token}` };
+  };
 
   const GOOGLE_CLIENT_ID = "";
   const GITHUB_CLIENT_ID = "";
@@ -809,6 +816,11 @@ pre.code-pre.is-streaming::after{
 
   let connectorState = {};
   try { connectorState = JSON.parse(localStorage.getItem(CONNECTORS_KEY) || "{}"); } catch { connectorState = {}; }
+  if (connectorState.gdrive?.token || connectorState.github?.code) {
+    delete connectorState.gdrive;
+    delete connectorState.github;
+    localStorage.removeItem(CONNECTORS_KEY);
+  }
   const saveConnectors = () => localStorage.setItem(CONNECTORS_KEY, JSON.stringify(connectorState));
 
   // Toast
@@ -824,7 +836,7 @@ pre.code-pre.is-streaming::after{
   // OAuth
   function buildGoogleOAuthUrl() {
     if (!GOOGLE_CLIENT_ID) return null;
-    const p = new URLSearchParams({ client_id:GOOGLE_CLIENT_ID, redirect_uri:OAUTH_REDIRECT_URI, response_type:"token", scope:"https://www.googleapis.com/auth/drive.readonly https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email", include_granted_scopes:"true", state:"gdrive" });
+    const p = new URLSearchParams({ client_id:GOOGLE_CLIENT_ID, redirect_uri:OAUTH_REDIRECT_URI, response_type:"code", scope:"https://www.googleapis.com/auth/drive.readonly https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email", state:"gdrive" });
     return "https://accounts.google.com/o/oauth2/v2/auth?" + p.toString();
   }
   function buildGithubOAuthUrl() {
@@ -836,25 +848,13 @@ pre.code-pre.is-streaming::after{
     const hash = new URLSearchParams(window.location.hash.substring(1));
     const query = new URLSearchParams(window.location.search.substring(1));
     if (hash.get("access_token") && hash.get("state")==="gdrive") {
-      const token = hash.get("access_token");
-      const expiresIn = parseInt(hash.get("expires_in")||"3600",10);
-      connectorState.gdrive = { connected:true, token, expiresAt:Date.now()+expiresIn*1000, user:null };
-      saveConnectors();
-      fetch("https://www.googleapis.com/oauth2/v2/userinfo",{headers:{Authorization:"Bearer "+token}})
-        .then(r=>r.json()).then(data=>{
-          if (data?.name) { connectorState.gdrive.user={name:data.name,email:data.email}; saveConnectors(); renderConnectors(); }
-        }).catch(()=>{});
       window.history.replaceState({},"",window.location.pathname);
-      showToast("Google Drive conectado!","success");
+      showToast("Conexão recusada: o fluxo seguro precisa de backend PKCE.","error");
       return true;
     }
     if (query.get("code") && query.get("state")==="github") {
-      const code = query.get("code");
-      connectorState.github = { connected:false, code, pending:true };
-      saveConnectors();
       window.history.replaceState({},"",window.location.pathname);
-      renderConnectors();
-      showToast("Código GitHub recebido. Backend necessário para trocar por token.","info");
+      showToast("Código recebido, mas a troca deve ocorrer no backend seguro.","info");
       return true;
     }
     return false;
@@ -1133,7 +1133,7 @@ pre.code-pre.is-streaming::after{
     updateSendState();
     activeController=new AbortController();
     try {
-      const res=await fetch("/api/chat",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({messages:apiMessages}),signal:activeController.signal});
+      const res=await fetch("/api/chat",{method:"POST",headers:await getApiHeaders(),body:JSON.stringify({messages:apiMessages}),signal:activeController.signal});
       const data=await res.json();
       if (!res.ok) throw new Error(data.error||"Erro na API");
       const answer=data.message?.content||data.response||"Sem resposta.";

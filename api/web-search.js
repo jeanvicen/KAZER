@@ -1,26 +1,22 @@
+const {
+  applyRateLimit,
+  authenticateUser,
+  hasSafeFetchMetadata,
+  isSameOrigin,
+  rateLimit,
+  readTextWithLimit,
+  redactSensitiveText,
+  requestExceedsLimit,
+  sendJson,
+} = require("./_security");
+
 const DEFAULT_MODEL = "gemini-2.5-flash-lite";
 const MAX_QUERY_CHARS = 240;
+const MAX_REQUEST_BYTES = 16 * 1024;
+const MAX_UPSTREAM_SEARCH_BYTES = 2 * 1024 * 1024;
+const MAX_UPSTREAM_SUMMARY_BYTES = 1 * 1024 * 1024;
 const MAX_RESULTS = 8;
 const MODES = new Set(["all", "web", "images", "videos", "news"]);
-
-function sendJson(response, status, payload) {
-  response.status(status);
-  response.setHeader("Content-Type", "application/json; charset=utf-8");
-  response.setHeader("Cache-Control", "no-store");
-  response.end(JSON.stringify(payload));
-}
-
-function isSameOrigin(request) {
-  const origin = request.headers.origin;
-  if (!origin) return true;
-  try {
-    const originUrl = new URL(origin);
-    const requestHost = (request.headers["x-forwarded-host"] || request.headers.host || "").split(",")[0].trim();
-    return Boolean(requestHost) && originUrl.host === requestHost;
-  } catch {
-    return false;
-  }
-}
 
 function parseBody(request) {
   if (!request.body) return {};
@@ -95,9 +91,9 @@ async function fetchPublicSearch(query, mode) {
   let lastError;
   for (const provider of providers) {
     try {
-      const response = await fetch(provider.url, { headers });
+      const response = await fetch(provider.url, { headers, signal: AbortSignal.timeout(8_000) });
       if (!response.ok) { lastError = new Error(`public_search_${response.status}`); continue; }
-      const results = provider.parse(await response.text());
+      const results = provider.parse(await readTextWithLimit(response, MAX_UPSTREAM_SEARCH_BYTES));
       if (results.length) return results;
     } catch (error) { lastError = error; }
   }
@@ -119,7 +115,20 @@ module.exports = async function handler(request, response) {
     response.setHeader("Allow", "POST");
     return sendJson(response, 405, { error: "Método não permitido." });
   }
-  if (!isSameOrigin(request)) return sendJson(response, 403, { error: "Origem não autorizada." });
+  if (!isSameOrigin(request) || !hasSafeFetchMetadata(request)) return sendJson(response, 403, { error: "Origem não autorizada." });
+  if (requestExceedsLimit(request, MAX_REQUEST_BYTES)) return sendJson(response, 413, { error: "A pesquisa excede o limite permitido." });
+
+  const ipLimit = rateLimit(request, "web-search-ip", { limit: 10, windowMs: 60_000 });
+  ipLimit.limit = 10;
+  applyRateLimit(response, ipLimit);
+  if (!ipLimit.allowed) return sendJson(response, 429, { error: "Muitas pesquisas. Aguarde um momento." });
+
+  const user = await authenticateUser(request);
+  if (!user) return sendJson(response, 401, { error: "Sessão inválida ou expirada." });
+  const userLimit = rateLimit(request, "web-search-user", { limit: 6, windowMs: 60_000, identity: user.id });
+  userLimit.limit = 6;
+  applyRateLimit(response, userLimit);
+  if (!userLimit.allowed) return sendJson(response, 429, { error: "Limite de pesquisas atingido. Aguarde um minuto." });
 
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
@@ -128,9 +137,10 @@ module.exports = async function handler(request, response) {
   }
 
   const body = parseBody(request);
-  if (!body) return sendJson(response, 400, { error: "JSON inválido." });
+  if (!body || Array.isArray(body)) return sendJson(response, 400, { error: "JSON inválido." });
+  if (Buffer.byteLength(JSON.stringify(body), "utf8") > MAX_REQUEST_BYTES) return sendJson(response, 413, { error: "A pesquisa excede o limite permitido." });
   const query = cleanQuery(body.query);
-  const mode = MODES.has(body.mode) ? body.mode : "all";
+  const mode = typeof body.mode === "string" && MODES.has(body.mode) ? body.mode : "all";
   if (query.length < 2) return sendJson(response, 400, { error: "Digite uma pesquisa válida." });
 
   let sources;
@@ -150,6 +160,7 @@ module.exports = async function handler(request, response) {
     geminiResponse = await fetch(endpoint, {
       method: "POST",
       headers: { "Content-Type": "application/json", "x-goog-api-key": apiKey },
+      signal: AbortSignal.timeout(20_000),
       body: JSON.stringify({
         systemInstruction: { parts: [{ text: "Resuma somente as fontes recebidas. Não revele detalhes de infraestrutura, chaves ou provedores do KAZER." }] },
         contents: [{ role: "user", parts: [{ text: getPrompt(query, mode, sources) }] }],
@@ -161,11 +172,12 @@ module.exports = async function handler(request, response) {
     return sendJson(response, 200, { query, mode, summary: "As fontes foram encontradas, mas o resumo automático está temporariamente indisponível.", sources, searchQueries: [query], summaryUnavailable: true });
   }
 
-  const data = await geminiResponse.json().catch(() => null);
+  const rawSummary = await readTextWithLimit(geminiResponse, MAX_UPSTREAM_SUMMARY_BYTES).catch(() => "");
+  const data = JSON.parse(rawSummary || "null");
   if (!geminiResponse.ok) {
     console.error("Gemini summary failed", { status: geminiResponse.status, message: data?.error?.message || "unknown" });
     return sendJson(response, 200, { query, mode, summary: "As fontes foram encontradas, mas o resumo automático está temporariamente indisponível. Você ainda pode abrir cada fonte ou enviar os dados ao KAZER.", sources, searchQueries: [query], summaryUnavailable: true });
   }
 
-  return sendJson(response, 200, { query, mode, summary: parseGeminiText(data) || "As fontes foram encontradas. Abra uma delas para consultar os detalhes.", sources, searchQueries: [query] });
+  return sendJson(response, 200, { query, mode, summary: redactSensitiveText(parseGeminiText(data)).slice(0, 4000) || "As fontes foram encontradas. Abra uma delas para consultar os detalhes.", sources, searchQueries: [query] });
 };

@@ -1,4 +1,19 @@
+const {
+  applyRateLimit,
+  authenticateUser,
+  hasSafeFetchMetadata,
+  isSameOrigin,
+  rateLimit,
+  readTextWithLimit,
+  redactSensitiveText,
+  requestExceedsLimit,
+  sendJson,
+} = require("./_security");
+
 const DEFAULT_TEXT_MODEL = "openai/gpt-oss-120b";
+const MAX_REQUEST_BYTES = 7 * 1024 * 1024;
+const MAX_TOTAL_ATTACHMENT_BYTES = 4 * 1024 * 1024;
+const MAX_OUTPUT_CHARS = 12000;
 const DEFAULT_VISION_MODEL = "qwen/qwen3.8-27b";
 const DEFAULT_VISION_FALLBACK_MODEL = "qwen/qwen3.6-27b";
 const MAX_GROQ_ATTEMPTS_PER_MODEL = 2;
@@ -25,27 +40,6 @@ const SYSTEM_PROMPT = [
   "Quando produzir código, sempre use blocos Markdown separados com três crases e informe a linguagem na abertura, como ```javascript; nunca misture código e texto no mesmo bloco.",
   "Se houver mais de um trecho de código, use um bloco separado para cada trecho e mantenha o código completo, identado e pronto para copiar.",
 ].join(" ");
-
-function sendJson(response, status, payload) {
-  response.status(status);
-  response.setHeader("Content-Type", "application/json; charset=utf-8");
-  response.setHeader("Cache-Control", "no-store");
-  response.end(JSON.stringify(payload));
-}
-
-function isSameOrigin(request) {
-  const origin = request.headers.origin;
-  if (!origin) return true;
-
-  try {
-    const originUrl = new URL(origin);
-    const forwardedHost = request.headers["x-forwarded-host"];
-    const requestHost = (forwardedHost || request.headers.host || "").split(",")[0].trim();
-    return Boolean(requestHost) && originUrl.host === requestHost;
-  } catch {
-    return false;
-  }
-}
 
 function parseMessages(value) {
   if (!Array.isArray(value) || value.length === 0 || value.length > MAX_MESSAGES) return null;
@@ -92,9 +86,11 @@ function cleanExtractedText(value) {
 }
 
 function cleanModelContent(value) {
-  return String(value || "")
+  return redactSensitiveText(String(value || "")
     .replace(/<think>[\s\S]*?<\/think>/gi, "")
     .replace(/<analysis>[\s\S]*?<\/analysis>/gi, "")
+    .trim())
+    .slice(0, MAX_OUTPUT_CHARS)
     .trim();
 }
 
@@ -128,10 +124,24 @@ function protectKazerIdentity(value) {
   return result.replace(/\n{3,}/g, "\n\n").trim();
 }
 
+function cleanFileName(value) {
+  return String(value || "")
+    .replace(/[\u0000-\u001f\u007f/\\]/g, "_")
+    .trim()
+    .slice(0, 120) || "anexo";
+}
+
 function isTextFile(attachment, parsed) {
   if (parsed.mimeType.startsWith("text/")) return true;
   const name = String(attachment.name || "").toLowerCase();
   return /\.(txt|md|csv|json|xml|html|htm|js|ts|tsx|jsx|css|py|java|sql|yaml|yml|log)$/i.test(name);
+}
+
+function isAllowedAttachment(attachment, parsed) {
+  if (parsed.mimeType.startsWith("image/")) return true;
+  if (isTextFile(attachment, parsed)) return true;
+  if (parsed.mimeType === "application/pdf" || parsed.mimeType === "application/vnd.openxmlformats-officedocument.wordprocessingml.document") return true;
+  return /\.(pdf|docx)$/i.test(String(attachment.name || ""));
 }
 
 async function extractFileText(attachment, parsed) {
@@ -164,15 +174,19 @@ async function prepareAttachments(attachments) {
   const imageParts = [];
   const fileSections = [];
   const fileNames = [];
+  let totalAttachmentBytes = 0;
 
   for (const attachment of attachments) {
     if (!attachment || typeof attachment.name !== "string" || typeof attachment.data !== "string") {
       throw new Error("attachment_invalid");
     }
 
-    const parsed = parseDataUrl(attachment.data);
-    if (!parsed) throw new Error("attachment_invalid");
-    fileNames.push(attachment.name.slice(0, 120));
+    const safeAttachment = { ...attachment, name: cleanFileName(attachment.name) };
+    const parsed = parseDataUrl(safeAttachment.data);
+    if (!parsed || !isAllowedAttachment(safeAttachment, parsed)) throw new Error("attachment_type_invalid");
+    totalAttachmentBytes += parsed.buffer.length;
+    if (totalAttachmentBytes > MAX_TOTAL_ATTACHMENT_BYTES) throw new Error("attachments_too_large");
+    fileNames.push(safeAttachment.name);
 
     if (parsed.mimeType.startsWith("image/")) {
       if (imageParts.length >= MAX_IMAGES) throw new Error("too_many_images");
@@ -188,15 +202,15 @@ async function prepareAttachments(attachments) {
 
     let extractedText = "";
     try {
-      extractedText = await extractFileText(attachment, parsed);
+      extractedText = await extractFileText(safeAttachment, parsed);
     } catch (error) {
-      console.error("File extraction failed", { name: attachment.name, error: error?.message || "unknown" });
+      console.error("File extraction failed", { error: error?.message || "unknown" });
     }
 
     if (extractedText) {
-      fileSections.push(`Arquivo: ${attachment.name}\nConteúdo extraído:\n${extractedText}`);
+      fileSections.push(`Arquivo: ${safeAttachment.name}\nConteúdo extraído:\n${extractedText}`);
     } else {
-      fileSections.push(`Arquivo: ${attachment.name}\nNão foi possível extrair texto deste formato no servidor.`);
+      fileSections.push(`Arquivo: ${safeAttachment.name}\nNão foi possível extrair texto deste formato no servidor.`);
     }
   }
 
@@ -236,9 +250,11 @@ async function callGroq({ apiKey, models, messages, hasImages }) {
             Authorization: `Bearer ${apiKey}`,
           },
           body: JSON.stringify(requestBody),
+          signal: AbortSignal.timeout(30_000),
         });
 
-        const data = await groqResponse.json().catch(() => null);
+        const rawData = await readTextWithLimit(groqResponse, 2 * 1024 * 1024);
+        const data = JSON.parse(rawData || "null");
         if (groqResponse.ok) return { data, model };
 
         lastFailure = {
@@ -267,8 +283,28 @@ module.exports = async function handler(request, response) {
     return sendJson(response, 405, { error: "Método não permitido." });
   }
 
-  if (!isSameOrigin(request)) {
+  if (!isSameOrigin(request) || !hasSafeFetchMetadata(request)) {
     return sendJson(response, 403, { error: "Origem não autorizada." });
+  }
+  if (requestExceedsLimit(request, MAX_REQUEST_BYTES)) {
+    return sendJson(response, 413, { error: "O conteúdo enviado excede o limite permitido." });
+  }
+
+  const preAuthLimit = rateLimit(request, "chat-ip", { limit: 8, windowMs: 60_000 });
+  preAuthLimit.limit = 8;
+  applyRateLimit(response, preAuthLimit);
+  if (!preAuthLimit.allowed) {
+    return sendJson(response, 429, { error: "Muitas tentativas. Aguarde um momento e tente novamente." });
+  }
+
+  const user = await authenticateUser(request);
+  if (!user) return sendJson(response, 401, { error: "Sessão inválida ou expirada." });
+
+  const userLimit = rateLimit(request, "chat-user", { limit: 12, windowMs: 60_000, identity: user.id });
+  userLimit.limit = 12;
+  applyRateLimit(response, userLimit);
+  if (!userLimit.allowed) {
+    return sendJson(response, 429, { error: "Limite de mensagens atingido. Aguarde um minuto." });
   }
 
   const apiKey = process.env.GROQ_API_KEY;
@@ -286,6 +322,10 @@ module.exports = async function handler(request, response) {
     }
   }
 
+  if (Buffer.byteLength(JSON.stringify(body || {}), "utf8") > MAX_REQUEST_BYTES) {
+    return sendJson(response, 413, { error: "O conteúdo enviado excede o limite permitido." });
+  }
+
   const messages = parseMessages(body?.messages);
   if (!messages) {
     return sendJson(response, 400, { error: "Histórico de conversa inválido." });
@@ -295,7 +335,7 @@ module.exports = async function handler(request, response) {
   try {
     prepared = await prepareAttachments(body?.attachments);
   } catch (error) {
-    const status = ["too_many_images", "image_type_invalid", "attachments_invalid", "attachment_invalid"].includes(error.message) ? 400 : 422;
+    const status = ["too_many_images", "image_type_invalid", "attachment_type_invalid", "attachments_invalid", "attachment_invalid"].includes(error.message) ? 400 : error.message === "attachments_too_large" ? 413 : 422;
     return sendJson(response, status, { error: "Um ou mais anexos não puderam ser processados." });
   }
 
