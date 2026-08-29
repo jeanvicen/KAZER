@@ -94,3 +94,77 @@ Não execute o job de retenção com credenciais reais durante testes sem confir
 A moderação baseada em padrões é uma camada preventiva local, não substitui políticas de uso, revisão humana ou filtros especializados do provedor. A proteção contra prompt injection é uma instrução de defesa em profundidade; nenhum modelo deve ser considerado capaz de eliminar esse risco sozinho. O rate limit em memória é best effort em funções serverless; para limites distribuídos entre instâncias, use armazenamento compartilhado ou controles nativos do provedor.
 
 Antes de produção, mantenha todas as chaves privadas como variáveis secretas na Vercel, aplique as migrações Supabase, confirme o domínio HTTPS, configure `PUBLIC_APP_ORIGINS` e execute `npm run security:check` e `npm run security:audit -- --audit-level=high`.
+
+
+## Checklist complementar incorporado
+
+Esta seção consolida os itens adicionais do checklist recebido e não substitui os controles técnicos descritos acima. Um item marcado como **pendente** não deve ser tratado como implementado apenas porque está documentado.
+
+### 1. Secrets e chaves
+
+**Implementado:** chaves privadas da IA, tokens administrativos e segredos de cron ficam no backend por variáveis privadas da Vercel; não são colocados no frontend. O repositório possui verificação automatizada para padrões comuns de chaves e tokens. O uso de ambientes separados de desenvolvimento e produção é uma **recomendação operacional pendente**, que deve ser configurada na Vercel.
+
+**Procedimento em caso de exposição:** revogar imediatamente a chave comprometida, emitir uma nova, revisar logs, verificar o histórico Git e atualizar somente as variáveis secretas do ambiente. Senhas, tokens, cookies e API keys nunca devem ser registrados em logs.
+
+### 2. Autenticação, autorização e sessões
+
+**Implementado:** as rotas privadas de chat e pesquisa validam no servidor o bearer token da sessão Supabase; o usuário é identificado pelo token validado, não por `user_id` enviado pelo cliente. O Supabase Auth administra expiração, revogação, login, cadastro e recuperação de senha.
+
+**Pendente de teste operacional:** testar explicitamente acesso sem login, token inválido, token expirado, sessão revogada e tentativas de alterar identificadores de usuário, mensagens, memórias ou arquivos. O app não possui uma camada própria de JWT nem cookies `HttpOnly`; utiliza o token de sessão do Supabase conforme a arquitetura atual.
+
+### 3. Autorização, banco, memória e RAG
+
+**Implementado:** as migrações SQL habilitam RLS, policies por `auth.uid()` e grants mínimos. As APIs não aceitam um identificador de usuário para escolher a identidade autenticada.
+
+**Não aplicável no fluxo atual:** o KAZER não possui atualmente um sistema próprio de memória persistente ou RAG de documentos por usuário. Se esse recurso for adicionado, cada registro deverá ter proprietário/tenant, verificar autorização antes de ler/alterar/apagar e tratar conteúdo recuperado como não confiável.
+
+### 4. Rate limiting e abuso
+
+**Implementado:** chat e pesquisa possuem limites por IP e por usuário autenticado, limites de corpo, limites de anexos e timeouts. **Parcial:** login, cadastro e recuperação de senha são executados pelo Supabase Auth e dependem dos limites e proteções configurados nesse serviço; não há um endpoint próprio do KAZER para pagamentos, créditos ou criação de tokens.
+
+O rate limit em memória é best effort em serverless e não substitui limite distribuído do provedor. Antes de produção, deve-se testar rajadas simultâneas, abuso de anexos e consumo excessivo de recursos.
+
+### 5. Segurança da IA e prompt injection
+
+**Implementado:** instruções internas são separadas dos dados do usuário; mensagens, anexos e resultados de pesquisa são tratados como não confiáveis; o prompt ordena ignorar tentativas de alterar regras, revelar instruções internas, assumir outra identidade ou executar ações não autorizadas. O endpoint não expõe ferramentas gerais ao modelo e não contém secrets no prompt.
+
+**Pendente de teste autorizado:** tentar prompt injection, exfiltração de contexto, manipulação de conteúdo recuperado e solicitações de ações não permitidas em ambiente controlado. A proteção por prompt é defesa em profundidade e não é garantia absoluta.
+
+### 6. API, injection, XSS e SSRF
+
+**Implementado:** inputs são validados no backend, corpos e respostas têm limites, upstreams têm timeout, métodos e origens são restringidos, erros não devolvem detalhes internos, consultas de banco usam filtros/queries parametrizadas e conteúdo exibido no navegador é escapado.
+
+**SSRF:** o servidor consulta somente provedores de busca fixos e não acessa URLs arbitrárias fornecidas pelo usuário. URLs retornadas como fontes são apresentadas ao cliente, não buscadas pelo servidor como destino controlável pelo usuário.
+
+### 7. Uploads
+
+**Implementado:** há allowlist de tipos, validação de MIME/extensão, limite de tamanho, limite de quantidade, normalização de nomes, processamento em memória e extração limitada. Arquivos enviados não são executados.
+
+**Pendente se o produto ganhar armazenamento persistente:** associar cada arquivo ao usuário/tenant, validar autorização em toda leitura, manter armazenamento privado e testar extensão falsa, MIME inesperado e nomes malformados.
+
+### 8. Pagamentos, webhooks e administração
+
+**Não aplicável ao fluxo atual:** não existem endpoint de pagamentos, webhook de cobrança, carteira de créditos ou painel administrativo no escopo atual. Caso sejam adicionados, deverão validar assinatura no backend, usar idempotência, manter o servidor como fonte de verdade, aplicar menor privilégio e registrar ações administrativas sem expor dados sensíveis.
+
+### 9. Logs, headers e HTTPS
+
+**Implementado:** respostas de API não usam cache, erros devolvidos ao cliente são genéricos, a configuração aplica CSP, HSTS, `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`, Permissions Policy, isolamento de origem e `upgrade-insecure-requests`. O código não registra chaves, tokens ou senhas.
+
+**Pendente de operação:** centralizar alertas para falhas de autenticação, abuso, picos de uso e eventos administrativos, revisar retenção de logs e confirmar o redirecionamento HTTP para HTTPS no domínio de produção.
+
+### 10. Dependências, CI/CD e backups
+
+**Implementado:** `npm run security:check` verifica políticas, headers, autenticação, rate limit, moderação, prompt injection, RLS e padrões de secrets; `npm run security:audit -- --audit-level=high` verifica vulnerabilidades de dependências; o lockfile é versionado.
+
+**Pendente de operação:** executar os comandos em cada push/pull request, revisar dependências novas e configurar proteção do pipeline. Backups e restauração são responsabilidade da infraestrutura Supabase/Vercel e devem ser configurados, protegidos e testados separadamente; não há backup próprio implementado pelo KAZER.
+
+## Roteiro mínimo de validação antes de produção
+
+1. Testar APIs sem login, com token inválido, expirado e revogado.
+2. Testar isolamento entre duas contas e confirmar que IDs enviados pelo cliente não alteram a identidade autenticada.
+3. Enviar requests grandes, tipos inesperados, muitas mensagens, muitos anexos e múltiplas requisições simultâneas.
+4. Testar HTML, Markdown e conteúdo malicioso vindo do usuário, da IA, de fontes web e de anexos.
+5. Testar tentativas de prompt injection sem usar dados reais ou ações destrutivas.
+6. Confirmar headers HTTPS no domínio de produção e revisar logs para garantir ausência de secrets.
+7. Executar `npm run security:check` e `npm run security:audit -- --audit-level=high` antes de cada publicação.
+8. Aplicar e testar as migrações Supabase em ambiente controlado; manter `RETENTION_DELETE_ENABLED=false` até concluir o procedimento de backup e restauração.
