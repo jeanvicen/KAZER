@@ -13,7 +13,7 @@
   "backgroundColor": "#070707",
   "enableNotifications": true,
   "startUrl": "/chat",
-  "iconUrl": "https://kazer.vercel.app/download/assets/kazer-login-symbol.png",
+  "iconUrl": "https://kazer.vercel.app/download/icons/kazer-512.png",
   "splashScreenFadeOutDuration": 300,
   "signingKey": {
     "path": ".secrets/kazer-dev.keystore",
