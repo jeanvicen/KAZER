@@ -19,6 +19,7 @@ const DEFAULT_VISION_FALLBACK_MODEL = "qwen/qwen3.6-27b";
 const MAX_GROQ_ATTEMPTS_PER_MODEL = 2;
 const RETRYABLE_GROQ_STATUSES = new Set([429, 500, 502, 503, 504]);
 const MAX_MESSAGES = 24;
+const MAX_RECEIVED_MESSAGES = 72;
 const MAX_MESSAGE_CHARS = 8000;
 const MAX_TOTAL_CHARS = 32000;
 const MAX_FILE_BYTES = 4 * 1024 * 1024;
@@ -61,12 +62,13 @@ function isModeratedRequest(messages) {
 }
 
 function parseMessages(value) {
-  if (!Array.isArray(value) || value.length === 0 || value.length > MAX_MESSAGES) return null;
+  if (!Array.isArray(value) || value.length === 0 || value.length > MAX_RECEIVED_MESSAGES) return null;
 
   let totalChars = 0;
   const messages = [];
+  const recentMessages = value.slice(-MAX_MESSAGES);
 
-  for (const item of value) {
+  for (const item of recentMessages) {
     if (!item || !["user", "assistant"].includes(item.role) || typeof item.content !== "string") return null;
 
     const content = cleanUserContent(item.content);
