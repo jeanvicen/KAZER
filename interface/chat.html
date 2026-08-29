@@ -2766,17 +2766,24 @@
         const kazerSupabase = window.supabase?.createClient(KAZER_SUPABASE_URL, KAZER_SUPABASE_ANON_KEY, {
           auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: false }
         });
-        const getApiHeaders = async () => {
+        const getApiHeaders = async (forceRefresh = false) => {
           if (!kazerSupabase) throw new Error("Sessão inválida ou expirada.");
           let { data: { session } = {} } = await kazerSupabase.auth.getSession();
           if (!session?.access_token) throw new Error("Sessão inválida ou expirada.");
           const expiresAt = Number(session.expires_at || 0) * 1000;
-          if (expiresAt && expiresAt - Date.now() < 60_000) {
+          if (forceRefresh || (expiresAt && expiresAt - Date.now() < 60_000)) {
             const refreshed = await kazerSupabase.auth.refreshSession();
+            if (refreshed.error) throw refreshed.error;
             session = refreshed.data?.session || session;
           }
           if (!session?.access_token) throw new Error("Sessão inválida ou expirada.");
           return { "Content-Type": "application/json", Accept: "application/json", Authorization: `Bearer ${session.access_token}` };
+        };
+        const fetchWithAuth = async (url, options = {}) => {
+          let response = await fetch(url, { ...options, headers: { ...(options.headers || {}), ...await getApiHeaders() } });
+          if (response.status !== 401) return response;
+          response = await fetch(url, { ...options, headers: { ...(options.headers || {}), ...await getApiHeaders(true) } });
+          return response;
         };
         let currentUser = null;
         const profileButton = document.getElementById("profileButton");
@@ -3233,7 +3240,7 @@
           webSources.innerHTML = '<div class="web-loading">Consultando fontes atuais…</div>';
           const startedAt = Date.now();
           try {
-            const response = await fetch("/api/web-search", { method: "POST", headers: await getApiHeaders(), body: JSON.stringify({ query, mode: webMode }) });
+            const response = await fetchWithAuth("/api/web-search", { method: "POST", body: JSON.stringify({ query, mode: webMode }) });
             const result = await response.json().catch(() => null);
             const remaining = Math.max(0, 650 - (Date.now() - startedAt));
             await new Promise((resolve) => window.setTimeout(resolve, remaining));
@@ -3686,9 +3693,8 @@
           try {
             const attachments = await Promise.all(files.map(fileToDataUrl));
             if (activeRequestController !== controller) return;
-            const result = await fetch("/api/chat", {
+            const result = await fetchWithAuth("/api/chat", {
               method: "POST",
-              headers: await getApiHeaders(),
               body: JSON.stringify({ messages: conversationMessages, attachments }),
               signal: controller.signal,
             });
