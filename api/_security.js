@@ -3,6 +3,9 @@ const crypto = require("node:crypto");
 const rateBuckets = new Map();
 const MAX_RATE_BUCKETS = 5000;
 const DEFAULT_AUTH_TIMEOUT_MS = 5000;
+// Fallback público do projeto Supabase; chaves privadas nunca entram no cliente.
+const PUBLIC_SUPABASE_URL = "https://mqjunopzycdezzjmlhip.supabase.co";
+const PUBLIC_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1xanVub3B6eWNkZXp6am1saGlwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc4Mzg3NDksImV4cCI6MjEwMzQxNDc0OX0.Y_o2_QQhZzuCjvHdEfxaR5VrAxo7NFenPaDmdHN3bwM";
 
 function sendJson(response, status, payload, extraHeaders = {}) {
   response.status(status);
@@ -67,7 +70,7 @@ function getBearerToken(request) {
 }
 
 function supabaseBaseUrl() {
-  const value = String(process.env.SUPABASE_URL || "").trim().replace(/\/$/, "");
+  const value = String(process.env.SUPABASE_URL || PUBLIC_SUPABASE_URL).trim().replace(/\/$/, "");
   try {
     const url = new URL(value);
     if (url.protocol !== "https:" || url.username || url.password) return null;
@@ -80,7 +83,7 @@ function supabaseBaseUrl() {
 async function authenticateUser(request) {
   const token = getBearerToken(request);
   const baseUrl = supabaseBaseUrl();
-  const anonKey = String(process.env.SUPABASE_ANON_KEY || process.env.SUPABASE_PUBLIC_ANON_KEY || "").trim();
+  const anonKey = String(process.env.SUPABASE_ANON_KEY || process.env.SUPABASE_PUBLIC_ANON_KEY || PUBLIC_SUPABASE_ANON_KEY).trim();
   if (!token || !baseUrl || !anonKey) return null;
 
   try {
