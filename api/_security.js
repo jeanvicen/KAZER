@@ -70,7 +70,7 @@ function getBearerToken(request) {
 }
 
 function supabaseBaseUrl() {
-  const value = String(process.env.SUPABASE_URL || PUBLIC_SUPABASE_URL).trim().replace(/\/$/, "");
+  const value = PUBLIC_SUPABASE_URL;
   try {
     const url = new URL(value);
     if (url.protocol !== "https:" || url.username || url.password) return null;
@@ -83,7 +83,7 @@ function supabaseBaseUrl() {
 async function authenticateUser(request) {
   const token = getBearerToken(request);
   const baseUrl = supabaseBaseUrl();
-  const anonKey = String(process.env.SUPABASE_ANON_KEY || process.env.SUPABASE_PUBLIC_ANON_KEY || PUBLIC_SUPABASE_ANON_KEY).trim();
+  const anonKey = PUBLIC_SUPABASE_ANON_KEY;
   if (!token || !baseUrl || !anonKey) return null;
 
   try {
