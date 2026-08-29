@@ -1245,53 +1245,6 @@
         color: #cfaa58 !important;
       }
 
-      .laboratory-action {
-        position: relative;
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        width: 100%;
-        min-height: 68px;
-        padding: 10px 20px;
-        border-bottom: 1px solid rgba(156, 135, 255, 0.18);
-        background: linear-gradient(105deg, rgba(83, 63, 184, 0.14), rgba(50, 120, 210, 0.06) 52%, rgba(83, 63, 184, 0.12));
-        color: var(--text);
-        text-align: left;
-        cursor: pointer;
-        transition: background 160ms var(--ease), filter 160ms var(--ease), transform 160ms var(--ease);
-      }
-
-      .laboratory-action:hover {
-        background: linear-gradient(105deg, rgba(100, 76, 220, 0.24), rgba(50, 120, 210, 0.1) 52%, rgba(100, 76, 220, 0.2));
-        filter: brightness(1.1);
-      }
-
-      .laboratory-badge {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        width: 38px;
-        height: 38px;
-        flex: 0 0 auto;
-        border: 1px solid rgba(156, 135, 255, 0.48);
-        border-radius: 12px;
-        color: var(--violet);
-        background: rgba(156, 135, 255, 0.1);
-        box-shadow: 0 0 18px rgba(110, 88, 255, 0.18);
-        font-size: 18px;
-      }
-
-      .laboratory-copy,
-      .laboratory-copy strong,
-      .laboratory-copy small {
-        position: relative;
-        display: block;
-      }
-
-      .laboratory-copy { min-width: 0; flex: 1; }
-      .laboratory-copy strong { font-size: 14px; font-weight: 700; }
-      .laboratory-copy small { margin-top: 4px; color: var(--text-soft); font-size: 10px; }
-      .laboratory-arrow { color: var(--violet) !important; }
 
       .menu-action {
         display: flex;
@@ -2708,8 +2661,6 @@
         </div>
         <div class="menu-actions">
           <button class="pro-action" id="proAction" type="button" aria-label="Obter Kazer Pro"><span class="pro-badge">PRO</span><span class="pro-copy"><strong>Kazer Pro</strong><small>Obter mais do KAZER</small></span><svg class="icon pro-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"></path></svg></button>
-          <button class="laboratory-action" id="laboratoryAction" type="button" aria-label="Abrir Laboratory"><span class="laboratory-badge" aria-hidden="true">⌘</span><span class="laboratory-copy"><strong>Laboratory</strong><small>KAZER CODER em beta</small></span><svg class="icon laboratory-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"></path></svg></button>
-          <div class="profile-more" id="profileMore"><button class="profile-more-toggle" id="profileMoreToggle" type="button" aria-expanded="false"><span>Mais opções</span><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg></button><div class="profile-more-options"><button class="profile-more-option" id="webKazerAction" type="button"><span>WebKazer<br><small>Pesquisa na web</small></span><span aria-hidden="true">↗</span></button></div></div>
           <button class="menu-action" id="settingsAction" type="button"><span>Settings</span><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6 7 7M17 17l1.4 1.4M18.4 5.6 17 7M7 17l-1.4 1.4"></path><circle cx="12" cy="12" r="3.5"></circle></svg></button>
         </div>
       </div>
@@ -2825,7 +2776,6 @@
         const settingsPopover = document.getElementById("settingsPopover");
         const webPopover = document.getElementById("webPopover");
         const proAction = document.getElementById("proAction");
-        const laboratoryAction = document.getElementById("laboratoryAction");
         const profileMore = document.getElementById("profileMore");
         const profileMoreToggle = document.getElementById("profileMoreToggle");
         const webKazerAction = document.getElementById("webKazerAction");
@@ -3809,11 +3759,6 @@
           profileMoreToggle.setAttribute("aria-expanded", String(isOpen));
         });
         webKazerAction.addEventListener("click", () => openWeb());
-        laboratoryAction.addEventListener("click", () => {
-          closeMenus();
-          const coderPath = window.location.pathname.includes("/interface/") ? "../kaze-coder/" : "/kaze-coder/";
-          window.location.assign(coderPath);
-        });
         proAction.addEventListener("click", () => {
           closeMenus();
           showToast("Kazer Pro: página de compra em breve");
