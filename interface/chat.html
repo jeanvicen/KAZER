@@ -2767,7 +2767,14 @@
           auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: false }
         });
         const getApiHeaders = async () => {
-          const { data: { session } = {} } = await kazerSupabase?.auth.getSession() || {};
+          if (!kazerSupabase) throw new Error("Sessão inválida ou expirada.");
+          let { data: { session } = {} } = await kazerSupabase.auth.getSession();
+          if (!session?.access_token) throw new Error("Sessão inválida ou expirada.");
+          const expiresAt = Number(session.expires_at || 0) * 1000;
+          if (expiresAt && expiresAt - Date.now() < 60_000) {
+            const refreshed = await kazerSupabase.auth.refreshSession();
+            session = refreshed.data?.session || session;
+          }
           if (!session?.access_token) throw new Error("Sessão inválida ou expirada.");
           return { "Content-Type": "application/json", Accept: "application/json", Authorization: `Bearer ${session.access_token}` };
         };
