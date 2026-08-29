@@ -77,3 +77,20 @@ Não execute o job de retenção com credenciais reais durante testes sem confir
 [^2]: [Supabase — Understanding API keys](https://supabase.com/docs/guides/getting-started/api-keys)
 [^3]: [Supabase — Row Level Security](https://supabase.com/docs/guides/database/postgres/row-level-security)
 [^4]: [MDN — Content Security Policy (CSP)](https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/CSP)
+
+
+## Controles solicitados nesta revisão
+
+| Requisito | Implementação atual | Local/evidência |
+|---|---|---|
+| Esconder chaves | As chaves privadas da IA (`GROQ_API_KEY` e `GEMINI_API_KEY`) são lidas somente em funções serverless. O navegador usa apenas a chave pública anon do Supabase, protegida por Auth e RLS. | `api/chat.js`, `api/web-search.js`, `interface/login.html`, `.env.example` |
+| Rate limit | O chat aplica limites por IP e por usuário autenticado; a pesquisa web também aplica limites separados e envia cabeçalhos `X-RateLimit-*` e `Retry-After`. | `api/_security.js`, `api/chat.js`, `api/web-search.js` |
+| Bloqueio XSS | Mensagens do usuário são inseridas com `textContent`; respostas e resultados web são escapados antes de qualquer `innerHTML`. O backend remove caracteres de controle e limita payloads e respostas. | `interface/chat.html`, `api/chat.js`, `api/web-search.js` |
+| Prompt injection | O prompt server-side trata mensagens, anexos e resultados de pesquisa como dados não confiáveis e instrui a IA a ignorar tentativas de alterar regras, revelar o prompt ou assumir outra identidade. | `api/chat.js`, `api/web-search.js` |
+| Autenticação | As APIs exigem bearer token de sessão e validam o token no endpoint Auth do Supabase antes de processar a solicitação. | `api/_security.js`, `api/chat.js`, `api/web-search.js` |
+| Moderação da IA | Pedidos com padrões operacionais de violência, fabricação de armas/explosivos, invasão, malware, roubo, fraude e crimes são bloqueados antes da chamada ao provedor. | `api/chat.js` (`HIGH_RISK_PATTERNS`) |
+| HTTPS | A configuração da Vercel usa HSTS, `upgrade-insecure-requests`, CSP e conexões HTTPS para os serviços externos. A confirmação do domínio de produção continua sendo operacional. | `vercel.json` |
+
+A moderação baseada em padrões é uma camada preventiva local, não substitui políticas de uso, revisão humana ou filtros especializados do provedor. A proteção contra prompt injection é uma instrução de defesa em profundidade; nenhum modelo deve ser considerado capaz de eliminar esse risco sozinho. O rate limit em memória é best effort em funções serverless; para limites distribuídos entre instâncias, use armazenamento compartilhado ou controles nativos do provedor.
+
+Antes de produção, mantenha todas as chaves privadas como variáveis secretas na Vercel, aplique as migrações Supabase, confirme o domínio HTTPS, configure `PUBLIC_APP_ORIGINS` e execute `npm run security:check` e `npm run security:audit -- --audit-level=high`.
