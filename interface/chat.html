@@ -1095,10 +1095,6 @@
         display: none;
       }
 
-      .attachment-plugin-row {
-        padding-top: 4px;
-      }
-
       .attachment-sheet-icon {
         display: inline-flex;
         align-items: center;
@@ -1142,89 +1138,6 @@
         font-size: 11px;
         text-align: center;
       }
-      .plugins-action {
-        position: relative;
-        gap: 14px;
-        padding: 13px 4px;
-        border-bottom: 0;
-      }
-      .plugins-action::after {
-        content: "";
-        width: 8px;
-        height: 8px;
-        margin-left: auto;
-        border-top: 1px solid var(--text-dim);
-        border-right: 1px solid var(--text-dim);
-        transform: rotate(45deg);
-        flex: 0 0 auto;
-      }
-      .plugin-sheet {
-        z-index: 94;
-      }
-      .plugin-sheet-head {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 12px;
-        padding: 0 2px 12px;
-        flex: 0 0 auto;
-      }
-      .plugin-sheet-head h2 {
-        margin: 0;
-        color: var(--text);
-        font-size: 18px;
-        font-weight: 550;
-        letter-spacing: -0.02em;
-      }
-      .plugin-sheet-head-actions {
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-      }
-      .plugin-sheet-add,
-      .plugin-sheet-close {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        width: 34px;
-        height: 34px;
-        border: 1px solid var(--line);
-        border-radius: 50%;
-        background: transparent;
-        color: var(--text-soft);
-        cursor: pointer;
-        transition: background 160ms var(--ease), color 160ms var(--ease), transform 160ms var(--ease);
-      }
-      .plugin-sheet-add {
-        font-size: 24px;
-        font-weight: 300;
-        line-height: 1;
-      }
-      .plugin-sheet-close {
-        font-size: 25px;
-        font-weight: 250;
-        line-height: 1;
-      }
-      .plugin-sheet-add:hover,
-      .plugin-sheet-close:hover {
-        background: var(--card-2);
-        color: var(--text);
-      }
-      .plugin-sheet-add:active,
-      .plugin-sheet-close:active {
-        transform: scale(.95);
-      }
-      .plugin-sheet-empty {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        min-height: 180px;
-        padding: 36px 16px;
-        color: var(--text-dim);
-        font-size: 12px;
-        text-align: center;
-      }
-
       @media (min-width: 681px) {
         .attachment-sheet {
           right: auto;
