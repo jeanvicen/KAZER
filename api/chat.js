@@ -9,6 +9,7 @@ const {
   requestExceedsLimit,
   sendJson,
 } = require("./_security");
+const { callUsageRpc } = require("./_usage");
 
 const DEFAULT_TEXT_MODEL = "openai/gpt-oss-120b";
 const MAX_REQUEST_BYTES = 7 * 1024 * 1024;
@@ -363,6 +364,29 @@ module.exports = async function handler(request, response) {
     return sendJson(response, status, { error: "Um ou mais anexos não puderam ser processados." });
   }
 
+  let usage;
+  try {
+    usage = await callUsageRpc(request, "consume_chat_usage", {
+      p_credit_amount: 1,
+      p_has_attachment: prepared.fileNames.length > 0,
+    });
+  } catch (error) {
+    if (error.code === "credits_limit_reached") {
+      return sendJson(response, 402, {
+        error: "Você atingiu seu limite de créditos.",
+        usage: { credits_limit_reached: true },
+      });
+    }
+    if (error.code === "attachment_limit_reached") {
+      return sendJson(response, 409, {
+        error: "Você atingiu o limite de anexos do plano Free.",
+        usage: { attachment_limit_reached: true },
+      });
+    }
+    console.error("Usage reservation failed", error?.message || "unknown");
+    return sendJson(response, 503, { error: "Não foi possível validar os limites da conta agora." });
+  }
+
   const hasImages = prepared.imageParts.length > 0;
   const models = hasImages
     ? [
@@ -399,5 +423,6 @@ module.exports = async function handler(request, response) {
   return sendJson(response, 200, {
     message: { role: "assistant", content: content.trim() },
     attachments: prepared.fileNames,
+    usage,
   });
 };

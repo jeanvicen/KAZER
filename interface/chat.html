@@ -220,6 +220,12 @@
         pointer-events: auto;
       }
 
+      .credit-indicator { position: absolute; top: max(18px, env(safe-area-inset-top)); left: clamp(18px, 4vw, 40px); display: inline-flex; align-items: center; gap: 8px; min-height: 40px; padding: 0 13px; border: 1px solid rgba(255,255,255,.14); border-radius: 999px; background: color-mix(in srgb, var(--card) 78%, transparent); color: var(--text); box-shadow: 0 6px 22px rgba(0,0,0,.16); backdrop-filter: blur(14px); transition: transform 260ms var(--ease), border-color 260ms var(--ease), box-shadow 260ms var(--ease); }
+      .credit-indicator.is-changing { transform: translateY(-1px) scale(1.035); border-color: rgba(231,188,105,.55); box-shadow: 0 0 22px rgba(231,188,105,.15); }
+      .credit-indicator-icon { color: var(--warning); font-size: 16px; line-height: 1; }
+      .credit-indicator-value { min-width: 3ch; font-size: 16px; font-weight: 750; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+      @media (max-width: 560px) { .credit-indicator { left: 14px; min-height: 36px; padding: 0 10px; } .credit-indicator-value { font-size: 15px; } }
+
       .conversation-title {
         color: transparent;
         background: var(--metal-gradient);
@@ -2134,6 +2140,17 @@
         color: var(--text) !important;
       }
 
+      .attachment-limit-banner { position: absolute; z-index: 16; right: 18px; bottom: calc(max(24px, env(safe-area-inset-bottom)) + 178px); left: 18px; display: grid; gap: 4px; width: min(640px, calc(100% - 36px)); margin: 0 auto; padding: 12px 15px; border: 1px solid rgba(231,188,105,.26); border-radius: 15px; background: color-mix(in srgb, var(--card) 92%, transparent); box-shadow: 0 12px 30px rgba(0,0,0,.18); backdrop-filter: blur(14px); color: var(--text-soft); }
+      .attachment-limit-banner strong { color: var(--text); font-size: 13px; }
+      .attachment-limit-banner span, .attachment-limit-banner small { font-size: 12px; }
+      .attachment-limit-banner button, .credit-limit-card button { justify-self: start; margin-top: 5px; padding: 8px 11px; border-radius: 9px; background: var(--text); color: var(--accent-ink); font-size: 12px; font-weight: 700; cursor: pointer; }
+      .credit-limit-modal { position: fixed; z-index: 80; inset: 0; display: grid; place-items: center; padding: 22px; background: rgba(0,0,0,.58); backdrop-filter: blur(8px); }
+      .credit-limit-card { width: min(390px,100%); padding: 28px; border: 1px solid rgba(231,188,105,.3); border-radius: 24px; background: var(--card); box-shadow: 0 24px 70px rgba(0,0,0,.34); text-align: center; }
+      .credit-limit-icon { color: var(--warning); font-size: 26px; }
+      .credit-limit-card h2 { margin: 12px 0 8px; color: var(--text); font-size: 21px; }
+      .credit-limit-card p, .credit-limit-card small { display: block; margin: 0 0 10px; color: var(--text-soft); line-height: 1.45; }
+      .credit-limit-card button { justify-self: center; margin-top: 10px; }
+
       .retention-banner {
         position: fixed;
         z-index: 111;
@@ -2648,6 +2665,7 @@
         <button class="retention-dismiss" id="retentionDismiss" type="button" aria-label="Fechar aviso">×</button>
       </aside>
       <header class="topbar" aria-label="Barra de conversa">
+        <div class="credit-indicator" id="creditIndicator" aria-label="Saldo de créditos" hidden><span class="credit-indicator-icon" aria-hidden="true">✦</span><span class="credit-indicator-value" id="creditBalanceValue">0</span></div>
         <span class="conversation-title">KAZER</span>
         <button class="new-chat-button" id="newChatButton" type="button" aria-label="Nova conversa" hidden>+</button>
         <button class="profile-button" id="profileButton" type="button" aria-label="Abrir perfil" aria-expanded="false"><span class="avatar-photo" aria-hidden="true"></span></button>
@@ -2705,6 +2723,8 @@
         </section>
       </section>
 
+      <aside class="attachment-limit-banner" id="attachmentLimitBanner" hidden aria-live="polite"><strong>Você usou seu limite de anexos.</strong><span>Mude para o Kazer Pro para enviar mais anexos.</span><small>Seus anexos serão liberados em <b id="attachmentResetValue">—</b>.</small><button type="button" id="attachmentProButton">Conhecer Kazer Pro</button></aside>
+      <section class="credit-limit-modal" id="creditLimitModal" hidden role="dialog" aria-modal="true" aria-labelledby="creditLimitTitle"><div class="credit-limit-card"><span class="credit-limit-icon" aria-hidden="true">✦</span><h2 id="creditLimitTitle">Você atingiu seu limite de créditos.</h2><p>Mude para o Kazer Pro para continuar usando mais recursos.</p><small>Seus créditos serão renovados em <b id="creditResetValue">—</b>.</small><button type="button" id="creditProButton">Conhecer Kazer Pro</button></div></section>
       <div class="web-popover" id="webPopover" role="dialog" aria-label="WebKazer">
         <h2>WebKazer</h2>
         <p class="web-subtitle">Pesquise na web, imagens, vídeos e notícias; traga contexto para o KAZER.</p>
@@ -2851,11 +2871,21 @@
         const retentionMessage = document.getElementById("retentionMessage");
         const retentionKeepActive = document.getElementById("retentionKeepActive");
         const retentionDismiss = document.getElementById("retentionDismiss");
+        const creditIndicator = document.getElementById("creditIndicator");
+        const creditBalanceValue = document.getElementById("creditBalanceValue");
+        const creditLimitModal = document.getElementById("creditLimitModal");
+        const creditResetValue = document.getElementById("creditResetValue");
+        const creditProButton = document.getElementById("creditProButton");
+        const attachmentLimitBanner = document.getElementById("attachmentLimitBanner");
+        const attachmentResetValue = document.getElementById("attachmentResetValue");
+        const attachmentProButton = document.getElementById("attachmentProButton");
         const installBanner = document.getElementById("installBanner");
         const installNow = document.getElementById("installNow");
         const installLater = document.getElementById("installLater");
         const installDismiss = document.getElementById("installDismiss");
         let deferredInstallPrompt = null;
+        let usageState = null;
+        let usageRefreshTimer = null;
         let busy = false;
         let activeRequestController = null;
         let toastTimer = null;
@@ -2893,6 +2923,66 @@
           [profileDisplayName, settingsAccountName].forEach((element) => { if (element) element.textContent = displayName; });
           [profileEmail, settingsAccountEmail].forEach((element) => { if (element) element.textContent = email; });
           if (settingsAccountAvatar) settingsAccountAvatar.textContent = initial;
+        };
+
+        const formatResetTime = (value) => {
+          if (!value) return "—";
+          const date = new Date(value);
+          if (Number.isNaN(date.getTime())) return "—";
+          return new Intl.DateTimeFormat("pt-BR", { dateStyle: "short", timeStyle: "short", timeZone: "UTC" }).format(date) + " UTC";
+        };
+
+        const animateCreditBalance = (target, animate = true) => {
+          if (!creditBalanceValue) return;
+          const next = Math.max(0, Number(target) || 0);
+          const previous = Number(creditBalanceValue.dataset.value ?? next);
+          creditBalanceValue.dataset.value = String(next);
+          if (!animate || previous === next) { creditBalanceValue.textContent = String(next); return; }
+          creditIndicator?.classList.add("is-changing");
+          const start = performance.now();
+          const duration = 420;
+          const step = (now) => {
+            const progress = Math.min(1, (now - start) / duration);
+            const eased = 1 - Math.pow(1 - progress, 3);
+            creditBalanceValue.textContent = String(Math.round(previous + (next - previous) * eased));
+            if (progress < 1) requestAnimationFrame(step);
+            else { creditBalanceValue.textContent = String(next); window.setTimeout(() => creditIndicator?.classList.remove("is-changing"), 180); }
+          };
+          requestAnimationFrame(step);
+        };
+
+        const applyUsageState = (next, animate = true) => {
+          if (!next || typeof next !== "object") return;
+          usageState = next;
+          if (creditIndicator) creditIndicator.hidden = false;
+          animateCreditBalance(next.credits_balance, animate);
+          if (creditResetValue) creditResetValue.textContent = formatResetTime(next.next_credit_reset_at);
+          if (attachmentResetValue) attachmentResetValue.textContent = formatResetTime(next.attachment_reset_at);
+          if (attachmentLimitBanner) attachmentLimitBanner.hidden = next.attachment_limit_reached !== true;
+          if (creditLimitModal) creditLimitModal.hidden = next.credits_limit_reached !== true;
+        };
+
+        const loadUsage = async (animate = true) => {
+          try {
+            const response = await fetchWithAuth("/api/usage", { method: "GET" });
+            const data = await response.json().catch(() => null);
+            if (!response.ok) throw new Error(data?.error || "usage_unavailable");
+            applyUsageState(data, animate);
+            return data;
+          } catch (error) {
+            console.warn("Kazer usage sync failed", error?.message || "unknown");
+            return null;
+          }
+        };
+
+        const showCreditLimit = () => {
+          if (creditLimitModal) creditLimitModal.hidden = false;
+          if (creditResetValue) creditResetValue.textContent = formatResetTime(usageState?.next_credit_reset_at);
+        };
+
+        const showAttachmentLimit = () => {
+          if (attachmentLimitBanner) attachmentLimitBanner.hidden = false;
+          if (attachmentResetValue) attachmentResetValue.textContent = formatResetTime(usageState?.attachment_reset_at);
         };
 
         const loadAccount = async () => {
@@ -2937,6 +3027,9 @@
             applySettings();
           }
           await safeQuery(kazerSupabase.rpc("touch_user_activity"));
+          await loadUsage(false);
+          window.clearInterval(usageRefreshTimer);
+          usageRefreshTimer = window.setInterval(() => loadUsage(false), 60_000);
           await loadRetentionNotice();
           if (new URLSearchParams(window.location.search).get("tool") === "web") window.setTimeout(openWeb, 180);
           return true;
@@ -3638,6 +3731,11 @@
         };
 
         const addFiles = (fileList) => {
+          if (usageState?.attachment_limit_reached === true) {
+            showAttachmentLimit();
+            showToast("Você atingiu o limite de anexos do plano Free.");
+            return;
+          }
           const incoming = [...fileList];
           const totalBytes = selectedFiles.reduce((sum, file) => sum + file.size, 0);
           for (const file of incoming) {
@@ -3699,7 +3797,12 @@
               signal: controller.signal,
             });
             const data = await result.json().catch(() => ({}));
-            if (!result.ok) throw new Error(data.error || "Não foi possível obter uma resposta.");
+            if (!result.ok) {
+              if (result.status === 402) { await loadUsage(false); showCreditLimit(); }
+              if (result.status === 409) { await loadUsage(false); showAttachmentLimit(); }
+              throw new Error(data.error || "Não foi possível obter uma resposta.");
+            }
+            if (data.usage) applyUsageState(data.usage, true);
             if (activeRequestController !== controller) return;
             const answer = data.message?.content;
             if (typeof answer !== "string" || !answer.trim()) throw new Error("A resposta recebida estava vazia.");
@@ -3773,10 +3876,10 @@
           profileMoreToggle.setAttribute("aria-expanded", String(isOpen));
         });
         webKazerAction.addEventListener("click", () => openWeb());
-        proAction.addEventListener("click", () => {
-          closeMenus();
-          showToast("Kazer Pro: página de compra em breve");
-        });
+        const openPro = () => { closeMenus(); showToast("Kazer Pro: página de compra em breve"); };
+        proAction.addEventListener("click", openPro);
+        creditProButton?.addEventListener("click", openPro);
+        attachmentProButton?.addEventListener("click", openPro);
         webModes.addEventListener("click", (event) => {
           const button = event.target.closest("[data-web-mode]");
           if (!button) return;
@@ -3886,18 +3989,19 @@
         });
         attachmentSheetClose.addEventListener("click", () => closeAttachmentSheet(true));
         attachmentBackdrop.addEventListener("click", () => closeAttachmentSheet(true));
-        cameraAction.addEventListener("click", () => {
+        const openAttachmentInput = (input) => {
+          if (usageState?.attachment_limit_reached === true) {
+            closeAttachmentSheet(true);
+            showAttachmentLimit();
+            showToast("Você atingiu o limite de anexos do plano Free.");
+            return;
+          }
           closeAttachmentSheet();
-          cameraInput.click();
-        });
-        photoAction.addEventListener("click", () => {
-          closeAttachmentSheet();
-          photoInput.click();
-        });
-        fileAction.addEventListener("click", () => {
-          closeAttachmentSheet();
-          fileInput.click();
-        });
+          input.click();
+        };
+        cameraAction.addEventListener("click", () => openAttachmentInput(cameraInput));
+        photoAction.addEventListener("click", () => openAttachmentInput(photoInput));
+        fileAction.addEventListener("click", () => openAttachmentInput(fileInput));
         fileInput.addEventListener("change", () => addFiles(fileInput.files));
         photoInput.addEventListener("change", () => addFiles(photoInput.files));
         cameraInput.addEventListener("change", () => addFiles(cameraInput.files));
