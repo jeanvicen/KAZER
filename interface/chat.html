@@ -319,6 +319,44 @@
         background: var(--card);
       }
 
+      .computer-button {
+        position: absolute;
+        top: max(20px, env(safe-area-inset-top));
+        right: clamp(124px, 19vw, 220px);
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        min-height: 40px;
+        padding: 0 14px;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        background: color-mix(in srgb, var(--card) 72%, transparent);
+        color: var(--text);
+        font-size: 12px;
+        font-weight: 650;
+        letter-spacing: 0.01em;
+        text-decoration: none;
+        white-space: nowrap;
+        cursor: pointer;
+        box-shadow: 0 6px 22px rgba(0, 0, 0, 0.14);
+        backdrop-filter: blur(14px);
+        transition: border-color 180ms var(--ease), background 180ms var(--ease), transform 180ms var(--ease);
+      }
+
+      .computer-button:hover {
+        border-color: rgba(255, 255, 255, 0.45);
+        background: var(--card-2);
+      }
+
+      .computer-button:active {
+        transform: scale(0.96);
+      }
+
+      .computer-button .icon {
+        width: 17px;
+        height: 17px;
+      }
+
       .conversation-area {
         position: relative;
         display: flex;
@@ -2655,6 +2693,27 @@
           font-size: 28px;
         }
 
+        .computer-button {
+          top: max(18px, env(safe-area-inset-top));
+          right: 107px;
+          width: 35px;
+          min-height: 35px;
+          padding: 0;
+          justify-content: center;
+        }
+
+        .computer-button span {
+          position: absolute;
+          width: 1px;
+          height: 1px;
+          padding: 0;
+          margin: -1px;
+          overflow: hidden;
+          clip: rect(0, 0, 0, 0);
+          white-space: nowrap;
+          border: 0;
+        }
+
         .conversation-title {
           font-size: 17px;
         }
@@ -3086,7 +3145,7 @@
         }
       }
 
-      .plugin-card { display:flex; align-items:center; gap:12px; width:100%; padding:15px; border:1px solid var(--line); border-radius:16px; background:var(--card-2); color:var(--text); text-align:left; } .plugin-card-button { cursor:pointer; } .plugin-card-button:hover { border-color:rgba(255,255,255,.42); } .plugin-card-icon { display:grid; place-items:center; width:36px; height:36px; border-radius:10px; background:transparent; color:white; } .plugin-card-icon svg { width:29px; height:26px; display:block; } .plugin-card strong,.plugin-card small { display:block; } .plugin-card small { margin-top:3px; color:var(--text-soft); font-size:12px; } .plugin-card > span:nth-child(2) { flex:1; } .plugin-card-action { padding:7px 9px; border:1px solid var(--line); border-radius:8px; background:transparent; color:var(--text-soft); cursor:pointer; font-size:12px; } .plugin-card-arrow { color:var(--text-soft); font-size:22px; } .plugin-consent-note { margin:12px 2px 0; color:var(--text-dim); font-size:12px; line-height:1.45; }\n    </style>
+      \n    </style>
   </head>
   <body>
     <main class="app" id="app" data-auth-pending="true">
@@ -3118,6 +3177,7 @@
       <header class="topbar" aria-label="Barra de conversa">
         <div class="credit-indicator" id="creditIndicator" aria-label="Saldo de créditos" hidden><span class="credit-indicator-value" id="creditBalanceValue">0</span></div>
         <span class="conversation-title">KAZER</span>
+        <a class="computer-button" id="computerButton" href="https://coderkazer.vercel.app" target="_blank" rel="noopener noreferrer" aria-label="Abrir Kazer's Computer" title="Abrir Kazer's Computer"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="13" rx="2"></rect><path d="M8 21h8M12 17v4"></path></svg><span>Kazer's Computer</span></a>
         <button class="new-chat-button" id="newChatButton" type="button" aria-label="Nova conversa" hidden>+</button>
         <button class="profile-button" id="profileButton" type="button" aria-label="Abrir perfil" aria-expanded="false"><span class="avatar-photo" aria-hidden="true"></span></button>
       </header>
@@ -3231,31 +3291,8 @@
             <button class="attachment-sheet-action attachment-grid-action" id="photoAction" type="button"><span class="attachment-sheet-icon" aria-hidden="true"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"></rect><circle cx="8.5" cy="9" r="1.4"></circle><path d="m4.5 17 4.7-4.6 3.1 3 5 4.7"></path></svg></span><span class="attachment-sheet-copy"><strong>Fotos</strong></span></button>
             <button class="attachment-sheet-action attachment-grid-action" id="fileAction" type="button"><span class="attachment-sheet-icon" aria-hidden="true"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H6.5A1.5 1.5 0 0 0 5 4.5v15A1.5 1.5 0 0 0 6.5 21h11a1.5 1.5 0 0 0 1.5-1.5V8Z"></path><path d="M14 3v5h5M8.5 13h7M8.5 16.5h7"></path></svg></span><span class="attachment-sheet-copy"><strong>Arquivos</strong></span></button>
           </div>
-          <div class="attachment-plugin-row">
-            <button class="attachment-sheet-action plugins-action" id="pluginsAction" type="button"><span class="attachment-sheet-icon" aria-hidden="true"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3v5M16 3v5"></path><path d="M6 8h12v2a6 6 0 0 1-12 0V8Z"></path><path d="M12 16v5M9 21h6"></path></svg></span><span class="attachment-sheet-copy"><strong>Plugins</strong></span></button>
           </div>
         </div>
-            </section>
-      <div class="attachment-backdrop" id="pluginBackdrop" hidden></div>
-      <section class="attachment-sheet plugin-sheet" id="pluginSheet" role="dialog" aria-modal="true" aria-labelledby="pluginSheetTitle" aria-hidden="true" hidden>
-        <div class="attachment-sheet-handle" aria-hidden="true"></div>
-        <header class="plugin-sheet-head">
-          <h2 id="pluginSheetTitle">Plugins</h2>
-          <div class="plugin-sheet-head-actions">
-            <button class="plugin-sheet-add" id="pluginAddButton" type="button" aria-label="Adicionar plugin">+</button>
-            <button class="plugin-sheet-close" id="pluginSheetClose" type="button" aria-label="Fechar Plugins">×</button>
-          </div>
-        </header>
-        <div class="plugin-sheet-empty" id="connectedPluginsEmpty" aria-live="polite">Nenhum plugin conectado ainda.</div><div class="plugin-card" id="googleDriveConnectedCard" hidden><span class="plugin-card-icon" aria-hidden="true"><svg viewBox="0 0 48 42" role="img" aria-label="Google Drive"><path fill="#0F9D58" d="M16.1 0h15.8l16.1 27.9H32.2L16.1 0Z"></path><path fill="#4285F4" d="M0 27.9h32.2L24.1 42H8.1L0 27.9Z"></path><path fill="#F4B400" d="M16.1 0 0 27.9l8.1 14L24.1 14l7.8 13.9H48L31.9 0H16.1Z"></path></svg></span><span><strong>Google Drive</strong><small>Conectado com segurança</small></span><button class="plugin-card-action" id="googleDriveDisconnect" type="button">Desconectar</button></div>
-      </section>
-      <div class="attachment-backdrop" id="pluginAddBackdrop" hidden></div>
-      <section class="attachment-sheet plugin-sheet" id="pluginAddSheet" role="dialog" aria-modal="true" aria-labelledby="pluginAddSheetTitle" aria-hidden="true" hidden>
-        <div class="attachment-sheet-handle" aria-hidden="true"></div>
-        <header class="plugin-sheet-head">
-          <h2 id="pluginAddSheetTitle">Adicionar plugin</h2>
-          <button class="plugin-sheet-close" id="pluginAddSheetClose" type="button" aria-label="Fechar Adicionar plugin">×</button>
-        </header>
-        <button class="plugin-card plugin-card-button" id="googleDriveConnect" type="button"><span class="plugin-card-icon" aria-hidden="true"><svg viewBox="0 0 48 42" role="img" aria-label="Google Drive"><path fill="#0F9D58" d="M16.1 0h15.8l16.1 27.9H32.2L16.1 0Z"></path><path fill="#4285F4" d="M0 27.9h32.2L24.1 42H8.1L0 27.9Z"></path><path fill="#F4B400" d="M16.1 0 0 27.9l8.1 14L24.1 14l7.8 13.9H48L31.9 0H16.1Z"></path></svg></span><span><strong>Google Drive</strong><small>Buscar, ler e salvar arquivos no seu Drive</small></span><span class="plugin-card-arrow" aria-hidden="true">→</span></button><p class="plugin-consent-note">A autorização acontece na tela oficial do Google. O KAZER nunca pede sua senha.</p>
       </section>
       <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
@@ -3319,25 +3356,6 @@
         const cameraAction = document.getElementById("cameraAction");
         const photoAction = document.getElementById("photoAction");
         const fileAction = document.getElementById("fileAction");
-        const pluginsAction = document.getElementById("pluginsAction");
-        const pluginBackdrop = document.getElementById("pluginBackdrop");
-        const pluginSheet = document.getElementById("pluginSheet");
-        const pluginSheetClose = document.getElementById("pluginSheetClose");
-        const pluginAddButton = document.getElementById("pluginAddButton");
-        const pluginAddBackdrop = document.getElementById("pluginAddBackdrop");
-        const pluginAddSheet = document.getElementById("pluginAddSheet");
-        const pluginAddSheetClose = document.getElementById("pluginAddSheetClose");
-        const connectedPluginsEmpty = document.getElementById("connectedPluginsEmpty");
-        const googleDriveConnectedCard = document.getElementById("googleDriveConnectedCard");
-        const googleDriveConnect = document.getElementById("googleDriveConnect");
-        const googleDriveDisconnect = document.getElementById("googleDriveDisconnect");
-        let googleDriveConnected = false;
-        const authHeaders = () => { const token = kazerSupabase?.auth?.session?.()?.access_token; return token ? { Authorization: `Bearer ${token}` } : {}; };
-        const renderGoogleDrive = () => { if (googleDriveConnectedCard) googleDriveConnectedCard.hidden = !googleDriveConnected; if (connectedPluginsEmpty) connectedPluginsEmpty.hidden = googleDriveConnected; };
-        const loadGoogleDriveStatus = async () => { try { const response = await fetchWithAuth("/api/google-drive", { method: "GET" }); const data = await response.json().catch(() => ({})); googleDriveConnected = response.ok && data.connected === true; renderGoogleDrive(); } catch {} };
-        const connectGoogleDrive = async () => { try { const response = await fetchWithAuth("/api/google-drive-auth", { method: "GET" }); const data = await response.json(); if (!response.ok || !data.url) throw new Error(data.error || "Não foi possível iniciar a conexão."); window.open(data.url, "kazerGoogleDrive", "popup,width=520,height=720"); } catch (error) { showToast(error.message); } };
-        const streamDriveAction = async (payload, onResult) => { const response = await fetchWithAuth("/api/google-drive", { method: "POST", body: JSON.stringify(payload) }); if (!response.ok || !response.body) { const data = await response.json().catch(() => ({})); throw new Error(data.error || "Não foi possível acessar o Google Drive."); } const reader = response.body.getReader(); const decoder = new TextDecoder(); let buffer = ""; while (true) { const part = await reader.read(); if (part.done) break; buffer += decoder.decode(part.value, { stream: true }); const events = buffer.split("\n\n"); buffer = events.pop() || ""; for (const raw of events) { const type = raw.match(/^event: (.+)$/m)?.[1]; const data = raw.match(/^data: (.+)$/m)?.[1]; if (!data) continue; const parsed = JSON.parse(data); if (type === "narration" && parsed.text) append(createMessage("assistant", parsed.text)); if (type === "result") onResult?.(parsed); if (type === "error") throw new Error(parsed.error); } } };
-        window.addEventListener("message", (event) => { if (event.origin !== window.location.origin || event.data?.type !== "kazer-google-drive") return; if (event.data.status === 200) { googleDriveConnected = true; renderGoogleDrive(); showToast("Google Drive conectado"); } else showToast(event.data.message || "Conexão não concluída."); });
         const settingsBackdrop = document.getElementById("settingsBackdrop");
         const closeSettings = document.getElementById("closeSettings");
         const closeSettingsDesktop = document.getElementById("closeSettingsDesktop");
@@ -3716,57 +3734,6 @@
 
         let attachmentSheetTimer = null;
 
-        const closePluginAddSheet = (restoreFocus = false) => {
-          if (!pluginAddSheet || !pluginAddBackdrop) return;
-          pluginAddSheet.classList.remove("visible");
-          pluginAddBackdrop.classList.remove("visible");
-          pluginAddSheet.setAttribute("aria-hidden", "true");
-          window.setTimeout(() => {
-            if (!pluginAddSheet.classList.contains("visible")) {
-              pluginAddSheet.hidden = true;
-              pluginAddBackdrop.hidden = true;
-            }
-          }, 270);
-          if (restoreFocus) pluginAddButton.focus();
-        };
-
-        const openPluginAddSheet = () => { loadGoogleDriveStatus();
-          if (!pluginAddSheet || !pluginAddBackdrop) return;
-          pluginAddSheet.hidden = false;
-          pluginAddBackdrop.hidden = false;
-          pluginAddSheet.setAttribute("aria-hidden", "false");
-          requestAnimationFrame(() => {
-            pluginAddBackdrop.classList.add("visible");
-            pluginAddSheet.classList.add("visible");
-          });
-        };
-
-        const closePluginSheet = (restoreFocus = false) => {
-          closePluginAddSheet();
-          if (!pluginSheet || !pluginBackdrop) return;
-          pluginSheet.classList.remove("visible");
-          pluginBackdrop.classList.remove("visible");
-          pluginSheet.setAttribute("aria-hidden", "true");
-          window.setTimeout(() => {
-            if (!pluginSheet.classList.contains("visible")) {
-              pluginSheet.hidden = true;
-              pluginBackdrop.hidden = true;
-            }
-          }, 270);
-          if (restoreFocus) pluginsAction.focus();
-        };
-
-        const openPluginSheet = () => {
-          if (!pluginSheet || !pluginBackdrop) return;
-          closeAttachmentSheet();
-          pluginSheet.hidden = false;
-          pluginBackdrop.hidden = false;
-          pluginSheet.setAttribute("aria-hidden", "false");
-          requestAnimationFrame(() => {
-            pluginBackdrop.classList.add("visible");
-            pluginSheet.classList.add("visible");
-          });
-        };
 
         const closeAttachmentSheet = (restoreFocus = false) => {
           if (!attachmentSheet || !attachmentBackdrop) return;
@@ -3801,7 +3768,6 @@
         const closeMenus = () => {
           closeCustomSelects();
           closeAttachmentSheet();
-          closePluginSheet();
           profilePopover.classList.remove("visible");
           settingsPopover.classList.remove("visible", "mobile-section-open");
           settingsBackdrop.classList.remove("visible");
@@ -4481,15 +4447,6 @@
           reader.readAsDataURL(file);
         });
 
-        const tryDriveIntent = async (text, files) => {
-          if (!googleDriveConnected) return false;
-          const normalized = text.toLowerCase();
-          const wantsSearch = /(?:drive|arquivo|documento|pasta)/.test(normalized) && /(?:buscar|procura|encontra|achar|localiza|listar)/.test(normalized);
-          const wantsUpload = files.length > 0 && /(?:drive|salvar|envia|upload|guardar)/.test(normalized);
-          if (!wantsSearch && !wantsUpload) return false;
-          if (wantsSearch) { const query = text.replace(/.*?(?:buscar|procura|encontra|achar|localiza|listar)/i, "").replace(/(?:no|na|em)\s+(?:meu\s+)?drive/i, "").trim() || text; await streamDriveAction({ action: "search", query }, (result) => { const filesText = (result.files || []).map((file) => `• ${file.name}`).join("\\n"); append(createMessage("assistant", filesText ? `Encontrei estes arquivos:\\n${filesText}` : "Não encontrei arquivos com esse nome no seu Drive.")); }); return true; }
-          const file = files[0]; const dataUrl = await fileToDataUrl(file); await streamDriveAction({ action: "upload", name: file.name, mimeType: file.type || "application/octet-stream", dataUrl }, (result) => append(createMessage("assistant", `Arquivo salvo no Google Drive: ${result.file?.name || file.name}.`))); return true;
-        };
         const submit = async () => {
           if (busy) return;
           const text = messageInput.value.trim();
@@ -4515,7 +4472,6 @@
           activeRequestController = controller;
 
           try {
-            if (await tryDriveIntent(prompt, files)) return;
             const attachments = await Promise.all(files.map(fileToDataUrl));
             if (activeRequestController !== controller) return;
             const result = await fetchWithAuth("/api/chat", {
@@ -4704,14 +4660,6 @@
         });
         document.addEventListener("keydown", (event) => {
           if (event.key !== "Escape") return;
-          if (pluginAddSheet.classList.contains("visible")) {
-            closePluginAddSheet(true);
-            return;
-          }
-          if (pluginSheet.classList.contains("visible")) {
-            closePluginSheet(true);
-            return;
-          }
           if (attachmentSheet.classList.contains("visible")) {
             closeAttachmentSheet(true);
             return;
@@ -4744,14 +4692,6 @@
           closeAttachmentSheet();
           input.click();
         };
-        pluginsAction.addEventListener("click", () => { openPluginSheet(); loadGoogleDriveStatus(); });
-        googleDriveConnect?.addEventListener("click", connectGoogleDrive);
-        googleDriveDisconnect?.addEventListener("click", async () => { try { const response = await fetchWithAuth("/api/google-drive", { method: "DELETE" }); if (!response.ok) throw new Error("Não foi possível desconectar agora."); googleDriveConnected = false; renderGoogleDrive(); showToast("Google Drive desconectado"); } catch (error) { showToast(error.message); } });
-        pluginSheetClose.addEventListener("click", () => closePluginSheet(true));
-        pluginBackdrop.addEventListener("click", () => closePluginSheet(true));
-        pluginAddButton.addEventListener("click", () => openPluginAddSheet());
-        pluginAddSheetClose.addEventListener("click", () => closePluginAddSheet(true));
-        pluginAddBackdrop.addEventListener("click", () => closePluginAddSheet(true));
         cameraAction.addEventListener("click", () => openAttachmentInput(cameraInput));
         photoAction.addEventListener("click", () => openAttachmentInput(photoInput));
         fileAction.addEventListener("click", () => openAttachmentInput(fileInput));
