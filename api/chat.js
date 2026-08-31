@@ -55,6 +55,8 @@ const SYSTEM_PROMPT = [
   "Não forneça instruções operacionais para violência, fabricação de armas ou explosivos, invasão, malware, roubo, fraude ou outros crimes. Em pedidos desse tipo, recuse brevemente e ofereça uma alternativa segura e preventiva.",
 ].join(" ");
 
+const VISUAL_REQUEST_PATTERN = /\b(?:imagem|visual|desenho|desenhar|ilustra[cç][aã]o|logo|[ií]cone|[ií]cones|layout|interface|tela|prot[oó]tipo|mockup|wireframe|diagrama|fluxograma|gr[aá]fico|chart|dashboard|slide|cart[aã]o|banner|poster|p[oó]ster|infogr[aá]fico|planta|mapa|composi[cç][aã]o|design|image|drawing|illustration|icon|icons|screen|prototype|mockup|wireframe|diagram|flowchart|chart|dashboard|slide|card|banner|poster|infographic|visual(?:ly)?|look like)\b/i;
+
 const MODERATION_PATTERNS = [
   /\b(?:como|passo a passo|instru[cç][oõ]es|ensine|fabricar|montar|construir|detonar|envenenar|hackear|invadir|roubar|matar|burlar)\b[\s\S]{0,100}\b(?:bomba|explosivo|arma|veneno|malware|ransomware|senha|cart[aã]o|conta|v[ií]tima|pol[ií]cia|crime)\b/i,
   /\b(?:fabricar|montar|construir|comprar|detonar)\b[\s\S]{0,60}\b(?:bomba|explosivo|arma)\b/i,
@@ -408,7 +410,10 @@ module.exports = async function handler(request, response) {
   const fileInstruction = prepared.fileContext
     ? `\n\nUse os anexos abaixo como contexto para responder:\n\n${prepared.fileContext}`
     : "";
-  const latestText = `${lastMessage.content}${fileInstruction}`.slice(0, MAX_TOTAL_CHARS);
+  const visualInstruction = VISUAL_REQUEST_PATTERN.test(String(lastMessage.content || ""))
+    ? "\n\nINSTRUÇÃO DE RENDERIZAÇÃO: este pedido tem intenção visual. Entregue o resultado visual dentro da resposta usando um bloco ```kazer-svg ou ```kazer-html. Não devolva o SVG/HTML como bloco de código comum, não use mermaid e não entregue apenas instruções para o usuário executar. Intercale uma explicação curta com o visual renderizável."
+    : "";
+  const latestText = `${lastMessage.content}${visualInstruction}${fileInstruction}`.slice(0, MAX_TOTAL_CHARS);
   const latestContent = hasImages
     ? [{ type: "text", text: latestText }, ...prepared.imageParts]
     : latestText;
