@@ -4003,10 +4003,19 @@
         const MAX_VISUAL_CODE_CHARS = 7000;
 
         const looksLikeVisualMarkup = (code) => /<svg\b[\s\S]*<\/svg>|<!doctype\s+html\b|<html\b[\s\S]*<\/html>|<(?:article|section|main|div)\b[\s\S]*<\/(?:article|section|main|div)>/i.test(String(code || ""));
-        const isVisualLanguage = (language, code = "") => {
+        const detectVisualMarkup = (language, code = "") => {
+          const source = String(code || "");
           const normalized = String(language || "").trim().toLowerCase();
-          return VISUAL_LANGUAGES.has(normalized) || ((normalized === "html" || normalized === "xml") && looksLikeVisualMarkup(code));
+          if (!VISUAL_LANGUAGES.has(normalized) && !((normalized === "html" || normalized === "xml") && looksLikeVisualMarkup(source)) && !looksLikeVisualMarkup(source)) return null;
+          const svg = source.match(/<svg\b[\s\S]*?<\/svg>/i);
+          if (svg) return { kind: "svg", source: svg[0] };
+          const documentMarkup = source.match(/<!doctype\s+html\b[\s\S]*?<\/html>|<html\b[\s\S]*?<\/html>/i);
+          if (documentMarkup) return { kind: "html", source: documentMarkup[0] };
+          const elementMarkup = source.match(/<(?:article|section|main|div)\b[\s\S]*?<\/(?:article|section|main|div)>/i);
+          if (elementMarkup) return { kind: "html", source: elementMarkup[0] };
+          return normalized.includes("html") || normalized === "xml" ? { kind: "html", source } : { kind: "svg", source };
         };
+        const isVisualLanguage = (language, code = "") => Boolean(detectVisualMarkup(language, code));
 
         const sanitizeVisualStyle = (value) => String(value || "")
           .replace(/url\s*\([^)]*\)/gi, "")
@@ -4064,8 +4073,10 @@
         };
 
         const createVisualBlock = (language, code, { writing = false, complete = true } = {}) => {
-          const kind = String(language || "").toLowerCase().includes("html") ? "html" : "svg";
-          const safeMarkup = complete ? (kind === "html" ? sanitizeVisualHtml(code) : sanitizeVisualSvg(code)) : null;
+          const detected = detectVisualMarkup(language, code);
+          const kind = detected?.kind || (String(language || "").toLowerCase().includes("html") ? "html" : "svg");
+          const source = detected?.source || String(code || "");
+          const safeMarkup = complete ? (kind === "html" ? sanitizeVisualHtml(source) : sanitizeVisualSvg(source)) : null;
           const block = document.createElement("section");
           block.className = "visual-block";
           block.dataset.visualKind = kind;
@@ -4279,9 +4290,11 @@
           if (codeStart < 0 || lines.length - codeStart < 2) return null;
           const before = lines.slice(0, codeStart).join("\n").trim();
           const code = lines.slice(codeStart).join("\n").trim();
+          const inferredLanguage = inferCodeLanguage(code);
+          const detected = detectVisualMarkup(inferredLanguage, code);
           return [
             ...(before ? [{ type: "markdown", text: before }] : []),
-            { type: isVisualLanguage(inferCodeLanguage(code), code) ? "visual" : "code", language: isVisualLanguage(inferCodeLanguage(code), code) ? (/<svg\b/i.test(code) ? "svg" : "kazer-html") : inferCodeLanguage(code), code, complete: true },
+            { type: detected ? "visual" : "code", language: detected?.kind || inferredLanguage, code, complete: true },
           ];
         };
 
