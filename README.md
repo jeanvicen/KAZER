@@ -83,7 +83,7 @@ flowchart LR
 | Preferências | Tema, idioma, avisos e aviso de instalação, com fallback local e sincronização no perfil. | `user_settings` e `localStorage`. |
 | Retenção | Avisos de inatividade e job diário de retenção, com exclusão desligada por padrão. | `api/retention.js`, `vercel.json` e migrações Supabase. |
 | PWA | Instalação na tela inicial, manifesto, service worker e cache restrito do app shell. | `download/manifest.webmanifest`, `download/sw.js` e `vercel.json`. |
-| Plugins | Estrutura visual reservada para futuras integrações; não há plugins funcionais no estado atual. | `interface/chat.html`. |
+| Plugins | Google Drive com OAuth oficial, busca/leitura e upload/criação; arquitetura preparada para futuras integrações. | `interface/chat.html`, `api/google-drive*.js` e `database/supabase/009_google_drive_connections.sql`. |
 | Kazer Pro | Chamada visual de oferta; a tela informa que a página de compra está em preparação. | `interface/chat.html`. |
 
 ## Arquitetura
@@ -305,3 +305,11 @@ Consulte o texto integral em [`LICENSE.md`](LICENSE.md). A licença não substit
 [1]: https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/licensing-a-repository "GitHub Docs — Licensing a repository"
 [2]: https://www.planalto.gov.br/ccivil_03/leis/l9609.htm "Planalto — Lei nº 9.609/1998"
 [3]: https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/managing-repository-settings/setting-repository-visibility "GitHub Docs — Setting repository visibility"
+
+## Plugin Google Drive
+
+O KAZER agora possui um plugin Google Drive com autorização OAuth 2.0 pelo servidor. A pessoa é redirecionada para a tela oficial do Google; o KAZER não coleta senha. O plugin permite buscar/listar arquivos, ler o conteúdo de um arquivo por ID e criar/upload de arquivos de até 5 MB. Cada ação consome 10 créditos pelo mesmo RPC de uso do chat.
+
+Para ativar a integração, habilite a Google Drive API no [Google Cloud Console](https://console.cloud.google.com/apis/library/drive.googleapis.com), crie um cliente OAuth do tipo **Web application** e cadastre exatamente `https://SEU_DOMINIO/api/google-drive-callback` como URI de redirecionamento. Configure no ambiente do servidor `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_DRIVE_REDIRECT_URI`, `GOOGLE_DRIVE_TOKEN_KEY` e `SUPABASE_SERVICE_ROLE_KEY`. A chave `GOOGLE_DRIVE_TOKEN_KEY` deve ser longa, aleatória e privada; alterá-la invalida os tokens armazenados.
+
+Execute a migration `database/supabase/009_google_drive_connections.sql` no Supabase. A tabela guarda somente tokens cifrados no servidor e não concede leitura de tokens ao cliente. O sistema de narração usa eventos SSE produzidos durante a operação; cada fala é gerada dinamicamente com base na etapa real da ação, e não por frases fixas pré-programadas.

@@ -10,7 +10,7 @@
 
 Ao acessar, criar uma conta ou utilizar o KAZER, você declara que leu estas regras e se compromete a usar o serviço de forma legal, segura, respeitosa e compatível com a legislação aplicável. Se não concordar, não utilize o serviço. Quando uma funcionalidade tiver regras adicionais exibidas na própria tela, elas complementam estes Termos para aquela funcionalidade.
 
-O KAZER é uma interface web/PWA de conversa com inteligência artificial que pode oferecer respostas, escrita, organização de ideias, análise de imagens e arquivos compatíveis e pesquisa na web pelo WebKazer. Recursos, limites, provedores, preços, disponibilidade e fluxos podem mudar. Plugins estão reservados para futuras integrações e não são funcionais no estado atual; a área Kazer Pro também não representa, neste estado, uma compra concluída.
+O KAZER é uma interface web/PWA de conversa com inteligência artificial que pode oferecer respostas, escrita, organização de ideias, análise de imagens e arquivos compatíveis e pesquisa na web pelo WebKazer. Recursos, limites, provedores, preços, disponibilidade e fluxos podem mudar. Existe um plugin Google Drive funcional, com autorização oficial do Google, busca, leitura e salvamento de arquivos; outras integrações podem ser adicionadas no futuro; a área Kazer Pro também não representa, neste estado, uma compra concluída.
 
 ## 2. Conta e segurança de acesso
 

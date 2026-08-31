@@ -3086,7 +3086,7 @@
         }
       }
 
-    </style>
+      .plugin-card { display:flex; align-items:center; gap:12px; width:100%; padding:15px; border:1px solid var(--line); border-radius:16px; background:var(--card-2); color:var(--text); text-align:left; } .plugin-card-button { cursor:pointer; } .plugin-card-button:hover { border-color:rgba(255,255,255,.42); } .plugin-card-icon { display:grid; place-items:center; width:36px; height:36px; border-radius:10px; background:#4285f4; color:white; font-size:20px; } .plugin-card strong,.plugin-card small { display:block; } .plugin-card small { margin-top:3px; color:var(--text-soft); font-size:12px; } .plugin-card > span:nth-child(2) { flex:1; } .plugin-card-action { padding:7px 9px; border:1px solid var(--line); border-radius:8px; background:transparent; color:var(--text-soft); cursor:pointer; font-size:12px; } .plugin-card-arrow { color:var(--text-soft); font-size:22px; } .plugin-consent-note { margin:12px 2px 0; color:var(--text-dim); font-size:12px; line-height:1.45; }\n    </style>
   </head>
   <body>
     <main class="app" id="app" data-auth-pending="true">
@@ -3246,7 +3246,7 @@
             <button class="plugin-sheet-close" id="pluginSheetClose" type="button" aria-label="Fechar Plugins">×</button>
           </div>
         </header>
-        <div class="plugin-sheet-empty" aria-live="polite">Nenhum plugin configurado ainda.</div>
+        <div class="plugin-sheet-empty" id="connectedPluginsEmpty" aria-live="polite">Nenhum plugin conectado ainda.</div><div class="plugin-card" id="googleDriveConnectedCard" hidden><span class="plugin-card-icon" aria-hidden="true">▣</span><span><strong>Google Drive</strong><small>Conectado com segurança</small></span><button class="plugin-card-action" id="googleDriveDisconnect" type="button">Desconectar</button></div>
       </section>
       <div class="attachment-backdrop" id="pluginAddBackdrop" hidden></div>
       <section class="attachment-sheet plugin-sheet" id="pluginAddSheet" role="dialog" aria-modal="true" aria-labelledby="pluginAddSheetTitle" aria-hidden="true" hidden>
@@ -3255,7 +3255,7 @@
           <h2 id="pluginAddSheetTitle">Adicionar plugin</h2>
           <button class="plugin-sheet-close" id="pluginAddSheetClose" type="button" aria-label="Fechar Adicionar plugin">×</button>
         </header>
-        <div class="plugin-sheet-empty" aria-live="polite">Nenhum plugin disponível ainda.</div>
+        <button class="plugin-card plugin-card-button" id="googleDriveConnect" type="button"><span class="plugin-card-icon" aria-hidden="true">▣</span><span><strong>Google Drive</strong><small>Buscar, ler e salvar arquivos no seu Drive</small></span><span class="plugin-card-arrow" aria-hidden="true">→</span></button><p class="plugin-consent-note">A autorização acontece na tela oficial do Google. O KAZER nunca pede sua senha.</p>
       </section>
       <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
@@ -3327,6 +3327,17 @@
         const pluginAddBackdrop = document.getElementById("pluginAddBackdrop");
         const pluginAddSheet = document.getElementById("pluginAddSheet");
         const pluginAddSheetClose = document.getElementById("pluginAddSheetClose");
+        const connectedPluginsEmpty = document.getElementById("connectedPluginsEmpty");
+        const googleDriveConnectedCard = document.getElementById("googleDriveConnectedCard");
+        const googleDriveConnect = document.getElementById("googleDriveConnect");
+        const googleDriveDisconnect = document.getElementById("googleDriveDisconnect");
+        let googleDriveConnected = false;
+        const authHeaders = () => { const token = kazerSupabase?.auth?.session?.()?.access_token; return token ? { Authorization: `Bearer ${token}` } : {}; };
+        const renderGoogleDrive = () => { if (googleDriveConnectedCard) googleDriveConnectedCard.hidden = !googleDriveConnected; if (connectedPluginsEmpty) connectedPluginsEmpty.hidden = googleDriveConnected; };
+        const loadGoogleDriveStatus = async () => { try { const response = await fetchWithAuth("/api/google-drive", { method: "GET" }); const data = await response.json().catch(() => ({})); googleDriveConnected = response.ok && data.connected === true; renderGoogleDrive(); } catch {} };
+        const connectGoogleDrive = async () => { try { const response = await fetchWithAuth("/api/google-drive-auth", { method: "GET" }); const data = await response.json(); if (!response.ok || !data.url) throw new Error(data.error || "Não foi possível iniciar a conexão."); window.open(data.url, "kazerGoogleDrive", "popup,width=520,height=720"); } catch (error) { showToast(error.message); } };
+        const streamDriveAction = async (payload, onResult) => { const response = await fetchWithAuth("/api/google-drive", { method: "POST", body: JSON.stringify(payload) }); if (!response.ok || !response.body) { const data = await response.json().catch(() => ({})); throw new Error(data.error || "Não foi possível acessar o Google Drive."); } const reader = response.body.getReader(); const decoder = new TextDecoder(); let buffer = ""; while (true) { const part = await reader.read(); if (part.done) break; buffer += decoder.decode(part.value, { stream: true }); const events = buffer.split("\n\n"); buffer = events.pop() || ""; for (const raw of events) { const type = raw.match(/^event: (.+)$/m)?.[1]; const data = raw.match(/^data: (.+)$/m)?.[1]; if (!data) continue; const parsed = JSON.parse(data); if (type === "narration" && parsed.text) append(createMessage("assistant", parsed.text)); if (type === "result") onResult?.(parsed); if (type === "error") throw new Error(parsed.error); } } };
+        window.addEventListener("message", (event) => { if (event.origin !== window.location.origin || event.data?.type !== "kazer-google-drive") return; if (event.data.status === 200) { googleDriveConnected = true; renderGoogleDrive(); showToast("Google Drive conectado"); } else showToast(event.data.message || "Conexão não concluída."); });
         const settingsBackdrop = document.getElementById("settingsBackdrop");
         const closeSettings = document.getElementById("closeSettings");
         const closeSettingsDesktop = document.getElementById("closeSettingsDesktop");
@@ -3719,7 +3730,7 @@
           if (restoreFocus) pluginAddButton.focus();
         };
 
-        const openPluginAddSheet = () => {
+        const openPluginAddSheet = () => { loadGoogleDriveStatus();
           if (!pluginAddSheet || !pluginAddBackdrop) return;
           pluginAddSheet.hidden = false;
           pluginAddBackdrop.hidden = false;
@@ -4470,6 +4481,15 @@
           reader.readAsDataURL(file);
         });
 
+        const tryDriveIntent = async (text, files) => {
+          if (!googleDriveConnected) return false;
+          const normalized = text.toLowerCase();
+          const wantsSearch = /(?:drive|arquivo|documento|pasta)/.test(normalized) && /(?:buscar|procura|encontra|achar|localiza|listar)/.test(normalized);
+          const wantsUpload = files.length > 0 && /(?:drive|salvar|envia|upload|guardar)/.test(normalized);
+          if (!wantsSearch && !wantsUpload) return false;
+          if (wantsSearch) { const query = text.replace(/.*?(?:buscar|procura|encontra|achar|localiza|listar)/i, "").replace(/(?:no|na|em)\s+(?:meu\s+)?drive/i, "").trim() || text; await streamDriveAction({ action: "search", query }, (result) => { const filesText = (result.files || []).map((file) => `• ${file.name}`).join("\\n"); append(createMessage("assistant", filesText ? `Encontrei estes arquivos:\\n${filesText}` : "Não encontrei arquivos com esse nome no seu Drive.")); }); return true; }
+          const file = files[0]; const dataUrl = await fileToDataUrl(file); await streamDriveAction({ action: "upload", name: file.name, mimeType: file.type || "application/octet-stream", dataUrl }, (result) => append(createMessage("assistant", `Arquivo salvo no Google Drive: ${result.file?.name || file.name}.`))); return true;
+        };
         const submit = async () => {
           if (busy) return;
           const text = messageInput.value.trim();
@@ -4495,6 +4515,7 @@
           activeRequestController = controller;
 
           try {
+            if (await tryDriveIntent(prompt, files)) return;
             const attachments = await Promise.all(files.map(fileToDataUrl));
             if (activeRequestController !== controller) return;
             const result = await fetchWithAuth("/api/chat", {
@@ -4723,7 +4744,9 @@
           closeAttachmentSheet();
           input.click();
         };
-        pluginsAction.addEventListener("click", () => openPluginSheet());
+        pluginsAction.addEventListener("click", () => { openPluginSheet(); loadGoogleDriveStatus(); });
+        googleDriveConnect?.addEventListener("click", connectGoogleDrive);
+        googleDriveDisconnect?.addEventListener("click", async () => { try { const response = await fetchWithAuth("/api/google-drive", { method: "DELETE" }); if (!response.ok) throw new Error("Não foi possível desconectar agora."); googleDriveConnected = false; renderGoogleDrive(); showToast("Google Drive desconectado"); } catch (error) { showToast(error.message); } });
         pluginSheetClose.addEventListener("click", () => closePluginSheet(true));
         pluginBackdrop.addEventListener("click", () => closePluginSheet(true));
         pluginAddButton.addEventListener("click", () => openPluginAddSheet());
