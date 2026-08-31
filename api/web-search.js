@@ -1,3 +1,7 @@
+/*
+ * KAZER — Copyright © 2026 Jean V. / @jeanvicen · 0neajx · Klipza Studio.
+ * Código proprietário. Consulte /LICENSE.md antes de reutilizar este arquivo.
+ */
 const {
   applyRateLimit,
   authenticateUser,

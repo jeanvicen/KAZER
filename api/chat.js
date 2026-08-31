@@ -1,3 +1,7 @@
+/*
+ * KAZER — Copyright © 2026 Jean V. / @jeanvicen · 0neajx · Klipza Studio.
+ * Código proprietário. Consulte /LICENSE.md antes de reutilizar este arquivo.
+ */
 const {
   applyRateLimit,
   authenticateUser,
@@ -194,7 +198,7 @@ async function extractFileText(attachment, parsed) {
 
 async function prepareAttachments(attachments) {
   if (attachments == null) return { imageParts: [], fileContext: "", fileNames: [] };
-  if (!Array.isArray(attachments) || attachments.length > 5) throw new Error("attachments_invalid");
+  if (!Array.isArray(attachments) || attachments.length > 10) throw new Error("attachments_invalid");
 
   const imageParts = [];
   const fileSections = [];

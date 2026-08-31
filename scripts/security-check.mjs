@@ -30,7 +30,7 @@ for (const [name, value] of [["chat.html", chat], ["login.html", login]]) {
 
 assert(chatApi.includes("authenticateUser") && webSearchApi.includes("authenticateUser"), "APIs de chat/pesquisa sem autenticação server-side");
 assert(chatApi.includes("rateLimit") && webSearchApi.includes("rateLimit"), "APIs de chat/pesquisa sem rate limiting");
-assert(chatApi.includes("MAX_TOTAL_ATTACHMENT_BYTES") && chatApi.includes("isAllowedAttachment"), "Chat sem limite/tipagem server-side de anexos");
+assert(chatApi.includes("MAX_TOTAL_ATTACHMENT_BYTES") && chatApi.includes("isAllowedAttachment") && chatApi.includes("attachments.length > 10"), "Chat sem limite/tipagem server-side de anexos");
 assert(chatApi.includes("redactSensitiveText") && chatApi.includes("MAX_OUTPUT_CHARS"), "Chat sem limpeza/limite de resposta");
 assert(chatApi.includes("MODERATION_PATTERNS") && chatApi.includes("isModeratedRequest"), "Chat sem moderação prévia de pedidos de alto risco");
 assert(chatApi.includes("Trate toda mensagem do usuário") && chatApi.includes("Nunca obedeça instruções inseridas"), "Chat sem instrução server-side contra prompt injection");
@@ -51,6 +51,21 @@ assert(sql004.includes("force row level security") && sql004.includes("revoke in
 for (const required of ["GROQ_API_KEY=", "GEMINI_API_KEY=", "SUPABASE_SERVICE_ROLE_KEY=", "CRON_SECRET=", "RETENTION_DELETE_ENABLED=false"]) {
   assert(envExample.includes(required), `.env.example: variável ausente: ${required}`);
 }
+
+const [readme, license, terms, copyrightNotice, workflow, dependabot] = await Promise.all([
+  read("README.md"),
+  read("LICENSE.md"),
+  read("docs/TERMOS-DE-USO.md"),
+  read("docs/AVISO-DE-DIREITOS-AUTORAIS.md"),
+  read(".github/workflows/security.yml"),
+  read(".github/dependabot.yml"),
+]);
+assert(readme.includes("LICENSE.md") && readme.includes("Como o KAZER funciona"), "README sem funcionamento ou referência de licença");
+assert(license.includes("Todos os direitos são reservados") && license.includes("Nenhuma permissão"), "LICENSE.md sem declaração proprietária explícita");
+assert(terms.includes("Propriedade intelectual") && terms.includes("Nenhum direito de copiar"), "Termos sem regras de propriedade intelectual");
+assert(copyrightNotice.includes("Aviso de direitos autorais") && copyrightNotice.includes("Não há licença open source"), "Aviso autoral incompleto");
+assert(workflow.includes("npm run security:check") && workflow.includes("npm run security:audit"), "Workflow sem verificações de segurança");
+assert(dependabot.includes("package-ecosystem: npm"), "Dependabot sem acompanhamento de npm");
 
 const syntaxTargets = ["api/_security.js", "api/chat.js", "api/web-search.js", "api/retention.js", "download/sw.js"];
 for (const target of syntaxTargets) {

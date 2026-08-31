@@ -4,4 +4,18 @@ node_modules/
 !.env.example
 .vercel/
 .notes/
+
+# Credenciais, chaves e certificados nunca devem entrar no Git.
+*.pem
+*.key
+*.p12
+*.pfx
+*.jks
+*.keystore
+*.crt
+
+# Artefatos locais de build, cobertura e distribuição.
+coverage/
+dist/
+build/
 .DS_Store

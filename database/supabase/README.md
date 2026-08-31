@@ -1,25 +1,44 @@
-# Integração de conta do Kazer
+# Integração Supabase do KAZER
 
-Este diretório contém a migração aditiva da conta Kazer. A aplicação usa somente a chave pública do Supabase no navegador. Chaves `service_role`, `sb_secret` e credenciais privadas nunca devem ser colocadas no repositório, no HTML ou em variáveis públicas do Vercel.
+Este diretório contém as migrações incrementais do banco usado pelo KAZER. O navegador usa apenas a chave pública `anon`/publishable; chaves `service_role`, `sb_secret`, credenciais de IA e `CRON_SECRET` devem existir somente em variáveis privadas do servidor.
 
-## Aplicar o banco
+> **Importante:** as migrações devem ser aplicadas no SQL Editor de um ambiente controlado, na ordem numérica. Faça backup, confirme o projeto de destino e teste com contas não produtivas antes de aplicar mudanças em produção.
 
-Abra o SQL Editor do projeto Supabase do Kazer e execute, nesta ordem, `001_auth_accounts.sql`, `002_inactivity_retention.sql`, `003_retention_notifications.sql` e `004_security_hardening.sql`. A primeira migração cria `profiles`, `user_settings`, `app_notices` e `app_maintenance`; as seguintes adicionam o índice de retenção e a tabela privada `account_notifications`. As migrações são aditivas e não apagam tabelas, usuários ou dados existentes.
+## Ordem de aplicação
 
-## Fluxo atual
+| Ordem | Arquivo | Conteúdo |
+|---:|---|---|
+| 1 | `001_auth_accounts.sql` | Perfis, preferências, avisos públicos, trigger de novo usuário, atividade e RLS inicial. |
+| 2 | `002_inactivity_retention.sql` | Índice e apoio à consulta de contas inativas. |
+| 3 | `003_retention_notifications.sql` | Notificações privadas de retenção e policies próprias. |
+| 4 | `004_security_hardening.sql` | `FORCE RLS`, grants mínimos, constraints e revogações. |
+| 5 | `005_usage_limits.sql` | Catálogo de planos, tabela de uso, resets e RPCs iniciais. |
+| 6 | `006_usage_rpc_fix.sql` | Correções das RPCs de consumo e grants autenticados. |
+| 7 | `007_credits_150_messages_5h.sql` | Créditos Free, janela de cinco horas e consumo do chat. |
+| 8 | `008_attachment_limit_10_items.sql` | Dez itens de anexo por janela no plano Free e consumo atômico por item. |
 
-O login usa `signInWithPassword`. O cadastro usa `signUp` com o nome informado em `user_metadata.display_name`. Com a confirmação de e-mail desativada no projeto Supabase, o cadastro deve retornar uma sessão imediatamente e o Kazer redireciona diretamente para `/chat`. O login de uma conta existente também redireciona para `/chat`.
+As migrações posteriores dependem de objetos criados pelas anteriores. Não pule arquivos, não os execute fora de ordem e não edite uma migração já aplicada sem registrar uma nova migração corretiva.
 
-A confirmação automática precisa estar habilitada no painel do Supabase em Authentication → Providers → Email, com a confirmação de e-mail desativada. Nenhum template de Gmail é usado pelo fluxo atual e não existe link de recuperação na tela de login.
+## Configuração do Auth
 
-## Dados da conta
+O login usa `signInWithPassword`. O cadastro usa `signUp` com `user_metadata.display_name`. O fluxo atual espera que a configuração de confirmação de e-mail no provedor Supabase esteja alinhada ao produto; confirme isso em **Authentication → Providers → Email** antes de testar o redirecionamento automático para `/chat`.
 
-O chat lê o perfil da tabela `profiles` e as preferências da tabela `user_settings`, mantendo o armazenamento local apenas como fallback. As preferências de notificações, instalação, aparência e idioma são sincronizadas para o usuário autenticado. A última atividade é atualizada pelo RPC protegido `touch_user_activity`.
+O KAZER não grava senhas ou hashes em tabelas próprias. O Supabase Auth administra sessão, expiração, renovação, login, cadastro e logout. A chave pública não é uma autorização para ignorar RLS: toda tabela de usuário deve continuar limitada por `auth.uid()`.
+
+## Dados e uso
+
+O trigger de novo usuário provisiona `profiles` e `user_settings`. As preferências de notificações, instalação, aparência e idioma podem ser sincronizadas para a conta autenticada, enquanto o navegador mantém um fallback local.
+
+As migrações de uso criam o catálogo e o estado por usuário. O consumo do chat é atômico, aplica reset lazy com bloqueio de linha e impede saldo ou contagem negativa. A migração `008` substitui a assinatura antiga da RPC por `p_attachment_count`, contabilizando cada foto/arquivo individualmente e permitindo no máximo dez itens por janela conforme o plano Free.
 
 ## Retenção
 
-A coluna `user_settings.last_activity_at` registra o último login ou uso registrado no Kazer. A migração `002_inactivity_retention.sql` adiciona um índice para a consulta de retenção sem alterar usuários existentes. A migração `003_retention_notifications.sql` cria `account_notifications`, com RLS para que cada usuário veja e descarte somente seus próprios avisos.
+A coluna de atividade apoia a busca de contas inativas. O endpoint `/api/retention` é protegido por `CRON_SECRET`, cria avisos nas janelas previstas e só pode excluir contas quando `RETENTION_DELETE_ENABLED=true`. Mantenha essa flag como `false` até revisar backup, restauração, avisos, suporte e reversão.
 
-O endpoint protegido `/api/retention` procura contas com **três anos completos** sem atividade. A exclusão administrativa é permanente e só é executada quando `CRON_SECRET`, `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` e `RETENTION_DELETE_ENABLED=true` estão configurados como variáveis privadas do Vercel. Sem a flag explícita, a rotina opera em modo de aviso/relatório e não apaga nada. Se uma chave privada já tiver sido exposta, revogue-a e gere outra antes de habilitar a exclusão.
+O agendamento diário está em `vercel.json`, às 04:00 UTC. A exclusão administrativa, quando habilitada, é permanente, limitada por execução e depende de `SUPABASE_SERVICE_ROLE_KEY`. Nunca coloque a service role no navegador, no repositório, em issues, em logs ou em parâmetros de URL.
 
-O agendamento diário está em `vercel.json`, às 04:00 UTC. A rotina procura contas vencidas e, para contas que estejam na janela final, registra uma notificação única quando faltarem aproximadamente 50, 30 ou 5 dias para a exclusão. O usuário vê o aviso ao entrar no KAZER e pode selecionar “Manter conta ativa”, o que atualiza a atividade e encerra o aviso. A exclusão é limitada a 100 contas por execução e usa a data calculada no momento da execução; qualquer login ou uso registrado reinicia o prazo. Os arquivos `002_inactivity_retention.sql`, `003_retention_notifications.sql` e `004_security_hardening.sql` precisam ser aplicados no SQL Editor do projeto Supabase antes do primeiro uso do novo fluxo. Depois, valide as policies em um usuário de teste e mantenha `RETENTION_DELETE_ENABLED=false` até revisar backup e procedimento de recuperação.
+## Validação pós-migração
+
+Use duas contas de teste e confirme que cada uma consegue ler somente o próprio perfil, preferências, uso e notificações. Tente também acessar sem sessão, com bearer inválido, com sessão revogada e com identificador de outra conta. Verifique o saldo inicial, o reset, a contagem individual de anexos, o bloqueio de limite e a chamada das RPCs por uma role não autorizada.
+
+Registre a data, o projeto, os arquivos aplicados, o resultado, o responsável e o plano de rollback. A aplicação das migrações não deve ser considerada concluída apenas porque o SQL foi aceito pelo editor; o comportamento e as policies precisam ser testados.
