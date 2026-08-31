@@ -3998,11 +3998,15 @@
           if (!copied) throw new Error("Não foi possível copiar o código.");
         };
 
-        const VISUAL_LANGUAGES = new Set(["svg", "kazer-svg", "kazer-html"]);
+        const VISUAL_LANGUAGES = new Set(["svg", "kazer-svg", "kazer-html", "visual-svg", "visual-html"]);
         const MAX_VISUAL_BLOCKS = 3;
         const MAX_VISUAL_CODE_CHARS = 7000;
 
-        const isVisualLanguage = (language) => VISUAL_LANGUAGES.has(String(language || "").trim().toLowerCase());
+        const looksLikeVisualMarkup = (code) => /<svg\b[\s\S]*<\/svg>|<!doctype\s+html\b|<html\b[\s\S]*<\/html>|<(?:article|section|main|div)\b[\s\S]*<\/(?:article|section|main|div)>/i.test(String(code || ""));
+        const isVisualLanguage = (language, code = "") => {
+          const normalized = String(language || "").trim().toLowerCase();
+          return VISUAL_LANGUAGES.has(normalized) || ((normalized === "html" || normalized === "xml") && looksLikeVisualMarkup(code));
+        };
 
         const sanitizeVisualStyle = (value) => String(value || "")
           .replace(/url\s*\([^)]*\)/gi, "")
@@ -4245,7 +4249,7 @@
               const isClosing = trimmed.length >= fenceLength && trimmed.startsWith(closeToken) && trimmed.slice(fenceLength).trim() === "";
               if (isClosing) {
                 const code = codeLines.join("\n");
-                segments.push({ type: isVisualLanguage(language) ? "visual" : "code", language, code, complete: true });
+                segments.push({ type: isVisualLanguage(language, code) ? "visual" : "code", language, code, complete: true });
                 fenceType = null;
                 fenceLength = 0;
                 language = "";
@@ -4261,7 +4265,7 @@
 
           if (fenceType) {
             const code = codeLines.join("\n");
-            segments.push({ type: isVisualLanguage(language) ? "visual" : "code", language, code, complete: false });
+            segments.push({ type: isVisualLanguage(language, code) ? "visual" : "code", language, code, complete: false });
           } else {
             flushMarkdown();
           }
@@ -4271,13 +4275,13 @@
         const splitBareCode = (text) => {
           const source = String(text || "").replace(/\r\n?/g, "\n");
           const lines = source.split("\n");
-          const codeStart = lines.findIndex((line) => /^\s*(?:const |let |var |function |async function |class |import |export |def |from |#include|<!doctype|<html|SELECT |CREATE TABLE|#!\/bin\/)/i.test(line));
+          const codeStart = lines.findIndex((line) => /^\s*(?:const |let |var |function |async function |class |import |export |def |from |#include|<!doctype|<html|<svg|<article|<section|<main|<div|SELECT |CREATE TABLE|#!\/bin\/)/i.test(line));
           if (codeStart < 0 || lines.length - codeStart < 2) return null;
           const before = lines.slice(0, codeStart).join("\n").trim();
           const code = lines.slice(codeStart).join("\n").trim();
           return [
             ...(before ? [{ type: "markdown", text: before }] : []),
-            { type: "code", language: inferCodeLanguage(code), code, complete: true },
+            { type: isVisualLanguage(inferCodeLanguage(code), code) ? "visual" : "code", language: isVisualLanguage(inferCodeLanguage(code), code) ? (/<svg\b/i.test(code) ? "svg" : "kazer-html") : inferCodeLanguage(code), code, complete: true },
           ];
         };
 
