@@ -3086,7 +3086,7 @@
         }
       }
 
-      .plugin-card { display:flex; align-items:center; gap:12px; width:100%; padding:15px; border:1px solid var(--line); border-radius:16px; background:var(--card-2); color:var(--text); text-align:left; } .plugin-card-button { cursor:pointer; } .plugin-card-button:hover { border-color:rgba(255,255,255,.42); } .plugin-card-icon { display:grid; place-items:center; width:36px; height:36px; border-radius:10px; background:#4285f4; color:white; font-size:20px; } .plugin-card strong,.plugin-card small { display:block; } .plugin-card small { margin-top:3px; color:var(--text-soft); font-size:12px; } .plugin-card > span:nth-child(2) { flex:1; } .plugin-card-action { padding:7px 9px; border:1px solid var(--line); border-radius:8px; background:transparent; color:var(--text-soft); cursor:pointer; font-size:12px; } .plugin-card-arrow { color:var(--text-soft); font-size:22px; } .plugin-consent-note { margin:12px 2px 0; color:var(--text-dim); font-size:12px; line-height:1.45; }\n    </style>
+      .plugin-card { display:flex; align-items:center; gap:12px; width:100%; padding:15px; border:1px solid var(--line); border-radius:16px; background:var(--card-2); color:var(--text); text-align:left; } .plugin-card-button { cursor:pointer; } .plugin-card-button:hover { border-color:rgba(255,255,255,.42); } .plugin-card-icon { display:grid; place-items:center; width:36px; height:36px; border-radius:10px; background:transparent; color:white; } .plugin-card-icon svg { width:29px; height:26px; display:block; } .plugin-card strong,.plugin-card small { display:block; } .plugin-card small { margin-top:3px; color:var(--text-soft); font-size:12px; } .plugin-card > span:nth-child(2) { flex:1; } .plugin-card-action { padding:7px 9px; border:1px solid var(--line); border-radius:8px; background:transparent; color:var(--text-soft); cursor:pointer; font-size:12px; } .plugin-card-arrow { color:var(--text-soft); font-size:22px; } .plugin-consent-note { margin:12px 2px 0; color:var(--text-dim); font-size:12px; line-height:1.45; }\n    </style>
   </head>
   <body>
     <main class="app" id="app" data-auth-pending="true">
@@ -3246,7 +3246,7 @@
             <button class="plugin-sheet-close" id="pluginSheetClose" type="button" aria-label="Fechar Plugins">×</button>
           </div>
         </header>
-        <div class="plugin-sheet-empty" id="connectedPluginsEmpty" aria-live="polite">Nenhum plugin conectado ainda.</div><div class="plugin-card" id="googleDriveConnectedCard" hidden><span class="plugin-card-icon" aria-hidden="true">▣</span><span><strong>Google Drive</strong><small>Conectado com segurança</small></span><button class="plugin-card-action" id="googleDriveDisconnect" type="button">Desconectar</button></div>
+        <div class="plugin-sheet-empty" id="connectedPluginsEmpty" aria-live="polite">Nenhum plugin conectado ainda.</div><div class="plugin-card" id="googleDriveConnectedCard" hidden><span class="plugin-card-icon" aria-hidden="true"><svg viewBox="0 0 48 42" role="img" aria-label="Google Drive"><path fill="#0F9D58" d="M16.1 0h15.8l16.1 27.9H32.2L16.1 0Z"></path><path fill="#4285F4" d="M0 27.9h32.2L24.1 42H8.1L0 27.9Z"></path><path fill="#F4B400" d="M16.1 0 0 27.9l8.1 14L24.1 14l7.8 13.9H48L31.9 0H16.1Z"></path></svg></span><span><strong>Google Drive</strong><small>Conectado com segurança</small></span><button class="plugin-card-action" id="googleDriveDisconnect" type="button">Desconectar</button></div>
       </section>
       <div class="attachment-backdrop" id="pluginAddBackdrop" hidden></div>
       <section class="attachment-sheet plugin-sheet" id="pluginAddSheet" role="dialog" aria-modal="true" aria-labelledby="pluginAddSheetTitle" aria-hidden="true" hidden>
@@ -3255,7 +3255,7 @@
           <h2 id="pluginAddSheetTitle">Adicionar plugin</h2>
           <button class="plugin-sheet-close" id="pluginAddSheetClose" type="button" aria-label="Fechar Adicionar plugin">×</button>
         </header>
-        <button class="plugin-card plugin-card-button" id="googleDriveConnect" type="button"><span class="plugin-card-icon" aria-hidden="true">▣</span><span><strong>Google Drive</strong><small>Buscar, ler e salvar arquivos no seu Drive</small></span><span class="plugin-card-arrow" aria-hidden="true">→</span></button><p class="plugin-consent-note">A autorização acontece na tela oficial do Google. O KAZER nunca pede sua senha.</p>
+        <button class="plugin-card plugin-card-button" id="googleDriveConnect" type="button"><span class="plugin-card-icon" aria-hidden="true"><svg viewBox="0 0 48 42" role="img" aria-label="Google Drive"><path fill="#0F9D58" d="M16.1 0h15.8l16.1 27.9H32.2L16.1 0Z"></path><path fill="#4285F4" d="M0 27.9h32.2L24.1 42H8.1L0 27.9Z"></path><path fill="#F4B400" d="M16.1 0 0 27.9l8.1 14L24.1 14l7.8 13.9H48L31.9 0H16.1Z"></path></svg></span><span><strong>Google Drive</strong><small>Buscar, ler e salvar arquivos no seu Drive</small></span><span class="plugin-card-arrow" aria-hidden="true">→</span></button><p class="plugin-consent-note">A autorização acontece na tela oficial do Google. O KAZER nunca pede sua senha.</p>
       </section>
       <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
