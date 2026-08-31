@@ -1702,6 +1702,118 @@
         color: var(--text-soft);
       }
 
+      .settings-mobile-account-card {
+        display: none;
+      }
+
+      .settings-mobile-account-top {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .settings-mobile-account-identity {
+        min-width: 0;
+        flex: 1;
+      }
+
+      .settings-mobile-account-identity strong,
+      .settings-mobile-account-identity small {
+        display: block;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .settings-mobile-account-identity strong {
+        color: var(--text);
+        font-size: 14px;
+        font-weight: 600;
+      }
+
+      .settings-mobile-account-identity small {
+        margin-top: 3px;
+        color: var(--text-dim);
+        font-size: 10px;
+      }
+
+      .settings-mobile-account-plan {
+        display: grid;
+        justify-items: end;
+        gap: 6px;
+        flex: 0 0 auto;
+      }
+
+      .settings-mobile-account-plan-label {
+        color: var(--text-dim);
+        font-size: 8px;
+        font-weight: 700;
+        letter-spacing: 0.16em;
+      }
+
+      .settings-mobile-account-plan-value {
+        color: var(--text);
+        font-size: 11px;
+        font-weight: 650;
+      }
+
+      .settings-mobile-upgrade {
+        min-height: 29px;
+        padding: 0 10px;
+        border: 1px solid color-mix(in srgb, var(--accent) 70%, var(--line));
+        border-radius: 999px;
+        background: var(--accent);
+        color: var(--accent-ink);
+        font: inherit;
+        font-size: 10px;
+        font-weight: 700;
+        cursor: pointer;
+        transition: transform 150ms var(--ease), filter 150ms var(--ease);
+      }
+
+      .settings-mobile-upgrade:hover {
+        filter: brightness(1.08);
+      }
+
+      .settings-mobile-upgrade:active {
+        transform: scale(0.97);
+      }
+
+      .settings-mobile-account-credit {
+        display: flex;
+        justify-content: flex-end;
+        margin-top: 16px;
+        padding-top: 13px;
+        border-top: 1px solid var(--line-soft);
+      }
+
+      .settings-mobile-credit-balance {
+        color: var(--text);
+        font-size: 26px;
+        font-weight: 650;
+        letter-spacing: -0.06em;
+        line-height: 1;
+        font-variant-numeric: tabular-nums;
+      }
+
+      .settings-mobile-account-avatar {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 42px;
+        height: 42px;
+        flex: 0 0 auto;
+        border-radius: 50%;
+        background: var(--purple);
+        color: #fff;
+        font-size: 15px;
+        font-weight: 700;
+      }
+
+      .settings-mobile-account-card.is-changing .settings-mobile-credit-balance {
+        color: var(--purple);
+      }
+
       .settings-search {
         display: flex;
         align-items: center;
@@ -1783,6 +1895,10 @@
         min-width: 0;
         min-height: 0;
         background: var(--card);
+      }
+
+      .settings-mobile-back {
+        display: none;
       }
 
       .settings-panel-head {
@@ -2620,10 +2736,70 @@
           background: var(--card);
         }
 
+        section.settings-popover:not(.mobile-section-open) .settings-panel {
+          display: none;
+        }
+
+        section.settings-popover.mobile-section-open .settings-nav {
+          display: none;
+        }
+
+        section.settings-popover.mobile-section-open .settings-panel {
+          display: flex;
+          height: 100%;
+          border-top: 0;
+        }
+
         .settings-nav {
-          padding: max(12px, env(safe-area-inset-top)) 16px 0;
+          min-height: 100%;
+          padding: max(12px, env(safe-area-inset-top)) 16px max(14px, env(safe-area-inset-bottom));
           border-right: 0;
           background: var(--card);
+        }
+
+        .settings-mobile-account-card {
+          display: block;
+          margin: 4px 0 16px;
+          padding: 16px;
+          border: 1px solid var(--line-soft);
+          border-radius: 18px;
+          background: linear-gradient(145deg, color-mix(in srgb, var(--card-2) 88%, transparent), color-mix(in srgb, var(--page-soft) 72%, transparent));
+          box-shadow: 0 12px 32px rgba(0, 0, 0, 0.14);
+        }
+
+        .settings-mobile-account-top {
+          gap: 10px;
+        }
+
+        .settings-mobile-account-avatar {
+          width: 40px;
+          height: 40px;
+          font-size: 14px;
+        }
+
+        .settings-mobile-account-identity strong {
+          font-size: 13px;
+        }
+
+        .settings-mobile-account-plan {
+          gap: 5px;
+        }
+
+        .settings-mobile-account-credit {
+          margin-top: 14px;
+          padding-top: 12px;
+        }
+
+        .settings-mobile-credit-balance {
+          font-size: 28px;
+        }
+
+        .settings-mobile-upgrade {
+          min-height: 28px;
+        }
+
+        .settings-mobile-back {
+          display: none;
         }
 
         .settings-mobile-head {
@@ -2636,22 +2812,32 @@
         }
 
         .settings-nav-list {
-          display: flex;
+          display: grid;
+          flex: 1;
           gap: 6px;
           margin: 0 -2px;
-          padding: 0 2px 13px;
-          overflow-x: auto;
+          padding: 0 2px 4px;
+          overflow-x: hidden;
+          overflow-y: auto;
         }
 
         .settings-nav-item {
-          min-width: max-content;
-          min-height: 38px;
+          width: 100%;
+          min-height: 58px;
           padding: 0 13px;
-          white-space: nowrap;
+          border-color: var(--line-soft);
+          background: color-mix(in srgb, var(--card-2) 42%, transparent);
+          white-space: normal;
+        }
+
+        .settings-nav-item:hover,
+        .settings-nav-item.active {
+          border-color: color-mix(in srgb, var(--purple) 48%, var(--line-soft));
+          background: color-mix(in srgb, var(--purple) 8%, var(--card-2));
         }
 
         .settings-nav-icon {
-          display: none;
+          display: inline-flex;
         }
 
         .settings-panel {
@@ -2659,7 +2845,41 @@
         }
 
         .settings-panel-head {
-          padding: 18px 17px 14px;
+          align-items: center;
+          padding: max(12px, env(safe-area-inset-top)) 17px 14px;
+        }
+
+        .settings-panel-head > div {
+          min-width: 0;
+          flex: 1;
+        }
+
+        .settings-mobile-back {
+          display: inline-flex;
+          align-items: center;
+          gap: 4px;
+          min-height: 36px;
+          margin-right: 8px;
+          padding: 0 3px 0 0;
+          border: 0;
+          background: transparent;
+          color: var(--text-soft);
+          font: inherit;
+          font-size: 11px;
+          cursor: pointer;
+        }
+
+        .settings-mobile-back:hover {
+          color: var(--text);
+        }
+
+        .settings-mobile-back:active {
+          transform: scale(0.97);
+        }
+
+        .settings-mobile-back .icon {
+          width: 18px;
+          height: 18px;
         }
 
         .settings-panel-close {
@@ -2808,6 +3028,14 @@
       <section class="settings-popover" id="settingsPopover" role="dialog" aria-modal="true" aria-label="Configurações" aria-hidden="true" hidden>
         <aside class="settings-nav">
           <div class="settings-mobile-head"><span class="settings-mobile-title">Configurações</span><button class="icon-button settings-close" id="closeSettings" type="button" aria-label="Fechar configurações"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"></path></svg></button></div>
+          <div class="settings-mobile-account-card" id="settingsMobileAccountCard">
+            <div class="settings-mobile-account-top">
+              <span class="settings-mobile-account-avatar" id="settingsMobileAccountAvatar">K</span>
+              <div class="settings-mobile-account-identity"><strong id="settingsMobileAccountName">Kazer</strong><small id="settingsMobileAccountEmail">Conta conectada</small></div>
+              <div class="settings-mobile-account-plan"><span class="settings-mobile-account-plan-label">PLANO</span><strong class="settings-mobile-account-plan-value" id="settingsMobilePlan">Free</strong><button class="settings-mobile-upgrade" id="settingsMobileUpgrade" type="button" hidden>Atualizar</button></div>
+            </div>
+            <div class="settings-mobile-account-credit"><span class="settings-mobile-credit-balance" id="settingsMobileCreditBalance" aria-label="Saldo de créditos">0</span></div>
+          </div>
           <label class="settings-search"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-4-4"></path></svg><input id="settingsSearch" type="search" placeholder="Pesquisar configuração" autocomplete="off" /></label>
           <nav class="settings-nav-list" aria-label="Categorias de configurações">
             <button class="settings-nav-item active" type="button" data-settings-section="general"><span class="settings-nav-icon">◌</span><span>Geral</span></button>
@@ -2818,7 +3046,7 @@
           </nav>
         </aside>
         <section class="settings-panel">
-          <header class="settings-panel-head"><div><span class="settings-eyebrow">PREFERÊNCIAS DO KAZER</span><h2 id="settingsPanelTitle">Geral</h2></div><button class="icon-button settings-panel-close" id="closeSettingsDesktop" type="button" aria-label="Fechar configurações"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"></path></svg></button></header>
+          <header class="settings-panel-head"><button class="settings-mobile-back" id="settingsPanelBack" type="button" aria-label="Voltar para Configurações"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"></path></svg><span>Voltar</span></button><div><span class="settings-eyebrow">PREFERÊNCIAS DO KAZER</span><h2 id="settingsPanelTitle">Geral</h2></div><button class="icon-button settings-panel-close" id="closeSettingsDesktop" type="button" aria-label="Fechar configurações"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"></path></svg></button></header>
           <div class="settings-panel-scroll">
             <section class="settings-section" data-settings-panel="general">
               <p class="settings-section-intro">Controle como o Kazer aparece e responde neste dispositivo.</p>
@@ -3012,6 +3240,14 @@
         const settingsAccountName = document.getElementById("settingsAccountName");
         const settingsAccountEmail = document.getElementById("settingsAccountEmail");
         const settingsAccountAvatar = document.getElementById("settingsAccountAvatar");
+        const settingsPanelBack = document.getElementById("settingsPanelBack");
+        const settingsMobileAccountCard = document.getElementById("settingsMobileAccountCard");
+        const settingsMobileAccountName = document.getElementById("settingsMobileAccountName");
+        const settingsMobileAccountEmail = document.getElementById("settingsMobileAccountEmail");
+        const settingsMobileAccountAvatar = document.getElementById("settingsMobileAccountAvatar");
+        const settingsMobilePlan = document.getElementById("settingsMobilePlan");
+        const settingsMobileUpgrade = document.getElementById("settingsMobileUpgrade");
+        const settingsMobileCreditBalance = document.getElementById("settingsMobileCreditBalance");
         const webSearchForm = document.getElementById("webSearchForm");
         const webQuery = document.getElementById("webQuery");
         const webSources = document.getElementById("webSources");
@@ -3073,9 +3309,9 @@
           const displayName = profile?.display_name || user?.user_metadata?.display_name || user?.email?.split("@")[0] || "Kazer";
           const email = user?.email || "Conta conectada";
           const initial = displayName.trim().charAt(0).toUpperCase() || "K";
-          [profileDisplayName, settingsAccountName].forEach((element) => { if (element) element.textContent = displayName; });
-          [profileEmail, settingsAccountEmail].forEach((element) => { if (element) element.textContent = email; });
-          if (settingsAccountAvatar) settingsAccountAvatar.textContent = initial;
+          [profileDisplayName, settingsAccountName, settingsMobileAccountName].forEach((element) => { if (element) element.textContent = displayName; });
+          [profileEmail, settingsAccountEmail, settingsMobileAccountEmail].forEach((element) => { if (element) element.textContent = email; });
+          [settingsAccountAvatar, settingsMobileAccountAvatar].forEach((element) => { if (element) element.textContent = initial; });
         };
 
         const formatResetTime = (value) => {
@@ -3086,20 +3322,32 @@
         };
 
         const animateCreditBalance = (target, animate = true) => {
-          if (!creditBalanceValue) return;
+          const targets = [creditBalanceValue, settingsMobileCreditBalance].filter(Boolean);
+          if (!targets.length) return;
           const next = Math.max(0, Number(target) || 0);
-          const previous = Number(creditBalanceValue.dataset.value ?? next);
-          creditBalanceValue.dataset.value = String(next);
-          if (!animate || previous === next) { creditBalanceValue.textContent = String(next); return; }
+          const previous = Number(targets[0].dataset.value ?? next);
+          targets.forEach((element) => { element.dataset.value = String(next); });
+          if (!animate || previous === next) {
+            targets.forEach((element) => { element.textContent = String(next); });
+            return;
+          }
           creditIndicator?.classList.add("is-changing");
+          settingsMobileAccountCard?.classList.add("is-changing");
           const start = performance.now();
           const duration = 420;
           const step = (now) => {
             const progress = Math.min(1, (now - start) / duration);
             const eased = 1 - Math.pow(1 - progress, 3);
-            creditBalanceValue.textContent = String(Math.round(previous + (next - previous) * eased));
+            const value = String(Math.round(previous + (next - previous) * eased));
+            targets.forEach((element) => { element.textContent = value; });
             if (progress < 1) requestAnimationFrame(step);
-            else { creditBalanceValue.textContent = String(next); window.setTimeout(() => creditIndicator?.classList.remove("is-changing"), 180); }
+            else {
+              targets.forEach((element) => { element.textContent = String(next); });
+              window.setTimeout(() => {
+                creditIndicator?.classList.remove("is-changing");
+                settingsMobileAccountCard?.classList.remove("is-changing");
+              }, 180);
+            }
           };
           requestAnimationFrame(step);
         };
@@ -3108,6 +3356,10 @@
           if (!next || typeof next !== "object") return;
           usageState = next;
           if (creditIndicator) creditIndicator.hidden = false;
+          const normalizedPlan = String(next.plan || "free").trim().toLowerCase().replace(/[-\s]+/g, "_");
+          const isProPlan = normalizedPlan === "pro" || normalizedPlan === "kazer_pro";
+          if (settingsMobilePlan) settingsMobilePlan.textContent = isProPlan ? "Kazer Pro" : "Free";
+          if (settingsMobileUpgrade) settingsMobileUpgrade.hidden = isProPlan;
           animateCreditBalance(next.credits_balance, animate);
           if (creditResetValue) creditResetValue.textContent = formatResetTime(next.next_credit_reset_at);
           if (attachmentResetValue) attachmentResetValue.textContent = formatResetTime(next.attachment_reset_at);
@@ -3429,7 +3681,7 @@
           closeAttachmentSheet();
           closePluginSheet();
           profilePopover.classList.remove("visible");
-          settingsPopover.classList.remove("visible");
+          settingsPopover.classList.remove("visible", "mobile-section-open");
           settingsBackdrop.classList.remove("visible");
           settingsPopover.hidden = true;
           settingsBackdrop.hidden = true;
@@ -3450,6 +3702,7 @@
         };
 
         const settingsLabels = { general: "Geral", notifications: "Notificações", data: "Dados e privacidade", documents: "Documentos", account: "Conta e segurança" };
+        const isMobileSettingsViewport = () => window.matchMedia?.("(max-width: 680px)").matches ?? window.innerWidth <= 680;
 
         const setSwitch = (element, value) => {
           if (!element) return;
@@ -3489,6 +3742,7 @@
             settingsBackdrop.classList.add("visible");
             settingsPopover.classList.add("visible");
           });
+          settingsPopover.classList.remove("mobile-section-open");
           settingsSearch.value = "";
           settingsNavItems.forEach((item) => { item.hidden = false; });
           renderSettingsSection(section);
@@ -3497,7 +3751,7 @@
         };
 
         const closeSettingsModal = () => {
-          settingsPopover.classList.remove("visible");
+          settingsPopover.classList.remove("visible", "mobile-section-open");
           settingsBackdrop.classList.remove("visible");
           settingsPopover.setAttribute("aria-hidden", "true");
           window.setTimeout(() => {
@@ -4087,6 +4341,7 @@
         webKazerAction.addEventListener("click", () => openWeb());
         const openPro = () => { closeMenus(); showToast("Kazer Pro: página de compra em breve"); };
         proAction.addEventListener("click", openPro);
+        settingsMobileUpgrade?.addEventListener("click", openPro);
         creditProButton?.addEventListener("click", openPro);
         attachmentProButton?.addEventListener("click", openPro);
         webModes.addEventListener("click", (event) => {
@@ -4122,8 +4377,17 @@
         closeSettings.addEventListener("click", closeSettingsModal);
         closeSettingsDesktop.addEventListener("click", closeSettingsModal);
         settingsBackdrop.addEventListener("click", closeSettingsModal);
+        settingsPanelBack?.addEventListener("click", () => {
+          if (!isMobileSettingsViewport()) return;
+          settingsPopover.classList.remove("mobile-section-open");
+          settingsNavItems.forEach((item) => { item.hidden = false; });
+          settingsSearch.value = "";
+        });
         settingsNavItems.forEach((item) => {
-          item.addEventListener("click", () => renderSettingsSection(item.dataset.settingsSection));
+          item.addEventListener("click", () => {
+            renderSettingsSection(item.dataset.settingsSection);
+            if (isMobileSettingsViewport()) settingsPopover.classList.add("mobile-section-open");
+          });
         });
         settingsSearch.addEventListener("input", () => {
           const query = settingsSearch.value.trim().toLocaleLowerCase();
