@@ -52,19 +52,17 @@ for (const required of ["GROQ_API_KEY=", "GEMINI_API_KEY=", "SUPABASE_SERVICE_RO
   assert(envExample.includes(required), `.env.example: variável ausente: ${required}`);
 }
 
-const [readme, license, terms, copyrightNotice, workflow, dependabot] = await Promise.all([
+const [readme, license, terms, copyrightNotice, dependabot] = await Promise.all([
   read("README.md"),
   read("LICENSE.md"),
   read("docs/TERMOS-DE-USO.md"),
   read("docs/AVISO-DE-DIREITOS-AUTORAIS.md"),
-  read(".github/workflows/security.yml"),
   read(".github/dependabot.yml"),
 ]);
 assert(readme.includes("LICENSE.md") && readme.includes("Como o KAZER funciona"), "README sem funcionamento ou referência de licença");
 assert(license.includes("Todos os direitos são reservados") && license.includes("Nenhuma permissão"), "LICENSE.md sem declaração proprietária explícita");
 assert(terms.includes("Propriedade intelectual") && terms.includes("Nenhum direito de copiar"), "Termos sem regras de propriedade intelectual");
 assert(copyrightNotice.includes("Aviso de direitos autorais") && copyrightNotice.includes("Não há licença open source"), "Aviso autoral incompleto");
-assert(workflow.includes("npm run security:check") && workflow.includes("npm run security:audit"), "Workflow sem verificações de segurança");
 assert(dependabot.includes("package-ecosystem: npm"), "Dependabot sem acompanhamento de npm");
 
 const syntaxTargets = ["api/_security.js", "api/chat.js", "api/web-search.js", "api/retention.js", "download/sw.js"];

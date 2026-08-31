@@ -108,7 +108,7 @@ A aplicação é deliberadamente dividida entre um cliente estático e funções
 | `database/supabase/` | Migrações SQL incrementais e instruções do banco. |
 | `download/` | Manifesto, service worker, ícones, logos e materiais de distribuição PWA/Android/iOS. |
 | `scripts/` | Verificações automatizadas de segurança e sintaxe. |
-| `.github/` | Workflow de segurança, Dependabot e regras de propriedade do código. |
+| `.github/` | CODEOWNERS, configuração do Dependabot e regras de propriedade do código. |
 | `docs/` | Termos, aviso autoral, política operacional de publicação e documentos de governança. |
 | `vercel.json` | Rewrites, headers de segurança e cron de retenção. |
 | `.env.example` | Nomes e valores de exemplo das variáveis; nunca contém credenciais reais. |
@@ -269,7 +269,7 @@ npm run security:check
 npm run security:audit -- --audit-level=high
 ```
 
-O workflow em `.github/workflows/security.yml` repete essas verificações em pushes e pull requests. O Dependabot em `.github/dependabot.yml` acompanha as dependências npm. Falhas devem ser tratadas antes do deploy; `npm audit` sem vulnerabilidades é apenas um retrato do momento, não uma certificação de segurança.
+O Dependabot em `.github/dependabot.yml` acompanha as dependências npm. Os mesmos comandos podem ser configurados em GitHub Actions, Vercel ou outro CI autorizado para cada push e pull request. Falhas devem ser tratadas antes do deploy; `npm audit` sem vulnerabilidades é apenas um retrato do momento, não uma certificação de segurança.
 
 ## Documentos e autoria
 
