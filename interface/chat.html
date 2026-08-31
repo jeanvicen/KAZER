@@ -1788,9 +1788,10 @@
       }
 
       .settings-mobile-credit-copy {
-        display: grid;
-        justify-items: end;
-        gap: 6px;
+        display: flex;
+        align-items: baseline;
+        justify-content: flex-end;
+        gap: 8px;
       }
 
       .settings-mobile-credit-label {
@@ -1799,6 +1800,7 @@
         font-weight: 700;
         letter-spacing: 0.16em;
         line-height: 1;
+        text-transform: uppercase;
       }
 
       .settings-mobile-credit-balance {
@@ -1901,6 +1903,21 @@
         color: var(--text-dim);
         font-size: 18px;
         line-height: 1;
+      }
+
+      .settings-nav-icon-text {
+        display: inline-flex;
+      }
+
+      .settings-nav-icon-svg {
+        display: none;
+      }
+
+      .settings-nav-icon svg {
+        display: block;
+        width: 24px;
+        height: 24px;
+        overflow: visible;
       }
 
       .settings-panel {
@@ -2828,7 +2845,7 @@
         .settings-nav-list {
           display: grid;
           flex: 1;
-          gap: 6px;
+          gap: 8px;
           margin: 0 -2px;
           padding: 0 2px 4px;
           overflow-x: hidden;
@@ -2837,21 +2854,48 @@
 
         .settings-nav-item {
           width: 100%;
-          min-height: 58px;
-          padding: 0 13px;
+          min-height: 60px;
+          gap: 14px;
+          padding: 0 16px;
           border-color: var(--line-soft);
           background: color-mix(in srgb, var(--card-2) 42%, transparent);
+          font-size: 14px;
           white-space: normal;
         }
 
         .settings-nav-item:hover,
         .settings-nav-item.active {
-          border-color: color-mix(in srgb, var(--purple) 48%, var(--line-soft));
-          background: color-mix(in srgb, var(--purple) 8%, var(--card-2));
+          border-color: var(--line);
+          background: var(--card-2);
+          color: var(--text);
+        }
+
+        .settings-nav-icon-text {
+          display: none;
+        }
+
+        .settings-nav-icon-svg {
+          display: inline-flex;
         }
 
         .settings-nav-icon {
           display: inline-flex;
+          width: 28px;
+          height: 28px;
+          color: var(--text-soft);
+        }
+
+        .settings-nav-icon.settings-nav-icon-text {
+          display: none;
+        }
+
+        .settings-nav-icon.settings-nav-icon-svg {
+          display: inline-flex;
+        }
+
+        .settings-nav-icon svg {
+          width: 24px;
+          height: 24px;
         }
 
         .settings-panel {
@@ -3052,11 +3096,11 @@
           </div>
           <label class="settings-search"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-4-4"></path></svg><input id="settingsSearch" type="search" placeholder="Pesquisar configuração" autocomplete="off" /></label>
           <nav class="settings-nav-list" aria-label="Categorias de configurações">
-            <button class="settings-nav-item active" type="button" data-settings-section="general"><span class="settings-nav-icon">◌</span><span>Geral</span></button>
-            <button class="settings-nav-item" type="button" data-settings-section="notifications"><span class="settings-nav-icon">◔</span><span>Notificações</span></button>
-            <button class="settings-nav-item" type="button" data-settings-section="data"><span class="settings-nav-icon">▣</span><span>Dados e privacidade</span></button>
-            <button class="settings-nav-item" type="button" data-settings-section="documents"><span class="settings-nav-icon">▤</span><span>Documentos</span></button>
-            <button class="settings-nav-item" type="button" data-settings-section="account"><span class="settings-nav-icon">◎</span><span>Conta e segurança</span></button>
+            <button class="settings-nav-item active" type="button" data-settings-section="general"><span class="settings-nav-icon settings-nav-icon-text" aria-hidden="true">◌</span><span class="settings-nav-icon settings-nav-icon-svg" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6 7 7M17 17l1.4 1.4M18.4 5.6 17 7M7 17l-1.4 1.4"></path><circle cx="12" cy="12" r="3.5"></circle></svg></span><span>Geral</span></button>
+            <button class="settings-nav-item" type="button" data-settings-section="notifications"><span class="settings-nav-icon settings-nav-icon-text" aria-hidden="true">◔</span><span class="settings-nav-icon settings-nav-icon-svg" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"></path><path d="M10 21h4"></path></svg></span><span>Notificações</span></button>
+            <button class="settings-nav-item" type="button" data-settings-section="data"><span class="settings-nav-icon settings-nav-icon-text" aria-hidden="true">▣</span><span class="settings-nav-icon settings-nav-icon-svg" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="10" rx="2"></rect><path d="M8 11V8a4 4 0 0 1 8 0v3"></path></svg></span><span>Dados e privacidade</span></button>
+            <button class="settings-nav-item" type="button" data-settings-section="documents"><span class="settings-nav-icon settings-nav-icon-text" aria-hidden="true">▤</span><span class="settings-nav-icon settings-nav-icon-svg" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h9l3 3v15H6z"></path><path d="M14 3v4h4M9 12h6M9 16h6"></path></svg></span><span>Documentos</span></button>
+            <button class="settings-nav-item" type="button" data-settings-section="account"><span class="settings-nav-icon settings-nav-icon-text" aria-hidden="true">◎</span><span class="settings-nav-icon settings-nav-icon-svg" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 20 6v5c0 4.8-3.2 8.5-8 10-4.8-1.5-8-5.2-8-10V6l8-3Z"></path><path d="m8.6 12 2.2 2.2 4.7-4.7"></path></svg></span><span>Conta e segurança</span></button>
           </nav>
         </aside>
         <section class="settings-panel">
