@@ -222,7 +222,6 @@
 
       .credit-indicator { position: absolute; top: max(18px, env(safe-area-inset-top)); left: clamp(18px, 4vw, 40px); display: inline-flex; align-items: center; gap: 8px; min-height: 40px; padding: 0 13px; border: 1px solid rgba(255,255,255,.14); border-radius: 999px; background: color-mix(in srgb, var(--card) 78%, transparent); color: var(--text); box-shadow: 0 6px 22px rgba(0,0,0,.16); backdrop-filter: blur(14px); transition: transform 260ms var(--ease), border-color 260ms var(--ease), box-shadow 260ms var(--ease); }
       .credit-indicator.is-changing { transform: translateY(-1px) scale(1.035); border-color: rgba(231,188,105,.55); box-shadow: 0 0 22px rgba(231,188,105,.15); }
-      .credit-indicator-icon { color: var(--warning); font-size: 16px; line-height: 1; }
       .credit-indicator-value { min-width: 3ch; font-size: 16px; font-weight: 750; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
       @media (max-width: 560px) { .credit-indicator { left: 14px; min-height: 36px; padding: 0 10px; } .credit-indicator-value { font-size: 15px; } }
 
@@ -577,36 +576,6 @@
         font-size: inherit;
       }
 
-      .assistant-marker,
-      .thinking-symbol {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        flex: 0 0 auto;
-        width: 19px;
-        height: 19px;
-        margin-top: 4px;
-        color: var(--purple);
-        opacity: .9;
-      }
-
-      .assistant-marker svg,
-      .thinking-symbol svg {
-        width: 16px;
-        height: 16px;
-        overflow: visible;
-        filter: drop-shadow(0 0 6px rgba(140, 122, 255, .34));
-      }
-
-      .assistant-marker svg {
-        animation: assistant-symbol-float 3.2s var(--ease) infinite;
-      }
-
-      @keyframes assistant-symbol-float {
-        0%, 100% { opacity: .62; transform: rotate(0deg) scale(.9); }
-        50% { opacity: 1; transform: rotate(90deg) scale(1.04); }
-      }
-
       .message-meta {
         display: flex;
         align-items: center;
@@ -624,24 +593,6 @@
         font-size: clamp(18px, 4.5vw, 25px);
         line-height: 1.2;
         animation: enter-up 300ms var(--ease) both;
-      }
-
-      .thinking-symbol {
-        width: 23px;
-        height: 23px;
-        margin-top: 0;
-        color: var(--text-soft);
-      }
-
-      .thinking-symbol svg {
-        width: 21px;
-        height: 21px;
-        animation: assistant-symbol-thinking 1.15s var(--ease) infinite;
-      }
-
-      @keyframes assistant-symbol-thinking {
-        0%, 100% { opacity: .42; transform: rotate(0deg) scale(.82); }
-        50% { opacity: 1; transform: rotate(180deg) scale(1.06); }
       }
 
       .thinking-label {
@@ -2146,7 +2097,6 @@
       .attachment-limit-banner button, .credit-limit-card button { justify-self: start; margin-top: 5px; padding: 8px 11px; border-radius: 9px; background: var(--text); color: var(--accent-ink); font-size: 12px; font-weight: 700; cursor: pointer; }
       .credit-limit-modal { position: fixed; z-index: 80; inset: 0; display: grid; place-items: center; padding: 22px; background: rgba(0,0,0,.58); backdrop-filter: blur(8px); }
       .credit-limit-card { width: min(390px,100%); padding: 28px; border: 1px solid rgba(231,188,105,.3); border-radius: 24px; background: var(--card); box-shadow: 0 24px 70px rgba(0,0,0,.34); text-align: center; }
-      .credit-limit-icon { color: var(--warning); font-size: 26px; }
       .credit-limit-card h2 { margin: 12px 0 8px; color: var(--text); font-size: 21px; }
       .credit-limit-card p, .credit-limit-card small { display: block; margin: 0 0 10px; color: var(--text-soft); line-height: 1.45; }
       .credit-limit-card button { justify-self: center; margin-top: 10px; }
@@ -2361,10 +2311,6 @@
         .message-row {
           max-width: 91%;
         }
-
-        .assistant-response { gap: 8px; }
-        .assistant-marker { width: 17px; height: 17px; margin-top: 3px; }
-        .assistant-marker svg { width: 14px; height: 14px; }
 
         .message-bubble {
           padding: 13px 17px;
@@ -2665,7 +2611,7 @@
         <button class="retention-dismiss" id="retentionDismiss" type="button" aria-label="Fechar aviso">×</button>
       </aside>
       <header class="topbar" aria-label="Barra de conversa">
-        <div class="credit-indicator" id="creditIndicator" aria-label="Saldo de créditos" hidden><span class="credit-indicator-icon" aria-hidden="true">✦</span><span class="credit-indicator-value" id="creditBalanceValue">0</span></div>
+        <div class="credit-indicator" id="creditIndicator" aria-label="Saldo de créditos" hidden><span class="credit-indicator-value" id="creditBalanceValue">0</span></div>
         <span class="conversation-title">KAZER</span>
         <button class="new-chat-button" id="newChatButton" type="button" aria-label="Nova conversa" hidden>+</button>
         <button class="profile-button" id="profileButton" type="button" aria-label="Abrir perfil" aria-expanded="false"><span class="avatar-photo" aria-hidden="true"></span></button>
@@ -2724,7 +2670,7 @@
       </section>
 
       <aside class="attachment-limit-banner" id="attachmentLimitBanner" hidden aria-live="polite"><strong>Você usou seu limite de anexos.</strong><span>Mude para o Kazer Pro para enviar mais anexos.</span><small>Seus anexos serão liberados em <b id="attachmentResetValue">—</b>.</small><button type="button" id="attachmentProButton">Conhecer Kazer Pro</button></aside>
-      <section class="credit-limit-modal" id="creditLimitModal" hidden role="dialog" aria-modal="true" aria-labelledby="creditLimitTitle"><div class="credit-limit-card"><span class="credit-limit-icon" aria-hidden="true">✦</span><h2 id="creditLimitTitle">Você atingiu seu limite de créditos.</h2><p>Mude para o Kazer Pro para continuar usando mais recursos.</p><small>Seus créditos serão renovados em <b id="creditResetValue">—</b>.</small><button type="button" id="creditProButton">Conhecer Kazer Pro</button></div></section>
+      <section class="credit-limit-modal" id="creditLimitModal" hidden role="dialog" aria-modal="true" aria-labelledby="creditLimitTitle"><div class="credit-limit-card"><h2 id="creditLimitTitle">Você atingiu seu limite de créditos.</h2><p>Mude para o Kazer Pro para continuar usando mais recursos.</p><small>Seus créditos serão renovados em <b id="creditResetValue">—</b>.</small><button type="button" id="creditProButton">Conhecer Kazer Pro</button></div></section>
       <div class="web-popover" id="webPopover" role="dialog" aria-label="WebKazer">
         <h2>WebKazer</h2>
         <p class="web-subtitle">Pesquise na web, imagens, vídeos e notícias; traga contexto para o KAZER.</p>
@@ -3369,15 +3315,6 @@
 
         const timeNow = () => new Intl.DateTimeFormat("pt-BR", { hour: "2-digit", minute: "2-digit" }).format(new Date());
 
-        const assistantSymbolMarkup = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.55" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2.6 13.8 10.2 21.4 12l-7.6 1.8L12 21.4l-1.8-7.6L2.6 12l7.6-1.8L12 2.6Z"></path><circle cx="12" cy="12" r="1.1" fill="currentColor" stroke="none"></circle></svg>';
-
-        const createAssistantSymbol = (className) => {
-          const symbol = document.createElement("span");
-          symbol.className = className;
-          symbol.innerHTML = assistantSymbolMarkup;
-          return symbol;
-        };
-
         const codeLanguageLabels = {
           js: "JavaScript",
           javascript: "JavaScript",
@@ -3652,7 +3589,7 @@
             const content = document.createElement("div");
             content.className = "assistant-content";
             renderAssistantContent(content, text, options);
-            response.append(createAssistantSymbol("assistant-marker"), content);
+            response.append(content);
             row.appendChild(response);
           } else {
             const bubble = document.createElement("div");
@@ -3690,7 +3627,7 @@
           const label = document.createElement("span");
           label.className = "thinking-label";
           label.textContent = "Thinking";
-          thinking.append(createAssistantSymbol("thinking-symbol"), label);
+          thinking.append(label);
           row.appendChild(thinking);
           return row;
         };
