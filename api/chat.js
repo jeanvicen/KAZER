@@ -367,7 +367,7 @@ module.exports = async function handler(request, response) {
   let usage;
   try {
     usage = await callUsageRpc(request, "consume_chat_usage", {
-      p_credit_amount: 1,
+      p_credit_amount: 10,
       p_has_attachment: prepared.fileNames.length > 0,
     });
   } catch (error) {
