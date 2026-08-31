@@ -368,7 +368,7 @@ module.exports = async function handler(request, response) {
   try {
     usage = await callUsageRpc(request, "consume_chat_usage", {
       p_credit_amount: 10,
-      p_has_attachment: prepared.fileNames.length > 0,
+      p_attachment_count: prepared.fileNames.length,
     });
   } catch (error) {
     if (error.code === "credits_limit_reached") {

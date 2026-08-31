@@ -3723,10 +3723,13 @@
             return;
           }
           const incoming = [...fileList];
+          const accountRemaining = Math.max(0, Number(usageState?.attachment_remaining ?? 10));
+          const selectionLimit = Math.min(10, accountRemaining);
           const totalBytes = selectedFiles.reduce((sum, file) => sum + file.size, 0);
           for (const file of incoming) {
-            if (selectedFiles.length >= 5) {
-              showToast("Você pode anexar até 5 arquivos por mensagem");
+            if (selectedFiles.length >= selectionLimit) {
+              const remainingToSelect = Math.max(0, selectionLimit - selectedFiles.length);
+              showToast(remainingToSelect > 0 ? `Você ainda pode selecionar ${remainingToSelect} anexo(s)` : "Você pode selecionar até 10 anexos por envio");
               break;
             }
             if (file.size > maxClientFileBytes || totalBytes + file.size > maxClientFileBytes) {
