@@ -483,6 +483,59 @@
         box-shadow: 0 10px 30px rgba(0, 0, 0, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.04);
       }
 
+      .visual-block {
+        width: min(100%, 670px);
+        overflow: hidden;
+        border: 1px solid var(--line-soft);
+        border-radius: 16px;
+        background: #0c0c10;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+      }
+
+      .visual-block-head {
+        display: flex;
+        align-items: center;
+        min-height: 34px;
+        padding: 0 13px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        background: rgba(255, 255, 255, 0.025);
+      }
+
+      .visual-block-label {
+        color: var(--text-dim);
+        font-family: var(--sans);
+        font-size: 9px;
+        font-weight: 700;
+        letter-spacing: 0.13em;
+        text-transform: uppercase;
+      }
+
+      .visual-frame {
+        display: block;
+        width: 100%;
+        height: 300px;
+        border: 0;
+        background: #0c0c10;
+      }
+
+      .visual-block[data-visual-kind="html"] .visual-frame {
+        height: 360px;
+      }
+
+      .visual-block.is-writing .visual-frame {
+        opacity: 0.42;
+      }
+
+      .visual-empty {
+        display: grid;
+        min-height: 120px;
+        place-items: center;
+        padding: 22px;
+        color: var(--text-dim);
+        font-size: 12px;
+        text-align: center;
+      }
+
       .code-block-head {
         display: flex;
         align-items: center;
@@ -3945,6 +3998,102 @@
           if (!copied) throw new Error("Não foi possível copiar o código.");
         };
 
+        const VISUAL_LANGUAGES = new Set(["svg", "kazer-svg", "kazer-html"]);
+        const MAX_VISUAL_BLOCKS = 3;
+        const MAX_VISUAL_CODE_CHARS = 7000;
+
+        const isVisualLanguage = (language) => VISUAL_LANGUAGES.has(String(language || "").trim().toLowerCase());
+
+        const sanitizeVisualStyle = (value) => String(value || "")
+          .replace(/url\s*\([^)]*\)/gi, "")
+          .replace(/expression\s*\([^)]*\)/gi, "")
+          .replace(/@import[^;]+;?/gi, "")
+          .slice(0, 4000);
+
+        const removeUnsafeVisualAttributes = (element) => {
+          [...element.attributes].forEach((attribute) => {
+            const name = attribute.name.toLowerCase();
+            const value = attribute.value || "";
+            if (name.startsWith("on") || ["src", "href", "xlink:href", "action", "formaction", "poster", "cite"].includes(name)) {
+              element.removeAttribute(attribute.name);
+              return;
+            }
+            if (name === "style") element.setAttribute(attribute.name, sanitizeVisualStyle(value));
+          });
+        };
+
+        const sanitizeVisualSvg = (source) => {
+          if (String(source || "").length > MAX_VISUAL_CODE_CHARS) return null;
+          const parsed = new DOMParser().parseFromString(String(source || ""), "image/svg+xml");
+          const root = parsed.documentElement;
+          if (!root || root.nodeName.toLowerCase() !== "svg" || parsed.querySelector("parsererror")) return null;
+          root.querySelectorAll("script,foreignObject,iframe,object,embed,link,style,form,input,button,textarea,select,video,audio,canvas").forEach((node) => node.remove());
+          root.querySelectorAll("*").forEach(removeUnsafeVisualAttributes);
+          removeUnsafeVisualAttributes(root);
+          root.setAttribute("xmlns", "http://www.w3.org/2000/svg");
+          root.setAttribute("preserveAspectRatio", root.getAttribute("preserveAspectRatio") || "xMidYMid meet");
+          root.setAttribute("style", "display:block;width:100%;max-width:100%;height:auto;max-height:100%;");
+          root.removeAttribute("width");
+          root.removeAttribute("height");
+          return root.outerHTML;
+        };
+
+        const sanitizeVisualScript = (value) => String(value || "")
+          .replace(/\b(?:fetch|XMLHttpRequest|WebSocket|EventSource)\b/gi, "undefined")
+          .replace(/navigator\s*\.\s*sendBeacon/gi, "undefined")
+          .replace(/(?:window\s*\.\s*)?(?:parent|top|opener)\b/gi, "undefined")
+          .slice(0, 3200);
+
+        const sanitizeVisualHtml = (source) => {
+          if (String(source || "").length > MAX_VISUAL_CODE_CHARS) return null;
+          const parsed = new DOMParser().parseFromString(String(source || ""), "text/html");
+          parsed.querySelectorAll("iframe,object,embed,link,meta,base,form,video,audio,canvas").forEach((node) => node.remove());
+          parsed.querySelectorAll("style").forEach((node) => { node.textContent = sanitizeVisualStyle(node.textContent); });
+          parsed.querySelectorAll("script").forEach((node) => {
+            node.removeAttribute("src");
+            node.textContent = sanitizeVisualScript(node.textContent);
+          });
+          parsed.querySelectorAll("*").forEach(removeUnsafeVisualAttributes);
+          const body = parsed.body;
+          if (!body || !body.innerHTML.trim()) return null;
+          return body.innerHTML.slice(0, MAX_VISUAL_CODE_CHARS);
+        };
+
+        const createVisualBlock = (language, code, { writing = false, complete = true } = {}) => {
+          const kind = String(language || "").toLowerCase().includes("html") ? "html" : "svg";
+          const safeMarkup = complete ? (kind === "html" ? sanitizeVisualHtml(code) : sanitizeVisualSvg(code)) : null;
+          const block = document.createElement("section");
+          block.className = "visual-block";
+          block.dataset.visualKind = kind;
+          if (writing && !complete) block.classList.add("is-writing");
+          const head = document.createElement("header");
+          head.className = "visual-block-head";
+          const label = document.createElement("span");
+          label.className = "visual-block-label";
+          label.textContent = writing && !complete ? "Preparando visual…" : kind === "html" ? "Visual" : "SVG";
+          head.appendChild(label);
+          const frame = document.createElement("iframe");
+          frame.className = "visual-frame";
+          frame.title = "Conteúdo visual gerado pelo Kazer";
+          frame.setAttribute("loading", "lazy");
+          frame.setAttribute("referrerpolicy", "no-referrer");
+          frame.setAttribute("sandbox", kind === "html" ? "allow-scripts" : "");
+          if (safeMarkup) {
+            const body = kind === "svg"
+              ? `<div style="width:100%;height:100%;display:grid;place-items:center;padding:24px;box-sizing:border-box;background:#0c0c10">${safeMarkup}</div>`
+              : `<div style="min-height:100%;box-sizing:border-box;padding:24px;background:#0c0c10;color:#f2f2f5;font-family:system-ui,sans-serif">${safeMarkup}</div>`;
+            frame.srcdoc = `<!doctype html><html><head><meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data: blob:; font-src data:; connect-src 'none'; frame-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'"></head><body style="margin:0;min-height:100vh;background:#0c0c10">${body}</body></html>`;
+          } else if (complete) {
+            const empty = document.createElement("div");
+            empty.className = "visual-empty";
+            empty.textContent = "Não foi possível renderizar este visual.";
+            block.append(head, empty);
+            return block;
+          }
+          block.append(head, frame);
+          return block;
+        };
+
         const createCodeBlock = (language, code, { writing = false, complete = true } = {}) => {
           const block = document.createElement("section");
           block.className = "code-block";
@@ -4095,7 +4244,8 @@
               const closeToken = fenceType.repeat(fenceLength);
               const isClosing = trimmed.length >= fenceLength && trimmed.startsWith(closeToken) && trimmed.slice(fenceLength).trim() === "";
               if (isClosing) {
-                segments.push({ type: "code", language, code: codeLines.join("\n"), complete: true });
+                const code = codeLines.join("\n");
+                segments.push({ type: isVisualLanguage(language) ? "visual" : "code", language, code, complete: true });
                 fenceType = null;
                 fenceLength = 0;
                 language = "";
@@ -4110,7 +4260,8 @@
           });
 
           if (fenceType) {
-            segments.push({ type: "code", language, code: codeLines.join("\n"), complete: false });
+            const code = codeLines.join("\n");
+            segments.push({ type: isVisualLanguage(language) ? "visual" : "code", language, code, complete: false });
           } else {
             flushMarkdown();
           }
@@ -4138,7 +4289,24 @@
             segments = splitBareCode(source) || segments;
           }
           let hasContent = false;
+          let visualCount = 0;
           segments.forEach((segment) => {
+            if (segment.type === "visual") {
+              if (visualCount >= MAX_VISUAL_BLOCKS || segment.code.length > MAX_VISUAL_CODE_CHARS) {
+                const notice = document.createElement("p");
+                notice.className = "visual-empty";
+                notice.textContent = "Este visual excede o limite permitido.";
+                container.appendChild(notice);
+              } else {
+                container.appendChild(createVisualBlock(segment.language, segment.code, {
+                  writing,
+                  complete: segment.complete,
+                }));
+                visualCount += 1;
+              }
+              hasContent = true;
+              return;
+            }
             if (segment.type === "code") {
               const language = segment.language || inferCodeLanguage(segment.code);
               container.appendChild(createCodeBlock(language, segment.code, {
