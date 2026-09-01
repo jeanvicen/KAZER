@@ -1,5 +1,6 @@
 import { readFile, readdir } from "node:fs/promises";
 import { join, relative } from "node:path";
+import { existsSync, readdirSync } from "node:fs";
 import { execFileSync } from "node:child_process";
 
 const root = new URL("..", import.meta.url).pathname;
@@ -45,6 +46,8 @@ for (const expected of ["content-security-policy", "strict-transport-security", 
 }
 assert(vercel.includes("upgrade-insecure-requests"), "vercel.json: HTTPS não é forçado pela CSP");
 assert(vercel.includes('"X-Frame-Options", "value": "DENY"'), "vercel.json: framing não está negado");
+const publicApiFiles = readdirSync(join(root, "api")).filter((name) => name.endsWith(".js") && !name.startsWith("_"));
+assert(publicApiFiles.length <= 12, `Vercel Hobby: ${publicApiFiles.length} funções públicas detectadas; máximo permitido: 12`);
 
 assert(sql001.includes("enable row level security") && sql001.includes("profiles_select_own") && sql001.includes("user_settings_select_own"), "Migração principal sem RLS/policies esperadas");
 assert(sql003.includes("enable row level security") && sql003.includes("account_notifications_select_own"), "Notificações sem RLS/policy esperada");
@@ -67,7 +70,7 @@ assert(terms.includes("Propriedade intelectual") && terms.includes("Nenhum direi
 assert(copyrightNotice.includes("Aviso de direitos autorais") && copyrightNotice.includes("Não há licença open source"), "Aviso autoral incompleto");
 assert(dependabot.includes("package-ecosystem: npm"), "Dependabot sem acompanhamento de npm");
 
-const syntaxTargets = ["api/_security.js", "api/_kazer-data.js", "api/_github.js", "api/_mcp-runtime.js", "api/_usage.js", "api/chat.js", "api/mcp.js", "api/tasks.js", "api/github-connect.js", "api/github-callback.js", "api/github-status.js", "api/github-repos.js", "api/github-disconnect.js", "api/web-search.js", "api/retention.js", "download/sw.js"];
+const syntaxTargets = ["api/_security.js", "api/_kazer-data.js", "api/_github.js", "api/_mcp-runtime.js", "api/_usage.js", "api/_github-connect-handler.js", "api/_github-callback-handler.js", "api/_github-status-handler.js", "api/_github-repos-handler.js", "api/_github-disconnect-handler.js", "api/_mcp-handler.js", "api/_tasks-handler.js", "api/chat.js", "api/github.js", "api/workspace.js", "api/web-search.js", "api/retention.js", "download/sw.js"];
 for (const target of syntaxTargets) {
   try {
     execFileSync(process.execPath, ["--check", join(root, target)], { stdio: "pipe" });
@@ -79,6 +82,7 @@ for (const target of syntaxTargets) {
 const tracked = execFileSync("git", ["ls-files"], { cwd: root, encoding: "utf8" }).trim().split("\n").filter(Boolean);
 const secretPattern = /(?:sk-[A-Za-z0-9_-]{20,}|gsk_[A-Za-z0-9_-]{20,}|AIza[A-Za-z0-9_-]{20,}|ghp_[A-Za-z0-9]{20,}|github_pat_[A-Za-z0-9_]{20,}|-----BEGIN (?:RSA|EC|OPENSSH|PRIVATE) KEY-----)/;
 for (const path of tracked) {
+  if (!existsSync(join(root, path))) continue;
   if (/\.(?:md|png|jpg|jpeg|svg|jar|lock)$/i.test(path) || path === ".env.example" || path === "scripts/security-check.mjs") continue;
   const text = await read(path);
   assert(!secretPattern.test(text), `${path}: padrão de segredo privado detectado`);

@@ -32,21 +32,20 @@ globalThis.fetch = async (input, init = {}) => {
 };
 
 const request = { method: "GET", headers: { authorization: "Bearer test-bearer-token-123456" }, query: {} };
-const mcpHandler = require("../api/mcp.js");
+const workspaceHandler = require("../api/workspace.js");
 const mcpResponse = responseOf();
-await mcpHandler(request, mcpResponse);
+await workspaceHandler({ ...request, query: { route: "mcp" } }, mcpResponse);
 assert.equal(mcpResponse.statusCode, 200);
 assert.equal(JSON.parse(mcpResponse.body).connectors.length, 0);
 
-const taskHandler = require("../api/tasks.js");
 const taskResponse = responseOf();
-await taskHandler({ ...request, method: "POST", body: { prompt: "Criar uma tela", taskType: "chat" } }, taskResponse);
+await workspaceHandler({ ...request, method: "POST", query: { route: "tasks" }, body: { prompt: "Criar uma tela", taskType: "chat" } }, taskResponse);
 assert.equal(taskResponse.statusCode, 201);
 assert.equal(JSON.parse(taskResponse.body).task.id, "task-1");
 
-const githubHandler = require("../api/github-connect.js");
+const githubHandler = require("../api/github.js");
 const githubResponse = responseOf();
-await githubHandler({ ...request, headers: { ...request.headers, host: "kazer.example" } }, githubResponse);
+await githubHandler({ ...request, query: { route: "connect" }, headers: { ...request.headers, host: "kazer.example" } }, githubResponse);
 assert.equal(githubResponse.statusCode, 200);
 assert.match(JSON.parse(githubResponse.body).url, /github\.com\/login\/oauth\/authorize/);
 

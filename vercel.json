@@ -52,6 +52,34 @@
       "destination": "/interface/chat.html"
     },
     {
+      "source": "/api/github-connect",
+      "destination": "/api/github?route=connect"
+    },
+    {
+      "source": "/api/github-callback",
+      "destination": "/api/github?route=callback"
+    },
+    {
+      "source": "/api/github-status",
+      "destination": "/api/github?route=status"
+    },
+    {
+      "source": "/api/github-repos",
+      "destination": "/api/github?route=repos"
+    },
+    {
+      "source": "/api/github-disconnect",
+      "destination": "/api/github?route=disconnect"
+    },
+    {
+      "source": "/api/mcp",
+      "destination": "/api/workspace?route=mcp"
+    },
+    {
+      "source": "/api/tasks",
+      "destination": "/api/workspace?route=tasks"
+    },
+    {
       "source": "/documentos",
       "destination": "/interface/documentos/documento.html"
     },
