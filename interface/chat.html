@@ -735,7 +735,7 @@
         position: relative;
         display: flex;
         align-items: stretch;
-        min-height: 60px;
+        min-height: 140px;
         overflow: hidden;
         border: 1px solid var(--line);
         border-radius: 26px;
@@ -751,17 +751,17 @@
 
       .message-input {
         width: 100%;
-        min-height: 60px;
-        max-height: 120px;
-        padding: 12px 78px 11px 74px;
+        min-height: 140px;
+        max-height: 260px;
+        padding: 24px 90px 21px 28px;
         resize: none;
         border: 0;
         outline: 0;
         overflow-y: auto;
         background: transparent;
         color: var(--text);
-        font-size: clamp(14px, 2.1vw, 17px);
-        font-weight: 400;
+        font-size: clamp(22px, 4.7vw, 32px);
+        font-weight: 350;
         line-height: 1.26;
       }
 
@@ -788,8 +788,8 @@
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        width: 42px;
-        height: 42px;
+        width: clamp(54px, 12vw, 72px);
+        height: clamp(54px, 12vw, 72px);
         border-radius: 50%;
         background: var(--accent);
         color: var(--accent-ink);
@@ -798,8 +798,8 @@
       }
 
       .send-button .icon {
-        width: 20px;
-        height: 20px;
+        width: clamp(26px, 5vw, 32px);
+        height: clamp(26px, 5vw, 32px);
         stroke-width: 1.55;
       }
 
@@ -861,7 +861,7 @@
 
       .plus-mark {
         display: block;
-        font-size: 25px;
+        font-size: 30px;
         font-weight: 300;
         line-height: 1;
         transform: translateY(-1px);
@@ -881,7 +881,6 @@
         font-size: 24px;
       }
 
-      .mcp-button{position:absolute;bottom:8px;left:58px;display:inline-flex;align-items:center;justify-content:center;width:38px;height:38px;border:1px solid var(--line);border-radius:50%;background:var(--card-2);color:var(--text-soft);cursor:pointer}.mcp-button:hover,.mcp-button[aria-expanded="true"]{background:var(--page-soft);color:var(--text)}.mcp-button .icon{width:18px;height:18px}.mcp-count{position:absolute;top:-3px;right:-3px;min-width:15px;height:15px;border:2px solid var(--card);border-radius:99px;background:var(--success);color:#07110c;font-size:9px;font-weight:800;text-align:center}.mcp-backdrop{position:fixed;z-index:94;inset:0;background:#0009;opacity:0;pointer-events:none;transition:opacity .18s}.mcp-backdrop.visible{opacity:1;pointer-events:auto}.mcp-sheet{position:fixed;z-index:96;right:0;bottom:0;left:0;display:flex;flex-direction:column;max-height:min(620px,calc(100dvh - 58px));padding:12px 18px 16px;overflow:hidden;border:1px solid #ffffff22;border-bottom:0;border-radius:25px 25px 0 0;background:#111112;box-shadow:0 -18px 60px #0008;opacity:0;visibility:hidden;pointer-events:none;transform:translateY(104%);transition:.26s}.mcp-sheet.visible{opacity:1;visibility:visible;pointer-events:auto;transform:translateY(0)}.mcp-sheet-handle{width:42px;height:4px;margin:0 auto 12px;border-radius:9px;background:#ffffff40}.mcp-sheet-head{display:flex;justify-content:space-between;gap:12px;padding:0 2px 12px}.mcp-sheet-head h2{margin:0;color:var(--text);font-size:18px}.mcp-sheet-head p{margin:4px 0 0;color:var(--text-soft);font-size:11px}.mcp-sheet-scroll{min-height:0;overflow-y:auto}.mcp-note,.mcp-empty,.mcp-loading{margin:0 0 12px;padding:11px 12px;border:1px solid var(--line-soft);border-radius:12px;color:var(--text-soft);font-size:12px;line-height:1.45}.mcp-empty{text-align:center}.mcp-error{color:var(--danger)}.mcp-connections{display:grid;gap:8px}.mcp-connection{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:11px 12px;border:1px solid var(--line-soft);border-radius:14px;background:#ffffff06}.mcp-connection-copy{min-width:0;display:flex;flex-direction:column;gap:3px}.mcp-connection-copy strong{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text);font-size:13px}.mcp-connection-copy span{color:var(--text-soft);font-size:10px}.mcp-connection-actions{display:flex;align-items:center;gap:6px}.mcp-toggle,.mcp-remove,.mcp-primary,.mcp-secondary{border-radius:9px;cursor:pointer;font-size:11px}.mcp-toggle{padding:7px 9px;border:1px solid #69d2a155;background:#69d2a11a;color:var(--success)}.mcp-toggle:not(.is-connected){border-color:var(--line);background:transparent;color:var(--text-soft)}.mcp-remove{padding:7px 4px;border:0;background:transparent;color:var(--text-dim)}.mcp-primary{display:inline-flex;justify-content:center;width:100%;margin-top:12px;padding:10px 13px;border:0;background:var(--text);color:var(--accent-ink);font-weight:700}.mcp-secondary{padding:10px 13px;border:1px solid var(--line);background:transparent;color:var(--text-soft)}.mcp-form{display:grid;gap:7px}.mcp-form label{margin-top:4px;color:var(--text-soft);font-size:11px}.mcp-form label span,.mcp-form-help{color:var(--text-dim)}.mcp-form input,.mcp-form select{width:100%;min-height:38px;padding:8px 10px;border:1px solid var(--line);border-radius:10px;background:var(--card);color:var(--text);font-size:13px}.mcp-form-help{margin:4px 0 3px;font-size:10px;line-height:1.45}.mcp-form-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:7px}.mcp-form-actions .mcp-primary{width:auto;margin:0}@media(min-width:681px){.mcp-sheet{right:auto;left:50%;width:min(560px,calc(100vw - 36px));border-bottom:1px solid #ffffff22;transform:translate(-50%,104%)}.mcp-sheet.visible{transform:translate(-50%,0)}}@media(max-width:680px){.mcp-button{left:54px;width:34px;height:34px;border:0;background:transparent}.mcp-button .icon{width:17px;height:17px}.mcp-connection-actions{flex-direction:column;align-items:stretch}}
       .attachment-backdrop {
         position: fixed;
         z-index: 88;
@@ -3121,7 +3120,6 @@
           <div class="composer-box">
             <textarea class="message-input" id="messageInput" rows="1" placeholder="Send a message..." aria-label="Mensagem"></textarea>
             <button class="attach-button" id="attachButton" type="button" aria-label="Abrir opções de envio" title="Abrir opções de envio" aria-controls="attachmentSheet" aria-expanded="false"><span class="plus-mark" aria-hidden="true">+</span></button>
-            <button class="mcp-button" id="mcpButton" type="button" aria-label="Conectar MCP" title="Conectar MCP" aria-controls="mcpSheet" aria-expanded="false"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9.5 14.5 14.5 9.5"></path><path d="M7.2 17.3 5.8 18.7a3 3 0 0 1-4.2-4.2l3.2-3.2a3 3 0 0 1 4.2 0"></path><path d="m16.8 6.7 1.4-1.4a3 3 0 0 1 4.2 4.2l-3.2 3.2a3 3 0 0 1-4.2 0"></path></svg><span class="mcp-count" id="mcpCount" hidden>0</span></button>
             <input class="file-input" id="fileInput" type="file" accept=".pdf,.docx,.txt,.md,.csv,.json,.xml,.html,.htm,.js,.ts,.tsx,.jsx,.css,.py,.java,.sql,.yaml,.yml,.log" multiple hidden />
             <input class="file-input" id="photoInput" type="file" accept="image/jpeg,image/png,image/webp,image/gif" multiple hidden />
             <input class="file-input" id="cameraInput" type="file" accept="image/*" capture="environment" multiple hidden />
@@ -3150,7 +3148,6 @@
         </div>
       </section>
       <div class="toast" id="toast" role="status" aria-live="polite"></div>
-      <div class="mcp-backdrop" id="mcpBackdrop" hidden></div><section class="mcp-sheet" id="mcpSheet" role="dialog" aria-modal="true" aria-labelledby="mcpSheetTitle" aria-hidden="true" hidden><div class="mcp-sheet-handle"></div><header class="mcp-sheet-head"><div><h2 id="mcpSheetTitle">Conectar MCP</h2><p>Adicione um servidor remoto ao KAZER.</p></div><button class="attachment-sheet-close" id="mcpSheetClose" type="button" aria-label="Fechar MCP">×</button></header><div class="mcp-sheet-scroll"><div id="mcpListView"><div class="mcp-note">A conexão é validada com um handshake real. Tokens ficam protegidos no servidor.</div><div class="mcp-connections" id="mcpConnections"><div class="mcp-loading">Carregando conexões…</div></div><button class="mcp-primary" id="mcpAddButton" type="button">Adicionar servidor MCP</button></div><form class="mcp-form" id="mcpForm" hidden><label for="mcpPreset">Atalho</label><select id="mcpPreset"><option value="custom">Servidor personalizado</option><option value="context7">Context7</option><option value="figma">Figma</option><option value="huggingface">Hugging Face</option><option value="linear">Linear</option><option value="notion">Notion</option><option value="supabase">Supabase</option></select><label for="mcpName">Nome</label><input id="mcpName" required maxlength="80" placeholder="Meu MCP" autocomplete="off"><label for="mcpUrl">URL HTTPS do servidor</label><input id="mcpUrl" required type="url" placeholder="https://exemplo.com/mcp" autocomplete="url"><label for="mcpToken">Token Bearer <span>(opcional)</span></label><input id="mcpToken" type="password" maxlength="4096" placeholder="Cole somente se o servidor pedir" autocomplete="off"><p class="mcp-form-help">Servidores locais via comando não rodam na hospedagem web do KAZER. Use a URL remota HTTPS.</p><div class="mcp-form-actions"><button class="mcp-secondary" id="mcpCancelButton" type="button">Voltar</button><button class="mcp-primary" id="mcpSubmitButton" type="submit">Conectar e verificar</button></div></form></div></section>
 
     </main>
 
@@ -3201,7 +3198,7 @@
         const messageInput = document.getElementById("messageInput");
         const sendButton = document.getElementById("sendButton");
         const stopButton = document.getElementById("stopButton");
-        const attachButton = document.getElementById("attachButton"); const mcpButton=document.getElementById("mcpButton"); const mcpCount=document.getElementById("mcpCount"); const mcpBackdrop=document.getElementById("mcpBackdrop"); const mcpSheet=document.getElementById("mcpSheet"); const mcpSheetClose=document.getElementById("mcpSheetClose"); const mcpConnections=document.getElementById("mcpConnections"); const mcpListView=document.getElementById("mcpListView"); const mcpForm=document.getElementById("mcpForm"); const mcpAddButton=document.getElementById("mcpAddButton"); const mcpCancelButton=document.getElementById("mcpCancelButton"); const mcpPreset=document.getElementById("mcpPreset"); const mcpName=document.getElementById("mcpName"); const mcpUrl=document.getElementById("mcpUrl"); const mcpToken=document.getElementById("mcpToken"); const mcpSubmitButton=document.getElementById("mcpSubmitButton");
+        const attachButton = document.getElementById("attachButton");
         const fileInput = document.getElementById("fileInput");
         const photoInput = document.getElementById("photoInput");
         const cameraInput = document.getElementById("cameraInput");
@@ -3588,7 +3585,7 @@
           config.trigger?.focus();
         };
 
-        let attachmentSheetTimer = null; let mcpSheetTimer=null; let mcpConnectionsState=[];
+        let attachmentSheetTimer = null;
 
 
         const closeAttachmentSheet = (restoreFocus = false) => {
@@ -3621,12 +3618,9 @@
           });
         };
 
-        const closeMcpSheet=(restore=false)=>{if(!mcpSheet)return; mcpSheet.classList.remove("visible");mcpBackdrop.classList.remove("visible");mcpSheet.setAttribute("aria-hidden","true");mcpButton.setAttribute("aria-expanded","false");window.setTimeout(()=>{mcpSheet.hidden=true;mcpBackdrop.hidden=true},270);if(restore)mcpButton.focus();};
-
         const closeMenus = () => {
           closeCustomSelects();
           closeAttachmentSheet();
-          closeMcpSheet();
           profilePopover.classList.remove("visible");
           settingsPopover.classList.remove("visible", "mobile-section-open");
           settingsBackdrop.classList.remove("visible");
@@ -3753,22 +3747,17 @@
           }
         };
 
-        const resizeInput=()=>{messageInput.style.height="auto";messageInput.style.height=Math.min(Math.max(messageInput.scrollHeight,60),120)+"px";
+        const resizeInput = () => {
+          messageInput.style.height = "auto";
+          const minimumHeight = app.classList.contains("in-conversation") ? 140 : 60;
+          messageInput.style.height = Math.min(Math.max(messageInput.scrollHeight, minimumHeight), 260) + "px";
         };
 
         const updateSend = () => {
           sendButton.disabled = busy || (messageInput.value.trim().length === 0 && selectedFiles.length === 0);
         };
 
-const MCP_PRESETS={context7:{name:"Context7",url:"https://mcp.context7.com/mcp"},figma:{name:"Figma",url:"https://mcp.figma.com/mcp"},huggingface:{name:"Hugging Face",url:"https://hf.co/mcp"},linear:{name:"Linear",url:"https://mcp.linear.app/sse"},notion:{name:"Notion",url:"https://mcp.notion.com/mcp"},supabase:{name:"Supabase",url:"https://mcp.supabase.com/mcp"}};
-        const setMcpFormMode=(show)=>{mcpListView.hidden=show;mcpForm.hidden=!show;if(!show){mcpForm.reset();mcpPreset.value="custom";}else mcpName.focus();};
-        const renderMcpConnections=()=>{mcpConnections.replaceChildren();const count=mcpConnectionsState.filter(x=>x.status==="connected").length;mcpCount.hidden=!count;mcpCount.textContent=String(count);if(!mcpConnectionsState.length){const e=document.createElement("p");e.className="mcp-empty";e.textContent="Nenhum servidor MCP conectado ainda.";mcpConnections.append(e);return;}mcpConnectionsState.forEach(c=>{const row=document.createElement("article");row.className="mcp-connection";row.innerHTML='<div class="mcp-connection-copy"><strong>'+escapeHtml(c.name)+'</strong><span>'+(c.status==="connected"?((c.tools_count||0)+" ferramenta(s) disponível(is)"):"Desconectado")+'</span></div><div class="mcp-connection-actions"><button type="button" class="mcp-toggle '+(c.status==="connected"?"is-connected":"")+'" data-mcp-toggle="'+c.id+'">'+(c.status==="connected"?"Conectado":"Conectar")+'</button><button type="button" class="mcp-remove" data-mcp-remove="'+c.id+'">Remover</button></div>';mcpConnections.append(row);});};
-        const loadMcpConnections=async()=>{try{const r=await fetchWithAuth("/api/mcp",{method:"GET"});const d=await r.json().catch(()=>({}));if(!r.ok)throw Error(d.error||"Não foi possível carregar os MCPs.");mcpConnectionsState=Array.isArray(d.data)?d.data:[];renderMcpConnections();}catch(e){mcpConnections.innerHTML='<p class="mcp-empty mcp-error">'+escapeHtml(e.message||"Não foi possível carregar os MCPs.")+'</p>';}};
-        const openMcpSheet=()=>{closeAttachmentSheet();setMcpFormMode(false);loadMcpConnections();mcpSheet.hidden=false;mcpBackdrop.hidden=false;mcpSheet.setAttribute("aria-hidden","false");mcpButton.setAttribute("aria-expanded","true");requestAnimationFrame(()=>{mcpBackdrop.classList.add("visible");mcpSheet.classList.add("visible");});};
-        const updateMcp=async(c)=>{const next=c.status==="connected"?"disconnected":"connected";try{const r=await fetchWithAuth("/api/mcp",{method:"PATCH",body:JSON.stringify({id:c.id,status:next})});const d=await r.json().catch(()=>({}));if(!r.ok)throw Error(d.error||"Não foi possível atualizar a conexão.");await loadMcpConnections();showToast(next==="connected"?"MCP conectado e verificado":"MCP desconectado");}catch(e){showToast(e.message||"Não foi possível atualizar o MCP");}};
-        mcpPreset.addEventListener("change",()=>{const p=MCP_PRESETS[mcpPreset.value];if(p){mcpName.value=p.name;mcpUrl.value=p.url;}});mcpConnections.addEventListener("click",async e=>{const t=e.target.closest("[data-mcp-toggle]")?.dataset.mcpToggle;const x=e.target.closest("[data-mcp-remove]")?.dataset.mcpRemove;if(t){const c=mcpConnectionsState.find(y=>y.id===t);if(c)await updateMcp(c);}if(x&&confirm("Remover este servidor MCP do KAZER?")){const r=await fetchWithAuth("/api/mcp?id="+encodeURIComponent(x),{method:"DELETE"});if(r.ok){await loadMcpConnections();showToast("MCP removido");}else{const d=await r.json().catch(()=>({}));showToast(d.error||"Não foi possível remover o MCP.");}}});mcpAddButton.onclick=()=>setMcpFormMode(true);mcpCancelButton.onclick=()=>setMcpFormMode(false);mcpForm.onsubmit=async e=>{e.preventDefault();mcpSubmitButton.disabled=true;mcpSubmitButton.textContent="Verificando…";try{const r=await fetchWithAuth("/api/mcp",{method:"POST",body:JSON.stringify({name:mcpName.value.trim(),baseUrl:mcpUrl.value.trim(),token:mcpToken.value})});const d=await r.json().catch(()=>({}));if(!r.ok)throw Error(d.error||"Não foi possível conectar o MCP.");setMcpFormMode(false);await loadMcpConnections();showToast("MCP conectado e verificado");}catch(e){showToast(e.message||"Não foi possível conectar o MCP");}finally{mcpSubmitButton.disabled=false;mcpSubmitButton.textContent="Conectar e verificar";}};
-
-                const scrollBottom = () => {
+        const scrollBottom = () => {
           requestAnimationFrame(() => conversationArea.scrollTo({ top: conversationArea.scrollHeight, behavior: "smooth" }));
         };
 
@@ -4455,7 +4444,7 @@ const MCP_PRESETS={context7:{name:"Context7",url:"https://mcp.context7.com/mcp"}
         settingsLogoutAction.addEventListener("click", logout);
         newChatButton.addEventListener("click", requestNewChat);
         document.addEventListener("click", (event) => {
-          if (!event.target.closest(".profile-popover") && !event.target.closest("#profileButton") && !event.target.closest(".settings-popover") && !event.target.closest(".web-popover") && !event.target.closest(".attachment-sheet") && !event.target.closest("#attachButton") && !event.target.closest(".mcp-sheet") && !event.target.closest("#mcpButton")) closeMenus();
+          if (!event.target.closest(".profile-popover") && !event.target.closest("#profileButton") && !event.target.closest(".settings-popover") && !event.target.closest(".web-popover") && !event.target.closest(".attachment-sheet") && !event.target.closest("#attachButton")) closeMenus();
         });
 
         closeSettings.addEventListener("click", closeSettingsModal);
@@ -4528,10 +4517,6 @@ const MCP_PRESETS={context7:{name:"Context7",url:"https://mcp.context7.com/mcp"}
             closeAttachmentSheet(true);
             return;
           }
-          if (mcpSheet.classList.contains("visible")) {
-            closeMcpSheet(true);
-            return;
-          }
           if (customSelects.some(({ root }) => root?.classList.contains("open"))) {
             closeCustomSelects();
             return;
@@ -4543,9 +4528,6 @@ const MCP_PRESETS={context7:{name:"Context7",url:"https://mcp.context7.com/mcp"}
           event.preventDefault();
           submit();
         });
-        mcpButton.addEventListener("click", (event) => { event.stopPropagation(); if (mcpSheet.classList.contains("visible")) closeMcpSheet(true); else openMcpSheet(); });
-        mcpSheetClose.addEventListener("click", () => closeMcpSheet(true));
-        mcpBackdrop.addEventListener("click", () => closeMcpSheet(true));
         attachButton.addEventListener("click", (event) => {
           event.stopPropagation();
           if (attachmentSheet.classList.contains("visible")) closeAttachmentSheet(true);
@@ -4610,7 +4592,7 @@ const MCP_PRESETS={context7:{name:"Context7",url:"https://mcp.context7.com/mcp"}
         resizeInput();
         updateSend();
         startAppSplash();
-        loadAccount().then((ready) => { if (ready) loadMcpConnections(); });
+        loadAccount();
       })();
     </script>
   </body>
