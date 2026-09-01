@@ -5,6 +5,7 @@
   "description": "Kazer static interface with a secure Groq chat function",
   "scripts": {
     "security:check": "node scripts/security-check.mjs",
+    "integration:test": "node scripts/mcp-smoke.mjs && node scripts/api-smoke.mjs",
     "security:audit": "npm audit --omit=dev"
   },
   "engines": {

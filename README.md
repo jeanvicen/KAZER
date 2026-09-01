@@ -83,7 +83,9 @@ flowchart LR
 | Preferências | Tema, idioma, avisos e aviso de instalação, com fallback local e sincronização no perfil. | `user_settings` e `localStorage`. |
 | Retenção | Avisos de inatividade e job diário de retenção, com exclusão desligada por padrão. | `api/retention.js`, `vercel.json` e migrações Supabase. |
 | PWA | Instalação na tela inicial, manifesto, service worker e cache restrito do app shell. | `download/manifest.webmanifest`, `download/sw.js` e `vercel.json`. |
-| Plugins | Google Drive com OAuth oficial, busca/leitura e upload/criação; arquitetura preparada para futuras integrações. | `interface/chat.html`, `api/google-drive*.js` e `database/supabase/009_google_drive_connections.sql`. |
+| Plugins | Google Drive e gerenciamento de MCPs remotos/locais com variáveis cifradas no backend. | `interface/chat.html`, `interface/kazer-workspace.js`, `api/mcp.js`, `api/_mcp-runtime.js` e migração `010`. |
+| GitHub | OAuth para vincular a conta, listar/buscar repositórios e usar um repositório como contexto do pedido. | `api/github-*.js`, `interface/kazer-workspace.js` e `kazer_github_connections`. |
+| Workspace | Painel fechado por padrão, aberto pelo raio, com tarefas, progresso, custo e repositórios. | `interface/chat.html`, `interface/kazer-workspace.js`, `api/tasks.js` e `kazer_tasks`. |
 | Kazer Pro | Chamada visual de oferta; a tela informa que a página de compra está em preparação. | `interface/chat.html`. |
 
 ## Arquitetura
@@ -104,7 +106,7 @@ A aplicação é deliberadamente dividida entre um cliente estático e funções
 | Caminho | Conteúdo |
 |---|---|
 | `interface/` | Telas públicas de login, chat e central de documentos. |
-| `api/` | Handlers serverless: chat, busca, uso, retenção e módulos de segurança. |
+| `api/` | Handlers serverless: chat, busca, uso, retenção, MCPs, tarefas, GitHub e módulos de segurança. |
 | `database/supabase/` | Migrações SQL incrementais e instruções do banco. |
 | `download/` | Manifesto, service worker, ícones, logos e materiais de distribuição PWA/Android/iOS. |
 | `scripts/` | Verificações automatizadas de segurança e sintaxe. |
@@ -153,7 +155,11 @@ Não faça commit de `.env`. O `.gitignore` já ignora arquivos de ambiente, `no
 | `GEMINI_SEARCH_MODEL` | Servidor | Não | Modelo usado para resumir pesquisa. |
 | `SUPABASE_URL` | Servidor | Sim | URL do projeto Supabase. |
 | `SUPABASE_ANON_KEY` | Servidor/configuração pública | Sim | Chave pública de baixo privilégio; RLS continua obrigatório. |
-| `SUPABASE_SERVICE_ROLE_KEY` | Servidor privado | Só para retenção administrativa | Chave administrativa; nunca exponha ao navegador. |
+| `SUPABASE_SERVICE_ROLE_KEY` | Servidor privado | Sim para MCPs, tarefas e GitHub | Chave administrativa; nunca exponha ao navegador. `SUPABASE_KEY` pode ser usada apenas como fallback privado no ambiente controlado. |
+| `GITHUB_CLIENT_ID` | Servidor privado | Sim para conectar GitHub | Client ID do OAuth App do GitHub. |
+| `GITHUB_CLIENT_SECRET` | Servidor privado | Sim para conectar GitHub | Segredo do OAuth App do GitHub. |
+| `GITHUB_OAUTH_STATE_SECRET` | Servidor privado | Recomendado | Segredo longo para assinar o estado do OAuth. |
+| `KAZER_CONNECTOR_ENCRYPTION_KEY` | Servidor privado | Recomendado | Chave longa para cifrar tokens e segredos dos MCPs; se omitida, deriva a chave do service role. |
 | `CRON_SECRET` | Servidor privado | Só para retenção | Segredo para autorizar chamadas ao job `/api/retention`. |
 | `PUBLIC_APP_ORIGINS` | Servidor | Recomendado | Lista separada por vírgulas das origens HTTPS autorizadas, sem barra final. |
 | `RETENTION_DELETE_ENABLED` | Servidor | Sim | Mantenha `false`; somente um procedimento revisado pode habilitar exclusões permanentes. |
@@ -174,6 +180,8 @@ As migrações são incrementais e devem ser executadas no SQL Editor do projeto
 | 6 | `006_usage_rpc_fix.sql` | Correções das RPCs de consumo e grants autenticados. |
 | 7 | `007_credits_150_messages_5h.sql` | Créditos Free, janela de cinco horas e consumo de chat. |
 | 8 | `008_attachment_limit_10_items.sql` | Limite Free de dez itens de anexo por janela e consumo atômico por item. |
+| 9 | `009_google_drive_connections.sql` | Tokens cifrados e RLS para Google Drive. |
+| 10 | `010_mcp_github_tasks.sql` | MCPs, conexão GitHub, tarefas do workspace e RPC de custo variável. |
 
 Depois das migrações, valide com duas contas de teste que cada usuário só consegue ler ou alterar seu próprio perfil, preferências, uso e notificações. Teste também chamadas sem bearer, bearer inválido, sessão revogada e tentativa de enviar `user_id` de outra conta. Não habilite exclusões de retenção antes de testar backup e restauração.
 
@@ -207,7 +215,14 @@ Todas as APIs privadas devem ser chamadas com `Authorization: Bearer <access_tok
 
 | Endpoint | Método | Entrada principal | Saída/erros relevantes |
 |---|---|---|---|
-| `/api/chat` | `POST` | `{ messages, attachments }` | `message`, nomes de anexos e `usage`; `401`, `402`, `409`, `413`, `422`, `429`, `502` conforme a falha. |
+| `/api/chat` | `POST` | `{ messages, attachments, mcpConnectorIds }` | `message`, `usage`, `credit_cost` e contagem de ferramentas MCP; `401`, `402`, `409`, `413`, `422`, `429`, `502` conforme a falha. |
+| `/api/mcp` | `GET`, `POST`, `PATCH`, `DELETE` | Cadastro, edição, status e exclusão de MCP. | Nunca devolve `secret_payload`; exige bearer e Supabase privado. |
+| `/api/tasks` | `GET`, `POST`, `PATCH`, `DELETE` | Histórico, progresso, status e resultado de tarefas do usuário. | Dados isolados por usuário; exige bearer. |
+| `/api/github-connect` | `GET` | Inicia OAuth com estado assinado. | Devolve URL oficial do GitHub; exige bearer. |
+| `/api/github-callback` | `GET` | Código e estado enviados pelo GitHub. | Salva token cifrado e redireciona ao chat. |
+| `/api/github-status` | `GET` | Nenhuma | Status e identidade pública da conexão. |
+| `/api/github-repos` | `GET` | `page`, `per_page`, `search` opcionais. | Lista segura e paginada dos repositórios. |
+| `/api/github-disconnect` | `DELETE` | Nenhuma | Revoga o vínculo local da conta. |
 | `/api/web-search` | `POST` | `{ query, mode }` | `summary`, `sources`, `searchQueries`; modos `all`, `web`, `images`, `videos`, `news`. |
 | `/api/usage` | `GET` | Nenhuma | Saldo, resets, limite e contagem de anexos do usuário autenticado. |
 | `/api/retention` | `GET` | Header de cron | Job administrativo protegido por `CRON_SECRET`; não é rota de usuário. |
@@ -250,7 +265,9 @@ A central pública em `/documentos` reúne o texto informativo de privacidade, t
 | Mensagens | Até 24 mensagens recentes processadas, de um máximo de 72 itens recebidos. |
 | Resposta | Até 12.000 caracteres após limpeza do conteúdo do modelo. |
 | Pesquisa | Query e fontes são limitadas pelo endpoint; o resumo pode retornar indisponível sem impedir a abertura das fontes. |
-| Plugins | Nenhum plugin ou conector funcional está disponível atualmente. |
+| MCPs | Presets e servidores personalizados são gerenciados no Perfil ou dentro do botão “+”; MCPs remotos com autenticação por variáveis podem ser descobertos e chamados durante o chat. |
+| GitHub | OAuth e listagem de repositórios dependem das variáveis privadas do GitHub e da migração `010`. |
+| Créditos variáveis | O custo parte de 10 e aumenta por tamanho do pedido, anexos, intenção de código/visual e MCPs ativos; o servidor decide e reserva atomicamente. |
 | Compra Pro | A chamada existe na interface, mas a compra não está integrada neste estado do projeto. |
 
 ## PWA e distribuição móvel
@@ -286,7 +303,7 @@ Atualize o ano, o titular legal, o e-mail, o endereço de notificação e a juri
 
 ## Status do projeto
 
-O projeto está em desenvolvimento. O fluxo principal de autenticação, chat, pesquisa, uso, anexos, PWA, retenção e controles server-side está implementado, enquanto Plugins e Kazer Pro ainda têm estados de interface sem integração completa. A matriz detalhada e as pendências operacionais estão em [`SECURITY.md`](SECURITY.md).
+O projeto está em desenvolvimento. O fluxo principal de autenticação, chat, pesquisa, uso, anexos, PWA, retenção, MCPs, GitHub e workspace está implementado no código desta branch. A publicação exige aplicar a migração `010` e configurar as variáveis privadas descritas acima; Kazer Pro continua com a tela comercial em preparação. A matriz detalhada e as pendências operacionais estão em [`SECURITY.md`](SECURITY.md).
 
 ## Contribuições
 
