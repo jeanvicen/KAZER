@@ -7,7 +7,7 @@ const failures = [];
 const read = (path) => readFile(join(root, path), "utf8");
 const assert = (condition, message) => { if (!condition) failures.push(message); };
 
-const [chat, login, chatApi, webSearchApi, retentionApi, securityApi, vercel, sql001, sql003, sql004, envExample] = await Promise.all([
+const [chat, login, chatApi, webSearchApi, retentionApi, securityApi, vercel, sql001, sql003, sql004, sql010, envExample] = await Promise.all([
   read("interface/chat.html"),
   read("interface/login.html"),
   read("api/chat.js"),
@@ -18,6 +18,7 @@ const [chat, login, chatApi, webSearchApi, retentionApi, securityApi, vercel, sq
   read("database/supabase/001_auth_accounts.sql"),
   read("database/supabase/003_retention_notifications.sql"),
   read("database/supabase/004_security_hardening.sql"),
+  read("database/supabase/010_mcp_github_tasks.sql"),
   read(".env.example"),
 ]);
 
@@ -48,6 +49,7 @@ assert(vercel.includes('"X-Frame-Options", "value": "DENY"'), "vercel.json: fram
 assert(sql001.includes("enable row level security") && sql001.includes("profiles_select_own") && sql001.includes("user_settings_select_own"), "Migração principal sem RLS/policies esperadas");
 assert(sql003.includes("enable row level security") && sql003.includes("account_notifications_select_own"), "Notificações sem RLS/policy esperada");
 assert(sql004.includes("force row level security") && sql004.includes("revoke insert, delete"), "Migração de endurecimento incompleta");
+assert(sql010.includes("kazer_mcp_connectors") && sql010.includes("kazer_github_connections") && sql010.includes("kazer_tasks") && sql010.includes("force row level security") && sql010.includes("consume_kazer_usage"), "Migração de MCP/GitHub/tarefas incompleta");
 for (const required of ["GROQ_API_KEY=", "GEMINI_API_KEY=", "SUPABASE_SERVICE_ROLE_KEY=", "CRON_SECRET=", "RETENTION_DELETE_ENABLED=false"]) {
   assert(envExample.includes(required), `.env.example: variável ausente: ${required}`);
 }
@@ -65,7 +67,7 @@ assert(terms.includes("Propriedade intelectual") && terms.includes("Nenhum direi
 assert(copyrightNotice.includes("Aviso de direitos autorais") && copyrightNotice.includes("Não há licença open source"), "Aviso autoral incompleto");
 assert(dependabot.includes("package-ecosystem: npm"), "Dependabot sem acompanhamento de npm");
 
-const syntaxTargets = ["api/_security.js", "api/chat.js", "api/web-search.js", "api/retention.js", "download/sw.js"];
+const syntaxTargets = ["api/_security.js", "api/_kazer-data.js", "api/_github.js", "api/_mcp-runtime.js", "api/_usage.js", "api/chat.js", "api/mcp.js", "api/tasks.js", "api/github-connect.js", "api/github-callback.js", "api/github-status.js", "api/github-repos.js", "api/github-disconnect.js", "api/web-search.js", "api/retention.js", "download/sw.js"];
 for (const target of syntaxTargets) {
   try {
     execFileSync(process.execPath, ["--check", join(root, target)], { stdio: "pipe" });

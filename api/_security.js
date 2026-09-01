@@ -73,6 +73,10 @@ function getBearerToken(request) {
   return match ? match[1] : null;
 }
 
+function publicSupabaseAnonKey() {
+  return PUBLIC_SUPABASE_ANON_KEY;
+}
+
 function supabaseBaseUrl() {
   const value = PUBLIC_SUPABASE_URL;
   try {
@@ -200,6 +204,7 @@ module.exports = {
   redactSensitiveText,
   requestExceedsLimit,
   sendJson,
+  publicSupabaseAnonKey,
   supabaseBaseUrl,
   timingSafeEqualText,
 };

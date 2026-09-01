@@ -14,6 +14,7 @@ const {
   sendJson,
 } = require("./_security");
 const { callUsageRpc } = require("./_usage");
+const { callMcpTool, flattenTools, getConnectedMcpCount, loadMcpRuntime } = require("./_mcp-runtime");
 
 const DEFAULT_TEXT_MODEL = "openai/gpt-oss-120b";
 const MAX_REQUEST_BYTES = 7 * 1024 * 1024;
@@ -62,6 +63,18 @@ const MODERATION_PATTERNS = [
   /\b(?:fabricar|montar|construir|comprar|detonar)\b[\s\S]{0,60}\b(?:bomba|explosivo|arma)\b/i,
   /\b(?:filho da puta|vai tomar no cu|puta que pariu|arrombado)\b/i,
 ];
+
+function calculateCreditCost(prompt, attachmentCount = 0, mcpCount = 0) {
+  const source = String(prompt || "");
+  const codingRequest = /\b(?:c[oó]digo|site|app|aplicativo|reposit[oó]rio|implementar|construir|programa|fun[cç][aã]o|bug|corrigir|deploy|projeto)\b/i.test(source);
+  const visualRequest = /\b(?:imagem|visual|desenho|logo|[ií]cone|layout|interface|tela|prot[oó]tipo|mockup|wireframe|diagrama|gr[aá]fico|dashboard|slide|design)\b/i.test(source);
+  const lengthCost = Math.min(24, Math.ceil(source.length / 900) * 3);
+  const taskCost = codingRequest ? 12 : 0;
+  const visualCost = visualRequest ? 5 : 0;
+  const attachmentCost = Math.min(40, Math.max(0, Number(attachmentCount) || 0) * 8);
+  const mcpCost = Math.min(30, Math.max(0, Number(mcpCount) || 0) * 5);
+  return Math.max(10, Math.min(1000, 10 + lengthCost + taskCost + visualCost + attachmentCost + mcpCost));
+}
 
 function cleanUserContent(value) {
   return String(value || "")
@@ -259,7 +272,7 @@ function wait(milliseconds) {
   return new Promise((resolve) => setTimeout(resolve, milliseconds));
 }
 
-async function callGroq({ apiKey, models, messages, hasImages }) {
+async function callGroq({ apiKey, models, messages, hasImages, tools = [] }) {
   let lastFailure = null;
 
   for (const model of models) {
@@ -271,6 +284,7 @@ async function callGroq({ apiKey, models, messages, hasImages }) {
           temperature: hasImages ? 0.7 : 0.6,
           max_completion_tokens: 2200,
         };
+        if (tools.length) requestBody.tools = tools;
 
         // GPT OSS aceita níveis como medium; os modelos Qwen exigem none/default.
         if (!model.startsWith("qwen/")) {
@@ -309,6 +323,43 @@ async function callGroq({ apiKey, models, messages, hasImages }) {
   }
 
   return { failure: lastFailure };
+}
+
+async function callGroqWithMcp({ apiKey, models, messages, hasImages, mcpServers }) {
+  const { tools, byName } = flattenTools(mcpServers || []);
+  let currentMessages = [...messages];
+  let result = await callGroq({ apiKey, models, messages: currentMessages, hasImages, tools });
+  if (result.failure || !tools.length) return { ...result, mcpToolsUsed: 0 };
+
+  let toolsUsed = 0;
+  for (let round = 0; round < 4; round += 1) {
+    const assistantMessage = result.data?.choices?.[0]?.message;
+    const toolCalls = Array.isArray(assistantMessage?.tool_calls) ? assistantMessage.tool_calls.slice(0, 6) : [];
+    if (!toolCalls.length) break;
+    currentMessages.push({
+      role: "assistant",
+      content: assistantMessage.content || "",
+      tool_calls: toolCalls,
+    });
+    for (const toolCall of toolCalls) {
+      const name = toolCall?.function?.name;
+      const entry = byName.get(name);
+      let toolContent = "Ferramenta indisponível.";
+      if (entry) {
+        try {
+          const args = JSON.parse(toolCall.function.arguments || "{}");
+          toolContent = await callMcpTool(entry, args);
+          toolsUsed += 1;
+        } catch (error) {
+          toolContent = `Falha ao consultar a ferramenta: ${String(error?.message || "erro").slice(0, 300)}`;
+        }
+      }
+      currentMessages.push({ role: "tool", tool_call_id: toolCall.id, content: toolContent });
+    }
+    result = await callGroq({ apiKey, models, messages: currentMessages, hasImages: false, tools });
+    if (result.failure) break;
+  }
+  return { ...result, mcpToolsUsed: toolsUsed };
 }
 
 module.exports = async function handler(request, response) {
@@ -376,29 +427,47 @@ module.exports = async function handler(request, response) {
     return sendJson(response, status, { error: "Um ou mais anexos não puderam ser processados." });
   }
 
+  const lastMessage = messages[messages.length - 1];
+  const requestedMcpCount = await getConnectedMcpCount(user.id, body?.mcpConnectorIds);
+  const creditCost = calculateCreditCost(lastMessage?.content || "", prepared.fileNames.length, requestedMcpCount);
   let usage;
   try {
-    usage = await callUsageRpc(request, "consume_chat_usage", {
-      p_credit_amount: 10,
+    usage = await callUsageRpc(request, "consume_kazer_usage", {
+      p_credit_amount: creditCost,
       p_attachment_count: prepared.fileNames.length,
     });
-  } catch (error) {
-    if (error.code === "credits_limit_reached") {
+  } catch (initialError) {
+    let error = initialError;
+    if (initialError.status === 404 || (initialError.status === 400 && initialError.code === "usage_rpc_failed")) {
+      try {
+        usage = await callUsageRpc(request, "consume_chat_usage", {
+          p_credit_amount: creditCost,
+          p_has_attachment: prepared.fileNames.length > 0,
+        });
+        error = null;
+      } catch (fallbackError) {
+        error = fallbackError;
+      }
+    }
+    if (!error) {
+      // Compatibilidade temporária com projetos que ainda não aplicaram a migração 010.
+    } else if (error.code === "credits_limit_reached") {
       return sendJson(response, 402, {
         error: "Você atingiu seu limite de créditos.",
         usage: { credits_limit_reached: true },
       });
-    }
-    if (error.code === "attachment_limit_reached") {
+    } else if (error.code === "attachment_limit_reached") {
       return sendJson(response, 409, {
         error: "Você atingiu o limite de anexos do plano Free.",
         usage: { attachment_limit_reached: true },
       });
+    } else {
+      console.error("Usage reservation failed", error?.message || "unknown");
+      return sendJson(response, 503, { error: "Não foi possível validar os limites da conta agora." });
     }
-    console.error("Usage reservation failed", error?.message || "unknown");
-    return sendJson(response, 503, { error: "Não foi possível validar os limites da conta agora." });
   }
 
+  const mcpServers = await loadMcpRuntime(user.id, body?.mcpConnectorIds);
   const hasImages = prepared.imageParts.length > 0;
   const models = hasImages
     ? [
@@ -406,7 +475,6 @@ module.exports = async function handler(request, response) {
         process.env.GROQ_VISION_FALLBACK_MODEL || DEFAULT_VISION_FALLBACK_MODEL,
       ].filter((value, index, values) => values.indexOf(value) === index)
     : [process.env.GROQ_MODEL || DEFAULT_TEXT_MODEL];
-  const lastMessage = messages[messages.length - 1];
   const fileInstruction = prepared.fileContext
     ? `\n\nUse os anexos abaixo como contexto para responder:\n\n${prepared.fileContext}`
     : "";
@@ -422,7 +490,7 @@ module.exports = async function handler(request, response) {
     { role: "user", content: latestContent },
   ];
 
-  const result = await callGroq({ apiKey, models, messages: apiMessages, hasImages });
+  const result = await callGroqWithMcp({ apiKey, models, messages: apiMessages, hasImages, mcpServers });
   if (result.failure) {
     console.error("Groq request failed", result.failure);
     return sendJson(response, 502, { error: "O KAZER não conseguiu concluir a resposta agora. Tente novamente." });
@@ -439,5 +507,9 @@ module.exports = async function handler(request, response) {
     message: { role: "assistant", content: content.trim() },
     attachments: prepared.fileNames,
     usage,
+    credit_cost: creditCost,
+    mcp_connector_count: requestedMcpCount,
+    mcp_servers_available: mcpServers.length,
+    mcp_tools_used: result.mcpToolsUsed || 0,
   });
 };
