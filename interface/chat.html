@@ -319,44 +319,6 @@
         background: var(--card);
       }
 
-      .computer-button {
-        position: absolute;
-        top: max(20px, env(safe-area-inset-top));
-        right: clamp(124px, 19vw, 220px);
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-        min-height: 40px;
-        padding: 0 14px;
-        border: 1px solid var(--line);
-        border-radius: 999px;
-        background: color-mix(in srgb, var(--card) 72%, transparent);
-        color: var(--text);
-        font-size: 12px;
-        font-weight: 650;
-        letter-spacing: 0.01em;
-        text-decoration: none;
-        white-space: nowrap;
-        cursor: pointer;
-        box-shadow: 0 6px 22px rgba(0, 0, 0, 0.14);
-        backdrop-filter: blur(14px);
-        transition: border-color 180ms var(--ease), background 180ms var(--ease), transform 180ms var(--ease);
-      }
-
-      .computer-button:hover {
-        border-color: rgba(255, 255, 255, 0.45);
-        background: var(--card-2);
-      }
-
-      .computer-button:active {
-        transform: scale(0.96);
-      }
-
-      .computer-button .icon {
-        width: 17px;
-        height: 17px;
-      }
-
       .conversation-area {
         position: relative;
         display: flex;
@@ -2606,27 +2568,6 @@
           font-size: 28px;
         }
 
-        .computer-button {
-          top: max(18px, env(safe-area-inset-top));
-          right: 107px;
-          width: 35px;
-          min-height: 35px;
-          padding: 0;
-          justify-content: center;
-        }
-
-        .computer-button span {
-          position: absolute;
-          width: 1px;
-          height: 1px;
-          padding: 0;
-          margin: -1px;
-          overflow: hidden;
-          clip: rect(0, 0, 0, 0);
-          white-space: nowrap;
-          border: 0;
-        }
-
         .conversation-title {
           font-size: 17px;
         }
@@ -3090,7 +3031,6 @@
       <header class="topbar" aria-label="Barra de conversa">
         <div class="credit-indicator" id="creditIndicator" aria-label="Saldo de créditos" hidden><span class="credit-indicator-value" id="creditBalanceValue">0</span></div>
         <span class="conversation-title">KAZER</span>
-        <a class="computer-button" id="computerButton" href="https://coderkazer.vercel.app" target="_blank" rel="noopener noreferrer" aria-label="Abrir Kazer's Computer" title="Abrir Kazer's Computer"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="13" rx="2"></rect><path d="M8 21h8M12 17v4"></path></svg><span>Kazer's Computer</span></a>
         <button class="new-chat-button" id="newChatButton" type="button" aria-label="Nova conversa" hidden>+</button>
         <button class="profile-button" id="profileButton" type="button" aria-label="Abrir perfil" aria-expanded="false"><span class="avatar-photo" aria-hidden="true"></span></button>
       </header>
