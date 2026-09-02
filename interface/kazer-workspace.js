@@ -11,7 +11,7 @@
     const date = new Date(value);
     return Number.isNaN(date.getTime()) ? "" : new Intl.DateTimeFormat("pt-BR", { dateStyle: "short", timeStyle: "short" }).format(date);
   };
-  const state = { tab: "tasks", tasks: [], repos: [], reposLoaded: false, connectors: [], presets: [], github: { connected: false }, mcpModal: null, pendingTasks: new Map() };
+  const state = { tab: "tasks", tasks: [], repos: [], reposLoaded: false, selectedRepo: null, connectors: [], presets: [], github: { connected: false }, mcpModal: null, pendingTasks: new Map() };
   const content = $("#workspaceContent");
   const workspace = $("#workspacePanel");
   const toggle = $("#workspaceToggle");
@@ -78,6 +78,22 @@
     try { return new URL(value).pathname.split("/").filter(Boolean).slice(0, 2).join("/"); } catch { return "Sem repositório"; }
   }
 
+  const CONNECTOR_REQUEST_PATTERN = /\b(?:github|git hub|reposit[oó]rio|repos?|branch|commit|pull request|merge|issue|bug|c[oó]digo|projeto|deploy|mcp|conector|integra[cç][aã]o|conectar|servidor|arquivo no github)\b/i;
+  function isConnectorRequest(prompt) { return CONNECTOR_REQUEST_PATTERN.test(String(prompt || "")); }
+  function isConnectorTask(task) {
+    return Boolean(task?.connectorContext || task?.taskType === "connector" || task?.repoUrl || task?.repoFullName || (Array.isArray(task?.mcpConnectorIds) && task.mcpConnectorIds.length));
+  }
+  function repoForPrompt(prompt) {
+    const source = String(prompt || "").toLocaleLowerCase();
+    const exact = state.repos.find((repo) => {
+      const fullName = String(repo.fullName || "").toLocaleLowerCase();
+      const name = String(repo.name || "").toLocaleLowerCase();
+      return (fullName && source.includes(fullName)) || (name && new RegExp(`(?:^|[^\\w-])${name.replace(/[.*+?^${}()|[\\]\\\\]/g, "\\\\$&")}(?:$|[^\\w-])`, "i").test(source));
+    });
+    return exact || (state.selectedRepo && isConnectorRequest(prompt) ? state.selectedRepo : null);
+  }
+  function taskRepositoryLabel(task) { return task?.repoFullName || repoFromUrl(task?.repoUrl); }
+
   function renderWorkspace() {
     if (!content) return;
     document.querySelectorAll("[data-workspace-tab]").forEach((button) => button.classList.toggle("active", button.dataset.workspaceTab === state.tab));
@@ -96,14 +112,16 @@
   function renderTasks() {
     const list = $("#workspaceTaskList");
     if (!list) return;
-    if (!state.tasks.length) {
-      list.innerHTML = `<div class="workspace-empty">Quando o KAZER iniciar uma tarefa, ela aparecerá aqui com o progresso e os MCPs utilizados.</div>`;
+    const connectorTasks = state.tasks.filter(isConnectorTask);
+    if (!connectorTasks.length) {
+      list.innerHTML = `<div class="workspace-empty">As tarefas aparecem aqui somente quando o KAZER trabalha com GitHub, repositórios ou conectores.</div>`;
       return;
     }
-    list.innerHTML = state.tasks.slice(0, 30).map((task) => {
+    list.innerHTML = connectorTasks.slice(0, 30).map((task) => {
       const status = String(task.status || "pending");
       const mcpCount = Array.isArray(task.mcpConnectorIds) ? task.mcpConnectorIds.length : 0;
-      return `<article class="workspace-card"><div class="workspace-card-head"><strong class="workspace-card-title">${escapeHtml(task.title || task.prompt)}</strong><span class="workspace-status ${escapeHtml(status)}">${escapeHtml(statusText(status))}</span></div><div class="workspace-card-meta">${escapeHtml(repoFromUrl(task.repoUrl))} · ${escapeHtml(formatDate(task.createdAt))}${mcpCount ? ` · ${mcpCount} MCP${mcpCount > 1 ? "s" : ""}` : ""}</div><div class="workspace-progress" aria-label="${Number(task.progress || 0)}%"><span style="width:${Math.max(0, Math.min(100, Number(task.progress || 0)))}%"></span></div>${task.creditCost ? `<div class="workspace-card-meta">Custo desta tarefa: ${Number(task.creditCost)} créditos</div>` : ""}</article>`;
+      const repository = taskRepositoryLabel(task);
+      return `<article class="workspace-card"><div class="workspace-card-head"><strong class="workspace-card-title">${escapeHtml(task.title || task.prompt)}</strong><span class="workspace-status ${escapeHtml(status)}">${escapeHtml(statusText(status))}</span></div><div class="workspace-card-meta">${escapeHtml(repository === "Sem repositório" ? "Operação de conector" : repository)} · ${escapeHtml(formatDate(task.createdAt))}${mcpCount ? ` · ${mcpCount} MCP${mcpCount > 1 ? "s" : ""}` : ""}</div><div class="workspace-progress" aria-label="${Number(task.progress || 0)}%"><span style="width:${Math.max(0, Math.min(100, Number(task.progress || 0)))}%"></span></div>${task.creditCost ? `<div class="workspace-card-meta">Custo desta tarefa: ${Number(task.creditCost)} créditos</div>` : ""}</article>`;
     }).join("");
   }
 
@@ -120,13 +138,14 @@
       list.innerHTML = `<div class="workspace-empty">${query ? `Nenhum repositório corresponde a “${escapeHtml(query)}”.` : "Nenhum repositório encontrado."}</div>`;
       return;
     }
-    list.innerHTML = repos.map((repo) => `<button class="workspace-repo" type="button" data-repo-url="${escapeHtml(repo.cloneUrl || repo.htmlUrl)}"><span class="workspace-repo-icon">⌘</span><span class="workspace-repo-copy"><strong>${escapeHtml(repo.fullName)}</strong><small>${escapeHtml(repo.description || repo.language || "Repositório GitHub")}</small></span>${repo.private ? `<span class="workspace-private">Privado</span>` : ""}</button>`).join("");
-    list.querySelectorAll("[data-repo-url]").forEach((button) => button.addEventListener("click", () => {
-      const url = button.dataset.repoUrl || "";
-      const input = $("#messageInput");
-      if (input) { input.value = `Trabalhe no repositório ${url}: `; input.focus(); input.dispatchEvent(new Event("input", { bubbles: true })); }
+    list.innerHTML = repos.map((repo) => `<button class="workspace-repo${state.selectedRepo?.id && String(state.selectedRepo.id) === String(repo.id) ? " selected" : ""}" type="button" data-repo-id="${escapeHtml(String(repo.id))}"><span class="workspace-repo-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 .7a11.3 11.3 0 0 0-3.58 21.99c.57.1.78-.25.78-.55v-2.12c-3.17.69-3.84-1.53-3.84-1.53-.52-1.32-1.27-1.67-1.27-1.67-1.04-.71.08-.7.08-.7 1.15.08 1.76 1.18 1.76 1.18 1.02 1.75 2.68 1.24 3.33.95.1-.74.4-1.24.73-1.53-2.53-.29-5.2-1.26-5.2-5.62 0-1.24.44-2.25 1.18-3.04-.12-.29-.51-1.44.11-3 0 0 .96-.3 3.12 1.16a10.8 10.8 0 0 1 5.68 0c2.16-1.46 3.12-1.16 3.12-1.16.62 1.56.23 2.71.12 3 .73.79 1.17 1.8 1.17 3.04 0 4.37-2.68 5.32-5.23 5.61.41.36.78 1.07.78 2.16v3.2c0 .31.2.66.79.55A11.3 11.3 0 0 0 12 .7Z"></path></svg></span><span class="workspace-repo-copy"><strong>${escapeHtml(repo.fullName)}</strong><small>${escapeHtml(repo.description || repo.language || "Repositório GitHub")}</small></span>${repo.private ? `<span class="workspace-private">Privado</span>` : ""}</button>`).join("");
+    list.querySelectorAll("[data-repo-id]").forEach((button) => button.addEventListener("click", () => {
+      const repo = state.repos.find((item) => String(item.id) === String(button.dataset.repoId));
+      if (!repo) return;
+      state.selectedRepo = repo;
+      window.kazerSelectedRepository = repo;
       closeWorkspace();
-      notify("Repositório adicionado ao pedido");
+      notify(`Repositório ${repo.fullName} selecionado; descreva o que deseja fazer`);
     }));
   }
 
@@ -161,6 +180,7 @@
       const data = await api("/api/github-status");
       state.github = data.connection || { connected: false };
       if (statusLabel) statusLabel.textContent = state.github.connected ? `Conectado como ${state.github.login}` : "Conectar repositórios";
+      if (state.github.connected) refreshRepos();
       if (state.tab === "repos" && workspace?.classList.contains("visible")) renderRepos();
     } catch {
       state.github = { connected: false };
@@ -201,9 +221,22 @@
     state.mcpModal = null;
   }
 
+  const MCP_ICON_PATHS = {
+    browserbase: '<rect x="3" y="3" width="18" height="18" rx="4"></rect><path d="M7 8h10M7 12h7M7 16h5"></path>',
+    context7: '<path d="M5 7.5 12 4l7 3.5v9L12 20l-7-3.5z"></path><path d="m8 9 4 2 4-2M12 11v6"></path>',
+    convex: '<path d="m12 3 8 14H4z"></path><path d="M8 17h8"></path>',
+    figma: '<path d="M8 3h4v6H8a3 3 0 1 1 0-6ZM12 3h4a3 3 0 1 1 0 6h-4zM8 9h4v6H8a3 3 0 1 1 0-6ZM12 9h4a3 3 0 1 1 0 0 6h-4zM12 15v3a3 3 0 1 1-3-3z"></path>',
+    'hugging face': '<circle cx="8" cy="11" r="1"></circle><circle cx="16" cy="11" r="1"></circle><path d="M6 15c1.6 2 4 3 6 3s4.4-1 6-3"></path>',
+    linear: '<path d="m4 5 15 15M4 10l10 10M4 15l5 5"></path>',
+    notion: '<rect x="5" y="3" width="14" height="18" rx="2"></rect><path d="M8 7h8M8 11h5M8 15h8"></path>',
+    playwright: '<path d="M4 5h16v14H4z"></path><path d="M8 9h8M8 13h5"></path>',
+    supabase: '<path d="m13 2-9 12h7l-1 8 9-12h-7z"></path>',
+  };
   function mcpIcon(name) {
-    const initial = String(name || "M").trim().charAt(0).toUpperCase();
-    return `<span class="profile-integration-icon" aria-hidden="true">${escapeHtml(initial)}</span>`;
+    const normalized = String(name || "").trim().toLocaleLowerCase();
+    const key = Object.keys(MCP_ICON_PATHS).find((item) => normalized.includes(item));
+    const path = key ? MCP_ICON_PATHS[key] : '<circle cx="12" cy="12" r="8"></circle><path d="M12 8v8M8 12h8"></path>';
+    return `<span class="profile-integration-icon mcp-brand-icon ${escapeHtml(key || "generic")}" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">${path}</svg></span>`;
   }
 
   async function loadConnectors() {
@@ -221,10 +254,10 @@
   }
 
   function updateMcpBadge() {
-    const attach = $("#mcpAction");
-    if (!attach) return;
+    const badge = $("#mcpProfileStatus");
+    if (!badge) return;
     const count = state.connectors.filter((connector) => connector.status === "connected").length;
-    attach.querySelector("small")?.replaceChildren(document.createTextNode(count ? `${count} conectado${count > 1 ? "s" : ""}` : "Conectar ferramentas"));
+    badge.textContent = count ? `${count} conectado${count > 1 ? "s" : ""}` : "Conectores prontos";
   }
 
   function renderMcpModal(errorMessage = "") {
@@ -243,7 +276,7 @@
 
   function renderMcpList(body) {
     const connected = state.connectors.filter((connector) => connector.status === "connected").length;
-    body.innerHTML = `<span class="mcp-section-label">${connected} ativo${connected === 1 ? "" : "s"}</span>${state.connectors.length ? state.connectors.map((connector) => `<div class="mcp-connector-row"><span class="profile-integration-icon">${escapeHtml(String(connector.name || "M").charAt(0).toUpperCase())}</span><div class="mcp-connector-copy"><strong>${escapeHtml(connector.name)}</strong><small>${escapeHtml(connector.baseUrl || connector.command || "MCP configurado")}</small></div><div class="mcp-connector-actions"><button class="mcp-small-button" type="button" data-mcp-edit="${escapeHtml(connector.id)}">Editar</button><button class="mcp-small-button" type="button" data-mcp-toggle="${escapeHtml(connector.id)}">${connector.status === "connected" ? "Desligar" : "Ligar"}</button><button class="mcp-small-button danger" type="button" data-mcp-delete="${escapeHtml(connector.id)}">Excluir</button></div></div>`).join("") : `<div class="workspace-empty">Nenhum MCP configurado. Escolha um preset abaixo ou adicione um servidor personalizado.</div>`}<div class="mcp-presets-grid">${state.presets.map((preset) => `<button class="mcp-preset-card" type="button" data-mcp-preset="${escapeHtml(preset.name)}">${mcpIcon(preset.name)}<strong>${escapeHtml(preset.name)}</strong><small>${escapeHtml(preset.type === "local" ? "Local / STDIO" : "Remoto / HTTP")}</small></button>`).join("")}</div><div class="mcp-form-actions"><button class="mcp-secondary-button" id="mcpAddCustom" type="button">MCP personalizado</button></div>`;
+    body.innerHTML = `<span class="mcp-section-label">${connected} ativo${connected === 1 ? "" : "s"}</span>${state.connectors.length ? state.connectors.map((connector) => `<div class="mcp-connector-row">${mcpIcon(connector.name)}<div class="mcp-connector-copy"><strong>${escapeHtml(connector.name)}</strong><small>${escapeHtml(connector.baseUrl || connector.command || "Conector configurado")}</small></div><div class="mcp-connector-actions"><button class="mcp-small-button" type="button" data-mcp-edit="${escapeHtml(connector.id)}">Editar</button><button class="mcp-small-button" type="button" data-mcp-toggle="${escapeHtml(connector.id)}">${connector.status === "connected" ? "Desligar" : "Ligar"}</button><button class="mcp-small-button danger" type="button" data-mcp-delete="${escapeHtml(connector.id)}">Excluir</button></div></div>`).join("") : `<div class="workspace-empty">Nenhum conector conectado. Escolha uma opção pronta abaixo ou adicione um servidor personalizado.</div>`}<div class="mcp-presets-grid">${state.presets.map((preset) => `<button class="mcp-preset-card" type="button" data-mcp-preset="${escapeHtml(preset.name)}">${mcpIcon(preset.name)}<strong>${escapeHtml(preset.name)}</strong><small>${escapeHtml(preset.type === "local" ? "Local / STDIO" : "Remoto / HTTP")}</small></button>`).join("")}</div><div class="mcp-form-actions"><button class="mcp-secondary-button" id="mcpAddCustom" type="button">Adicionar personalizado</button></div>`;
     body.querySelectorAll("[data-mcp-edit]").forEach((button) => button.addEventListener("click", () => openMcpModal(state.connectors.find((item) => item.id === button.dataset.mcpEdit) || null)));
     body.querySelectorAll("[data-mcp-toggle]").forEach((button) => button.addEventListener("click", async () => {
       button.disabled = true;
@@ -281,12 +314,16 @@
   }
 
   function startTask({ prompt, attachmentCount = 0 } = {}) {
-    const clientId = window.crypto?.randomUUID?.() || `task-${Date.now()}-${Math.random().toString(16).slice(2)}`;
     const mcpConnectorIds = Array.isArray(window.kazerMcpSelection) ? window.kazerMcpSelection : [];
-    const promise = api("/api/tasks", { method: "POST", body: JSON.stringify({ title: String(prompt || "").slice(0, 72), prompt, taskType: "chat", status: "processing", progress: 15, mcpConnectorIds, logs: [{ type: "info", message: "Tarefa iniciada no chat" }], creditCost: 0 }) }).then((data) => data.task);
+    const repository = repoForPrompt(prompt);
+    const connectorIntent = isConnectorRequest(prompt);
+    const connectorContext = connectorIntent && (Boolean(repository) || mcpConnectorIds.length > 0);
+    if (!connectorContext) return null;
+    const clientId = window.crypto?.randomUUID?.() || `task-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+    const promise = api("/api/tasks", { method: "POST", body: JSON.stringify({ title: String(prompt || "").slice(0, 72), prompt, taskType: repository ? "coding" : "chat", status: "processing", progress: 15, repoUrl: repository?.htmlUrl || repository?.cloneUrl || null, mcpConnectorIds, logs: [{ type: "info", message: "Operação de conector iniciada no chat" }], creditCost: 0 }) }).then((data) => data.task);
     state.pendingTasks.set(clientId, promise);
     promise.then((task) => { if (task) state.tasks = [task, ...state.tasks.filter((item) => item.id !== task.id)]; if (workspace?.classList.contains("visible") && state.tab === "tasks") renderTasks(); }).catch(() => {});
-    return { id: clientId, mcpConnectorIds, attachmentCount };
+    return { id: clientId, mcpConnectorIds, attachmentCount, connectorContext: true, repo: repository || null };
   }
 
   async function updateTask(context, patch) {
@@ -311,8 +348,7 @@
 
   toggle?.addEventListener("click", () => workspace?.classList.contains("visible") ? closeWorkspace() : openWorkspace());
   $("#workspaceClose")?.addEventListener("click", closeWorkspace);
-  $("#workspaceAction")?.addEventListener("click", () => openWorkspace("tasks"));
-  $("#mcpAction")?.addEventListener("click", () => openMcpModal());
+  $("#mobileWorkspaceButton")?.addEventListener("click", () => openWorkspace("tasks"));
   $("#mcpProfileAction")?.addEventListener("click", () => openMcpModal());
   $("#githubProfileAction")?.addEventListener("click", () => state.github.connected ? notify(`GitHub conectado como ${state.github.login}`) : connectGitHub());
   document.querySelectorAll("[data-workspace-tab]").forEach((button) => button.addEventListener("click", () => openWorkspace(button.dataset.workspaceTab)));
