@@ -221,22 +221,9 @@
     state.mcpModal = null;
   }
 
-  const MCP_ICON_PATHS = {
-    browserbase: '<rect x="3" y="3" width="18" height="18" rx="4"></rect><path d="M7 8h10M7 12h7M7 16h5"></path>',
-    context7: '<path d="M5 7.5 12 4l7 3.5v9L12 20l-7-3.5z"></path><path d="m8 9 4 2 4-2M12 11v6"></path>',
-    convex: '<path d="m12 3 8 14H4z"></path><path d="M8 17h8"></path>',
-    figma: '<path d="M8 3h4v6H8a3 3 0 1 1 0-6ZM12 3h4a3 3 0 1 1 0 6h-4zM8 9h4v6H8a3 3 0 1 1 0-6ZM12 9h4a3 3 0 1 1 0 0 6h-4zM12 15v3a3 3 0 1 1-3-3z"></path>',
-    'hugging face': '<circle cx="8" cy="11" r="1"></circle><circle cx="16" cy="11" r="1"></circle><path d="M6 15c1.6 2 4 3 6 3s4.4-1 6-3"></path>',
-    linear: '<path d="m4 5 15 15M4 10l10 10M4 15l5 5"></path>',
-    notion: '<rect x="5" y="3" width="14" height="18" rx="2"></rect><path d="M8 7h8M8 11h5M8 15h8"></path>',
-    playwright: '<path d="M4 5h16v14H4z"></path><path d="M8 9h8M8 13h5"></path>',
-    supabase: '<path d="m13 2-9 12h7l-1 8 9-12h-7z"></path>',
-  };
   function mcpIcon(name) {
-    const normalized = String(name || "").trim().toLocaleLowerCase();
-    const key = Object.keys(MCP_ICON_PATHS).find((item) => normalized.includes(item));
-    const path = key ? MCP_ICON_PATHS[key] : '<circle cx="12" cy="12" r="8"></circle><path d="M12 8v8M8 12h8"></path>';
-    return `<span class="profile-integration-icon mcp-brand-icon ${escapeHtml(key || "generic")}" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">${path}</svg></span>`;
+    if (typeof window.kazerConnectorIcon === "function") return window.kazerConnectorIcon(name);
+    return `<span class="profile-integration-icon mcp-brand-icon generic" aria-hidden="true">+</span>`;
   }
 
   async function loadConnectors() {
