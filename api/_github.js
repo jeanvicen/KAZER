@@ -4,13 +4,18 @@ const { decryptSecret, encryptSecret, safeJson, supabaseRequest } = require("./_
 function getGitHubConfig(request) {
   const clientId = String(process.env.GITHUB_CLIENT_ID || process.env.NEXT_PUBLIC_GITHUB_CLIENT_ID || "").trim();
   const clientSecret = String(process.env.GITHUB_CLIENT_SECRET || "").trim();
-  const configuredOrigin = String(process.env.PUBLIC_APP_ORIGINS || "").split(",")[0].trim().replace(/\/$/, "");
+  const configuredOrigins = String(process.env.PUBLIC_APP_ORIGINS || "")
+    .split(",")
+    .map((value) => value.trim().replace(/\/$/, ""))
+    .filter(Boolean);
   const forwardedProto = String(request?.headers?.["x-forwarded-proto"] || "https").split(",")[0].trim();
   const host = String(request?.headers?.host || "").split(",")[0].trim();
-  const origin = configuredOrigin || `${forwardedProto === "http" ? "http" : "https"}://${host}`;
+  const requestOrigin = `${forwardedProto === "http" ? "http" : "https"}://${host}`.replace(/\/$/, "");
+  const origin = configuredOrigins.find((candidate) => candidate.toLowerCase() === requestOrigin.toLowerCase()) || configuredOrigins[0] || requestOrigin;
   return {
     clientId,
     clientSecret,
+    appOrigin: origin,
     redirectUri: `${origin}/api/github-callback`,
   };
 }

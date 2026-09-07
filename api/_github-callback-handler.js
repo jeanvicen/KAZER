@@ -1,7 +1,7 @@
-const { clearCookie, encryptSecret, getGitHubConfig, githubFetch, readState, setCookie } = require("./_github");
+const { encryptSecret, getGitHubConfig, githubFetch, readState } = require("./_github");
 const { supabaseRequest } = require("./_kazer-data");
 
-function cookies(request) {
+function readCookies(request) {
   return Object.fromEntries(String(request.headers?.cookie || "").split(";").map((part) => {
     const index = part.indexOf("=");
     if (index < 0) return ["", ""];
@@ -26,17 +26,20 @@ module.exports = async function handler(request, response) {
 
   const queryState = String(request.query?.state || "");
   const code = String(request.query?.code || "");
-  const stored = cookies(request).kazer_github_oauth;
-  const payload = readState(stored);
-  const stateMatches = Boolean(payload && queryState && stored && stored === queryState);
-  if (!code || !payload || !stateMatches) {
+  // Alguns navegadores internos do GitHub retornam sem o cookie original.
+  // O state assinado continua sendo a validação CSRF, com validade curta.
+  const storedState = readCookies(request).kazer_github_oauth;
+  const payload = readState(queryState);
+  const cookieMatches = !storedState || storedState === queryState;
+  if (!code || !payload || !queryState || !cookieMatches) {
     redirect(response, "/chat?github=error", "kazer_github_oauth=; Max-Age=0; Path=/; HttpOnly; SameSite=Lax");
     return;
   }
 
-  const { clientId, clientSecret, redirectUri } = getGitHubConfig(request);
+  const { clientId, clientSecret, appOrigin, redirectUri } = getGitHubConfig(request);
+  const callbackLocation = (status) => new URL(`/chat?github=${status}`, appOrigin).toString();
   if (!clientId || !clientSecret) {
-    redirect(response, "/chat?github=not-configured", "kazer_github_oauth=; Max-Age=0; Path=/; HttpOnly; SameSite=Lax");
+    redirect(response, callbackLocation("not-configured"), "kazer_github_oauth=; Max-Age=0; Path=/; HttpOnly; SameSite=Lax");
     return;
   }
 
@@ -73,10 +76,10 @@ module.exports = async function handler(request, response) {
     }
 
     const cookieHeader = `kazer_github_oauth=; Max-Age=0; Path=/; HttpOnly; SameSite=Lax${process.env.NODE_ENV === "production" ? "; Secure" : ""}`;
-    redirect(response, "/chat?github=connected", cookieHeader);
+    redirect(response, callbackLocation("connected"), cookieHeader);
   } catch (error) {
     console.error("GitHub callback failed", error?.message || "unknown");
     const cookieHeader = `kazer_github_oauth=; Max-Age=0; Path=/; HttpOnly; SameSite=Lax${process.env.NODE_ENV === "production" ? "; Secure" : ""}`;
-    redirect(response, "/chat?github=error", cookieHeader);
+    redirect(response, callbackLocation("error"), cookieHeader);
   }
 };
