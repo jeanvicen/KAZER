@@ -47,7 +47,13 @@ const githubHandler = require("../api/github.js");
 const githubResponse = responseOf();
 await githubHandler({ ...request, query: { route: "connect" }, headers: { ...request.headers, host: "kazer.example" } }, githubResponse);
 assert.equal(githubResponse.statusCode, 200);
-assert.match(JSON.parse(githubResponse.body).url, /github\.com\/login\/oauth\/authorize/);
+const githubAuthorizeUrl = new URL(JSON.parse(githubResponse.body).url);
+assert.equal(githubAuthorizeUrl.origin, "https://github.com");
+assert.equal(githubAuthorizeUrl.pathname, "/login/oauth/authorize");
+assert.equal(githubAuthorizeUrl.searchParams.get("client_id"), "test-github-client");
+assert.equal(githubAuthorizeUrl.searchParams.get("redirect_uri"), "https://kazer.example/api/github-callback");
+assert.equal(githubAuthorizeUrl.searchParams.get("scope"), "repo read:user user:email");
+assert.ok(githubAuthorizeUrl.searchParams.get("state"));
 
 await import("node:fs/promises").then((fs) => fs.writeFile("/tmp/kazer-api-smoke-restored", "ok"));
 globalThis.fetch = originalFetch;
