@@ -198,17 +198,7 @@
       const sessionResult = await supabase?.auth.getSession();
       const accessToken = sessionResult?.data?.session?.access_token;
       if (!accessToken) throw new Error("Sessão inválida ou expirada.");
-      const form = document.createElement("form");
-      form.method = "POST";
-      form.action = "/api/github-authorize";
-      form.enctype = "application/x-www-form-urlencoded";
-      const input = document.createElement("input");
-      input.type = "hidden";
-      input.name = "access_token";
-      input.value = accessToken;
-      form.appendChild(input);
-      document.body.appendChild(form);
-      form.submit();
+      window.location.assign(`/api/github-authorize?access_token=${encodeURIComponent(accessToken)}`);
     } catch (error) {
       notify(error.message);
     } finally {
