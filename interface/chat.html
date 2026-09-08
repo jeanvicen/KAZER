@@ -3297,36 +3297,34 @@
 
       .history-search-field input::placeholder { color: var(--text-dim); }
 
-      .history-list {
-        display: grid;
-        gap: 0;
-        border-top: 1px solid var(--line-soft);
-      }
+      .history-list { display: grid; gap: 0; border-top: 1px solid var(--line-soft); }
 
       .history-item {
         display: grid;
-        grid-template-columns: 38px minmax(0, 1fr) auto;
+        grid-template-columns: minmax(0, 1fr) auto auto;
         align-items: center;
         gap: 14px;
-        width: 100%;
-        min-height: 78px;
-        padding: 12px 2px;
-        border: 0;
+        min-height: 72px;
         border-bottom: 1px solid var(--line-soft);
+        animation: history-fade-up 480ms var(--ease) both;
+        transition: background 180ms var(--ease), border-color 180ms var(--ease);
+      }
+
+      .history-item:hover,
+      .history-item.is-selected { background: color-mix(in srgb, var(--card) 48%, transparent); }
+
+      .history-item-open {
+        min-width: 0;
+        padding: 17px 0;
+        border: 0;
         background: transparent;
         color: var(--text);
         text-align: left;
         cursor: pointer;
-        animation: history-fade-up 480ms var(--ease) both;
-        transition: padding 180ms var(--ease), background 180ms var(--ease), border-color 180ms var(--ease);
       }
 
-      .history-item:hover {
-        padding-right: 10px;
-        padding-left: 10px;
-        border-color: var(--line);
-        background: color-mix(in srgb, var(--card) 55%, transparent);
-      }
+      .history-item-open:focus-visible,
+      .history-item-delete:focus-visible { outline: 2px solid #e7bc69; outline-offset: 4px; }
 
       .history-item:nth-child(2) { animation-delay: 38ms; }
       .history-item:nth-child(3) { animation-delay: 76ms; }
@@ -3334,24 +3332,16 @@
       .history-item:nth-child(5) { animation-delay: 152ms; }
       .history-item:nth-child(6) { animation-delay: 190ms; }
 
-      .history-item-icon {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        width: 38px;
-        height: 38px;
-        border: 1px solid var(--line-soft);
-        border-radius: 12px;
-        background: color-mix(in srgb, var(--card-2) 75%, transparent);
-        color: #e0b75d;
-      }
-
-      .history-item-icon .icon { width: 18px; height: 18px; }
-
       .history-item-copy { min-width: 0; }
       .history-item-copy strong { display: block; overflow: hidden; color: var(--text); font-size: 15px; font-weight: 540; letter-spacing: -.015em; text-overflow: ellipsis; white-space: nowrap; }
-      .history-item-copy small { display: block; margin-top: 5px; overflow: hidden; color: var(--text-dim); font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
-      .history-item-time { align-self: start; padding-top: 6px; color: var(--text-dim); font-size: 10px; white-space: nowrap; }
+      .history-item-copy small { display: none; }
+      .history-item-time { color: var(--text-dim); font-size: 11px; white-space: nowrap; }
+      .history-item-delete { display: inline-flex; align-items: center; justify-content: center; width: 34px; height: 34px; margin-right: 2px; border: 0; border-radius: 50%; background: transparent; color: var(--text-dim); cursor: pointer; opacity: 0; transition: opacity 180ms var(--ease), color 180ms var(--ease), background 180ms var(--ease); }
+      .history-item:hover .history-item-delete,
+      .history-item.is-selected .history-item-delete,
+      .history-item-delete:focus-visible { opacity: 1; }
+      .history-item-delete:hover { background: rgba(255,255,255,.08); color: #f1b3a4; }
+      .history-item-delete .icon { width: 17px; height: 17px; }
 
       .history-empty {
         display: grid;
@@ -3438,11 +3428,20 @@
       .new-chat-greeting h2 strong { color: transparent; background: var(--metal-gradient); background-size: 230% 100%; background-clip: text; -webkit-background-clip: text; font-weight: 600; animation: metal-word-shine 4.4s linear infinite; }
       .new-chat-greeting p { margin: 17px 0 0; color: var(--text-soft); font-size: clamp(16px, 3vw, 20px); font-weight: 350; }
 
-      .app.new-chat-active .topbar { display: none; }
-      .app.new-chat-active .empty-word { display: none; }
-      .app.new-chat-active .new-chat-greeting { display: block; }
-      .app.new-chat-active .empty-state { padding-top: 30vh; }
+      .app.history-active .workspace-toggle,
+      .app.history-active .mobile-workspace-button,
+      .app.history-active .retention-banner,
+      .app.new-chat-active .retention-banner { display: none !important; }
+      .app.new-chat-active .profile-button { visibility: hidden; pointer-events: none; }
+      .app.new-chat-active .topbar { display: flex; }
+      .app.new-chat-active .new-chat-greeting { display: none; }
+      .app.new-chat-active .empty-word { display: block; }
+      .app.new-chat-active .empty-state { padding-top: 0; }
       .app.new-chat-active .conversation-area { padding-top: 0; }
+      .app.new-chat-active .new-chat-header { display: block; height: 0; padding: 0; }
+      .app.new-chat-active .new-chat-brand,
+      .app.new-chat-active .new-chat-credit { display: none; }
+      .app.new-chat-active .new-chat-back { position: fixed; z-index: 52; top: max(18px, env(safe-area-inset-top)); right: clamp(18px, 4vw, 42px); }
       .app.history-active .profile-popover { right: auto; left: clamp(18px, 4vw, 42px); }
       .app.history-active .install-banner,
       .app.new-chat-active .install-banner { display: none !important; }
@@ -3455,11 +3454,11 @@
         .history-content { width: min(100% - 28px, 620px); height: calc(100dvh - 72px); padding-top: 54px; }
         .history-heading { margin-bottom: 32px; }
         .history-heading p { font-size: 13px; }
-        .history-item { grid-template-columns: 34px minmax(0, 1fr); min-height: 70px; gap: 12px; }
-        .history-item-icon { width: 34px; height: 34px; border-radius: 10px; }
-        .history-item-time { grid-column: 2; grid-row: 1; align-self: end; padding: 0 0 1px; font-size: 9px; }
-        .history-item-copy strong { font-size: 14px; padding-bottom: 17px; }
-        .history-item-copy small { padding-right: 12px; }
+        .history-item { min-height: 68px; gap: 9px; }
+        .history-item-open { padding: 15px 0; }
+        .history-item-copy strong { font-size: 14px; }
+        .history-item-time { font-size: 10px; }
+        .history-item-delete { opacity: 1; margin-right: 0; }
         .history-new-chat { width: 58px; height: 58px; right: 20px; }
         .new-chat-header { height: 70px; padding-right: 14px; padding-left: 14px; }
         .new-chat-back { width: 42px; height: 42px; }
@@ -3505,7 +3504,7 @@
 
       <section class="history-screen" id="historyScreen" aria-label="Histórico de chats" aria-hidden="true" hidden>
         <header class="history-topbar">
-          <button class="history-profile-button" id="historyProfileButton" type="button" aria-label="Abrir perfil" aria-expanded="false"><span class="avatar-photo" aria-hidden="true"></span></button>
+          <button class="history-profile-button" id="historyProfileButton" type="button" aria-label="Voltar ao chat"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"></path></svg></button>
           <span class="history-brand" aria-label="KAZER">KAZER</span>
           <button class="history-search-button" id="historySearchButton" type="button" aria-label="Pesquisar no histórico" aria-expanded="false"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-4-4"></path></svg></button>
         </header>
@@ -4266,16 +4265,19 @@
           if (!historyList || !historyEmpty) return;
           const query = String(historySearchInput?.value || "").trim().toLocaleLowerCase();
           const filtered = historyItems.filter((item) => (item.title + " " + (item.excerpt || "")).toLocaleLowerCase().includes(query));
-          historyList.innerHTML = filtered.map((item) => '<button class="history-item" type="button" data-history-id="' + escapeHtml(item.id) + '"><span class="history-item-icon">' + historyIcon(item.kind) + '</span><span class="history-item-copy"><strong>' + escapeHtml(item.title) + '</strong><small>' + escapeHtml(item.excerpt || (item.kind === "task" ? "Tarefa do KAZER" : "Conversa com o KAZER")) + '</small></span><time class="history-item-time" datetime="' + escapeHtml(item.createdAt) + '">' + escapeHtml(historyDateLabel(item.createdAt)) + '</time></button>').join("");
+          historyList.innerHTML = filtered.map((item) => '<div class="history-item" data-history-row="' + escapeHtml(item.id) + '"><button class="history-item-open" type="button" data-history-id="' + escapeHtml(item.id) + '"><span class="history-item-copy"><strong>' + escapeHtml(item.title) + '</strong><small>' + escapeHtml(item.excerpt || "Conversa com o KAZER") + '</small></span></button><time class="history-item-time" datetime="' + escapeHtml(item.createdAt) + '">' + escapeHtml(historyDateLabel(item.createdAt)) + '</time><button class="history-item-delete" type="button" data-history-delete="' + escapeHtml(item.id) + '" aria-label="Excluir ' + escapeHtml(item.title) + '"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16"></path><path d="M10 11v6M14 11v6"></path><path d="M6 7l1 13h10l1-13M9 7V4h6v3"></path></svg></button></div>').join("");
           historyList.querySelectorAll("[data-history-id]").forEach((button) => button.addEventListener("click", () => {
-            const item = historyItems.find((entry) => entry.id === button.dataset.historyId);
-            if (!item) return;
-            setView("new-chat", { push: true });
-            messageInput.value = item.title;
-            resizeInput();
-            updateSend();
-            messageInput.focus();
-            showToast("Conversa pronta para continuar");
+            const row = button.closest("[data-history-row]");
+            if (!row) return;
+            historyList.querySelectorAll("[data-history-row]").forEach((item) => item.classList.remove("is-selected"));
+            row.classList.add("is-selected");
+          }));
+          historyList.querySelectorAll("[data-history-delete]").forEach((button) => button.addEventListener("click", (event) => {
+            event.stopPropagation();
+            const id = button.dataset.historyDelete;
+            saveChatHistory(historyItems.filter((item) => item.id !== id));
+            renderChatHistory();
+            showToast("Chat excluído");
           }));
           const empty = filtered.length === 0;
           historyEmpty.hidden = !empty;
@@ -4293,21 +4295,6 @@
 
         const loadChatHistory = async () => {
           historyItems = readChatHistory();
-          try {
-            const response = await fetchWithAuth("/api/tasks", { method: "GET" });
-            const data = await response.json().catch(() => ({}));
-            if (response.ok && Array.isArray(data.tasks)) {
-              const taskItems = data.tasks.filter((task) => task?.title || task?.prompt).map((task) => ({
-                id: "task-" + task.id,
-                title: String(task.title || task.prompt).slice(0, 120),
-                excerpt: task.repoFullName ? "Tarefa em " + task.repoFullName : "Atividade recente do KAZER",
-                createdAt: task.createdAt || new Date().toISOString(),
-                kind: "task"
-              }));
-              const known = new Set(historyItems.map((item) => item.id));
-              historyItems = [...historyItems, ...taskItems.filter((item) => !known.has(item.id))];
-            }
-          } catch {}
           historyItems.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
           renderChatHistory();
         };
@@ -5057,10 +5044,7 @@
         };
 
 
-        historyProfileButton?.addEventListener("click", (event) => {
-          event.stopPropagation();
-          toggleProfile();
-        });
+        historyProfileButton?.addEventListener("click", () => setView("new-chat", { push: true }));
         historySearchButton?.addEventListener("click", () => {
           historySearchOpen = !historySearchOpen;
           if (historySearchField) historySearchField.hidden = !historySearchOpen;
