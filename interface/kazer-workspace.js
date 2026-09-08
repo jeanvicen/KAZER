@@ -192,11 +192,20 @@
   }
 
   async function connectGitHub() {
+    if (connectGitHub.inProgress) return;
+    connectGitHub.inProgress = true;
+    const authWindow = window.open("about:blank", "_blank");
     try {
       const data = await api("/api/github-connect");
       if (!data.url) throw new Error("GitHub OAuth não configurado.");
-      window.location.assign(data.url);
-    } catch (error) { notify(error.message); }
+      if (authWindow && !authWindow.closed) authWindow.location.replace(data.url);
+      else window.location.replace(data.url);
+    } catch (error) {
+      if (authWindow && !authWindow.closed) authWindow.close();
+      notify(error.message);
+    } finally {
+      connectGitHub.inProgress = false;
+    }
   }
 
   async function disconnectGitHub() {
