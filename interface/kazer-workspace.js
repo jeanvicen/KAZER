@@ -16,6 +16,7 @@
   const workspace = $("#workspacePanel");
   const toggle = $("#workspaceToggle");
   const statusLabel = $("#githubProfileStatus");
+  const connectorStripList = $("#connectorStripList");
 
   async function authHeaders() {
     const result = await supabase?.auth.getSession();
@@ -180,11 +181,13 @@
       const data = await api("/api/github-status");
       state.github = data.connection || { connected: false };
       if (statusLabel) statusLabel.textContent = state.github.connected ? `Conectado como ${state.github.login}` : "Conectar repositórios";
+      renderConnectorStrip();
       if (state.github.connected) refreshRepos();
       if (state.tab === "repos" && workspace?.classList.contains("visible")) renderRepos();
     } catch {
       state.github = { connected: false };
       if (statusLabel) statusLabel.textContent = "Conectar repositórios";
+      renderConnectorStrip();
     }
   }
 
@@ -204,15 +207,21 @@
       state.repos = [];
       state.reposLoaded = false;
       if (statusLabel) statusLabel.textContent = "Conectar repositórios";
+      renderConnectorStrip();
       renderRepos();
       notify("GitHub desconectado");
     } catch (error) { notify(error.message); }
   }
 
   function openMcpModal(editing = null) {
-    closeAttachmentSheet();
+    window.kazerCloseAttachmentSheet?.();
     state.mcpModal = { editing, view: editing ? "form" : "list" };
     renderMcpModal();
+  }
+
+  function openConnectorStrip() {
+    window.kazerOpenAttachmentSheet?.();
+    window.setTimeout(() => connectorStripList?.scrollIntoView({ block: "nearest", behavior: "smooth" }), 80);
   }
 
   function closeMcpModal() {
@@ -233,9 +242,11 @@
       state.presets = Array.isArray(data.presets) ? data.presets : [];
       window.kazerMcpSelection = state.connectors.filter((connector) => connector.status === "connected").map((connector) => connector.id);
       updateMcpBadge();
+      renderConnectorStrip();
       if (state.mcpModal) renderMcpModal();
     } catch (error) {
       state.connectors = [];
+      renderConnectorStrip();
       if (state.mcpModal) renderMcpModal(error.message);
     }
   }
@@ -245,6 +256,21 @@
     if (!badge) return;
     const count = state.connectors.filter((connector) => connector.status === "connected").length;
     badge.textContent = count ? `${count} conectado${count > 1 ? "s" : ""}` : "Conectores prontos";
+  }
+
+  function renderConnectorStrip() {
+    if (!connectorStripList) return;
+    const githubStatus = state.github.connected ? `Conectado como ${state.github.login}` : "Não conectado";
+    const githubClass = state.github.connected ? " is-connected" : "";
+    const githubIcon = `<span class="connector-strip-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5a9.5 9.5 0 0 0-3 18.51c.48.09.65-.21.65-.46v-1.7c-2.65.58-3.2-1.12-3.2-1.12-.44-1.1-1.06-1.4-1.06-1.4-.87-.6.07-.59.07-.59.96.07 1.47.99 1.47.99.85 1.46 2.22 1.04 2.76.8.09-.62.33-1.04.6-1.28-2.12-.24-4.35-1.06-4.35-4.72 0-1.04.37-1.9.98-2.57-.1-.24-.43-1.22.1-2.54 0 0 .8-.26 2.62.98A9.1 9.1 0 0 1 12 7.08a9 9 0 0 1 2.38.32c1.82-1.24 2.62-.98 2.62-.98.53 1.32.2 2.3.1 2.54.61.67.98 1.53.98 2.57 0 3.67-2.23 4.48-4.36 4.72.34.3.64.88.64 1.77v2.62c0 .25.17.55.65.46A9.5 9.5 0 0 0 12 2.5Z"></path></svg></span>`;
+    const connectorCards = state.connectors.map((connector) => {
+      const connected = connector.status === "connected";
+      return `<button class="connector-strip-item${connected ? " is-connected" : ""}" type="button" data-strip-mcp="${escapeHtml(connector.id)}">${mcpIcon(connector.name)}<span class="connector-strip-copy"><strong>${escapeHtml(connector.name)}</strong><small>${connected ? "Conectado" : "Desconectado"}</small></span></button>`;
+    }).join("");
+    connectorStripList.innerHTML = `<button class="connector-strip-item is-github${githubClass}" type="button" data-strip-github>${githubIcon}<span class="connector-strip-copy"><strong>GitHub</strong><small>${escapeHtml(githubStatus)}</small></span></button>${connectorCards}<button class="connector-strip-add" type="button" data-strip-add aria-label="Adicionar conector" title="Adicionar conector">+</button>`;
+    connectorStripList.querySelector("[data-strip-github]")?.addEventListener("click", () => state.github.connected ? notify(`GitHub conectado como ${state.github.login}`) : connectGitHub());
+    connectorStripList.querySelector("[data-strip-add]")?.addEventListener("click", () => openMcpModal());
+    connectorStripList.querySelectorAll("[data-strip-mcp]").forEach((button) => button.addEventListener("click", () => openMcpModal(state.connectors.find((item) => item.id === button.dataset.stripMcp) || null)));
   }
 
   function renderMcpModal(errorMessage = "") {
@@ -336,7 +362,7 @@
   toggle?.addEventListener("click", () => workspace?.classList.contains("visible") ? closeWorkspace() : openWorkspace());
   $("#workspaceClose")?.addEventListener("click", closeWorkspace);
   $("#mobileWorkspaceButton")?.addEventListener("click", () => openWorkspace("tasks"));
-  $("#mcpProfileAction")?.addEventListener("click", () => openMcpModal());
+  $("#mcpProfileAction")?.addEventListener("click", openConnectorStrip);
   $("#githubProfileAction")?.addEventListener("click", () => state.github.connected ? notify(`GitHub conectado como ${state.github.login}`) : connectGitHub());
   document.querySelectorAll("[data-workspace-tab]").forEach((button) => button.addEventListener("click", () => openWorkspace(button.dataset.workspaceTab)));
   document.addEventListener("keydown", (event) => { if (event.key === "Escape") { closeMcpModal(); closeWorkspace(); } });
