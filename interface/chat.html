@@ -3116,6 +3116,363 @@
       @media (max-width: 680px) { .attachment-actions-grid { gap: 7px; } .attachment-actions-grid .attachment-grid-action { min-height: 84px; padding: 10px 4px; } .attachment-actions-grid .attachment-grid-action .attachment-sheet-icon { width: 38px; height: 38px; flex-basis: 38px; border-radius: 12px; } }
       @media (prefers-reduced-motion: reduce) { .workspace-panel, .workspace-toggle, .workspace-progress span { transition: none; } }
 
+
+      /* Chat history + new chat screens: additive UI layer, existing composer/API remain untouched. */
+      .history-screen {
+        position: fixed;
+        z-index: 45;
+        inset: 0;
+        overflow: hidden;
+        background:
+          radial-gradient(circle at 50% -18%, rgba(255, 242, 176, 0.075), transparent 34%),
+          radial-gradient(circle at 8% 88%, rgba(140, 122, 255, 0.07), transparent 26%),
+          var(--page);
+        color: var(--text);
+      }
+
+      .history-screen::before {
+        position: absolute;
+        inset: 0;
+        background-image: linear-gradient(rgba(255,255,255,.018) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.018) 1px, transparent 1px);
+        background-size: 72px 72px;
+        mask-image: linear-gradient(to bottom, rgba(0,0,0,.5), transparent 76%);
+        content: "";
+        pointer-events: none;
+      }
+
+      .history-topbar {
+        position: relative;
+        z-index: 1;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        width: min(100%, 1120px);
+        height: 82px;
+        margin: 0 auto;
+        padding: max(18px, env(safe-area-inset-top)) clamp(18px, 4vw, 42px) 0;
+      }
+
+      .history-topbar::after {
+        position: absolute;
+        right: clamp(18px, 4vw, 42px);
+        bottom: 0;
+        left: clamp(18px, 4vw, 42px);
+        height: 1px;
+        background: linear-gradient(90deg, transparent, var(--line-soft) 18%, var(--line-soft) 82%, transparent);
+        content: "";
+      }
+
+      .history-profile-button,
+      .history-search-button,
+      .new-chat-back {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        flex: 0 0 auto;
+        width: 46px;
+        height: 46px;
+        border: 1px solid var(--line);
+        border-radius: 50%;
+        background: color-mix(in srgb, var(--card) 72%, transparent);
+        color: var(--text);
+        cursor: pointer;
+        box-shadow: 0 10px 28px rgba(0,0,0,.16);
+        backdrop-filter: blur(14px);
+        transition: transform 180ms var(--ease), border-color 180ms var(--ease), background 180ms var(--ease), box-shadow 180ms var(--ease);
+      }
+
+      .history-profile-button:hover,
+      .history-search-button:hover,
+      .new-chat-back:hover {
+        border-color: rgba(255,255,255,.42);
+        background: var(--card-2);
+        box-shadow: 0 12px 32px rgba(0,0,0,.25);
+        transform: translateY(-1px);
+      }
+
+      .history-profile-button:active,
+      .history-search-button:active,
+      .new-chat-back:active,
+      .history-new-chat:active {
+        transform: scale(.96);
+      }
+
+      .history-profile-button .avatar-photo {
+        width: 32px;
+        height: 32px;
+      }
+
+      .history-search-button .icon {
+        width: 20px;
+        height: 20px;
+        color: var(--text-soft);
+      }
+
+      .history-brand {
+        color: transparent;
+        background: var(--metal-gradient);
+        background-size: 230% 100%;
+        background-clip: text;
+        -webkit-background-clip: text;
+        font-size: 17px;
+        font-weight: 600;
+        letter-spacing: .28em;
+        padding-left: .28em;
+        animation: metal-word-shine 4.4s linear infinite;
+      }
+
+      .history-content {
+        position: relative;
+        z-index: 1;
+        width: min(820px, calc(100% - 36px));
+        height: calc(100dvh - 82px);
+        margin: 0 auto;
+        padding: clamp(58px, 10vh, 104px) 0 132px;
+        overflow-y: auto;
+        scrollbar-width: thin;
+        scrollbar-color: var(--line) transparent;
+      }
+
+      .history-heading {
+        margin-bottom: 44px;
+        animation: history-fade-up 560ms var(--ease) both;
+      }
+
+      .history-eyebrow {
+        display: block;
+        margin-bottom: 13px;
+        color: #d5ae57;
+        font-size: 10px;
+        font-weight: 750;
+        letter-spacing: .2em;
+        text-transform: uppercase;
+      }
+
+      .history-heading h1 {
+        margin: 0;
+        color: var(--text);
+        font-size: clamp(34px, 7vw, 58px);
+        font-weight: 480;
+        letter-spacing: -.065em;
+        line-height: .98;
+      }
+
+      .history-heading p {
+        max-width: 420px;
+        margin: 16px 0 0;
+        color: var(--text-soft);
+        font-size: 14px;
+        line-height: 1.5;
+      }
+
+      .history-search-field {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        min-height: 48px;
+        margin: -18px 0 23px;
+        padding: 0 14px;
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        background: color-mix(in srgb, var(--card) 78%, transparent);
+        box-shadow: 0 12px 36px rgba(0,0,0,.12);
+        animation: history-fade-up 260ms var(--ease) both;
+      }
+
+      .history-search-field .icon {
+        width: 18px;
+        height: 18px;
+        color: var(--text-dim);
+      }
+
+      .history-search-field input {
+        min-width: 0;
+        flex: 1;
+        border: 0;
+        outline: 0;
+        background: transparent;
+        color: var(--text);
+        font-size: 14px;
+      }
+
+      .history-search-field input::placeholder { color: var(--text-dim); }
+
+      .history-list {
+        display: grid;
+        gap: 0;
+        border-top: 1px solid var(--line-soft);
+      }
+
+      .history-item {
+        display: grid;
+        grid-template-columns: 38px minmax(0, 1fr) auto;
+        align-items: center;
+        gap: 14px;
+        width: 100%;
+        min-height: 78px;
+        padding: 12px 2px;
+        border: 0;
+        border-bottom: 1px solid var(--line-soft);
+        background: transparent;
+        color: var(--text);
+        text-align: left;
+        cursor: pointer;
+        animation: history-fade-up 480ms var(--ease) both;
+        transition: padding 180ms var(--ease), background 180ms var(--ease), border-color 180ms var(--ease);
+      }
+
+      .history-item:hover {
+        padding-right: 10px;
+        padding-left: 10px;
+        border-color: var(--line);
+        background: color-mix(in srgb, var(--card) 55%, transparent);
+      }
+
+      .history-item:nth-child(2) { animation-delay: 38ms; }
+      .history-item:nth-child(3) { animation-delay: 76ms; }
+      .history-item:nth-child(4) { animation-delay: 114ms; }
+      .history-item:nth-child(5) { animation-delay: 152ms; }
+      .history-item:nth-child(6) { animation-delay: 190ms; }
+
+      .history-item-icon {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 38px;
+        height: 38px;
+        border: 1px solid var(--line-soft);
+        border-radius: 12px;
+        background: color-mix(in srgb, var(--card-2) 75%, transparent);
+        color: #e0b75d;
+      }
+
+      .history-item-icon .icon { width: 18px; height: 18px; }
+
+      .history-item-copy { min-width: 0; }
+      .history-item-copy strong { display: block; overflow: hidden; color: var(--text); font-size: 15px; font-weight: 540; letter-spacing: -.015em; text-overflow: ellipsis; white-space: nowrap; }
+      .history-item-copy small { display: block; margin-top: 5px; overflow: hidden; color: var(--text-dim); font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
+      .history-item-time { align-self: start; padding-top: 6px; color: var(--text-dim); font-size: 10px; white-space: nowrap; }
+
+      .history-empty {
+        display: grid;
+        justify-items: center;
+        padding: 70px 18px 34px;
+        border-top: 1px solid var(--line-soft);
+        color: var(--text-soft);
+        text-align: center;
+        animation: history-fade-up 480ms var(--ease) both;
+      }
+
+      .history-empty-mark {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 54px;
+        height: 54px;
+        margin-bottom: 16px;
+        border: 1px solid rgba(231,188,105,.35);
+        border-radius: 17px;
+        background: linear-gradient(135deg, rgba(255,241,169,.12), rgba(255,255,255,.025));
+        color: #e7bc69;
+        box-shadow: 0 0 28px rgba(231,188,105,.08);
+      }
+
+      .history-empty-mark .icon { width: 25px; height: 25px; }
+      .history-empty strong { color: var(--text); font-size: 15px; font-weight: 550; }
+      .history-empty p { max-width: 330px; margin: 8px 0 0; color: var(--text-dim); font-size: 12px; line-height: 1.5; }
+
+      .history-new-chat {
+        position: absolute;
+        right: clamp(20px, 5vw, 54px);
+        bottom: max(24px, env(safe-area-inset-bottom));
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 62px;
+        height: 62px;
+        border: 1px solid rgba(255,255,255,.75);
+        border-radius: 50%;
+        background: var(--accent);
+        color: var(--accent-ink);
+        cursor: pointer;
+        box-shadow: 0 14px 34px rgba(0,0,0,.35), 0 0 0 7px color-mix(in srgb, var(--page) 75%, transparent);
+        transition: transform 180ms var(--ease), filter 180ms var(--ease), box-shadow 180ms var(--ease);
+        animation: history-fade-up 620ms var(--ease) 130ms both;
+      }
+
+      .history-new-chat:hover { filter: brightness(1.08); box-shadow: 0 18px 40px rgba(0,0,0,.42), 0 0 0 7px color-mix(in srgb, var(--page) 62%, transparent); transform: translateY(-2px); }
+      .history-new-chat .icon { width: 25px; height: 25px; stroke-width: 1.7; }
+
+      .new-chat-header {
+        position: fixed;
+        z-index: 48;
+        top: 0;
+        right: 0;
+        left: 0;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        height: 78px;
+        padding: max(18px, env(safe-area-inset-top)) clamp(18px, 4vw, 42px) 0;
+        pointer-events: none;
+      }
+
+      .new-chat-header > * { pointer-events: auto; }
+      .new-chat-brand { position: absolute; left: 50%; color: transparent; background: var(--metal-gradient); background-size: 230% 100%; background-clip: text; -webkit-background-clip: text; font-size: 17px; font-weight: 600; letter-spacing: .28em; padding-left: .28em; transform: translateX(-50%); animation: metal-word-shine 4.4s linear infinite; }
+      .new-chat-back { width: 44px; height: 44px; border-radius: 14px; }
+      .new-chat-back .icon { width: 20px; height: 20px; }
+      .new-chat-credit { display: inline-flex; align-items: baseline; gap: 7px; min-height: 40px; padding: 0 13px; border: 1px solid rgba(255,255,255,.14); border-radius: 999px; background: color-mix(in srgb, var(--card) 78%, transparent); color: var(--text); box-shadow: 0 6px 22px rgba(0,0,0,.16); backdrop-filter: blur(14px); }
+      .new-chat-credit-value { min-width: 2ch; color: var(--text); font-size: 16px; font-weight: 750; font-variant-numeric: tabular-nums; }
+      .new-chat-credit-label { color: var(--text-dim); font-size: 10px; font-weight: 750; letter-spacing: .1em; text-transform: uppercase; }
+      .new-chat-credit.is-changing { border-color: rgba(231,188,105,.55); box-shadow: 0 0 22px rgba(231,188,105,.15); transform: translateY(-1px) scale(1.035); }
+
+      .new-chat-greeting {
+        display: none;
+        width: min(560px, calc(100% - 34px));
+        text-align: center;
+        animation: greeting-in 680ms var(--ease) both;
+      }
+
+      .new-chat-greeting-time { display: block; margin-bottom: 17px; color: #d5ae57; font-size: 11px; font-weight: 750; letter-spacing: .2em; text-transform: uppercase; }
+      .new-chat-greeting h2 { margin: 0; color: var(--text); font-size: clamp(30px, 6vw, 52px); font-weight: 430; letter-spacing: -.07em; line-height: 1.02; }
+      .new-chat-greeting h2 strong { color: transparent; background: var(--metal-gradient); background-size: 230% 100%; background-clip: text; -webkit-background-clip: text; font-weight: 600; animation: metal-word-shine 4.4s linear infinite; }
+      .new-chat-greeting p { margin: 17px 0 0; color: var(--text-soft); font-size: clamp(16px, 3vw, 20px); font-weight: 350; }
+
+      .app.new-chat-active .topbar { display: none; }
+      .app.new-chat-active .empty-word { display: none; }
+      .app.new-chat-active .new-chat-greeting { display: block; }
+      .app.new-chat-active .empty-state { padding-top: 30vh; }
+      .app.new-chat-active .conversation-area { padding-top: 0; }
+      .app.history-active .profile-popover { right: auto; left: clamp(18px, 4vw, 42px); }
+      .app.history-active .install-banner,
+      .app.new-chat-active .install-banner { display: none !important; }
+
+      @keyframes history-fade-up { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+      @keyframes greeting-in { from { opacity: 0; transform: translateY(18px) scale(.985); } to { opacity: 1; transform: translateY(0) scale(1); } }
+
+      @media (max-width: 680px) {
+        .history-topbar { height: 72px; }
+        .history-content { width: min(100% - 28px, 620px); height: calc(100dvh - 72px); padding-top: 54px; }
+        .history-heading { margin-bottom: 32px; }
+        .history-heading p { font-size: 13px; }
+        .history-item { grid-template-columns: 34px minmax(0, 1fr); min-height: 70px; gap: 12px; }
+        .history-item-icon { width: 34px; height: 34px; border-radius: 10px; }
+        .history-item-time { grid-column: 2; grid-row: 1; align-self: end; padding: 0 0 1px; font-size: 9px; }
+        .history-item-copy strong { font-size: 14px; padding-bottom: 17px; }
+        .history-item-copy small { padding-right: 12px; }
+        .history-new-chat { width: 58px; height: 58px; right: 20px; }
+        .new-chat-header { height: 70px; padding-right: 14px; padding-left: 14px; }
+        .new-chat-back { width: 42px; height: 42px; }
+        .new-chat-credit { min-height: 36px; padding: 0 10px; }
+        .new-chat-credit-value { font-size: 15px; }
+        .new-chat-brand { font-size: 15px; }
+        .app.new-chat-active .empty-state { padding-top: 27vh; }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        .history-screen *, .new-chat-header *, .new-chat-greeting { animation: none !important; transition-duration: .01ms !important; }
+      }
+
     </style>
   </head>
   <body>
@@ -3145,6 +3502,28 @@
         </div>
         <button class="retention-dismiss" id="retentionDismiss" type="button" aria-label="Fechar aviso">×</button>
       </aside>
+
+      <section class="history-screen" id="historyScreen" aria-label="Histórico de chats" aria-hidden="true" hidden>
+        <header class="history-topbar">
+          <button class="history-profile-button" id="historyProfileButton" type="button" aria-label="Abrir perfil" aria-expanded="false"><span class="avatar-photo" aria-hidden="true"></span></button>
+          <span class="history-brand" aria-label="KAZER">KAZER</span>
+          <button class="history-search-button" id="historySearchButton" type="button" aria-label="Pesquisar no histórico" aria-expanded="false"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-4-4"></path></svg></button>
+        </header>
+        <div class="history-content">
+          <div class="history-heading"><span class="history-eyebrow">SEU ESPAÇO</span><h1>Histórico de chats</h1><p>Retome uma conversa ou comece uma nova ideia com o KAZER.</p></div>
+          <label class="history-search-field" id="historySearchField" hidden><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-4-4"></path></svg><input id="historySearchInput" type="search" placeholder="Pesquisar conversas..." autocomplete="off" /></label>
+          <div class="history-list" id="historyList" aria-live="polite"></div>
+          <div class="history-empty" id="historyEmpty" hidden><span class="history-empty-mark" aria-hidden="true"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 6.5A2.5 2.5 0 0 1 7.5 4h9A2.5 2.5 0 0 1 19 6.5v6a2.5 2.5 0 0 1-2.5 2.5H13l-3.2 3.2c-.63.63-1.8.18-1.8-.72V15H7.5A2.5 2.5 0 0 1 5 12.5z"></path><path d="M8.5 8.5h7M8.5 11.5h4"></path></svg></span><strong id="historyEmptyTitle">Ainda não há conversas</strong><p id="historyEmptyMessage">Quando você iniciar um chat, ele aparecerá aqui para continuar de onde parou.</p></div>
+        </div>
+        <button class="history-new-chat" id="historyNewChat" type="button" aria-label="Começar novo chat"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11.5a7.4 7.4 0 0 1-7.6 7.5 8.2 8.2 0 0 1-3.1-.6L5 20l1.4-3.7a7.2 7.2 0 0 1-1.5-4.5A7.4 7.4 0 0 1 12.4 4 7.4 7.4 0 0 1 20 11.5Z"></path><path d="M12 8.7v5.6M9.2 11.5h5.6"></path></svg></button>
+      </section>
+
+      <header class="new-chat-header" id="newChatHeader" aria-label="Novo chat" aria-hidden="true" hidden>
+        <button class="new-chat-back" id="newChatBack" type="button" aria-label="Voltar ao histórico"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"></path></svg></button>
+        <span class="new-chat-brand" aria-label="KAZER">KAZER</span>
+        <div class="new-chat-credit" id="newChatCredit" aria-label="Saldo de créditos"><span class="new-chat-credit-value" id="newChatCreditBalance">0</span><span class="new-chat-credit-label">créditos</span></div>
+      </header>
+
       <header class="topbar" aria-label="Barra de conversa">
         <div class="credit-indicator" id="creditIndicator" aria-label="Saldo de créditos" hidden><span class="credit-indicator-value" id="creditBalanceValue">0</span></div>
         <button class="mobile-workspace-button" id="mobileWorkspaceButton" type="button" aria-label="Abrir tarefas e repositórios"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3h11A2.5 2.5 0 0 1 20 5.5v8a2.5 2.5 0 0 1-2.5 2.5H13l-3.2 3.2c-.63.63-1.8.18-1.8-.72V16H6.5A2.5 2.5 0 0 1 4 13.5z"></path></svg><span>Tarefas e repositórios</span></button>
@@ -3229,7 +3608,7 @@
       </div>
 
       <section class="conversation-area" id="conversationArea" aria-label="Conversa">
-        <section class="empty-state" id="emptyState"><h1 class="empty-word">KAZER</h1></section>
+        <section class="empty-state" id="emptyState"><div class="new-chat-greeting" id="newChatGreeting" aria-live="polite"><span class="new-chat-greeting-time" id="greetingTime">Boa noite</span><h2>Olá, <strong id="greetingName">Kazer</strong></h2><p id="greetingQuestion">O que vamos fazer hoje?</p></div><h1 class="empty-word">KAZER</h1></section>
         <section class="message-list" id="messageList" hidden aria-live="polite"></section>
       </section>
 
@@ -3389,6 +3768,22 @@
         const installNow = document.getElementById("installNow");
         const installLater = document.getElementById("installLater");
         const installDismiss = document.getElementById("installDismiss");
+          const historyScreen = document.getElementById("historyScreen");
+        const historyProfileButton = document.getElementById("historyProfileButton");
+        const historySearchButton = document.getElementById("historySearchButton");
+        const historySearchField = document.getElementById("historySearchField");
+        const historySearchInput = document.getElementById("historySearchInput");
+        const historyList = document.getElementById("historyList");
+        const historyEmpty = document.getElementById("historyEmpty");
+        const historyEmptyTitle = document.getElementById("historyEmptyTitle");
+        const historyEmptyMessage = document.getElementById("historyEmptyMessage");
+        const historyNewChat = document.getElementById("historyNewChat");
+        const newChatHeader = document.getElementById("newChatHeader");
+        const newChatBack = document.getElementById("newChatBack");
+        const newChatCredit = document.getElementById("newChatCredit");
+        const newChatCreditBalance = document.getElementById("newChatCreditBalance");
+        const greetingTime = document.getElementById("greetingTime");
+        const greetingName = document.getElementById("greetingName");
         let deferredInstallPrompt = null;
         let usageState = null;
         let usageRefreshTimer = null;
@@ -3396,6 +3791,10 @@
         let activeRequestController = null;
         let toastTimer = null;
         let conversationMessages = [];
+        let viewMode = new URLSearchParams(window.location.search).get("view") === "chat" ? "new-chat" : "history";
+        let historyItems = [];
+        let historySearchOpen = false;
+        const historyStoragePrefix = "kazer-chat-history:";
         let selectedFiles = [];
         const maxClientFileBytes = 4 * 1024 * 1024;
         const settingsStorageKey = "kazer-settings";
@@ -3429,6 +3828,7 @@
           [profileDisplayName, settingsAccountName, settingsMobileAccountName].forEach((element) => { if (element) element.textContent = displayName; });
           [profileEmail, settingsAccountEmail, settingsMobileAccountEmail].forEach((element) => { if (element) element.textContent = email; });
           [settingsAccountAvatar, settingsMobileAccountAvatar].forEach((element) => { if (element) element.textContent = initial; });
+          updateGreeting();
         };
 
         const formatResetTime = (value) => {
@@ -3439,7 +3839,7 @@
         };
 
         const animateCreditBalance = (target, animate = true) => {
-          const targets = [creditBalanceValue, settingsMobileCreditBalance].filter(Boolean);
+          const targets = [creditBalanceValue, settingsMobileCreditBalance, newChatCreditBalance].filter(Boolean);
           if (!targets.length) return;
           const next = Math.max(0, Number(target) || 0);
           const previous = Number(targets[0].dataset.value ?? next);
@@ -3835,6 +4235,125 @@
         };
 
         const escapeHtml = (value) => String(value || "").replace(/[&<>\"']/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&#39;" }[character]));
+
+        const historyStorageKey = () => historyStoragePrefix + (currentUser?.id || "guest");
+
+        const readChatHistory = () => {
+          try {
+            const stored = JSON.parse(localStorage.getItem(historyStorageKey()) || "[]");
+            return Array.isArray(stored) ? stored.filter((item) => item && item.id && item.title) : [];
+          } catch {
+            return [];
+          }
+        };
+
+        const saveChatHistory = (items) => {
+          historyItems = items.slice(0, 50);
+          try { localStorage.setItem(historyStorageKey(), JSON.stringify(historyItems)); } catch {}
+        };
+
+        const historyDateLabel = (value) => {
+          const date = new Date(value);
+          if (Number.isNaN(date.getTime())) return "";
+          const now = new Date();
+          const sameDay = date.toDateString() === now.toDateString();
+          return sameDay ? new Intl.DateTimeFormat("pt-BR", { hour: "2-digit", minute: "2-digit" }).format(date) : new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "short" }).format(date).replace(" de ", " ");
+        };
+
+        const historyIcon = (kind) => kind === "task" ? '<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 4 4L19 6"></path><path d="M12 21a9 9 0 1 0-9-9"></path></svg>' : '<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11.5a7.4 7.4 0 0 1-7.6 7.5 8.2 8.2 0 0 1-3.1-.6L5 20l1.4-3.7a7.2 7.2 0 0 1-1.5-4.5A7.4 7.4 0 0 1 12.4 4 7.4 7.4 0 0 1 20 11.5Z"></path><path d="M8.5 11.5h7"></path></svg>';
+
+        const renderChatHistory = () => {
+          if (!historyList || !historyEmpty) return;
+          const query = String(historySearchInput?.value || "").trim().toLocaleLowerCase();
+          const filtered = historyItems.filter((item) => (item.title + " " + (item.excerpt || "")).toLocaleLowerCase().includes(query));
+          historyList.innerHTML = filtered.map((item) => '<button class="history-item" type="button" data-history-id="' + escapeHtml(item.id) + '"><span class="history-item-icon">' + historyIcon(item.kind) + '</span><span class="history-item-copy"><strong>' + escapeHtml(item.title) + '</strong><small>' + escapeHtml(item.excerpt || (item.kind === "task" ? "Tarefa do KAZER" : "Conversa com o KAZER")) + '</small></span><time class="history-item-time" datetime="' + escapeHtml(item.createdAt) + '">' + escapeHtml(historyDateLabel(item.createdAt)) + '</time></button>').join("");
+          historyList.querySelectorAll("[data-history-id]").forEach((button) => button.addEventListener("click", () => {
+            const item = historyItems.find((entry) => entry.id === button.dataset.historyId);
+            if (!item) return;
+            setView("new-chat", { push: true });
+            messageInput.value = item.title;
+            resizeInput();
+            updateSend();
+            messageInput.focus();
+            showToast("Conversa pronta para continuar");
+          }));
+          const empty = filtered.length === 0;
+          historyEmpty.hidden = !empty;
+          if (query && !historyItems.length) {
+            historyEmptyTitle.textContent = "Seu histórico está vazio";
+            historyEmptyMessage.textContent = "Inicie um chat e ele ficará disponível aqui.";
+          } else if (query) {
+            historyEmptyTitle.textContent = "Nenhum chat encontrado";
+            historyEmptyMessage.textContent = "Não encontramos uma conversa para “" + query + "”.";
+          } else {
+            historyEmptyTitle.textContent = "Ainda não há conversas";
+            historyEmptyMessage.textContent = "Quando você iniciar um chat, ele aparecerá aqui para continuar de onde parou.";
+          }
+        };
+
+        const loadChatHistory = async () => {
+          historyItems = readChatHistory();
+          try {
+            const response = await fetchWithAuth("/api/tasks", { method: "GET" });
+            const data = await response.json().catch(() => ({}));
+            if (response.ok && Array.isArray(data.tasks)) {
+              const taskItems = data.tasks.filter((task) => task?.title || task?.prompt).map((task) => ({
+                id: "task-" + task.id,
+                title: String(task.title || task.prompt).slice(0, 120),
+                excerpt: task.repoFullName ? "Tarefa em " + task.repoFullName : "Atividade recente do KAZER",
+                createdAt: task.createdAt || new Date().toISOString(),
+                kind: "task"
+              }));
+              const known = new Set(historyItems.map((item) => item.id));
+              historyItems = [...historyItems, ...taskItems.filter((item) => !known.has(item.id))];
+            }
+          } catch {}
+          historyItems.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+          renderChatHistory();
+        };
+
+        const rememberChat = (prompt) => {
+          const title = String(prompt || "Nova conversa").replace(/\\s+/g, " ").trim().slice(0, 120) || "Nova conversa";
+          const items = readChatHistory().filter((item) => item.title !== title);
+          items.unshift({ id: window.crypto?.randomUUID?.() || "chat-" + Date.now(), title, excerpt: "Conversa com o KAZER", createdAt: new Date().toISOString(), kind: "chat" });
+          saveChatHistory(items);
+          if (viewMode === "history") renderChatHistory();
+        };
+
+        const updateGreeting = () => {
+          const hour = new Date().getHours();
+          const greeting = hour >= 5 && hour < 12 ? "Bom dia" : hour >= 12 && hour < 18 ? "Boa tarde" : "Boa noite";
+          if (greetingTime) greetingTime.textContent = greeting;
+          if (greetingName) greetingName.textContent = currentUser?.user_metadata?.display_name || currentUser?.email?.split("@")[0] || "Kazer";
+        };
+
+        const setView = (nextView, { push = false } = {}) => {
+          viewMode = nextView === "new-chat" ? "new-chat" : "history";
+          const isHistory = viewMode === "history";
+          app.classList.toggle("history-active", isHistory);
+          app.classList.toggle("new-chat-active", !isHistory);
+          if (historyScreen) {
+            historyScreen.hidden = !isHistory;
+            historyScreen.setAttribute("aria-hidden", String(!isHistory));
+          }
+          if (newChatHeader) {
+            newChatHeader.hidden = isHistory;
+            newChatHeader.setAttribute("aria-hidden", String(isHistory));
+          }
+          if (push) {
+            const url = new URL(window.location.href);
+            url.searchParams.set("view", isHistory ? "history" : "chat");
+            window.history.pushState({ view: viewMode }, "", url);
+          }
+          if (isHistory) {
+            closeMenus();
+            toast?.classList.remove("visible");
+            loadChatHistory();
+          } else {
+            updateGreeting();
+            window.setTimeout(() => messageInput?.focus(), 80);
+          }
+        };
 
         const renderWebResults = (query, result) => {
           const cleanQuery = escapeHtml(query);
@@ -4434,6 +4953,7 @@
           if (!text && files.length === 0) return;
 
           const prompt = text || "Analise os arquivos anexados e explique os pontos principais.";
+          rememberChat(prompt);
           const taskContext = window.kazerWorkspace?.startTask?.({ prompt, attachmentCount: files.length }) || null;
           window.kazerActiveTaskContext = taskContext;
           const mcpConnectorIds = taskContext?.mcpConnectorIds || [];
@@ -4535,6 +5055,26 @@
         const requestNewChat = () => {
           reset();
         };
+
+
+        historyProfileButton?.addEventListener("click", (event) => {
+          event.stopPropagation();
+          toggleProfile();
+        });
+        historySearchButton?.addEventListener("click", () => {
+          historySearchOpen = !historySearchOpen;
+          if (historySearchField) historySearchField.hidden = !historySearchOpen;
+          historySearchButton.setAttribute("aria-expanded", String(historySearchOpen));
+          if (historySearchOpen) window.setTimeout(() => historySearchInput?.focus(), 50);
+          else if (historySearchInput) { historySearchInput.value = ""; renderChatHistory(); }
+        });
+        historySearchInput?.addEventListener("input", renderChatHistory);
+        historyNewChat?.addEventListener("click", () => {
+          requestNewChat();
+          setView("new-chat", { push: true });
+        });
+        newChatBack?.addEventListener("click", () => setView("history", { push: true }));
+        window.addEventListener("popstate", () => setView(new URLSearchParams(window.location.search).get("view") === "chat" ? "new-chat" : "history"));
 
         profileButton.addEventListener("click", (event) => {
           event.stopPropagation();
@@ -4727,7 +5267,8 @@
         resizeInput();
         updateSend();
         startAppSplash();
-        loadAccount();
+        setView(viewMode);
+        loadAccount().then(() => { updateGreeting(); if (viewMode === "history") loadChatHistory(); });
       })();
     </script>
     <script src="/interface/connector-icons.js"></script>
