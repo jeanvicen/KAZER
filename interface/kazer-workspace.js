@@ -194,14 +194,22 @@
   async function connectGitHub() {
     if (connectGitHub.inProgress) return;
     connectGitHub.inProgress = true;
-    const authWindow = window.open("about:blank", "_blank");
     try {
-      const data = await api("/api/github-connect");
-      if (!data.url) throw new Error("GitHub OAuth não configurado.");
-      if (authWindow && !authWindow.closed) authWindow.location.replace(data.url);
-      else window.location.replace(data.url);
+      const sessionResult = await supabase?.auth.getSession();
+      const accessToken = sessionResult?.data?.session?.access_token;
+      if (!accessToken) throw new Error("Sessão inválida ou expirada.");
+      const form = document.createElement("form");
+      form.method = "POST";
+      form.action = "/api/github-authorize";
+      form.enctype = "application/x-www-form-urlencoded";
+      const input = document.createElement("input");
+      input.type = "hidden";
+      input.name = "access_token";
+      input.value = accessToken;
+      form.appendChild(input);
+      document.body.appendChild(form);
+      form.submit();
     } catch (error) {
-      if (authWindow && !authWindow.closed) authWindow.close();
       notify(error.message);
     } finally {
       connectGitHub.inProgress = false;

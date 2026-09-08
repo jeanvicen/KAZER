@@ -56,6 +56,10 @@
       "destination": "/api/github?route=connect"
     },
     {
+      "source": "/api/github-authorize",
+      "destination": "/api/github?route=authorize"
+    },
+    {
       "source": "/api/github-callback",
       "destination": "/api/github?route=callback"
     },

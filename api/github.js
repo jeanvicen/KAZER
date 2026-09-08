@@ -5,6 +5,7 @@
  */
 const handlers = {
   connect: require("./_github-connect-handler"),
+  authorize: require("./_github-authorize-handler"),
   callback: require("./_github-callback-handler"),
   status: require("./_github-status-handler"),
   repos: require("./_github-repos-handler"),
@@ -15,7 +16,7 @@ module.exports = async function handler(request, response) {
   const route = String(request?.query?.route || "status").toLowerCase();
   const selected = handlers[route];
   if (!selected) {
-    response.setHeader("Allow", "connect, callback, status, repos, disconnect");
+    response.setHeader("Allow", "connect, authorize, callback, status, repos, disconnect");
     response.status(404).json({ error: "Rota GitHub não encontrada." });
     return;
   }

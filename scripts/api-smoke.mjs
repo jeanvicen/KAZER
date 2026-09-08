@@ -12,7 +12,7 @@ function responseOf() {
     statusCode: 200,
     body: "",
     setHeader(name, value) { this.headers[name] = value; },
-    status(code) { this.statusCode = code; },
+    status(code) { this.statusCode = code; return this; },
     end(value = "") { this.body = value; },
   };
 }
@@ -54,6 +54,16 @@ assert.equal(githubAuthorizeUrl.searchParams.get("client_id"), "test-github-clie
 assert.equal(githubAuthorizeUrl.searchParams.get("redirect_uri"), "https://kazer.example/api/github-callback");
 assert.equal(githubAuthorizeUrl.searchParams.get("scope"), "repo read:user user:email");
 assert.ok(githubAuthorizeUrl.searchParams.get("state"));
+
+const directHandler = require("../api/_github-authorize-handler.js");
+const directResponse = responseOf();
+await directHandler({ ...request, method: "POST", headers: { ...request.headers, host: "kazer.example" }, body: { access_token: "test-bearer-token-123456" } }, directResponse);
+assert.equal(directResponse.statusCode, 302);
+const directAuthorizeUrl = new URL(directResponse.headers.Location);
+assert.equal(directAuthorizeUrl.origin, "https://github.com");
+assert.equal(directAuthorizeUrl.pathname, "/login/oauth/authorize");
+assert.equal(directAuthorizeUrl.searchParams.get("redirect_uri"), "https://kazer.example/api/github-callback");
+assert.ok(directAuthorizeUrl.searchParams.get("state"));
 
 await import("node:fs/promises").then((fs) => fs.writeFile("/tmp/kazer-api-smoke-restored", "ok"));
 globalThis.fetch = originalFetch;
