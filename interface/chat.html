@@ -3162,7 +3162,7 @@
         content: "";
       }
 
-      .history-profile-button,
+      .history-topbar-spacer,
       .history-search-button,
       .new-chat-back {
         display: inline-flex;
@@ -3181,7 +3181,6 @@
         transition: transform 180ms var(--ease), border-color 180ms var(--ease), background 180ms var(--ease), box-shadow 180ms var(--ease);
       }
 
-      .history-profile-button:hover,
       .history-search-button:hover,
       .new-chat-back:hover {
         border-color: rgba(255,255,255,.42);
@@ -3190,17 +3189,13 @@
         transform: translateY(-1px);
       }
 
-      .history-profile-button:active,
       .history-search-button:active,
       .new-chat-back:active,
       .history-new-chat:active {
         transform: scale(.96);
       }
 
-      .history-profile-button .avatar-photo {
-        width: 32px;
-        height: 32px;
-      }
+      .history-topbar-spacer { visibility: hidden; pointer-events: none; }
 
       .history-search-button .icon {
         width: 20px;
@@ -3504,13 +3499,13 @@
 
       <section class="history-screen" id="historyScreen" aria-label="Histórico de chats" aria-hidden="true" hidden>
         <header class="history-topbar">
-          <button class="history-profile-button" id="historyProfileButton" type="button" aria-label="Voltar ao chat"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"></path></svg></button>
+          <span class="history-topbar-spacer" aria-hidden="true"></span>
           <span class="history-brand" aria-label="KAZER">KAZER</span>
-          <button class="history-search-button" id="historySearchButton" type="button" aria-label="Pesquisar no histórico" aria-expanded="false"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-4-4"></path></svg></button>
+          <button class="history-search-button" id="historySearchButton" type="button" aria-label="Focar pesquisa do histórico" aria-expanded="true"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-4-4"></path></svg></button>
         </header>
         <div class="history-content">
           <div class="history-heading"><span class="history-eyebrow">SEU ESPAÇO</span><h1>Histórico de chats</h1><p>Retome uma conversa ou comece uma nova ideia com o KAZER.</p></div>
-          <label class="history-search-field" id="historySearchField" hidden><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-4-4"></path></svg><input id="historySearchInput" type="search" placeholder="Pesquisar conversas..." autocomplete="off" /></label>
+          <label class="history-search-field" id="historySearchField"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-4-4"></path></svg><input id="historySearchInput" type="search" placeholder="Pesquisar conversas..." autocomplete="off" /></label>
           <div class="history-list" id="historyList" aria-live="polite"></div>
           <div class="history-empty" id="historyEmpty" hidden><span class="history-empty-mark" aria-hidden="true"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 6.5A2.5 2.5 0 0 1 7.5 4h9A2.5 2.5 0 0 1 19 6.5v6a2.5 2.5 0 0 1-2.5 2.5H13l-3.2 3.2c-.63.63-1.8.18-1.8-.72V15H7.5A2.5 2.5 0 0 1 5 12.5z"></path><path d="M8.5 8.5h7M8.5 11.5h4"></path></svg></span><strong id="historyEmptyTitle">Ainda não há conversas</strong><p id="historyEmptyMessage">Quando você iniciar um chat, ele aparecerá aqui para continuar de onde parou.</p></div>
         </div>
@@ -3768,7 +3763,6 @@
         const installLater = document.getElementById("installLater");
         const installDismiss = document.getElementById("installDismiss");
           const historyScreen = document.getElementById("historyScreen");
-        const historyProfileButton = document.getElementById("historyProfileButton");
         const historySearchButton = document.getElementById("historySearchButton");
         const historySearchField = document.getElementById("historySearchField");
         const historySearchInput = document.getElementById("historySearchInput");
@@ -3792,7 +3786,7 @@
         let conversationMessages = [];
         let viewMode = new URLSearchParams(window.location.search).get("view") === "chat" ? "new-chat" : "history";
         let historyItems = [];
-        let historySearchOpen = false;
+        let historySearchOpen = true;
         const historyStoragePrefix = "kazer-chat-history:";
         let selectedFiles = [];
         const maxClientFileBytes = 4 * 1024 * 1024;
@@ -5044,13 +5038,10 @@
         };
 
 
-        historyProfileButton?.addEventListener("click", () => setView("new-chat", { push: true }));
         historySearchButton?.addEventListener("click", () => {
-          historySearchOpen = !historySearchOpen;
-          if (historySearchField) historySearchField.hidden = !historySearchOpen;
-          historySearchButton.setAttribute("aria-expanded", String(historySearchOpen));
-          if (historySearchOpen) window.setTimeout(() => historySearchInput?.focus(), 50);
-          else if (historySearchInput) { historySearchInput.value = ""; renderChatHistory(); }
+          historySearchOpen = true;
+          historySearchButton.setAttribute("aria-expanded", "true");
+          window.setTimeout(() => historySearchInput?.focus(), 50);
         });
         historySearchInput?.addEventListener("input", renderChatHistory);
         historyNewChat?.addEventListener("click", () => {
