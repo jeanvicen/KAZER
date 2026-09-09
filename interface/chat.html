@@ -3504,10 +3504,10 @@
           <button class="history-search-button" id="historySearchButton" type="button" aria-label="Focar pesquisa do histórico" aria-expanded="true"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-4-4"></path></svg></button>
         </header>
         <div class="history-content">
-          <div class="history-heading"><span class="history-eyebrow">SEU ESPAÇO</span><h1>Histórico de chats</h1><p>Retome uma conversa ou comece uma nova ideia com o KAZER.</p></div>
+          <div class="history-heading"><span class="history-eyebrow">SEU ESPAÇO · CHATS</span><h1>Histórico de chats</h1></div>
           <label class="history-search-field" id="historySearchField"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-4-4"></path></svg><input id="historySearchInput" type="search" placeholder="Pesquisar conversas..." autocomplete="off" /></label>
           <div class="history-list" id="historyList" aria-live="polite"></div>
-          <div class="history-empty" id="historyEmpty" hidden><span class="history-empty-mark" aria-hidden="true"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 6.5A2.5 2.5 0 0 1 7.5 4h9A2.5 2.5 0 0 1 19 6.5v6a2.5 2.5 0 0 1-2.5 2.5H13l-3.2 3.2c-.63.63-1.8.18-1.8-.72V15H7.5A2.5 2.5 0 0 1 5 12.5z"></path><path d="M8.5 8.5h7M8.5 11.5h4"></path></svg></span><strong id="historyEmptyTitle">Ainda não há conversas</strong><p id="historyEmptyMessage">Quando você iniciar um chat, ele aparecerá aqui para continuar de onde parou.</p></div>
+          <div class="history-empty" id="historyEmpty" hidden><span class="history-empty-mark" aria-hidden="true"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 6.5A2.5 2.5 0 0 1 7.5 4h9A2.5 2.5 0 0 1 19 6.5v6a2.5 2.5 0 0 1-2.5 2.5H13l-3.2 3.2c-.63.63-1.8.18-1.8-.72V15H7.5A2.5 2.5 0 0 1 5 12.5z"></path><path d="M8.5 8.5h7M8.5 11.5h4"></path></svg></span><strong id="historyEmptyTitle">Nenhum chat ainda</strong><p id="historyEmptyMessage">Comece uma nova conversa para vê-la aqui.</p></div>
         </div>
         <button class="history-new-chat" id="historyNewChat" type="button" aria-label="Começar novo chat"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11.5a7.4 7.4 0 0 1-7.6 7.5 8.2 8.2 0 0 1-3.1-.6L5 20l1.4-3.7a7.2 7.2 0 0 1-1.5-4.5A7.4 7.4 0 0 1 12.4 4 7.4 7.4 0 0 1 20 11.5Z"></path><path d="M12 8.7v5.6M9.2 11.5h5.6"></path></svg></button>
       </section>
@@ -3786,6 +3786,7 @@
         let conversationMessages = [];
         let viewMode = new URLSearchParams(window.location.search).get("view") === "chat" ? "new-chat" : "history";
         let historyItems = [];
+        let activeChatHistoryId = null;
         let historySearchOpen = true;
         const historyStoragePrefix = "kazer-chat-history:";
         let selectedFiles = [];
@@ -4241,7 +4242,7 @@
         };
 
         const saveChatHistory = (items) => {
-          historyItems = items.slice(0, 50);
+          historyItems = items.slice(0, 10);
           try { localStorage.setItem(historyStorageKey(), JSON.stringify(historyItems)); } catch {}
         };
 
@@ -4276,29 +4277,51 @@
           const empty = filtered.length === 0;
           historyEmpty.hidden = !empty;
           if (query && !historyItems.length) {
-            historyEmptyTitle.textContent = "Seu histórico está vazio";
+            historyEmptyTitle.textContent = "Nenhum chat ainda";
             historyEmptyMessage.textContent = "Inicie um chat e ele ficará disponível aqui.";
           } else if (query) {
             historyEmptyTitle.textContent = "Nenhum chat encontrado";
             historyEmptyMessage.textContent = "Não encontramos uma conversa para “" + query + "”.";
           } else {
-            historyEmptyTitle.textContent = "Ainda não há conversas";
-            historyEmptyMessage.textContent = "Quando você iniciar um chat, ele aparecerá aqui para continuar de onde parou.";
+            historyEmptyTitle.textContent = "Nenhum chat ainda";
+            historyEmptyMessage.textContent = "Comece uma nova conversa para vê-la aqui.";
           }
         };
 
         const loadChatHistory = async () => {
-          historyItems = readChatHistory();
+          historyItems = readChatHistory().slice(0, 10);
+          saveChatHistory(historyItems);
           historyItems.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
           renderChatHistory();
         };
 
-        const rememberChat = (prompt) => {
-          const title = String(prompt || "Nova conversa").replace(/\\s+/g, " ").trim().slice(0, 120) || "Nova conversa";
-          const items = readChatHistory().filter((item) => item.title !== title);
-          items.unshift({ id: window.crypto?.randomUUID?.() || "chat-" + Date.now(), title, excerpt: "Conversa com o KAZER", createdAt: new Date().toISOString(), kind: "chat" });
+        const titleCase = (value) => String(value || "").replace(/\b\w/g, (letter) => letter.toUpperCase());
+
+        const createChatTitle = (prompt, files = []) => {
+          const source = String(prompt || "").replace(/\s+/g, " ").trim();
+          const normalized = source.toLocaleLowerCase();
+          const meaningful = source.replace(/[^\p{L}\p{N}\s-]/gu, " ").split(/\s+/).filter((word) => word.length > 2 && !/^(para|com|uma|uns|das|dos|que|como|por|esse|essa|isso|mais|meu|minha|você|voce|the|and|for|with|this|that)$/i.test(word));
+          if (/^(oi|olá|ola|e aí|e ai|bom dia|boa tarde|boa noite|hello|hi)[!.?\s]*$/i.test(source)) return "Conversa inicial";
+          if (files.length && !source) return "Análise de arquivos";
+          if (/landing page|página|pagina|site|website|interface|tela|app|aplicativo|design|layout/i.test(normalized)) return "Projeto de interface e design";
+          if (/código|codigo|bug|erro|programa|javascript|python|api|repositório|repositorio/i.test(normalized)) return "Análise e solução técnica";
+          if (/imagem|foto|logo|visual|ilustra|diagrama|gráfico|grafico/i.test(normalized)) return "Criação visual e direção de arte";
+          if (/explique|explica|como funciona|o que é|o que e|diferença|diferenca/i.test(normalized)) return "Explicação sobre " + (titleCase(meaningful.slice(0, 3).join(" ")) || "o assunto");
+          if (/planeje|planejar|organize|organizar|roteiro|estratégia|estrategia/i.test(normalized)) return "Planejamento de " + (titleCase(meaningful.slice(0, 3).join(" ")) || "uma ideia");
+          const topic = titleCase(meaningful.slice(0, 5).join(" ")).slice(0, 54);
+          return topic ? "Ideias sobre " + topic : "Nova conversa";
+        };
+
+        const rememberChat = (prompt, files = []) => {
+          if (activeChatHistoryId) return activeChatHistoryId;
+          const id = window.crypto?.randomUUID?.() || "chat-" + Date.now();
+          const title = createChatTitle(prompt, files);
+          const items = readChatHistory().filter((item) => item.id !== id);
+          items.unshift({ id, title, excerpt: "Conversa com o KAZER", createdAt: new Date().toISOString(), kind: "chat" });
           saveChatHistory(items);
+          activeChatHistoryId = id;
           if (viewMode === "history") renderChatHistory();
+          return id;
         };
 
         const updateGreeting = () => {
@@ -4934,7 +4957,7 @@
           if (!text && files.length === 0) return;
 
           const prompt = text || "Analise os arquivos anexados e explique os pontos principais.";
-          rememberChat(prompt);
+          rememberChat(prompt, files);
           const taskContext = window.kazerWorkspace?.startTask?.({ prompt, attachmentCount: files.length }) || null;
           window.kazerActiveTaskContext = taskContext;
           const mcpConnectorIds = taskContext?.mcpConnectorIds || [];
@@ -5019,6 +5042,7 @@
           activeRequestController = null;
           setBusy(false);
           conversationMessages = [];
+          activeChatHistoryId = null;
           selectedFiles = [];
           renderAttachments();
           messageList.replaceChildren();
@@ -5029,7 +5053,6 @@
           messageInput.value = "";
           resizeInput();
           closeMenus();
-          showToast("Nova conversa pronta");
           messageInput.focus();
         };
 
