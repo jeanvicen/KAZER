@@ -5067,9 +5067,11 @@
           window.setTimeout(() => historySearchInput?.focus(), 50);
         });
         historySearchInput?.addEventListener("input", renderChatHistory);
-        historyNewChat?.addEventListener("click", () => {
-          requestNewChat();
+        historyNewChat?.addEventListener("click", (event) => {
+          event.preventDefault();
+          event.stopPropagation();
           setView("new-chat", { push: true });
+          requestNewChat();
         });
         newChatBack?.addEventListener("click", () => setView("history", { push: true }));
         window.addEventListener("popstate", () => setView(new URLSearchParams(window.location.search).get("view") === "chat" ? "new-chat" : "history"));
