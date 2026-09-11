@@ -12,7 +12,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link
-    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=UnifrakturMaguntia&display=swap"
+    href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700;800&family=Inter:wght@400;500;600;700&display=swap"
     rel="stylesheet"
   />
 
@@ -433,7 +433,7 @@
 
     .brand-title em {
       display: block;
-      font-family: "UnifrakturMaguntia", cursive;
+      font-family: "Cinzel", serif;
       font-style: normal;
       font-weight: 400;
       letter-spacing: .015em;
@@ -1796,14 +1796,14 @@
           initMetalText(
             document.getElementById("splashCanvas"),
             "KAZER",
-            "UnifrakturMaguntia",
+            "Cinzel",
             0.72
           );
         };
 
         if (document.fonts?.load) {
           document.fonts
-            .load('90px "UnifrakturMaguntia"')
+            .load('90px "Cinzel"')
             .catch(() => {})
             .finally(boot);
         } else {
