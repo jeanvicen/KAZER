@@ -1,245 +1,236 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover, user-scalable=no, interactive-widget=resizes-content">
-<title>KAZER</title>
-<link rel="icon" href="../download/assets/kazer-login-symbol.png" type="image/png">
-<link rel="apple-touch-icon" href="../download/assets/kazer-login-symbol.png">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=UnifrakturMaguntia&display=swap" rel="stylesheet">
-
-<style>
-  :root {
-    --purple: #6C4CF1;
-    --purple-2: #8B6FFF;
-    --purple-glow: rgba(108, 76, 241, 0.25);
-    --bg: #050508;
-    --text: #ffffff;
-    --text-dim: rgba(255, 255, 255, 0.5);
-    --border: rgba(255, 255, 255, 0.1);
-    --glass: rgba(255, 255, 255, 0.03);
-    --vh: 1vh;
+\<!DOCTYPE html>
+\<html lang="pt-BR">
+\<head>
+\<meta charset="UTF-8">
+\<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover, user-scalable=no">
+  \<title>KAZER\</title>
+  \<link rel="icon" href="../download/assets/kazer-login-symbol.png" type="image/png">
+  \<link rel="apple-touch-icon" href="../download/assets/kazer-login-symbol.png">
+  \<link rel="preconnect" href="[https://fonts.googleapis.com](https://fonts.googleapis.com)">
+\<link rel="preconnect" href="[https://fonts.gstatic.com](https://fonts.gstatic.com)" crossorigin>
+\<link href="[https://fonts.googleapis.com/css2?family=UnifrakturMaguntia&display=swap](https://fonts.googleapis.com/css2?family=UnifrakturMaguntia\&display=swap)" rel="stylesheet">
+\<style>
+  \:root{
+    \--purple: #6C4CF1;
+    \--purple-2: #7B5CFF;
+    \--bg: #000000;
+    \--text: #ffffff;
+    \--text-dim: rgba(255,255,255,0.55);
+    \--border: rgba(255,255,255,0.22);
+    \--vh: 1vh;
   }
 
-  * {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
+  \*{
+    margin:0;
+    padding:0;
+    box-sizing\:border-box;
     -webkit-tap-highlight-color: transparent;
   }
 
-  html, body {
-    height: 100%;
-    background: radial-gradient(circle at 50% 0%, #1a1533 0%, var(--bg) 60%);
-    overflow: hidden;
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-    color: var(--text);
+  html, body{
+    height:100%;
+    background: var(--bg);
+    overflow\:hidden;
   }
 
-  body {
-    height: calc(var(--vh, 1vh) * 100);
+  body{
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    color: var(--text);
+    height: calc(var(--vh, 1vh) \* 100);
     width: 100%;
     position: fixed;
     inset: 0;
   }
 
-  .screen {
+  /\* ---------- CONTAINER GERAL ---------- \*/
+  .screen{
     position: absolute;
     inset: 0;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    width: 100%;
-    height: 100%;
+    display\:flex;
+    flex-direction\:column;
+    align-items\:center;
+    justify-content\:center;
+    width:100%;
+    height:100%;
     padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
   }
 
-  #splash {
+  /\* ---------- SPLASH (ANIMAÇÃO INICIAL) ---------- \*/
+  \#splash{
     z-index: 20;
     background: var(--bg);
-    transition: opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: opacity 0.6s ease;
   }
 
-  .brand-block {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 20px;
+  .brand-block{
+    display\:flex;
+    align-items\:center;
+    justify-content\:center;
+    gap: clamp(2px, 0.8vw, 6px);
     opacity: 0;
     transform: scale(0.94);
-    animation: brandIn 0.8s cubic-bezier(0.2, 0.9, 0.25, 1) forwards;
+    animation: brandIn 0.7s cubic-bezier(.2,.9,.25,1) forwards;
   }
 
-  @keyframes brandIn {
-    to { opacity: 1; transform: scale(1); }
+  @keyframes brandIn{
+    to{ opacity: 1; transform: scale(1); }
   }
 
-  .star-wrap {
-    width: clamp(48px, 12vw, 64px);
-    height: clamp(48px, 12vw, 64px);
+  .star-wrap{
+    width: clamp(52px, 13vw, 70px);
+    height: clamp(52px, 13vw, 70px);
     flex-shrink: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    display\:flex;
+    align-items\:center;
+    justify-content\:center;
+    margin-right: clamp(-6px, -1vw, -2px);
   }
 
-  .star {
-    width: 100%;
-    height: 100%;
+  .star,
+  .mini-star{
     display: block;
     background: url("../download/assets/kazer-login-symbol.png") center / contain no-repeat;
-    animation: starPulse 3s ease-in-out infinite;
+    animation: starPulse 2.6s ease-in-out infinite;
   }
 
-  @keyframes starPulse {
-    0%, 100% { filter: brightness(1) drop-shadow(0 0 8px rgba(108, 76, 241, 0.3)); }
-    50% { filter: brightness(1.2) drop-shadow(0 0 16px rgba(108, 76, 241, 0.6)); }
+  .star{
+    width: 100%;
+    height: 100%;
   }
 
-  .kazer-canvas-container {
-    width: min(60vw, 280px);
-    height: clamp(60px, 16vw, 90px);
-    display: block;
+  .star > \*,
+  .mini-star > \*{
+    display: none;
   }
 
-  .kazer-canvas-container canvas {
-    width: 100% !important;
-    height: 100% !important;
-    display: block;
+  @keyframes starPulse{
+    0%, 100%{ filter: brightness(1); }
+    50%{ filter: brightness(1.35); }
   }
 
-  .footer-brand {
+  .metal-canvas{
+    display\:block;
+    width: min(58vw, 250px);
+    height: auto;
+  }
+
+  \#loginCanvas{
+    width: min(78vw, 380px);
+    margin: 0 auto;
+    opacity: 0;
+    animation: fadeUp 0.8s ease 0.9s forwards;
+  }
+
+  .footer-brand{
     position: absolute;
-    bottom: clamp(32px, 8vh, 56px);
+    bottom: clamp(36px, 9vh, 64px);
     left: 0;
     right: 0;
-    display: flex;
-    justify-content: center;
+    display\:flex;
+    justify-content\:center;
     padding: 0 24px;
   }
 
-  .footer-brand span {
-    font-size: clamp(11px, 3vw, 13px);
-    font-weight: 600;
-    letter-spacing: clamp(3px, 1.2vw, 5px);
+  .footer-brand span{
+    font-size: clamp(12px, 3.4vw, 14px);
+    font-weight: 700;
+    letter-spacing: clamp(2px, 1vw, 4px);
     color: var(--text-dim);
     text-transform: uppercase;
     opacity: 0;
-    animation: fadeIn 1s ease 0.5s forwards;
+    animation: fadeIn 1s ease 0.4s forwards;
   }
 
-  @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(5px); }
-    to { opacity: 1; transform: translateY(0); }
+  @keyframes fadeIn{
+    from{ opacity: 0; }
+    to{ opacity: 1; }
   }
 
-  #login {
+  @keyframes fadeUp{
+    from{ opacity:0; transform: translateY(10px); }
+    to{ opacity:1; transform: translateY(0); }
+  }
+
+  /\* ---------- TELA DE LOGIN / CRIAR CONTA ---------- \*/
+  \#login{
     z-index: 10;
     opacity: 0;
-    pointer-events: none;
-    padding: max(env(safe-area-inset-top), 32px) 24px max(env(safe-area-inset-bottom), 32px);
+    padding: max(env(safe-area-inset-top), 24px) 24px max(env(safe-area-inset-bottom), 24px);
     justify-content: flex-start;
   }
 
-  #login.visible {
-    opacity: 1;
-    pointer-events: auto;
-    animation: fadeUp 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+  \#login.visible{
+    animation: fadeUp 0.7s ease forwards;
   }
 
-  @keyframes fadeUp {
-    from { opacity: 0; transform: translateY(20px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
-
-  .login-inner {
+  .login-inner{
     width: 100%;
-    max-width: 420px;
+    max-width: 400px;
     margin: auto;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    background: var(--glass);
-    backdrop-filter: blur(24px);
-    -webkit-backdrop-filter: blur(24px);
-    border: 1px solid var(--border);
-    border-radius: 28px;
-    padding: clamp(28px, 5vw, 40px) clamp(20px, 4vw, 32px);
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    display\:flex;
+    flex-direction\:column;
+    align-items\:center;
   }
 
-  .login-header {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    margin-bottom: clamp(24px, 5vh, 36px);
-    width: 100%;
+  .login-header{
+    display\:flex;
+    flex-direction\:column;
+    align-items\:center;
+    margin-bottom: clamp(28px, 6vh, 44px);
   }
 
-  .mini-star {
-    width: clamp(48px, 14vw, 60px);
-    height: clamp(48px, 14vw, 60px);
+  .mini-star{
+    width: clamp(52px, 16vw, 70px);
+    height: clamp(52px, 16vw, 70px);
     margin-bottom: 16px;
-    display: block;
-    background: url("../download/assets/kazer-login-symbol.png") center / contain no-repeat;
-    animation: starPulse 3s ease-in-out infinite;
   }
 
-  .login-sub {
-    margin-top: 12px;
-    font-size: clamp(13px, 3.5vw, 14px);
+  .login-title{
+    margin-bottom: 2px;
+  }
+
+  .login-sub{
+    margin-top: 8px;
+    font-size: clamp(13px, 3.4vw, 14px);
     color: var(--text-dim);
-    letter-spacing: 0.3px;
+    letter-spacing: 0.5px;
     text-align: center;
-    font-weight: 500;
   }
 
-  form {
-    width: 100%;
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
+  form{
+    width:100%;
+    display\:flex;
+    flex-direction\:column;
+    gap: 14px;
   }
 
-  .field {
-    position: relative;
-    display: flex;
-    align-items: center;
+  .field{
+    position\:relative;
+    display\:flex;
+    align-items\:center;
     border: 1px solid var(--border);
-    border-radius: 16px;
-    padding: 0 18px;
-    height: 56px;
-    background: rgba(0, 0, 0, 0.2);
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    border-radius: 14px;
+    padding: 0 16px;
+    height: 54px;
+    background: rgba(255,255,255,0.02);
+    transition: border-color 0.2s ease;
     flex-shrink: 0;
   }
 
-  .field:focus-within {
-    border-color: var(--purple);
-    background: rgba(108, 76, 241, 0.04);
-    box-shadow: 0 0 0 4px var(--purple-glow);
+  .field\:focus-within{
+    border-color: var(--purple-2);
   }
 
-  .field svg {
-    flex-shrink: 0;
-    margin-right: 14px;
-    opacity: 0.4;
-    transition: all 0.3s ease;
+  .field svg{
+    flex-shrink:0;
+    margin-right: 12px;
+    opacity: 0.7;
   }
 
-  .field:focus-within svg {
-    opacity: 1;
-    stroke: var(--purple-2);
-  }
-
-  .field input {
-    flex: 1;
+  .field input{
+    flex:1;
     min-width: 0;
     background: transparent;
     border: none;
@@ -247,537 +238,370 @@
     color: var(--text);
     font-size: 16px;
     height: 100%;
-    font-family: inherit;
   }
 
-  .field input::placeholder {
+  .field input::placeholder{
     color: var(--text-dim);
-    font-weight: 400;
   }
 
-  .toggle-eye {
-    background: none;
-    border: none;
-    padding: 8px;
-    margin: -8px;
-    cursor: pointer;
-    opacity: 0.5;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+  .toggle-eye{
+    background\:none;
+    border\:none;
+    padding: 4px;
+    cursor\:pointer;
+    opacity:0.7;
+    display\:flex;
+    align-items\:center;
     flex-shrink: 0;
-    transition: opacity 0.2s ease;
   }
 
-  .toggle-eye:hover {
-    opacity: 1;
+  .eye-icon{
+    overflow: visible;
   }
 
-  .eye-pupil {
-    transition: transform 0.28s cubic-bezier(0.5, 0, 0.5, 1), opacity 0.15s ease;
+  .eye-pupil{
+    transition: transform 0.28s cubic-bezier(.5,0,.5,1), opacity 0.15s ease;
     transform-origin: center;
     transform-box: fill-box;
   }
 
-  .eye-icon.is-closed .eye-pupil {
+  .eye-icon.is-closed .eye-pupil{
     transform: scaleY(0.05);
     opacity: 0;
   }
 
-  .eye-outline {
-    transition: transform 0.28s cubic-bezier(0.5, 0, 0.5, 1);
+  .eye-outline{
+    transition: transform 0.28s cubic-bezier(.5,0,.5,1);
     transform-origin: center;
     transform-box: fill-box;
   }
 
-  .eye-icon.is-closed .eye-outline {
+  .eye-icon.is-closed .eye-outline{
     transform: scaleY(0.12);
   }
 
-  .hint {
+  .hint{
     font-size: 12px;
     color: var(--text-dim);
-    padding: 0 4px;
-    line-height: 1.5;
-    margin-top: -8px;
+    padding: 0 2px;
+    line-height: 1.4;
   }
 
-  .strength-wrap {
-    display: none;
+  .hint .ok{ color: #6de68a; }
+
+  /\* ---------- FORÇA DA SENHA ---------- \*/
+  .strength-wrap{
+    display\:none;
     flex-direction: column;
-    gap: 8px;
-    padding: 0 4px;
-    margin-top: -4px;
+    gap: 6px;
+    padding: 0 2px;
+    margin-top: -2px;
   }
 
-  body.mode-signup .strength-wrap.show {
-    display: flex;
-    animation: fadeUp 0.3s ease forwards;
+  body.mode-signup .strength-wrap.show{
+    display\:flex;
   }
 
-  .strength-bar {
+  .strength-bar{
     width: 100%;
-    height: 6px;
+    height: 5px;
     border-radius: 3px;
-    background: rgba(255, 255, 255, 0.08);
+    background: rgba(255,255,255,0.12);
     overflow: hidden;
   }
 
-  .strength-fill {
+  .strength-fill{
     height: 100%;
     width: 0%;
     border-radius: 3px;
-    transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1), background 0.4s ease, box-shadow 0.4s ease;
+    background: #ff5b5b;
+    transition: width 0.45s cubic-bezier(.4,1.4,.4,1), background-color 0.45s ease;
   }
 
-  .strength-label {
+  .strength-fill.pulse{
+    animation: strengthPulse 0.5s ease;
+  }
+
+  @keyframes strengthPulse{
+    0%{ transform: scaleY(1); }
+    40%{ transform: scaleY(1.8); }
+    100%{ transform: scaleY(1); }
+  }
+
+  .strength-label{
     font-size: 12px;
     font-weight: 600;
     letter-spacing: 0.3px;
     color: var(--text-dim);
     transition: color 0.3s ease;
-    display: flex;
-    align-items: center;
+    display\:flex;
+    align-items\:center;
     gap: 6px;
   }
 
-  .strength-label .icon {
-    display: inline-flex;
-    transition: transform 0.35s cubic-bezier(0.4, 1.6, 0.4, 1);
+  .strength-label .icon{
+    display\:inline-flex;
+    transition: transform 0.35s cubic-bezier(.4,1.6,.4,1);
   }
 
-  .strength-label.pop .icon {
-    transform: scale(1.2) rotate(-5deg);
+  .strength-label.pop .icon{
+    transform: scale(1.3) rotate(-8deg);
   }
 
-  .btn-primary {
-    margin-top: 8px;
-    height: 56px;
-    border-radius: 16px;
+  .btn-primary{
+    margin-top: 6px;
+    height: 54px;
+    border-radius: 14px;
     border: none;
-    background: linear-gradient(135deg, var(--purple-2), var(--purple));
+    background: linear-gradient(180deg, var(--purple-2), var(--purple));
     color: #fff;
     font-size: 16px;
     font-weight: 600;
-    letter-spacing: 0.5px;
+    letter-spacing: 0.3px;
     cursor: pointer;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    box-shadow: 0 4px 20px var(--purple-glow);
-    position: relative;
-    overflow: hidden;
+    transition: transform 0.15s ease, filter 0.2s ease, opacity 0.2s ease;
+    flex-shrink: 0;
   }
 
-  .btn-primary::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(135deg, rgba(255,255,255,0.2), transparent);
-    opacity: 0;
-    transition: opacity 0.3s ease;
-  }
-
-  .btn-primary:hover:not(:disabled)::after {
-    opacity: 1;
-  }
-
-  .btn-primary:active:not(:disabled) {
+  .btn-primary\:active{
     transform: scale(0.98);
-    box-shadow: 0 2px 10px var(--purple-glow);
+    filter: brightness(0.95);
   }
 
-  .btn-primary:disabled {
-    opacity: 0.6;
+  .btn-primary\:disabled{
+    opacity: 0.5;
     cursor: not-allowed;
-    transform: none;
   }
 
-  .btn-primary.loading {
-    color: transparent;
-  }
-
-  .btn-primary.loading::before {
-    content: '';
-    position: absolute;
-    width: 22px;
-    height: 22px;
-    top: 50%;
-    left: 50%;
-    margin-left: -11px;
-    margin-top: -11px;
-    border: 2.5px solid rgba(255,255,255,0.3);
-    border-top-color: #fff;
-    border-radius: 50%;
-    animation: spin 0.8s linear infinite;
-  }
-
-  @keyframes spin {
-    to { transform: rotate(360deg); }
-  }
-
-  .switch-mode {
-    margin-top: 28px;
-    text-align: center;
+  .switch-mode{
+    margin-top: 20px;
+    text-align\:center;
     font-size: 14px;
     color: var(--text-dim);
   }
 
-  .switch-mode a {
-    color: var(--purple-2);
-    text-decoration: none;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    position: relative;
+  .switch-mode a{
+    color: var(--text);
+    text-decoration: underline;
+    cursor\:pointer;
   }
 
-  .switch-mode a::after {
-    content: '';
-    position: absolute;
-    bottom: -2px;
-    left: 0;
-    width: 0;
-    height: 1px;
-    background: var(--purple-2);
-    transition: width 0.3s ease;
-  }
-
-  .switch-mode a:hover {
-    color: #fff;
-  }
-
-  .switch-mode a:hover::after {
-    width: 100%;
-  }
-
-  .error-msg {
+  .error-msg{
     font-size: 13px;
     color: #ff6b6b;
-    min-height: 20px;
-    text-align: center;
-    margin-top: 4px;
-    opacity: 0;
-    transition: opacity 0.3s ease;
-    font-weight: 500;
+    min-height: 16px;
+    text-align\:center;
   }
 
-  .error-msg:not(:empty) {
-    opacity: 1;
+  /\* campos exclusivos de cada modo \*/
+  .signup-only{ display\:none; }
+  body.mode-signup .signup-only{ display\:flex; }
+  body.mode-signup .signup-only.hint{ display\:block; }
+
+  /\* pequenas telas: reduzir respiros \*/
+  @media (max-height: 640px){
+    .login-header{ margin-bottom: 20px; }
+    .field{ height: 48px; }
+    .btn-primary{ height: 48px; }
   }
+\</style>
+\</head>
+\<body>
 
-  .form-error-shake {
-    animation: shake 0.4s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
-  }
+  \<!-- ================= SPLASH / TELA DE ENTRADA ================= -->
+  \<div id="splash" class="screen">
+    \<div class="brand-block">
+      \<div class="star-wrap">
+        \<svg class="star" viewBox="0 0 400 400" xmlns="[http://www.w3.org/2000/svg](http://www.w3.org/2000/svg)">
+          \<defs>
+            \<radialGradient id="core" cx="50%" cy="50%" r="50%">
+              \<stop offset="0%" stop-color="#ffffff" stop-opacity="1"/>
+              \<stop offset="15%" stop-color="#ffffff" stop-opacity="1"/>
+              \<stop offset="45%" stop-color="#ffffff" stop-opacity="0.55"/>
+              \<stop offset="100%" stop-color="#ffffff" stop-opacity="0"/>
+            \</radialGradient>
+            \<linearGradient id="rayLong" x1="0%" y1="0%" x2="100%" y2="0%">
+              \<stop offset="0%" stop-color="#ffffff" stop-opacity="0"/>
+              \<stop offset="45%" stop-color="#ffffff" stop-opacity="0.9"/>
+              \<stop offset="50%" stop-color="#ffffff" stop-opacity="1"/>
+              \<stop offset="55%" stop-color="#ffffff" stop-opacity="0.9"/>
+              \<stop offset="100%" stop-color="#ffffff" stop-opacity="0"/>
+            \</linearGradient>
+          \</defs>
 
-  @keyframes shake {
-    10%, 90% { transform: translateX(-1px); }
-    20%, 80% { transform: translateX(2px); }
-    30%, 50%, 70% { transform: translateX(-3px); }
-    40%, 60% { transform: translateX(3px); }
-  }
+          \<g transform="translate(200,200)">
+            \<!-- glow de fundo -->
+            \<circle r="130" fill="url(#core)"/>
 
-  .signup-only { display: none; }
-  body.mode-signup .signup-only { display: flex; }
-  body.mode-signup .signup-only.hint { display: block; }
+            \<!-- 4 raios principais (longos, mais grossos) -->
+            \<g fill="#ffffff">
+              \<path d="M0,-190 C 3,-90 6,-6 0,0 C -6,-6 -3,-90 0,-190 Z"/>
+              \<path d="M0,190 C 3,90 6,6 0,0 C -6,6 -3,90 0,190 Z"/>
+              \<path d="M-190,0 C -90,-3 -6,-6 0,0 C -6,6 -90,3 -190,0 Z"/>
+              \<path d="M190,0 C 90,3 6,6 0,0 C 6,-6 90,-3 190,0 Z"/>
+            \</g>
 
-  @media (max-height: 700px) {
-    .login-inner { padding: 24px 20px; }
-    .login-header { margin-bottom: 20px; }
-    .field { height: 52px; }
-    .btn-primary { height: 52px; }
-  }
-</style>
-</head>
-<body>
+            \<!-- 4 raios diagonais (médios) -->
+            \<g fill="#ffffff" transform="rotate(45)">
+              \<path d="M0,-150 C 2.5,-70 5,-5 0,0 C -5,-5 -2.5,-70 0,-150 Z"/>
+              \<path d="M0,150 C 2.5,70 5,5 0,0 C -5,5 -2.5,70 0,150 Z"/>
+              \<path d="M-150,0 C -70,-2.5 -5,-5 0,0 C -5,5 -70,2.5 -150,0 Z"/>
+              \<path d="M150,0 C 70,2.5 5,5 0,0 C 5,-5 70,-2.5 150,0 Z"/>
+            \</g>
 
-  <div id="splash" class="screen">
-    <div class="brand-block">
-      <div class="star-wrap">
-        <svg class="star" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
-          <defs>
-            <radialGradient id="core" cx="50%" cy="50%" r="50%">
-              <stop offset="0%" stop-color="#ffffff" stop-opacity="1"/>
-              <stop offset="15%" stop-color="#ffffff" stop-opacity="1"/>
-              <stop offset="45%" stop-color="#ffffff" stop-opacity="0.55"/>
-              <stop offset="100%" stop-color="#ffffff" stop-opacity="0"/>
-            </radialGradient>
-          </defs>
-          <g transform="translate(200,200)">
-            <circle r="130" fill="url(#core)"/>
-            <g fill="#ffffff">
-              <path d="M0,-190 C 3,-90 6,-6 0,0 C -6,-6 -3,-90 0,-190 Z"/>
-              <path d="M0,190 C 3,90 6,6 0,0 C -6,6 -3,90 0,190 Z"/>
-              <path d="M-190,0 C -90,-3 -6,-6 0,0 C -6,6 -90,3 -190,0 Z"/>
-              <path d="M190,0 C 90,3 6,6 0,0 C 6,-6 90,-3 190,0 Z"/>
-            </g>
-            <g fill="#ffffff" transform="rotate(45)">
-              <path d="M0,-150 C 2.5,-70 5,-5 0,0 C -5,-5 -2.5,-70 0,-150 Z"/>
-              <path d="M0,150 C 2.5,70 5,5 0,0 C -5,5 -2.5,70 0,150 Z"/>
-              <path d="M-150,0 C -70,-2.5 -5,-5 0,0 C -5,5 -70,2.5 -150,0 Z"/>
-              <path d="M150,0 C 70,2.5 5,5 0,0 C 5,-5 70,-2.5 150,0 Z"/>
-            </g>
-            <circle r="12" fill="#ffffff"/>
-          </g>
-        </svg>
-      </div>
-      <div class="kazer-canvas-container" id="splashKazer"></div>
-    </div>
-    <div class="footer-brand">
-      <span>Klipza Studio</span>
-    </div>
-  </div>
+            \<!-- 8 raios finos intermediários -->
+            \<g fill="#ffffff" opacity="0.95">
+              \<g transform="rotate(22.5)">\<path d="M0,-165 C 1.6,-75 3,-4 0,0 C -3,-4 -1.6,-75 0,-165 Z"/>\</g>
+              \<g transform="rotate(67.5)">\<path d="M0,-165 C 1.6,-75 3,-4 0,0 C -3,-4 -1.6,-75 0,-165 Z"/>\</g>
+              \<g transform="rotate(112.5)">\<path d="M0,-165 C 1.6,-75 3,-4 0,0 C -3,-4 -1.6,-75 0,-165 Z"/>\</g>
+              \<g transform="rotate(157.5)">\<path d="M0,-165 C 1.6,-75 3,-4 0,0 C -3,-4 -1.6,-75 0,-165 Z"/>\</g>
+              \<g transform="rotate(202.5)">\<path d="M0,-165 C 1.6,-75 3,-4 0,0 C -3,-4 -1.6,-75 0,-165 Z"/>\</g>
+              \<g transform="rotate(247.5)">\<path d="M0,-165 C 1.6,-75 3,-4 0,0 C -3,-4 -1.6,-75 0,-165 Z"/>\</g>
+              \<g transform="rotate(292.5)">\<path d="M0,-165 C 1.6,-75 3,-4 0,0 C -3,-4 -1.6,-75 0,-165 Z"/>\</g>
+              \<g transform="rotate(337.5)">\<path d="M0,-165 C 1.6,-75 3,-4 0,0 C -3,-4 -1.6,-75 0,-165 Z"/>\</g>
+            \</g>
 
-  <div id="login" class="screen">
-    <div class="login-inner">
-      <div class="login-header">
-        <div class="mini-star"></div>
-        <div class="kazer-canvas-container" id="loginKazer" style="width: min(78vw, 320px); height: 70px;"></div>
-        <div class="login-sub" id="subText">Entrar para continuar</div>
-      </div>
+            \<!-- núcleo brilhante -->
+            \<circle r="12" fill="#ffffff"/>
+          \</g>
+        \</svg>
+      \</div>
+      \<canvas class="metal-canvas" id="splashCanvas" width="360" height="90">\</canvas>
+    \</div>
 
-      <form id="authForm">
-        <div class="field signup-only">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="1.8"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4.4 3.6-7 8-7s8 2.6 8 7"/></svg>
-          <input type="text" id="displayName" placeholder="Como devemos te chamar?" autocomplete="name" maxlength="80" spellcheck="false">
-        </div>
+    \<div class="footer-brand">
+      \<span>Klipza Studio\</span>
+    \</div>
+  \</div>
 
-        <div class="field">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="1.8"><path d="M3 6l9 7 9-7"/><rect x="3" y="5" width="18" height="14" rx="2"/></svg>
-          <input type="email" id="email" placeholder="Email" required autocomplete="email" maxlength="254" inputmode="email">
-        </div>
+  \<!-- ================= LOGIN / CRIAR CONTA ================= -->
+  \<div id="login" class="screen">
+    \<div class="login-inner">
+      \<div class="login-header">
+        \<svg class="mini-star" viewBox="0 0 400 400" xmlns="[http://www.w3.org/2000/svg](http://www.w3.org/2000/svg)">
+          \<defs>
+            \<radialGradient id="core2" cx="50%" cy="50%" r="50%">
+              \<stop offset="0%" stop-color="#ffffff" stop-opacity="1"/>
+              \<stop offset="15%" stop-color="#ffffff" stop-opacity="1"/>
+              \<stop offset="45%" stop-color="#ffffff" stop-opacity="0.55"/>
+              \<stop offset="100%" stop-color="#ffffff" stop-opacity="0"/>
+            \</radialGradient>
+          \</defs>
+          \<g transform="translate(200,200)">
+            \<circle r="130" fill="url(#core2)"/>
+            \<g fill="#ffffff">
+              \<path d="M0,-190 C 3,-90 6,-6 0,0 C -6,-6 -3,-90 0,-190 Z"/>
+              \<path d="M0,190 C 3,90 6,6 0,0 C -6,6 -3,90 0,190 Z"/>
+              \<path d="M-190,0 C -90,-3 -6,-6 0,0 C -6,6 -90,3 -190,0 Z"/>
+              \<path d="M190,0 C 90,3 6,6 0,0 C 6,-6 90,-3 190,0 Z"/>
+            \</g>
+            \<g fill="#ffffff" transform="rotate(45)">
+              \<path d="M0,-150 C 2.5,-70 5,-5 0,0 C -5,-5 -2.5,-70 0,-150 Z"/>
+              \<path d="M0,150 C 2.5,70 5,5 0,0 C -5,5 -2.5,70 0,150 Z"/>
+              \<path d="M-150,0 C -70,-2.5 -5,-5 0,0 C -5,5 -70,2.5 -150,0 Z"/>
+              \<path d="M150,0 C 70,2.5 5,5 0,0 C 5,-5 70,-2.5 150,0 Z"/>
+            \</g>
+            \<g fill="#ffffff" opacity="0.95">
+              \<g transform="rotate(22.5)">\<path d="M0,-165 C 1.6,-75 3,-4 0,0 C -3,-4 -1.6,-75 0,-165 Z"/>\</g>
+              \<g transform="rotate(67.5)">\<path d="M0,-165 C 1.6,-75 3,-4 0,0 C -3,-4 -1.6,-75 0,-165 Z"/>\</g>
+              \<g transform="rotate(112.5)">\<path d="M0,-165 C 1.6,-75 3,-4 0,0 C -3,-4 -1.6,-75 0,-165 Z"/>\</g>
+              \<g transform="rotate(157.5)">\<path d="M0,-165 C 1.6,-75 3,-4 0,0 C -3,-4 -1.6,-75 0,-165 Z"/>\</g>
+              \<g transform="rotate(202.5)">\<path d="M0,-165 C 1.6,-75 3,-4 0,0 C -3,-4 -1.6,-75 0,-165 Z"/>\</g>
+              \<g transform="rotate(247.5)">\<path d="M0,-165 C 1.6,-75 3,-4 0,0 C -3,-4 -1.6,-75 0,-165 Z"/>\</g>
+              \<g transform="rotate(292.5)">\<path d="M0,-165 C 1.6,-75 3,-4 0,0 C -3,-4 -1.6,-75 0,-165 Z"/>\</g>
+              \<g transform="rotate(337.5)">\<path d="M0,-165 C 1.6,-75 3,-4 0,0 C -3,-4 -1.6,-75 0,-165 Z"/>\</g>
+            \</g>
+            \<circle r="12" fill="#ffffff"/>
+          \</g>
+        \</svg>
+        \<canvas class="login-title metal-canvas" id="loginCanvas" width="380" height="70">\</canvas>
+        \<div class="login-sub" id="subText">Entrar para continuar\</div>
+      \</div>
 
-        <div class="field">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="1.8"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
-          <input type="password" id="password" placeholder="Senha" required autocomplete="current-password" minlength="10" maxlength="256">
-          <button type="button" class="toggle-eye" id="eyeBtnPassword" aria-label="Mostrar senha">
-            <svg class="eye-icon is-open" id="eyeIconPassword" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="1.8">
-              <path class="eye-outline" d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/>
-              <circle class="eye-pupil" cx="12" cy="12" r="3"/>
-            </svg>
-          </button>
-        </div>
+      \<form id="authForm">
+        \<!-- Nome (apenas no cadastro) -->
+        \<div class="field signup-only">
+          \<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="1.8">\<circle cx="12" cy="8" r="4"/>\<path d="M4 20c0-4.4 3.6-7 8-7s8 2.6 8 7"/>\</svg>
+          \<input type="text" id="displayName" placeholder="Como devemos te chamar?" autocomplete="name" maxlength="80" spellcheck="false">
+        \</div>
 
-        <div class="strength-wrap" id="strengthWrap">
-          <div class="strength-bar">
-            <div class="strength-fill" id="strengthFill"></div>
-          </div>
-          <div class="strength-label" id="strengthLabel">
-            <span class="icon">✦</span>
-            <span id="strengthText">Digite uma senha</span>
-          </div>
-        </div>
+        \<!-- Email -->
+        \<div class="field">
+          \<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="1.8">\<path d="M3 6l9 7 9-7"/>\<rect x="3" y="5" width="18" height="14" rx="2"/>\</svg>
+          \<input type="email" id="email" placeholder="Email" required autocomplete="email" maxlength="254" inputmode="email">
+        \</div>
 
-        <div class="hint signup-only" id="passwordHint">
+        \<!-- Senha -->
+        \<div class="field">
+          \<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="1.8">\<rect x="5" y="11" width="14" height="9" rx="2"/>\<path d="M8 11V7a4 4 0 0 1 8 0v4"/>\</svg>
+          \<input type="password" id="password" placeholder="Senha" required autocomplete="current-password" minlength="10" maxlength="256">
+          \<button type="button" class="toggle-eye" id="eyeBtnPassword" aria-label="Mostrar senha">
+            \<svg class="eye-icon is-open" id="eyeIconPassword" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="1.8">
+              \<path class="eye-outline" d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/>
+              \<circle class="eye-pupil" cx="12" cy="12" r="3"/>
+            \</svg>
+          \</button>
+        \</div>
+
+        \<!-- Indicador de força da senha (apenas no cadastro) -->
+        \<div class="strength-wrap" id="strengthWrap">
+          \<div class="strength-bar">
+            \<div class="strength-fill" id="strengthFill">\</div>
+          \</div>
+          \<div class="strength-label" id="strengthLabel">
+            \<span id="strengthText">Digite uma senha\</span>
+          \</div>
+        \</div>
+
+        \<!-- Regra de senha (apenas no cadastro) -->
+        \<div class="hint signup-only" id="passwordHint">
           A senha precisa ter pelo menos 10 caracteres, 1 letra maiúscula e 1 caractere especial.
-        </div>
+        \</div>
 
-        <div class="field signup-only">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="1.8"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
-          <input type="password" id="confirmPassword" placeholder="Confirmar senha" autocomplete="new-password" minlength="10" maxlength="256">
-          <button type="button" class="toggle-eye" id="eyeBtnConfirmPassword" aria-label="Mostrar senha">
-            <svg class="eye-icon is-open" id="eyeIconConfirmPassword" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="1.8">
-              <path class="eye-outline" d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/>
-              <circle class="eye-pupil" cx="12" cy="12" r="3"/>
-            </svg>
-          </button>
-        </div>
+        \<!-- Confirmar senha (apenas no cadastro) -->
+        \<div class="field signup-only">
+          \<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="1.8">\<rect x="5" y="11" width="14" height="9" rx="2"/>\<path d="M8 11V7a4 4 0 0 1 8 0v4"/>\</svg>
+          \<input type="password" id="confirmPassword" placeholder="Confirmar senha" autocomplete="new-password" minlength="10" maxlength="256">
+          \<button type="button" class="toggle-eye" id="eyeBtnConfirmPassword" aria-label="Mostrar senha">
+            \<svg class="eye-icon is-open" id="eyeIconConfirmPassword" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="1.8">
+              \<path class="eye-outline" d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/>
+              \<circle class="eye-pupil" cx="12" cy="12" r="3"/>
+            \</svg>
+          \</button>
+        \</div>
 
-        <div class="error-msg" id="errorMsg"></div>
+        \<div class="error-msg" id="errorMsg">\</div>
 
-        <button type="submit" class="btn-primary" id="submitBtn">Sign in</button>
-      </form>
+        \<button type="submit" class="btn-primary" id="submitBtn">Sign in\</button>
+      \</form>
 
-      <div class="switch-mode">
-        <span id="switchText">Não tem conta?</span>
-        <a id="switchLink" href="#signup">Criar conta</a>
-      </div>
-    </div>
-  </div>
+      \<div class="switch-mode">
+        \<span id="switchText">Não tem conta?\</span>
+        \<a id="switchLink" href="#signup">Criar conta\</a>
+      \</div>
+    \</div>
+  \</div>
 
-<script type="module">
-  import * as THREE from "https://esm.sh/three@0.160.0";
-  import { ShaderPass } from "https://esm.sh/three@0.160.0/examples/jsm/postprocessing/ShaderPass.js";
-  import { HorizontalBlurShader } from "https://esm.sh/three@0.160.0/examples/jsm/shaders/HorizontalBlurShader.js";
-  import { VerticalBlurShader } from "https://esm.sh/three@0.160.0/examples/jsm/shaders/VerticalBlurShader.js";
-  import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-
-  function setVH() {
-    document.documentElement.style.setProperty('--vh', (window.innerHeight * 0.01) + 'px');
+\<script src="[https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2](https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2)">\</script>
+\<script>
+  // ---------- ajusta altura real da viewport (evita bug de barra do navegador mobile) ----------
+  function setVH(){
+    document.documentElement.style.setProperty('--vh', (window\.innerHeight \* 0.01) + 'px');
   }
   setVH();
-  window.addEventListener('resize', setVH);
-  window.addEventListener('orientationchange', setVH);
+  window\.addEventListener('resize', setVH);
+  window\.addEventListener('orientationchange', setVH);
 
-  function initKazerEffect(containerId, text) {
-    const container = document.getElementById(containerId);
-    if (!container) return null;
-
-    const pr = Math.min(2, window.devicePixelRatio);
-    const scene = new THREE.Scene();
-    const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 4, -4);
-    const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true, powerPreference: "high-performance" });
-    renderer.setPixelRatio(pr);
-    renderer.setClearColor(0x000000, 0);
-    container.appendChild(renderer.domElement);
-
-    const state = {
-      band: { amount: 140, cutoff: 4.5, scale: 5.5 },
-      img: { blur: 6, cutoff: 2.2, darken: 1.3 }
-    };
-
-    const width = 512;
-    const height = 128;
-    const CanvasConstructor = window.OffscreenCanvas || HTMLCanvasElement;
-    const offCanvas = new CanvasConstructor(width, height);
-    const ctx = offCanvas.getContext("2d");
-    
-    function drawText() {
-      ctx.clearRect(0, 0, width, height);
-      ctx.fillStyle = "white";
-      ctx.textAlign = "center";
-      ctx.textBaseline = "middle";
-      ctx.font = "bold 72px 'UnifrakturMaguntia', cursive";
-      ctx.fillText(text, width / 2, height / 2);
-    }
-    drawText();
-
-    const inputTexture = new THREE.CanvasTexture(offCanvas);
-    inputTexture.needsUpdate = true;
-
-    class BlurFilter {
-      constructor(renderer, w, h) {
-        this.renderer = renderer;
-        this.rt_a = new THREE.WebGLRenderTarget(w, h);
-        this.rt_b = this.rt_a.clone();
-        this.x_pass = new ShaderPass(HorizontalBlurShader);
-        this.y_pass = new ShaderPass(VerticalBlurShader);
-        this.x_pass.uniforms.h.value = 1 / w;
-        this.y_pass.uniforms.v.value = 1 / h;
-      }
-      render(texture, repeat) {
-        this.renderer.copyTextureToTexture(texture, this.rt_a.texture);
-        for (let i = 0; i < repeat; i++) {
-          this.x_pass.render(this.renderer, this.rt_b, this.rt_a);
-          this.y_pass.render(this.renderer, this.rt_a, this.rt_b);
-        }
-      }
-      get texture() { return this.rt_a.texture; }
-    }
-
-    const blur = new BlurFilter(renderer, width, height);
-    blur.render(inputTexture, state.img.blur);
-
-    const band_geometry = new THREE.PlaneGeometry(2, 2);
-    const band_material = new THREE.RawShaderMaterial({
-      glslVersion: THREE.GLSL3,
-      transparent: true,
-      uniforms: {
-        amount: { value: state.band.amount },
-        band_scale: { value: state.band.scale },
-        map: { value: blur.texture },
-        img_cutoff: { value: state.img.cutoff },
-        band_cutoff: { value: 2 ** state.band.cutoff },
-        fill_darken: { value: 2 ** state.img.darken },
-        color: { value: new THREE.Color(0x9b9dff) }
-      },
-      vertexShader: `
-        #extension GL_ANGLE_instanced_arrays : enable
-        precision highp float;
-        in vec3 position;
-        uniform mat4 modelViewMatrix;
-        uniform mat4 projectionMatrix;
-        uniform float amount;
-        uniform float band_scale;
-        out vec2 vuv;
-        out vec2 suv;
-        void main() {
-          vec2 pos = position.xy;
-          vuv = pos * 0.5 + 0.5;
-          pos.y += 1.0;
-          pos.y *= 0.5;
-          pos.x *= 2.0 * band_scale;
-          float z_step = 4.0 * band_scale / amount;
-          float z = 2.0 * band_scale - float(gl_InstanceID) * z_step;
-          gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, z, 1.0);
-          suv = (gl_Position.xy / gl_Position.w) * 0.5 + 0.5;
-        }
-      `,
-      fragmentShader: `
-        precision highp float;
-        in vec2 vuv;
-        in vec2 suv;
-        uniform sampler2D map;
-        uniform float img_cutoff;
-        uniform float band_cutoff;
-        uniform float fill_darken;
-        uniform vec3 color;
-        out vec4 Color;
-        void main() {
-          float y = 1.0 - vuv.y;
-          if (y < 0.005 || y > 0.995) discard;
-          float a = texture(map, suv).r;
-          a *= pow(y, img_cutoff);
-          y = pow(y, band_cutoff);
-          a = 1.0 - (1.0 - a) * (1.0 - y);
-          if (a < 0.4) discard;
-          a = (1.0 - a) * 2.0;
-          vec3 finalColor = color * pow(a, fill_darken);
-          Color = vec4(finalColor, smoothstep(0.4, 1.0, a));
-        }
-      `
-    });
-
-    const bands_mesh = new THREE.InstancedMesh(band_geometry, band_material, state.band.amount);
-    bands_mesh.frustumCulled = false;
-    bands_mesh.rotation.x = -45 * THREE.MathUtils.DEG2RAD;
-    scene.add(bands_mesh);
-
-    const world_z = new THREE.Vector3(0, 0, 1);
-    let time = 0;
-
-    function animate(t) {
-      requestAnimationFrame(animate);
-      const dt = t - time;
-      time = t;
-      bands_mesh.rotateOnWorldAxis(world_z, dt * 0.00035);
-      renderer.render(scene, camera);
-    }
-    requestAnimationFrame(animate);
-
-    const resize = () => {
-      const rect = container.getBoundingClientRect();
-      if (rect.width > 0 && rect.height > 0) {
-        renderer.setSize(rect.width, rect.height, false);
-      }
-    };
-    window.addEventListener('resize', resize);
-    
-    document.fonts.ready.then(() => {
-      drawText();
-      inputTexture.needsUpdate = true;
-      blur.render(inputTexture, state.img.blur);
-      resize();
-    }).catch(() => {
-      drawText();
-      inputTexture.needsUpdate = true;
-      blur.render(inputTexture, state.img.blur);
-      resize();
-    });
-    
-    return renderer;
-  }
-
-  // Inicializa efeitos visuais
-  const splashRenderer = initKazerEffect('splashKazer', 'KAZER');
-  const loginRenderer = initKazerEffect('loginKazer', 'KAZER');
-
-  function togglePassword(id) {
+  // ---------- controla exibição do olho da senha (com animação de piscar) ----------
+  function togglePassword(id){
     const input = document.getElementById(id);
-    const btn = document.getElementById('eyeBtn' + id.charAt(0).toUpperCase() + id.slice(1));
-    const icon = document.getElementById('eyeIcon' + id.charAt(0).toUpperCase() + id.slice(1));
+    const btn = document.getElementById('eyeBtn' + capitalize(id));
+    const icon = document.getElementById('eyeIcon' + capitalize(id));
     const isHidden = input.type === 'password';
 
     input.type = isHidden ? 'text' : 'password';
-    if (isHidden) {
+
+    if(isHidden){
       icon.classList.remove('is-open');
       icon.classList.add('is-closed');
     } else {
@@ -787,11 +611,16 @@
     btn.setAttribute('aria-label', isHidden ? 'Ocultar senha' : 'Mostrar senha');
   }
 
+  function capitalize(str){
+    return str.charAt(0).toUpperCase() + str.slice(1);
+  }
+
   document.getElementById('eyeBtnPassword').addEventListener('click', () => togglePassword('password'));
   document.getElementById('eyeBtnConfirmPassword').addEventListener('click', () => togglePassword('confirmPassword'));
 
+  // ---------- alterna entre login e criar conta ----------
   let isSignup = false;
-  function toggleMode() {
+  function toggleMode(){
     isSignup = !isSignup;
     const body = document.body;
     const sub = document.getElementById('subText');
@@ -800,9 +629,8 @@
     const switchLink = document.getElementById('switchLink');
     const confirmInput = document.getElementById('confirmPassword');
     const nameInput = document.getElementById('displayName');
-    const errorMsg = document.getElementById('errorMsg');
 
-    if (isSignup) {
+    if(isSignup){
       body.classList.add('mode-signup');
       sub.textContent = 'Criar sua conta';
       submitBtn.textContent = 'Criar conta';
@@ -818,35 +646,38 @@
       switchLink.textContent = 'Criar conta';
       confirmInput.removeAttribute('required');
       nameInput.removeAttribute('required');
-      document.getElementById('strengthWrap').classList.remove('show');
+      strengthWrap.classList.remove('show');
     }
-    errorMsg.textContent = '';
-    errorMsg.dataset.type = '';
+    document.getElementById('errorMsg').textContent = '';
+    document.getElementById('errorMsg').dataset.type = '';
   }
 
-  document.getElementById('switchLink').addEventListener('click', (event) => {
-    event.preventDefault();
-    toggleMode();
-  });
+  // ---------- validação da senha: 1 maiúscula + 1 caractere especial ----------
+  function isPasswordValid(pw){
+    const hasUpper = /[A-Z]/.test(pw);
+    const hasSpecial = /[^A-Za-z0-9]/.test(pw);
+    return pw\.length >= 10 && pw\.length <= 256 && hasUpper && hasSpecial;
+  }
 
-  function getPasswordStrength(pw) {
-    if (!pw) return 0;
+  // ---------- calcula a força da senha (0 a 4) ----------
+  function getPasswordStrength(pw){
+    if(!pw) return 0;
     let score = 0;
-    if (pw.length >= 6) score++;
-    if (pw.length >= 10) score++;
-    if (/[A-Z]/.test(pw)) score++;
-    if (/[^A-Za-z0-9]/.test(pw)) score++;
-    if (/[0-9]/.test(pw)) score++;
-    if (pw.length < 6) score = Math.min(score, 1);
+    if(pw\.length >= 6) score++;
+    if(pw\.length >= 10) score++;
+    if(/[A-Z]/.test(pw)) score++;
+    if(/[^A-Za-z0-9]/.test(pw)) score++;
+    if(/[0-9]/.test(pw)) score++;
+    if(pw\.length < 6) score = Math.min(score, 1);
     return Math.min(score, 4);
   }
 
   const strengthConfig = {
-    0: { pct: 4, color: '#ff4757', text: 'Digite uma senha' },
-    1: { pct: 25, color: '#ff4757', text: 'Senha fraca — capriche mais' },
-    2: { pct: 50, color: '#ffa502', text: 'Quase lá, dá pra melhorar' },
-    3: { pct: 75, color: '#ffd84e', text: 'Boa senha!' },
-    4: { pct: 100, color: '#2ed573', text: 'Senha forte, mandou bem!' }
+    0: { pct: 4,   color: '#ff5b5b', text: 'Digite uma senha' },
+    1: { pct: 25,  color: '#ff5b5b', text: 'Senha fraca — capriche mais' },
+    2: { pct: 50,  color: '#ffb14e', text: 'Quase lá, dá pra melhorar' },
+    3: { pct: 75,  color: '#ffd84e', text: 'Boa senha!' },
+    4: { pct: 100, color: '#6de68a', text: 'Senha forte, mandou bem!' }
   };
 
   const strengthWrap = document.getElementById('strengthWrap');
@@ -854,199 +685,242 @@
   const strengthLabel = document.getElementById('strengthLabel');
   const strengthText = document.getElementById('strengthText');
 
-  function updateStrengthUI(pw) {
-    if (!pw) {
+  function updateStrengthUI(pw){
+    if(!pw){
       strengthWrap.classList.remove('show');
       return;
     }
     strengthWrap.classList.add('show');
+
     const level = getPasswordStrength(pw);
     const cfg = strengthConfig[level];
 
     strengthFill.style.width = cfg.pct + '%';
-    strengthFill.style.background = cfg.color;
-    strengthFill.style.boxShadow = `0 0 12px ${cfg.color}66`;
+    strengthFill.style.backgroundColor = cfg.color;
     strengthText.textContent = cfg.text;
     strengthLabel.style.color = cfg.color;
 
+    // pequena animação de "pulso" a cada mudança de nível
     strengthFill.classList.remove('pulse');
     strengthLabel.classList.remove('pop');
-    void strengthFill.offsetWidth;
+    void strengthFill.offsetWidth; // reflow pra reiniciar a animação
     strengthFill.classList.add('pulse');
     strengthLabel.classList.add('pop');
   }
 
-  document.getElementById('password').addEventListener('input', function() {
-    if (isSignup) updateStrengthUI(this.value);
+  document.getElementById('switchLink').addEventListener('click', (event) => {
+    event.preventDefault();
+    toggleMode();
+  });
+
+  document.getElementById('password').addEventListener('input', function(){
+    if(isSignup){
+      updateStrengthUI(this.value);
+    }
     checkPasswordsMatch();
   });
 
+  // ---------- checa em tempo real se as senhas coincidem ----------
   const confirmField = document.getElementById('confirmPassword');
-  function checkPasswordsMatch() {
+  function checkPasswordsMatch(){
     const errorMsg = document.getElementById('errorMsg');
     const pw = document.getElementById('password').value;
     const confirmPw = confirmField.value;
 
-    if (!isSignup || !confirmPw) {
-      if (errorMsg.dataset.type === 'mismatch') errorMsg.textContent = '';
+    if(!isSignup || !confirmPw){
+      if(errorMsg.dataset.type === 'mismatch') errorMsg.textContent = '';
       return;
     }
 
-    if (pw !== confirmPw) {
-      errorMsg.textContent = 'As senhas não coincidem. Verifique e tente novamente.';
+    if(pw !== confirmPw){
+      errorMsg.textContent = 'Acho que a senha de confirmação não ficou igual à primeira';
       errorMsg.dataset.type = 'mismatch';
-    } else if (errorMsg.dataset.type === 'mismatch') {
+    } else if(errorMsg.dataset.type === 'mismatch'){
       errorMsg.textContent = '';
       errorMsg.dataset.type = '';
     }
   }
   confirmField.addEventListener('input', checkPasswordsMatch);
 
-  const KAZER_SUPABASE_URL = 'https://mqjunopzycdezzjmlhip.supabase.co';
-  const KAZER_SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1xanVub3B6eWNkZXp6am1saGlwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc4Mzg3NDksImV4cCI6MjEwMzQxNDc0OX0.Y_o2_QQhZzuCjvHdEfxaR5VrAxo7NFenPaDmdHN3bwM';
-  
-  const kazerSupabase = createClient(KAZER_SUPABASE_URL, KAZER_SUPABASE_ANON_KEY, {
+  // ---------- cliente Supabase público e autenticação real ----------
+  const KAZER\_SUPABASE\_URL = '[https://mqjunopzycdezzjmlhip.supabase.co](https://mqjunopzycdezzjmlhip.supabase.co)';
+  const KAZER\_SUPABASE\_ANON\_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1xanVub3B6eWNkZXp6am1saGlwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc4Mzg3NDksImV4cCI6MjEwMzQxNDc0OX0.Y\_o2\_QQhZzuCjvHdEfxaR5VrAxo7NFenPaDmdHN3bwM';
+  const kazerSupabase = window\.supabase?.createClient(KAZER\_SUPABASE\_URL, KAZER\_SUPABASE\_ANON\_KEY, {
     auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: false }
   });
 
-  function authErrorMessage(error) {
+  function authErrorMessage(error){
     const message = String(error?.message || '').toLowerCase();
-    if (message.includes('invalid login credentials')) return 'E-mail ou senha incorretos.';
-    if (message.includes('email not confirmed')) return 'O acesso por e-mail ainda não está liberado no projeto Kazer.';
-    if (message.includes('user already registered')) return 'Este e-mail já possui uma conta. Tente entrar.';
-    if (message.includes('password')) return 'A senha não atende aos requisitos de segurança do Kazer.';
+    if(message.includes('invalid login credentials')) return 'E-mail ou senha incorretos.';
+    if(message.includes('email not confirmed')) return 'O acesso por e-mail ainda não está liberado no projeto Kazer.';
+    if(message.includes('user already registered')) return 'Este e-mail já tem uma conta. Tente entrar.';
+    if(message.includes('password')) return 'A senha não atende aos requisitos do Kazer.';
     return 'Não foi possível concluir agora. Tente novamente.';
   }
 
-  document.getElementById('authForm').addEventListener('submit', async function(e) {
+  // ---------- validação e envio do form ----------
+  document.getElementById('authForm').addEventListener('submit', async function(e){
     e.preventDefault();
     const errorMsg = document.getElementById('errorMsg');
     const submitBtn = document.getElementById('submitBtn');
-    const form = this;
-    
     const name = document.getElementById('displayName').value.trim();
     const email = document.getElementById('email').value.trim();
     const password = document.getElementById('password').value;
     const confirmPassword = document.getElementById('confirmPassword').value;
 
-    if (!kazerSupabase) {
+    if(!kazerSupabase){
       errorMsg.textContent = 'A conexão segura do Kazer não carregou. Atualize a página.';
       return;
     }
-
-    if (isSignup) {
-      if (!name || name.length > 80) {
-        errorMsg.textContent = 'Informe um nome válido de até 80 caracteres.';
-        form.classList.add('form-error-shake');
-        setTimeout(() => form.classList.remove('form-error-shake'), 400);
+    if(isSignup){
+      if(!name || name.length > 80){ errorMsg.textContent = 'Informe um nome válido de até 80 caracteres.'; return; }
+      if(!isPasswordValid(password)){
+        errorMsg.textContent = 'Sua senha ainda tá fraca — use pelo menos 10 caracteres, 1 letra maiúscula e 1 caractere especial.';
         return;
       }
-      if (password.length < 10 || !/[A-Z]/.test(password) || !/[^A-Za-z0-9]/.test(password)) {
-        errorMsg.textContent = 'Sua senha precisa de pelo menos 10 caracteres, 1 letra maiúscula e 1 caractere especial.';
-        form.classList.add('form-error-shake');
-        setTimeout(() => form.classList.remove('form-error-shake'), 400);
-        return;
-      }
-      if (password !== confirmPassword) {
-        errorMsg.textContent = 'As senhas não coincidem. Verifique e tente novamente.';
-        form.classList.add('form-error-shake');
-        setTimeout(() => form.classList.remove('form-error-shake'), 400);
+      if(password !== confirmPassword){
+        errorMsg.textContent = 'Acho que a senha de confirmação não ficou igual à primeira';
         return;
       }
     }
 
     errorMsg.textContent = '';
     submitBtn.disabled = true;
-    submitBtn.classList.add('loading');
     submitBtn.textContent = isSignup ? 'Criando conta…' : 'Entrando…';
 
-    try {
+    try{
       const result = isSignup
         ? await kazerSupabase.auth.signUp({
             email,
             password,
             options: {
-              data: { display_name: name },
-              emailRedirectTo: `${window.location.origin}/chat`
+              data: { display\_name: name },
+              emailRedirectTo: \`${window\.location.origin}/chat\`
             }
           })
         : await kazerSupabase.auth.signInWithPassword({ email, password });
 
-      if (result.error) throw result.error;
-      if (!result.data.session) {
+      if(result.error) throw result.error;
+      if(!result.data.session){
         throw new Error('A sessão imediata ainda não está habilitada no projeto Kazer.');
       }
-      
       if (isSignup && result.data.user?.id) {
         try {
-          await kazerSupabase.from('profiles').update({ display_name: name }).eq('id', result.data.user.id);
-        } catch (_) {}
+          await kazerSupabase.from('profiles').update({ display\_name: name }).eq('id', result.data.user.id);
+        } catch (\_) {}
       }
-      
-      try { await kazerSupabase.rpc('touch_user_activity'); } catch (_) {}
-      
-      window.location.assign('/chat');
-    } catch (error) {
+      try { await kazerSupabase.rpc('touch\_user\_activity'); } catch (\_) {}
+      window\.location.assign('/chat');
+    }catch(error){
       errorMsg.style.color = '#ff6b6b';
       errorMsg.textContent = authErrorMessage(error);
       submitBtn.disabled = false;
-      submitBtn.classList.remove('loading');
       submitBtn.textContent = isSignup ? 'Criar conta' : 'Sign in';
-      
-      form.classList.add('form-error-shake');
-      setTimeout(() => form.classList.remove('form-error-shake'), 400);
     }
   });
 
-  // Transição splash -> login com timeout de segurança
-  window.addEventListener('load', function() {
+  // ---------- transição splash -> login ----------
+  // ---------- efeito de metal líquido animado no texto KAZER ----------
+  function initMetalText(canvas, text, fontFamily, fontSizeRatio){
+    const ctx = canvas.getContext('2d');
+    const W = canvas.width;
+    const H = canvas.height;
+    let running = true;
+
+    // paleta de reflexos do metal (tons prata/branco com toque frio, tipo cromo)
+    const stops = [
+      { pos: 0.00, c: '#3a3d45' },
+      { pos: 0.18, c: '#c9ccd4' },
+      { pos: 0.32, c: '#ffffff' },
+      { pos: 0.46, c: '#8b8f99' },
+      { pos: 0.60, c: '#f2f3f6' },
+      { pos: 0.75, c: '#5a5d66' },
+      { pos: 0.90, c: '#e8eaef' },
+      { pos: 1.00, c: '#3a3d45' }
+    ];
+
+    function draw(t){
+      if(!running) return;
+      ctx.clearRect(0, 0, W, H);
+
+      // desenha o texto pra usar como máscara
+      ctx.save();
+      ctx.font = \`${Math.floor(H \* fontSizeRatio)}px "${fontFamily}", cursive\`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+
+      // cria o gradiente "líquido" que se desloca ao longo do tempo, como reflexo de luz correndo no metal
+      const shift = (t \* 0.00035) % 1;
+      const shifted = stops.map(function(s){
+        let pos = (s.pos + shift) % 1;
+        return { pos: pos, c: s.c };
+      }).sort(function(a, b){ return a.pos - b.pos; });
+
+      const grad = ctx.createLinearGradient(0, 0, W, 0);
+      shifted.forEach(function(s){
+        grad.addColorStop(s.pos, s.c);
+      });
+      ctx.fillStyle = grad;
+      ctx.fillText(text, W / 2, H / 2 + H \* 0.04);
+
+      // leve brilho superior pra dar volume metálico
+      const sheen = ctx.createLinearGradient(0, 0, 0, H);
+      sheen.addColorStop(0, 'rgba(255,255,255,0.35)');
+      sheen.addColorStop(0.45, 'rgba(255,255,255,0)');
+      sheen.addColorStop(1, 'rgba(0,0,0,0.25)');
+      ctx.globalCompositeOperation = 'source-atop';
+      ctx.fillStyle = sheen;
+      ctx.fillRect(0, 0, W, H);
+      ctx.restore();
+
+      requestAnimationFrame(draw);
+    }
+
+    requestAnimationFrame(draw);
+    return { stop: function(){ running = false; } };
+  }
+
+  // espera a fonte gótica carregar antes de desenhar, senão usa fallback do navegador
+  if(document.fonts && document.fonts.ready){
+    document.fonts.load('90px "UnifrakturMaguntia"').then(function(){
+      return document.fonts.ready;
+    }).then(function(){
+      initMetalText(document.getElementById('splashCanvas'), 'KAZER', 'UnifrakturMaguntia', 0.72);
+      initMetalText(document.getElementById('loginCanvas'), 'KAZER', 'UnifrakturMaguntia', 0.72);
+    });
+  } else {
+    setTimeout(function(){
+      initMetalText(document.getElementById('splashCanvas'), 'KAZER', 'UnifrakturMaguntia', 0.72);
+      initMetalText(document.getElementById('loginCanvas'), 'KAZER', 'UnifrakturMaguntia', 0.72);
+    }, 300);
+  }
+
+  // ---------- checa sessão e decide o próximo passo ----------
+  window\.addEventListener('load', async function(){
     const splash = document.getElementById('splash');
     const login = document.getElementById('login');
-    
-    let transitioned = false;
-    
-    function doTransition() {
-      if (transitioned) return;
-      transitioned = true;
-      
-      setTimeout(() => {
-        splash.style.opacity = '0';
-        setTimeout(() => {
-          splash.style.display = 'none';
-          login.classList.add('visible');
-        }, 800);
-      }, 2500);
+    let session = null;
+    try{
+      const result = await kazerSupabase?.auth.getSession();
+      session = result?.data?.session || null;
+    }catch(error){
+      session = null;
     }
-    
-    // Verifica sessão com timeout
-    if (kazerSupabase) {
-      const sessionCheck = kazerSupabase.auth.getSession()
-        .then(result => {
-          const session = result?.data?.session || null;
-          if (session) {
-            setTimeout(() => { window.location.assign('/chat'); }, 1500);
-            return true;
-          }
-          return false;
-        })
-        .catch(() => false);
-      
-      // Timeout de 3 segundos para garantir transição
-      setTimeout(() => {
-        sessionCheck.then(hasSession => {
-          if (!hasSession) {
-            doTransition();
-          }
-        }).catch(() => {
-          doTransition();
-        });
-      }, 3000);
-    } else {
-      // Se Supabase não carregou, faz transição mesmo assim
-      doTransition();
-    }
-  });
-</script>
 
-</body>
-</html>
+    if(session){
+      setTimeout(function(){ window\.location.assign('/chat'); }, 1800);
+      return;
+    }
+
+    setTimeout(function(){
+      splash.style.opacity = '0';
+      setTimeout(function(){
+        splash.style.display = 'none';
+        login.classList.add('visible');
+      }, 600);
+    }, 2200);
+  });
+\</script>
+
+\</body>
+\</html>   
