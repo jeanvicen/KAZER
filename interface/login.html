@@ -45,7 +45,6 @@
     inset: 0;
   }
 
-  /* ---------- CONTAINER GERAL ---------- */
   .screen {
     position: absolute;
     inset: 0;
@@ -60,7 +59,6 @@
     -webkit-overflow-scrolling: touch;
   }
 
-  /* ---------- SPLASH ---------- */
   #splash {
     z-index: 20;
     background: var(--bg);
@@ -69,9 +67,10 @@
 
   .brand-block {
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: clamp(4px, 1vw, 8px);
+    gap: 20px;
     opacity: 0;
     transform: scale(0.94);
     animation: brandIn 0.8s cubic-bezier(0.2, 0.9, 0.25, 1) forwards;
@@ -88,7 +87,6 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    margin-right: clamp(-8px, -1.5vw, -4px);
   }
 
   .star {
@@ -141,15 +139,17 @@
     to { opacity: 1; transform: translateY(0); }
   }
 
-  /* ---------- TELA DE LOGIN / CRIAR CONTA ---------- */
   #login {
     z-index: 10;
     opacity: 0;
+    pointer-events: none;
     padding: max(env(safe-area-inset-top), 32px) 24px max(env(safe-area-inset-bottom), 32px);
     justify-content: flex-start;
   }
 
   #login.visible {
+    opacity: 1;
+    pointer-events: auto;
     animation: fadeUp 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
   }
 
@@ -245,7 +245,7 @@
     border: none;
     outline: none;
     color: var(--text);
-    font-size: 16px; /* Previne zoom no iOS */
+    font-size: 16px;
     height: 100%;
     font-family: inherit;
   }
@@ -302,7 +302,6 @@
     margin-top: -8px;
   }
 
-  /* ---------- FORÇA DA SENHA ---------- */
   .strength-wrap {
     display: none;
     flex-direction: column;
@@ -476,7 +475,6 @@
     40%, 60% { transform: translateX(3px); }
   }
 
-  /* campos exclusivos de cada modo */
   .signup-only { display: none; }
   body.mode-signup .signup-only { display: flex; }
   body.mode-signup .signup-only.hint { display: block; }
@@ -491,7 +489,6 @@
 </head>
 <body>
 
-  <!-- ================= SPLASH ================= -->
   <div id="splash" class="screen">
     <div class="brand-block">
       <div class="star-wrap">
@@ -529,7 +526,6 @@
     </div>
   </div>
 
-  <!-- ================= LOGIN / CRIAR CONTA ================= -->
   <div id="login" class="screen">
     <div class="login-inner">
       <div class="login-header">
@@ -604,7 +600,6 @@
   import { VerticalBlurShader } from "https://esm.sh/three@0.160.0/examples/jsm/shaders/VerticalBlurShader.js";
   import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-  // ---------- AJUSTE DE VH MOBILE ----------
   function setVH() {
     document.documentElement.style.setProperty('--vh', (window.innerHeight * 0.01) + 'px');
   }
@@ -612,10 +607,9 @@
   window.addEventListener('resize', setVH);
   window.addEventListener('orientationchange', setVH);
 
-  // ---------- EFEITO KAZER THREE.JS (Baseado na referência) ----------
   function initKazerEffect(containerId, text) {
     const container = document.getElementById(containerId);
-    if (!container) return;
+    if (!container) return null;
 
     const pr = Math.min(2, window.devicePixelRatio);
     const scene = new THREE.Scene();
@@ -683,7 +677,7 @@
         img_cutoff: { value: state.img.cutoff },
         band_cutoff: { value: 2 ** state.band.cutoff },
         fill_darken: { value: 2 ** state.img.darken },
-        color: { value: new THREE.Color(0x9b9dff) } // Tom prata/roxo premium
+        color: { value: new THREE.Color(0x9b9dff) }
       },
       vertexShader: `
         #extension GL_ANGLE_instanced_arrays : enable
@@ -744,7 +738,7 @@
       requestAnimationFrame(animate);
       const dt = t - time;
       time = t;
-      bands_mesh.rotateOnWorldAxis(world_z, dt * 0.00035); // Rotação elegante e suave
+      bands_mesh.rotateOnWorldAxis(world_z, dt * 0.00035);
       renderer.render(scene, camera);
     }
     requestAnimationFrame(animate);
@@ -762,14 +756,20 @@
       inputTexture.needsUpdate = true;
       blur.render(inputTexture, state.img.blur);
       resize();
+    }).catch(() => {
+      drawText();
+      inputTexture.needsUpdate = true;
+      blur.render(inputTexture, state.img.blur);
+      resize();
     });
+    
+    return renderer;
   }
 
-  // Inicializa os efeitos visuais
-  initKazerEffect('splashKazer', 'KAZER');
-  initKazerEffect('loginKazer', 'KAZER');
+  // Inicializa efeitos visuais
+  const splashRenderer = initKazerEffect('splashKazer', 'KAZER');
+  const loginRenderer = initKazerEffect('loginKazer', 'KAZER');
 
-  // ---------- LÓGICA DE UI ----------
   function togglePassword(id) {
     const input = document.getElementById(id);
     const btn = document.getElementById('eyeBtn' + id.charAt(0).toUpperCase() + id.slice(1));
@@ -829,7 +829,6 @@
     toggleMode();
   });
 
-  // ---------- FORÇA DA SENHA ----------
   function getPasswordStrength(pw) {
     if (!pw) return 0;
     let score = 0;
@@ -903,7 +902,6 @@
   }
   confirmField.addEventListener('input', checkPasswordsMatch);
 
-  // ---------- SUPABASE (LÓGICA INTACTA) ----------
   const KAZER_SUPABASE_URL = 'https://mqjunopzycdezzjmlhip.supabase.co';
   const KAZER_SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1xanVub3B6eWNkZXp6am1saGlwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc4Mzg3NDksImV4cCI6MjEwMzQxNDc0OX0.Y_o2_QQhZzuCjvHdEfxaR5VrAxo7NFenPaDmdHN3bwM';
   
@@ -1000,31 +998,53 @@
     }
   });
 
-  // ---------- TRANSIÇÃO SPLASH -> LOGIN ----------
-  window.addEventListener('load', async function() {
+  // Transição splash -> login com timeout de segurança
+  window.addEventListener('load', function() {
     const splash = document.getElementById('splash');
     const login = document.getElementById('login');
-    let session = null;
     
-    try {
-      const result = await kazerSupabase?.auth.getSession();
-      session = result?.data?.session || null;
-    } catch (error) {
-      session = null;
-    }
-
-    if (session) {
-      setTimeout(() => { window.location.assign('/chat'); }, 1500);
-      return;
-    }
-
-    setTimeout(() => {
-      splash.style.opacity = '0';
+    let transitioned = false;
+    
+    function doTransition() {
+      if (transitioned) return;
+      transitioned = true;
+      
       setTimeout(() => {
-        splash.style.display = 'none';
-        login.classList.add('visible');
-      }, 800);
-    }, 2500);
+        splash.style.opacity = '0';
+        setTimeout(() => {
+          splash.style.display = 'none';
+          login.classList.add('visible');
+        }, 800);
+      }, 2500);
+    }
+    
+    // Verifica sessão com timeout
+    if (kazerSupabase) {
+      const sessionCheck = kazerSupabase.auth.getSession()
+        .then(result => {
+          const session = result?.data?.session || null;
+          if (session) {
+            setTimeout(() => { window.location.assign('/chat'); }, 1500);
+            return true;
+          }
+          return false;
+        })
+        .catch(() => false);
+      
+      // Timeout de 3 segundos para garantir transição
+      setTimeout(() => {
+        sessionCheck.then(hasSession => {
+          if (!hasSession) {
+            doTransition();
+          }
+        }).catch(() => {
+          doTransition();
+        });
+      }, 3000);
+    } else {
+      // Se Supabase não carregou, faz transição mesmo assim
+      doTransition();
+    }
   });
 </script>
 
