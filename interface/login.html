@@ -3,39 +3,59 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover, user-scalable=no" />
-  <meta name="theme-color" content="#050507" />
+  <meta name="theme-color" content="#050508" />
   <meta name="color-scheme" content="dark" />
+  <meta name="description" content="KAZER — acesso à sua experiência de IA." />
+
   <title>KAZER</title>
 
   <link rel="icon" href="../download/assets/kazer-login-symbol.png" type="image/png" />
   <link rel="apple-touch-icon" href="../download/assets/kazer-login-symbol.png" />
+
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link
-    href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700;800&family=Inter:wght@400;500;600;700&display=swap"
+    href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700;800&family=Inter:wght@400;500;600;700&family=UnifrakturMaguntia&display=swap"
     rel="stylesheet"
   />
 
   <style>
     :root {
-      --bg: #050507;
-      --bg-soft: #09090d;
-      --panel: rgba(14, 14, 19, 0.82);
-      --panel-solid: #111117;
-      --line: rgba(255, 255, 255, 0.09);
-      --line-strong: rgba(255, 255, 255, 0.15);
-      --text: #f6f6f8;
-      --text-soft: rgba(246, 246, 248, 0.68);
-      --text-dim: rgba(246, 246, 248, 0.42);
-      --accent: #7457ff;
-      --accent-2: #927cff;
-      --accent-soft: rgba(116, 87, 255, 0.16);
-      --danger: #ff6c77;
-      --success: #6ce0a0;
-      --shadow: 0 24px 80px rgba(0, 0, 0, 0.52);
-      --radius-lg: 28px;
+      --purple: #6C4CF1;
+      --purple-2: #8B6FFF;
+      --purple-3: #A997FF;
+
+      --bg: #050508;
+      --bg-2: #09090F;
+      --surface: rgba(255,255,255,0.032);
+      --surface-2: rgba(255,255,255,0.048);
+      --surface-solid: #101016;
+
+      --line: rgba(255,255,255,0.085);
+      --line-soft: rgba(255,255,255,0.055);
+      --line-bright: rgba(255,255,255,0.15);
+
+      --text: #F7F7FA;
+      --text-soft: rgba(247,247,250,0.66);
+      --text-muted: rgba(247,247,250,0.40);
+
+      --gold: #FFD86B;
+      --success: #2ED573;
+      --error: #FF6B6B;
+      --warning: #FFB454;
+
+      --radius-xl: 30px;
+      --radius-lg: 22px;
       --radius-md: 16px;
-      --radius-sm: 12px;
+      --radius-sm: 13px;
+
+      --shadow-card:
+        0 35px 90px rgba(0,0,0,.48),
+        0 10px 30px rgba(0,0,0,.22),
+        inset 0 1px 0 rgba(255,255,255,.045);
+
+      --ease-out: cubic-bezier(.2,.8,.2,1);
+      --ease-soft: cubic-bezier(.22,.8,.24,1);
       --vh: 1vh;
     }
 
@@ -57,8 +77,8 @@
     body {
       position: fixed;
       inset: 0;
-      color: var(--text);
       font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--text);
       -webkit-font-smoothing: antialiased;
       text-rendering: optimizeLegibility;
       overscroll-behavior: none;
@@ -70,197 +90,25 @@
     }
 
     button {
-      -webkit-appearance: none;
+      border: 0;
+      outline: 0;
       appearance: none;
+      -webkit-appearance: none;
     }
 
     .app {
       position: relative;
-      z-index: 1;
       width: 100%;
       height: calc(var(--vh) * 100);
-      min-height: 100%;
+      overflow: hidden;
       isolation: isolate;
-      overflow: hidden;
       background:
-        radial-gradient(circle at 15% 12%, rgba(116, 87, 255, 0.09), transparent 28%),
-        radial-gradient(circle at 85% 90%, rgba(116, 87, 255, 0.065), transparent 32%),
-        var(--bg);
+        radial-gradient(circle at 16% 14%, rgba(108,76,241,.12), transparent 30%),
+        radial-gradient(circle at 85% 86%, rgba(139,111,255,.08), transparent 34%),
+        linear-gradient(180deg, #050508 0%, #07070B 100%);
     }
 
-    /* Premium monochrome visual system */
-    .app {
-      position: relative;
-      z-index: 1;
-      width: 100%;
-      height: calc(var(--vh) * 100);
-      min-height: 100%;
-      isolation: isolate;
-      overflow: hidden;
-      background: transparent;
-    }
-
-    .ambient {
-      position: absolute;
-      inset: 0;
-      z-index: 0;
-      pointer-events: none;
-      overflow: hidden;
-    }
-
-    .ambient::before {
-      content: "";
-      position: absolute;
-      inset: 0;
-      background:
-        radial-gradient(circle at 50% 50%, rgba(255,255,255,.024), transparent 36%),
-        radial-gradient(circle at 12% 18%, rgba(255,255,255,.022), transparent 25%),
-        radial-gradient(circle at 88% 82%, rgba(255,255,255,.018), transparent 28%);
-    }
-
-    .ambient-grid,
-    .orb,
-    .ambient-noise {
-      opacity: 0 !important;
-    }
-
-    /* Intro / splash */
-    .screen {
-      position: absolute;
-      inset: 0;
-      z-index: 5;
-      width: 100%;
-      height: 100%;
-    }
-
-    #splash {
-      display: grid;
-      place-items: center;
-      background:
-        radial-gradient(circle at 50% 43%, rgba(116,87,255,0.12), transparent 28%),
-        #050507;
-      transition: opacity 0.65s cubic-bezier(.2,.75,.2,1), visibility 0.65s;
-      overflow: hidden;
-    }
-
-    #splash.is-hidden {
-      opacity: 0;
-      visibility: hidden;
-      pointer-events: none;
-    }
-
-    .splash-core {
-      position: relative;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      width: min(720px, 92vw);
-      min-height: 300px;
-      text-align: center;
-    }
-
-    .splash-mark-wrap {
-      position: relative;
-      width: 82px;
-      height: 82px;
-      margin-bottom: 14px;
-      animation: splashIn 1.05s cubic-bezier(.17,.9,.22,1) both;
-    }
-
-    .splash-mark-wrap::before {
-      content: "";
-      position: absolute;
-      inset: -22px;
-      border-radius: 50%;
-      background: radial-gradient(circle, rgba(255,255,255,0.10), transparent 68%);
-      filter: blur(8px);
-      animation: markGlow 2.6s ease-in-out infinite;
-    }
-
-    .splash-mark {
-      position: relative;
-      width: 100%;
-      height: 100%;
-      display: block;
-      background: url("../download/assets/kazer-login-symbol.png") center / contain no-repeat;
-      filter: drop-shadow(0 0 18px rgba(255,255,255,0.08));
-      animation: markFloat 3.1s ease-in-out infinite;
-    }
-
-    .splash-wordmark {
-      width: min(420px, 78vw);
-      height: auto;
-      opacity: 0;
-      animation: wordmarkIn 0.95s cubic-bezier(.17,.9,.22,1) 0.18s forwards;
-    }
-
-    .splash-caption {
-      margin-top: 12px;
-      font-size: 11px;
-      font-weight: 600;
-      letter-spacing: 0.28em;
-      color: rgba(255,255,255,0.38);
-      text-transform: uppercase;
-      opacity: 0;
-      animation: fadeIn 0.8s ease 0.62s forwards;
-    }
-
-    .splash-progress {
-      position: absolute;
-      left: 50%;
-      bottom: 24px;
-      width: min(160px, 34vw);
-      height: 1px;
-      transform: translateX(-50%);
-      overflow: hidden;
-      background: rgba(255,255,255,0.08);
-      border-radius: 999px;
-      opacity: 0;
-      animation: fadeIn 0.8s ease 0.55s forwards;
-    }
-
-    .splash-progress::after {
-      content: "";
-      position: absolute;
-      inset: 0 auto 0 0;
-      width: 100%;
-      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.85), transparent);
-      transform: translateX(-100%);
-      animation: loadingSweep 1.55s ease-in-out 0.55s infinite;
-    }
-
-    @keyframes splashIn {
-      from { opacity: 0; transform: translateY(18px) scale(.92); }
-      to { opacity: 1; transform: translateY(0) scale(1); }
-    }
-
-    @keyframes wordmarkIn {
-      from { opacity: 0; transform: translateY(14px) scale(.97); filter: blur(5px); }
-      to { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
-    }
-
-    @keyframes fadeIn {
-      from { opacity: 0; }
-      to { opacity: 1; }
-    }
-
-    @keyframes markFloat {
-      0%, 100% { transform: translateY(0) scale(1); }
-      50% { transform: translateY(-5px) scale(1.015); }
-    }
-
-    @keyframes markGlow {
-      0%, 100% { opacity: .52; transform: scale(.98); }
-      50% { opacity: .92; transform: scale(1.06); }
-    }
-
-    @keyframes loadingSweep {
-      0% { transform: translateX(-100%); }
-      50%, 100% { transform: translateX(100%); }
-    }
-
-    /* Animated monochrome line background */
+    /* ---------- animated line background ---------- */
     #lineBackground {
       position: fixed;
       inset: 0;
@@ -268,15 +116,167 @@
       width: 100%;
       height: 100%;
       pointer-events: none;
-      background: #050507;
+      opacity: .86;
     }
 
-    /* Main auth */
-    #login {
+    .background-vignette {
+      position: fixed;
+      inset: 0;
+      z-index: 1;
+      pointer-events: none;
+      background:
+        radial-gradient(circle at 50% 46%, transparent 20%, rgba(5,5,8,.14) 62%, rgba(5,5,8,.58) 100%),
+        linear-gradient(90deg, rgba(5,5,8,.30), transparent 22%, transparent 78%, rgba(5,5,8,.30));
+    }
+
+    .grain {
+      position: fixed;
+      inset: 0;
+      z-index: 2;
+      pointer-events: none;
+      opacity: .025;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+      mix-blend-mode: soft-light;
+    }
+
+    /* ---------- screens ---------- */
+    .screen {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+    }
+
+    /* ---------- splash ---------- */
+    #splash {
       z-index: 10;
+      display: grid;
+      place-items: center;
+      background:
+        radial-gradient(circle at 50% 47%, rgba(108,76,241,.11), transparent 30%),
+        #050508;
+      transition:
+        opacity .8s cubic-bezier(.4,0,.2,1),
+        visibility .8s;
+      overflow: hidden;
+    }
+
+    #splash.hidden {
       opacity: 0;
       visibility: hidden;
       pointer-events: none;
+    }
+
+    .splash-stage {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      width: min(760px, 92vw);
+      min-height: 350px;
+      text-align: center;
+    }
+
+    .splash-orbit {
+      position: absolute;
+      width: min(460px, 70vw);
+      aspect-ratio: 1;
+      border: 1px solid rgba(255,255,255,.045);
+      border-radius: 50%;
+      box-shadow:
+        0 0 0 44px rgba(255,255,255,.009),
+        0 0 0 88px rgba(255,255,255,.006);
+      animation: orbitPulse 3.2s ease-in-out infinite;
+    }
+
+    .splash-orbit::before {
+      content: "";
+      position: absolute;
+      left: 50%;
+      top: -2px;
+      width: 4px;
+      height: 4px;
+      border-radius: 50%;
+      background: rgba(255,255,255,.72);
+      box-shadow: 0 0 15px rgba(139,111,255,.78);
+      transform: translateX(-50%);
+    }
+
+    .splash-mark {
+      position: relative;
+      width: 82px;
+      height: 82px;
+      margin-bottom: 13px;
+      border-radius: 24px;
+      animation: markIn .8s var(--ease-out) both, markPulse 3.2s ease-in-out 1s infinite;
+    }
+
+    .splash-mark::before {
+      content: "";
+      position: absolute;
+      inset: -25px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(139,111,255,.18), transparent 68%);
+      filter: blur(10px);
+    }
+
+    .splash-mark img {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      display: block;
+      object-fit: contain;
+      filter:
+        brightness(1.08)
+        drop-shadow(0 0 18px rgba(139,111,255,.18));
+    }
+
+    .splash-word {
+      width: min(445px, 78vw);
+      height: auto;
+      display: block;
+      overflow: visible;
+      opacity: 0;
+      animation: wordIn .95s var(--ease-out) .16s forwards;
+    }
+
+    .splash-caption {
+      margin-top: 13px;
+      color: rgba(255,255,255,.34);
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: .28em;
+      text-transform: uppercase;
+      opacity: 0;
+      animation: fadeIn .8s ease .58s forwards;
+    }
+
+    .splash-progress {
+      position: absolute;
+      bottom: max(26px, env(safe-area-inset-bottom));
+      left: 50%;
+      width: 150px;
+      height: 1px;
+      overflow: hidden;
+      transform: translateX(-50%);
+      background: rgba(255,255,255,.08);
+      border-radius: 99px;
+    }
+
+    .splash-progress::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      background: linear-gradient(90deg, transparent, #8b6fff, transparent);
+      transform: translateX(-100%);
+      animation: sweep 1.55s ease-in-out .4s infinite;
+    }
+
+    /* ---------- login screen ---------- */
+    #login {
+      z-index: 8;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -287,7 +287,10 @@
         max(18px, env(safe-area-inset-left));
       overflow-y: auto;
       overscroll-behavior: contain;
-      transition: opacity .65s ease, visibility .65s ease;
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+      transition: opacity .75s var(--ease-out), visibility .75s;
     }
 
     #login.visible {
@@ -298,260 +301,163 @@
 
     .auth-layout {
       position: relative;
-      z-index: 1;
+      z-index: 3;
       display: grid;
-      grid-template-columns: minmax(0, 1fr) minmax(380px, 430px);
-      gap: clamp(54px, 8vw, 122px);
+      grid-template-columns: minmax(0, 1fr) minmax(390px, 460px);
       align-items: center;
+      gap: clamp(46px, 8vw, 130px);
       width: min(1240px, 100%);
-      min-height: min(760px, calc(100% - 18px));
-      padding: clamp(20px, 3vw, 44px);
+      min-height: min(760px, calc(100% - 20px));
+      padding: clamp(24px, 3vw, 46px);
     }
 
-    /* Brand side */
+    /* ---------- editorial / brand side ---------- */
     .brand-panel {
       position: relative;
       display: flex;
-      min-height: 560px;
+      min-height: 600px;
       flex-direction: column;
       justify-content: center;
-      padding: 20px 12px 20px 0;
+      padding: 10px 0;
     }
 
     .brand-panel::before {
       content: "";
       position: absolute;
-      width: min(470px, 78%);
+      width: min(520px, 80%);
       aspect-ratio: 1;
-      top: 13%;
-      left: -7%;
-      border: 1px solid rgba(255,255,255,.035);
+      left: -8%;
+      top: 12%;
       border-radius: 50%;
+      border: 1px solid rgba(255,255,255,.035);
       box-shadow:
-        0 0 0 52px rgba(255,255,255,.010),
+        0 0 0 52px rgba(255,255,255,.009),
         0 0 0 104px rgba(255,255,255,.006);
+      mask-image: linear-gradient(90deg, black 30%, transparent 84%);
       pointer-events: none;
-      mask-image: linear-gradient(90deg, black 35%, transparent 80%);
     }
 
-    .brand-topline {
+    .brand-eyebrow {
       display: inline-flex;
       align-items: center;
-      gap: 10px;
+      gap: 9px;
       width: fit-content;
-      margin-bottom: 20px;
-      color: rgba(255,255,255,.38);
+      margin-bottom: 17px;
+      color: rgba(255,255,255,.40);
       font-size: 10px;
       font-weight: 700;
       letter-spacing: .24em;
       text-transform: uppercase;
+      animation: revealUp .75s var(--ease-out) .05s both;
     }
 
-    .brand-dot {
-      width: 7px;
-      height: 7px;
+    .brand-eyebrow-dot {
+      width: 6px;
+      height: 6px;
       border-radius: 50%;
-      background: var(--accent-2);
-      box-shadow: 0 0 0 5px rgba(146,124,255,0.08), 0 0 18px rgba(116,87,255,.75);
-      animation: dotPulse 2.2s ease-in-out infinite;
-    }
-
-    @keyframes dotPulse {
-      0%, 100% { transform: scale(1); opacity: .8; }
-      50% { transform: scale(1.18); opacity: 1; }
-    }
-
-    .brand-symbol {
-      position: relative;
-      width: 66px;
-      height: 66px;
-      margin-bottom: 22px;
-      display: grid;
-      place-items: center;
-      border: 1px solid rgba(255,255,255,.11);
-      border-radius: 18px;
-      background:
-        linear-gradient(145deg, rgba(255,255,255,.07), rgba(255,255,255,.018));
+      background: var(--purple-2);
       box-shadow:
-        inset 0 1px 0 rgba(255,255,255,.07),
-        0 20px 60px rgba(0,0,0,.26);
-      transform: translateZ(0);
-      animation: softAppear .9s cubic-bezier(.2,.9,.2,1) both;
-    }
-
-    .brand-symbol::before {
-      content: "";
-      position: absolute;
-      inset: 9px;
-      border: 1px solid rgba(255,255,255,.045);
-      border-radius: 14px;
-    }
-
-    .brand-symbol img {
-      width: 46px;
-      height: 46px;
-      object-fit: contain;
-      filter: brightness(1.08) contrast(1.02);
-    }
-
-    .brand-title {
-      max-width: 700px;
-      font-size: clamp(54px, 6.9vw, 92px);
-      line-height: .86;
-      letter-spacing: -.065em;
-      font-weight: 700;
-      color: #f9f9fb;
-      text-wrap: balance;
-      animation: softAppear .95s cubic-bezier(.2,.9,.2,1) .05s both;
-    }
-
-    .brand-title em {
-      display: block;
-      font-family: "Cinzel", serif;
-      font-style: normal;
-      font-weight: 700;
-      letter-spacing: .045em;
-      line-height: .84;
-      margin-top: 8px;
-      color: #fff;
-      text-shadow:
-        0 1px 0 rgba(255,255,255,.22),
-        0 16px 42px rgba(255,255,255,.045);
-    }
-
-    .brand-description {
-      width: min(500px, 92%);
-      margin-top: 25px;
-      color: rgba(246,246,248,.52);
-      font-size: 14px;
-      line-height: 1.8;
-      animation: softAppear .95s cubic-bezier(.2,.9,.2,1) .13s both;
-    }
-
-    .brand-rule {
-      width: min(400px, 74%);
-      height: 1px;
-      margin-top: 32px;
-      background: linear-gradient(90deg, rgba(255,255,255,.14), transparent 82%);
-      animation: softAppear .95s cubic-bezier(.2,.9,.2,1) .18s both;
-    }
-
-    .brand-meta {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-      margin-top: 16px;
-      animation: softAppear .95s cubic-bezier(.2,.9,.2,1) .22s both;
-    }
-
-    .meta-chip {
-      display: inline-flex;
-      align-items: center;
-      gap: 7px;
-      min-height: 29px;
-      padding: 7px 10px;
-      border: 1px solid rgba(255,255,255,.07);
-      border-radius: 999px;
-      background: rgba(255,255,255,.02);
-      color: rgba(255,255,255,.42);
-      font-size: 10px;
-      font-weight: 600;
-      letter-spacing: .025em;
-    }
-
-    .meta-chip svg {
-      opacity: .7;
+        0 0 0 5px rgba(139,111,255,.08),
+        0 0 18px rgba(139,111,255,.6);
+      animation: dotPulse 2.2s ease-in-out infinite;
     }
 
     .brand-message {
       position: relative;
-      min-height: 132px;
-      max-width: 620px;
-      margin-bottom: 8px;
-      overflow: hidden;
+      max-width: 720px;
+      min-height: 226px;
+      z-index: 1;
     }
 
-    .brand-message-line {
-      position: relative;
+    .brand-kicker {
       display: block;
-      width: fit-content;
-      max-width: 100%;
-      color: rgba(255,255,255,.48);
+      min-height: 15px;
+      margin-bottom: 13px;
+      color: rgba(255,255,255,.38);
       font-size: 10px;
       font-weight: 700;
-      letter-spacing: .22em;
-      line-height: 1.4;
+      letter-spacing: .20em;
       text-transform: uppercase;
-      margin-bottom: 10px;
-    }
-
-    .brand-message-line::before {
-      content: "";
-      display: inline-block;
-      width: 22px;
-      height: 1px;
-      margin-right: 9px;
-      vertical-align: middle;
-      background: rgba(255,255,255,.35);
     }
 
     .brand-message-title {
       display: block;
-      min-height: 84px;
-      max-width: 650px;
-      font-size: clamp(38px, 4.7vw, 67px);
-      line-height: .93;
-      letter-spacing: -.055em;
+      min-height: 130px;
+      max-width: 710px;
+      color: #F9F9FB;
+      font-size: clamp(46px, 5.1vw, 78px);
       font-weight: 700;
-      color: #fafafd;
+      line-height: .91;
+      letter-spacing: -.065em;
       text-wrap: balance;
-      transition: opacity .35s ease, transform .55s cubic-bezier(.2,.85,.2,1), filter .35s ease;
+      transition:
+        opacity .32s ease,
+        transform .55s var(--ease-out),
+        filter .32s ease;
     }
 
-    .brand-message-title .accent-word {
+    .brand-message-title .line {
       display: block;
-      color: #fff;
+    }
+
+    .brand-message-title .accent {
+      display: block;
+      margin-top: 5px;
+      color: transparent;
+      background:
+        linear-gradient(
+          105deg,
+          #fff 0%,
+          #d7d8ff 22%,
+          #9b8cff 42%,
+          #fff 54%,
+          #8070f4 72%,
+          #f7f7ff 100%
+        );
+      background-size: 220% auto;
+      -webkit-background-clip: text;
+      background-clip: text;
+      animation: gradientDrift 8s linear infinite;
     }
 
     .brand-message-title.out {
       opacity: 0;
-      transform: translateY(16px);
+      transform: translateY(17px);
       filter: blur(7px);
     }
 
     .brand-message-title.in {
-      animation: messageIn .6s cubic-bezier(.2,.9,.2,1) both;
+      animation: messageIn .62s var(--ease-out) both;
     }
 
     .brand-message-sub {
-      margin-top: 10px;
-      max-width: 470px;
-      color: rgba(255,255,255,.44);
-      font-size: 13px;
-      line-height: 1.65;
-      transition: opacity .35s ease, transform .55s cubic-bezier(.2,.85,.2,1);
+      max-width: 500px;
+      margin-top: 18px;
+      color: rgba(247,247,250,.48);
+      font-size: 14px;
+      line-height: 1.78;
+      transition: opacity .32s ease, transform .55s var(--ease-out);
     }
 
     .brand-message-sub.out {
       opacity: 0;
-      transform: translateY(8px);
+      transform: translateY(9px);
     }
 
     .brand-message-sub.in {
-      animation: subIn .65s ease both .05s;
+      animation: subIn .62s ease .04s both;
     }
 
     .brand-state {
       display: inline-flex;
       align-items: center;
-      gap: 7px;
-      margin-top: 18px;
+      gap: 10px;
+      margin-top: 19px;
       color: rgba(255,255,255,.32);
-      font-size: 10px;
-      font-weight: 600;
-      letter-spacing: .12em;
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: .15em;
       text-transform: uppercase;
-      transition: opacity .3s ease;
     }
 
     .brand-state-bars {
@@ -562,125 +468,157 @@
 
     .brand-state-bars i {
       display: block;
-      width: 16px;
+      width: 12px;
       height: 2px;
       border-radius: 99px;
-      background: rgba(255,255,255,.18);
-      transition: background .3s ease, width .3s ease;
+      background: rgba(255,255,255,.15);
+      transition: width .35s var(--ease-soft), background .35s ease;
     }
 
     .brand-state-bars i.active {
       width: 28px;
-      background: rgba(255,255,255,.78);
+      background: rgba(255,255,255,.72);
     }
 
-    @keyframes messageIn {
-      from {
-        opacity: 0;
-        transform: translateY(18px);
-        filter: blur(8px);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0);
-        filter: blur(0);
-      }
+    .brand-symbol {
+      position: relative;
+      width: 64px;
+      height: 64px;
+      margin-top: 34px;
+      display: grid;
+      place-items: center;
+      border: 1px solid rgba(255,255,255,.10);
+      border-radius: 18px;
+      background:
+        linear-gradient(145deg, rgba(255,255,255,.065), rgba(255,255,255,.015));
+      box-shadow:
+        inset 0 1px 0 rgba(255,255,255,.08),
+        0 20px 55px rgba(0,0,0,.26);
+      animation: revealUp .8s var(--ease-out) .2s both;
     }
 
-    @keyframes subIn {
-      from {
-        opacity: 0;
-        transform: translateY(10px);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
+    .brand-symbol::before {
+      content: "";
+      position: absolute;
+      inset: 9px;
+      border: 1px solid rgba(255,255,255,.045);
+      border-radius: 13px;
     }
 
-    @keyframes softAppear {
-      from { opacity: 0; transform: translateY(14px); }
-      to { opacity: 1; transform: translateY(0); }
+    .brand-symbol img {
+      position: relative;
+      width: 44px;
+      height: 44px;
+      object-fit: contain;
+      filter: brightness(1.07);
     }
 
-    /* Auth card */
+    .brand-rule {
+      width: min(420px, 74%);
+      height: 1px;
+      margin-top: 31px;
+      background: linear-gradient(90deg, rgba(255,255,255,.14), transparent 82%);
+      animation: revealUp .8s var(--ease-out) .27s both;
+    }
+
+    .brand-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 15px;
+      animation: revealUp .8s var(--ease-out) .32s both;
+    }
+
+    .meta-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      min-height: 28px;
+      padding: 6px 10px;
+      border: 1px solid rgba(255,255,255,.065);
+      border-radius: 999px;
+      background: rgba(255,255,255,.018);
+      color: rgba(255,255,255,.37);
+      font-size: 10px;
+      font-weight: 600;
+    }
+
+    .meta-chip svg {
+      opacity: .75;
+    }
+
+    /* ---------- auth card ---------- */
     .auth-shell {
       width: 100%;
-      max-width: 430px;
+      max-width: 460px;
       justify-self: end;
     }
 
     .auth-card {
       position: relative;
-      padding: clamp(25px, 3vw, 34px);
-      border: 1px solid rgba(255,255,255,.085);
-      border-radius: 24px;
+      padding: clamp(26px, 3vw, 38px);
+      border: 1px solid rgba(255,255,255,.095);
+      border-radius: var(--radius-xl);
       background:
-        linear-gradient(180deg, rgba(18,18,23,.88), rgba(9,9,12,.94));
-      box-shadow:
-        0 34px 90px rgba(0,0,0,.46),
-        0 8px 30px rgba(0,0,0,.20),
-        inset 0 1px 0 rgba(255,255,255,.045);
+        linear-gradient(180deg, rgba(20,20,27,.78), rgba(9,9,13,.88));
+      box-shadow: var(--shadow-card);
       backdrop-filter: blur(24px);
       -webkit-backdrop-filter: blur(24px);
       overflow: hidden;
-      animation: cardIn .8s cubic-bezier(.2,.85,.2,1) .08s both;
+      animation: cardIn .8s var(--ease-out) .1s both;
     }
 
     .auth-card::before {
       content: "";
       position: absolute;
-      left: 16%;
-      right: 16%;
-      top: -1px;
+      left: 15%;
+      right: 15%;
+      top: 0;
       height: 1px;
-      background: linear-gradient(90deg, transparent, rgba(255,255,255,.38), transparent);
-      opacity: .6;
+      background: linear-gradient(90deg, transparent, rgba(139,111,255,.78), transparent);
+      opacity: .72;
     }
 
     .auth-card::after {
       content: "";
       position: absolute;
-      width: 260px;
-      height: 260px;
-      top: -170px;
+      width: 280px;
+      height: 280px;
+      top: -190px;
       right: -170px;
       border-radius: 50%;
-      background: radial-gradient(circle, rgba(255,255,255,.055), transparent 67%);
+      background: radial-gradient(circle, rgba(139,111,255,.11), transparent 68%);
       pointer-events: none;
     }
 
-    @keyframes cardIn {
-      from { opacity: 0; transform: translateY(18px) scale(.985); }
-      to { opacity: 1; transform: translateY(0) scale(1); }
-    }
-
     .auth-header {
-      margin-bottom: 27px;
+      position: relative;
+      z-index: 1;
+      margin-bottom: 26px;
     }
 
     .auth-symbol {
-      width: 35px;
-      height: 35px;
-      margin-bottom: 18px;
+      width: 36px;
+      height: 36px;
+      margin-bottom: 19px;
       display: block;
       object-fit: contain;
-      opacity: .95;
-      filter: drop-shadow(0 0 12px rgba(255,255,255,.08));
+      opacity: .96;
+      filter: drop-shadow(0 0 13px rgba(139,111,255,.15));
     }
 
     .auth-title {
-      font-size: clamp(26px, 3vw, 30px);
-      line-height: 1.05;
+      font-size: clamp(27px, 3vw, 31px);
       font-weight: 700;
+      line-height: 1.03;
       letter-spacing: -.045em;
     }
 
     .auth-subtitle {
       margin-top: 9px;
-      color: rgba(246,246,248,.55);
+      color: rgba(247,247,250,.54);
       font-size: 12px;
-      line-height: 1.6;
+      line-height: 1.64;
     }
 
     .auth-status {
@@ -703,11 +641,13 @@
       height: 5px;
       border-radius: 50%;
       background: var(--success);
-      box-shadow: 0 0 0 4px rgba(108,224,160,.07);
+      box-shadow: 0 0 0 4px rgba(46,213,115,.06), 0 0 13px rgba(46,213,115,.28);
     }
 
-    /* Fields */
+    /* ---------- form ---------- */
     form {
+      position: relative;
+      z-index: 1;
       display: flex;
       flex-direction: column;
       gap: 12px;
@@ -724,27 +664,30 @@
       align-items: center;
       gap: 11px;
       padding: 0 14px;
-      border: 1px solid rgba(255,255,255,.08);
-      border-radius: 13px;
-      background: rgba(255,255,255,.018);
+      border: 1px solid rgba(255,255,255,.085);
+      border-radius: var(--radius-sm);
+      background: rgba(0,0,0,.18);
       transition:
-        border-color .2s ease,
-        background .2s ease,
-        box-shadow .2s ease,
-        transform .2s ease;
+        border-color .3s var(--ease-out),
+        background .3s ease,
+        box-shadow .3s var(--ease-out),
+        transform .3s var(--ease-out);
     }
 
     .field:hover {
-      background: rgba(255,255,255,.032);
       border-color: rgba(255,255,255,.13);
+      background: rgba(255,255,255,.022);
     }
 
     .field:focus-within {
-      border-color: rgba(255,255,255,.28);
-      background: rgba(255,255,255,.028);
+      border-color: var(--purple);
+      border-width: 2px;
+      padding-left: 13px;
+      padding-right: 13px;
+      background: rgba(108,76,241,.038);
       box-shadow:
-        0 0 0 3px rgba(255,255,255,.035),
-        0 10px 28px rgba(0,0,0,.14);
+        0 0 0 4px rgba(108,76,241,.20),
+        0 12px 30px rgba(0,0,0,.13);
       transform: translateY(-1px);
     }
 
@@ -752,12 +695,14 @@
       width: 18px;
       height: 18px;
       flex: 0 0 auto;
-      opacity: .5;
-      transition: opacity .2s ease;
+      color: rgba(255,255,255,.40);
+      opacity: .55;
+      transition: opacity .3s ease, color .3s ease;
     }
 
     .field:focus-within .field-icon {
-      opacity: .88;
+      color: var(--purple-3);
+      opacity: 1;
     }
 
     .field input {
@@ -768,18 +713,18 @@
       outline: 0;
       background: transparent;
       color: var(--text);
-      font-size: 15px;
+      font-size: 16px;
     }
 
     .field input::placeholder {
-      color: rgba(246,246,248,.34);
+      color: rgba(247,247,250,.32);
     }
 
     .field input:-webkit-autofill,
     .field input:-webkit-autofill:hover,
     .field input:-webkit-autofill:focus {
       -webkit-text-fill-color: var(--text);
-      box-shadow: 0 0 0 1000px rgba(255,255,255,.02) inset;
+      box-shadow: 0 0 0 1000px rgba(0,0,0,.12) inset;
       transition: background-color 9999s ease-in-out 0s;
     }
 
@@ -789,33 +734,32 @@
       flex: 0 0 auto;
       display: grid;
       place-items: center;
-      border: 0;
       border-radius: 9px;
+      color: rgba(255,255,255,.45);
       background: transparent;
-      color: rgba(255,255,255,.5);
       cursor: pointer;
       transition: background .18s ease, color .18s ease, transform .18s ease;
     }
 
     .toggle-eye:hover {
-      background: rgba(255,255,255,.06);
+      background: rgba(255,255,255,.055);
       color: #fff;
     }
 
     .toggle-eye:active {
-      transform: scale(.94);
+      transform: scale(.93);
     }
 
     .eye-icon .eye-pupil {
       transform-origin: center;
       transform-box: fill-box;
-      transition: transform .25s cubic-bezier(.5,0,.5,1), opacity .18s ease;
+      transition: transform 280ms cubic-bezier(.5,0,.5,1), opacity 180ms ease;
     }
 
     .eye-icon .eye-outline {
       transform-origin: center;
       transform-box: fill-box;
-      transition: transform .25s cubic-bezier(.5,0,.5,1);
+      transition: transform 280ms cubic-bezier(.5,0,.5,1);
     }
 
     .eye-icon.is-closed .eye-pupil {
@@ -827,7 +771,7 @@
       transform: scaleY(.12);
     }
 
-    /* Signup state */
+    /* signup */
     .signup-only {
       display: none;
     }
@@ -836,87 +780,94 @@
       display: flex;
     }
 
-    body.mode-signup .signup-only.hint {
+    body.mode-signup .signup-only.password-rule {
       display: block;
     }
 
-    /* Strength */
+    .mode-enter,
+    .mode-signup-extra {
+      overflow: hidden;
+    }
+
+    /* strength */
     .strength-wrap {
       display: none;
       flex-direction: column;
       gap: 8px;
-      padding: 2px 2px 0;
-      margin-bottom: 1px;
+      padding: 1px 1px 0;
     }
 
     body.mode-signup .strength-wrap.show {
       display: flex;
-      animation: strengthIn .28s ease;
-    }
-
-    @keyframes strengthIn {
-      from { opacity: 0; transform: translateY(-4px); }
-      to { opacity: 1; transform: translateY(0); }
+      animation: fieldReveal .32s var(--ease-out) both;
     }
 
     .strength-track {
       width: 100%;
       height: 4px;
       overflow: hidden;
-      border-radius: 999px;
-      background: rgba(255,255,255,.09);
+      border-radius: 99px;
+      background: rgba(255,255,255,.08);
     }
 
     .strength-fill {
       width: 0;
       height: 100%;
       border-radius: inherit;
-      transition: width .45s cubic-bezier(.4,1.2,.4,1), background-color .3s ease;
+      background: var(--error);
+      transition:
+        width .42s cubic-bezier(.4,0,.2,1),
+        background-color .30s ease;
+    }
+
+    .strength-fill.pulse {
+      animation: strengthPulse .42s ease;
     }
 
     .strength-meta {
       display: flex;
+      align-items: center;
       justify-content: space-between;
-      gap: 12px;
-      min-height: 16px;
+      gap: 10px;
+      min-height: 15px;
+    }
+
+    .strength-text,
+    .strength-score {
+      font-size: 10px;
+      font-weight: 600;
     }
 
     .strength-text {
-      font-size: 11px;
-      font-weight: 600;
-      color: var(--text-dim);
-      transition: color .25s ease;
+      color: var(--text-muted);
+      transition: color .3s ease;
+    }
+
+    .strength-score {
+      color: rgba(255,255,255,.24);
     }
 
     .password-rule {
-      color: var(--text-dim);
-      font-size: 11px;
-      line-height: 1.5;
+      color: rgba(255,255,255,.34);
+      font-size: 10px;
+      line-height: 1.55;
     }
 
-    /* Error */
+    /* error */
     .error-msg {
       min-height: 18px;
-      padding: 2px 1px;
-      color: var(--danger);
+      padding: 1px 2px;
+      color: var(--error);
       font-size: 12px;
-      line-height: 1.45;
+      line-height: 1.48;
       text-align: left;
     }
 
     .shake {
-      animation: formShake .36s ease;
+      animation: formShake 400ms cubic-bezier(.36,.07,.19,.97);
     }
 
-    @keyframes formShake {
-      0%,100% { transform: translateX(0); }
-      20% { transform: translateX(-5px); }
-      40% { transform: translateX(5px); }
-      60% { transform: translateX(-3px); }
-      80% { transform: translateX(3px); }
-    }
-
-    /* Primary button */
+    /* primary */
     .btn-primary {
       position: relative;
       isolation: isolate;
@@ -925,89 +876,91 @@
       min-height: 56px;
       margin-top: 2px;
       border: 1px solid rgba(255,255,255,.12);
-      border-radius: 13px;
-      color: #050507;
-      background:
-        linear-gradient(180deg, #fff 0%, #dedee2 100%);
+      border-radius: 16px;
+      color: #fff;
+      background: linear-gradient(135deg, var(--purple-2), var(--purple));
       box-shadow:
-        0 15px 32px rgba(0,0,0,.22),
-        inset 0 1px 0 rgba(255,255,255,.80);
+        0 4px 20px rgba(108,76,241,.25),
+        inset 0 1px 0 rgba(255,255,255,.22);
       font-size: 14px;
       font-weight: 700;
       letter-spacing: -.01em;
       cursor: pointer;
-      transition: transform .16s ease, filter .2s ease, opacity .2s ease, box-shadow .2s ease;
+      transition:
+        transform .16s ease,
+        filter .25s ease,
+        opacity .2s ease,
+        box-shadow .25s ease;
     }
 
-    .btn-primary::before {
+    .btn-primary::after {
       content: "";
       position: absolute;
-      inset: -80% 40%;
+      inset: 0;
       z-index: -1;
-      background: linear-gradient(100deg, transparent, rgba(0,0,0,.09), transparent);
-      transform: rotate(15deg) translateX(-120%);
-      transition: transform .7s ease;
+      background: linear-gradient(135deg, rgba(255,255,255,.20), transparent 56%);
+      opacity: 0;
+      transition: opacity .3s ease;
     }
 
-    .btn-primary:hover {
-      filter: brightness(1.025);
+    .btn-primary:hover:not(:disabled) {
+      filter: brightness(1.055);
       box-shadow:
-        0 18px 40px rgba(0,0,0,.27),
-        inset 0 1px 0 rgba(255,255,255,.9);
+        0 8px 26px rgba(108,76,241,.30),
+        inset 0 1px 0 rgba(255,255,255,.24);
     }
 
-    .btn-primary:hover::before {
-      transform: rotate(15deg) translateX(260%);
+    .btn-primary:hover:not(:disabled)::after {
+      opacity: 1;
     }
 
-    .btn-primary:active {
-      transform: scale(.988);
+    .btn-primary:active:not(:disabled) {
+      transform: scale(.985);
+      box-shadow: 0 2px 10px rgba(108,76,241,.25);
     }
 
     .btn-primary:disabled {
-      opacity: .56;
       cursor: not-allowed;
-      box-shadow: none;
+      opacity: .58;
     }
 
-    .btn-content,
-    .btn-spinner {
-      position: relative;
-      z-index: 1;
+    .btn-content {
+      transition: opacity .18s ease;
     }
 
     .btn-spinner {
-      width: 18px;
-      height: 18px;
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: 22px;
+      height: 22px;
+      margin: -11px 0 0 -11px;
       display: none;
-      margin: 0 auto;
-      border: 2px solid rgba(255,255,255,.30);
+      border: 2px solid rgba(255,255,255,.26);
       border-top-color: #fff;
       border-radius: 50%;
-      animation: spin .7s linear infinite;
+      animation: spin .8s linear infinite;
     }
 
     .btn-primary.loading .btn-content {
-      display: none;
+      opacity: 0;
     }
 
     .btn-primary.loading .btn-spinner {
       display: block;
     }
 
-    @keyframes spin {
-      to { transform: rotate(360deg); }
-    }
-
+    /* mode switch */
     .switch-mode {
+      position: relative;
+      z-index: 1;
       display: flex;
       align-items: center;
       justify-content: center;
       gap: 5px;
       margin-top: 19px;
-      color: rgba(246,246,248,.34);
+      color: rgba(247,247,250,.34);
       font-size: 11px;
-      line-height: 1.5;
     }
 
     .switch-mode a {
@@ -1015,73 +968,124 @@
       font-weight: 600;
       text-decoration: none;
       border-bottom: 1px solid rgba(255,255,255,.30);
-      transition: border-color .18s ease, opacity .18s ease;
       cursor: pointer;
+      transition: opacity .18s ease, border-color .18s ease;
     }
 
     .switch-mode a:hover {
+      opacity: .84;
       border-color: #fff;
-      opacity: .86;
     }
 
     .auth-footer {
+      position: relative;
+      z-index: 1;
       display: flex;
+      align-items: center;
       justify-content: space-between;
       gap: 12px;
-      margin-top: 20px;
+      margin-top: 21px;
       padding-top: 16px;
       border-top: 1px solid rgba(255,255,255,.055);
-      color: rgba(255,255,255,.27);
-      font-size: 10px;
-      line-height: 1.5;
+      color: rgba(255,255,255,.23);
+      font-size: 9px;
+      letter-spacing: .08em;
+      text-transform: uppercase;
     }
 
-    .auth-footer span:last-child {
-      text-align: right;
-    }
-
-    /* Small visual cursor light */
-    .cursor-light {
-      position: fixed;
-      z-index: 2;
-      width: 220px;
-      height: 220px;
-      margin: -110px 0 0 -110px;
-      border-radius: 50%;
-      pointer-events: none;
-      background: radial-gradient(circle, rgba(116,87,255,.07), transparent 68%);
-      opacity: 0;
-      transition: opacity .25s ease;
-      mix-blend-mode: screen;
-    }
-
-    body.pointer-active .cursor-light {
-      opacity: 1;
-    }
-
-    /* Accessibility */
+    /* ---------- accessibility ---------- */
     :focus-visible {
-      outline: 2px solid rgba(146,124,255,.95);
+      outline: 2px solid var(--purple-3);
       outline-offset: 3px;
     }
 
-    @media (prefers-reduced-motion: reduce) {
-      #lineBackground {
-        opacity: .9;
-      }
-
-      *,
-      *::before,
-      *::after {
-        scroll-behavior: auto !important;
-        animation-duration: 0.001ms !important;
-        animation-iteration-count: 1 !important;
-        transition-duration: 0.001ms !important;
-      }
+    /* ---------- animations ---------- */
+    @keyframes markIn {
+      from { opacity: 0; transform: translateY(12px) scale(.90); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
     }
 
-    /* Desktop / tablet */
-    @media (max-width: 920px) {
+    @keyframes markPulse {
+      0%, 100% { filter: drop-shadow(0 0 0 rgba(139,111,255,0)); }
+      50% { filter: drop-shadow(0 0 16px rgba(139,111,255,.16)); }
+    }
+
+    @keyframes wordIn {
+      from { opacity: 0; transform: translateY(11px); filter: blur(5px); }
+      to { opacity: 1; transform: translateY(0); filter: blur(0); }
+    }
+
+    @keyframes orbitPulse {
+      0%, 100% { transform: scale(.98); opacity: .55; }
+      50% { transform: scale(1.025); opacity: .9; }
+    }
+
+    @keyframes sweep {
+      0% { transform: translateX(-100%); }
+      50%, 100% { transform: translateX(100%); }
+    }
+
+    @keyframes dotPulse {
+      0%, 100% { transform: scale(1); opacity: .78; }
+      50% { transform: scale(1.18); opacity: 1; }
+    }
+
+    @keyframes revealUp {
+      from { opacity: 0; transform: translateY(14px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes cardIn {
+      from { opacity: 0; transform: translateY(20px) scale(.985); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    @keyframes messageIn {
+      from { opacity: 0; transform: translateY(17px); filter: blur(8px); }
+      to { opacity: 1; transform: translateY(0); filter: blur(0); }
+    }
+
+    @keyframes subIn {
+      from { opacity: 0; transform: translateY(9px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes fieldReveal {
+      from { opacity: 0; transform: translateY(-6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes formShake {
+      0%,100% { transform: translateX(0); }
+      16% { transform: translateX(-3px); }
+      32% { transform: translateX(3px); }
+      48% { transform: translateX(-3px); }
+      64% { transform: translateX(3px); }
+      80% { transform: translateX(-2px); }
+    }
+
+    @keyframes strengthPulse {
+      0% { transform: scaleY(1); }
+      42% { transform: scaleY(1.65); }
+      100% { transform: scaleY(1); }
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    @keyframes gradientDrift {
+      0% { background-position: 0% 50%; }
+      100% { background-position: 220% 50%; }
+    }
+
+    /* ---------- tablet / mobile ---------- */
+    @media (max-width: 980px) {
       .auth-layout {
         grid-template-columns: minmax(0, 1fr);
         width: min(520px, 100%);
@@ -1096,115 +1100,78 @@
       .auth-shell {
         justify-self: center;
       }
-
-      .auth-card {
-        border-radius: 22px;
-      }
     }
 
-    /* Phones */
-    @media (max-width: 620px) {
+    @media (max-width: 480px) {
       #login {
         align-items: flex-start;
       }
 
       .auth-layout {
-        display: block;
         width: 100%;
         min-height: 100%;
         padding:
-          max(14px, env(safe-area-inset-top))
-          max(14px, env(safe-area-inset-right))
-          max(14px, env(safe-area-inset-bottom))
-          max(14px, env(safe-area-inset-left));
+          max(12px, env(safe-area-inset-top))
+          max(12px, env(safe-area-inset-right))
+          max(12px, env(safe-area-inset-bottom))
+          max(12px, env(safe-area-inset-left));
       }
 
       .auth-shell {
         width: 100%;
         max-width: none;
-        padding: 5vh 0 20px;
+        padding: 4vh 0 18px;
       }
 
       .auth-card {
-        width: 100%;
-        padding: 22px 18px 18px;
-        border-radius: 20px;
-        backdrop-filter: blur(18px);
-        -webkit-backdrop-filter: blur(18px);
-      }
-
-      .auth-header {
-        margin-bottom: 22px;
+        padding: 22px 17px 17px;
+        border-radius: 22px;
       }
 
       .auth-symbol {
         width: 34px;
         height: 34px;
-        margin-bottom: 16px;
       }
 
       .auth-title {
-        font-size: 25px;
-      }
-
-      .auth-subtitle {
-        font-size: 12px;
+        font-size: 26px;
       }
 
       .field {
         min-height: 56px;
-        border-radius: 13px;
       }
 
       .field input {
         height: 54px;
-        font-size: 16px; /* evita zoom automático no iOS */
+        font-size: 16px;
       }
 
       .btn-primary {
         min-height: 56px;
       }
 
-      .auth-status {
-        margin-top: 12px;
-      }
-
       .auth-footer {
         display: none;
       }
 
-      .ambient-grid {
-        opacity: .16;
-        background-size: 34px 34px;
+      .splash-mark {
+        width: 68px;
+        height: 68px;
       }
 
-      .orb {
-        opacity: .18;
+      .splash-word {
+        width: min(320px, 76vw);
       }
     }
 
-    /* Very small heights */
-    @media (max-height: 690px) and (min-width: 621px) {
-      .auth-layout {
-        min-height: auto;
-        padding-top: 12px;
-        padding-bottom: 12px;
-      }
-
-      .brand-panel {
-        min-height: 430px;
-      }
-
-      .brand-title {
-        font-size: clamp(48px, 7vw, 76px);
-      }
-
+    @media (max-height: 700px) {
       .auth-card {
-        padding: 24px;
+        padding-top: 22px;
+        padding-bottom: 20px;
       }
 
       .auth-header {
-        margin-bottom: 20px;
+        margin-bottom: 19px;
       }
 
       .field {
@@ -1218,30 +1185,46 @@
       .btn-primary {
         min-height: 52px;
       }
+
+      .auth-footer {
+        margin-top: 14px;
+        padding-top: 11px;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *,
+      *::before,
+      *::after {
+        animation-duration: .01ms !important;
+        animation-iteration-count: 1 !important;
+        scroll-behavior: auto !important;
+        transition-duration: .01ms !important;
+      }
+
+      #lineBackground {
+        opacity: .72;
+      }
     }
   </style>
 </head>
 
 <body>
   <canvas id="lineBackground" aria-hidden="true"></canvas>
+  <div class="background-vignette" aria-hidden="true"></div>
+  <div class="grain" aria-hidden="true"></div>
+
   <div class="app">
-    <div class="ambient" aria-hidden="true">
-      <div class="ambient-grid"></div>
-      <div class="orb orb-a"></div>
-      <div class="orb orb-b"></div>
-      <div class="ambient-noise"></div>
-    </div>
-
-    <div class="cursor-light" id="cursorLight" aria-hidden="true"></div>
-
     <!-- ================= SPLASH ================= -->
     <section id="splash" class="screen" aria-label="Kazer">
-      <div class="splash-core">
-        <div class="splash-mark-wrap">
-          <div class="splash-mark" aria-hidden="true"></div>
+      <div class="splash-stage">
+        <div class="splash-orbit" aria-hidden="true"></div>
+
+        <div class="splash-mark">
+          <img src="../download/assets/kazer-login-symbol.png" alt="" />
         </div>
 
-        <canvas class="splash-wordmark" id="splashCanvas" width="640" height="112" aria-hidden="true"></canvas>
+        <canvas id="splashWord" class="splash-word" width="700" height="125" aria-hidden="true"></canvas>
 
         <div class="splash-caption">Klipza Studio</div>
       </div>
@@ -1249,46 +1232,39 @@
       <div class="splash-progress" aria-hidden="true"></div>
     </section>
 
-    <!-- ================= LOGIN / CADASTRO ================= -->
+    <!-- ================= AUTH ================= -->
     <main id="login" class="screen" aria-labelledby="authTitle">
       <div class="auth-layout">
-        <!-- Marca / identidade -->
         <section class="brand-panel" aria-label="Kazer">
-          <div class="brand-topline">
-            <span class="brand-dot"></span>
-            <span>Klipza Studio</span>
+          <div class="brand-eyebrow">
+            <span class="brand-eyebrow-dot"></span>
+            <span>Klipza Studio / Kazer</span>
           </div>
 
           <div class="brand-message" aria-live="polite">
-            <span class="brand-message-line" id="brandMessageKicker">KAZER / BEM-VINDO DE VOLTA</span>
-            <span class="brand-message-title" id="brandMessageTitle">
-              Olá de novo<span class="accent-word">vamos continuar?</span>
+            <span class="brand-kicker" id="brandKicker">BEM-VINDO DE VOLTA</span>
+
+            <span class="brand-message-title" id="brandTitle">
+              <span class="line">Olá de novo.</span>
+              <span class="line accent">Vamos continuar?</span>
             </span>
-            <span class="brand-message-sub" id="brandMessageSub">
-              Entre na sua conta e retome sua experiência exatamente de onde parou.
+
+            <span class="brand-message-sub" id="brandSub">
+              Entre na sua conta e retome sua experiência no Kazer exatamente de onde parou.
             </span>
+
             <span class="brand-state" aria-hidden="true">
               <span class="brand-state-bars">
-                <i id="brandStateBar1" class="active"></i>
-                <i id="brandStateBar2"></i>
+                <i class="active" id="stateBar1"></i>
+                <i id="stateBar2"></i>
               </span>
-              <span id="brandStateLabel">entrar</span>
+              <span id="stateLabel">entrar</span>
             </span>
           </div>
 
           <div class="brand-symbol">
             <img src="../download/assets/kazer-login-symbol.png" alt="" />
           </div>
-
-          <h1 class="brand-title">
-            Seu espaço.
-            <em>KAZER</em>
-          </h1>
-
-          <p class="brand-description">
-            Um espaço pensado para conversar, criar e trabalhar com IA sem ruído visual.
-            Entre na sua conta para continuar.
-          </p>
 
           <div class="brand-rule"></div>
 
@@ -1298,7 +1274,7 @@
                 <path d="M12 3l7 4v5c0 4.4-3 7.6-7 9-4-1.4-7-4.6-7-9V7l7-4z"/>
                 <path d="M9.3 12l1.8 1.8 3.7-4"/>
               </svg>
-              Sessão persistente
+              Sessão protegida
             </span>
 
             <span class="meta-chip">
@@ -1306,12 +1282,11 @@
                 <circle cx="12" cy="12" r="8"/>
                 <path d="M8.5 12.2l2.2 2.2 4.8-5"/>
               </svg>
-              Acesso seguro
+              Experiência contínua
             </span>
           </div>
         </section>
 
-        <!-- Card de autenticação -->
         <section class="auth-shell">
           <div class="auth-card" id="authCard">
             <div class="auth-header">
@@ -1321,7 +1296,7 @@
                 alt=""
               />
 
-              <h2 class="auth-title" id="authTitle">Entrar para continuar</h2>
+              <h1 class="auth-title" id="authTitle">Entrar para continuar</h1>
 
               <p class="auth-subtitle" id="subText">
                 Acesse sua conta Kazer.
@@ -1329,18 +1304,19 @@
 
               <div class="auth-status">
                 <span class="status-dot"></span>
-                <span>Sessão protegida</span>
+                <span>Conexão segura</span>
               </div>
             </div>
 
             <form id="authForm" novalidate>
-              <!-- Nome -->
+              <!-- Display name -->
               <div class="field-wrap signup-only">
                 <div class="field">
                   <svg class="field-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
                     <circle cx="12" cy="8" r="4"/>
                     <path d="M4 20c0-4.4 3.6-7 8-7s8 2.6 8 7"/>
                   </svg>
+
                   <input
                     type="text"
                     id="displayName"
@@ -1359,10 +1335,11 @@
                     <path d="M3 6l9 7 9-7"/>
                     <rect x="3" y="5" width="18" height="14" rx="2"/>
                   </svg>
+
                   <input
                     type="email"
                     id="email"
-                    placeholder="Email"
+                    placeholder="seu@email.com"
                     required
                     autocomplete="email"
                     maxlength="254"
@@ -1371,7 +1348,7 @@
                 </div>
               </div>
 
-              <!-- Senha -->
+              <!-- Password -->
               <div class="field-wrap">
                 <div class="field">
                   <svg class="field-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
@@ -1382,7 +1359,7 @@
                   <input
                     type="password"
                     id="password"
-                    placeholder="Senha"
+                    placeholder="Sua senha"
                     required
                     autocomplete="current-password"
                     minlength="10"
@@ -1413,23 +1390,23 @@
                 </div>
               </div>
 
-              <!-- Força da senha -->
+              <!-- Password strength -->
               <div class="strength-wrap" id="strengthWrap">
                 <div class="strength-track">
                   <div class="strength-fill" id="strengthFill"></div>
                 </div>
+
                 <div class="strength-meta">
                   <span class="strength-text" id="strengthText">Digite uma senha</span>
-                  <span class="strength-text" id="strengthScore"></span>
+                  <span class="strength-score" id="strengthScore"></span>
                 </div>
               </div>
 
-              <!-- Regra da senha -->
               <div class="password-rule signup-only" id="passwordHint">
-                Use pelo menos 10 caracteres, 1 letra maiúscula e 1 caractere especial.
+                Pelo menos 10 caracteres, 1 letra maiúscula e 1 caractere especial.
               </div>
 
-              <!-- Confirmar senha -->
+              <!-- Confirm -->
               <div class="field-wrap signup-only">
                 <div class="field">
                   <svg class="field-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
@@ -1440,7 +1417,7 @@
                   <input
                     type="password"
                     id="confirmPassword"
-                    placeholder="Confirmar senha"
+                    placeholder="Digite a senha novamente"
                     autocomplete="new-password"
                     minlength="10"
                     maxlength="256"
@@ -1473,7 +1450,7 @@
               <div class="error-msg" id="errorMsg" aria-live="polite"></div>
 
               <button type="submit" class="btn-primary" id="submitBtn">
-                <span class="btn-content">Entrar</span>
+                <span class="btn-content">Sign in</span>
                 <span class="btn-spinner" aria-hidden="true"></span>
               </button>
             </form>
@@ -1485,7 +1462,7 @@
 
             <div class="auth-footer" aria-hidden="true">
               <span>KAZER</span>
-              <span>klipza studio</span>
+              <span>Klipza Studio</span>
             </div>
           </div>
         </section>
@@ -1500,7 +1477,7 @@
       "use strict";
 
       /* =========================================================
-         VIEWPORT MOBILE
+         VIEWPORT
       ========================================================= */
       function setVH() {
         document.documentElement.style.setProperty("--vh", (window.innerHeight * 0.01) + "px");
@@ -1511,15 +1488,15 @@
       window.addEventListener("orientationchange", setVH, { passive: true });
 
       /* =========================================================
-         ELEMENTOS
+         ELEMENTS
       ========================================================= */
       const splash = document.getElementById("splash");
       const login = document.getElementById("login");
       const authCard = document.getElementById("authCard");
       const authForm = document.getElementById("authForm");
 
-      const subText = document.getElementById("subText");
       const authTitle = document.getElementById("authTitle");
+      const subText = document.getElementById("subText");
       const submitBtn = document.getElementById("submitBtn");
       const switchText = document.getElementById("switchText");
       const switchLink = document.getElementById("switchLink");
@@ -1535,7 +1512,198 @@
       const strengthText = document.getElementById("strengthText");
       const strengthScore = document.getElementById("strengthScore");
 
+      const brandKicker = document.getElementById("brandKicker");
+      const brandTitle = document.getElementById("brandTitle");
+      const brandSub = document.getElementById("brandSub");
+      const stateLabel = document.getElementById("stateLabel");
+      const stateBar1 = document.getElementById("stateBar1");
+      const stateBar2 = document.getElementById("stateBar2");
+
       let isSignup = false;
+
+      /* =========================================================
+         BACKGROUND — MOVING LINES
+      ========================================================= */
+      (() => {
+        const canvas = document.getElementById("lineBackground");
+        const ctx = canvas.getContext("2d", { alpha: false });
+        if (!ctx) return;
+
+        let width = 0;
+        let height = 0;
+        let dpr = 1;
+
+        const resize = () => {
+          dpr = Math.min(2, window.devicePixelRatio || 1);
+          width = window.innerWidth;
+          height = window.innerHeight;
+
+          canvas.width = Math.floor(width * dpr);
+          canvas.height = Math.floor(height * dpr);
+          canvas.style.width = width + "px";
+          canvas.style.height = height + "px";
+
+          ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        };
+
+        const draw = (timestamp) => {
+          const t = timestamp * 0.00036;
+
+          ctx.fillStyle = "#050508";
+          ctx.fillRect(0, 0, width, height);
+
+          const cols = Math.max(16, Math.min(31, Math.floor(width / 54)));
+          const rows = Math.max(13, Math.min(24, Math.floor(height / 47)));
+          const sx = width / Math.max(1, cols - 1);
+          const sy = height / Math.max(1, rows - 1);
+
+          for (let y = -1; y <= rows + 1; y++) {
+            const baseY = y * sy;
+
+            ctx.beginPath();
+
+            for (let x = -2; x <= cols + 2; x++) {
+              const px = x * sx;
+              const wave =
+                Math.sin(x * 0.42 + t * 1.55 + y * 0.12) * 10 +
+                Math.sin(x * 0.17 - t * 1.08 + y * 0.32) * 6;
+
+              const py = baseY + wave;
+
+              if (x === -2) ctx.moveTo(px, py);
+              else ctx.lineTo(px, py);
+            }
+
+            const alpha = 0.028 + (Math.sin(y * .44 + t) + 1) * .012;
+            ctx.strokeStyle = `rgba(255,255,255,${alpha.toFixed(3)})`;
+            ctx.lineWidth = .75;
+            ctx.stroke();
+          }
+
+          for (let x = -1; x <= cols + 1; x++) {
+            const baseX = x * sx;
+
+            ctx.beginPath();
+
+            for (let y = -2; y <= rows + 2; y++) {
+              const py = y * sy;
+              const wave =
+                Math.sin(y * .48 - t * 1.24 + x * .14) * 7 +
+                Math.sin(y * .18 + t * 1.32 + x * .25) * 5;
+
+              const px = baseX + wave;
+
+              if (y === -2) ctx.moveTo(px, py);
+              else ctx.lineTo(px, py);
+            }
+
+            const alpha = 0.018 + (Math.cos(x * .47 + t * .7) + 1) * .006;
+            ctx.strokeStyle = `rgba(139,111,255,${alpha.toFixed(3)})`;
+            ctx.lineWidth = .55;
+            ctx.stroke();
+          }
+
+          const focus = ctx.createRadialGradient(
+            width * .50,
+            height * .47,
+            0,
+            width * .50,
+            height * .47,
+            Math.max(width, height) * .60
+          );
+
+          focus.addColorStop(0, "rgba(108,76,241,.050)");
+          focus.addColorStop(.34, "rgba(108,76,241,.018)");
+          focus.addColorStop(1, "rgba(108,76,241,0)");
+
+          ctx.fillStyle = focus;
+          ctx.fillRect(0, 0, width, height);
+
+          requestAnimationFrame(draw);
+        };
+
+        resize();
+        window.addEventListener("resize", resize, { passive: true });
+
+        if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+          draw(0);
+        } else {
+          requestAnimationFrame(draw);
+        }
+      })();
+
+      /* =========================================================
+         METALLIC KAZER WORDMARK
+      ========================================================= */
+      function initMetalWordmark(canvas) {
+        const ctx = canvas.getContext("2d");
+        if (!ctx) return;
+
+        const W = canvas.width;
+        const H = canvas.height;
+        let fontReady = false;
+
+        const render = (timestamp) => {
+          ctx.clearRect(0, 0, W, H);
+
+          ctx.save();
+
+          const fontSize = Math.floor(H * .71);
+          ctx.font = `${fontSize}px "UnifrakturMaguntia", serif`;
+          ctx.textAlign = "center";
+          ctx.textBaseline = "middle";
+
+          const shift = ((timestamp * .00016) % 1 + 1) % 1;
+
+          const grad = ctx.createLinearGradient(
+            -W * .45 + W * shift,
+            0,
+            W * .55 + W * shift,
+            0
+          );
+
+          grad.addColorStop(0.00, "#4a4b55");
+          grad.addColorStop(0.17, "#d3d6e0");
+          grad.addColorStop(0.29, "#9b9dff");
+          grad.addColorStop(0.41, "#ffffff");
+          grad.addColorStop(0.54, "#6d70b7");
+          grad.addColorStop(0.69, "#f3f4fa");
+          grad.addColorStop(0.84, "#767984");
+          grad.addColorStop(1.00, "#3f4048");
+
+          ctx.fillStyle = grad;
+          ctx.shadowColor = "rgba(139,111,255,.16)";
+          ctx.shadowBlur = 14;
+          ctx.fillText("KAZER", W / 2, H / 2 + H * .04);
+
+          const sheen = ctx.createLinearGradient(0, 0, 0, H);
+          sheen.addColorStop(0, "rgba(255,255,255,.34)");
+          sheen.addColorStop(.45, "rgba(255,255,255,0)");
+          sheen.addColorStop(1, "rgba(0,0,0,.27)");
+
+          ctx.globalCompositeOperation = "source-atop";
+          ctx.fillStyle = sheen;
+          ctx.fillRect(0, 0, W, H);
+
+          ctx.restore();
+
+          requestAnimationFrame(render);
+        };
+
+        const start = () => {
+          if (fontReady) return;
+          fontReady = true;
+          requestAnimationFrame(render);
+        };
+
+        if (document.fonts?.load) {
+          document.fonts.load('90px "UnifrakturMaguntia"').catch(() => {}).finally(start);
+        } else {
+          setTimeout(start, 250);
+        }
+      }
+
+      initMetalWordmark(document.getElementById("splashWord"));
 
       /* =========================================================
          PASSWORD EYE
@@ -1547,7 +1715,7 @@
       function togglePassword(id) {
         const input = document.getElementById(id);
         const suffix = capitalize(id);
-        const btn = document.getElementById("eyeBtn" + suffix);
+        const button = document.getElementById("eyeBtn" + suffix);
         const icon = document.getElementById("eyeIcon" + suffix);
 
         const hidden = input.type === "password";
@@ -1555,14 +1723,18 @@
 
         icon.classList.toggle("is-closed", hidden);
         icon.classList.toggle("is-open", !hidden);
-        btn.setAttribute("aria-label", hidden ? "Ocultar senha" : "Mostrar senha");
+
+        button.setAttribute(
+          "aria-label",
+          hidden ? "Ocultar senha" : "Mostrar senha"
+        );
       }
 
       document.getElementById("eyeBtnPassword").addEventListener("click", () => togglePassword("password"));
       document.getElementById("eyeBtnConfirmPassword").addEventListener("click", () => togglePassword("confirmPassword"));
 
       /* =========================================================
-         MODO LOGIN / CADASTRO
+         MODE TOGGLE
       ========================================================= */
       function clearError() {
         errorMsg.textContent = "";
@@ -1570,20 +1742,61 @@
         authCard.classList.remove("shake");
       }
 
+      function animateMode(nextSignup) {
+        brandTitle.classList.remove("in");
+        brandSub.classList.remove("in");
+        brandTitle.classList.add("out");
+        brandSub.classList.add("out");
+
+        setTimeout(() => {
+          if (nextSignup) {
+            brandKicker.textContent = "UM NOVO COMEÇO";
+            brandTitle.innerHTML = `
+              <span class="line">Vamos criar</span>
+              <span class="line accent">sua experiência.</span>
+            `;
+            brandSub.textContent =
+              "Crie seu acesso e prepare seu espaço para começar no Kazer.";
+            stateLabel.textContent = "criar conta";
+          } else {
+            brandKicker.textContent = "BEM-VINDO DE VOLTA";
+            brandTitle.innerHTML = `
+              <span class="line">Olá de novo.</span>
+              <span class="line accent">Vamos continuar?</span>
+            `;
+            brandSub.textContent =
+              "Entre na sua conta e retome sua experiência no Kazer exatamente de onde parou.";
+            stateLabel.textContent = "entrar";
+          }
+
+          stateBar1.classList.toggle("active", !nextSignup);
+          stateBar2.classList.toggle("active", nextSignup);
+
+          brandTitle.classList.remove("out");
+          brandSub.classList.remove("out");
+
+          void brandTitle.offsetWidth;
+          void brandSub.offsetWidth;
+
+          brandTitle.classList.add("in");
+          brandSub.classList.add("in");
+        }, 220);
+      }
+
       function setMode(nextSignup) {
         isSignup = nextSignup;
 
         document.body.classList.toggle("mode-signup", isSignup);
-        animateBrandMessage(isSignup);
+        animateMode(isSignup);
 
         if (isSignup) {
           authTitle.textContent = "Criar sua conta";
-          subText.textContent = "Configure seu acesso ao Kazer.";
+          subText.textContent = "Vamos preparar seu acesso ao Kazer.";
           switchText.textContent = "Já tem conta?";
           switchLink.textContent = "Entrar";
 
-          confirmInput.setAttribute("required", "true");
           displayNameInput.setAttribute("required", "true");
+          confirmInput.setAttribute("required", "true");
           passwordInput.setAttribute("autocomplete", "new-password");
         } else {
           authTitle.textContent = "Entrar para continuar";
@@ -1591,22 +1804,19 @@
           switchText.textContent = "Não tem conta?";
           switchLink.textContent = "Criar conta";
 
-          confirmInput.removeAttribute("required");
           displayNameInput.removeAttribute("required");
+          confirmInput.removeAttribute("required");
           passwordInput.setAttribute("autocomplete", "current-password");
 
           strengthWrap.classList.remove("show");
+          strengthFill.style.width = "0%";
         }
 
         clearError();
         window.history.replaceState(null, "", isSignup ? "#signup" : "#login");
 
         requestAnimationFrame(() => {
-          if (isSignup) {
-            displayNameInput.focus({ preventScroll: true });
-          } else {
-            emailInput.focus({ preventScroll: true });
-          }
+          (isSignup ? displayNameInput : emailInput).focus({ preventScroll: true });
         });
       }
 
@@ -1616,36 +1826,38 @@
       });
 
       /* =========================================================
-         SENHA
+         PASSWORD STRENGTH
       ========================================================= */
-      function isPasswordValid(pw) {
-        const hasUpper = /[A-Z]/.test(pw);
-        const hasSpecial = /[^A-Za-z0-9]/.test(pw);
-        return pw.length >= 10 && pw.length <= 256 && hasUpper && hasSpecial;
+      function isPasswordValid(password) {
+        return (
+          password.length >= 10 &&
+          password.length <= 256 &&
+          /[A-Z]/.test(password) &&
+          /[^A-Za-z0-9]/.test(password)
+        );
       }
 
-      function getPasswordStrength(pw) {
-        if (!pw) return 0;
+      function getPasswordStrength(password) {
+        if (!password) return 0;
 
         let score = 0;
+        if (password.length >= 6) score++;
+        if (password.length >= 10) score++;
+        if (/[A-Z]/.test(password)) score++;
+        if (/[^A-Za-z0-9]/.test(password)) score++;
+        if (/[0-9]/.test(password)) score++;
 
-        if (pw.length >= 6) score++;
-        if (pw.length >= 10) score++;
-        if (/[A-Z]/.test(pw)) score++;
-        if (/[^A-Za-z0-9]/.test(pw)) score++;
-        if (/[0-9]/.test(pw)) score++;
-
-        if (pw.length < 6) score = Math.min(score, 1);
+        if (password.length < 6) score = Math.min(score, 1);
 
         return Math.min(score, 4);
       }
 
       const strengthConfig = {
-        0: { pct: 3, color: "#ff6570", text: "Digite uma senha", score: "" },
-        1: { pct: 25, color: "#ff6570", text: "Senha fraca", score: "1/4" },
-        2: { pct: 50, color: "#ffb35a", text: "Pode melhorar", score: "2/4" },
-        3: { pct: 75, color: "#e9d05a", text: "Boa senha", score: "3/4" },
-        4: { pct: 100, color: "#68df9d", text: "Senha forte", score: "4/4" }
+        0: { pct: 3, color: "#FF6B6B", text: "Digite uma senha", score: "" },
+        1: { pct: 25, color: "#FF6B6B", text: "Senha fraca — capriche mais", score: "1/4" },
+        2: { pct: 50, color: "#FFB454", text: "Quase lá, dá pra melhorar", score: "2/4" },
+        3: { pct: 75, color: "#FFD86B", text: "Boa senha!", score: "3/4" },
+        4: { pct: 100, color: "#2ED573", text: "Senha forte, mandou bem!", score: "4/4" }
       };
 
       function updateStrengthUI(password) {
@@ -1659,30 +1871,32 @@
         strengthWrap.classList.add("show");
 
         const level = getPasswordStrength(password);
-        const cfg = strengthConfig[level];
+        const config = strengthConfig[level];
 
-        strengthFill.style.width = cfg.pct + "%";
-        strengthFill.style.backgroundColor = cfg.color;
-        strengthText.style.color = cfg.color;
-        strengthText.textContent = cfg.text;
-        strengthScore.textContent = cfg.score;
+        strengthFill.style.width = config.pct + "%";
+        strengthFill.style.backgroundColor = config.color;
+        strengthText.style.color = config.color;
+        strengthText.textContent = config.text;
+        strengthScore.textContent = config.score;
+
+        strengthFill.classList.remove("pulse");
+        void strengthFill.offsetWidth;
+        strengthFill.classList.add("pulse");
       }
 
       function checkPasswordsMatch() {
         if (!isSignup) return;
 
-        const pw = passwordInput.value;
-        const confirmPw = confirmInput.value;
+        const password = passwordInput.value;
+        const confirm = confirmInput.value;
 
-        if (!confirmPw) {
-          if (errorMsg.dataset.type === "mismatch") {
-            clearError();
-          }
+        if (!confirm) {
+          if (errorMsg.dataset.type === "mismatch") clearError();
           return;
         }
 
-        if (pw !== confirmPw) {
-          errorMsg.textContent = "As senhas ainda não coincidem.";
+        if (password !== confirm) {
+          errorMsg.textContent = "Acho que a senha de confirmação não ficou igual à primeira.";
           errorMsg.dataset.type = "mismatch";
         } else if (errorMsg.dataset.type === "mismatch") {
           clearError();
@@ -1697,158 +1911,7 @@
       confirmInput.addEventListener("input", checkPasswordsMatch);
 
       /* =========================================================
-         FUNDO EM LINHAS — PRETO & BRANCO
-      ========================================================= */
-      (() => {
-        const canvas = document.getElementById("lineBackground");
-        const ctx = canvas.getContext("2d", { alpha: false });
-        if (!ctx) return;
-
-        let width = 0;
-        let height = 0;
-        let dpr = 1;
-        let raf = 0;
-        let time = 0;
-
-        function resize() {
-          dpr = Math.min(2, window.devicePixelRatio || 1);
-          width = window.innerWidth;
-          height = window.innerHeight;
-          canvas.width = Math.floor(width * dpr);
-          canvas.height = Math.floor(height * dpr);
-          canvas.style.width = width + "px";
-          canvas.style.height = height + "px";
-          ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-        }
-
-        function draw(ts) {
-          time = ts * 0.00055;
-
-          ctx.fillStyle = "#050507";
-          ctx.fillRect(0, 0, width, height);
-
-          const cols = Math.max(14, Math.min(30, Math.floor(width / 55)));
-          const rows = Math.max(12, Math.min(22, Math.floor(height / 48)));
-          const sx = width / Math.max(1, cols - 1);
-          const sy = height / Math.max(1, rows - 1);
-
-          for (let y = 0; y <= rows; y++) {
-            const baseY = y * sy;
-
-            ctx.beginPath();
-
-            for (let x = -2; x <= cols + 2; x++) {
-              const px = x * sx;
-              const wave =
-                Math.sin(x * 0.42 + time * 1.7 + y * 0.12) * 10 +
-                Math.sin(x * 0.16 - time * 1.08 + y * 0.36) * 7;
-
-              const py = baseY + wave;
-
-              if (x === -2) ctx.moveTo(px, py);
-              else ctx.lineTo(px, py);
-            }
-
-            const alpha = 0.055 + (Math.sin(y * 0.45 + time) + 1) * 0.018;
-            ctx.strokeStyle = `rgba(255,255,255,${alpha.toFixed(3)})`;
-            ctx.lineWidth = 0.7;
-            ctx.stroke();
-          }
-
-          for (let x = 0; x <= cols; x++) {
-            const baseX = x * sx;
-
-            ctx.beginPath();
-
-            for (let y = -2; y <= rows + 2; y++) {
-              const py = y * sy;
-              const wave =
-                Math.sin(y * 0.5 - time * 1.25 + x * 0.14) * 7 +
-                Math.sin(y * 0.19 + time * 1.4 + x * 0.27) * 5;
-
-              const px = baseX + wave;
-
-              if (y === -2) ctx.moveTo(px, py);
-              else ctx.lineTo(px, py);
-            }
-
-            const alpha = 0.035 + (Math.cos(x * 0.5 + time * 0.8) + 1) * 0.012;
-            ctx.strokeStyle = `rgba(255,255,255,${alpha.toFixed(3)})`;
-            ctx.lineWidth = 0.55;
-            ctx.stroke();
-          }
-
-          const glow = ctx.createRadialGradient(
-            width * 0.50, height * 0.44, 0,
-            width * 0.50, height * 0.44, Math.max(width, height) * 0.55
-          );
-          glow.addColorStop(0, "rgba(255,255,255,0.035)");
-          glow.addColorStop(0.4, "rgba(255,255,255,0.012)");
-          glow.addColorStop(1, "rgba(255,255,255,0)");
-
-          ctx.fillStyle = glow;
-          ctx.fillRect(0, 0, width, height);
-
-          raf = requestAnimationFrame(draw);
-        }
-
-        resize();
-        window.addEventListener("resize", resize, { passive: true });
-
-        if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-          draw(0);
-        } else {
-          raf = requestAnimationFrame(draw);
-        }
-      })();
-
-      /* =========================================================
-         MENSAGENS LATERAIS — LOGIN / CADASTRO
-      ========================================================= */
-      const brandMessageKicker = document.getElementById("brandMessageKicker");
-      const brandMessageTitle = document.getElementById("brandMessageTitle");
-      const brandMessageSub = document.getElementById("brandMessageSub");
-      const brandStateLabel = document.getElementById("brandStateLabel");
-      const brandStateBar1 = document.getElementById("brandStateBar1");
-      const brandStateBar2 = document.getElementById("brandStateBar2");
-
-      function animateBrandMessage(signup) {
-        brandMessageTitle.classList.remove("in");
-        brandMessageSub.classList.remove("in");
-        brandMessageTitle.classList.add("out");
-        brandMessageSub.classList.add("out");
-
-        setTimeout(() => {
-          if (signup) {
-            brandMessageKicker.textContent = "KAZER / NOVO COMEÇO";
-            brandMessageTitle.innerHTML = 'Vamos criar<span class="accent-word">sua experiência.</span>';
-            brandMessageSub.textContent =
-              "Crie seu acesso e prepare seu espaço para começar no Kazer.";
-            brandStateLabel.textContent = "criar conta";
-          } else {
-            brandMessageKicker.textContent = "KAZER / BEM-VINDO DE VOLTA";
-            brandMessageTitle.innerHTML = 'Olá de novo<span class="accent-word">vamos continuar?</span>';
-            brandMessageSub.textContent =
-              "Entre na sua conta e retome sua experiência exatamente de onde parou.";
-            brandStateLabel.textContent = "entrar";
-          }
-
-          brandStateBar1.classList.toggle("active", !signup);
-          brandStateBar2.classList.toggle("active", signup);
-
-          brandMessageTitle.classList.remove("out");
-          brandMessageSub.classList.remove("out");
-
-          void brandMessageTitle.offsetWidth;
-          void brandMessageSub.offsetWidth;
-
-          brandMessageTitle.classList.add("in");
-          brandMessageSub.classList.add("in");
-        }, 220);
-      }
-
-      /* =========================================================
-         SUPABASE — MANTIDO
+         SUPABASE — PRESERVADO
       ========================================================= */
       const KAZER_SUPABASE_URL = "https://mqjunopzycdezzjmlhip.supabase.co";
       const KAZER_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1xanVub3B6eWNkZXp6am1saGlwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc4Mzg3NDksImV4cCI6MjEwMzQxNDc0OX0.Y_o2_QQhZzuCjvHdEfxaR5VrAxo7NFenPaDmdHN3bwM";
@@ -1869,7 +1932,7 @@
         const message = String(error?.message || "").toLowerCase();
 
         if (message.includes("invalid login credentials")) {
-          return "E-mail ou senha incorretos.";
+          return "E-mail ou senha incorretos. Que tal verificar o Caps Lock?";
         }
 
         if (message.includes("email not confirmed")) {
@@ -1877,29 +1940,19 @@
         }
 
         if (message.includes("user already registered")) {
-          return "Este e-mail já tem uma conta. Tente entrar.";
+          return "Este e-mail já tem uma conta. Vamos entrar?";
         }
 
         if (message.includes("password")) {
-          return "A senha não atende aos requisitos do Kazer.";
+          return "Sua senha ainda tá fraca — use pelo menos 10 caracteres, 1 letra maiúscula e 1 caractere especial.";
         }
 
         return "Não foi possível concluir agora. Tente novamente.";
       }
 
-      function setLoading(loading, label) {
+      function setLoading(loading) {
         submitBtn.disabled = loading;
         submitBtn.classList.toggle("loading", loading);
-
-        if (!loading) {
-          submitBtn.querySelector(".btn-content").textContent = isSignup ? "Criar conta" : "Entrar";
-        } else if (label) {
-          submitBtn.setAttribute("aria-label", label);
-        }
-
-        if (!loading) {
-          submitBtn.removeAttribute("aria-label");
-        }
       }
 
       /* =========================================================
@@ -1907,7 +1960,6 @@
       ========================================================= */
       authForm.addEventListener("submit", async (event) => {
         event.preventDefault();
-
         clearError();
 
         if (!kazerSupabase) {
@@ -1921,38 +1973,39 @@
         const confirmPassword = confirmInput.value;
 
         if (!email) {
-          errorMsg.textContent = "Informe seu e-mail.";
+          errorMsg.textContent = "Digite seu e-mail para continuar.";
           emailInput.focus();
           return;
         }
 
         if (!password) {
-          errorMsg.textContent = "Informe sua senha.";
+          errorMsg.textContent = "Digite sua senha para continuar.";
           passwordInput.focus();
           return;
         }
 
         if (isSignup) {
           if (!name || name.length > 80) {
-            errorMsg.textContent = "Informe um nome válido de até 80 caracteres.";
+            errorMsg.textContent = "Como devemos te chamar? Informe um nome válido de até 80 caracteres.";
             displayNameInput.focus();
             return;
           }
 
           if (!isPasswordValid(password)) {
-            errorMsg.textContent = "Use pelo menos 10 caracteres, 1 letra maiúscula e 1 caractere especial.";
+            errorMsg.textContent =
+              "Sua senha ainda tá fraca — use pelo menos 10 caracteres, 1 letra maiúscula e 1 caractere especial.";
             passwordInput.focus();
             return;
           }
 
           if (password !== confirmPassword) {
-            errorMsg.textContent = "As senhas não coincidem.";
+            errorMsg.textContent = "Acho que a senha de confirmação não ficou igual à primeira.";
             confirmInput.focus();
             return;
           }
         }
 
-        setLoading(true, isSignup ? "Criando conta" : "Entrando");
+        setLoading(true);
 
         try {
           const result = isSignup
@@ -1969,9 +2022,7 @@
                 password
               });
 
-          if (result.error) {
-            throw result.error;
-          }
+          if (result.error) throw result.error;
 
           if (!result.data.session) {
             throw new Error("A sessão imediata ainda não está habilitada no projeto Kazer.");
@@ -2003,123 +2054,7 @@
       });
 
       /* =========================================================
-         METAL TEXT
-      ========================================================= */
-      function initMetalText(canvas, text, fontFamily, fontSizeRatio) {
-        const ctx = canvas.getContext("2d");
-        if (!ctx) return;
-
-        const W = canvas.width;
-        const H = canvas.height;
-        let running = true;
-
-        const stops = [
-          { pos: 0.00, c: "#3b3d45" },
-          { pos: 0.16, c: "#cfd2da" },
-          { pos: 0.29, c: "#ffffff" },
-          { pos: 0.43, c: "#858992" },
-          { pos: 0.58, c: "#f4f5f7" },
-          { pos: 0.73, c: "#575a63" },
-          { pos: 0.88, c: "#eceef2" },
-          { pos: 1.00, c: "#3b3d45" }
-        ];
-
-        function draw(t) {
-          if (!running) return;
-
-          ctx.clearRect(0, 0, W, H);
-
-          ctx.save();
-
-          ctx.font = `${Math.floor(H * fontSizeRatio)}px "${fontFamily}", cursive`;
-          ctx.textAlign = "center";
-          ctx.textBaseline = "middle";
-
-          const shift = (t * 0.00035) % 1;
-
-          const shifted = stops
-            .map((stop) => ({
-              pos: (stop.pos + shift) % 1,
-              c: stop.c
-            }))
-            .sort((a, b) => a.pos - b.pos);
-
-          const grad = ctx.createLinearGradient(0, 0, W, 0);
-          shifted.forEach((stop) => grad.addColorStop(stop.pos, stop.c));
-
-          ctx.fillStyle = grad;
-          ctx.shadowColor = "rgba(255,255,255,.08)";
-          ctx.shadowBlur = 10;
-          ctx.fillText(text, W / 2, H / 2 + H * 0.04);
-
-          const sheen = ctx.createLinearGradient(0, 0, 0, H);
-          sheen.addColorStop(0, "rgba(255,255,255,.30)");
-          sheen.addColorStop(.45, "rgba(255,255,255,0)");
-          sheen.addColorStop(1, "rgba(0,0,0,.22)");
-
-          ctx.globalCompositeOperation = "source-atop";
-          ctx.fillStyle = sheen;
-          ctx.fillRect(0, 0, W, H);
-
-          ctx.restore();
-
-          requestAnimationFrame(draw);
-        }
-
-        requestAnimationFrame(draw);
-
-        return {
-          stop() {
-            running = false;
-          }
-        };
-      }
-
-      function initWordmarks() {
-        const boot = () => {
-          initMetalText(
-            document.getElementById("splashCanvas"),
-            "KAZER",
-            "Cinzel",
-            0.72
-          );
-        };
-
-        if (document.fonts?.load) {
-          document.fonts
-            .load('90px "Cinzel"')
-            .catch(() => {})
-            .finally(boot);
-        } else {
-          setTimeout(boot, 250);
-        }
-      }
-
-      initWordmarks();
-
-      /* =========================================================
-         CURSOR LIGHT — DESKTOP
-      ========================================================= */
-      const cursorLight = document.getElementById("cursorLight");
-
-      if (window.matchMedia("(pointer:fine)").matches) {
-        window.addEventListener("pointermove", (event) => {
-          cursorLight.style.transform = `translate3d(${event.clientX}px, ${event.clientY}px, 0)`;
-          document.body.classList.add("pointer-active");
-        }, { passive: true });
-
-        window.addEventListener("pointerleave", () => {
-          document.body.classList.remove("pointer-active");
-        }, { passive: true });
-      }
-
-      /* =========================================================
-         REDUZ MOVIMENTO SE USUÁRIO PREFERIR
-      ========================================================= */
-      const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-
-      /* =========================================================
-         BOOT / SESSÃO
+         BOOT
       ========================================================= */
       window.addEventListener("load", async () => {
         let session = null;
@@ -2134,48 +2069,23 @@
         if (session) {
           setTimeout(() => {
             window.location.assign("/chat");
-          }, reducedMotion ? 250 : 850);
+          }, 1500);
           return;
         }
 
-        const splashDelay = reducedMotion ? 700 : 1900;
-        const fadeDelay = reducedMotion ? 120 : 520;
-
         setTimeout(() => {
-          splash.classList.add("is-hidden");
+          splash.classList.add("hidden");
 
           setTimeout(() => {
             login.classList.add("visible");
 
             if (window.location.hash === "#signup") {
               setMode(true);
-            } else if (window.location.hash === "#login") {
+            } else {
               setMode(false);
             }
-
-            if (!reducedMotion) {
-              document.querySelector(".auth-card")?.animate(
-                [
-                  { opacity: 0, transform: "translateY(12px) scale(.99)" },
-                  { opacity: 1, transform: "translateY(0) scale(1)" }
-                ],
-                {
-                  duration: 480,
-                  easing: "cubic-bezier(.2,.85,.2,1)"
-                }
-              );
-            }
-          }, fadeDelay);
-        }, splashDelay);
-      });
-
-      /* =========================================================
-         ENTER / ESC
-      ========================================================= */
-      document.addEventListener("keydown", (event) => {
-        if (event.key === "Escape" && isSignup) {
-          setMode(false);
-        }
+          }, 800);
+        }, 2500);
       });
     })();
   </script>
