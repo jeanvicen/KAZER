@@ -3,10 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover, user-scalable=no" />
-  <meta name="theme-color" content="#050508" />
+  <meta name="theme-color" content="#050507" />
   <meta name="color-scheme" content="dark" />
-  <meta name="description" content="KAZER — acesso à sua experiência de IA." />
-
   <title>KAZER</title>
 
   <link rel="icon" href="../download/assets/kazer-login-symbol.png" type="image/png" />
@@ -15,48 +13,30 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link
-    href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700;800&family=Inter:wght@400;500;600;700&display=swap"
+    href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap"
     rel="stylesheet"
   />
 
   <style>
     :root {
-      --purple: #6C4CF1;
-      --purple-2: #8B6FFF;
-      --purple-3: #A997FF;
-
-      --bg: #050508;
-      --bg-2: #09090F;
-      --surface: rgba(255,255,255,0.032);
-      --surface-2: rgba(255,255,255,0.048);
-      --surface-solid: #101016;
-
-      --line: rgba(255,255,255,0.085);
-      --line-soft: rgba(255,255,255,0.055);
-      --line-bright: rgba(255,255,255,0.15);
-
-      --text: #F7F7FA;
-      --text-soft: rgba(247,247,250,0.66);
-      --text-muted: rgba(247,247,250,0.40);
-
-      --gold: #FFD86B;
-      --success: #2ED573;
-      --error: #FF6B6B;
-      --warning: #FFB454;
-
-      --radius-xl: 30px;
-      --radius-lg: 22px;
-      --radius-md: 16px;
-      --radius-sm: 13px;
-
-      --shadow-card:
-        0 35px 90px rgba(0,0,0,.48),
-        0 10px 30px rgba(0,0,0,.22),
-        inset 0 1px 0 rgba(255,255,255,.045);
-
-      --ease-out: cubic-bezier(.2,.8,.2,1);
-      --ease-soft: cubic-bezier(.22,.8,.24,1);
+      --bg: #050507;
+      --card: rgba(14, 14, 18, .78);
+      --card-strong: rgba(18, 18, 23, .92);
+      --line: rgba(255,255,255,.09);
+      --line-focus: rgba(139,111,255,.85);
+      --text: #f6f6f8;
+      --muted: rgba(246,246,248,.50);
+      --faint: rgba(246,246,248,.28);
+      --purple: #6c4cf1;
+      --purple-2: #8b6fff;
+      --green: #2ed573;
+      --red: #ff6b6b;
+      --orange: #ffb454;
+      --yellow: #ffd86b;
+      --radius: 24px;
+      --radius-field: 14px;
       --vh: 1vh;
+      --ease: cubic-bezier(.2,.8,.2,1);
     }
 
     * {
@@ -77,8 +57,8 @@
     body {
       position: fixed;
       inset: 0;
-      font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       color: var(--text);
+      font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       -webkit-font-smoothing: antialiased;
       text-rendering: optimizeLegibility;
       overscroll-behavior: none;
@@ -90,75 +70,53 @@
     }
 
     button {
+      appearance: none;
       border: 0;
       outline: 0;
-      appearance: none;
-      -webkit-appearance: none;
     }
 
-    .app {
-      position: relative;
-      width: 100%;
-      height: calc(var(--vh) * 100);
+    /* ================= BACKGROUND ================= */
+
+    .background {
+      position: fixed;
+      inset: 0;
       overflow: hidden;
-      isolation: isolate;
       background:
-        radial-gradient(circle at 16% 14%, rgba(108,76,241,.12), transparent 30%),
-        radial-gradient(circle at 85% 86%, rgba(139,111,255,.08), transparent 34%),
-        linear-gradient(180deg, #050508 0%, #07070B 100%);
+        radial-gradient(circle at 50% 40%, rgba(108,76,241,.07), transparent 28%),
+        radial-gradient(circle at 8% 95%, rgba(255,255,255,.025), transparent 24%),
+        radial-gradient(circle at 96% 5%, rgba(255,255,255,.02), transparent 22%),
+        #050507;
     }
 
-    /* ---------- animated line background ---------- */
     #lineBackground {
-      position: fixed;
-      inset: 0;
-      z-index: 0;
-      width: 100%;
-      height: 100%;
-      pointer-events: none;
-      opacity: .86;
-    }
-
-    .background-vignette {
-      position: fixed;
-      inset: 0;
-      z-index: 1;
-      pointer-events: none;
-      background:
-        radial-gradient(circle at 50% 46%, transparent 20%, rgba(5,5,8,.14) 62%, rgba(5,5,8,.58) 100%),
-        linear-gradient(90deg, rgba(5,5,8,.30), transparent 22%, transparent 78%, rgba(5,5,8,.30));
-    }
-
-    .grain {
-      position: fixed;
-      inset: 0;
-      z-index: 2;
-      pointer-events: none;
-      opacity: .025;
-      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-      mix-blend-mode: soft-light;
-    }
-
-    /* ---------- screens ---------- */
-    .screen {
       position: absolute;
       inset: 0;
       width: 100%;
       height: 100%;
+      opacity: .52;
     }
 
-    /* ---------- splash ---------- */
+    .background::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background:
+        radial-gradient(circle at center, transparent 25%, rgba(5,5,7,.1) 58%, rgba(5,5,7,.52) 100%);
+    }
+
+    /* ================= SPLASH ================= */
+
     #splash {
+      position: fixed;
+      inset: 0;
       z-index: 10;
       display: grid;
       place-items: center;
-      background:
-        radial-gradient(circle at 50% 47%, rgba(108,76,241,.11), transparent 30%),
-        #050508;
-      transition:
-        opacity .8s cubic-bezier(.4,0,.2,1),
-        visibility .8s;
-      overflow: hidden;
+      background: #050507;
+      opacity: 1;
+      visibility: visible;
+      transition: opacity .7s var(--ease), visibility .7s;
     }
 
     #splash.hidden {
@@ -167,116 +125,82 @@
       pointer-events: none;
     }
 
-    .splash-stage {
-      position: relative;
+    .splash-content {
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      width: min(760px, 92vw);
-      min-height: 350px;
       text-align: center;
     }
 
-    .splash-orbit {
-      position: absolute;
-      width: min(460px, 70vw);
-      aspect-ratio: 1;
-      border: 1px solid rgba(255,255,255,.045);
-      border-radius: 50%;
-      box-shadow:
-        0 0 0 44px rgba(255,255,255,.009),
-        0 0 0 88px rgba(255,255,255,.006);
-      animation: orbitPulse 3.2s ease-in-out infinite;
+    .splash-icon {
+      position: relative;
+      width: 64px;
+      height: 64px;
+      margin-bottom: 15px;
     }
 
-    .splash-orbit::before {
+    .splash-icon::after {
       content: "";
       position: absolute;
-      left: 50%;
-      top: -2px;
-      width: 4px;
-      height: 4px;
+      inset: -20px;
       border-radius: 50%;
-      background: rgba(255,255,255,.72);
-      box-shadow: 0 0 15px rgba(139,111,255,.78);
-      transform: translateX(-50%);
+      background: radial-gradient(circle, rgba(139,111,255,.13), transparent 68%);
+      filter: blur(8px);
+      animation: glow 2.8s ease-in-out infinite;
     }
 
-    .splash-mark {
+    .splash-icon img {
       position: relative;
-      width: 82px;
-      height: 82px;
-      margin-bottom: 13px;
-      border-radius: 24px;
-      animation: markIn .8s var(--ease-out) both, markPulse 3.2s ease-in-out 1s infinite;
-    }
-
-    .splash-mark::before {
-      content: "";
-      position: absolute;
-      inset: -25px;
-      border-radius: 50%;
-      background: radial-gradient(circle, rgba(139,111,255,.18), transparent 68%);
-      filter: blur(10px);
-    }
-
-    .splash-mark img {
-      position: relative;
+      z-index: 1;
       width: 100%;
       height: 100%;
-      display: block;
       object-fit: contain;
-      filter:
-        brightness(1.08)
-        drop-shadow(0 0 18px rgba(139,111,255,.18));
+      filter: brightness(1.07);
     }
 
-    .splash-word {
-      width: min(445px, 78vw);
+    #splashWord {
+      width: min(300px, 68vw);
       height: auto;
       display: block;
-      overflow: visible;
-      opacity: 0;
-      animation: wordIn .95s var(--ease-out) .16s forwards;
     }
 
     .splash-caption {
-      margin-top: 13px;
-      color: rgba(255,255,255,.34);
-      font-size: 10px;
+      margin-top: 8px;
+      color: rgba(255,255,255,.30);
+      font-size: 9px;
       font-weight: 600;
-      letter-spacing: .28em;
+      letter-spacing: .24em;
       text-transform: uppercase;
       opacity: 0;
-      animation: fadeIn .8s ease .58s forwards;
+      animation: fadeIn .8s ease .4s forwards;
     }
 
-    .splash-progress {
-      position: absolute;
-      bottom: max(26px, env(safe-area-inset-bottom));
-      left: 50%;
-      width: 150px;
+    .splash-line {
+      width: 120px;
       height: 1px;
+      margin-top: 24px;
       overflow: hidden;
-      transform: translateX(-50%);
-      background: rgba(255,255,255,.08);
-      border-radius: 99px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.07);
     }
 
-    .splash-progress::after {
+    .splash-line::after {
       content: "";
-      position: absolute;
-      inset: 0;
-      width: 100%;
-      background: linear-gradient(90deg, transparent, #8b6fff, transparent);
-      transform: translateX(-100%);
-      animation: sweep 1.55s ease-in-out .4s infinite;
+      display: block;
+      width: 45%;
+      height: 100%;
+      background: var(--purple-2);
+      transform: translateX(-110%);
+      animation: sweep 1.5s ease-in-out infinite;
     }
 
-    /* ---------- login screen ---------- */
+    /* ================= AUTH ================= */
+
     #login {
-      z-index: 8;
+      position: fixed;
+      inset: 0;
+      z-index: 5;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -285,12 +209,10 @@
         max(18px, env(safe-area-inset-right))
         max(18px, env(safe-area-inset-bottom))
         max(18px, env(safe-area-inset-left));
-      overflow-y: auto;
-      overscroll-behavior: contain;
       opacity: 0;
       visibility: hidden;
       pointer-events: none;
-      transition: opacity .75s var(--ease-out), visibility .75s;
+      transition: opacity .65s var(--ease), visibility .65s;
     }
 
     #login.visible {
@@ -299,355 +221,121 @@
       pointer-events: auto;
     }
 
-    .auth-layout {
-      position: relative;
-      z-index: 3;
-      display: grid;
-      grid-template-columns: minmax(0, 1fr) minmax(390px, 460px);
-      align-items: center;
-      gap: clamp(46px, 8vw, 130px);
-      width: min(1240px, 100%);
-      min-height: min(760px, calc(100% - 20px));
-      padding: clamp(24px, 3vw, 46px);
-    }
-
-    /* ---------- editorial / brand side ---------- */
-    .brand-panel {
-      position: relative;
+    .auth-wrap {
+      width: min(430px, 100%);
+      max-height: calc(100vh - 26px);
       display: flex;
-      min-height: 600px;
       flex-direction: column;
-      justify-content: center;
-      padding: 10px 0;
+      align-items: center;
     }
 
-    .brand-panel::before {
-      content: "";
-      position: absolute;
-      width: min(520px, 80%);
-      aspect-ratio: 1;
-      left: -8%;
-      top: 12%;
-      border-radius: 50%;
-      border: 1px solid rgba(255,255,255,.035);
-      box-shadow:
-        0 0 0 52px rgba(255,255,255,.009),
-        0 0 0 104px rgba(255,255,255,.006);
-      mask-image: linear-gradient(90deg, black 30%, transparent 84%);
-      pointer-events: none;
-    }
-
-    .brand-eyebrow {
+    /* Small brand at top */
+    .top-brand {
       display: inline-flex;
       align-items: center;
       gap: 9px;
-      width: fit-content;
-      margin-bottom: 17px;
-      color: rgba(255,255,255,.40);
-      font-size: 10px;
-      font-weight: 700;
-      letter-spacing: .24em;
-      text-transform: uppercase;
-      animation: revealUp .75s var(--ease-out) .05s both;
-    }
-
-    .brand-eyebrow-dot {
-      width: 6px;
-      height: 6px;
-      border-radius: 50%;
-      background: var(--purple-2);
-      box-shadow:
-        0 0 0 5px rgba(139,111,255,.08),
-        0 0 18px rgba(139,111,255,.6);
-      animation: dotPulse 2.2s ease-in-out infinite;
-    }
-
-    .brand-message {
-      position: relative;
-      max-width: 720px;
-      min-height: 226px;
-      z-index: 1;
-    }
-
-    .brand-kicker {
-      display: block;
-      min-height: 15px;
-      margin-bottom: 13px;
-      color: rgba(255,255,255,.38);
-      font-size: 10px;
-      font-weight: 700;
-      letter-spacing: .20em;
-      text-transform: uppercase;
-    }
-
-    .brand-message-title {
-      display: block;
-      min-height: 130px;
-      max-width: 710px;
-      color: #F9F9FB;
-      font-size: clamp(46px, 5.1vw, 78px);
-      font-weight: 700;
-      line-height: .91;
-      letter-spacing: -.065em;
-      text-wrap: balance;
-      transition:
-        opacity .32s ease,
-        transform .55s var(--ease-out),
-        filter .32s ease;
-    }
-
-    .brand-message-title .line {
-      display: block;
-    }
-
-    .brand-message-title .accent {
-      display: block;
-      margin-top: 5px;
-      color: transparent;
-      background:
-        linear-gradient(
-          105deg,
-          #fff 0%,
-          #d7d8ff 22%,
-          #9b8cff 42%,
-          #fff 54%,
-          #8070f4 72%,
-          #f7f7ff 100%
-        );
-      background-size: 220% auto;
-      -webkit-background-clip: text;
-      background-clip: text;
-      animation: gradientDrift 8s linear infinite;
-    }
-
-    .brand-message-title.out {
-      opacity: 0;
-      transform: translateY(17px);
-      filter: blur(7px);
-    }
-
-    .brand-message-title.in {
-      animation: messageIn .62s var(--ease-out) both;
-    }
-
-    .brand-message-sub {
-      max-width: 500px;
-      margin-top: 18px;
-      color: rgba(247,247,250,.48);
-      font-size: 14px;
-      line-height: 1.78;
-      transition: opacity .32s ease, transform .55s var(--ease-out);
-    }
-
-    .brand-message-sub.out {
-      opacity: 0;
-      transform: translateY(9px);
-    }
-
-    .brand-message-sub.in {
-      animation: subIn .62s ease .04s both;
-    }
-
-    .brand-state {
-      display: inline-flex;
-      align-items: center;
-      gap: 10px;
-      margin-top: 19px;
-      color: rgba(255,255,255,.32);
-      font-size: 9px;
-      font-weight: 700;
-      letter-spacing: .15em;
-      text-transform: uppercase;
-    }
-
-    .brand-state-bars {
-      display: inline-flex;
-      align-items: center;
-      gap: 3px;
-    }
-
-    .brand-state-bars i {
-      display: block;
-      width: 12px;
-      height: 2px;
-      border-radius: 99px;
-      background: rgba(255,255,255,.15);
-      transition: width .35s var(--ease-soft), background .35s ease;
-    }
-
-    .brand-state-bars i.active {
-      width: 28px;
-      background: rgba(255,255,255,.72);
-    }
-
-    .brand-symbol {
-      position: relative;
-      width: 64px;
-      height: 64px;
-      margin-top: 34px;
-      display: grid;
-      place-items: center;
-      border: 1px solid rgba(255,255,255,.10);
-      border-radius: 18px;
-      background:
-        linear-gradient(145deg, rgba(255,255,255,.065), rgba(255,255,255,.015));
-      box-shadow:
-        inset 0 1px 0 rgba(255,255,255,.08),
-        0 20px 55px rgba(0,0,0,.26);
-      animation: revealUp .8s var(--ease-out) .2s both;
-    }
-
-    .brand-symbol::before {
-      content: "";
-      position: absolute;
-      inset: 9px;
-      border: 1px solid rgba(255,255,255,.045);
-      border-radius: 13px;
-    }
-
-    .brand-symbol img {
-      position: relative;
-      width: 44px;
-      height: 44px;
-      object-fit: contain;
-      filter: brightness(1.07);
-    }
-
-    .brand-rule {
-      width: min(420px, 74%);
-      height: 1px;
-      margin-top: 31px;
-      background: linear-gradient(90deg, rgba(255,255,255,.14), transparent 82%);
-      animation: revealUp .8s var(--ease-out) .27s both;
-    }
-
-    .brand-meta {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      margin-top: 15px;
-      animation: revealUp .8s var(--ease-out) .32s both;
-    }
-
-    .meta-chip {
-      display: inline-flex;
-      align-items: center;
-      gap: 7px;
-      min-height: 28px;
-      padding: 6px 10px;
-      border: 1px solid rgba(255,255,255,.065);
-      border-radius: 999px;
-      background: rgba(255,255,255,.018);
-      color: rgba(255,255,255,.37);
+      margin-bottom: 18px;
+      color: rgba(255,255,255,.44);
       font-size: 10px;
       font-weight: 600;
+      letter-spacing: .22em;
+      text-transform: uppercase;
+      opacity: 0;
+      transform: translateY(8px);
     }
 
-    .meta-chip svg {
-      opacity: .75;
+    #login.visible .top-brand {
+      animation: up .7s var(--ease) .05s forwards;
     }
 
-    /* ---------- auth card ---------- */
-    .auth-shell {
-      width: 100%;
-      max-width: 460px;
-      justify-self: end;
+    .top-brand img {
+      width: 18px;
+      height: 18px;
+      object-fit: contain;
+      filter: brightness(1.05);
     }
 
     .auth-card {
       position: relative;
-      padding: clamp(26px, 3vw, 38px);
-      border: 1px solid rgba(255,255,255,.095);
-      border-radius: var(--radius-xl);
+      width: 100%;
+      padding: 30px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
       background:
-        linear-gradient(180deg, rgba(20,20,27,.78), rgba(9,9,13,.88));
-      box-shadow: var(--shadow-card);
+        linear-gradient(180deg, rgba(18,18,23,.88), rgba(10,10,13,.90));
+      box-shadow:
+        0 28px 80px rgba(0,0,0,.42),
+        inset 0 1px 0 rgba(255,255,255,.045);
       backdrop-filter: blur(24px);
       -webkit-backdrop-filter: blur(24px);
       overflow: hidden;
-      animation: cardIn .8s var(--ease-out) .1s both;
+      opacity: 0;
+      transform: translateY(16px);
+    }
+
+    #login.visible .auth-card {
+      animation: cardIn .75s var(--ease) .1s forwards;
     }
 
     .auth-card::before {
       content: "";
       position: absolute;
+      top: 0;
       left: 15%;
       right: 15%;
-      top: 0;
       height: 1px;
-      background: linear-gradient(90deg, transparent, rgba(139,111,255,.78), transparent);
-      opacity: .72;
+      background: linear-gradient(90deg, transparent, rgba(139,111,255,.66), transparent);
     }
 
-    .auth-card::after {
-      content: "";
-      position: absolute;
-      width: 280px;
-      height: 280px;
-      top: -190px;
-      right: -170px;
-      border-radius: 50%;
-      background: radial-gradient(circle, rgba(139,111,255,.11), transparent 68%);
-      pointer-events: none;
+    .card-header {
+      text-align: center;
+      margin-bottom: 25px;
     }
 
-    .auth-header {
-      position: relative;
-      z-index: 1;
-      margin-bottom: 26px;
-    }
-
-    .auth-symbol {
-      width: 36px;
-      height: 36px;
-      margin-bottom: 19px;
-      display: block;
+    .card-logo {
+      width: 42px;
+      height: 42px;
+      margin: 0 auto 17px;
       object-fit: contain;
-      opacity: .96;
-      filter: drop-shadow(0 0 13px rgba(139,111,255,.15));
+      filter: drop-shadow(0 0 14px rgba(139,111,255,.12));
+      animation: float 3.4s ease-in-out infinite;
     }
 
     .auth-title {
-      font-size: clamp(27px, 3vw, 31px);
-      font-weight: 700;
-      line-height: 1.03;
+      font-size: 28px;
+      line-height: 1.02;
       letter-spacing: -.045em;
+      font-weight: 700;
     }
 
     .auth-subtitle {
       margin-top: 9px;
-      color: rgba(247,247,250,.54);
+      color: var(--muted);
       font-size: 12px;
-      line-height: 1.64;
+      line-height: 1.6;
     }
 
-    .auth-status {
+    /* tiny context line: one useful piece of information only */
+    .context-line {
       display: inline-flex;
       align-items: center;
       gap: 7px;
-      margin-top: 14px;
-      padding: 7px 9px;
-      border: 1px solid rgba(255,255,255,.055);
-      border-radius: 8px;
-      background: rgba(255,255,255,.018);
-      color: rgba(255,255,255,.34);
+      margin-top: 13px;
+      color: var(--faint);
       font-size: 9px;
       font-weight: 600;
-      letter-spacing: .03em;
+      letter-spacing: .04em;
     }
 
-    .status-dot {
+    .context-dot {
       width: 5px;
       height: 5px;
       border-radius: 50%;
-      background: var(--success);
-      box-shadow: 0 0 0 4px rgba(46,213,115,.06), 0 0 13px rgba(46,213,115,.28);
+      background: var(--green);
+      box-shadow: 0 0 0 4px rgba(46,213,115,.06);
     }
 
-    /* ---------- form ---------- */
     form {
-      position: relative;
-      z-index: 1;
       display: flex;
       flex-direction: column;
       gap: 12px;
@@ -655,60 +343,55 @@
 
     .field-wrap {
       position: relative;
+      animation: fieldIn .4s var(--ease) both;
     }
 
     .field {
-      position: relative;
-      min-height: 58px;
       display: flex;
       align-items: center;
       gap: 11px;
-      padding: 0 14px;
+      min-height: 56px;
+      padding: 0 15px;
       border: 1px solid rgba(255,255,255,.085);
-      border-radius: var(--radius-sm);
+      border-radius: var(--radius-field);
       background: rgba(0,0,0,.18);
       transition:
-        border-color .3s var(--ease-out),
-        background .3s ease,
-        box-shadow .3s var(--ease-out),
-        transform .3s var(--ease-out);
+        border-color .25s ease,
+        background .25s ease,
+        box-shadow .25s var(--ease),
+        transform .25s var(--ease);
     }
 
     .field:hover {
-      border-color: rgba(255,255,255,.13);
-      background: rgba(255,255,255,.022);
+      background: rgba(255,255,255,.018);
+      border-color: rgba(255,255,255,.12);
     }
 
     .field:focus-within {
-      border-color: var(--purple);
-      border-width: 2px;
-      padding-left: 13px;
-      padding-right: 13px;
-      background: rgba(108,76,241,.038);
+      border-color: var(--line-focus);
+      background: rgba(108,76,241,.04);
       box-shadow:
-        0 0 0 4px rgba(108,76,241,.20),
-        0 12px 30px rgba(0,0,0,.13);
+        0 0 0 4px rgba(108,76,241,.15),
+        0 10px 30px rgba(0,0,0,.12);
       transform: translateY(-1px);
     }
 
-    .field-icon {
+    .field svg {
+      flex: 0 0 auto;
       width: 18px;
       height: 18px;
-      flex: 0 0 auto;
-      color: rgba(255,255,255,.40);
-      opacity: .55;
-      transition: opacity .3s ease, color .3s ease;
+      color: rgba(255,255,255,.36);
+      transition: color .25s ease, opacity .25s ease;
     }
 
-    .field:focus-within .field-icon {
+    .field:focus-within svg {
       color: var(--purple-3);
-      opacity: 1;
     }
 
     .field input {
       width: 100%;
       min-width: 0;
-      height: 56px;
+      height: 54px;
       border: 0;
       outline: 0;
       background: transparent;
@@ -717,61 +400,61 @@
     }
 
     .field input::placeholder {
-      color: rgba(247,247,250,.32);
+      color: rgba(246,246,248,.30);
     }
 
     .field input:-webkit-autofill,
     .field input:-webkit-autofill:hover,
     .field input:-webkit-autofill:focus {
       -webkit-text-fill-color: var(--text);
-      box-shadow: 0 0 0 1000px rgba(0,0,0,.12) inset;
+      box-shadow: 0 0 0 1000px rgba(0,0,0,.16) inset;
       transition: background-color 9999s ease-in-out 0s;
     }
 
-    .toggle-eye {
+    .eye {
       width: 34px;
       height: 34px;
       flex: 0 0 auto;
       display: grid;
       place-items: center;
       border-radius: 9px;
-      color: rgba(255,255,255,.45);
+      color: rgba(255,255,255,.43);
       background: transparent;
       cursor: pointer;
-      transition: background .18s ease, color .18s ease, transform .18s ease;
+      transition: color .18s ease, background .18s ease, transform .18s ease;
     }
 
-    .toggle-eye:hover {
-      background: rgba(255,255,255,.055);
+    .eye:hover {
       color: #fff;
+      background: rgba(255,255,255,.05);
     }
 
-    .toggle-eye:active {
-      transform: scale(.93);
+    .eye:active {
+      transform: scale(.94);
     }
 
-    .eye-icon .eye-pupil {
+    .eye-pupil {
       transform-origin: center;
       transform-box: fill-box;
-      transition: transform 280ms cubic-bezier(.5,0,.5,1), opacity 180ms ease;
+      transition: transform .28s cubic-bezier(.5,0,.5,1), opacity .18s ease;
     }
 
-    .eye-icon .eye-outline {
+    .eye-outline {
       transform-origin: center;
       transform-box: fill-box;
-      transition: transform 280ms cubic-bezier(.5,0,.5,1);
+      transition: transform .28s cubic-bezier(.5,0,.5,1);
     }
 
-    .eye-icon.is-closed .eye-pupil {
+    .eye.closed .eye-pupil {
       transform: scaleY(.05);
       opacity: 0;
     }
 
-    .eye-icon.is-closed .eye-outline {
+    .eye.closed .eye-outline {
       transform: scaleY(.12);
     }
 
-    /* signup */
+    /* Signup only */
     .signup-only {
       display: none;
     }
@@ -780,33 +463,26 @@
       display: flex;
     }
 
-    body.mode-signup .signup-only.password-rule {
+    body.mode-signup .password-note {
       display: block;
     }
 
-    .mode-enter,
-    .mode-signup-extra {
-      overflow: hidden;
-    }
-
-    /* strength */
-    .strength-wrap {
+    /* Strength */
+    .strength {
       display: none;
       flex-direction: column;
-      gap: 8px;
-      padding: 1px 1px 0;
+      gap: 7px;
+      padding: 2px 1px 0;
     }
 
-    body.mode-signup .strength-wrap.show {
+    body.mode-signup .strength.show {
       display: flex;
-      animation: fieldReveal .32s var(--ease-out) both;
     }
 
     .strength-track {
-      width: 100%;
       height: 4px;
-      overflow: hidden;
       border-radius: 99px;
+      overflow: hidden;
       background: rgba(255,255,255,.08);
     }
 
@@ -814,22 +490,19 @@
       width: 0;
       height: 100%;
       border-radius: inherit;
-      background: var(--error);
-      transition:
-        width .42s cubic-bezier(.4,0,.2,1),
-        background-color .30s ease;
+      background: var(--red);
+      transition: width .42s cubic-bezier(.4,0,.2,1), background-color .3s ease;
     }
 
     .strength-fill.pulse {
       animation: strengthPulse .42s ease;
     }
 
-    .strength-meta {
+    .strength-row {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 10px;
-      min-height: 15px;
+      min-height: 14px;
     }
 
     .strength-text,
@@ -839,239 +512,168 @@
     }
 
     .strength-text {
-      color: var(--text-muted);
-      transition: color .3s ease;
+      color: var(--muted);
     }
 
     .strength-score {
-      color: rgba(255,255,255,.24);
+      color: rgba(255,255,255,.22);
     }
 
-    .password-rule {
-      color: rgba(255,255,255,.34);
+    .password-note {
+      display: none;
+      margin-top: -2px;
+      padding: 0 2px;
+      color: var(--faint);
       font-size: 10px;
-      line-height: 1.55;
+      line-height: 1.5;
     }
 
-    /* error */
-    .error-msg {
+    /* Error */
+    .error {
       min-height: 18px;
-      padding: 1px 2px;
-      color: var(--error);
+      padding: 2px;
+      color: var(--red);
       font-size: 12px;
-      line-height: 1.48;
-      text-align: left;
+      line-height: 1.45;
     }
 
     .shake {
-      animation: formShake 400ms cubic-bezier(.36,.07,.19,.97);
+      animation: shake .4s cubic-bezier(.36,.07,.19,.97);
     }
 
-    /* primary */
-    .btn-primary {
+    /* CTA */
+    .primary {
       position: relative;
-      isolation: isolate;
       overflow: hidden;
+      isolation: isolate;
       width: 100%;
       min-height: 56px;
-      margin-top: 2px;
-      border: 1px solid rgba(255,255,255,.12);
-      border-radius: 16px;
+      border-radius: 15px;
+      border: 1px solid rgba(255,255,255,.10);
       color: #fff;
       background: linear-gradient(135deg, var(--purple-2), var(--purple));
       box-shadow:
-        0 4px 20px rgba(108,76,241,.25),
-        inset 0 1px 0 rgba(255,255,255,.22);
+        0 9px 24px rgba(108,76,241,.25),
+        inset 0 1px 0 rgba(255,255,255,.20);
       font-size: 14px;
       font-weight: 700;
-      letter-spacing: -.01em;
       cursor: pointer;
-      transition:
-        transform .16s ease,
-        filter .25s ease,
-        opacity .2s ease,
-        box-shadow .25s ease;
+      transition: transform .15s ease, filter .2s ease, box-shadow .2s ease, opacity .2s ease;
     }
 
-    .btn-primary::after {
+    .primary::after {
       content: "";
       position: absolute;
       inset: 0;
-      z-index: -1;
-      background: linear-gradient(135deg, rgba(255,255,255,.20), transparent 56%);
-      opacity: 0;
-      transition: opacity .3s ease;
+      background: linear-gradient(110deg, transparent 20%, rgba(255,255,255,.15) 48%, transparent 74%);
+      transform: translateX(-100%);
+      transition: transform .7s ease;
     }
 
-    .btn-primary:hover:not(:disabled) {
-      filter: brightness(1.055);
+    .primary:hover:not(:disabled) {
+      filter: brightness(1.045);
       box-shadow:
-        0 8px 26px rgba(108,76,241,.30),
-        inset 0 1px 0 rgba(255,255,255,.24);
+        0 12px 30px rgba(108,76,241,.29),
+        inset 0 1px 0 rgba(255,255,255,.22);
     }
 
-    .btn-primary:hover:not(:disabled)::after {
-      opacity: 1;
+    .primary:hover:not(:disabled)::after {
+      transform: translateX(100%);
     }
 
-    .btn-primary:active:not(:disabled) {
-      transform: scale(.985);
-      box-shadow: 0 2px 10px rgba(108,76,241,.25);
+    .primary:active:not(:disabled) {
+      transform: scale(.987);
     }
 
-    .btn-primary:disabled {
-      cursor: not-allowed;
+    .primary:disabled {
       opacity: .58;
+      cursor: not-allowed;
     }
 
-    .btn-content {
-      transition: opacity .18s ease;
+    .button-text {
+      transition: opacity .15s ease;
     }
 
-    .btn-spinner {
+    .spinner {
       position: absolute;
       left: 50%;
       top: 50%;
-      width: 22px;
-      height: 22px;
-      margin: -11px 0 0 -11px;
+      width: 21px;
+      height: 21px;
+      margin: -10.5px 0 0 -10.5px;
       display: none;
-      border: 2px solid rgba(255,255,255,.26);
+      border: 2px solid rgba(255,255,255,.28);
       border-top-color: #fff;
       border-radius: 50%;
       animation: spin .8s linear infinite;
     }
 
-    .btn-primary.loading .btn-content {
+    .primary.loading .button-text {
       opacity: 0;
     }
 
-    .btn-primary.loading .btn-spinner {
+    .primary.loading .spinner {
       display: block;
     }
 
-    /* mode switch */
-    .switch-mode {
-      position: relative;
-      z-index: 1;
+    /* Switch */
+    .switch {
       display: flex;
       align-items: center;
       justify-content: center;
       gap: 5px;
-      margin-top: 19px;
-      color: rgba(247,247,250,.34);
+      margin-top: 18px;
+      color: var(--muted);
       font-size: 11px;
     }
 
-    .switch-mode a {
+    .switch a {
       color: #fff;
       font-weight: 600;
       text-decoration: none;
-      border-bottom: 1px solid rgba(255,255,255,.30);
       cursor: pointer;
+      border-bottom: 1px solid rgba(255,255,255,.28);
       transition: opacity .18s ease, border-color .18s ease;
     }
 
-    .switch-mode a:hover {
-      opacity: .84;
+    .switch a:hover {
+      opacity: .82;
       border-color: #fff;
     }
 
-    .auth-footer {
-      position: relative;
-      z-index: 1;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-      margin-top: 21px;
-      padding-top: 16px;
-      border-top: 1px solid rgba(255,255,255,.055);
-      color: rgba(255,255,255,.23);
+    .mini-footer {
+      margin-top: 14px;
+      color: rgba(255,255,255,.22);
       font-size: 9px;
-      letter-spacing: .08em;
+      letter-spacing: .15em;
       text-transform: uppercase;
     }
 
-    /* ---------- accessibility ---------- */
-    :focus-visible {
-      outline: 2px solid var(--purple-3);
-      outline-offset: 3px;
-    }
-
-    /* ---------- animations ---------- */
-    @keyframes markIn {
-      from { opacity: 0; transform: translateY(12px) scale(.90); }
-      to { opacity: 1; transform: translateY(0) scale(1); }
-    }
-
-    @keyframes markPulse {
-      0%, 100% { filter: drop-shadow(0 0 0 rgba(139,111,255,0)); }
-      50% { filter: drop-shadow(0 0 16px rgba(139,111,255,.16)); }
-    }
-
-    @keyframes wordIn {
-      from { opacity: 0; transform: translateY(11px); filter: blur(5px); }
-      to { opacity: 1; transform: translateY(0); filter: blur(0); }
-    }
-
-    @keyframes orbitPulse {
-      0%, 100% { transform: scale(.98); opacity: .55; }
-      50% { transform: scale(1.025); opacity: .9; }
-    }
-
-    @keyframes sweep {
-      0% { transform: translateX(-100%); }
-      50%, 100% { transform: translateX(100%); }
-    }
-
-    @keyframes dotPulse {
-      0%, 100% { transform: scale(1); opacity: .78; }
-      50% { transform: scale(1.18); opacity: 1; }
-    }
-
-    @keyframes revealUp {
-      from { opacity: 0; transform: translateY(14px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
+    /* ================= ANIMATIONS ================= */
 
     @keyframes cardIn {
-      from { opacity: 0; transform: translateY(20px) scale(.985); }
+      from { opacity: 0; transform: translateY(18px) scale(.99); }
       to { opacity: 1; transform: translateY(0) scale(1); }
     }
 
-    @keyframes messageIn {
-      from { opacity: 0; transform: translateY(17px); filter: blur(8px); }
-      to { opacity: 1; transform: translateY(0); filter: blur(0); }
-    }
-
-    @keyframes subIn {
-      from { opacity: 0; transform: translateY(9px); }
+    @keyframes up {
+      from { opacity: 0; transform: translateY(8px); }
       to { opacity: 1; transform: translateY(0); }
     }
 
-    @keyframes fieldReveal {
-      from { opacity: 0; transform: translateY(-6px); }
+    @keyframes fieldIn {
+      from { opacity: 0; transform: translateY(7px); }
       to { opacity: 1; transform: translateY(0); }
     }
 
-    @keyframes formShake {
-      0%,100% { transform: translateX(0); }
-      16% { transform: translateX(-3px); }
-      32% { transform: translateX(3px); }
-      48% { transform: translateX(-3px); }
-      64% { transform: translateX(3px); }
-      80% { transform: translateX(-2px); }
+    @keyframes glow {
+      0%, 100% { opacity: .45; transform: scale(.98); }
+      50% { opacity: .9; transform: scale(1.05); }
     }
 
-    @keyframes strengthPulse {
-      0% { transform: scaleY(1); }
-      42% { transform: scaleY(1.65); }
-      100% { transform: scaleY(1); }
-    }
-
-    @keyframes spin {
-      to { transform: rotate(360deg); }
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-3px); }
     }
 
     @keyframes fadeIn {
@@ -1079,98 +681,82 @@
       to { opacity: 1; }
     }
 
-    @keyframes gradientDrift {
-      0% { background-position: 0% 50%; }
-      100% { background-position: 220% 50%; }
+    @keyframes sweep {
+      0% { transform: translateX(-110%); }
+      50%, 100% { transform: translateX(250%); }
     }
 
-    /* ---------- tablet / mobile ---------- */
-    @media (max-width: 980px) {
-      .auth-layout {
-        grid-template-columns: minmax(0, 1fr);
-        width: min(520px, 100%);
-        min-height: auto;
-        padding: 18px;
-      }
-
-      .brand-panel {
-        display: none;
-      }
-
-      .auth-shell {
-        justify-self: center;
-      }
+    @keyframes strengthPulse {
+      0% { transform: scaleY(1); }
+      45% { transform: scaleY(1.6); }
+      100% { transform: scaleY(1); }
     }
+
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      16% { transform: translateX(-3px); }
+      32% { transform: translateX(3px); }
+      48% { transform: translateX(-3px); }
+      64% { transform: translateX(3px); }
+      80% { transform: translateX(-2px); }
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* ================= RESPONSIVE ================= */
 
     @media (max-width: 480px) {
       #login {
         align-items: flex-start;
       }
 
-      .auth-layout {
+      .auth-wrap {
         width: 100%;
-        min-height: 100%;
-        padding:
-          max(12px, env(safe-area-inset-top))
-          max(12px, env(safe-area-inset-right))
-          max(12px, env(safe-area-inset-bottom))
-          max(12px, env(safe-area-inset-left));
+        padding-top: 4vh;
+        max-height: calc(100vh - 10px);
       }
 
-      .auth-shell {
-        width: 100%;
-        max-width: none;
-        padding: 4vh 0 18px;
+      .top-brand {
+        margin-bottom: 14px;
       }
 
       .auth-card {
-        padding: 22px 17px 17px;
-        border-radius: 22px;
+        padding: 24px 17px 18px;
+        border-radius: 21px;
       }
 
-      .auth-symbol {
-        width: 34px;
-        height: 34px;
+      .card-header {
+        margin-bottom: 21px;
+      }
+
+      .card-logo {
+        width: 38px;
+        height: 38px;
+        margin-bottom: 14px;
       }
 
       .auth-title {
-        font-size: 26px;
+        font-size: 25px;
       }
 
-      .field {
-        min-height: 56px;
+      .auth-subtitle {
+        font-size: 12px;
       }
 
-      .field input {
-        height: 54px;
-        font-size: 16px;
-      }
-
-      .btn-primary {
-        min-height: 56px;
-      }
-
-      .auth-footer {
+      .mini-footer {
         display: none;
-      }
-
-      .splash-mark {
-        width: 68px;
-        height: 68px;
-      }
-
-      .splash-word {
-        width: min(320px, 76vw);
       }
     }
 
     @media (max-height: 700px) {
       .auth-card {
         padding-top: 22px;
-        padding-bottom: 20px;
+        padding-bottom: 17px;
       }
 
-      .auth-header {
+      .card-header {
         margin-bottom: 19px;
       }
 
@@ -1182,13 +768,12 @@
         height: 50px;
       }
 
-      .btn-primary {
+      .primary {
         min-height: 52px;
       }
 
-      .auth-footer {
+      .switch {
         margin-top: 14px;
-        padding-top: 11px;
       }
     }
 
@@ -1198,277 +783,179 @@
       *::after {
         animation-duration: .01ms !important;
         animation-iteration-count: 1 !important;
-        scroll-behavior: auto !important;
         transition-duration: .01ms !important;
+        scroll-behavior: auto !important;
       }
 
       #lineBackground {
-        opacity: .72;
+        opacity: .45;
       }
+    }
+
+    :focus-visible {
+      outline: 2px solid var(--purple-2);
+      outline-offset: 3px;
     }
   </style>
 </head>
 
 <body>
-  <canvas id="lineBackground" aria-hidden="true"></canvas>
-  <div class="background-vignette" aria-hidden="true"></div>
-  <div class="grain" aria-hidden="true"></div>
+  <div class="background" aria-hidden="true">
+    <canvas id="lineBackground"></canvas>
+  </div>
 
-  <div class="app">
-    <!-- ================= SPLASH ================= -->
-    <section id="splash" class="screen" aria-label="Kazer">
-      <div class="splash-stage">
-        <div class="splash-orbit" aria-hidden="true"></div>
+  <section id="splash" aria-label="Kazer">
+    <div class="splash-content">
+      <div class="splash-icon">
+        <img src="../download/assets/kazer-login-symbol.png" alt="" />
+      </div>
+      <canvas id="splashWord" width="600" height="110"></canvas>
+      <div class="splash-caption">Klipza Studio</div>
+      <div class="splash-line"></div>
+    </div>
+  </section>
 
-        <div class="splash-mark">
-          <img src="../download/assets/kazer-login-symbol.png" alt="" />
+  <main id="login" aria-labelledby="authTitle">
+    <div class="auth-wrap">
+      <div class="top-brand">
+        <img src="../download/assets/kazer-login-symbol.png" alt="" />
+        <span>KAZER</span>
+      </div>
+
+      <section class="auth-card" id="authCard">
+        <div class="card-header">
+          <img class="card-logo" src="../download/assets/kazer-login-symbol.png" alt="" />
+
+          <h1 class="auth-title" id="authTitle">Entrar para continuar</h1>
+
+          <p class="auth-subtitle" id="subText">
+            Acesse sua conta Kazer.
+          </p>
+
+          <div class="context-line">
+            <span class="context-dot"></span>
+            <span>Conexão segura</span>
+          </div>
         </div>
 
-        <canvas id="splashWord" class="splash-word" width="700" height="125" aria-hidden="true"></canvas>
-
-        <div class="splash-caption">Klipza Studio</div>
-      </div>
-
-      <div class="splash-progress" aria-hidden="true"></div>
-    </section>
-
-    <!-- ================= AUTH ================= -->
-    <main id="login" class="screen" aria-labelledby="authTitle">
-      <div class="auth-layout">
-        <section class="brand-panel" aria-label="Kazer">
-          <div class="brand-eyebrow">
-            <span class="brand-eyebrow-dot"></span>
-            <span>Klipza Studio / Kazer</span>
-          </div>
-
-          <div class="brand-message" aria-live="polite">
-            <span class="brand-kicker" id="brandKicker">BEM-VINDO DE VOLTA</span>
-
-            <span class="brand-message-title" id="brandTitle">
-              <span class="line">Olá de novo.</span>
-              <span class="line accent">Vamos continuar?</span>
-            </span>
-
-            <span class="brand-message-sub" id="brandSub">
-              Entre na sua conta e retome sua experiência no Kazer exatamente de onde parou.
-            </span>
-
-            <span class="brand-state" aria-hidden="true">
-              <span class="brand-state-bars">
-                <i class="active" id="stateBar1"></i>
-                <i id="stateBar2"></i>
-              </span>
-              <span id="stateLabel">entrar</span>
-            </span>
-          </div>
-
-          <div class="brand-symbol">
-            <img src="../download/assets/kazer-login-symbol.png" alt="" />
-          </div>
-
-          <div class="brand-rule"></div>
-
-          <div class="brand-meta" aria-hidden="true">
-            <span class="meta-chip">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7">
-                <path d="M12 3l7 4v5c0 4.4-3 7.6-7 9-4-1.4-7-4.6-7-9V7l7-4z"/>
-                <path d="M9.3 12l1.8 1.8 3.7-4"/>
+        <form id="authForm" novalidate>
+          <div class="field-wrap signup-only">
+            <div class="field">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+                <circle cx="12" cy="8" r="4"/>
+                <path d="M4 20c0-4.4 3.6-7 8-7s8 2.6 8 7"/>
               </svg>
-              Sessão protegida
-            </span>
-
-            <span class="meta-chip">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7">
-                <circle cx="12" cy="12" r="8"/>
-                <path d="M8.5 12.2l2.2 2.2 4.8-5"/>
-              </svg>
-              Experiência contínua
-            </span>
+              <input
+                type="text"
+                id="displayName"
+                placeholder="Como devemos te chamar?"
+                autocomplete="name"
+                maxlength="80"
+                spellcheck="false"
+              />
+            </div>
           </div>
-        </section>
 
-        <section class="auth-shell">
-          <div class="auth-card" id="authCard">
-            <div class="auth-header">
-              <img
-                class="auth-symbol"
-                src="../download/assets/kazer-login-symbol.png"
-                alt=""
+          <div class="field-wrap">
+            <div class="field">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+                <path d="M3 6l9 7 9-7"/>
+                <rect x="3" y="5" width="18" height="14" rx="2"/>
+              </svg>
+              <input
+                type="email"
+                id="email"
+                placeholder="seu@email.com"
+                required
+                autocomplete="email"
+                maxlength="254"
+                inputmode="email"
+              />
+            </div>
+          </div>
+
+          <div class="field-wrap">
+            <div class="field">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+                <rect x="5" y="11" width="14" height="9" rx="2"/>
+                <path d="M8 11V7a4 4 0 0 1 8 0v4"/>
+              </svg>
+
+              <input
+                type="password"
+                id="password"
+                placeholder="Sua senha"
+                required
+                autocomplete="current-password"
+                minlength="10"
+                maxlength="256"
               />
 
-              <h1 class="auth-title" id="authTitle">Entrar para continuar</h1>
-
-              <p class="auth-subtitle" id="subText">
-                Acesse sua conta Kazer.
-              </p>
-
-              <div class="auth-status">
-                <span class="status-dot"></span>
-                <span>Conexão segura</span>
-              </div>
-            </div>
-
-            <form id="authForm" novalidate>
-              <!-- Display name -->
-              <div class="field-wrap signup-only">
-                <div class="field">
-                  <svg class="field-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
-                    <circle cx="12" cy="8" r="4"/>
-                    <path d="M4 20c0-4.4 3.6-7 8-7s8 2.6 8 7"/>
-                  </svg>
-
-                  <input
-                    type="text"
-                    id="displayName"
-                    placeholder="Como devemos te chamar?"
-                    autocomplete="name"
-                    maxlength="80"
-                    spellcheck="false"
-                  />
-                </div>
-              </div>
-
-              <!-- Email -->
-              <div class="field-wrap">
-                <div class="field">
-                  <svg class="field-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
-                    <path d="M3 6l9 7 9-7"/>
-                    <rect x="3" y="5" width="18" height="14" rx="2"/>
-                  </svg>
-
-                  <input
-                    type="email"
-                    id="email"
-                    placeholder="seu@email.com"
-                    required
-                    autocomplete="email"
-                    maxlength="254"
-                    inputmode="email"
-                  />
-                </div>
-              </div>
-
-              <!-- Password -->
-              <div class="field-wrap">
-                <div class="field">
-                  <svg class="field-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
-                    <rect x="5" y="11" width="14" height="9" rx="2"/>
-                    <path d="M8 11V7a4 4 0 0 1 8 0v4"/>
-                  </svg>
-
-                  <input
-                    type="password"
-                    id="password"
-                    placeholder="Sua senha"
-                    required
-                    autocomplete="current-password"
-                    minlength="10"
-                    maxlength="256"
-                  />
-
-                  <button
-                    type="button"
-                    class="toggle-eye"
-                    id="eyeBtnPassword"
-                    aria-label="Mostrar senha"
-                  >
-                    <svg
-                      class="eye-icon is-open"
-                      id="eyeIconPassword"
-                      width="18"
-                      height="18"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      stroke-width="1.8"
-                      aria-hidden="true"
-                    >
-                      <path class="eye-outline" d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/>
-                      <circle class="eye-pupil" cx="12" cy="12" r="3"/>
-                    </svg>
-                  </button>
-                </div>
-              </div>
-
-              <!-- Password strength -->
-              <div class="strength-wrap" id="strengthWrap">
-                <div class="strength-track">
-                  <div class="strength-fill" id="strengthFill"></div>
-                </div>
-
-                <div class="strength-meta">
-                  <span class="strength-text" id="strengthText">Digite uma senha</span>
-                  <span class="strength-score" id="strengthScore"></span>
-                </div>
-              </div>
-
-              <div class="password-rule signup-only" id="passwordHint">
-                Pelo menos 10 caracteres, 1 letra maiúscula e 1 caractere especial.
-              </div>
-
-              <!-- Confirm -->
-              <div class="field-wrap signup-only">
-                <div class="field">
-                  <svg class="field-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
-                    <rect x="5" y="11" width="14" height="9" rx="2"/>
-                    <path d="M8 11V7a4 4 0 0 1 8 0v4"/>
-                  </svg>
-
-                  <input
-                    type="password"
-                    id="confirmPassword"
-                    placeholder="Digite a senha novamente"
-                    autocomplete="new-password"
-                    minlength="10"
-                    maxlength="256"
-                  />
-
-                  <button
-                    type="button"
-                    class="toggle-eye"
-                    id="eyeBtnConfirmPassword"
-                    aria-label="Mostrar senha"
-                  >
-                    <svg
-                      class="eye-icon is-open"
-                      id="eyeIconConfirmPassword"
-                      width="18"
-                      height="18"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      stroke-width="1.8"
-                      aria-hidden="true"
-                    >
-                      <path class="eye-outline" d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/>
-                      <circle class="eye-pupil" cx="12" cy="12" r="3"/>
-                    </svg>
-                  </button>
-                </div>
-              </div>
-
-              <div class="error-msg" id="errorMsg" aria-live="polite"></div>
-
-              <button type="submit" class="btn-primary" id="submitBtn">
-                <span class="btn-content">Sign in</span>
-                <span class="btn-spinner" aria-hidden="true"></span>
+              <button type="button" class="eye" id="eyeBtnPassword" aria-label="Mostrar senha">
+                <svg id="eyeIconPassword" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+                  <path class="eye-outline" d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/>
+                  <circle class="eye-pupil" cx="12" cy="12" r="3"/>
+                </svg>
               </button>
-            </form>
-
-            <div class="switch-mode">
-              <span id="switchText">Não tem conta?</span>
-              <a id="switchLink" href="#signup">Criar conta</a>
-            </div>
-
-            <div class="auth-footer" aria-hidden="true">
-              <span>KAZER</span>
-              <span>Klipza Studio</span>
             </div>
           </div>
-        </section>
-      </div>
-    </main>
-  </div>
+
+          <div class="strength" id="strengthWrap">
+            <div class="strength-track">
+              <div class="strength-fill" id="strengthFill"></div>
+            </div>
+            <div class="strength-row">
+              <span class="strength-text" id="strengthText">Digite uma senha</span>
+              <span class="strength-score" id="strengthScore"></span>
+            </div>
+          </div>
+
+          <div class="password-note signup-only" id="passwordHint">
+            Pelo menos 10 caracteres, 1 letra maiúscula e 1 caractere especial.
+          </div>
+
+          <div class="field-wrap signup-only">
+            <div class="field">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+                <rect x="5" y="11" width="14" height="9" rx="2"/>
+                <path d="M8 11V7a4 4 0 0 1 8 0v4"/>
+              </svg>
+
+              <input
+                type="password"
+                id="confirmPassword"
+                placeholder="Digite a senha novamente"
+                autocomplete="new-password"
+                minlength="10"
+                maxlength="256"
+              />
+
+              <button type="button" class="eye" id="eyeBtnConfirmPassword" aria-label="Mostrar senha">
+                <svg id="eyeIconConfirmPassword" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+                  <path class="eye-outline" d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/>
+                  <circle class="eye-pupil" cx="12" cy="12" r="3"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <div class="error" id="errorMsg" aria-live="polite"></div>
+
+          <button type="submit" class="primary" id="submitBtn">
+            <span class="button-text" id="buttonText">Sign in</span>
+            <span class="spinner" aria-hidden="true"></span>
+          </button>
+        </form>
+
+        <div class="switch">
+          <span id="switchText">Não tem conta?</span>
+          <a href="#signup" id="switchLink">Criar conta</a>
+        </div>
+
+        <div class="mini-footer">Klipza Studio</div>
+      </section>
+    </div>
+  </main>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
@@ -1482,10 +969,155 @@
       function setVH() {
         document.documentElement.style.setProperty("--vh", (window.innerHeight * 0.01) + "px");
       }
-
       setVH();
       window.addEventListener("resize", setVH, { passive: true });
       window.addEventListener("orientationchange", setVH, { passive: true });
+
+      /* =========================================================
+         LINE BACKGROUND
+      ========================================================= */
+      (() => {
+        const canvas = document.getElementById("lineBackground");
+        const ctx = canvas.getContext("2d", { alpha: false });
+        if (!ctx) return;
+
+        let w = 0;
+        let h = 0;
+        let dpr = 1;
+
+        function resize() {
+          dpr = Math.min(2, window.devicePixelRatio || 1);
+          w = window.innerWidth;
+          h = window.innerHeight;
+          canvas.width = Math.round(w * dpr);
+          canvas.height = Math.round(h * dpr);
+          canvas.style.width = w + "px";
+          canvas.style.height = h + "px";
+          ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        }
+
+        function draw(t) {
+          const time = t * 0.00033;
+
+          ctx.fillStyle = "#050507";
+          ctx.fillRect(0, 0, w, h);
+
+          const cols = Math.max(16, Math.min(29, Math.floor(w / 58)));
+          const rows = Math.max(12, Math.min(21, Math.floor(h / 51)));
+          const sx = w / Math.max(1, cols - 1);
+          const sy = h / Math.max(1, rows - 1);
+
+          for (let y = -1; y <= rows + 1; y++) {
+            ctx.beginPath();
+
+            for (let x = -2; x <= cols + 2; x++) {
+              const px = x * sx;
+              const py =
+                y * sy +
+                Math.sin(x * .46 + time * 1.45 + y * .14) * 8 +
+                Math.sin(x * .18 - time + y * .28) * 4;
+
+              if (x === -2) ctx.moveTo(px, py);
+              else ctx.lineTo(px, py);
+            }
+
+            ctx.strokeStyle = "rgba(255,255,255,.034)";
+            ctx.lineWidth = .7;
+            ctx.stroke();
+          }
+
+          for (let x = -1; x <= cols + 1; x++) {
+            ctx.beginPath();
+
+            for (let y = -2; y <= rows + 2; y++) {
+              const px =
+                x * sx +
+                Math.sin(y * .50 - time * 1.12 + x * .19) * 5 +
+                Math.sin(y * .20 + time * 1.1 + x * .21) * 3;
+
+              const py = y * sy;
+
+              if (y === -2) ctx.moveTo(px, py);
+              else ctx.lineTo(px, py);
+            }
+
+            ctx.strokeStyle = "rgba(139,111,255,.016)";
+            ctx.lineWidth = .55;
+            ctx.stroke();
+          }
+
+          requestAnimationFrame(draw);
+        }
+
+        resize();
+        window.addEventListener("resize", resize, { passive: true });
+        requestAnimationFrame(draw);
+      })();
+
+      /* =========================================================
+         METALLIC KAZER
+      ========================================================= */
+      function initKazerWordmark(canvas) {
+        const ctx = canvas.getContext("2d");
+        if (!ctx) return;
+
+        const W = canvas.width;
+        const H = canvas.height;
+
+        const draw = (t) => {
+          ctx.clearRect(0, 0, W, H);
+          ctx.save();
+
+          const size = Math.floor(H * .73);
+          ctx.font = `${size}px "Cinzel", serif`;
+          ctx.textAlign = "center";
+          ctx.textBaseline = "middle";
+
+          const shift = (t * .00014) % 1;
+
+          const grad = ctx.createLinearGradient(
+            W * (-.5 + shift),
+            0,
+            W * (1 + shift),
+            0
+          );
+
+          grad.addColorStop(0, "#51525b");
+          grad.addColorStop(.18, "#e1e2e8");
+          grad.addColorStop(.32, "#a49bff");
+          grad.addColorStop(.46, "#ffffff");
+          grad.addColorStop(.59, "#6e6b9e");
+          grad.addColorStop(.76, "#ececf0");
+          grad.addColorStop(1, "#50515a");
+
+          ctx.fillStyle = grad;
+          ctx.shadowColor = "rgba(139,111,255,.13)";
+          ctx.shadowBlur = 11;
+          ctx.fillText("KAZER", W / 2, H / 2 + 2);
+
+          const sheen = ctx.createLinearGradient(0, 0, 0, H);
+          sheen.addColorStop(0, "rgba(255,255,255,.26)");
+          sheen.addColorStop(.48, "rgba(255,255,255,0)");
+          sheen.addColorStop(1, "rgba(0,0,0,.18)");
+
+          ctx.globalCompositeOperation = "source-atop";
+          ctx.fillStyle = sheen;
+          ctx.fillRect(0, 0, W, H);
+
+          ctx.restore();
+          requestAnimationFrame(draw);
+        };
+
+        const start = () => requestAnimationFrame(draw);
+
+        if (document.fonts?.load) {
+          document.fonts.load('90px "Cinzel"').catch(() => {}).finally(start);
+        } else {
+          setTimeout(start, 200);
+        }
+      }
+
+      initKazerWordmark(document.getElementById("splashWord"));
 
       /* =========================================================
          ELEMENTS
@@ -1493,248 +1125,48 @@
       const splash = document.getElementById("splash");
       const login = document.getElementById("login");
       const authCard = document.getElementById("authCard");
-      const authForm = document.getElementById("authForm");
 
+      const authForm = document.getElementById("authForm");
       const authTitle = document.getElementById("authTitle");
       const subText = document.getElementById("subText");
+      const buttonText = document.getElementById("buttonText");
       const submitBtn = document.getElementById("submitBtn");
       const switchText = document.getElementById("switchText");
       const switchLink = document.getElementById("switchLink");
       const errorMsg = document.getElementById("errorMsg");
 
-      const displayNameInput = document.getElementById("displayName");
-      const emailInput = document.getElementById("email");
-      const passwordInput = document.getElementById("password");
-      const confirmInput = document.getElementById("confirmPassword");
+      const displayName = document.getElementById("displayName");
+      const email = document.getElementById("email");
+      const password = document.getElementById("password");
+      const confirmPassword = document.getElementById("confirmPassword");
 
-      const strengthWrap = document.getElementById("strengthWrap");
+      const strength = document.getElementById("strengthWrap");
       const strengthFill = document.getElementById("strengthFill");
       const strengthText = document.getElementById("strengthText");
       const strengthScore = document.getElementById("strengthScore");
 
-      const brandKicker = document.getElementById("brandKicker");
-      const brandTitle = document.getElementById("brandTitle");
-      const brandSub = document.getElementById("brandSub");
-      const stateLabel = document.getElementById("stateLabel");
-      const stateBar1 = document.getElementById("stateBar1");
-      const stateBar2 = document.getElementById("stateBar2");
-
       let isSignup = false;
-
-      /* =========================================================
-         BACKGROUND — MOVING LINES
-      ========================================================= */
-      (() => {
-        const canvas = document.getElementById("lineBackground");
-        const ctx = canvas.getContext("2d", { alpha: false });
-        if (!ctx) return;
-
-        let width = 0;
-        let height = 0;
-        let dpr = 1;
-
-        const resize = () => {
-          dpr = Math.min(2, window.devicePixelRatio || 1);
-          width = window.innerWidth;
-          height = window.innerHeight;
-
-          canvas.width = Math.floor(width * dpr);
-          canvas.height = Math.floor(height * dpr);
-          canvas.style.width = width + "px";
-          canvas.style.height = height + "px";
-
-          ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-        };
-
-        const draw = (timestamp) => {
-          const t = timestamp * 0.00036;
-
-          ctx.fillStyle = "#050508";
-          ctx.fillRect(0, 0, width, height);
-
-          const cols = Math.max(16, Math.min(31, Math.floor(width / 54)));
-          const rows = Math.max(13, Math.min(24, Math.floor(height / 47)));
-          const sx = width / Math.max(1, cols - 1);
-          const sy = height / Math.max(1, rows - 1);
-
-          for (let y = -1; y <= rows + 1; y++) {
-            const baseY = y * sy;
-
-            ctx.beginPath();
-
-            for (let x = -2; x <= cols + 2; x++) {
-              const px = x * sx;
-              const wave =
-                Math.sin(x * 0.42 + t * 1.55 + y * 0.12) * 10 +
-                Math.sin(x * 0.17 - t * 1.08 + y * 0.32) * 6;
-
-              const py = baseY + wave;
-
-              if (x === -2) ctx.moveTo(px, py);
-              else ctx.lineTo(px, py);
-            }
-
-            const alpha = 0.028 + (Math.sin(y * .44 + t) + 1) * .012;
-            ctx.strokeStyle = `rgba(255,255,255,${alpha.toFixed(3)})`;
-            ctx.lineWidth = .75;
-            ctx.stroke();
-          }
-
-          for (let x = -1; x <= cols + 1; x++) {
-            const baseX = x * sx;
-
-            ctx.beginPath();
-
-            for (let y = -2; y <= rows + 2; y++) {
-              const py = y * sy;
-              const wave =
-                Math.sin(y * .48 - t * 1.24 + x * .14) * 7 +
-                Math.sin(y * .18 + t * 1.32 + x * .25) * 5;
-
-              const px = baseX + wave;
-
-              if (y === -2) ctx.moveTo(px, py);
-              else ctx.lineTo(px, py);
-            }
-
-            const alpha = 0.018 + (Math.cos(x * .47 + t * .7) + 1) * .006;
-            ctx.strokeStyle = `rgba(139,111,255,${alpha.toFixed(3)})`;
-            ctx.lineWidth = .55;
-            ctx.stroke();
-          }
-
-          const focus = ctx.createRadialGradient(
-            width * .50,
-            height * .47,
-            0,
-            width * .50,
-            height * .47,
-            Math.max(width, height) * .60
-          );
-
-          focus.addColorStop(0, "rgba(108,76,241,.050)");
-          focus.addColorStop(.34, "rgba(108,76,241,.018)");
-          focus.addColorStop(1, "rgba(108,76,241,0)");
-
-          ctx.fillStyle = focus;
-          ctx.fillRect(0, 0, width, height);
-
-          requestAnimationFrame(draw);
-        };
-
-        resize();
-        window.addEventListener("resize", resize, { passive: true });
-
-        if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-          draw(0);
-        } else {
-          requestAnimationFrame(draw);
-        }
-      })();
-
-      /* =========================================================
-         METALLIC KAZER WORDMARK
-      ========================================================= */
-      function initMetalWordmark(canvas) {
-        const ctx = canvas.getContext("2d");
-        if (!ctx) return;
-
-        const W = canvas.width;
-        const H = canvas.height;
-        let fontReady = false;
-
-        const render = (timestamp) => {
-          ctx.clearRect(0, 0, W, H);
-
-          ctx.save();
-
-          const fontSize = Math.floor(H * .71);
-          ctx.font = `${fontSize}px "Cinzel", serif`;
-          ctx.textAlign = "center";
-          ctx.textBaseline = "middle";
-
-          const shift = ((timestamp * .00016) % 1 + 1) % 1;
-
-          const grad = ctx.createLinearGradient(
-            -W * .45 + W * shift,
-            0,
-            W * .55 + W * shift,
-            0
-          );
-
-          grad.addColorStop(0.00, "#4a4b55");
-          grad.addColorStop(0.17, "#d3d6e0");
-          grad.addColorStop(0.29, "#9b9dff");
-          grad.addColorStop(0.41, "#ffffff");
-          grad.addColorStop(0.54, "#6d70b7");
-          grad.addColorStop(0.69, "#f3f4fa");
-          grad.addColorStop(0.84, "#767984");
-          grad.addColorStop(1.00, "#3f4048");
-
-          ctx.fillStyle = grad;
-          ctx.shadowColor = "rgba(139,111,255,.16)";
-          ctx.shadowBlur = 14;
-          ctx.fillText("KAZER", W / 2, H / 2 + H * .04);
-
-          const sheen = ctx.createLinearGradient(0, 0, 0, H);
-          sheen.addColorStop(0, "rgba(255,255,255,.34)");
-          sheen.addColorStop(.45, "rgba(255,255,255,0)");
-          sheen.addColorStop(1, "rgba(0,0,0,.27)");
-
-          ctx.globalCompositeOperation = "source-atop";
-          ctx.fillStyle = sheen;
-          ctx.fillRect(0, 0, W, H);
-
-          ctx.restore();
-
-          requestAnimationFrame(render);
-        };
-
-        const start = () => {
-          if (fontReady) return;
-          fontReady = true;
-          requestAnimationFrame(render);
-        };
-
-        if (document.fonts?.load) {
-          document.fonts.load('90px "Cinzel"').catch(() => {}).finally(start);
-        } else {
-          setTimeout(start, 250);
-        }
-      }
-
-      initMetalWordmark(document.getElementById("splashWord"));
 
       /* =========================================================
          PASSWORD EYE
       ========================================================= */
-      function capitalize(value) {
-        return value.charAt(0).toUpperCase() + value.slice(1);
-      }
-
       function togglePassword(id) {
         const input = document.getElementById(id);
-        const suffix = capitalize(id);
+        const suffix = id.charAt(0).toUpperCase() + id.slice(1);
         const button = document.getElementById("eyeBtn" + suffix);
         const icon = document.getElementById("eyeIcon" + suffix);
 
         const hidden = input.type === "password";
         input.type = hidden ? "text" : "password";
-
-        icon.classList.toggle("is-closed", hidden);
-        icon.classList.toggle("is-open", !hidden);
-
-        button.setAttribute(
-          "aria-label",
-          hidden ? "Ocultar senha" : "Mostrar senha"
-        );
+        icon.classList.toggle("closed", hidden);
+        button.setAttribute("aria-label", hidden ? "Ocultar senha" : "Mostrar senha");
       }
 
       document.getElementById("eyeBtnPassword").addEventListener("click", () => togglePassword("password"));
       document.getElementById("eyeBtnConfirmPassword").addEventListener("click", () => togglePassword("confirmPassword"));
 
       /* =========================================================
-         MODE TOGGLE
+         MODE
       ========================================================= */
       function clearError() {
         errorMsg.textContent = "";
@@ -1742,160 +1174,124 @@
         authCard.classList.remove("shake");
       }
 
-      function animateMode(nextSignup) {
-        brandTitle.classList.remove("in");
-        brandSub.classList.remove("in");
-        brandTitle.classList.add("out");
-        brandSub.classList.add("out");
+      function setMode(signup) {
+        isSignup = signup;
+        document.body.classList.toggle("mode-signup", signup);
 
-        setTimeout(() => {
-          if (nextSignup) {
-            brandKicker.textContent = "UM NOVO COMEÇO";
-            brandTitle.innerHTML = `
-              <span class="line">Vamos criar</span>
-              <span class="line accent">sua experiência.</span>
-            `;
-            brandSub.textContent =
-              "Crie seu acesso e prepare seu espaço para começar no Kazer.";
-            stateLabel.textContent = "criar conta";
-          } else {
-            brandKicker.textContent = "BEM-VINDO DE VOLTA";
-            brandTitle.innerHTML = `
-              <span class="line">Olá de novo.</span>
-              <span class="line accent">Vamos continuar?</span>
-            `;
-            brandSub.textContent =
-              "Entre na sua conta e retome sua experiência no Kazer exatamente de onde parou.";
-            stateLabel.textContent = "entrar";
-          }
-
-          stateBar1.classList.toggle("active", !nextSignup);
-          stateBar2.classList.toggle("active", nextSignup);
-
-          brandTitle.classList.remove("out");
-          brandSub.classList.remove("out");
-
-          void brandTitle.offsetWidth;
-          void brandSub.offsetWidth;
-
-          brandTitle.classList.add("in");
-          brandSub.classList.add("in");
-        }, 220);
-      }
-
-      function setMode(nextSignup) {
-        isSignup = nextSignup;
-
-        document.body.classList.toggle("mode-signup", isSignup);
-        animateMode(isSignup);
-
-        if (isSignup) {
+        if (signup) {
           authTitle.textContent = "Criar sua conta";
-          subText.textContent = "Vamos preparar seu acesso ao Kazer.";
+          subText.textContent = "Seu espaço começa aqui.";
           switchText.textContent = "Já tem conta?";
           switchLink.textContent = "Entrar";
 
-          displayNameInput.setAttribute("required", "true");
-          confirmInput.setAttribute("required", "true");
-          passwordInput.setAttribute("autocomplete", "new-password");
+          displayName.setAttribute("required", "true");
+          confirmPassword.setAttribute("required", "true");
+          password.setAttribute("autocomplete", "new-password");
         } else {
           authTitle.textContent = "Entrar para continuar";
           subText.textContent = "Acesse sua conta Kazer.";
           switchText.textContent = "Não tem conta?";
           switchLink.textContent = "Criar conta";
 
-          displayNameInput.removeAttribute("required");
-          confirmInput.removeAttribute("required");
-          passwordInput.setAttribute("autocomplete", "current-password");
+          displayName.removeAttribute("required");
+          confirmPassword.removeAttribute("required");
+          password.setAttribute("autocomplete", "current-password");
 
-          strengthWrap.classList.remove("show");
+          strength.classList.remove("show");
           strengthFill.style.width = "0%";
         }
 
+        buttonText.textContent = signup ? "Criar conta" : "Sign in";
         clearError();
-        window.history.replaceState(null, "", isSignup ? "#signup" : "#login");
+
+        window.history.replaceState(null, "", signup ? "#signup" : "#login");
 
         requestAnimationFrame(() => {
-          (isSignup ? displayNameInput : emailInput).focus({ preventScroll: true });
+          (signup ? displayName : email).focus({ preventScroll: true });
         });
       }
 
       switchLink.addEventListener("click", (event) => {
         event.preventDefault();
-        setMode(!isSignup);
+
+        authCard.classList.remove("shake");
+        authCard.style.transform = "scale(.995)";
+        setTimeout(() => {
+          authCard.style.transform = "";
+          setMode(!isSignup);
+        }, 80);
       });
 
       /* =========================================================
          PASSWORD STRENGTH
       ========================================================= */
-      function isPasswordValid(password) {
-        return (
-          password.length >= 10 &&
-          password.length <= 256 &&
-          /[A-Z]/.test(password) &&
-          /[^A-Za-z0-9]/.test(password)
-        );
-      }
+      const config = {
+        0: { pct: 3, color: "var(--red)", text: "Digite uma senha", score: "" },
+        1: { pct: 25, color: "var(--red)", text: "Senha fraca — capriche mais", score: "1/4" },
+        2: { pct: 50, color: "var(--orange)", text: "Quase lá, dá pra melhorar", score: "2/4" },
+        3: { pct: 75, color: "var(--yellow)", text: "Boa senha!", score: "3/4" },
+        4: { pct: 100, color: "var(--green)", text: "Senha forte, mandou bem!", score: "4/4" }
+      };
 
-      function getPasswordStrength(password) {
-        if (!password) return 0;
+      function getPasswordStrength(value) {
+        if (!value) return 0;
 
         let score = 0;
-        if (password.length >= 6) score++;
-        if (password.length >= 10) score++;
-        if (/[A-Z]/.test(password)) score++;
-        if (/[^A-Za-z0-9]/.test(password)) score++;
-        if (/[0-9]/.test(password)) score++;
+        if (value.length >= 6) score++;
+        if (value.length >= 10) score++;
+        if (/[A-Z]/.test(value)) score++;
+        if (/[^A-Za-z0-9]/.test(value)) score++;
+        if (/[0-9]/.test(value)) score++;
 
-        if (password.length < 6) score = Math.min(score, 1);
-
+        if (value.length < 6) score = Math.min(score, 1);
         return Math.min(score, 4);
       }
 
-      const strengthConfig = {
-        0: { pct: 3, color: "#FF6B6B", text: "Digite uma senha", score: "" },
-        1: { pct: 25, color: "#FF6B6B", text: "Senha fraca — capriche mais", score: "1/4" },
-        2: { pct: 50, color: "#FFB454", text: "Quase lá, dá pra melhorar", score: "2/4" },
-        3: { pct: 75, color: "#FFD86B", text: "Boa senha!", score: "3/4" },
-        4: { pct: 100, color: "#2ED573", text: "Senha forte, mandou bem!", score: "4/4" }
-      };
+      function validPassword(value) {
+        return (
+          value.length >= 10 &&
+          value.length <= 256 &&
+          /[A-Z]/.test(value) &&
+          /[^A-Za-z0-9]/.test(value)
+        );
+      }
 
-      function updateStrengthUI(password) {
-        if (!password) {
-          strengthWrap.classList.remove("show");
-          strengthFill.style.width = "0%";
-          strengthScore.textContent = "";
+      function updateStrength(value) {
+        if (!value) {
+          strength.classList.remove("show");
           return;
         }
 
-        strengthWrap.classList.add("show");
+        strength.classList.add("show");
 
-        const level = getPasswordStrength(password);
-        const config = strengthConfig[level];
+        const level = getPasswordStrength(value);
+        const item = config[level];
 
-        strengthFill.style.width = config.pct + "%";
-        strengthFill.style.backgroundColor = config.color;
-        strengthText.style.color = config.color;
-        strengthText.textContent = config.text;
-        strengthScore.textContent = config.score;
+        strengthFill.style.width = item.pct + "%";
+        strengthFill.style.backgroundColor = item.color;
+        strengthText.style.color = item.color;
+        strengthText.textContent = item.text;
+        strengthScore.textContent = item.score;
 
         strengthFill.classList.remove("pulse");
         void strengthFill.offsetWidth;
         strengthFill.classList.add("pulse");
       }
 
-      function checkPasswordsMatch() {
+      password.addEventListener("input", () => {
+        if (isSignup) updateStrength(password.value);
+        checkMatch();
+      });
+
+      function checkMatch() {
         if (!isSignup) return;
 
-        const password = passwordInput.value;
-        const confirm = confirmInput.value;
-
-        if (!confirm) {
+        if (!confirmPassword.value) {
           if (errorMsg.dataset.type === "mismatch") clearError();
           return;
         }
 
-        if (password !== confirm) {
+        if (password.value !== confirmPassword.value) {
           errorMsg.textContent = "Acho que a senha de confirmação não ficou igual à primeira.";
           errorMsg.dataset.type = "mismatch";
         } else if (errorMsg.dataset.type === "mismatch") {
@@ -1903,15 +1299,10 @@
         }
       }
 
-      passwordInput.addEventListener("input", () => {
-        if (isSignup) updateStrengthUI(passwordInput.value);
-        checkPasswordsMatch();
-      });
-
-      confirmInput.addEventListener("input", checkPasswordsMatch);
+      confirmPassword.addEventListener("input", checkMatch);
 
       /* =========================================================
-         SUPABASE — PRESERVADO
+         SUPABASE — MANTIDO
       ========================================================= */
       const KAZER_SUPABASE_URL = "https://mqjunopzycdezzjmlhip.supabase.co";
       const KAZER_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1xanVub3B6eWNkZXp6am1saGlwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc4Mzg3NDksImV4cCI6MjEwMzQxNDc0OX0.Y_o2_QQhZzuCjvHdEfxaR5VrAxo7NFenPaDmdHN3bwM";
@@ -1929,21 +1320,21 @@
       );
 
       function authErrorMessage(error) {
-        const message = String(error?.message || "").toLowerCase();
+        const msg = String(error?.message || "").toLowerCase();
 
-        if (message.includes("invalid login credentials")) {
+        if (msg.includes("invalid login credentials")) {
           return "E-mail ou senha incorretos. Que tal verificar o Caps Lock?";
         }
 
-        if (message.includes("email not confirmed")) {
+        if (msg.includes("email not confirmed")) {
           return "O acesso por e-mail ainda não está liberado no projeto Kazer.";
         }
 
-        if (message.includes("user already registered")) {
+        if (msg.includes("user already registered")) {
           return "Este e-mail já tem uma conta. Vamos entrar?";
         }
 
-        if (message.includes("password")) {
+        if (msg.includes("password")) {
           return "Sua senha ainda tá fraca — use pelo menos 10 caracteres, 1 letra maiúscula e 1 caractere especial.";
         }
 
@@ -1955,9 +1346,6 @@
         submitBtn.classList.toggle("loading", loading);
       }
 
-      /* =========================================================
-         SUBMIT
-      ========================================================= */
       authForm.addEventListener("submit", async (event) => {
         event.preventDefault();
         clearError();
@@ -1967,40 +1355,40 @@
           return;
         }
 
-        const name = displayNameInput.value.trim();
-        const email = emailInput.value.trim();
-        const password = passwordInput.value;
-        const confirmPassword = confirmInput.value;
+        const name = displayName.value.trim();
+        const mail = email.value.trim();
+        const pass = password.value;
+        const confirm = confirmPassword.value;
 
-        if (!email) {
+        if (!mail) {
           errorMsg.textContent = "Digite seu e-mail para continuar.";
-          emailInput.focus();
+          email.focus();
           return;
         }
 
-        if (!password) {
+        if (!pass) {
           errorMsg.textContent = "Digite sua senha para continuar.";
-          passwordInput.focus();
+          password.focus();
           return;
         }
 
         if (isSignup) {
           if (!name || name.length > 80) {
-            errorMsg.textContent = "Como devemos te chamar? Informe um nome válido de até 80 caracteres.";
-            displayNameInput.focus();
+            errorMsg.textContent = "Informe um nome válido de até 80 caracteres.";
+            displayName.focus();
             return;
           }
 
-          if (!isPasswordValid(password)) {
+          if (!validPassword(pass)) {
             errorMsg.textContent =
               "Sua senha ainda tá fraca — use pelo menos 10 caracteres, 1 letra maiúscula e 1 caractere especial.";
-            passwordInput.focus();
+            password.focus();
             return;
           }
 
-          if (password !== confirmPassword) {
+          if (pass !== confirm) {
             errorMsg.textContent = "Acho que a senha de confirmação não ficou igual à primeira.";
-            confirmInput.focus();
+            confirmPassword.focus();
             return;
           }
         }
@@ -2010,16 +1398,16 @@
         try {
           const result = isSignup
             ? await kazerSupabase.auth.signUp({
-                email,
-                password,
+                email: mail,
+                password: pass,
                 options: {
                   data: { display_name: name },
                   emailRedirectTo: `${window.location.origin}/chat`
                 }
               })
             : await kazerSupabase.auth.signInWithPassword({
-                email,
-                password
+                email: mail,
+                password: pass
               });
 
           if (result.error) throw result.error;
@@ -2054,7 +1442,7 @@
       });
 
       /* =========================================================
-         BOOT
+         BOOT / SESSION
       ========================================================= */
       window.addEventListener("load", async () => {
         let session = null;
@@ -2084,7 +1472,7 @@
             } else {
               setMode(false);
             }
-          }, 800);
+          }, 700);
         }, 2500);
       });
     })();
