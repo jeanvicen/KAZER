@@ -1,926 +1,3229 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover, user-scalable=no">
+  <meta charset="UTF-8">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover, user-scalable=no"
+  >
+
+  <meta name="theme-color" content="#050408">
+  <meta name="color-scheme" content="dark">
+
   <title>KAZER</title>
-  <link rel="icon" href="../download/assets/kazer-login-symbol.png" type="image/png">
-  <link rel="apple-touch-icon" href="../download/assets/kazer-login-symbol.png">
+
+  <link
+    rel="icon"
+    href="../download/assets/kazer-login-symbol.png"
+    type="image/png"
+  >
+
+  <link
+    rel="apple-touch-icon"
+    href="../download/assets/kazer-login-symbol.png"
+  >
+
   <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=UnifrakturMaguntia&display=swap" rel="stylesheet">
-<style>
-  :root{
-    --purple: #6C4CF1;
-    --purple-2: #7B5CFF;
-    --bg: #000000;
-    --text: #ffffff;
-    --text-dim: rgba(255,255,255,0.55);
-    --border: rgba(255,255,255,0.22);
-    --vh: 1vh;
-  }
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 
-  *{
-    margin:0;
-    padding:0;
-    box-sizing:border-box;
-    -webkit-tap-highlight-color: transparent;
-  }
+  <link
+    href="https://fonts.googleapis.com/css2?family=UnifrakturMaguntia&display=swap"
+    rel="stylesheet"
+  >
 
-  html, body{
-    height:100%;
-    background: var(--bg);
-    overflow:hidden;
-  }
+  <style>
+    :root {
+      --bg: #050407;
+      --bg-2: #08060b;
 
-  body{
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    color: var(--text);
-    height: calc(var(--vh, 1vh) * 100);
-    width: 100%;
-    position: fixed;
-    inset: 0;
-  }
+      --white: #ffffff;
+      --text: rgba(255,255,255,0.94);
+      --muted: rgba(255,255,255,0.52);
+      --muted-2: rgba(255,255,255,0.34);
 
-  /* ---------- CONTAINER GERAL ---------- */
-  .screen{
-    position: absolute;
-    inset: 0;
-    display:flex;
-    flex-direction:column;
-    align-items:center;
-    justify-content:center;
-    width:100%;
-    height:100%;
-    padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
-  }
+      --purple: #6c4cf1;
+      --purple-2: #947cff;
+      --purple-3: #b4a5ff;
 
-  /* ---------- SPLASH (ANIMAÇÃO INICIAL) ---------- */
-  #splash{
-    z-index: 20;
-    background: var(--bg);
-    transition: opacity 0.6s ease;
-  }
+      --border: rgba(255,255,255,0.095);
+      --border-strong: rgba(255,255,255,0.17);
 
-  .brand-block{
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    gap: clamp(2px, 0.8vw, 6px);
-    opacity: 0;
-    transform: scale(0.94);
-    animation: brandIn 0.7s cubic-bezier(.2,.9,.25,1) forwards;
-  }
+      --danger: #ff6f83;
+      --success: #6de68a;
+      --warning: #ffd45a;
 
-  @keyframes brandIn{
-    to{ opacity: 1; transform: scale(1); }
-  }
+      --card: rgba(13, 10, 18, 0.72);
 
-  .star-wrap{
-    width: clamp(52px, 13vw, 70px);
-    height: clamp(52px, 13vw, 70px);
-    flex-shrink: 0;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    margin-right: clamp(-6px, -1vw, -2px);
-  }
+      --vh: 1vh;
+    }
 
-  .star,
-  .mini-star{
-    display: block;
-    background: url("../download/assets/kazer-login-symbol.png") center / contain no-repeat;
-    animation: starPulse 2.6s ease-in-out infinite;
-  }
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
 
-  .star{
-    width: 100%;
-    height: 100%;
-  }
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      min-height: 100%;
+      background: var(--bg);
+      color: var(--white);
+      overflow: hidden;
+    }
 
-  .star > *,
-  .mini-star > *{
-    display: none;
-  }
+    body {
+      position: fixed;
+      inset: 0;
+      font-family:
+        Inter,
+        ui-sans-serif,
+        system-ui,
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        Roboto,
+        Helvetica,
+        Arial,
+        sans-serif;
 
-  @keyframes starPulse{
-    0%, 100%{ filter: brightness(1); }
-    50%{ filter: brightness(1.35); }
-  }
+      min-height: calc(var(--vh) * 100);
+      isolation: isolate;
+    }
 
-  .metal-canvas{
-    display:block;
-    width: min(58vw, 250px);
-    height: auto;
-  }
+    button,
+    input {
+      font: inherit;
+    }
 
-  #loginCanvas{
-    width: min(78vw, 380px);
-    margin: 0 auto;
-    opacity: 0;
-    animation: fadeUp 0.8s ease 0.9s forwards;
-  }
+    button {
+      -webkit-appearance: none;
+      appearance: none;
+    }
 
-  .footer-brand{
-    position: absolute;
-    bottom: clamp(36px, 9vh, 64px);
-    left: 0;
-    right: 0;
-    display:flex;
-    justify-content:center;
-    padding: 0 24px;
-  }
+    /* =========================================================
+       FUNDO
+    ========================================================= */
 
-  .footer-brand span{
-    font-size: clamp(12px, 3.4vw, 14px);
-    font-weight: 700;
-    letter-spacing: clamp(2px, 1vw, 4px);
-    color: var(--text-dim);
-    text-transform: uppercase;
-    opacity: 0;
-    animation: fadeIn 1s ease 0.4s forwards;
-  }
+    #fxCanvas {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      display: block;
 
-  @keyframes fadeIn{
-    from{ opacity: 0; }
-    to{ opacity: 1; }
-  }
+      z-index: 0;
 
-  @keyframes fadeUp{
-    from{ opacity:0; transform: translateY(10px); }
-    to{ opacity:1; transform: translateY(0); }
-  }
+      opacity: 1;
+      pointer-events: none;
+    }
 
-  /* ---------- TELA DE LOGIN / CRIAR CONTA ---------- */
-  #login{
-    z-index: 10;
-    opacity: 0;
-    padding: max(env(safe-area-inset-top), 24px) 24px max(env(safe-area-inset-bottom), 24px);
-    justify-content: flex-start;
-  }
+    .bg-vignette {
+      position: fixed;
+      inset: 0;
+      z-index: 1;
+      pointer-events: none;
 
-  #login.visible{
-    animation: fadeUp 0.7s ease forwards;
-  }
+      background:
+        radial-gradient(
+          circle at 50% 48%,
+          rgba(83, 54, 180, 0.07),
+          transparent 34%
+        ),
+        radial-gradient(
+          circle at 50% 50%,
+          transparent 35%,
+          rgba(0,0,0,0.56) 100%
+        );
+    }
 
-  .login-inner{
-    width: 100%;
-    max-width: 400px;
-    margin: auto;
-    display:flex;
-    flex-direction:column;
-    align-items:center;
-  }
+    .bg-grid {
+      position: fixed;
+      inset: 0;
+      z-index: 1;
+      pointer-events: none;
 
-  .login-header{
-    display:flex;
-    flex-direction:column;
-    align-items:center;
-    margin-bottom: clamp(28px, 6vh, 44px);
-  }
+      opacity: 0.06;
 
-  .mini-star{
-    width: clamp(52px, 16vw, 70px);
-    height: clamp(52px, 16vw, 70px);
-    margin-bottom: 16px;
-  }
+      background-image:
+        linear-gradient(
+          rgba(255,255,255,0.045) 1px,
+          transparent 1px
+        ),
+        linear-gradient(
+          90deg,
+          rgba(255,255,255,0.045) 1px,
+          transparent 1px
+        );
 
-  .login-title{
-    margin-bottom: 2px;
-  }
+      background-size: 48px 48px;
 
-  .login-sub{
-    margin-top: 8px;
-    font-size: clamp(13px, 3.4vw, 14px);
-    color: var(--text-dim);
-    letter-spacing: 0.5px;
-    text-align: center;
-  }
+      mask-image: linear-gradient(
+        to bottom,
+        transparent,
+        black 28%,
+        black 72%,
+        transparent
+      );
+    }
 
-  form{
-    width:100%;
-    display:flex;
-    flex-direction:column;
-    gap: 14px;
-  }
+    .noise {
+      position: fixed;
+      inset: -50%;
+      z-index: 2;
+      pointer-events: none;
 
-  .field{
-    position:relative;
-    display:flex;
-    align-items:center;
-    border: 1px solid var(--border);
-    border-radius: 14px;
-    padding: 0 16px;
-    height: 54px;
-    background: rgba(255,255,255,0.02);
-    transition: border-color 0.2s ease;
-    flex-shrink: 0;
-  }
+      opacity: 0.035;
 
-  .field:focus-within{
-    border-color: var(--purple-2);
-  }
+      background-image:
+        url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.8'/%3E%3C/svg%3E");
 
-  .field svg{
-    flex-shrink:0;
-    margin-right: 12px;
-    opacity: 0.7;
-  }
+      animation: noiseMove 0.35s steps(2) infinite;
+      transform: translateZ(0);
+    }
 
-  .field input{
-    flex:1;
-    min-width: 0;
-    background: transparent;
-    border: none;
-    outline: none;
-    color: var(--text);
-    font-size: 16px;
-    height: 100%;
-  }
+    @keyframes noiseMove {
+      0%   { transform: translate3d(0,0,0); }
+      25%  { transform: translate3d(-2%,1%,0); }
+      50%  { transform: translate3d(1%,-2%,0); }
+      75%  { transform: translate3d(2%,2%,0); }
+      100% { transform: translate3d(0,0,0); }
+    }
 
-  .field input::placeholder{
-    color: var(--text-dim);
-  }
+    /* =========================================================
+       SPLASH
+    ========================================================= */
 
-  .toggle-eye{
-    background:none;
-    border:none;
-    padding: 4px;
-    cursor:pointer;
-    opacity:0.7;
-    display:flex;
-    align-items:center;
-    flex-shrink: 0;
-  }
+    #splash {
+      position: fixed;
+      inset: 0;
+      z-index: 50;
 
-  .eye-icon{
-    overflow: visible;
-  }
+      display: flex;
+      align-items: center;
+      justify-content: center;
 
-  .eye-pupil{
-    transition: transform 0.28s cubic-bezier(.5,0,.5,1), opacity 0.15s ease;
-    transform-origin: center;
-    transform-box: fill-box;
-  }
+      background:
+        radial-gradient(
+          circle at center,
+          rgba(91, 61, 200, 0.08),
+          transparent 28%
+        ),
+        #050407;
 
-  .eye-icon.is-closed .eye-pupil{
-    transform: scaleY(0.05);
-    opacity: 0;
-  }
+      transition:
+        opacity 0.7s cubic-bezier(.22,.8,.28,1),
+        visibility 0.7s ease;
+    }
 
-  .eye-outline{
-    transition: transform 0.28s cubic-bezier(.5,0,.5,1);
-    transform-origin: center;
-    transform-box: fill-box;
-  }
+    #splash.hide {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+    }
 
-  .eye-icon.is-closed .eye-outline{
-    transform: scaleY(0.12);
-  }
+    .splash-center {
+      width: min(90vw, 520px);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
 
-  .hint{
-    font-size: 12px;
-    color: var(--text-dim);
-    padding: 0 2px;
-    line-height: 1.4;
-  }
+      transform: translateY(-2vh);
+    }
 
-  .hint .ok{ color: #6de68a; }
+    .splash-symbol {
+      width: clamp(70px, 16vw, 104px);
+      height: clamp(70px, 16vw, 104px);
 
-  /* ---------- FORÇA DA SENHA ---------- */
-  .strength-wrap{
-    display:none;
-    flex-direction: column;
-    gap: 6px;
-    padding: 0 2px;
-    margin-top: -2px;
-  }
+      margin-bottom: 10px;
 
-  body.mode-signup .strength-wrap.show{
-    display:flex;
-  }
+      background:
+        radial-gradient(
+          circle,
+          rgba(255,255,255,0.13),
+          transparent 60%
+        );
+    }
 
-  .strength-bar{
-    width: 100%;
-    height: 5px;
-    border-radius: 3px;
-    background: rgba(255,255,255,0.12);
-    overflow: hidden;
-  }
+    .splash-symbol img {
+      width: 100%;
+      height: 100%;
 
-  .strength-fill{
-    height: 100%;
-    width: 0%;
-    border-radius: 3px;
-    background: #ff5b5b;
-    transition: width 0.45s cubic-bezier(.4,1.4,.4,1), background-color 0.45s ease;
-  }
+      display: block;
+      object-fit: contain;
 
-  .strength-fill.pulse{
-    animation: strengthPulse 0.5s ease;
-  }
+      filter:
+        drop-shadow(0 0 12px rgba(255,255,255,0.2))
+        drop-shadow(0 0 32px rgba(115,84,255,0.12));
 
-  @keyframes strengthPulse{
-    0%{ transform: scaleY(1); }
-    40%{ transform: scaleY(1.8); }
-    100%{ transform: scaleY(1); }
-  }
+      animation: symbolPulse 3.3s ease-in-out infinite;
+    }
 
-  .strength-label{
-    font-size: 12px;
-    font-weight: 600;
-    letter-spacing: 0.3px;
-    color: var(--text-dim);
-    transition: color 0.3s ease;
-    display:flex;
-    align-items:center;
-    gap: 6px;
-  }
+    @keyframes symbolPulse {
+      0%,100% {
+        transform: scale(0.98);
+        opacity: 0.92;
+      }
 
-  .strength-label .icon{
-    display:inline-flex;
-    transition: transform 0.35s cubic-bezier(.4,1.6,.4,1);
-  }
+      50% {
+        transform: scale(1.03);
+        opacity: 1;
+      }
+    }
 
-  .strength-label.pop .icon{
-    transform: scale(1.3) rotate(-8deg);
-  }
+    #splashCanvas {
+      width: min(78vw, 360px);
+      height: auto;
 
-  .btn-primary{
-    margin-top: 6px;
-    height: 54px;
-    border-radius: 14px;
-    border: none;
-    background: linear-gradient(180deg, var(--purple-2), var(--purple));
-    color: #fff;
-    font-size: 16px;
-    font-weight: 600;
-    letter-spacing: 0.3px;
-    cursor: pointer;
-    transition: transform 0.15s ease, filter 0.2s ease, opacity 0.2s ease;
-    flex-shrink: 0;
-  }
+      display: block;
 
-  .btn-primary:active{
-    transform: scale(0.98);
-    filter: brightness(0.95);
-  }
+      opacity: 0;
+      transform: translateY(12px) scale(0.98);
 
-  .btn-primary:disabled{
-    opacity: 0.5;
-    cursor: not-allowed;
-  }
+      animation:
+        splashLogoIn 0.85s
+        cubic-bezier(.18,.86,.2,1)
+        0.15s forwards;
+    }
 
-  .switch-mode{
-    margin-top: 20px;
-    text-align:center;
-    font-size: 14px;
-    color: var(--text-dim);
-  }
+    @keyframes splashLogoIn {
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
 
-  .switch-mode a{
-    color: var(--text);
-    text-decoration: underline;
-    cursor:pointer;
-  }
+    .splash-subtitle {
+      margin-top: 12px;
 
-  .error-msg{
-    font-size: 13px;
-    color: #ff6b6b;
-    min-height: 16px;
-    text-align:center;
-  }
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.34em;
+      text-transform: uppercase;
 
-  /* campos exclusivos de cada modo */
-  .signup-only{ display:none; }
-  body.mode-signup .signup-only{ display:flex; }
-  body.mode-signup .signup-only.hint{ display:block; }
+      color: rgba(255,255,255,0.33);
 
-  /* pequenas telas: reduzir respiros */
-  @media (max-height: 640px){
-    .login-header{ margin-bottom: 20px; }
-    .field{ height: 48px; }
-    .btn-primary{ height: 48px; }
-  }
-</style>
+      opacity: 0;
+      animation: fadeUp 0.8s ease 0.5s forwards;
+    }
+
+    .splash-footer {
+      position: absolute;
+      bottom: max(28px, env(safe-area-inset-bottom));
+
+      left: 0;
+      right: 0;
+
+      display: flex;
+      justify-content: center;
+    }
+
+    .splash-footer span {
+      color: rgba(255,255,255,0.28);
+
+      font-size: 10px;
+      font-weight: 700;
+
+      letter-spacing: 0.27em;
+      text-transform: uppercase;
+    }
+
+    /* =========================================================
+       LOGIN SHELL
+    ========================================================= */
+
+    #login {
+      position: fixed;
+      inset: 0;
+
+      z-index: 10;
+
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      padding:
+        max(24px, env(safe-area-inset-top))
+        max(24px, env(safe-area-inset-right))
+        max(24px, env(safe-area-inset-bottom))
+        max(24px, env(safe-area-inset-left));
+
+      opacity: 0;
+      pointer-events: none;
+
+      transition: opacity 0.65s ease;
+    }
+
+    #login.visible {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .login-shell {
+      width: min(1120px, 100%);
+
+      min-height: min(720px, calc(100vh - 56px));
+
+      display: grid;
+      grid-template-columns: 1.05fr 0.95fr;
+
+      border: 1px solid rgba(255,255,255,0.075);
+      border-radius: 30px;
+
+      background:
+        linear-gradient(
+          145deg,
+          rgba(255,255,255,0.035),
+          rgba(255,255,255,0.012)
+        );
+
+      box-shadow:
+        0 35px 110px rgba(0,0,0,0.58),
+        inset 0 1px rgba(255,255,255,0.05);
+
+      backdrop-filter: blur(28px);
+      -webkit-backdrop-filter: blur(28px);
+
+      overflow: hidden;
+
+      transform:
+        translateY(18px)
+        scale(0.985);
+
+      transition:
+        transform 0.7s cubic-bezier(.18,.9,.2,1);
+    }
+
+    #login.visible .login-shell {
+      transform: translateY(0) scale(1);
+    }
+
+    /* =========================================================
+       PAINEL VISUAL
+    ========================================================= */
+
+    .brand-panel {
+      position: relative;
+
+      min-width: 0;
+
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+
+      padding: clamp(36px, 6vw, 76px);
+
+      overflow: hidden;
+
+      border-right: 1px solid rgba(255,255,255,0.065);
+
+      background:
+        radial-gradient(
+          circle at 50% 42%,
+          rgba(104, 73, 243, 0.14),
+          transparent 28%
+        ),
+        linear-gradient(
+          180deg,
+          rgba(255,255,255,0.012),
+          transparent
+        );
+    }
+
+    .brand-panel::before {
+      content: "";
+
+      position: absolute;
+      width: 420px;
+      height: 420px;
+
+      left: 50%;
+      top: 50%;
+
+      transform: translate(-50%, -50%);
+
+      border-radius: 50%;
+
+      border: 1px solid rgba(160,140,255,0.06);
+
+      box-shadow:
+        0 0 80px rgba(105,76,241,0.08),
+        inset 0 0 80px rgba(105,76,241,0.025);
+
+      pointer-events: none;
+    }
+
+    .brand-panel::after {
+      content: "";
+
+      position: absolute;
+      inset: 0;
+
+      pointer-events: none;
+
+      background:
+        linear-gradient(
+          120deg,
+          transparent 0%,
+          rgba(255,255,255,0.015) 50%,
+          transparent 100%
+        );
+    }
+
+    .brand-content {
+      position: relative;
+      z-index: 2;
+
+      width: 100%;
+      max-width: 420px;
+
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+
+      text-align: center;
+    }
+
+    .brand-symbol {
+      width: clamp(78px, 10vw, 116px);
+      height: clamp(78px, 10vw, 116px);
+
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      margin-bottom: 8px;
+    }
+
+    .brand-symbol img {
+      width: 100%;
+      height: 100%;
+
+      object-fit: contain;
+
+      filter:
+        drop-shadow(0 0 12px rgba(255,255,255,0.24))
+        drop-shadow(0 0 38px rgba(102,76,241,0.15));
+    }
+
+    #loginCanvas {
+      width: min(90%, 400px);
+      height: auto;
+
+      display: block;
+
+      margin: 0 auto;
+    }
+
+    .brand-tag {
+      margin-top: 8px;
+
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.38em;
+      text-transform: uppercase;
+
+      color: rgba(255,255,255,0.38);
+    }
+
+    .brand-line {
+      width: 74px;
+      height: 1px;
+
+      margin-top: 25px;
+
+      background:
+        linear-gradient(
+          90deg,
+          transparent,
+          rgba(159,137,255,0.65),
+          transparent
+        );
+    }
+
+    .brand-description {
+      max-width: 315px;
+
+      margin-top: 20px;
+
+      font-size: 13px;
+      line-height: 1.75;
+
+      color: rgba(255,255,255,0.42);
+
+      text-wrap: balance;
+    }
+
+    .brand-corner {
+      position: absolute;
+
+      left: 24px;
+      right: 24px;
+      bottom: 22px;
+
+      display: flex;
+      justify-content: space-between;
+
+      color: rgba(255,255,255,0.2);
+
+      font-size: 9px;
+      font-weight: 700;
+
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+    }
+
+    /* =========================================================
+       FORM PAINEL
+    ========================================================= */
+
+    .form-panel {
+      min-width: 0;
+
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      padding: clamp(34px, 5vw, 68px);
+
+      background:
+        linear-gradient(
+          180deg,
+          rgba(8,6,11,0.62),
+          rgba(8,6,11,0.82)
+        );
+    }
+
+    .login-inner {
+      width: 100%;
+      max-width: 410px;
+    }
+
+    .mobile-brand {
+      display: none;
+    }
+
+    .form-header {
+      margin-bottom: 30px;
+    }
+
+    .form-kicker {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+
+      margin-bottom: 10px;
+
+      font-size: 10px;
+      font-weight: 700;
+
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+
+      color: rgba(255,255,255,0.36);
+    }
+
+    .form-kicker::before {
+      content: "";
+
+      width: 18px;
+      height: 1px;
+
+      background: rgba(147,123,255,0.8);
+    }
+
+    .form-title {
+      font-size: clamp(26px, 3vw, 34px);
+
+      line-height: 1.08;
+      font-weight: 650;
+
+      letter-spacing: -0.035em;
+
+      color: rgba(255,255,255,0.96);
+    }
+
+    .form-subtitle {
+      margin-top: 10px;
+
+      font-size: 13px;
+      line-height: 1.6;
+
+      color: rgba(255,255,255,0.43);
+    }
+
+    /* =========================================================
+       CAMPOS
+    ========================================================= */
+
+    form {
+      width: 100%;
+
+      display: flex;
+      flex-direction: column;
+
+      gap: 12px;
+    }
+
+    .field {
+      position: relative;
+
+      width: 100%;
+      height: 58px;
+
+      display: flex;
+      align-items: center;
+
+      border: 1px solid rgba(255,255,255,0.085);
+      border-radius: 15px;
+
+      background:
+        linear-gradient(
+          180deg,
+          rgba(255,255,255,0.028),
+          rgba(255,255,255,0.012)
+        );
+
+      box-shadow:
+        inset 0 1px rgba(255,255,255,0.02);
+
+      transition:
+        border-color 0.22s ease,
+        background 0.22s ease,
+        box-shadow 0.22s ease,
+        transform 0.22s ease;
+    }
+
+    .field:hover {
+      border-color: rgba(255,255,255,0.14);
+    }
+
+    .field:focus-within {
+      border-color: rgba(132,104,255,0.8);
+
+      background:
+        linear-gradient(
+          180deg,
+          rgba(108,76,241,0.065),
+          rgba(255,255,255,0.012)
+        );
+
+      box-shadow:
+        0 0 0 4px rgba(108,76,241,0.08),
+        inset 0 1px rgba(255,255,255,0.03);
+    }
+
+    .field svg {
+      width: 18px;
+      height: 18px;
+
+      flex: 0 0 auto;
+
+      margin-left: 17px;
+      margin-right: 12px;
+
+      opacity: 0.42;
+
+      transition: opacity 0.2s ease;
+    }
+
+    .field:focus-within svg {
+      opacity: 0.78;
+    }
+
+    .field input {
+      width: 100%;
+      min-width: 0;
+      height: 100%;
+
+      color: rgba(255,255,255,0.94);
+
+      font-size: 15px;
+      font-weight: 450;
+
+      background: transparent;
+      border: 0;
+      outline: 0;
+
+      padding-right: 16px;
+    }
+
+    .field input::placeholder {
+      color: rgba(255,255,255,0.34);
+    }
+
+    .field input:-webkit-autofill,
+    .field input:-webkit-autofill:hover,
+    .field input:-webkit-autofill:focus {
+      -webkit-text-fill-color: white;
+
+      box-shadow:
+        0 0 0 1000px rgba(13,10,18,0.98) inset;
+
+      transition: background-color 9999s ease-out 0s;
+    }
+
+    .toggle-eye {
+      width: 44px;
+      height: 44px;
+
+      margin-right: 7px;
+
+      flex: 0 0 auto;
+
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      border: 0;
+      border-radius: 11px;
+
+      background: transparent;
+
+      color: white;
+      opacity: 0.46;
+
+      cursor: pointer;
+
+      transition:
+        background 0.2s ease,
+        opacity 0.2s ease,
+        transform 0.16s ease;
+    }
+
+    .toggle-eye:hover {
+      background: rgba(255,255,255,0.05);
+      opacity: 0.82;
+    }
+
+    .toggle-eye:active {
+      transform: scale(0.94);
+    }
+
+    .eye-icon {
+      overflow: visible;
+    }
+
+    .eye-pupil {
+      transition:
+        transform 0.26s cubic-bezier(.5,0,.5,1),
+        opacity 0.15s ease;
+      transform-origin: center;
+      transform-box: fill-box;
+    }
+
+    .eye-icon.is-closed .eye-pupil {
+      transform: scaleY(0.05);
+      opacity: 0;
+    }
+
+    .eye-outline {
+      transition:
+        transform 0.26s cubic-bezier(.5,0,.5,1);
+      transform-origin: center;
+      transform-box: fill-box;
+    }
+
+    .eye-icon.is-closed .eye-outline {
+      transform: scaleY(0.12);
+    }
+
+    /* =========================================================
+       PASSWORD STRENGTH
+    ========================================================= */
+
+    .strength-wrap {
+      display: none;
+
+      flex-direction: column;
+
+      gap: 7px;
+
+      margin-top: -1px;
+
+      padding: 0 2px;
+    }
+
+    body.mode-signup .strength-wrap.show {
+      display: flex;
+    }
+
+    .strength-bar {
+      width: 100%;
+      height: 4px;
+
+      overflow: hidden;
+
+      border-radius: 999px;
+
+      background: rgba(255,255,255,0.09);
+    }
+
+    .strength-fill {
+      width: 0%;
+      height: 100%;
+
+      border-radius: inherit;
+
+      background: #ff5b5b;
+
+      transition:
+        width 0.4s cubic-bezier(.4,1.4,.4,1),
+        background-color 0.4s ease;
+    }
+
+    .strength-fill.pulse {
+      animation: strengthPulse 0.45s ease;
+    }
+
+    @keyframes strengthPulse {
+      0%   { transform: scaleY(1); }
+      45%  { transform: scaleY(1.7); }
+      100% { transform: scaleY(1); }
+    }
+
+    .strength-label {
+      display: flex;
+      align-items: center;
+
+      min-height: 16px;
+
+      font-size: 11px;
+      font-weight: 650;
+
+      color: rgba(255,255,255,0.42);
+
+      transition: color 0.3s ease;
+    }
+
+    .strength-label.pop {
+      animation: labelPop 0.38s cubic-bezier(.4,1.6,.4,1);
+    }
+
+    @keyframes labelPop {
+      0%   { transform: translateY(0); }
+      40%  { transform: translateY(-2px); }
+      100% { transform: translateY(0); }
+    }
+
+    /* =========================================================
+       HINTS / ERROS
+    ========================================================= */
+
+    .hint {
+      padding: 0 2px;
+
+      color: rgba(255,255,255,0.34);
+
+      font-size: 11px;
+      line-height: 1.55;
+    }
+
+    .error-msg {
+      min-height: 18px;
+
+      display: flex;
+      align-items: center;
+
+      padding: 0 2px;
+
+      color: var(--danger);
+
+      font-size: 12px;
+      line-height: 1.5;
+
+      transition:
+        opacity 0.2s ease,
+        transform 0.2s ease;
+    }
+
+    /* =========================================================
+       BOTÃO
+    ========================================================= */
+
+    .btn-primary {
+      position: relative;
+
+      width: 100%;
+      height: 58px;
+
+      margin-top: 4px;
+
+      overflow: hidden;
+
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 15px;
+
+      background:
+        linear-gradient(
+          180deg,
+          #8f76ff,
+          #6344ea
+        );
+
+      color: white;
+
+      font-size: 14px;
+      font-weight: 700;
+
+      letter-spacing: -0.01em;
+
+      cursor: pointer;
+
+      box-shadow:
+        0 14px 32px rgba(91,65,231,0.22),
+        inset 0 1px rgba(255,255,255,0.28);
+
+      transition:
+        transform 0.16s ease,
+        filter 0.2s ease,
+        opacity 0.2s ease,
+        box-shadow 0.2s ease;
+    }
+
+    .btn-primary::before {
+      content: "";
+
+      position: absolute;
+      inset: 0;
+
+      background:
+        linear-gradient(
+          110deg,
+          transparent 0%,
+          rgba(255,255,255,0.16) 44%,
+          transparent 70%
+        );
+
+      transform: translateX(-120%);
+      transition: transform 0.7s ease;
+    }
+
+    .btn-primary:hover::before {
+      transform: translateX(120%);
+    }
+
+    .btn-primary:hover {
+      filter: brightness(1.06);
+
+      box-shadow:
+        0 18px 38px rgba(91,65,231,0.28),
+        inset 0 1px rgba(255,255,255,0.3);
+    }
+
+    .btn-primary:active {
+      transform: scale(0.985);
+    }
+
+    .btn-primary:disabled {
+      opacity: 0.58;
+      cursor: not-allowed;
+
+      filter: saturate(0.72);
+      box-shadow: none;
+    }
+
+    /* =========================================================
+       TROCA LOGIN/CADASTRO
+    ========================================================= */
+
+    .switch-mode {
+      margin-top: 19px;
+
+      text-align: center;
+
+      color: rgba(255,255,255,0.36);
+
+      font-size: 12px;
+    }
+
+    .switch-mode a {
+      color: rgba(255,255,255,0.9);
+
+      text-decoration: none;
+
+      font-weight: 650;
+
+      margin-left: 5px;
+
+      cursor: pointer;
+
+      transition: color 0.2s ease;
+    }
+
+    .switch-mode a:hover {
+      color: #ae9cff;
+    }
+
+    /* =========================================================
+       CAMPOS SOMENTE CADASTRO
+    ========================================================= */
+
+    .signup-only {
+      display: none;
+    }
+
+    body.mode-signup .signup-only {
+      display: flex;
+    }
+
+    body.mode-signup .signup-only.hint {
+      display: block;
+    }
+
+    /* =========================================================
+       FOOTER
+    ========================================================= */
+
+    .form-footer {
+      margin-top: 26px;
+
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+
+      color: rgba(255,255,255,0.22);
+
+      font-size: 9px;
+      font-weight: 700;
+
+      letter-spacing: 0.13em;
+      text-transform: uppercase;
+    }
+
+    .status-dot {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+    }
+
+    .status-dot::before {
+      content: "";
+
+      width: 5px;
+      height: 5px;
+
+      border-radius: 50%;
+
+      background: #7a62ff;
+
+      box-shadow:
+        0 0 12px rgba(122,98,255,0.9);
+    }
+
+    /* =========================================================
+       ANIMAÇÕES
+    ========================================================= */
+
+    @keyframes fadeUp {
+      from {
+        opacity: 0;
+        transform: translateY(12px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* =========================================================
+       MOBILE
+    ========================================================= */
+
+    @media (max-width: 860px) {
+      #login {
+        padding:
+          max(18px, env(safe-area-inset-top))
+          max(18px, env(safe-area-inset-right))
+          max(18px, env(safe-area-inset-bottom))
+          max(18px, env(safe-area-inset-left));
+      }
+
+      .login-shell {
+        width: min(100%, 540px);
+
+        min-height: auto;
+
+        display: block;
+
+        border-radius: 26px;
+      }
+
+      .brand-panel {
+        display: none;
+      }
+
+      .form-panel {
+        padding:
+          clamp(28px, 7vw, 46px)
+          clamp(22px, 7vw, 40px)
+          clamp(28px, 7vw, 42px);
+      }
+
+      .mobile-brand {
+        display: flex;
+
+        align-items: center;
+        justify-content: center;
+
+        width: 54px;
+        height: 54px;
+
+        margin: 0 auto 18px;
+      }
+
+      .mobile-brand img {
+        width: 100%;
+        height: 100%;
+
+        object-fit: contain;
+
+        filter:
+          drop-shadow(0 0 9px rgba(255,255,255,0.2))
+          drop-shadow(0 0 24px rgba(109,76,241,0.18));
+      }
+
+      .form-header {
+        text-align: center;
+        margin-bottom: 26px;
+      }
+
+      .form-kicker {
+        justify-content: center;
+      }
+
+      .form-title {
+        font-size: 28px;
+      }
+
+      .form-subtitle {
+        font-size: 12px;
+        max-width: 320px;
+        margin-left: auto;
+        margin-right: auto;
+      }
+
+      .form-footer {
+        justify-content: center;
+      }
+
+      .form-footer .footer-version {
+        display: none;
+      }
+    }
+
+    @media (max-width: 480px) {
+      #login {
+        align-items: center;
+
+        overflow-y: auto;
+      }
+
+      .login-shell {
+        width: 100%;
+        max-height: none;
+      }
+
+      .form-panel {
+        padding:
+          28px
+          18px
+          max(26px, env(safe-area-inset-bottom));
+      }
+
+      .mobile-brand {
+        width: 48px;
+        height: 48px;
+
+        margin-bottom: 14px;
+      }
+
+      .form-title {
+        font-size: 26px;
+      }
+
+      .form-header {
+        margin-bottom: 23px;
+      }
+
+      .field {
+        height: 56px;
+        border-radius: 14px;
+      }
+
+      .field input {
+        font-size: 16px;
+      }
+
+      .btn-primary {
+        height: 56px;
+      }
+
+      .switch-mode {
+        margin-top: 17px;
+      }
+
+      .noise {
+        opacity: 0.02;
+      }
+
+      .bg-grid {
+        opacity: 0.035;
+        background-size: 38px 38px;
+      }
+    }
+
+    @media (max-height: 680px) and (min-width: 861px) {
+      .login-shell {
+        min-height: min(620px, calc(100vh - 32px));
+      }
+
+      .brand-panel,
+      .form-panel {
+        padding-top: 34px;
+        padding-bottom: 34px;
+      }
+
+      .brand-description {
+        margin-top: 13px;
+      }
+
+      .form-header {
+        margin-bottom: 20px;
+      }
+
+      .field,
+      .btn-primary {
+        height: 52px;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *,
+      *::before,
+      *::after {
+        animation-duration: 0.001ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.001ms !important;
+        scroll-behavior: auto !important;
+      }
+    }
+  </style>
 </head>
+
 <body>
 
-  <!-- ================= SPLASH / TELA DE ENTRADA ================= -->
-  <div id="splash" class="screen">
-    <div class="brand-block">
-      <div class="star-wrap">
-        <svg class="star" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
-          <defs>
-            <radialGradient id="core" cx="50%" cy="50%" r="50%">
-              <stop offset="0%" stop-color="#ffffff" stop-opacity="1"/>
-              <stop offset="15%" stop-color="#ffffff" stop-opacity="1"/>
-              <stop offset="45%" stop-color="#ffffff" stop-opacity="0.55"/>
-              <stop offset="100%" stop-color="#ffffff" stop-opacity="0"/>
-            </radialGradient>
-            <linearGradient id="rayLong" x1="0%" y1="0%" x2="100%" y2="0%">
-              <stop offset="0%" stop-color="#ffffff" stop-opacity="0"/>
-              <stop offset="45%" stop-color="#ffffff" stop-opacity="0.9"/>
-              <stop offset="50%" stop-color="#ffffff" stop-opacity="1"/>
-              <stop offset="55%" stop-color="#ffffff" stop-opacity="0.9"/>
-              <stop offset="100%" stop-color="#ffffff" stop-opacity="0"/>
-            </linearGradient>
-          </defs>
+  <!-- =========================================================
+       FUNDO VISUAL
+  ========================================================== -->
 
-          <g transform="translate(200,200)">
-            <!-- glow de fundo -->
-            <circle r="130" fill="url(#core)"/>
+  <canvas id="fxCanvas" aria-hidden="true"></canvas>
 
-            <!-- 4 raios principais (longos, mais grossos) -->
-            <g fill="#ffffff">
-              <path d="M0,-190 C 3,-90 6,-6 0,0 C -6,-6 -3,-90 0,-190 Z"/>
-              <path d="M0,190 C 3,90 6,6 0,0 C -6,6 -3,90 0,190 Z"/>
-              <path d="M-190,0 C -90,-3 -6,-6 0,0 C -6,6 -90,3 -190,0 Z"/>
-              <path d="M190,0 C 90,3 6,6 0,0 C 6,-6 90,-3 190,0 Z"/>
-            </g>
+  <div class="bg-grid" aria-hidden="true"></div>
+  <div class="bg-vignette" aria-hidden="true"></div>
+  <div class="noise" aria-hidden="true"></div>
 
-            <!-- 4 raios diagonais (médios) -->
-            <g fill="#ffffff" transform="rotate(45)">
-              <path d="M0,-150 C 2.5,-70 5,-5 0,0 C -5,-5 -2.5,-70 0,-150 Z"/>
-              <path d="M0,150 C 2.5,70 5,5 0,0 C -5,5 -2.5,70 0,150 Z"/>
-              <path d="M-150,0 C -70,-2.5 -5,-5 0,0 C -5,5 -70,2.5 -150,0 Z"/>
-              <path d="M150,0 C 70,2.5 5,5 0,0 C 5,-5 70,-2.5 150,0 Z"/>
-            </g>
 
-            <!-- 8 raios finos intermediários -->
-            <g fill="#ffffff" opacity="0.95">
-              <g transform="rotate(22.5)"><path d="M0,-165 C 1.6,-75 3,-4 0,0 C -3,-4 -1.6,-75 0,-165 Z"/></g>
-              <g transform="rotate(67.5)"><path d="M0,-165 C 1.6,-75 3,-4 0,0 C -3,-4 -1.6,-75 0,-165 Z"/></g>
-              <g transform="rotate(112.5)"><path d="M0,-165 C 1.6,-75 3,-4 0,0 C -3,-4 -1.6,-75 0,-165 Z"/></g>
-              <g transform="rotate(157.5)"><path d="M0,-165 C 1.6,-75 3,-4 0,0 C -3,-4 -1.6,-75 0,-165 Z"/></g>
-              <g transform="rotate(202.5)"><path d="M0,-165 C 1.6,-75 3,-4 0,0 C -3,-4 -1.6,-75 0,-165 Z"/></g>
-              <g transform="rotate(247.5)"><path d="M0,-165 C 1.6,-75 3,-4 0,0 C -3,-4 -1.6,-75 0,-165 Z"/></g>
-              <g transform="rotate(292.5)"><path d="M0,-165 C 1.6,-75 3,-4 0,0 C -3,-4 -1.6,-75 0,-165 Z"/></g>
-              <g transform="rotate(337.5)"><path d="M0,-165 C 1.6,-75 3,-4 0,0 C -3,-4 -1.6,-75 0,-165 Z"/></g>
-            </g>
+  <!-- =========================================================
+       SPLASH
+  ========================================================== -->
 
-            <!-- núcleo brilhante -->
-            <circle r="12" fill="#ffffff"/>
-          </g>
-        </svg>
+  <div id="splash">
+
+    <div class="splash-center">
+
+      <div class="splash-symbol">
+        <img
+          src="../download/assets/kazer-login-symbol.png"
+          alt=""
+        >
       </div>
-      <canvas class="metal-canvas" id="splashCanvas" width="360" height="90"></canvas>
+
+      <canvas
+        id="splashCanvas"
+        width="360"
+        height="90"
+        aria-label="Kazer"
+      ></canvas>
+
+      <div class="splash-subtitle">
+        experiência inteligente
+      </div>
+
     </div>
 
-    <div class="footer-brand">
+    <div class="splash-footer">
       <span>Klipza Studio</span>
     </div>
+
   </div>
 
-  <!-- ================= LOGIN / CRIAR CONTA ================= -->
-  <div id="login" class="screen">
-    <div class="login-inner">
-      <div class="login-header">
-        <svg class="mini-star" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
-          <defs>
-            <radialGradient id="core2" cx="50%" cy="50%" r="50%">
-              <stop offset="0%" stop-color="#ffffff" stop-opacity="1"/>
-              <stop offset="15%" stop-color="#ffffff" stop-opacity="1"/>
-              <stop offset="45%" stop-color="#ffffff" stop-opacity="0.55"/>
-              <stop offset="100%" stop-color="#ffffff" stop-opacity="0"/>
-            </radialGradient>
-          </defs>
-          <g transform="translate(200,200)">
-            <circle r="130" fill="url(#core2)"/>
-            <g fill="#ffffff">
-              <path d="M0,-190 C 3,-90 6,-6 0,0 C -6,-6 -3,-90 0,-190 Z"/>
-              <path d="M0,190 C 3,90 6,6 0,0 C -6,6 -3,90 0,190 Z"/>
-              <path d="M-190,0 C -90,-3 -6,-6 0,0 C -6,6 -90,3 -190,0 Z"/>
-              <path d="M190,0 C 90,3 6,6 0,0 C 6,-6 90,-3 190,0 Z"/>
-            </g>
-            <g fill="#ffffff" transform="rotate(45)">
-              <path d="M0,-150 C 2.5,-70 5,-5 0,0 C -5,-5 -2.5,-70 0,-150 Z"/>
-              <path d="M0,150 C 2.5,70 5,5 0,0 C -5,5 -2.5,70 0,150 Z"/>
-              <path d="M-150,0 C -70,-2.5 -5,-5 0,0 C -5,5 -70,2.5 -150,0 Z"/>
-              <path d="M150,0 C 70,2.5 5,5 0,0 C 5,-5 70,-2.5 150,0 Z"/>
-            </g>
-            <g fill="#ffffff" opacity="0.95">
-              <g transform="rotate(22.5)"><path d="M0,-165 C 1.6,-75 3,-4 0,0 C -3,-4 -1.6,-75 0,-165 Z"/></g>
-              <g transform="rotate(67.5)"><path d="M0,-165 C 1.6,-75 3,-4 0,0 C -3,-4 -1.6,-75 0,-165 Z"/></g>
-              <g transform="rotate(112.5)"><path d="M0,-165 C 1.6,-75 3,-4 0,0 C -3,-4 -1.6,-75 0,-165 Z"/></g>
-              <g transform="rotate(157.5)"><path d="M0,-165 C 1.6,-75 3,-4 0,0 C -3,-4 -1.6,-75 0,-165 Z"/></g>
-              <g transform="rotate(202.5)"><path d="M0,-165 C 1.6,-75 3,-4 0,0 C -3,-4 -1.6,-75 0,-165 Z"/></g>
-              <g transform="rotate(247.5)"><path d="M0,-165 C 1.6,-75 3,-4 0,0 C -3,-4 -1.6,-75 0,-165 Z"/></g>
-              <g transform="rotate(292.5)"><path d="M0,-165 C 1.6,-75 3,-4 0,0 C -3,-4 -1.6,-75 0,-165 Z"/></g>
-              <g transform="rotate(337.5)"><path d="M0,-165 C 1.6,-75 3,-4 0,0 C -3,-4 -1.6,-75 0,-165 Z"/></g>
-            </g>
-            <circle r="12" fill="#ffffff"/>
-          </g>
-        </svg>
-        <canvas class="login-title metal-canvas" id="loginCanvas" width="380" height="70"></canvas>
-        <div class="login-sub" id="subText">Entrar para continuar</div>
-      </div>
 
-      <form id="authForm">
-        <!-- Nome (apenas no cadastro) -->
-        <div class="field signup-only">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="1.8"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4.4 3.6-7 8-7s8 2.6 8 7"/></svg>
-          <input type="text" id="displayName" placeholder="Como devemos te chamar?" autocomplete="name" maxlength="80" spellcheck="false">
-        </div>
+  <!-- =========================================================
+       LOGIN
+  ========================================================== -->
 
-        <!-- Email -->
-        <div class="field">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="1.8"><path d="M3 6l9 7 9-7"/><rect x="3" y="5" width="18" height="14" rx="2"/></svg>
-          <input type="email" id="email" placeholder="Email" required autocomplete="email" maxlength="254" inputmode="email">
-        </div>
+  <main id="login">
 
-        <!-- Senha -->
-        <div class="field">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="1.8"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
-          <input type="password" id="password" placeholder="Senha" required autocomplete="current-password" minlength="10" maxlength="256">
-          <button type="button" class="toggle-eye" id="eyeBtnPassword" aria-label="Mostrar senha">
-            <svg class="eye-icon is-open" id="eyeIconPassword" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="1.8">
-              <path class="eye-outline" d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/>
-              <circle class="eye-pupil" cx="12" cy="12" r="3"/>
-            </svg>
-          </button>
-        </div>
+    <div class="login-shell">
 
-        <!-- Indicador de força da senha (apenas no cadastro) -->
-        <div class="strength-wrap" id="strengthWrap">
-          <div class="strength-bar">
-            <div class="strength-fill" id="strengthFill"></div>
+      <!-- =====================================================
+           PAINEL ESQUERDO / DESKTOP
+      ====================================================== -->
+
+      <section class="brand-panel">
+
+        <div class="brand-content">
+
+          <div class="brand-symbol">
+            <img
+              src="../download/assets/kazer-login-symbol.png"
+              alt=""
+            >
           </div>
-          <div class="strength-label" id="strengthLabel">
-            <span id="strengthText">Digite uma senha</span>
+
+          <canvas
+            id="loginCanvas"
+            width="380"
+            height="70"
+            aria-label="Kazer"
+          ></canvas>
+
+          <div class="brand-tag">
+            Klipza Intelligence
           </div>
+
+          <div class="brand-line"></div>
+
+          <p class="brand-description">
+            Um espaço limpo, rápido e inteligente para conversar,
+            criar e transformar suas ideias.
+          </p>
+
         </div>
 
-        <!-- Regra de senha (apenas no cadastro) -->
-        <div class="hint signup-only" id="passwordHint">
-          A senha precisa ter pelo menos 10 caracteres, 1 letra maiúscula e 1 caractere especial.
+        <div class="brand-corner">
+          <span>KAZER</span>
+          <span>PRIVATE SPACE</span>
         </div>
 
-        <!-- Confirmar senha (apenas no cadastro) -->
-        <div class="field signup-only">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="1.8"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
-          <input type="password" id="confirmPassword" placeholder="Confirmar senha" autocomplete="new-password" minlength="10" maxlength="256">
-          <button type="button" class="toggle-eye" id="eyeBtnConfirmPassword" aria-label="Mostrar senha">
-            <svg class="eye-icon is-open" id="eyeIconConfirmPassword" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="1.8">
-              <path class="eye-outline" d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/>
-              <circle class="eye-pupil" cx="12" cy="12" r="3"/>
-            </svg>
-          </button>
+      </section>
+
+
+      <!-- =====================================================
+           PAINEL DIREITO / FORMULÁRIO
+      ====================================================== -->
+
+      <section class="form-panel">
+
+        <div class="login-inner">
+
+          <div class="mobile-brand">
+            <img
+              src="../download/assets/kazer-login-symbol.png"
+              alt=""
+            >
+          </div>
+
+          <header class="form-header">
+
+            <div class="form-kicker">
+              KAZER
+            </div>
+
+            <h1
+              class="form-title"
+              id="formTitle"
+            >
+              Entrar para continuar
+            </h1>
+
+            <p
+              class="form-subtitle"
+              id="formSubtitle"
+            >
+              Acesse seu espaço e continue de onde parou.
+            </p>
+
+          </header>
+
+
+          <form
+            id="authForm"
+            novalidate
+          >
+
+            <!-- =================================================
+                 NOME — CADASTRO
+            ================================================== -->
+
+            <div class="field signup-only">
+
+              <svg
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.8"
+                aria-hidden="true"
+              >
+                <circle cx="12" cy="8" r="4"></circle>
+                <path d="M4 20c0-4.4 3.6-7 8-7s8 2.6 8 7"></path>
+              </svg>
+
+              <input
+                type="text"
+                id="displayName"
+                name="name"
+                placeholder="Como devemos te chamar?"
+                autocomplete="name"
+                maxlength="80"
+                spellcheck="false"
+              >
+
+            </div>
+
+
+            <!-- =================================================
+                 EMAIL
+            ================================================== -->
+
+            <div class="field">
+
+              <svg
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.8"
+                aria-hidden="true"
+              >
+                <path d="M3 6l9 7 9-7"></path>
+                <rect
+                  x="3"
+                  y="5"
+                  width="18"
+                  height="14"
+                  rx="2"
+                ></rect>
+              </svg>
+
+              <input
+                type="email"
+                id="email"
+                name="email"
+                placeholder="Email"
+                required
+                autocomplete="username"
+                inputmode="email"
+                maxlength="254"
+                autocapitalize="none"
+                spellcheck="false"
+              >
+
+            </div>
+
+
+            <!-- =================================================
+                 SENHA
+            ================================================== -->
+
+            <div class="field">
+
+              <svg
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.8"
+                aria-hidden="true"
+              >
+                <rect
+                  x="5"
+                  y="11"
+                  width="14"
+                  height="9"
+                  rx="2"
+                ></rect>
+
+                <path d="M8 11V7a4 4 0 0 1 8 0v4"></path>
+              </svg>
+
+              <input
+                type="password"
+                id="password"
+                name="password"
+                placeholder="Senha"
+                required
+                autocomplete="current-password"
+                minlength="10"
+                maxlength="256"
+              >
+
+              <button
+                type="button"
+                class="toggle-eye"
+                id="eyeBtnPassword"
+                aria-label="Mostrar senha"
+              >
+                <svg
+                  class="eye-icon is-open"
+                  id="eyeIconPassword"
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.8"
+                  aria-hidden="true"
+                >
+                  <path
+                    class="eye-outline"
+                    d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"
+                  ></path>
+
+                  <circle
+                    class="eye-pupil"
+                    cx="12"
+                    cy="12"
+                    r="3"
+                  ></circle>
+                </svg>
+              </button>
+
+            </div>
+
+
+            <!-- =================================================
+                 FORÇA
+            ================================================== -->
+
+            <div
+              class="strength-wrap"
+              id="strengthWrap"
+            >
+
+              <div class="strength-bar">
+                <div
+                  class="strength-fill"
+                  id="strengthFill"
+                ></div>
+              </div>
+
+              <div
+                class="strength-label"
+                id="strengthLabel"
+              >
+                <span id="strengthText">
+                  Digite uma senha
+                </span>
+              </div>
+
+            </div>
+
+
+            <!-- =================================================
+                 REGRA DE SENHA
+            ================================================== -->
+
+            <div
+              class="hint signup-only"
+              id="passwordHint"
+            >
+              Use pelo menos 10 caracteres, uma letra maiúscula
+              e um caractere especial.
+            </div>
+
+
+            <!-- =================================================
+                 CONFIRMAR SENHA
+            ================================================== -->
+
+            <div class="field signup-only">
+
+              <svg
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.8"
+                aria-hidden="true"
+              >
+                <rect
+                  x="5"
+                  y="11"
+                  width="14"
+                  height="9"
+                  rx="2"
+                ></rect>
+
+                <path d="M8 11V7a4 4 0 0 1 8 0v4"></path>
+              </svg>
+
+              <input
+                type="password"
+                id="confirmPassword"
+                name="confirmPassword"
+                placeholder="Confirmar senha"
+                autocomplete="new-password"
+                minlength="10"
+                maxlength="256"
+              >
+
+              <button
+                type="button"
+                class="toggle-eye"
+                id="eyeBtnConfirmPassword"
+                aria-label="Mostrar senha"
+              >
+                <svg
+                  class="eye-icon is-open"
+                  id="eyeIconConfirmPassword"
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.8"
+                  aria-hidden="true"
+                >
+                  <path
+                    class="eye-outline"
+                    d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"
+                  ></path>
+
+                  <circle
+                    class="eye-pupil"
+                    cx="12"
+                    cy="12"
+                    r="3"
+                  ></circle>
+                </svg>
+              </button>
+
+            </div>
+
+
+            <!-- =================================================
+                 ERRO
+            ================================================== -->
+
+            <div
+              class="error-msg"
+              id="errorMsg"
+              role="alert"
+              aria-live="polite"
+            ></div>
+
+
+            <!-- =================================================
+                 SUBMIT
+            ================================================== -->
+
+            <button
+              type="submit"
+              class="btn-primary"
+              id="submitBtn"
+            >
+              Entrar
+            </button>
+
+          </form>
+
+
+          <!-- ===================================================
+               TROCA DE MODO
+          ==================================================== -->
+
+          <div class="switch-mode">
+
+            <span id="switchText">
+              Não tem conta?
+            </span>
+
+            <a
+              id="switchLink"
+              href="#signup"
+            >
+              Criar conta
+            </a>
+
+          </div>
+
+
+          <!-- ===================================================
+               FOOTER
+          ==================================================== -->
+
+          <div class="form-footer">
+
+            <span class="status-dot">
+              KAZER ONLINE
+            </span>
+
+            <span class="footer-version">
+              KLIPZA STUDIO
+            </span>
+
+          </div>
+
         </div>
 
-        <div class="error-msg" id="errorMsg"></div>
+      </section>
 
-        <button type="submit" class="btn-primary" id="submitBtn">Sign in</button>
-      </form>
-
-      <div class="switch-mode">
-        <span id="switchText">Não tem conta?</span>
-        <a id="switchLink" href="#signup">Criar conta</a>
-      </div>
     </div>
-  </div>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script>
-  // ---------- ajusta altura real da viewport (evita bug de barra do navegador mobile) ----------
-  function setVH(){
-    document.documentElement.style.setProperty('--vh', (window.innerHeight * 0.01) + 'px');
-  }
-  setVH();
-  window.addEventListener('resize', setVH);
-  window.addEventListener('orientationchange', setVH);
+  </main>
 
-  // ---------- controla exibição do olho da senha (com animação de piscar) ----------
-  function togglePassword(id){
-    const input = document.getElementById(id);
-    const btn = document.getElementById('eyeBtn' + capitalize(id));
-    const icon = document.getElementById('eyeIcon' + capitalize(id));
-    const isHidden = input.type === 'password';
 
-    input.type = isHidden ? 'text' : 'password';
+  <!-- =========================================================
+       SUPABASE — MANTIDO
+  ========================================================== -->
 
-    if(isHidden){
-      icon.classList.remove('is-open');
-      icon.classList.add('is-closed');
-    } else {
-      icon.classList.remove('is-closed');
-      icon.classList.add('is-open');
-    }
-    btn.setAttribute('aria-label', isHidden ? 'Ocultar senha' : 'Mostrar senha');
-  }
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-  function capitalize(str){
-    return str.charAt(0).toUpperCase() + str.slice(1);
-  }
 
-  document.getElementById('eyeBtnPassword').addEventListener('click', () => togglePassword('password'));
-  document.getElementById('eyeBtnConfirmPassword').addEventListener('click', () => togglePassword('confirmPassword'));
+  <!-- =========================================================
+       THREE.JS / FUNDO
+  ========================================================== -->
 
-  // ---------- alterna entre login e criar conta ----------
-  let isSignup = false;
-  function toggleMode(){
-    isSignup = !isSignup;
-    const body = document.body;
-    const sub = document.getElementById('subText');
-    const submitBtn = document.getElementById('submitBtn');
-    const switchText = document.getElementById('switchText');
-    const switchLink = document.getElementById('switchLink');
-    const confirmInput = document.getElementById('confirmPassword');
-    const nameInput = document.getElementById('displayName');
+  <script type="module">
+    import * as THREE from
+      "https://esm.sh/three@0.185.1";
 
-    if(isSignup){
-      body.classList.add('mode-signup');
-      sub.textContent = 'Criar sua conta';
-      submitBtn.textContent = 'Criar conta';
-      switchText.textContent = 'Já tem conta?';
-      switchLink.textContent = 'Entrar';
-      confirmInput.setAttribute('required', 'true');
-      nameInput.setAttribute('required', 'true');
-    } else {
-      body.classList.remove('mode-signup');
-      sub.textContent = 'Entrar para continuar';
-      submitBtn.textContent = 'Sign in';
-      switchText.textContent = 'Não tem conta?';
-      switchLink.textContent = 'Criar conta';
-      confirmInput.removeAttribute('required');
-      nameInput.removeAttribute('required');
-      strengthWrap.classList.remove('show');
-    }
-    document.getElementById('errorMsg').textContent = '';
-    document.getElementById('errorMsg').dataset.type = '';
-  }
+    const canvas = document.getElementById("fxCanvas");
 
-  // ---------- validação da senha: 1 maiúscula + 1 caractere especial ----------
-  function isPasswordValid(pw){
-    const hasUpper = /[A-Z]/.test(pw);
-    const hasSpecial = /[^A-Za-z0-9]/.test(pw);
-    return pw.length >= 10 && pw.length <= 256 && hasUpper && hasSpecial;
-  }
+    if (canvas) {
+      try {
 
-  // ---------- calcula a força da senha (0 a 4) ----------
-  function getPasswordStrength(pw){
-    if(!pw) return 0;
-    let score = 0;
-    if(pw.length >= 6) score++;
-    if(pw.length >= 10) score++;
-    if(/[A-Z]/.test(pw)) score++;
-    if(/[^A-Za-z0-9]/.test(pw)) score++;
-    if(/[0-9]/.test(pw)) score++;
-    if(pw.length < 6) score = Math.min(score, 1);
-    return Math.min(score, 4);
-  }
+        const pixelRatio = Math.min(
+          window.devicePixelRatio || 1,
+          1.5
+        );
 
-  const strengthConfig = {
-    0: { pct: 4,   color: '#ff5b5b', text: 'Digite uma senha' },
-    1: { pct: 25,  color: '#ff5b5b', text: 'Senha fraca — capriche mais' },
-    2: { pct: 50,  color: '#ffb14e', text: 'Quase lá, dá pra melhorar' },
-    3: { pct: 75,  color: '#ffd84e', text: 'Boa senha!' },
-    4: { pct: 100, color: '#6de68a', text: 'Senha forte, mandou bem!' }
-  };
+        const renderer = new THREE.WebGLRenderer({
+          canvas,
+          antialias: true,
+          alpha: false,
+          powerPreference: "high-performance"
+        });
 
-  const strengthWrap = document.getElementById('strengthWrap');
-  const strengthFill = document.getElementById('strengthFill');
-  const strengthLabel = document.getElementById('strengthLabel');
-  const strengthText = document.getElementById('strengthText');
+        renderer.setPixelRatio(pixelRatio);
+        renderer.setSize(
+          window.innerWidth,
+          window.innerHeight,
+          false
+        );
 
-  function updateStrengthUI(pw){
-    if(!pw){
-      strengthWrap.classList.remove('show');
-      return;
-    }
-    strengthWrap.classList.add('show');
+        const scene = new THREE.Scene();
 
-    const level = getPasswordStrength(pw);
-    const cfg = strengthConfig[level];
+        const camera = new THREE.OrthographicCamera(
+          -1,
+          1,
+          1,
+          -1,
+          0.1,
+          10
+        );
 
-    strengthFill.style.width = cfg.pct + '%';
-    strengthFill.style.backgroundColor = cfg.color;
-    strengthText.textContent = cfg.text;
-    strengthLabel.style.color = cfg.color;
+        camera.position.z = 1;
 
-    // pequena animação de "pulso" a cada mudança de nível
-    strengthFill.classList.remove('pulse');
-    strengthLabel.classList.remove('pop');
-    void strengthFill.offsetWidth; // reflow pra reiniciar a animação
-    strengthFill.classList.add('pulse');
-    strengthLabel.classList.add('pop');
-  }
+        const geometry = new THREE.PlaneGeometry(2, 2);
 
-  document.getElementById('switchLink').addEventListener('click', (event) => {
-    event.preventDefault();
-    toggleMode();
-  });
+        const material = new THREE.ShaderMaterial({
 
-  document.getElementById('password').addEventListener('input', function(){
-    if(isSignup){
-      updateStrengthUI(this.value);
-    }
-    checkPasswordsMatch();
-  });
+          uniforms: {
+            uTime: {
+              value: 0
+            },
 
-  // ---------- checa em tempo real se as senhas coincidem ----------
-  const confirmField = document.getElementById('confirmPassword');
-  function checkPasswordsMatch(){
-    const errorMsg = document.getElementById('errorMsg');
-    const pw = document.getElementById('password').value;
-    const confirmPw = confirmField.value;
+            uResolution: {
+              value: new THREE.Vector2(
+                window.innerWidth,
+                window.innerHeight
+              )
+            },
 
-    if(!isSignup || !confirmPw){
-      if(errorMsg.dataset.type === 'mismatch') errorMsg.textContent = '';
-      return;
-    }
-
-    if(pw !== confirmPw){
-      errorMsg.textContent = 'Acho que a senha de confirmação não ficou igual à primeira';
-      errorMsg.dataset.type = 'mismatch';
-    } else if(errorMsg.dataset.type === 'mismatch'){
-      errorMsg.textContent = '';
-      errorMsg.dataset.type = '';
-    }
-  }
-  confirmField.addEventListener('input', checkPasswordsMatch);
-
-  // ---------- cliente Supabase público e autenticação real ----------
-  const KAZER_SUPABASE_URL = 'https://mqjunopzycdezzjmlhip.supabase.co';
-  const KAZER_SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1xanVub3B6eWNkZXp6am1saGlwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc4Mzg3NDksImV4cCI6MjEwMzQxNDc0OX0.Y_o2_QQhZzuCjvHdEfxaR5VrAxo7NFenPaDmdHN3bwM';
-  const kazerSupabase = window.supabase?.createClient(KAZER_SUPABASE_URL, KAZER_SUPABASE_ANON_KEY, {
-    auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: false }
-  });
-
-  function authErrorMessage(error){
-    const message = String(error?.message || '').toLowerCase();
-    if(message.includes('invalid login credentials')) return 'E-mail ou senha incorretos.';
-    if(message.includes('email not confirmed')) return 'O acesso por e-mail ainda não está liberado no projeto Kazer.';
-    if(message.includes('user already registered')) return 'Este e-mail já tem uma conta. Tente entrar.';
-    if(message.includes('password')) return 'A senha não atende aos requisitos do Kazer.';
-    return 'Não foi possível concluir agora. Tente novamente.';
-  }
-
-  // ---------- validação e envio do form ----------
-  document.getElementById('authForm').addEventListener('submit', async function(e){
-    e.preventDefault();
-    const errorMsg = document.getElementById('errorMsg');
-    const submitBtn = document.getElementById('submitBtn');
-    const name = document.getElementById('displayName').value.trim();
-    const email = document.getElementById('email').value.trim();
-    const password = document.getElementById('password').value;
-    const confirmPassword = document.getElementById('confirmPassword').value;
-
-    if(!kazerSupabase){
-      errorMsg.textContent = 'A conexão segura do Kazer não carregou. Atualize a página.';
-      return;
-    }
-    if(isSignup){
-      if(!name || name.length > 80){ errorMsg.textContent = 'Informe um nome válido de até 80 caracteres.'; return; }
-      if(!isPasswordValid(password)){
-        errorMsg.textContent = 'Sua senha ainda tá fraca — use pelo menos 10 caracteres, 1 letra maiúscula e 1 caractere especial.';
-        return;
-      }
-      if(password !== confirmPassword){
-        errorMsg.textContent = 'Acho que a senha de confirmação não ficou igual à primeira';
-        return;
-      }
-    }
-
-    errorMsg.textContent = '';
-    submitBtn.disabled = true;
-    submitBtn.textContent = isSignup ? 'Criando conta…' : 'Entrando…';
-
-    try{
-      const result = isSignup
-        ? await kazerSupabase.auth.signUp({
-            email,
-            password,
-            options: {
-              data: { display_name: name },
-              emailRedirectTo: `${window.location.origin}/chat`
+            uPointer: {
+              value: new THREE.Vector2(0.5, 0.5)
             }
-          })
-        : await kazerSupabase.auth.signInWithPassword({ email, password });
+          },
 
-      if(result.error) throw result.error;
-      if(!result.data.session){
-        throw new Error('A sessão imediata ainda não está habilitada no projeto Kazer.');
+          vertexShader: `
+            varying vec2 vUv;
+
+            void main() {
+              vUv = uv;
+
+              gl_Position = vec4(
+                position,
+                1.0
+              );
+            }
+          `,
+
+          fragmentShader: `
+            precision highp float;
+
+            uniform float uTime;
+            uniform vec2 uResolution;
+            uniform vec2 uPointer;
+
+            varying vec2 vUv;
+
+            float hash(vec2 p) {
+              return fract(
+                sin(dot(p, vec2(127.1,311.7))) * 43758.5453123
+              );
+            }
+
+            float noise(vec2 p) {
+              vec2 i = floor(p);
+              vec2 f = fract(p);
+
+              f = f * f * (3.0 - 2.0 * f);
+
+              float a = hash(i);
+              float b = hash(i + vec2(1.0, 0.0));
+              float c = hash(i + vec2(0.0, 1.0));
+              float d = hash(i + vec2(1.0, 1.0));
+
+              return mix(
+                mix(a,b,f.x),
+                mix(c,d,f.x),
+                f.y
+              );
+            }
+
+            float ribbon(
+              vec2 uv,
+              float offset,
+              float speed,
+              float thickness
+            ) {
+
+              float wave =
+                sin(
+                  uv.x * 4.5
+                  + sin(uv.y * 4.0 + uTime * speed) * 1.1
+                  + uTime * speed * 0.3
+                  + offset
+                );
+
+              float y =
+                uv.y
+                + wave * 0.10
+                + sin(
+                    uv.x * 2.0
+                    + uTime * speed
+                    + offset
+                  ) * 0.055;
+
+              return smoothstep(
+                thickness,
+                0.0,
+                abs(y - 0.53)
+              );
+            }
+
+            void main() {
+
+              vec2 uv = vUv;
+
+              vec2 p = uv - 0.5;
+
+              p.x *= uResolution.x /
+                      max(uResolution.y, 1.0);
+
+              vec2 pointer = uPointer - 0.5;
+
+              float n =
+                noise(
+                  uv * 3.0
+                  + uTime * 0.025
+                );
+
+              float light =
+                exp(
+                  -(
+                    dot(
+                      p - pointer * 0.5,
+                      p - pointer * 0.5
+                    ) * 5.4
+                  )
+                );
+
+              float r1 =
+                ribbon(
+                  vec2(uv.x, uv.y - 0.15),
+                  0.0,
+                  0.12,
+                  0.025
+                );
+
+              float r2 =
+                ribbon(
+                  vec2(uv.y, uv.x + 0.1),
+                  2.4,
+                  0.08,
+                  0.016
+                );
+
+              float r3 =
+                ribbon(
+                  vec2(uv.x, uv.y + 0.08),
+                  4.8,
+                  0.055,
+                  0.009
+                );
+
+              vec3 base =
+                vec3(
+                  0.012,
+                  0.009,
+                  0.018
+                );
+
+              vec3 purple =
+                vec3(
+                  0.12,
+                  0.075,
+                  0.34
+                );
+
+              vec3 lavender =
+                vec3(
+                  0.35,
+                  0.25,
+                  0.75
+                );
+
+              vec3 color =
+                base;
+
+              color += purple * r1 * 0.26;
+              color += lavender * r2 * 0.10;
+              color += lavender * r3 * 0.055;
+
+              color +=
+                vec3(
+                  0.12,
+                  0.08,
+                  0.24
+                ) * light * 0.20;
+
+              color +=
+                vec3(0.022)
+                * n;
+
+              float vignette =
+                smoothstep(
+                  1.0,
+                  0.12,
+                  length(p)
+                );
+
+              color *=
+                mix(
+                  0.53,
+                  1.0,
+                  vignette
+                );
+
+              gl_FragColor =
+                vec4(
+                  color,
+                  1.0
+                );
+            }
+          `
+        });
+
+        const mesh = new THREE.Mesh(
+          geometry,
+          material
+        );
+
+        scene.add(mesh);
+
+        const pointerTarget =
+          new THREE.Vector2(0.5, 0.5);
+
+        const pointerSmooth =
+          new THREE.Vector2(0.5, 0.5);
+
+        function setPointer(x, y) {
+          pointerTarget.set(
+            x / window.innerWidth,
+            1 - y / window.innerHeight
+          );
+        }
+
+        window.addEventListener(
+          "pointermove",
+          event => {
+            setPointer(
+              event.clientX,
+              event.clientY
+            );
+          },
+          {
+            passive: true
+          }
+        );
+
+        function resizeFx() {
+
+          renderer.setSize(
+            window.innerWidth,
+            window.innerHeight,
+            false
+          );
+
+          material.uniforms.uResolution.value.set(
+            window.innerWidth,
+            window.innerHeight
+          );
+        }
+
+        window.addEventListener(
+          "resize",
+          resizeFx,
+          {
+            passive: true
+          }
+        );
+
+        const clock =
+          new THREE.Clock();
+
+        renderer.setAnimationLoop(() => {
+
+          material.uniforms.uTime.value =
+            clock.getElapsedTime();
+
+          pointerSmooth.lerp(
+            pointerTarget,
+            0.025
+          );
+
+          material.uniforms.uPointer.value.copy(
+            pointerSmooth
+          );
+
+          renderer.render(
+            scene,
+            camera
+          );
+        });
+
+      } catch (error) {
+
+        canvas.style.display = "none";
+
+        console.warn(
+          "Kazer visual background unavailable:",
+          error
+        );
       }
-      if (isSignup && result.data.user?.id) {
+    }
+  </script>
+
+
+  <!-- =========================================================
+       KAZER APPLICATION
+       SUPABASE NÃO FOI DESCONECTADO
+  ========================================================== -->
+
+  <script>
+    /* =========================================================
+       VIEWPORT MOBILE
+    ========================================================== */
+
+    function setVH() {
+      document.documentElement.style.setProperty(
+        "--vh",
+        (window.innerHeight * 0.01) + "px"
+      );
+    }
+
+    setVH();
+
+    window.addEventListener(
+      "resize",
+      setVH,
+      { passive: true }
+    );
+
+    window.addEventListener(
+      "orientationchange",
+      setVH,
+      { passive: true }
+    );
+
+
+    /* =========================================================
+       ELEMENTOS
+    ========================================================== */
+
+    const splash =
+      document.getElementById("splash");
+
+    const login =
+      document.getElementById("login");
+
+    const authForm =
+      document.getElementById("authForm");
+
+    const errorMsg =
+      document.getElementById("errorMsg");
+
+    const submitBtn =
+      document.getElementById("submitBtn");
+
+    const switchLink =
+      document.getElementById("switchLink");
+
+    const switchText =
+      document.getElementById("switchText");
+
+    const formTitle =
+      document.getElementById("formTitle");
+
+    const formSubtitle =
+      document.getElementById("formSubtitle");
+
+    const displayName =
+      document.getElementById("displayName");
+
+    const email =
+      document.getElementById("email");
+
+    const password =
+      document.getElementById("password");
+
+    const confirmPassword =
+      document.getElementById("confirmPassword");
+
+    const strengthWrap =
+      document.getElementById("strengthWrap");
+
+    const strengthFill =
+      document.getElementById("strengthFill");
+
+    const strengthLabel =
+      document.getElementById("strengthLabel");
+
+    const strengthText =
+      document.getElementById("strengthText");
+
+
+    /* =========================================================
+       SENHA / OLHO
+    ========================================================== */
+
+    function capitalize(value) {
+      return value.charAt(0).toUpperCase() +
+             value.slice(1);
+    }
+
+    function togglePassword(id) {
+
+      const input =
+        document.getElementById(id);
+
+      const suffix =
+        capitalize(id);
+
+      const btn =
+        document.getElementById(
+          "eyeBtn" + suffix
+        );
+
+      const icon =
+        document.getElementById(
+          "eyeIcon" + suffix
+        );
+
+      const isHidden =
+        input.type === "password";
+
+      input.type =
+        isHidden
+          ? "text"
+          : "password";
+
+      if (isHidden) {
+
+        icon.classList.remove("is-open");
+        icon.classList.add("is-closed");
+
+      } else {
+
+        icon.classList.remove("is-closed");
+        icon.classList.add("is-open");
+      }
+
+      btn.setAttribute(
+        "aria-label",
+        isHidden
+          ? "Ocultar senha"
+          : "Mostrar senha"
+      );
+    }
+
+    document
+      .getElementById("eyeBtnPassword")
+      .addEventListener(
+        "click",
+        () => togglePassword("password")
+      );
+
+    document
+      .getElementById("eyeBtnConfirmPassword")
+      .addEventListener(
+        "click",
+        () => togglePassword("confirmPassword")
+      );
+
+
+    /* =========================================================
+       MODO LOGIN / CADASTRO
+    ========================================================== */
+
+    let isSignup = false;
+
+    function toggleMode() {
+
+      isSignup = !isSignup;
+
+      errorMsg.textContent = "";
+      errorMsg.dataset.type = "";
+
+      if (isSignup) {
+
+        document.body.classList.add(
+          "mode-signup"
+        );
+
+        formTitle.textContent =
+          "Criar sua conta";
+
+        formSubtitle.textContent =
+          "Monte seu espaço Kazer e comece sua experiência.";
+
+        submitBtn.textContent =
+          "Criar conta";
+
+        switchText.textContent =
+          "Já tem conta?";
+
+        switchLink.textContent =
+          "Entrar";
+
+        confirmPassword.setAttribute(
+          "required",
+          "true"
+        );
+
+        displayName.setAttribute(
+          "required",
+          "true"
+        );
+
+        email.setAttribute(
+          "autocomplete",
+          "email"
+        );
+
+        password.setAttribute(
+          "autocomplete",
+          "new-password"
+        );
+
+      } else {
+
+        document.body.classList.remove(
+          "mode-signup"
+        );
+
+        formTitle.textContent =
+          "Entrar para continuar";
+
+        formSubtitle.textContent =
+          "Acesse seu espaço e continue de onde parou.";
+
+        submitBtn.textContent =
+          "Entrar";
+
+        switchText.textContent =
+          "Não tem conta?";
+
+        switchLink.textContent =
+          "Criar conta";
+
+        confirmPassword.removeAttribute(
+          "required"
+        );
+
+        displayName.removeAttribute(
+          "required"
+        );
+
+        email.setAttribute(
+          "autocomplete",
+          "username"
+        );
+
+        password.setAttribute(
+          "autocomplete",
+          "current-password"
+        );
+
+        strengthWrap.classList.remove(
+          "show"
+        );
+      }
+    }
+
+    switchLink.addEventListener(
+      "click",
+      event => {
+
+        event.preventDefault();
+
+        toggleMode();
+
+        requestAnimationFrame(() => {
+
+          if (isSignup) {
+            displayName.focus();
+          } else {
+            email.focus();
+          }
+
+        });
+      }
+    );
+
+
+    /* =========================================================
+       SENHA
+    ========================================================== */
+
+    function isPasswordValid(pw) {
+
+      const hasUpper =
+        /[A-Z]/.test(pw);
+
+      const hasSpecial =
+        /[^A-Za-z0-9]/.test(pw);
+
+      return (
+        pw.length >= 10 &&
+        pw.length <= 256 &&
+        hasUpper &&
+        hasSpecial
+      );
+    }
+
+
+    function getPasswordStrength(pw) {
+
+      if (!pw) return 0;
+
+      let score = 0;
+
+      if (pw.length >= 6)
+        score++;
+
+      if (pw.length >= 10)
+        score++;
+
+      if (/[A-Z]/.test(pw))
+        score++;
+
+      if (/[^A-Za-z0-9]/.test(pw))
+        score++;
+
+      if (/[0-9]/.test(pw))
+        score++;
+
+      if (pw.length < 6)
+        score = Math.min(score, 1);
+
+      return Math.min(score, 4);
+    }
+
+
+    const strengthConfig = {
+
+      0: {
+        pct: 4,
+        color: "#ff5b5b",
+        text: "Digite uma senha"
+      },
+
+      1: {
+        pct: 25,
+        color: "#ff5b5b",
+        text: "Senha fraca — capriche mais"
+      },
+
+      2: {
+        pct: 50,
+        color: "#ffb14e",
+        text: "Quase lá, dá para melhorar"
+      },
+
+      3: {
+        pct: 75,
+        color: "#ffd84e",
+        text: "Boa senha!"
+      },
+
+      4: {
+        pct: 100,
+        color: "#6de68a",
+        text: "Senha forte, mandou bem!"
+      }
+    };
+
+
+    function updateStrengthUI(pw) {
+
+      if (!pw) {
+
+        strengthWrap.classList.remove(
+          "show"
+        );
+
+        return;
+      }
+
+      strengthWrap.classList.add(
+        "show"
+      );
+
+      const level =
+        getPasswordStrength(pw);
+
+      const config =
+        strengthConfig[level];
+
+      strengthFill.style.width =
+        config.pct + "%";
+
+      strengthFill.style.backgroundColor =
+        config.color;
+
+      strengthText.textContent =
+        config.text;
+
+      strengthLabel.style.color =
+        config.color;
+
+      strengthFill.classList.remove(
+        "pulse"
+      );
+
+      strengthLabel.classList.remove(
+        "pop"
+      );
+
+      void strengthFill.offsetWidth;
+
+      strengthFill.classList.add(
+        "pulse"
+      );
+
+      strengthLabel.classList.add(
+        "pop"
+      );
+    }
+
+
+    function checkPasswordsMatch() {
+
+      const pw =
+        password.value;
+
+      const confirmPw =
+        confirmPassword.value;
+
+      if (!isSignup || !confirmPw) {
+
+        if (
+          errorMsg.dataset.type ===
+          "mismatch"
+        ) {
+          errorMsg.textContent = "";
+          errorMsg.dataset.type = "";
+        }
+
+        return;
+      }
+
+      if (pw !== confirmPw) {
+
+        errorMsg.textContent =
+          "A confirmação de senha não corresponde.";
+
+        errorMsg.dataset.type =
+          "mismatch";
+
+      } else if (
+        errorMsg.dataset.type ===
+        "mismatch"
+      ) {
+
+        errorMsg.textContent = "";
+        errorMsg.dataset.type = "";
+      }
+    }
+
+
+    password.addEventListener(
+      "input",
+      function() {
+
+        if (isSignup) {
+          updateStrengthUI(
+            this.value
+          );
+        }
+
+        checkPasswordsMatch();
+      }
+    );
+
+    confirmPassword.addEventListener(
+      "input",
+      checkPasswordsMatch
+    );
+
+
+    /* =========================================================
+       SUPABASE
+       IMPORTANTE:
+       NÃO REMOVIDO
+    ========================================================== */
+
+    const KAZER_SUPABASE_URL =
+      "https://mqjunopzycdezzjmlhip.supabase.co";
+
+    const KAZER_SUPABASE_ANON_KEY =
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1xanVub3B6eWNkZXp6am1saGlwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc4Mzg3NDksImV4cCI6MjEwMzQxNDc0OX0.Y_o2_QQhZzuCjvHdEfxaR5VrAxo7NFenPaDmdHN3bwM";
+
+    const kazerSupabase =
+      window.supabase?.createClient(
+        KAZER_SUPABASE_URL,
+        KAZER_SUPABASE_ANON_KEY,
+        {
+          auth: {
+            persistSession: true,
+            autoRefreshToken: true,
+            detectSessionInUrl: false
+          }
+        }
+      );
+
+
+    /* =========================================================
+       ERROS
+    ========================================================== */
+
+    function authErrorMessage(error) {
+
+      const message =
+        String(
+          error?.message || ""
+        ).toLowerCase();
+
+      if (
+        message.includes(
+          "invalid login credentials"
+        )
+      ) {
+        return "E-mail ou senha incorretos.";
+      }
+
+      if (
+        message.includes(
+          "email not confirmed"
+        )
+      ) {
+        return "O acesso por e-mail ainda não está liberado no projeto Kazer.";
+      }
+
+      if (
+        message.includes(
+          "user already registered"
+        )
+      ) {
+        return "Este e-mail já tem uma conta. Tente entrar.";
+      }
+
+      if (
+        message.includes(
+          "password"
+        )
+      ) {
+        return "A senha não atende aos requisitos do Kazer.";
+      }
+
+      return "Não foi possível concluir agora. Tente novamente.";
+    }
+
+
+    /* =========================================================
+       SUBMIT
+    ========================================================== */
+
+    authForm.addEventListener(
+      "submit",
+      async function(event) {
+
+        event.preventDefault();
+
+        const name =
+          displayName.value.trim();
+
+        const userEmail =
+          email.value.trim();
+
+        const userPassword =
+          password.value;
+
+        const userConfirmPassword =
+          confirmPassword.value;
+
+
+        if (!kazerSupabase) {
+
+          errorMsg.textContent =
+            "A conexão segura do Kazer não carregou. Atualize a página.";
+
+          return;
+        }
+
+
+        /* ------------------------------------------
+           CADASTRO
+        ------------------------------------------- */
+
+        if (isSignup) {
+
+          if (
+            !name ||
+            name.length > 80
+          ) {
+
+            errorMsg.textContent =
+              "Informe um nome válido de até 80 caracteres.";
+
+            return;
+          }
+
+
+          if (!isPasswordValid(
+            userPassword
+          )) {
+
+            errorMsg.textContent =
+              "Use pelo menos 10 caracteres, uma letra maiúscula e um caractere especial.";
+
+            return;
+          }
+
+
+          if (
+            userPassword !==
+            userConfirmPassword
+          ) {
+
+            errorMsg.textContent =
+              "A confirmação de senha não corresponde.";
+
+            return;
+          }
+        }
+
+
+        errorMsg.textContent = "";
+
+        submitBtn.disabled = true;
+
+        submitBtn.textContent =
+          isSignup
+            ? "Criando conta..."
+            : "Entrando...";
+
+
         try {
-          await kazerSupabase.from('profiles').update({ display_name: name }).eq('id', result.data.user.id);
-        } catch (_) {}
+
+          const result =
+            isSignup
+
+              ? await kazerSupabase.auth.signUp({
+                  email: userEmail,
+
+                  password: userPassword,
+
+                  options: {
+                    data: {
+                      display_name: name
+                    },
+
+                    emailRedirectTo:
+                      `${window.location.origin}/chat`
+                  }
+                })
+
+              : await kazerSupabase.auth.signInWithPassword({
+                  email: userEmail,
+                  password: userPassword
+                });
+
+
+          if (result.error)
+            throw result.error;
+
+
+          if (!result.data.session) {
+
+            throw new Error(
+              "A sessão imediata ainda não está habilitada no projeto Kazer."
+            );
+          }
+
+
+          /* ----------------------------------------
+             PERFIL
+          ----------------------------------------- */
+
+          if (
+            isSignup &&
+            result.data.user?.id
+          ) {
+
+            try {
+
+              await kazerSupabase
+                .from("profiles")
+                .update({
+                  display_name: name
+                })
+                .eq(
+                  "id",
+                  result.data.user.id
+                );
+
+            } catch (_) {
+              /* Mantido como no projeto original */
+            }
+          }
+
+
+          /* ----------------------------------------
+             ATIVIDADE
+          ----------------------------------------- */
+
+          try {
+
+            await kazerSupabase
+              .rpc(
+                "touch_user_activity"
+              );
+
+          } catch (_) {
+            /* Mantido como no projeto original */
+          }
+
+
+          /* ----------------------------------------
+             CHAT
+          ----------------------------------------- */
+
+          window.location.assign(
+            "/chat"
+          );
+
+        } catch (error) {
+
+          errorMsg.style.color =
+            "#ff6f83";
+
+          errorMsg.textContent =
+            authErrorMessage(
+              error
+            );
+
+          submitBtn.disabled = false;
+
+          submitBtn.textContent =
+            isSignup
+              ? "Criar conta"
+              : "Entrar";
+        }
       }
-      try { await kazerSupabase.rpc('touch_user_activity'); } catch (_) {}
-      window.location.assign('/chat');
-    }catch(error){
-      errorMsg.style.color = '#ff6b6b';
-      errorMsg.textContent = authErrorMessage(error);
-      submitBtn.disabled = false;
-      submitBtn.textContent = isSignup ? 'Criar conta' : 'Sign in';
+    );
+
+
+    /* =========================================================
+       METAL TEXT
+    ========================================================== */
+
+    function initMetalText(
+      canvas,
+      text,
+      fontFamily,
+      fontSizeRatio
+    ) {
+
+      const ctx =
+        canvas.getContext("2d");
+
+      if (!ctx)
+        return;
+
+      const W =
+        canvas.width;
+
+      const H =
+        canvas.height;
+
+      let running = true;
+
+
+      const stops = [
+
+        {
+          pos: 0.00,
+          c: "#31343b"
+        },
+
+        {
+          pos: 0.16,
+          c: "#c8ccd6"
+        },
+
+        {
+          pos: 0.30,
+          c: "#ffffff"
+        },
+
+        {
+          pos: 0.43,
+          c: "#848995"
+        },
+
+        {
+          pos: 0.58,
+          c: "#f4f5f8"
+        },
+
+        {
+          pos: 0.74,
+          c: "#555962"
+        },
+
+        {
+          pos: 0.89,
+          c: "#e6e9ef"
+        },
+
+        {
+          pos: 1.00,
+          c: "#31343b"
+        }
+      ];
+
+
+      function draw(t) {
+
+        if (!running)
+          return;
+
+        ctx.clearRect(
+          0,
+          0,
+          W,
+          H
+        );
+
+        ctx.save();
+
+
+        ctx.font =
+          `${Math.floor(
+            H * fontSizeRatio
+          )}px "${fontFamily}", cursive`;
+
+        ctx.textAlign =
+          "center";
+
+        ctx.textBaseline =
+          "middle";
+
+
+        const shift =
+          (t * 0.00024) % 1;
+
+
+        const shifted =
+          stops
+            .map(stop => {
+
+              let position =
+                (
+                  stop.pos +
+                  shift
+                ) % 1;
+
+              return {
+                pos: position,
+                c: stop.c
+              };
+
+            })
+            .sort(
+              (a, b) =>
+                a.pos - b.pos
+            );
+
+
+        const grad =
+          ctx.createLinearGradient(
+            0,
+            0,
+            W,
+            0
+          );
+
+
+        shifted.forEach(
+          stop => {
+
+            grad.addColorStop(
+              stop.pos,
+              stop.c
+            );
+
+          }
+        );
+
+
+        ctx.fillStyle =
+          grad;
+
+
+        ctx.shadowColor =
+          "rgba(150,130,255,0.08)";
+
+        ctx.shadowBlur = 12;
+
+
+        ctx.fillText(
+          text,
+          W / 2,
+          H / 2 +
+          H * 0.04
+        );
+
+
+        ctx.shadowBlur = 0;
+
+
+        const sheen =
+          ctx.createLinearGradient(
+            0,
+            0,
+            0,
+            H
+          );
+
+
+        sheen.addColorStop(
+          0,
+          "rgba(255,255,255,0.40)"
+        );
+
+        sheen.addColorStop(
+          0.44,
+          "rgba(255,255,255,0)"
+        );
+
+        sheen.addColorStop(
+          1,
+          "rgba(0,0,0,0.28)"
+        );
+
+
+        ctx.globalCompositeOperation =
+          "source-atop";
+
+        ctx.fillStyle =
+          sheen;
+
+        ctx.fillRect(
+          0,
+          0,
+          W,
+          H
+        );
+
+        ctx.restore();
+
+        requestAnimationFrame(
+          draw
+        );
+      }
+
+
+      requestAnimationFrame(
+        draw
+      );
+
+
+      return {
+        stop() {
+          running = false;
+        }
+      };
     }
-  });
 
-  // ---------- transição splash -> login ----------
-  // ---------- efeito de metal líquido animado no texto KAZER ----------
-  function initMetalText(canvas, text, fontFamily, fontSizeRatio){
-    const ctx = canvas.getContext('2d');
-    const W = canvas.width;
-    const H = canvas.height;
-    let running = true;
 
-    // paleta de reflexos do metal (tons prata/branco com toque frio, tipo cromo)
-    const stops = [
-      { pos: 0.00, c: '#3a3d45' },
-      { pos: 0.18, c: '#c9ccd4' },
-      { pos: 0.32, c: '#ffffff' },
-      { pos: 0.46, c: '#8b8f99' },
-      { pos: 0.60, c: '#f2f3f6' },
-      { pos: 0.75, c: '#5a5d66' },
-      { pos: 0.90, c: '#e8eaef' },
-      { pos: 1.00, c: '#3a3d45' }
-    ];
+    /* =========================================================
+       FONT + LOGO
+    ========================================================== */
 
-    function draw(t){
-      if(!running) return;
-      ctx.clearRect(0, 0, W, H);
+    function startLogo() {
 
-      // desenha o texto pra usar como máscara
-      ctx.save();
-      ctx.font = `${Math.floor(H * fontSizeRatio)}px "${fontFamily}", cursive`;
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
+      initMetalText(
+        document.getElementById(
+          "splashCanvas"
+        ),
+        "KAZER",
+        "UnifrakturMaguntia",
+        0.72
+      );
 
-      // cria o gradiente "líquido" que se desloca ao longo do tempo, como reflexo de luz correndo no metal
-      const shift = (t * 0.00035) % 1;
-      const shifted = stops.map(function(s){
-        let pos = (s.pos + shift) % 1;
-        return { pos: pos, c: s.c };
-      }).sort(function(a, b){ return a.pos - b.pos; });
 
-      const grad = ctx.createLinearGradient(0, 0, W, 0);
-      shifted.forEach(function(s){
-        grad.addColorStop(s.pos, s.c);
-      });
-      ctx.fillStyle = grad;
-      ctx.fillText(text, W / 2, H / 2 + H * 0.04);
-
-      // leve brilho superior pra dar volume metálico
-      const sheen = ctx.createLinearGradient(0, 0, 0, H);
-      sheen.addColorStop(0, 'rgba(255,255,255,0.35)');
-      sheen.addColorStop(0.45, 'rgba(255,255,255,0)');
-      sheen.addColorStop(1, 'rgba(0,0,0,0.25)');
-      ctx.globalCompositeOperation = 'source-atop';
-      ctx.fillStyle = sheen;
-      ctx.fillRect(0, 0, W, H);
-      ctx.restore();
-
-      requestAnimationFrame(draw);
+      initMetalText(
+        document.getElementById(
+          "loginCanvas"
+        ),
+        "KAZER",
+        "UnifrakturMaguntia",
+        0.72
+      );
     }
 
-    requestAnimationFrame(draw);
-    return { stop: function(){ running = false; } };
-  }
 
-  // espera a fonte gótica carregar antes de desenhar, senão usa fallback do navegador
-  if(document.fonts && document.fonts.ready){
-    document.fonts.load('90px "UnifrakturMaguntia"').then(function(){
-      return document.fonts.ready;
-    }).then(function(){
-      initMetalText(document.getElementById('splashCanvas'), 'KAZER', 'UnifrakturMaguntia', 0.72);
-      initMetalText(document.getElementById('loginCanvas'), 'KAZER', 'UnifrakturMaguntia', 0.72);
-    });
-  } else {
-    setTimeout(function(){
-      initMetalText(document.getElementById('splashCanvas'), 'KAZER', 'UnifrakturMaguntia', 0.72);
-      initMetalText(document.getElementById('loginCanvas'), 'KAZER', 'UnifrakturMaguntia', 0.72);
-    }, 300);
-  }
+    if (
+      document.fonts &&
+      document.fonts.ready
+    ) {
 
-  // ---------- checa sessão e decide o próximo passo ----------
-  window.addEventListener('load', async function(){
-    const splash = document.getElementById('splash');
-    const login = document.getElementById('login');
-    let session = null;
-    try{
-      const result = await kazerSupabase?.auth.getSession();
-      session = result?.data?.session || null;
-    }catch(error){
-      session = null;
+      document.fonts
+        .load(
+          '90px "UnifrakturMaguntia"'
+        )
+        .then(
+          () =>
+            document.fonts.ready
+        )
+        .then(
+          startLogo
+        );
+
+    } else {
+
+      setTimeout(
+        startLogo,
+        300
+      );
     }
 
-    if(session){
-      setTimeout(function(){ window.location.assign('/chat'); }, 1800);
-      return;
-    }
 
-    setTimeout(function(){
-      splash.style.opacity = '0';
-      setTimeout(function(){
-        splash.style.display = 'none';
-        login.classList.add('visible');
-      }, 600);
-    }, 2200);
-  });
-</script>
+    /* =========================================================
+       SPLASH -> LOGIN
+    ========================================================== */
+
+    window.addEventListener(
+      "load",
+      async function() {
+
+        let session = null;
+
+        try {
+
+          const result =
+            await kazerSupabase?.auth.getSession();
+
+          session =
+            result?.data?.session ||
+            null;
+
+        } catch (_) {
+
+          session = null;
+        }
+
+
+        /* ----------------------------------------
+           JÁ LOGADO
+        ----------------------------------------- */
+
+        if (session) {
+
+          setTimeout(
+            () => {
+
+              window.location.assign(
+                "/chat"
+              );
+
+            },
+            1200
+          );
+
+          return;
+        }
+
+
+        /* ----------------------------------------
+           MOSTRA LOGIN
+        ----------------------------------------- */
+
+        setTimeout(
+          () => {
+
+            splash.classList.add(
+              "hide"
+            );
+
+            login.classList.add(
+              "visible"
+            );
+
+          },
+          1900
+        );
+      }
+    );
+  </script>
 
 </body>
 </html>
