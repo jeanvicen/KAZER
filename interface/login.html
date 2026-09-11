@@ -1,4 +1,3 @@
-```html
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -6,10 +5,10 @@
 
   <meta
     name="viewport"
-    content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover, user-scalable=no"
+    content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover"
   >
 
-  <meta name="theme-color" content="#050407">
+  <meta name="theme-color" content="#08080c">
   <meta name="color-scheme" content="dark">
 
   <title>KAZER</title>
@@ -35,22 +34,23 @@
 
   <style>
     :root {
-      --bg: #050407;
-      --bg2: #08060b;
+      --bg: #07070b;
+      --panel: rgba(12, 12, 18, .78);
+      --panel-2: rgba(18, 18, 25, .55);
 
       --white: #fff;
       --text: rgba(255,255,255,.95);
-      --muted: rgba(255,255,255,.48);
-      --muted2: rgba(255,255,255,.30);
+      --muted: rgba(255,255,255,.46);
+      --muted-2: rgba(255,255,255,.27);
 
-      --purple: #6c4cf1;
-      --purple2: #947cff;
+      --purple: #7558ff;
+      --purple-2: #9a83ff;
 
-      --border: rgba(255,255,255,.09);
-      --border2: rgba(255,255,255,.16);
+      --border: rgba(255,255,255,.085);
+      --border-focus: rgba(139,114,255,.72);
 
-      --danger: #ff6f83;
-      --success: #6de68a;
+      --danger: #ff7184;
+      --success: #66e28a;
 
       --vh: 1vh;
     }
@@ -66,7 +66,6 @@
     body {
       width: 100%;
       height: 100%;
-      min-height: 100%;
       overflow: hidden;
       background: var(--bg);
       color: var(--white);
@@ -75,7 +74,9 @@
     body {
       position: fixed;
       inset: 0;
+
       min-height: calc(var(--vh) * 100);
+
       font-family:
         Inter,
         ui-sans-serif,
@@ -87,6 +88,7 @@
         Helvetica,
         Arial,
         sans-serif;
+
       isolation: isolate;
     }
 
@@ -96,15 +98,15 @@
     }
 
     button {
-      appearance: none;
-      -webkit-appearance: none;
+      border: 0;
+      outline: 0;
     }
 
     /* =========================================================
-       FUNDO
+       THREE BACKGROUND
     ========================================================== */
 
-    #fxCanvas {
+    #app {
       position: fixed;
       inset: 0;
       z-index: 0;
@@ -112,188 +114,119 @@
       width: 100%;
       height: 100%;
 
-      display: block;
-      pointer-events: none;
+      overflow: hidden;
+
+      background:
+        radial-gradient(
+          circle at 25% 45%,
+          rgba(107,82,255,.07),
+          transparent 35%
+        ),
+        #07070b;
     }
 
-    .bg-vignette {
+    #app canvas {
+      width: 100%;
+      height: 100%;
+
+      display: block;
+    }
+
+    #fallback {
       position: fixed;
       inset: 0;
+
+      z-index: 100;
+
+      display: none;
+
+      place-items: center;
+
+      padding: 30px;
+
+      background: #07070b;
+
+      color: white;
+
+      text-align: center;
+    }
+
+    .fallback-inner {
+      max-width: 340px;
+    }
+
+    .fallback-inner strong {
+      display: block;
+
+      margin-bottom: 8px;
+
+      font-size: 18px;
+    }
+
+    .fallback-inner span {
+      color: rgba(255,255,255,.5);
+
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    .scene-vignette {
+      position: fixed;
+      inset: 0;
+
       z-index: 1;
 
       pointer-events: none;
 
       background:
         radial-gradient(
-          circle at 50% 50%,
-          transparent 18%,
-          rgba(0,0,0,.12) 48%,
-          rgba(0,0,0,.68) 100%
+          circle at 25% 50%,
+          transparent 0%,
+          rgba(0,0,0,.04) 34%,
+          rgba(0,0,0,.62) 100%
         );
     }
 
-    .noise {
+    .scene-noise {
       position: fixed;
-      inset: 0;
+      inset: -50%;
+
       z-index: 2;
 
       pointer-events: none;
 
-      opacity: .018;
+      opacity: .014;
 
       background-image:
         url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.8'/%3E%3C/svg%3E");
 
-      animation: noiseMove .35s steps(2) infinite;
+      animation: sceneNoise .35s steps(2) infinite;
     }
 
-    @keyframes noiseMove {
-      0%   { transform: translate(0,0); }
-      25%  { transform: translate(-2%,1%); }
-      50%  { transform: translate(1%,-2%); }
-      75%  { transform: translate(2%,2%); }
-      100% { transform: translate(0,0); }
-    }
+    @keyframes sceneNoise {
+      0% {
+        transform: translate(0,0);
+      }
 
-    /* =========================================================
-       SPLASH
-    ========================================================== */
-
-    #splash {
-      position: fixed;
-      inset: 0;
-
-      z-index: 50;
-
-      display: flex;
-      align-items: center;
-      justify-content: center;
-
-      background:
-        radial-gradient(
-          circle at center,
-          rgba(91,61,200,.08),
-          transparent 28%
-        ),
-        #050407;
-
-      transition:
-        opacity .7s cubic-bezier(.22,.8,.28,1),
-        visibility .7s ease;
-    }
-
-    #splash.hide {
-      opacity: 0;
-      visibility: hidden;
-      pointer-events: none;
-    }
-
-    .splash-center {
-      width: min(90vw, 520px);
-
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-
-      transform: translateY(-2vh);
-    }
-
-    .splash-symbol {
-      width: clamp(70px, 16vw, 104px);
-      height: clamp(70px, 16vw, 104px);
-
-      margin-bottom: 9px;
-    }
-
-    .splash-symbol img {
-      width: 100%;
-      height: 100%;
-
-      display: block;
-
-      object-fit: contain;
-
-      filter:
-        drop-shadow(0 0 12px rgba(255,255,255,.22))
-        drop-shadow(0 0 32px rgba(115,84,255,.12));
-
-      animation: symbolPulse 3.3s ease-in-out infinite;
-    }
-
-    @keyframes symbolPulse {
-      0%,100% {
-        transform: scale(.98);
-        opacity: .92;
+      25% {
+        transform: translate(-2%,1%);
       }
 
       50% {
-        transform: scale(1.03);
-        opacity: 1;
+        transform: translate(1%,-2%);
       }
-    }
 
-    #splashCanvas {
-      width: min(78vw, 360px);
-      height: auto;
-
-      display: block;
-
-      opacity: 0;
-      transform: translateY(12px) scale(.98);
-
-      animation:
-        splashLogoIn .85s
-        cubic-bezier(.18,.86,.2,1)
-        .15s forwards;
-    }
-
-    @keyframes splashLogoIn {
-      to {
-        opacity: 1;
-        transform: translateY(0) scale(1);
+      75% {
+        transform: translate(2%,2%);
       }
-    }
 
-    .splash-subtitle {
-      margin-top: 12px;
-
-      font-size: 10px;
-      font-weight: 700;
-
-      letter-spacing: .34em;
-      text-transform: uppercase;
-
-      color: rgba(255,255,255,.32);
-
-      opacity: 0;
-
-      animation: fadeUp .8s ease .5s forwards;
-    }
-
-    .splash-footer {
-      position: absolute;
-
-      left: 0;
-      right: 0;
-      bottom: max(28px, env(safe-area-inset-bottom));
-
-      display: flex;
-      justify-content: center;
-    }
-
-    .splash-footer span {
-      color: rgba(255,255,255,.25);
-
-      font-size: 10px;
-      font-weight: 700;
-
-      letter-spacing: .26em;
-      text-transform: uppercase;
+      100% {
+        transform: translate(0,0);
+      }
     }
 
     /* =========================================================
-       LOGIN
+       LOGIN SHELL
     ========================================================== */
 
     #login {
@@ -302,17 +235,24 @@
 
       z-index: 10;
 
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      display: grid;
+
+      grid-template-columns:
+        minmax(0, 1.18fr)
+        minmax(390px, .72fr);
+
+      align-items: stretch;
 
       padding:
-        max(24px, env(safe-area-inset-top))
-        max(24px, env(safe-area-inset-right))
-        max(24px, env(safe-area-inset-bottom))
-        max(24px, env(safe-area-inset-left));
+        max(22px, env(safe-area-inset-top))
+        max(22px, env(safe-area-inset-right))
+        max(22px, env(safe-area-inset-bottom))
+        max(22px, env(safe-area-inset-left));
+
+      gap: 18px;
 
       opacity: 0;
+
       pointer-events: none;
 
       transition: opacity .65s ease;
@@ -323,290 +263,288 @@
       pointer-events: auto;
     }
 
-    .login-shell {
-      width: min(1120px, 100%);
-      min-height: min(720px, calc(100vh - 56px));
+    /* =========================================================
+       PC SIDE
+    ========================================================== */
 
-      display: grid;
-      grid-template-columns: 1.05fr .95fr;
+    .visual-side {
+      position: relative;
 
-      border: 1px solid rgba(255,255,255,.065);
-      border-radius: 30px;
+      min-width: 0;
+      min-height: 0;
+
+      overflow: hidden;
+
+      border: 1px solid rgba(255,255,255,.055);
+
+      border-radius: 28px;
 
       background:
         linear-gradient(
           145deg,
-          rgba(255,255,255,.024),
-          rgba(255,255,255,.008)
+          rgba(255,255,255,.018),
+          rgba(255,255,255,.005)
         );
 
-      backdrop-filter: blur(18px);
-      -webkit-backdrop-filter: blur(18px);
+      box-shadow:
+        0 30px 100px rgba(0,0,0,.35),
+        inset 0 1px rgba(255,255,255,.025);
+
+      backdrop-filter: blur(5px);
+      -webkit-backdrop-filter: blur(5px);
+    }
+
+    .visual-label {
+      position: absolute;
+
+      z-index: 5;
+
+      top: 24px;
+      left: 26px;
+
+      display: flex;
+      align-items: center;
+      gap: 9px;
+
+      color: rgba(255,255,255,.30);
+
+      font-size: 9px;
+      font-weight: 750;
+
+      letter-spacing: .18em;
+      text-transform: uppercase;
+
+      pointer-events: none;
+    }
+
+    .visual-label::before {
+      content: "";
+
+      width: 7px;
+      height: 7px;
+
+      border-radius: 50%;
+
+      background: #8d79ff;
 
       box-shadow:
-        0 35px 110px rgba(0,0,0,.58),
-        inset 0 1px rgba(255,255,255,.05);
+        0 0 12px rgba(141,121,255,.75);
+    }
+
+    .visual-caption {
+      position: absolute;
+
+      z-index: 5;
+
+      left: 26px;
+      bottom: 24px;
+
+      max-width: 260px;
+
+      color: rgba(255,255,255,.18);
+
+      font-size: 9px;
+      line-height: 1.6;
+
+      letter-spacing: .06em;
+      text-transform: uppercase;
+
+      pointer-events: none;
+    }
+
+    /* =========================================================
+       LOGIN PANEL
+    ========================================================== */
+
+    .auth-side {
+      position: relative;
+
+      min-width: 0;
+      min-height: 0;
+
+      display: flex;
+      align-items: center;
+      justify-content: center;
 
       overflow: hidden;
 
+      border:
+        1px solid
+        rgba(255,255,255,.07);
+
+      border-radius: 28px;
+
+      background:
+        linear-gradient(
+          145deg,
+          rgba(19,18,26,.83),
+          rgba(8,8,12,.89)
+        );
+
+      box-shadow:
+        0 30px 100px rgba(0,0,0,.42),
+        inset 0 1px rgba(255,255,255,.035);
+
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+
       transform:
-        translateY(18px)
-        scale(.985);
+        translateX(18px)
+        scale(.99);
 
       transition:
         transform .7s cubic-bezier(.18,.9,.2,1);
     }
 
-    #login.visible .login-shell {
-      transform: translateY(0) scale(1);
+    #login.visible .auth-side {
+      transform:
+        translateX(0)
+        scale(1);
     }
 
-    /* =========================================================
-       LADO VISUAL
-    ========================================================== */
-
-    .brand-panel {
-      position: relative;
-
-      min-width: 0;
-
-      display: flex;
-      align-items: center;
-      justify-content: center;
-
-      padding: clamp(36px, 6vw, 76px);
-
-      overflow: hidden;
-
-      border-right: 1px solid rgba(255,255,255,.055);
-
-      background:
-        radial-gradient(
-          circle at 50% 42%,
-          rgba(104,73,243,.10),
-          transparent 28%
-        ),
-        linear-gradient(
-          180deg,
-          rgba(255,255,255,.01),
-          transparent
-        );
-    }
-
-    .brand-panel::before {
+    .auth-side::before {
       content: "";
 
       position: absolute;
 
-      width: 420px;
-      height: 420px;
+      width: 360px;
+      height: 360px;
 
-      left: 50%;
-      top: 50%;
-
-      transform: translate(-50%,-50%);
+      right: -190px;
+      top: -170px;
 
       border-radius: 50%;
 
-      border: 1px solid rgba(160,140,255,.045);
-
-      box-shadow:
-        0 0 80px rgba(105,76,241,.06),
-        inset 0 0 80px rgba(105,76,241,.018);
+      background:
+        radial-gradient(
+          circle,
+          rgba(116,86,255,.13),
+          transparent 66%
+        );
 
       pointer-events: none;
     }
 
-    .brand-content {
+    .auth-side::after {
+      content: "";
+
+      position: absolute;
+
+      left: -170px;
+      bottom: -160px;
+
+      width: 340px;
+      height: 340px;
+
+      border-radius: 50%;
+
+      background:
+        radial-gradient(
+          circle,
+          rgba(91,64,220,.08),
+          transparent 68%
+        );
+
+      pointer-events: none;
+    }
+
+    .auth-inner {
       position: relative;
-      z-index: 2;
+      z-index: 4;
 
-      width: 100%;
-      max-width: 420px;
+      width: min(100%, 418px);
 
-      display: flex;
-      flex-direction: column;
-      align-items: center;
+      padding:
+        clamp(32px, 4vw, 58px);
 
-      text-align: center;
+      margin: auto;
     }
 
-    .brand-symbol {
-      width: clamp(78px,10vw,116px);
-      height: clamp(78px,10vw,116px);
+    /* =========================================================
+       MOBILE SYMBOL
+    ========================================================== */
 
-      display: flex;
-      align-items: center;
-      justify-content: center;
-
-      margin-bottom: 7px;
+    .mobile-symbol {
+      display: none;
     }
 
-    .brand-symbol img {
+    .mobile-symbol img {
       width: 100%;
       height: 100%;
 
       object-fit: contain;
-
-      filter:
-        drop-shadow(0 0 12px rgba(255,255,255,.24))
-        drop-shadow(0 0 38px rgba(102,76,241,.14));
     }
 
-    #loginCanvas {
-      width: min(90%,400px);
-      height: auto;
+    /* =========================================================
+       HEADER
+    ========================================================== */
 
-      display: block;
-    }
-
-    .brand-tag {
-      margin-top: 7px;
-
-      font-size: 9px;
-      font-weight: 700;
-
-      letter-spacing: .38em;
-      text-transform: uppercase;
-
-      color: rgba(255,255,255,.35);
-    }
-
-    .brand-line {
-      width: 74px;
-      height: 1px;
-
-      margin-top: 25px;
-
-      background:
-        linear-gradient(
-          90deg,
-          transparent,
-          rgba(159,137,255,.65),
-          transparent
-        );
-    }
-
-    .brand-description {
-      max-width: 315px;
-
-      margin-top: 20px;
-
-      font-size: 13px;
-      line-height: 1.75;
-
-      color: rgba(255,255,255,.39);
-    }
-
-    .brand-corner {
-      position: absolute;
-
-      left: 24px;
-      right: 24px;
-      bottom: 22px;
-
+    .auth-kicker {
       display: flex;
-      justify-content: space-between;
+      align-items: center;
+      gap: 9px;
 
-      color: rgba(255,255,255,.18);
+      margin-bottom: 14px;
+
+      color: rgba(255,255,255,.34);
 
       font-size: 9px;
-      font-weight: 700;
+      font-weight: 750;
 
       letter-spacing: .18em;
       text-transform: uppercase;
     }
 
-    /* =========================================================
-       FORM PANEL
-    ========================================================== */
-
-    .form-panel {
-      min-width: 0;
-
-      display: flex;
-      align-items: center;
-      justify-content: center;
-
-      padding: clamp(34px,5vw,68px);
-
-      background:
-        linear-gradient(
-          180deg,
-          rgba(5,4,8,.54),
-          rgba(5,4,8,.68)
-        );
-    }
-
-    .login-inner {
-      width: 100%;
-      max-width: 410px;
-    }
-
-    .mobile-brand {
-      display: none;
-    }
-
-    .form-header {
-      margin-bottom: 30px;
-    }
-
-    .form-kicker {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-
-      margin-bottom: 10px;
-
-      font-size: 10px;
-      font-weight: 700;
-
-      letter-spacing: .16em;
-      text-transform: uppercase;
-
-      color: rgba(255,255,255,.33);
-    }
-
-    .form-kicker::before {
+    .auth-kicker::before {
       content: "";
 
       width: 18px;
       height: 1px;
 
-      background: rgba(147,123,255,.8);
+      background:
+        linear-gradient(
+          90deg,
+          transparent,
+          #8d79ff
+        );
     }
 
-    .form-title {
-      font-size: clamp(26px,3vw,34px);
+    .auth-title {
+      color: rgba(255,255,255,.96);
 
-      line-height: 1.08;
+      font-size: clamp(27px,3vw,36px);
+
+      line-height: 1.04;
+
       font-weight: 650;
 
-      letter-spacing: -.035em;
-
-      color: rgba(255,255,255,.96);
+      letter-spacing: -.04em;
     }
 
-    .form-subtitle {
-      margin-top: 10px;
+    .auth-subtitle {
+      max-width: 340px;
 
-      font-size: 13px;
-      line-height: 1.6;
+      margin-top: 12px;
 
       color: rgba(255,255,255,.40);
+
+      font-size: 13px;
+      line-height: 1.65;
     }
 
     /* =========================================================
        FORM
     ========================================================== */
 
-    form {
+    #authForm {
       width: 100%;
+
+      margin-top: 29px;
 
       display: flex;
       flex-direction: column;
 
-      gap: 12px;
+      gap: 11px;
     }
 
     .field {
@@ -618,45 +556,50 @@
       display: flex;
       align-items: center;
 
-      border: 1px solid rgba(255,255,255,.085);
+      border:
+        1px solid
+        rgba(255,255,255,.085);
+
       border-radius: 15px;
 
       background:
         linear-gradient(
           180deg,
-          rgba(255,255,255,.028),
-          rgba(255,255,255,.012)
+          rgba(255,255,255,.025),
+          rgba(255,255,255,.009)
         );
 
       box-shadow:
-        inset 0 1px rgba(255,255,255,.02);
+        inset 0 1px rgba(255,255,255,.018);
 
       transition:
-        border-color .22s ease,
-        background .22s ease,
-        box-shadow .22s ease;
+        border-color .2s ease,
+        background .2s ease,
+        box-shadow .2s ease;
     }
 
     .field:hover {
-      border-color: rgba(255,255,255,.14);
+      border-color:
+        rgba(255,255,255,.14);
     }
 
     .field:focus-within {
-      border-color: rgba(132,104,255,.78);
+      border-color:
+        var(--border-focus);
 
       background:
         linear-gradient(
           180deg,
-          rgba(108,76,241,.06),
-          rgba(255,255,255,.012)
+          rgba(111,79,242,.05),
+          rgba(255,255,255,.01)
         );
 
       box-shadow:
-        0 0 0 4px rgba(108,76,241,.08),
-        inset 0 1px rgba(255,255,255,.03);
+        0 0 0 4px rgba(117,88,255,.07),
+        inset 0 1px rgba(255,255,255,.025);
     }
 
-    .field svg {
+    .field > svg {
       flex: 0 0 auto;
 
       width: 18px;
@@ -670,49 +613,57 @@
       transition: opacity .2s ease;
     }
 
-    .field:focus-within svg {
+    .field:focus-within > svg {
       opacity: .78;
     }
 
     .field input {
       width: 100%;
       min-width: 0;
+
       height: 100%;
 
-      padding-right: 16px;
+      padding:
+        0
+        10px
+        0
+        0;
 
       border: 0;
       outline: 0;
 
       background: transparent;
 
-      color: rgba(255,255,255,.94);
+      color: rgba(255,255,255,.95);
 
       font-size: 15px;
-      font-weight: 450;
     }
 
     .field input::placeholder {
-      color: rgba(255,255,255,.34);
+      color: rgba(255,255,255,.32);
     }
 
     .field input:-webkit-autofill,
     .field input:-webkit-autofill:hover,
     .field input:-webkit-autofill:focus {
-      -webkit-text-fill-color: white;
+      -webkit-text-fill-color: #fff;
 
       box-shadow:
         0 0 0 1000px
-        rgba(10,8,14,.98)
+        rgba(11,10,15,.98)
         inset;
 
       transition:
         background-color 9999s ease-out;
     }
 
+    /* =========================================================
+       EYE
+    ========================================================== */
+
     .toggle-eye {
-      width: 44px;
-      height: 44px;
+      width: 43px;
+      height: 43px;
 
       margin-right: 7px;
 
@@ -722,25 +673,27 @@
       align-items: center;
       justify-content: center;
 
-      border: 0;
       border-radius: 11px;
 
       background: transparent;
 
-      color: white;
-      opacity: .46;
+      color: #fff;
+
+      opacity: .43;
 
       cursor: pointer;
 
       transition:
-        background .2s ease,
         opacity .2s ease,
-        transform .16s ease;
+        background .2s ease,
+        transform .15s ease;
     }
 
     .toggle-eye:hover {
-      background: rgba(255,255,255,.05);
       opacity: .82;
+
+      background:
+        rgba(255,255,255,.05);
     }
 
     .toggle-eye:active {
@@ -778,7 +731,7 @@
     }
 
     /* =========================================================
-       PASSWORD STRENGTH
+       STRENGTH
     ========================================================== */
 
     .strength-wrap {
@@ -788,7 +741,6 @@
 
       gap: 7px;
 
-      margin-top: -1px;
       padding: 0 2px;
     }
 
@@ -797,14 +749,16 @@
     }
 
     .strength-bar {
-      width: 100%;
       height: 4px;
+
+      width: 100%;
 
       overflow: hidden;
 
       border-radius: 999px;
 
-      background: rgba(255,255,255,.09);
+      background:
+        rgba(255,255,255,.08);
     }
 
     .strength-fill {
@@ -816,12 +770,21 @@
       background: #ff5b5b;
 
       transition:
-        width .4s cubic-bezier(.4,1.4,.4,1),
-        background-color .4s ease;
+        width .38s cubic-bezier(.4,1.35,.4,1),
+        background-color .35s ease;
+    }
+
+    .strength-label {
+      min-height: 15px;
+
+      color: rgba(255,255,255,.38);
+
+      font-size: 11px;
+      font-weight: 650;
     }
 
     .strength-fill.pulse {
-      animation: strengthPulse .45s ease;
+      animation: strengthPulse .42s ease;
     }
 
     @keyframes strengthPulse {
@@ -830,7 +793,7 @@
       }
 
       45% {
-        transform: scaleY(1.7);
+        transform: scaleY(1.65);
       }
 
       100% {
@@ -838,38 +801,14 @@
       }
     }
 
-    .strength-label {
-      min-height: 16px;
-
-      display: flex;
-      align-items: center;
-
-      font-size: 11px;
-      font-weight: 650;
-
-      color: rgba(255,255,255,.42);
-
-      transition: color .3s ease;
-    }
-
-    .strength-label.pop {
-      animation: labelPop .38s cubic-bezier(.4,1.6,.4,1);
-    }
-
-    @keyframes labelPop {
-      0%   { transform: translateY(0); }
-      40%  { transform: translateY(-2px); }
-      100% { transform: translateY(0); }
-    }
-
     /* =========================================================
-       TEXTOS
+       HINT / ERROR
     ========================================================== */
 
     .hint {
       padding: 0 2px;
 
-      color: rgba(255,255,255,.33);
+      color: rgba(255,255,255,.31);
 
       font-size: 11px;
       line-height: 1.55;
@@ -890,7 +829,7 @@
     }
 
     /* =========================================================
-       BOTÃO
+       BUTTON
     ========================================================== */
 
     .btn-primary {
@@ -903,17 +842,20 @@
 
       overflow: hidden;
 
-      border: 1px solid rgba(255,255,255,.08);
+      border:
+        1px solid
+        rgba(255,255,255,.09);
+
       border-radius: 15px;
 
       background:
         linear-gradient(
           180deg,
-          #8f76ff,
-          #6344ea
+          #9179ff,
+          #6242e7
         );
 
-      color: white;
+      color: #fff;
 
       font-size: 14px;
       font-weight: 700;
@@ -923,14 +865,13 @@
       cursor: pointer;
 
       box-shadow:
-        0 14px 32px rgba(91,65,231,.22),
+        0 16px 35px rgba(90,65,220,.22),
         inset 0 1px rgba(255,255,255,.28);
 
       transition:
         transform .16s ease,
         filter .2s ease,
-        opacity .2s ease,
-        box-shadow .2s ease;
+        opacity .2s ease;
     }
 
     .btn-primary::before {
@@ -942,14 +883,15 @@
       background:
         linear-gradient(
           110deg,
-          transparent 0%,
-          rgba(255,255,255,.15) 44%,
-          transparent 70%
+          transparent,
+          rgba(255,255,255,.17),
+          transparent
         );
 
       transform: translateX(-120%);
 
-      transition: transform .7s ease;
+      transition:
+        transform .7s ease;
     }
 
     .btn-primary:hover::before {
@@ -958,10 +900,6 @@
 
     .btn-primary:hover {
       filter: brightness(1.06);
-
-      box-shadow:
-        0 18px 38px rgba(91,65,231,.28),
-        inset 0 1px rgba(255,255,255,.30);
     }
 
     .btn-primary:active {
@@ -973,21 +911,19 @@
 
       cursor: not-allowed;
 
-      filter: saturate(.72);
-
       box-shadow: none;
     }
 
     /* =========================================================
-       SWITCH
+       MODE SWITCH
     ========================================================== */
 
     .switch-mode {
-      margin-top: 19px;
+      margin-top: 18px;
 
       text-align: center;
 
-      color: rgba(255,255,255,.35);
+      color: rgba(255,255,255,.34);
 
       font-size: 12px;
     }
@@ -995,7 +931,7 @@
     .switch-mode a {
       margin-left: 5px;
 
-      color: rgba(255,255,255,.90);
+      color: rgba(255,255,255,.92);
 
       text-decoration: none;
 
@@ -1003,25 +939,26 @@
 
       cursor: pointer;
 
-      transition: color .2s ease;
+      transition:
+        color .2s ease;
     }
 
     .switch-mode a:hover {
-      color: #ae9cff;
+      color: #b3a3ff;
     }
 
     /* =========================================================
        FOOTER
     ========================================================== */
 
-    .form-footer {
-      margin-top: 26px;
+    .auth-footer {
+      margin-top: 25px;
 
       display: flex;
       align-items: center;
       justify-content: space-between;
 
-      color: rgba(255,255,255,.20);
+      color: rgba(255,255,255,.18);
 
       font-size: 9px;
       font-weight: 700;
@@ -1030,13 +967,13 @@
       text-transform: uppercase;
     }
 
-    .status-dot {
+    .online {
       display: inline-flex;
       align-items: center;
       gap: 7px;
     }
 
-    .status-dot::before {
+    .online::before {
       content: "";
 
       width: 5px;
@@ -1044,14 +981,14 @@
 
       border-radius: 50%;
 
-      background: #7a62ff;
+      background: #7f69ff;
 
       box-shadow:
-        0 0 12px rgba(122,98,255,.9);
+        0 0 10px rgba(127,105,255,.9);
     }
 
     /* =========================================================
-       CADASTRO
+       SIGNUP
     ========================================================== */
 
     .signup-only {
@@ -1067,139 +1004,151 @@
     }
 
     /* =========================================================
-       ANIMAÇÕES
+       MOBILE
     ========================================================== */
 
-    @keyframes fadeUp {
-      from {
-        opacity: 0;
-        transform: translateY(12px);
-      }
-
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
-
-    /* =========================================================
-       TABLET / MOBILE
-    ========================================================== */
-
-    @media (max-width: 860px) {
+    @media (max-width: 950px) {
 
       #login {
+        grid-template-columns: 1fr;
+
         padding:
-          max(18px, env(safe-area-inset-top))
-          max(18px, env(safe-area-inset-right))
-          max(18px, env(safe-area-inset-bottom))
-          max(18px, env(safe-area-inset-left));
+          max(14px, env(safe-area-inset-top))
+          max(14px, env(safe-area-inset-right))
+          max(14px, env(safe-area-inset-bottom))
+          max(14px, env(safe-area-inset-left));
+
+        gap: 12px;
       }
 
-      .login-shell {
-        width: min(100%,540px);
-        min-height: auto;
+      .visual-side {
+        position: absolute;
 
-        display: block;
+        inset: 10px;
 
-        border-radius: 26px;
+        border-radius: 24px;
+
+        opacity: .74;
       }
 
-      .brand-panel {
+      .visual-label {
         display: none;
       }
 
-      .form-panel {
-        padding:
-          clamp(28px,7vw,46px)
-          clamp(22px,7vw,40px)
-          clamp(28px,7vw,42px);
+      .visual-caption {
+        display: none;
       }
 
-      .mobile-brand {
-        width: 54px;
-        height: 54px;
+      .auth-side {
+        width: min(560px, 100%);
+        min-height: 0;
+
+        margin:
+          auto
+          auto;
+
+        border-radius: 24px;
+
+        background:
+          linear-gradient(
+            145deg,
+            rgba(15,14,22,.83),
+            rgba(6,6,10,.91)
+          );
+
+        box-shadow:
+          0 25px 80px rgba(0,0,0,.40);
+
+        backdrop-filter: blur(28px);
+        -webkit-backdrop-filter: blur(28px);
+      }
+
+      .auth-inner {
+        max-width: 500px;
+
+        padding:
+          clamp(26px,6vw,44px)
+          clamp(20px,7vw,42px);
+      }
+
+      .mobile-symbol {
+        width: 52px;
+        height: 52px;
+
+        margin:
+          0
+          auto
+          13px;
 
         display: flex;
-        align-items: center;
-        justify-content: center;
-
-        margin: 0 auto 18px;
       }
 
-      .mobile-brand img {
-        width: 100%;
-        height: 100%;
-
-        object-fit: contain;
-
-        filter:
-          drop-shadow(0 0 9px rgba(255,255,255,.20))
-          drop-shadow(0 0 24px rgba(109,76,241,.18));
-      }
-
-      .form-header {
-        margin-bottom: 26px;
+      .auth-header {
         text-align: center;
       }
 
-      .form-kicker {
+      .auth-kicker {
         justify-content: center;
       }
 
-      .form-title {
-        font-size: 28px;
-      }
-
-      .form-subtitle {
-        max-width: 320px;
-
+      .auth-subtitle {
         margin-left: auto;
         margin-right: auto;
 
-        font-size: 12px;
+        max-width: 330px;
       }
 
-      .form-footer {
+      .auth-footer {
         justify-content: center;
       }
 
-      .footer-version {
+      .auth-footer .version {
         display: none;
       }
     }
 
-    @media (max-width: 480px) {
+    @media (max-width: 520px) {
 
       #login {
-        align-items: center;
-        overflow-y: auto;
+        padding:
+          max(9px, env(safe-area-inset-top))
+          max(9px, env(safe-area-inset-right))
+          max(9px, env(safe-area-inset-bottom))
+          max(9px, env(safe-area-inset-left));
       }
 
-      .login-shell {
-        width: 100%;
+      .visual-side {
+        inset: 6px;
+
+        border-radius: 22px;
       }
 
-      .form-panel {
+      .auth-side {
+        border-radius: 22px;
+      }
+
+      .auth-inner {
         padding:
           28px
           18px
-          max(26px, env(safe-area-inset-bottom));
+          max(25px, env(safe-area-inset-bottom));
       }
 
-      .mobile-brand {
-        width: 48px;
-        height: 48px;
-
-        margin-bottom: 14px;
+      .mobile-symbol {
+        width: 46px;
+        height: 46px;
       }
 
-      .form-title {
-        font-size: 26px;
+      .auth-title {
+        font-size: 27px;
       }
 
-      .form-header {
-        margin-bottom: 23px;
+      .auth-subtitle {
+        font-size: 12px;
+      }
+
+      #authForm {
+        margin-top: 25px;
       }
 
       .field,
@@ -1207,45 +1156,24 @@
         height: 56px;
       }
 
-      .field {
-        border-radius: 14px;
-      }
-
       .field input {
         font-size: 16px;
       }
 
-      .btn-primary {
-        border-radius: 14px;
-      }
-
-      .switch-mode {
-        margin-top: 17px;
-      }
-
-      .noise {
-        opacity: .012;
+      .auth-footer {
+        margin-top: 21px;
       }
     }
 
-    @media (max-height: 680px) and (min-width: 861px) {
+    @media (max-height: 700px) and (min-width: 951px) {
 
-      .login-shell {
-        min-height: min(620px,calc(100vh - 32px));
+      .auth-inner {
+        padding-top: 28px;
+        padding-bottom: 28px;
       }
 
-      .brand-panel,
-      .form-panel {
-        padding-top: 34px;
-        padding-bottom: 34px;
-      }
-
-      .brand-description {
-        margin-top: 13px;
-      }
-
-      .form-header {
-        margin-bottom: 20px;
+      #authForm {
+        margin-top: 21px;
       }
 
       .field,
@@ -1265,63 +1193,43 @@
       }
     }
   </style>
+
+
+  <!-- =========================================================
+       THREE
+  ========================================================== -->
+
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://unpkg.com/three@0.166.1/build/three.module.js",
+      "three/addons/": "https://unpkg.com/three@0.166.1/examples/jsm/"
+    }
+  }
+  </script>
 </head>
 
 <body>
 
-  <!-- =========================================================
-       FUNDO 3D
-  ========================================================== -->
-
-  <canvas
-    id="fxCanvas"
-    aria-hidden="true"
-  ></canvas>
-
-  <div
-    class="bg-vignette"
-    aria-hidden="true"
-  ></div>
-
-  <div
-    class="noise"
-    aria-hidden="true"
-  ></div>
-
 
   <!-- =========================================================
-       SPLASH
+       3D SCENE
   ========================================================== -->
 
-  <div id="splash">
+  <div id="app"></div>
 
-    <div class="splash-center">
-
-      <div class="splash-symbol">
-        <img
-          src="../download/assets/kazer-login-symbol.png"
-          alt=""
-        >
-      </div>
-
-      <canvas
-        id="splashCanvas"
-        width="360"
-        height="90"
-        aria-label="Kazer"
-      ></canvas>
-
-      <div class="splash-subtitle">
-        experiência inteligente
-      </div>
-
+  <div id="fallback">
+    <div class="fallback-inner">
+      <strong>KAZER</strong>
+      <span>
+        O ambiente visual 3D não pôde ser carregado neste dispositivo.
+        O login continua disponível abaixo.
+      </span>
     </div>
-
-    <div class="splash-footer">
-      <span>Klipza Studio</span>
-    </div>
-
   </div>
+
+  <div class="scene-vignette"></div>
+  <div class="scene-noise"></div>
 
 
   <!-- =========================================================
@@ -1330,1410 +1238,2036 @@
 
   <main id="login">
 
-    <div class="login-shell">
+    <!-- =======================================================
+         VISUAL PC
+    ======================================================== -->
 
-      <!-- =====================================================
-           BRAND / DESKTOP
-      ====================================================== -->
+    <section class="visual-side">
 
-      <section class="brand-panel">
+      <div class="visual-label">
+        KAZER WORKSPACE
+      </div>
 
-        <div class="brand-content">
+      <div class="visual-caption">
+        intelligent workspace / klipza studio
+      </div>
 
-          <div class="brand-symbol">
+    </section>
 
-            <img
-              src="../download/assets/kazer-login-symbol.png"
-              alt=""
-            >
 
+    <!-- =======================================================
+         AUTENTICAÇÃO
+    ======================================================== -->
+
+    <section class="auth-side">
+
+      <div class="auth-inner">
+
+        <div class="mobile-symbol">
+          <img
+            src="../download/assets/kazer-login-symbol.png"
+            alt=""
+          >
+        </div>
+
+
+        <header class="auth-header">
+
+          <div class="auth-kicker">
+            KAZER
           </div>
 
-          <canvas
-            id="loginCanvas"
-            width="380"
-            height="70"
-            aria-label="Kazer"
-          ></canvas>
+          <h1
+            class="auth-title"
+            id="formTitle"
+          >
+            Entrar para continuar
+          </h1>
 
-          <div class="brand-tag">
-            Klipza Intelligence
-          </div>
-
-          <div class="brand-line"></div>
-
-          <p class="brand-description">
-            Um espaço limpo, rápido e inteligente para conversar,
-            criar e transformar suas ideias.
+          <p
+            class="auth-subtitle"
+            id="formSubtitle"
+          >
+            Acesse seu espaço e continue de onde parou.
           </p>
 
-        </div>
-
-        <div class="brand-corner">
-          <span>KAZER</span>
-          <span>PRIVATE SPACE</span>
-        </div>
-
-      </section>
+        </header>
 
 
-      <!-- =====================================================
-           FORM
-      ====================================================== -->
+        <form
+          id="authForm"
+          novalidate
+        >
 
-      <section class="form-panel">
+          <!-- =================================================
+               NOME
+          ================================================== -->
 
-        <div class="login-inner">
+          <div class="field signup-only">
 
-          <div class="mobile-brand">
-            <img
-              src="../download/assets/kazer-login-symbol.png"
-              alt=""
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.8"
+              aria-hidden="true"
             >
+              <circle
+                cx="12"
+                cy="8"
+                r="4"
+              />
+
+              <path
+                d="M4 20c0-4.4 3.6-7 8-7s8 2.6 8 7"
+              />
+            </svg>
+
+            <input
+              type="text"
+              id="displayName"
+              placeholder="Como devemos te chamar?"
+              autocomplete="name"
+              maxlength="80"
+              spellcheck="false"
+            >
+
           </div>
 
-          <header class="form-header">
 
-            <div class="form-kicker">
-              KAZER
-            </div>
+          <!-- =================================================
+               EMAIL
+          ================================================== -->
 
-            <h1
-              class="form-title"
-              id="formTitle"
+          <div class="field">
+
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.8"
+              aria-hidden="true"
             >
-              Entrar para continuar
-            </h1>
-
-            <p
-              class="form-subtitle"
-              id="formSubtitle"
-            >
-              Acesse seu espaço e continue de onde parou.
-            </p>
-
-          </header>
-
-
-          <form
-            id="authForm"
-            novalidate
-          >
-
-            <!-- NOME -->
-            <div class="field signup-only">
-
-              <svg
+              <path d="M3 6l9 7 9-7"/>
+              <rect
+                x="3"
+                y="5"
                 width="18"
-                height="18"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="1.8"
-                aria-hidden="true"
-              >
-                <circle cx="12" cy="8" r="4"></circle>
-                <path d="M4 20c0-4.4 3.6-7 8-7s8 2.6 8 7"></path>
-              </svg>
+                height="14"
+                rx="2"
+              />
+            </svg>
 
-              <input
-                type="text"
-                id="displayName"
-                placeholder="Como devemos te chamar?"
-                autocomplete="name"
-                maxlength="80"
-                spellcheck="false"
-              >
-
-            </div>
-
-
-            <!-- EMAIL -->
-            <div class="field">
-
-              <svg
-                width="18"
-                height="18"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="1.8"
-                aria-hidden="true"
-              >
-                <path d="M3 6l9 7 9-7"></path>
-                <rect
-                  x="3"
-                  y="5"
-                  width="18"
-                  height="14"
-                  rx="2"
-                ></rect>
-              </svg>
-
-              <input
-                type="email"
-                id="email"
-                placeholder="Email"
-                required
-                autocomplete="username"
-                inputmode="email"
-                maxlength="254"
-                autocapitalize="none"
-                spellcheck="false"
-              >
-
-            </div>
-
-
-            <!-- SENHA -->
-            <div class="field">
-
-              <svg
-                width="18"
-                height="18"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="1.8"
-                aria-hidden="true"
-              >
-                <rect
-                  x="5"
-                  y="11"
-                  width="14"
-                  height="9"
-                  rx="2"
-                ></rect>
-
-                <path d="M8 11V7a4 4 0 0 1 8 0v4"></path>
-              </svg>
-
-              <input
-                type="password"
-                id="password"
-                placeholder="Senha"
-                required
-                autocomplete="current-password"
-                minlength="10"
-                maxlength="256"
-              >
-
-              <button
-                type="button"
-                class="toggle-eye"
-                id="eyeBtnPassword"
-                aria-label="Mostrar senha"
-              >
-                <svg
-                  class="eye-icon is-open"
-                  id="eyeIconPassword"
-                  width="18"
-                  height="18"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="1.8"
-                  aria-hidden="true"
-                >
-                  <path
-                    class="eye-outline"
-                    d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"
-                  ></path>
-
-                  <circle
-                    class="eye-pupil"
-                    cx="12"
-                    cy="12"
-                    r="3"
-                  ></circle>
-                </svg>
-              </button>
-
-            </div>
-
-
-            <!-- FORÇA -->
-            <div
-              class="strength-wrap"
-              id="strengthWrap"
+            <input
+              type="email"
+              id="email"
+              placeholder="Email"
+              required
+              autocomplete="username"
+              inputmode="email"
+              maxlength="254"
+              autocapitalize="none"
+              spellcheck="false"
             >
 
-              <div class="strength-bar">
-                <div
-                  class="strength-fill"
-                  id="strengthFill"
-                ></div>
-              </div>
-
-              <div
-                class="strength-label"
-                id="strengthLabel"
-              >
-                <span id="strengthText">
-                  Digite uma senha
-                </span>
-              </div>
-
-            </div>
+          </div>
 
 
-            <!-- REGRA -->
-            <div
-              class="hint signup-only"
-              id="passwordHint"
+          <!-- =================================================
+               SENHA
+          ================================================== -->
+
+          <div class="field">
+
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.8"
+              aria-hidden="true"
             >
-              Use pelo menos 10 caracteres, uma letra maiúscula
-              e um caractere especial.
-            </div>
+              <rect
+                x="5"
+                y="11"
+                width="14"
+                height="9"
+                rx="2"
+              />
 
+              <path
+                d="M8 11V7a4 4 0 0 1 8 0v4"
+              />
+            </svg>
 
-            <!-- CONFIRMAÇÃO -->
-            <div class="field signup-only">
+            <input
+              type="password"
+              id="password"
+              placeholder="Senha"
+              required
+              autocomplete="current-password"
+              minlength="10"
+              maxlength="256"
+            >
 
-              <svg
-                width="18"
-                height="18"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="1.8"
-                aria-hidden="true"
-              >
-                <rect
-                  x="5"
-                  y="11"
-                  width="14"
-                  height="9"
-                  rx="2"
-                ></rect>
-
-                <path d="M8 11V7a4 4 0 0 1 8 0v4"></path>
-              </svg>
-
-              <input
-                type="password"
-                id="confirmPassword"
-                placeholder="Confirmar senha"
-                autocomplete="new-password"
-                minlength="10"
-                maxlength="256"
-              >
-
-              <button
-                type="button"
-                class="toggle-eye"
-                id="eyeBtnConfirmPassword"
-                aria-label="Mostrar senha"
-              >
-                <svg
-                  class="eye-icon is-open"
-                  id="eyeIconConfirmPassword"
-                  width="18"
-                  height="18"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="1.8"
-                  aria-hidden="true"
-                >
-                  <path
-                    class="eye-outline"
-                    d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"
-                  ></path>
-
-                  <circle
-                    class="eye-pupil"
-                    cx="12"
-                    cy="12"
-                    r="3"
-                  ></circle>
-                </svg>
-              </button>
-
-            </div>
-
-
-            <!-- ERRO -->
-            <div
-              class="error-msg"
-              id="errorMsg"
-              role="alert"
-              aria-live="polite"
-            ></div>
-
-
-            <!-- BOTÃO -->
             <button
-              type="submit"
-              class="btn-primary"
-              id="submitBtn"
+              type="button"
+              class="toggle-eye"
+              id="eyeBtnPassword"
+              aria-label="Mostrar senha"
             >
-              Entrar
+
+              <svg
+                class="eye-icon is-open"
+                id="eyeIconPassword"
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.8"
+                aria-hidden="true"
+              >
+
+                <path
+                  class="eye-outline"
+                  d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"
+                />
+
+                <circle
+                  class="eye-pupil"
+                  cx="12"
+                  cy="12"
+                  r="3"
+                />
+
+              </svg>
+
             </button>
 
-          </form>
+          </div>
 
 
-          <!-- SWITCH -->
-          <div class="switch-mode">
+          <!-- =================================================
+               SENHA FORTE
+          ================================================== -->
 
-            <span id="switchText">
-              Não tem conta?
-            </span>
+          <div
+            class="strength-wrap"
+            id="strengthWrap"
+          >
 
-            <a
-              id="switchLink"
-              href="#signup"
+            <div class="strength-bar">
+              <div
+                class="strength-fill"
+                id="strengthFill"
+              ></div>
+            </div>
+
+            <div
+              class="strength-label"
+              id="strengthLabel"
             >
-              Criar conta
-            </a>
+              <span id="strengthText">
+                Digite uma senha
+              </span>
+            </div>
 
           </div>
 
 
-          <!-- FOOTER -->
-          <div class="form-footer">
+          <!-- =================================================
+               HINT
+          ================================================== -->
 
-            <span class="status-dot">
-              KAZER ONLINE
-            </span>
+          <div
+            class="hint signup-only"
+            id="passwordHint"
+          >
+            Use pelo menos 10 caracteres, uma letra maiúscula
+            e um caractere especial.
+          </div>
 
-            <span class="footer-version">
-              KLIPZA STUDIO
-            </span>
+
+          <!-- =================================================
+               CONFIRMAÇÃO
+          ================================================== -->
+
+          <div class="field signup-only">
+
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.8"
+              aria-hidden="true"
+            >
+              <rect
+                x="5"
+                y="11"
+                width="14"
+                height="9"
+                rx="2"
+              />
+
+              <path
+                d="M8 11V7a4 4 0 0 1 8 0v4"
+              />
+            </svg>
+
+
+            <input
+              type="password"
+              id="confirmPassword"
+              placeholder="Confirmar senha"
+              autocomplete="new-password"
+              minlength="10"
+              maxlength="256"
+            >
+
+
+            <button
+              type="button"
+              class="toggle-eye"
+              id="eyeBtnConfirmPassword"
+              aria-label="Mostrar senha"
+            >
+
+              <svg
+                class="eye-icon is-open"
+                id="eyeIconConfirmPassword"
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.8"
+                aria-hidden="true"
+              >
+
+                <path
+                  class="eye-outline"
+                  d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"
+                />
+
+                <circle
+                  class="eye-pupil"
+                  cx="12"
+                  cy="12"
+                  r="3"
+                />
+
+              </svg>
+
+            </button>
 
           </div>
+
+
+          <!-- =================================================
+               ERRO
+          ================================================== -->
+
+          <div
+            class="error-msg"
+            id="errorMsg"
+            role="alert"
+            aria-live="polite"
+          ></div>
+
+
+          <!-- =================================================
+               ENTRAR / CRIAR
+          ================================================== -->
+
+          <button
+            type="submit"
+            class="btn-primary"
+            id="submitBtn"
+          >
+            Entrar
+          </button>
+
+        </form>
+
+
+        <!-- ===================================================
+             SWITCH
+        ==================================================== -->
+
+        <div class="switch-mode">
+
+          <span id="switchText">
+            Não tem conta?
+          </span>
+
+          <a
+            id="switchLink"
+            href="#signup"
+          >
+            Criar conta
+          </a>
 
         </div>
 
-      </section>
 
-    </div>
+        <!-- ===================================================
+             FOOTER
+        ==================================================== -->
+
+        <div class="auth-footer">
+
+          <span class="online">
+            KAZER ONLINE
+          </span>
+
+          <span class="version">
+            KLIPZA STUDIO
+          </span>
+
+        </div>
+
+      </div>
+
+    </section>
 
   </main>
 
 
   <!-- =========================================================
        SUPABASE
-       NÃO REMOVER
+       MANTIDO
   ========================================================== -->
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 
   <!-- =========================================================
-       FUNDO 3D KAZER
+       THREE — PC + PROJEÇÃO COLORIDA
   ========================================================== -->
 
   <script type="module">
 
-    import * as THREE from
-      "https://esm.sh/three@0.185.1";
+    import * as THREE from "three";
 
-    import { ShaderPass } from
-      "https://esm.sh/three@0.185.1/examples/jsm/postprocessing/ShaderPass.js";
+    import {
+      EffectComposer
+    } from "three/addons/postprocessing/EffectComposer.js";
 
-    import { HorizontalBlurShader } from
-      "https://esm.sh/three@0.185.1/examples/jsm/shaders/HorizontalBlurShader.js";
+    import {
+      RenderPass
+    } from "three/addons/postprocessing/RenderPass.js";
 
-    import { VerticalBlurShader } from
-      "https://esm.sh/three@0.185.1/examples/jsm/shaders/VerticalBlurShader.js";
+    import {
+      UnrealBloomPass
+    } from "three/addons/postprocessing/UnrealBloomPass.js";
+
+    import {
+      OutputPass
+    } from "three/addons/postprocessing/OutputPass.js";
 
 
-    const canvas =
-      document.getElementById("fxCanvas");
+    const app =
+      document.getElementById("app");
+
+    const fallback =
+      document.getElementById("fallback");
 
 
-    if (canvas) {
+    /* =========================================================
+       WEBGL SUPPORT
+    ========================================================== */
 
-      try {
+    const testCanvas =
+      document.createElement("canvas");
 
-        const pr =
-          Math.min(
-            1.8,
-            window.devicePixelRatio || 1
+
+    const gl2 =
+      testCanvas.getContext(
+        "webgl2"
+      );
+
+
+    const gl =
+      gl2 ||
+      testCanvas.getContext(
+        "webgl"
+      );
+
+
+    if (!gl) {
+
+      fallback.style.display =
+        "grid";
+
+      throw new Error(
+        "WebGL unavailable"
+      );
+    }
+
+
+    /* =========================================================
+       RENDERER
+    ========================================================== */
+
+    const isMobile =
+      window.innerWidth <= 950;
+
+
+    const renderer =
+      new THREE.WebGLRenderer({
+
+        antialias:
+          !isMobile,
+
+        powerPreference:
+          "high-performance"
+      });
+
+
+    renderer.setPixelRatio(
+      Math.min(
+        window.devicePixelRatio || 1,
+        isMobile ? 1.4 : 2
+      )
+    );
+
+
+    renderer.setSize(
+      window.innerWidth,
+      window.innerHeight
+    );
+
+
+    renderer.outputColorSpace =
+      THREE.SRGBColorSpace;
+
+
+    renderer.toneMapping =
+      THREE.ACESFilmicToneMapping;
+
+
+    renderer.toneMappingExposure =
+      .82;
+
+
+    renderer.shadowMap.enabled =
+      !isMobile;
+
+
+    renderer.shadowMap.type =
+      THREE.PCFSoftShadowMap;
+
+
+    app.appendChild(
+      renderer.domElement
+    );
+
+
+    /* =========================================================
+       SCENE
+    ========================================================== */
+
+    const scene =
+      new THREE.Scene();
+
+
+    scene.background =
+      new THREE.Color(
+        0x08080c
+      );
+
+
+    const camera =
+      new THREE.PerspectiveCamera(
+        43,
+        window.innerWidth /
+        window.innerHeight,
+        .1,
+        100
+      );
+
+
+    camera.position.set(
+      0,
+      1.4,
+      5.8
+    );
+
+
+    camera.lookAt(
+      0,
+      .72,
+      .8
+    );
+
+
+    /* =========================================================
+       PROCEDURAL PROJECTION
+    ========================================================== */
+
+    const VERT = `
+
+      varying vec2 vUv;
+
+      void main() {
+
+        vUv =
+          uv;
+
+        gl_Position =
+          vec4(
+            position.xy,
+            0.0,
+            1.0
+          );
+      }
+    `;
+
+
+    const FRAG = `
+
+      precision highp float;
+
+      varying vec2 vUv;
+
+      uniform float uTime;
+      uniform float uColorPhase;
+      uniform float uShowKazer;
+
+
+      vec3 palette(
+        float t
+      ) {
+
+        vec3 a =
+          vec3(
+            0.08,
+            0.055,
+            0.16
           );
 
-
-        const scene =
-          new THREE.Scene();
-
-
-        const worldZ =
-          new THREE.Vector3(
-            0,
-            0,
-            1
+        vec3 b =
+          vec3(
+            0.42,
+            0.30,
+            0.85
           );
 
-
-        const camera =
-          new THREE.OrthographicCamera(
-            -1,
-            1,
-            1,
-            -1,
-            4,
-            -4
+        vec3 c =
+          vec3(
+            1.0,
+            0.72,
+            0.90
           );
 
+        float p =
+          0.5 +
+          0.5 *
+          sin(
+            t
+            +
+            uColorPhase
+          );
 
-        const renderer =
-          new THREE.WebGLRenderer({
-            canvas,
-            alpha: false,
-            antialias: true,
-            powerPreference:
-              "high-performance"
-          });
+        return mix(
+          a,
+          b,
+          p
+        )
+        +
+        c *
+        pow(
+          p,
+          5.0
+        ) *
+        .18;
+      }
 
 
-        renderer.setPixelRatio(pr);
+      float hash(
+        vec2 p
+      ) {
 
-
-        renderer.setSize(
-          window.innerWidth,
-          window.innerHeight,
-          false
+        return fract(
+          sin(
+            dot(
+              p,
+              vec2(
+                127.1,
+                311.7
+              )
+            )
+          )
+          *
+          43758.5453
         );
+      }
 
 
-        renderer.setClearColor(
-          new THREE.Color(
-            .008,
-            .006,
-            .012
-          ),
+      float noise(
+        vec2 p
+      ) {
+
+        vec2 i =
+          floor(p);
+
+        vec2 f =
+          fract(p);
+
+        f =
+          f *
+          f *
+          (
+            3.0 -
+            2.0 *
+            f
+          );
+
+        float a =
+          hash(i);
+
+        float b =
+          hash(
+            i +
+            vec2(1.0,0.0)
+          );
+
+        float c =
+          hash(
+            i +
+            vec2(0.0,1.0)
+          );
+
+        float d =
+          hash(
+            i +
+            vec2(1.0,1.0)
+          );
+
+        return mix(
+          mix(a,b,f.x),
+          mix(c,d,f.x),
+          f.y
+        );
+      }
+
+
+      void main() {
+
+        vec2 uv =
+          vUv;
+
+        vec2 p =
+          uv * 2.0 -
+          1.0;
+
+
+        float t =
+          uTime;
+
+
+        float n1 =
+          noise(
+            p * 2.2 +
+            vec2(
+              t * .08,
+              -t * .04
+            )
+          );
+
+
+        float n2 =
+          noise(
+            p * 5.0 +
+            vec2(
+              -t * .05,
+              t * .09
+            )
+          );
+
+
+        float waves =
+          sin(
+            p.x * 4.2 +
+            n1 * 2.8 +
+            t * .22
+          );
+
+
+        float ridges =
+          sin(
+            p.y * 7.0 -
+            p.x * 2.0 +
+            t * .14
+          );
+
+
+        float energy =
+          .5 +
+          .5 *
+          (
+            waves *
+            .30 +
+            ridges *
+            .16 +
+            n1 *
+            .35 +
+            n2 *
+            .19
+          );
+
+
+        energy =
+          clamp(
+            energy,
+            0.0,
+            1.0
+          );
+
+
+        vec3 col =
+          palette(
+            energy * 3.0
+          );
+
+
+        float centerGlow =
+          exp(
+            -(
+              dot(
+                p,
+                p
+              ) *
+              1.9
+            )
+          );
+
+
+        col +=
+          vec3(
+            .15,
+            .10,
+            .30
+          )
+          *
+          centerGlow;
+
+
+        float edge =
+          smoothstep(
+            1.2,
+            .15,
+            length(p)
+          );
+
+
+        col *=
+          mix(
+            .48,
+            1.0,
+            edge
+          );
+
+
+        /*
+         * Texto branco ocasional.
+         * O formato é propositalmente
+         * simples para funcionar diretamente
+         * no shader.
+         */
+
+        float barTop =
+          smoothstep(
+            .022,
+            .0,
+            abs(
+              p.y -
+              .30
+            )
+          );
+
+
+        float barBottom =
+          smoothstep(
+            .022,
+            .0,
+            abs(
+              p.y +
+              .30
+            )
+          );
+
+
+        float textFlash =
+          uShowKazer *
+          (
+            barTop +
+            barBottom
+          );
+
+
+        col +=
+          vec3(
+            .68,
+            .61,
+            1.0
+          )
+          *
+          textFlash
+          *
+          .08;
+
+
+        gl_FragColor =
+          vec4(
+            col,
+            1.0
+          );
+      }
+    `;
+
+
+    function createProjectionSource(
+      width = 1024,
+      height = 576
+    ) {
+
+      const sourceScene =
+        new THREE.Scene();
+
+
+      const sourceCamera =
+        new THREE.OrthographicCamera(
+          -1,
+          1,
+          1,
+          -1,
+          0,
           1
         );
 
 
-        /* ======================================================
-           TEXTO
-        ======================================================= */
+      const sourceMaterial =
+        new THREE.ShaderMaterial({
 
-        function createTextCanvas(
-          width,
-          height,
-          text
-        ) {
+          vertexShader:
+            VERT,
 
-          const scale =
-            .5 / pr;
+          fragmentShader:
+            FRAG,
 
+          uniforms: {
 
-          const canvas2 =
-            new OffscreenCanvas(
-              Math.max(
-                1,
-                Math.floor(width * scale)
-              ),
-              Math.max(
-                1,
-                Math.floor(height * scale)
-              )
-            );
-
-
-          const ctx =
-            canvas2.getContext(
-              "2d",
-              { alpha: true }
-            );
-
-
-          if (!ctx) {
-            throw new Error(
-              "Canvas 2D indisponível."
-            );
-          }
-
-
-          function draw() {
-
-            const w =
-              canvas2.width;
-
-            const h =
-              canvas2.height;
-
-
-            ctx.clearRect(
-              0,
-              0,
-              w,
-              h
-            );
-
-
-            let fontSize =
-              Math.min(w,h) * .48;
-
-
-            ctx.textAlign =
-              "center";
-
-            ctx.textBaseline =
-              "middle";
-
-
-            ctx.font =
-              `900 ${fontSize}px Arial Black, Arial, sans-serif`;
-
-
-            const measured =
-              ctx.measureText(text).width;
-
-
-            if (
-              measured > w * 1.75
-            ) {
-
-              fontSize *=
-                (w * 1.75) /
-                measured;
-
-
-              ctx.font =
-                `900 ${fontSize}px Arial Black, Arial, sans-serif`;
-            }
-
-
-            const gradient =
-              ctx.createLinearGradient(
-                0,
-                h * .18,
-                0,
-                h * .82
-              );
-
-
-            gradient.addColorStop(
-              0,
-              "rgba(255,255,255,.96)"
-            );
-
-            gradient.addColorStop(
-              .46,
-              "rgba(255,255,255,1)"
-            );
-
-            gradient.addColorStop(
-              1,
-              "rgba(195,190,255,.82)"
-            );
-
-
-            ctx.fillStyle =
-              gradient;
-
-
-            ctx.fillText(
-              text,
-              w / 2,
-              h / 2
-            );
-
-
-            ctx.globalCompositeOperation =
-              "source-atop";
-
-
-            const shine =
-              ctx.createLinearGradient(
-                0,
-                0,
-                w,
-                0
-              );
-
-
-            shine.addColorStop(
-              0,
-              "rgba(255,255,255,0)"
-            );
-
-            shine.addColorStop(
-              .42,
-              "rgba(255,255,255,.12)"
-            );
-
-            shine.addColorStop(
-              .5,
-              "rgba(255,255,255,.34)"
-            );
-
-            shine.addColorStop(
-              .58,
-              "rgba(255,255,255,.08)"
-            );
-
-            shine.addColorStop(
-              1,
-              "rgba(255,255,255,0)"
-            );
-
-
-            ctx.fillStyle =
-              shine;
-
-
-            ctx.fillRect(
-              0,
-              0,
-              w,
-              h
-            );
-
-
-            ctx.globalCompositeOperation =
-              "source-over";
-          }
-
-
-          draw();
-
-
-          return {
-
-            canvas: canvas2,
-
-            resize(
-              nextWidth,
-              nextHeight
-            ) {
-
-              canvas2.width =
-                Math.max(
-                  1,
-                  Math.floor(
-                    nextWidth * scale
-                  )
-                );
-
-
-              canvas2.height =
-                Math.max(
-                  1,
-                  Math.floor(
-                    nextHeight * scale
-                  )
-                );
-
-
-              draw();
+            uTime: {
+              value: 0
             },
 
-            update: draw
-          };
-        }
+            uColorPhase: {
+              value: 0
+            },
 
-
-        let textInput =
-          createTextCanvas(
-            window.innerWidth,
-            window.innerHeight,
-            "KAZER"
-          );
-
-
-        const textTexture =
-          new THREE.CanvasTexture(
-            textInput.canvas
-          );
-
-
-        textTexture.minFilter =
-          THREE.LinearFilter;
-
-        textTexture.magFilter =
-          THREE.LinearFilter;
-
-        textTexture.generateMipmaps =
-          false;
-
-
-        /* ======================================================
-           BLUR
-        ======================================================= */
-
-        class BlurFilter {
-
-          constructor(
-            renderer,
-            width,
-            height
-          ) {
-
-            this.renderer =
-              renderer;
-
-
-            this.horizontal =
-              new ShaderPass(
-                HorizontalBlurShader
-              );
-
-
-            this.vertical =
-              new ShaderPass(
-                VerticalBlurShader
-              );
-
-
-            this.rtA =
-              new THREE.WebGLRenderTarget(
-                width,
-                height,
-                {
-                  minFilter:
-                    THREE.LinearFilter,
-
-                  magFilter:
-                    THREE.LinearFilter,
-
-                  format:
-                    THREE.RGBAFormat,
-
-                  depthBuffer:
-                    false,
-
-                  stencilBuffer:
-                    false
-                }
-              );
-
-
-            this.rtB =
-              this.rtA.clone();
-          }
-
-
-          setSize(
-            width,
-            height
-          ) {
-
-            width =
-              Math.max(
-                1,
-                Math.floor(width)
-              );
-
-            height =
-              Math.max(
-                1,
-                Math.floor(height)
-              );
-
-
-            this.rtA.setSize(
-              width,
-              height
-            );
-
-            this.rtB.setSize(
-              width,
-              height
-            );
-
-
-            this.horizontal
-              .uniforms
-              .h
-              .value =
-                1 / width;
-
-
-            this.vertical
-              .uniforms
-              .v
-              .value =
-                1 / height;
-          }
-
-
-          render(
-            texture,
-            repeat
-          ) {
-
-            this.renderer
-              .copyTextureToTexture(
-                texture,
-                this.rtA.texture
-              );
-
-
-            for (
-              let i = 0;
-              i < repeat;
-              i++
-            ) {
-
-              this.horizontal.render(
-                this.renderer,
-                this.rtB,
-                this.rtA,
-                0,
-                false
-              );
-
-
-              this.vertical.render(
-                this.renderer,
-                this.rtA,
-                this.rtB,
-                0,
-                false
-              );
+            uShowKazer: {
+              value: 0
             }
+          },
+
+          depthTest:
+            false,
+
+          depthWrite:
+            false
+        });
 
 
-            this.renderer.setRenderTarget(
-              null
-            );
-          }
-
-
-          get texture() {
-            return this.rtA.texture;
-          }
-        }
-
-
-        const blur =
-          new BlurFilter(
-            renderer,
-            1,
-            1
-          );
-
-
-        /* ======================================================
-           BANDAS
-        ======================================================= */
-
-        const isMobile =
-          Math.min(
-            window.innerWidth,
-            window.innerHeight
-          ) < 700;
-
-
-        const bandAmount =
-          isMobile
-            ? 110
-            : 180;
-
-
-        const bandGeometry =
+      const quad =
+        new THREE.Mesh(
           new THREE.PlaneGeometry(
             2,
             2
-          );
+          ),
+          sourceMaterial
+        );
 
 
-        const bandMaterial =
-          new THREE.RawShaderMaterial({
+      sourceScene.add(
+        quad
+      );
 
-            glslVersion:
-              THREE.GLSL3,
 
-            transparent:
-              true,
+      const target =
+        new THREE.WebGLRenderTarget(
+          width,
+          height,
+          {
 
-            depthWrite:
+            minFilter:
+              THREE.LinearFilter,
+
+            magFilter:
+              THREE.LinearFilter,
+
+            format:
+              THREE.RGBAFormat,
+
+            depthBuffer:
               false,
 
-            uniforms: {
-
-              amount: {
-                value:
-                  bandAmount
-              },
-
-              bandScale: {
-                value:
-                  isMobile
-                    ? 5.7
-                    : 7
-              },
-
-              map: {
-                value:
-                  blur.texture
-              },
-
-              imageCutoff: {
-                value: 2.8
-              },
-
-              bandCutoff: {
-                value:
-                  2 ** 6
-              },
-
-              darken: {
-                value: 1.25
-              },
-
-              color: {
-                value:
-                  new THREE.Color(
-                    .78,
-                    .75,
-                    1
-                  )
-              }
-            },
-
-
-            vertexShader: `
-
-              precision highp float;
-
-              in vec3 position;
-
-              uniform mat4 modelViewMatrix;
-              uniform mat4 projectionMatrix;
-
-              uniform float amount;
-              uniform float bandScale;
-
-              out vec2 vUv;
-              out vec2 screenUv;
-
-
-              void main() {
-
-                vec2 pos =
-                  position.xy;
-
-
-                vUv =
-                  pos * .5 + .5;
-
-
-                pos.y += 1.0;
-                pos.y *= .5;
-
-
-                pos.x *=
-                  2.0 *
-                  bandScale;
-
-
-                float zStep =
-                  4.0 *
-                  bandScale /
-                  amount;
-
-
-                float z =
-                  2.0 *
-                  bandScale -
-                  float(gl_InstanceID) *
-                  zStep;
-
-
-                float layer =
-                  float(gl_InstanceID) /
-                  amount;
-
-
-                pos.x +=
-                  sin(
-                    layer *
-                    6.2831
-                  ) *
-                  .015;
-
-
-                gl_Position =
-                  projectionMatrix *
-                  modelViewMatrix *
-                  vec4(
-                    pos,
-                    z,
-                    1.0
-                  );
-
-
-                screenUv =
-                  gl_Position.xy /
-                  gl_Position.w *
-                  .5 +
-                  .5;
-              }
-            `,
-
-
-            fragmentShader: `
-
-              precision highp float;
-
-              in vec2 vUv;
-              in vec2 screenUv;
-
-              uniform sampler2D map;
-
-              uniform float imageCutoff;
-              uniform float bandCutoff;
-              uniform float darken;
-
-              uniform vec3 color;
-
-              out vec4 outColor;
-
-
-              void main() {
-
-                float y =
-                  1.0 -
-                  vUv.y;
-
-
-                if (
-                  y < .006 ||
-                  y > .994
-                ) {
-                  discard;
-                }
-
-
-                float alpha =
-                  texture(
-                    map,
-                    screenUv
-                  ).r;
-
-
-                alpha *=
-                  pow(
-                    y,
-                    imageCutoff
-                  );
-
-
-                y =
-                  pow(
-                    y,
-                    bandCutoff
-                  );
-
-
-                alpha =
-                  1.0 -
-                  (
-                    1.0 -
-                    alpha
-                  ) *
-                  (
-                    1.0 -
-                    y
-                  );
-
-
-                if (
-                  alpha < .45
-                ) {
-                  discard;
-                }
-
-
-                alpha =
-                  (
-                    1.0 -
-                    alpha
-                  ) * 2.0;
-
-
-                float intensity =
-                  pow(
-                    alpha,
-                    darken
-                  );
-
-
-                vec3 finalColor =
-                  color *
-                  intensity;
-
-
-                finalColor +=
-                  vec3(
-                    .10,
-                    .08,
-                    .18
-                  ) *
-                  intensity;
-
-
-                outColor =
-                  vec4(
-                    finalColor,
-                    intensity * .72
-                  );
-              }
-            `
-          });
-
-
-        const bandsMesh =
-          new THREE.InstancedMesh(
-            bandGeometry,
-            bandMaterial,
-            bandAmount
-          );
-
-
-        bandsMesh.frustumCulled =
-          false;
-
-
-        bandsMesh.rotation.x =
-          -45 *
-          THREE.MathUtils.DEG2RAD;
-
-
-        bandsMesh.rotation.z =
-          -7 *
-          THREE.MathUtils.DEG2RAD;
-
-
-        scene.add(
-          bandsMesh
+            stencilBuffer:
+              false
+          }
         );
 
 
-        /* ======================================================
-           RESIZE
-        ======================================================= */
+      return {
 
-        function resize() {
+        texture:
+          target.texture,
 
-          const width =
-            window.innerWidth;
+        render(
+          renderer,
+          time,
+          colorPhase,
+          showKazer
+        ) {
 
-          const height =
-            window.innerHeight;
-
-
-          renderer.setSize(
-            width,
-            height,
-            false
-          );
-
-
-          const renderWidth =
-            width * pr;
-
-          const renderHeight =
-            height * pr;
-
-
-          blur.setSize(
-            renderWidth * .5,
-            renderHeight * .5
-          );
-
-
-          textInput.resize(
-            renderWidth,
-            renderHeight
-          );
-
-
-          textTexture.needsUpdate =
-            true;
-
-
-          if (
-            height > width
-          ) {
-
-            camera.left =
-              -1;
-
-            camera.right =
-              1;
-
-            camera.top =
-              height / width;
-
-            camera.bottom =
-              -(height / width);
-
-          } else {
-
-            camera.left =
-              -(width / height);
-
-            camera.right =
-              width / height;
-
-            camera.top =
-              1;
-
-            camera.bottom =
-              -1;
-          }
-
-
-          camera.updateProjectionMatrix();
-
-
-          bandMaterial
+          sourceMaterial
             .uniforms
-            .bandScale
+            .uTime
             .value =
-              Math.min(
-                width,
-                height
-              ) < 700
-                ? 5.7
-                : 7;
+              time;
+
+
+          sourceMaterial
+            .uniforms
+            .uColorPhase
+            .value =
+              colorPhase;
+
+
+          sourceMaterial
+            .uniforms
+            .uShowKazer
+            .value =
+              showKazer
+                ? 1
+                : 0;
+
+
+          const previous =
+            renderer.getRenderTarget();
+
+
+          renderer.setRenderTarget(
+            target
+          );
+
+
+          renderer.clear();
+
+
+          renderer.render(
+            sourceScene,
+            sourceCamera
+          );
+
+
+          renderer.setRenderTarget(
+            previous
+          );
+        },
+
+        dispose() {
+
+          quad.geometry.dispose();
+          sourceMaterial.dispose();
+          target.dispose();
         }
+      };
+    }
 
 
-        window.addEventListener(
-          "resize",
-          resize,
-          { passive: true }
-        );
+    const projectionSource =
+      createProjectionSource();
 
 
-        /* ======================================================
-           MOUSE
-        ======================================================= */
+    const projectionSource2 =
+      createProjectionSource();
 
-        const targetRotation =
-          new THREE.Vector2(
-            -.12,
-            -.04
+
+    /* =========================================================
+       MONITOR
+    ========================================================== */
+
+    const monitor =
+      new THREE.Group();
+
+
+    monitor.position.set(
+      0,
+      .92,
+      .25
+    );
+
+
+    monitor.rotation.y =
+      -.04;
+
+
+    scene.add(
+      monitor
+    );
+
+
+    const monitorBody =
+      new THREE.Mesh(
+
+        new THREE.BoxGeometry(
+          2.55,
+          1.58,
+          .14
+        ),
+
+        new THREE.MeshStandardMaterial({
+
+          color:
+            0x0b0b10,
+
+          roughness:
+            .58,
+
+          metalness:
+            .22
+        })
+      );
+
+
+    monitorBody.castShadow =
+      !isMobile;
+
+
+    monitorBody.receiveShadow =
+      !isMobile;
+
+
+    monitor.add(
+      monitorBody
+    );
+
+
+    /* SCREEN */
+    const screenTexture =
+      projectionSource.texture;
+
+
+    const screenMaterial =
+      new THREE.MeshBasicMaterial({
+
+        map:
+          screenTexture,
+
+        toneMapped:
+          false
+      });
+
+
+    const screen =
+      new THREE.Mesh(
+
+        new THREE.PlaneGeometry(
+          2.32,
+          1.37
+        ),
+
+        screenMaterial
+      );
+
+
+    screen.position.set(
+      0,
+      0,
+      .078
+    );
+
+
+    monitor.add(
+      screen
+    );
+
+
+    /* SCREEN FRAME */
+    const frame =
+      new THREE.Mesh(
+
+        new THREE.BoxGeometry(
+          2.68,
+          1.70,
+          .03
+        ),
+
+        new THREE.MeshStandardMaterial({
+
+          color:
+            0x15151c,
+
+          roughness:
+            .48,
+
+          metalness:
+            .28
+        })
+      );
+
+
+    frame.position.z =
+      .045;
+
+
+    frame.castShadow =
+      !isMobile;
+
+
+    monitor.add(
+      frame
+    );
+
+
+    /* botão inferior */
+    const monitorLight =
+      new THREE.Mesh(
+
+        new THREE.SphereGeometry(
+          .022,
+          12,
+          12
+        ),
+
+        new THREE.MeshBasicMaterial({
+          color:
+            0x8c78ff
+        })
+      );
+
+
+    monitorLight.position.set(
+      .0,
+      -.77,
+      .09
+    );
+
+
+    monitor.add(
+      monitorLight
+    );
+
+
+    /* =========================================================
+       SUPORTE
+    ========================================================== */
+
+    const stand =
+      new THREE.Mesh(
+
+        new THREE.BoxGeometry(
+          .18,
+          .65,
+          .18
+        ),
+
+        new THREE.MeshStandardMaterial({
+
+          color:
+            0x111117,
+
+          roughness:
+            .72,
+
+          metalness:
+            .15
+        })
+      );
+
+
+    stand.position.set(
+      0,
+      .28,
+      .25
+    );
+
+
+    stand.castShadow =
+      !isMobile;
+
+
+    monitor.add(
+      stand
+    );
+
+
+    const standBase =
+      new THREE.Mesh(
+
+        new THREE.BoxGeometry(
+          .72,
+          .06,
+          .42
+        ),
+
+        new THREE.MeshStandardMaterial({
+
+          color:
+            0x111117,
+
+          roughness:
+            .75,
+
+          metalness:
+            .12
+        })
+      );
+
+
+    standBase.position.set(
+      0,
+      -.03,
+      .25
+    );
+
+
+    monitor.add(
+      standBase
+    );
+
+
+    /* =========================================================
+       DESK
+    ========================================================== */
+
+    const deskMaterial =
+      new THREE.MeshStandardMaterial({
+
+        color:
+          0x0c0c11,
+
+        roughness:
+          .92,
+
+        metalness:
+          .02
+      });
+
+
+    const desk =
+      new THREE.Mesh(
+
+        new THREE.BoxGeometry(
+          100,
+          .11,
+          100
+        ),
+
+        deskMaterial
+      );
+
+
+    desk.position.y =
+      -.10;
+
+
+    desk.receiveShadow =
+      !isMobile;
+
+
+    scene.add(
+      desk
+    );
+
+
+    /* =========================================================
+       TECLADO
+    ========================================================== */
+
+    const keyboard =
+      new THREE.Group();
+
+
+    keyboard.position.set(
+      0,
+      0,
+      1.63
+    );
+
+
+    keyboard.rotation.x =
+      -.02;
+
+
+    scene.add(
+      keyboard
+    );
+
+
+    const keyboardBase =
+      new THREE.Mesh(
+
+        new THREE.BoxGeometry(
+          2.10,
+          .07,
+          .72
+        ),
+
+        new THREE.MeshStandardMaterial({
+
+          color:
+            0x111117,
+
+          roughness:
+            .72,
+
+          metalness:
+            .10
+        })
+      );
+
+
+    keyboard.add(
+      keyboardBase
+    );
+
+
+    const keyMaterial =
+      new THREE.MeshStandardMaterial({
+
+        color:
+          0x2a2931,
+
+        roughness:
+          .64,
+
+        metalness:
+          .05
+      });
+
+
+    const keyGeo =
+      new THREE.BoxGeometry(
+        .16,
+        .055,
+        .115
+      );
+
+
+    const rows = 4;
+    const cols = 11;
+
+    const keyGapX = .026;
+    const keyGapZ = .025;
+
+
+    for (
+      let r = 0;
+      r < rows;
+      r++
+    ) {
+
+      for (
+        let c = 0;
+        c < cols;
+        c++
+      ) {
+
+        const key =
+          new THREE.Mesh(
+            keyGeo,
+            keyMaterial
           );
 
 
-        const currentRotation =
-          new THREE.Vector2(
-            -.12,
-            -.04
-          );
+        key.position.set(
 
+          -(
+            (cols - 1) *
+            (.16 + keyGapX)
+          ) / 2
+          +
+          c *
+          (.16 + keyGapX),
 
-        window.addEventListener(
-          "pointermove",
-          event => {
+          .065,
 
-            const x =
-              event.clientX /
-              window.innerWidth -
-              .5;
-
-
-            const y =
-              event.clientY /
-              window.innerHeight -
-              .5;
-
-
-            targetRotation.x =
-              -.12 +
-              y * .08;
-
-
-            targetRotation.y =
-              -.04 +
-              x * .08;
-          },
-          { passive: true }
+          -(
+            (rows - 1) *
+            (.115 + keyGapZ)
+          ) / 2
+          +
+          r *
+          (.115 + keyGapZ)
         );
 
 
-        /* ======================================================
-           ANIMAÇÃO
-        ======================================================= */
-
-        let previousTime =
-          performance.now();
+        key.castShadow =
+          !isMobile;
 
 
-        renderer.setAnimationLoop(
-          currentTime => {
-
-            const delta =
-              currentTime -
-              previousTime;
-
-
-            previousTime =
-              currentTime;
-
-
-            currentRotation.lerp(
-              targetRotation,
-              .025
-            );
-
-
-            bandsMesh.rotation.x =
-              currentRotation.x;
-
-
-            bandsMesh.rotation.y =
-              currentRotation.y;
-
-
-            bandsMesh.rotateOnWorldAxis(
-              worldZ,
-              delta * .00011
-            );
-
-
-            textTexture.needsUpdate =
-              true;
-
-
-            blur.render(
-              textTexture,
-              isMobile ? 4 : 6
-            );
-
-
-            renderer.render(
-              scene,
-              camera
-            );
-          }
-        );
-
-
-        resize();
-
-      } catch (error) {
-
-        /*
-         * Se o WebGL não estiver disponível,
-         * o login continua funcionando.
-         */
-
-        canvas.style.display =
-          "none";
-
-        console.warn(
-          "Kazer FX indisponível:",
-          error
+        keyboard.add(
+          key
         );
       }
     }
+
+
+    /* =========================================================
+       MOUSE
+    ========================================================== */
+
+    const mouse =
+      new THREE.Mesh(
+
+        new THREE.BoxGeometry(
+          .28,
+          .10,
+          .40
+        ),
+
+        new THREE.MeshStandardMaterial({
+
+          color:
+            0x16161d,
+
+          roughness:
+            .62,
+
+          metalness:
+            .08
+        })
+      );
+
+
+    mouse.position.set(
+      1.43,
+      .08,
+      1.68
+    );
+
+
+    mouse.castShadow =
+      !isMobile;
+
+
+    scene.add(
+      mouse
+    );
+
+
+    /* =========================================================
+       LUZ
+    ========================================================== */
+
+    const ambient =
+      new THREE.HemisphereLight(
+        0xffffff,
+        0x050507,
+        isMobile
+          ? .06
+          : .045
+      );
+
+
+    scene.add(
+      ambient
+    );
+
+
+    const screenLight =
+      new THREE.SpotLight(
+        0xa391ff,
+        isMobile
+          ? 55
+          : 110
+      );
+
+
+    screenLight.decay =
+      2.5;
+
+
+    screenLight.distance =
+      9;
+
+
+    screenLight.angle =
+      Math.PI /
+      3.5;
+
+
+    screenLight.penumbra =
+      .72;
+
+
+    screenLight.position.set(
+      0,
+      1.0,
+      1.0
+    );
+
+
+    screenLight.target =
+      keyboard;
+
+
+    screenLight.castShadow =
+      !isMobile;
+
+
+    if (!isMobile) {
+
+      screenLight.shadow.mapSize.set(
+        1024,
+        1024
+      );
+
+      screenLight.shadow.bias =
+        -0.0002;
+
+      screenLight.shadow.normalBias =
+        .02;
+    }
+
+
+    scene.add(
+      screenLight
+    );
+
+
+    /* =========================================================
+       BLOOM
+    ========================================================== */
+
+    const composer =
+      new EffectComposer(
+        renderer
+      );
+
+
+    composer.addPass(
+      new RenderPass(
+        scene,
+        camera
+      )
+    );
+
+
+    const bloom =
+      new UnrealBloomPass(
+
+        new THREE.Vector2(
+          window.innerWidth,
+          window.innerHeight
+        ),
+
+        isMobile
+          ? .11
+          : .18,
+
+        .40,
+
+        .72
+      );
+
+
+    composer.addPass(
+      bloom
+    );
+
+
+    composer.addPass(
+      new OutputPass()
+    );
+
+
+    /* =========================================================
+       MOVIMENTO
+    ========================================================== */
+
+    const mouseTarget =
+      new THREE.Vector2(
+        0,
+        0
+      );
+
+
+    const mouseCurrent =
+      new THREE.Vector2(
+        0,
+        0
+      );
+
+
+    window.addEventListener(
+      "pointermove",
+      event => {
+
+        mouseTarget.x =
+          (
+            event.clientX /
+            window.innerWidth -
+            .5
+          );
+
+
+        mouseTarget.y =
+          (
+            event.clientY /
+            window.innerHeight -
+            .5
+          );
+      },
+      {
+        passive:
+          true
+      }
+    );
+
+
+    /* =========================================================
+       LOOP
+    ========================================================== */
+
+    let rafId =
+      null;
+
+
+    let previous =
+      performance.now();
+
+
+    function animate(
+      now
+    ) {
+
+      rafId =
+        requestAnimationFrame(
+          animate
+        );
+
+
+      const t =
+        now * .001;
+
+
+      const dt =
+        now -
+        previous;
+
+
+      previous =
+        now;
+
+
+      mouseCurrent.lerp(
+        mouseTarget,
+        .025
+      );
+
+
+      /*
+       * Movimento do ambiente.
+       */
+
+      monitor.rotation.y =
+        -.04 +
+        mouseCurrent.x *
+        .035;
+
+
+      monitor.rotation.x =
+        mouseCurrent.y *
+        .018;
+
+
+      keyboard.rotation.y =
+        mouseCurrent.x *
+        .025;
+
+
+      /*
+       * Pequeno movimento
+       * orgânico do PC.
+       */
+
+      monitor.position.y =
+        .92 +
+        Math.sin(
+          t * .45
+        ) *
+        .008;
+
+
+      /*
+       * Cores da projeção
+       */
+
+      const colorPhase =
+        t * .45;
+
+
+      /*
+       * KAZER aparece em ciclos.
+       *
+       * A maior parte do tempo
+       * fica apenas a textura.
+       */
+
+      const cycle =
+        (
+          t % 14
+        );
+
+
+      const showKazer =
+        cycle > 10.2 &&
+        cycle < 13.15;
+
+
+      projectionSource.render(
+        renderer,
+        t,
+        colorPhase,
+        showKazer
+      );
+
+
+      /*
+       * segunda textura para luz.
+       */
+
+      projectionSource2.render(
+        renderer,
+        t + .35,
+        colorPhase + .32,
+        showKazer
+      );
+
+
+      /*
+       * Atualiza a textura do monitor.
+       */
+
+      screenMaterial.map =
+        projectionSource.texture;
+
+
+      screenMaterial.needsUpdate =
+        true;
+
+
+      /*
+       * Intensidade muda suavemente.
+       */
+
+      const glow =
+        .85 +
+        Math.sin(
+          t * .8
+        ) *
+        .15;
+
+
+      screenLight.color.setHSL(
+        .70 +
+        Math.sin(
+          t * .18
+        ) * .035,
+        .62,
+        .72
+      );
+
+
+      screenLight.intensity =
+        (
+          isMobile
+            ? 42
+            : 82
+        ) *
+        glow;
+
+
+      bloom.strength =
+        (
+          isMobile
+            ? .10
+            : .16
+        ) +
+        glow *
+        .035;
+
+
+      composer.render();
+    }
+
+
+    animate(
+      performance.now()
+    );
+
+
+    /* =========================================================
+       RESIZE
+    ========================================================== */
+
+    function onResize() {
+
+      const width =
+        window.innerWidth;
+
+      const height =
+        window.innerHeight;
+
+
+      camera.aspect =
+        width /
+        height;
+
+
+      camera.updateProjectionMatrix();
+
+
+      renderer.setPixelRatio(
+        Math.min(
+          window.devicePixelRatio || 1,
+          width <= 950
+            ? 1.4
+            : 2
+        )
+      );
+
+
+      renderer.setSize(
+        width,
+        height
+      );
+
+
+      composer.setSize(
+        width,
+        height
+      );
+
+
+      /*
+       * Reenquadra o PC no celular.
+       */
+
+      if (width <= 950) {
+
+        camera.position.set(
+          0,
+          1.45,
+          6.25
+        );
+
+        camera.lookAt(
+          0,
+          .86,
+          .7
+        );
+
+        monitor.scale.set(
+          .94,
+          .94,
+          .94
+        );
+
+      } else {
+
+        camera.position.set(
+          0,
+          1.4,
+          5.8
+        );
+
+        camera.lookAt(
+          0,
+          .72,
+          .8
+        );
+
+        monitor.scale.set(
+          1,
+          1,
+          1
+        );
+      }
+    }
+
+
+    window.addEventListener(
+      "resize",
+      onResize,
+      {
+        passive:
+          true
+      }
+    );
+
+
+    onResize();
+
+
+    /* =========================================================
+       LIMPEZA
+    ========================================================== */
+
+    window.addEventListener(
+      "beforeunload",
+      () => {
+
+        if (
+          rafId !== null
+        ) {
+          cancelAnimationFrame(
+            rafId
+          );
+        }
+
+
+        projectionSource.dispose();
+        projectionSource2.dispose();
+
+
+        renderer.dispose();
+      }
+    );
+
+
+    /* =========================================================
+       WEBGL CONTEXT LOSS
+    ========================================================== */
+
+    renderer.domElement.addEventListener(
+      "webglcontextlost",
+      event => {
+
+        event.preventDefault();
+
+        console.warn(
+          "[KAZER] WebGL context lost"
+        );
+      }
+    );
+
   </script>
 
 
   <!-- =========================================================
-       KAZER / SUPABASE
-       AUTENTICAÇÃO ORIGINAL PRESERVADA
+       AUTENTICAÇÃO KAZER / SUPABASE
   ========================================================== -->
 
   <script>
@@ -2746,7 +3280,10 @@
 
       document.documentElement.style.setProperty(
         "--vh",
-        (window.innerHeight * .01) + "px"
+        (
+          window.innerHeight *
+          .01
+        ) + "px"
       );
     }
 
@@ -2757,14 +3294,20 @@
     window.addEventListener(
       "resize",
       setVH,
-      { passive: true }
+      {
+        passive:
+          true
+      }
     );
 
 
     window.addEventListener(
       "orientationchange",
       setVH,
-      { passive: true }
+      {
+        passive:
+          true
+      }
     );
 
 
@@ -2773,94 +3316,154 @@
     ========================================================== */
 
     const splash =
-      document.getElementById("splash");
+      null;
+
 
     const login =
-      document.getElementById("login");
+      document.getElementById(
+        "login"
+      );
+
 
     const authForm =
-      document.getElementById("authForm");
+      document.getElementById(
+        "authForm"
+      );
+
 
     const errorMsg =
-      document.getElementById("errorMsg");
+      document.getElementById(
+        "errorMsg"
+      );
+
 
     const submitBtn =
-      document.getElementById("submitBtn");
+      document.getElementById(
+        "submitBtn"
+      );
+
 
     const switchLink =
-      document.getElementById("switchLink");
+      document.getElementById(
+        "switchLink"
+      );
+
 
     const switchText =
-      document.getElementById("switchText");
+      document.getElementById(
+        "switchText"
+      );
+
 
     const formTitle =
-      document.getElementById("formTitle");
+      document.getElementById(
+        "formTitle"
+      );
+
 
     const formSubtitle =
-      document.getElementById("formSubtitle");
+      document.getElementById(
+        "formSubtitle"
+      );
+
 
     const displayName =
-      document.getElementById("displayName");
+      document.getElementById(
+        "displayName"
+      );
+
 
     const email =
-      document.getElementById("email");
+      document.getElementById(
+        "email"
+      );
+
 
     const password =
-      document.getElementById("password");
+      document.getElementById(
+        "password"
+      );
+
 
     const confirmPassword =
-      document.getElementById("confirmPassword");
+      document.getElementById(
+        "confirmPassword"
+      );
+
 
     const strengthWrap =
-      document.getElementById("strengthWrap");
+      document.getElementById(
+        "strengthWrap"
+      );
+
 
     const strengthFill =
-      document.getElementById("strengthFill");
+      document.getElementById(
+        "strengthFill"
+      );
+
 
     const strengthLabel =
-      document.getElementById("strengthLabel");
+      document.getElementById(
+        "strengthLabel"
+      );
+
 
     const strengthText =
-      document.getElementById("strengthText");
+      document.getElementById(
+        "strengthText"
+      );
 
 
     /* =========================================================
-       OLHO DA SENHA
+       PASSWORD EYE
     ========================================================== */
 
-    function capitalize(value) {
+    function capitalize(
+      value
+    ) {
 
       return (
-        value.charAt(0).toUpperCase() +
+        value.charAt(0)
+        .toUpperCase() +
         value.slice(1)
       );
     }
 
 
-    function togglePassword(id) {
+    function togglePassword(
+      id
+    ) {
 
       const input =
-        document.getElementById(id);
+        document.getElementById(
+          id
+        );
 
 
       const suffix =
-        capitalize(id);
+        capitalize(
+          id
+        );
 
 
       const btn =
         document.getElementById(
-          "eyeBtn" + suffix
+          "eyeBtn" +
+          suffix
         );
 
 
       const icon =
         document.getElementById(
-          "eyeIcon" + suffix
+          "eyeIcon" +
+          suffix
         );
 
 
       const isHidden =
-        input.type === "password";
+        input.type ===
+        "password";
 
 
       input.type =
@@ -2901,16 +3504,22 @@
 
 
     document
-      .getElementById("eyeBtnPassword")
+      .getElementById(
+        "eyeBtnPassword"
+      )
       .addEventListener(
         "click",
         () =>
-          togglePassword("password")
+          togglePassword(
+            "password"
+          )
       );
 
 
     document
-      .getElementById("eyeBtnConfirmPassword")
+      .getElementById(
+        "eyeBtnConfirmPassword"
+      )
       .addEventListener(
         "click",
         () =>
@@ -2921,7 +3530,7 @@
 
 
     /* =========================================================
-       LOGIN / CADASTRO
+       LOGIN / SIGNUP
     ========================================================== */
 
     let isSignup =
@@ -2936,6 +3545,7 @@
 
       errorMsg.textContent =
         "";
+
 
       errorMsg.dataset.type =
         "";
@@ -3053,7 +3663,9 @@
 
         event.preventDefault();
 
+
         toggleMode();
+
 
         requestAnimationFrame(
           () => {
@@ -3073,7 +3685,7 @@
 
 
     /* =========================================================
-       SENHA
+       PASSWORD VALIDATION
     ========================================================== */
 
     function isPasswordValid(
@@ -3081,11 +3693,15 @@
     ) {
 
       const hasUpper =
-        /[A-Z]/.test(pw);
+        /[A-Z]/.test(
+          pw
+        );
 
 
       const hasSpecial =
-        /[^A-Za-z0-9]/.test(pw);
+        /[^A-Za-z0-9]/.test(
+          pw
+        );
 
 
       return (
@@ -3121,7 +3737,7 @@
         score++;
 
 
-      if (/[^\w\s]/.test(pw))
+      if (/[A-Z]/.test(pw))
         score++;
 
 
@@ -3129,9 +3745,10 @@
         score++;
 
 
-      if (pw.length < 6)
-        score =
-          Math.min(score,1);
+      if (
+        /[^A-Za-z0-9]/.test(pw)
+      )
+        score++;
 
 
       return Math.min(
@@ -3195,15 +3812,20 @@
 
 
       const level =
-        getPasswordStrength(pw);
+        getPasswordStrength(
+          pw
+        );
 
 
       const config =
-        strengthConfig[level];
+        strengthConfig[
+          level
+        ];
 
 
       strengthFill.style.width =
-        config.pct + "%";
+        config.pct +
+        "%";
 
 
       strengthFill.style.backgroundColor =
@@ -3223,21 +3845,11 @@
       );
 
 
-      strengthLabel.classList.remove(
-        "pop"
-      );
-
-
       void strengthFill.offsetWidth;
 
 
       strengthFill.classList.add(
         "pulse"
-      );
-
-
-      strengthLabel.classList.add(
-        "pop"
       );
     }
 
@@ -3280,14 +3892,10 @@
         errorMsg.textContent =
           "A confirmação de senha não corresponde.";
 
-
         errorMsg.dataset.type =
           "mismatch";
 
-      } else if (
-        errorMsg.dataset.type ===
-        "mismatch"
-      ) {
+      } else {
 
         errorMsg.textContent =
           "";
@@ -3322,8 +3930,7 @@
 
 
     /* =========================================================
-       SUPABASE
-       MESMA CONEXÃO DO SEU CÓDIGO
+       SUPABASE — MESMAS CREDENCIAIS
     ========================================================== */
 
     const KAZER_SUPABASE_URL =
@@ -3331,26 +3938,34 @@
 
 
     const KAZER_SUPABASE_ANON_KEY =
-      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzIiwicmVmIjoibXFqdW5vcHp5Y2RlenpqbWxo aXAiLCJyb2xlIjoiYW5vbiIsImlhdCI6MTc4NzgzODc0OSwiZXhwIjoyMTAzNDE0NzQ5fQ.Y_o2_QQhZzuCjvHdEfxaR5VrAxo7NFenPaDmdHN3bwM"
-      .replace(/\s+/g, "");
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1xanVub3B6eWNkZXp6am1saXAiLCJyb2xlIjoiYW5vbiIsImlhdCI6MTc4NzgzODc0OSwiZXhwIjoyMTAzNDE0NzQ5fQ.Y_o2_QQhZzuCjvHdEfxaR5VrAxo7NFenPaDmdHN3bwM";
 
 
     const kazerSupabase =
       window.supabase?.createClient(
+
         KAZER_SUPABASE_URL,
+
         KAZER_SUPABASE_ANON_KEY,
+
         {
           auth: {
-            persistSession: true,
-            autoRefreshToken: true,
-            detectSessionInUrl: false
+
+            persistSession:
+              true,
+
+            autoRefreshToken:
+              true,
+
+            detectSessionInUrl:
+              false
           }
         }
       );
 
 
     /* =========================================================
-       MENSAGENS SUPABASE
+       AUTH ERRORS
     ========================================================== */
 
     function authErrorMessage(
@@ -3359,7 +3974,8 @@
 
       const message =
         String(
-          error?.message || ""
+          error?.message ||
+          ""
         ).toLowerCase();
 
 
@@ -3394,7 +4010,9 @@
 
 
       if (
-        message.includes("password")
+        message.includes(
+          "password"
+        )
       ) {
 
         return "A senha não atende aos requisitos do Kazer.";
@@ -3406,7 +4024,7 @@
 
 
     /* =========================================================
-       AUTENTICAÇÃO REAL
+       AUTH FORM
     ========================================================== */
 
     authForm.addEventListener(
@@ -3440,10 +4058,6 @@
           return;
         }
 
-
-        /* ======================================
-           CADASTRO
-        ======================================= */
 
         if (isSignup) {
 
@@ -3488,6 +4102,7 @@
         errorMsg.textContent =
           "";
 
+
         submitBtn.disabled =
           true;
 
@@ -3503,34 +4118,38 @@
           const result =
             isSignup
 
-              ? await kazerSupabase.auth.signUp({
+              ? await kazerSupabase
+                  .auth
+                  .signUp({
 
-                  email:
-                    userEmail,
+                    email:
+                      userEmail,
 
-                  password:
-                    userPassword,
+                    password:
+                      userPassword,
 
-                  options: {
+                    options: {
 
-                    data: {
-                      display_name:
-                        name
-                    },
+                      data: {
+                        display_name:
+                          name
+                      },
 
-                    emailRedirectTo:
-                      `${window.location.origin}/chat`
-                  }
-                })
+                      emailRedirectTo:
+                        `${window.location.origin}/chat`
+                    }
+                  })
 
-              : await kazerSupabase.auth.signInWithPassword({
+              : await kazerSupabase
+                  .auth
+                  .signInWithPassword({
 
-                  email:
-                    userEmail,
+                    email:
+                      userEmail,
 
-                  password:
-                    userPassword
-                });
+                    password:
+                      userPassword
+                  });
 
 
           if (
@@ -3563,25 +4182,26 @@
             try {
 
               await kazerSupabase
-                .from("profiles")
+                .from(
+                  "profiles"
+                )
                 .update({
+
                   display_name:
                     name
+
                 })
                 .eq(
                   "id",
                   result.data.user.id
                 );
 
-            } catch (_) {
-
-              /* Mantido intencionalmente */
-            }
+            } catch (_) {}
           }
 
 
           /* ====================================
-             ATIVIDADE
+             ACTIVITY
           ===================================== */
 
           try {
@@ -3591,10 +4211,7 @@
                 "touch_user_activity"
               );
 
-          } catch (_) {
-
-            /* Mantido intencionalmente */
-          }
+          } catch (_) {}
 
 
           /* ====================================
@@ -3631,294 +4248,7 @@
 
 
     /* =========================================================
-       TEXTO KAZER CROMADO
-    ========================================================== */
-
-    function initMetalText(
-      canvas,
-      text,
-      fontFamily,
-      fontSizeRatio
-    ) {
-
-      const ctx =
-        canvas.getContext(
-          "2d"
-        );
-
-
-      if (!ctx)
-        return;
-
-
-      const W =
-        canvas.width;
-
-      const H =
-        canvas.height;
-
-
-      let running =
-        true;
-
-
-      const stops = [
-
-        {
-          pos: 0,
-          c: "#31343b"
-        },
-
-        {
-          pos: .16,
-          c: "#c8ccd6"
-        },
-
-        {
-          pos: .30,
-          c: "#ffffff"
-        },
-
-        {
-          pos: .43,
-          c: "#848995"
-        },
-
-        {
-          pos: .58,
-          c: "#f4f5f8"
-        },
-
-        {
-          pos: .74,
-          c: "#555962"
-        },
-
-        {
-          pos: .89,
-          c: "#e6e9ef"
-        },
-
-        {
-          pos: 1,
-          c: "#31343b"
-        }
-      ];
-
-
-      function draw(t) {
-
-        if (!running)
-          return;
-
-
-        ctx.clearRect(
-          0,
-          0,
-          W,
-          H
-        );
-
-
-        ctx.save();
-
-
-        ctx.font =
-          `${Math.floor(
-            H * fontSizeRatio
-          )}px "UnifrakturMaguntia", cursive`;
-
-
-        ctx.textAlign =
-          "center";
-
-
-        ctx.textBaseline =
-          "middle";
-
-
-        const shift =
-          (t * .00024) % 1;
-
-
-        const shifted =
-          stops
-            .map(stop => ({
-
-              pos:
-                (
-                  stop.pos +
-                  shift
-                ) % 1,
-
-              c:
-                stop.c
-
-            }))
-            .sort(
-              (a,b) =>
-                a.pos - b.pos
-            );
-
-
-        const gradient =
-          ctx.createLinearGradient(
-            0,
-            0,
-            W,
-            0
-          );
-
-
-        shifted.forEach(
-          stop => {
-
-            gradient.addColorStop(
-              stop.pos,
-              stop.c
-            );
-          }
-        );
-
-
-        ctx.fillStyle =
-          gradient;
-
-
-        ctx.shadowColor =
-          "rgba(150,130,255,.08)";
-
-        ctx.shadowBlur =
-          12;
-
-
-        ctx.fillText(
-          text,
-          W / 2,
-          H / 2 +
-            H * .04
-        );
-
-
-        ctx.shadowBlur =
-          0;
-
-
-        const sheen =
-          ctx.createLinearGradient(
-            0,
-            0,
-            0,
-            H
-          );
-
-
-        sheen.addColorStop(
-          0,
-          "rgba(255,255,255,.40)"
-        );
-
-
-        sheen.addColorStop(
-          .44,
-          "rgba(255,255,255,0)"
-        );
-
-
-        sheen.addColorStop(
-          1,
-          "rgba(0,0,0,.28)"
-        );
-
-
-        ctx.globalCompositeOperation =
-          "source-atop";
-
-
-        ctx.fillStyle =
-          sheen;
-
-
-        ctx.fillRect(
-          0,
-          0,
-          W,
-          H
-        );
-
-
-        ctx.restore();
-
-
-        requestAnimationFrame(
-          draw
-        );
-      }
-
-
-      requestAnimationFrame(
-        draw
-      );
-
-
-      return {
-        stop() {
-          running = false;
-        }
-      };
-    }
-
-
-    function startLogo() {
-
-      initMetalText(
-        document.getElementById(
-          "splashCanvas"
-        ),
-        "KAZER",
-        "UnifrakturMaguntia",
-        .72
-      );
-
-
-      initMetalText(
-        document.getElementById(
-          "loginCanvas"
-        ),
-        "KAZER",
-        "UnifrakturMaguntia",
-        .72
-      );
-    }
-
-
-    if (
-      document.fonts &&
-      document.fonts.ready
-    ) {
-
-      document.fonts
-        .load(
-          '90px "UnifrakturMaguntia"'
-        )
-        .then(
-          () => document.fonts.ready
-        )
-        .then(
-          startLogo
-        );
-
-    } else {
-
-      setTimeout(
-        startLogo,
-        300
-      );
-    }
-
-
-    /* =========================================================
-       SESSÃO
+       SESSION CHECK
     ========================================================== */
 
     window.addEventListener(
@@ -3932,7 +4262,9 @@
         try {
 
           const result =
-            await kazerSupabase?.auth.getSession();
+            await kazerSupabase
+              ?.auth
+              .getSession();
 
 
           session =
@@ -3948,7 +4280,7 @@
 
         if (session) {
 
-          setTimeout(
+          window.setTimeout(
             () => {
 
               window.location.assign(
@@ -3956,7 +4288,7 @@
               );
 
             },
-            1200
+            650
           );
 
 
@@ -3964,20 +4296,15 @@
         }
 
 
-        setTimeout(
+        window.setTimeout(
           () => {
-
-            splash.classList.add(
-              "hide"
-            );
-
 
             login.classList.add(
               "visible"
             );
 
           },
-          1900
+          350
         );
       }
     );
