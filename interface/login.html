@@ -76,6 +76,7 @@
 
     .app {
       position: relative;
+      z-index: 1;
       width: 100%;
       height: calc(var(--vh) * 100);
       min-height: 100%;
@@ -298,6 +299,17 @@
       50%, 100% { transform: translateX(100%); }
     }
 
+    /* Animated monochrome line background */
+    #lineBackground {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      background: #050507;
+    }
+
     /* Main auth */
     #login {
       z-index: 10;
@@ -487,6 +499,141 @@
 
     .meta-chip svg {
       opacity: .7;
+    }
+
+    .brand-message {
+      position: relative;
+      min-height: 132px;
+      max-width: 620px;
+      margin-bottom: 8px;
+      overflow: hidden;
+    }
+
+    .brand-message-line {
+      position: relative;
+      display: block;
+      width: fit-content;
+      max-width: 100%;
+      color: rgba(255,255,255,.48);
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: .22em;
+      line-height: 1.4;
+      text-transform: uppercase;
+      margin-bottom: 10px;
+    }
+
+    .brand-message-line::before {
+      content: "";
+      display: inline-block;
+      width: 22px;
+      height: 1px;
+      margin-right: 9px;
+      vertical-align: middle;
+      background: rgba(255,255,255,.35);
+    }
+
+    .brand-message-title {
+      display: block;
+      min-height: 78px;
+      max-width: 620px;
+      font-size: clamp(34px, 4.3vw, 62px);
+      line-height: .98;
+      letter-spacing: -.05em;
+      font-weight: 700;
+      color: #fafafd;
+      text-wrap: balance;
+      transition: opacity .35s ease, transform .55s cubic-bezier(.2,.85,.2,1), filter .35s ease;
+    }
+
+    .brand-message-title .accent-word {
+      display: block;
+      color: #fff;
+    }
+
+    .brand-message-title.out {
+      opacity: 0;
+      transform: translateY(16px);
+      filter: blur(7px);
+    }
+
+    .brand-message-title.in {
+      animation: messageIn .6s cubic-bezier(.2,.9,.2,1) both;
+    }
+
+    .brand-message-sub {
+      margin-top: 10px;
+      max-width: 470px;
+      color: rgba(255,255,255,.44);
+      font-size: 13px;
+      line-height: 1.65;
+      transition: opacity .35s ease, transform .55s cubic-bezier(.2,.85,.2,1);
+    }
+
+    .brand-message-sub.out {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+
+    .brand-message-sub.in {
+      animation: subIn .65s ease both .05s;
+    }
+
+    .brand-state {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      margin-top: 18px;
+      color: rgba(255,255,255,.32);
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      transition: opacity .3s ease;
+    }
+
+    .brand-state-bars {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+    }
+
+    .brand-state-bars i {
+      display: block;
+      width: 16px;
+      height: 2px;
+      border-radius: 99px;
+      background: rgba(255,255,255,.18);
+      transition: background .3s ease, width .3s ease;
+    }
+
+    .brand-state-bars i.active {
+      width: 28px;
+      background: rgba(255,255,255,.78);
+    }
+
+    @keyframes messageIn {
+      from {
+        opacity: 0;
+        transform: translateY(18px);
+        filter: blur(8px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+        filter: blur(0);
+      }
+    }
+
+    @keyframes subIn {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
     }
 
     @keyframes softAppear {
@@ -956,6 +1103,10 @@
     }
 
     @media (prefers-reduced-motion: reduce) {
+      #lineBackground {
+        opacity: .9;
+      }
+
       *,
       *::before,
       *::after {
@@ -1109,6 +1260,7 @@
 </head>
 
 <body>
+  <canvas id="lineBackground" aria-hidden="true"></canvas>
   <div class="app">
     <div class="ambient" aria-hidden="true">
       <div class="ambient-grid"></div>
@@ -1144,12 +1296,29 @@
             <span>Klipza Studio</span>
           </div>
 
+          <div class="brand-message" aria-live="polite">
+            <span class="brand-message-line" id="brandMessageKicker">KAZER / BEM-VINDO DE VOLTA</span>
+            <span class="brand-message-title" id="brandMessageTitle">
+              Olá de novo<span class="accent-word">vamos continuar?</span>
+            </span>
+            <span class="brand-message-sub" id="brandMessageSub">
+              Entre na sua conta e retome sua experiência exatamente de onde parou.
+            </span>
+            <span class="brand-state" aria-hidden="true">
+              <span class="brand-state-bars">
+                <i id="brandStateBar1" class="active"></i>
+                <i id="brandStateBar2"></i>
+              </span>
+              <span id="brandStateLabel">entrar</span>
+            </span>
+          </div>
+
           <div class="brand-symbol">
             <img src="../download/assets/kazer-login-symbol.png" alt="" />
           </div>
 
           <h1 class="brand-title">
-            Bem-vindo ao
+            Seu espaço.
             <em>KAZER</em>
           </h1>
 
@@ -1442,6 +1611,7 @@
         isSignup = nextSignup;
 
         document.body.classList.toggle("mode-signup", isSignup);
+        animateBrandMessage(isSignup);
 
         if (isSignup) {
           authTitle.textContent = "Criar sua conta";
@@ -1562,6 +1732,157 @@
       });
 
       confirmInput.addEventListener("input", checkPasswordsMatch);
+
+      /* =========================================================
+         FUNDO EM LINHAS — PRETO & BRANCO
+      ========================================================= */
+      (() => {
+        const canvas = document.getElementById("lineBackground");
+        const ctx = canvas.getContext("2d", { alpha: false });
+        if (!ctx) return;
+
+        let width = 0;
+        let height = 0;
+        let dpr = 1;
+        let raf = 0;
+        let time = 0;
+
+        function resize() {
+          dpr = Math.min(2, window.devicePixelRatio || 1);
+          width = window.innerWidth;
+          height = window.innerHeight;
+          canvas.width = Math.floor(width * dpr);
+          canvas.height = Math.floor(height * dpr);
+          canvas.style.width = width + "px";
+          canvas.style.height = height + "px";
+          ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        }
+
+        function draw(ts) {
+          time = ts * 0.00055;
+
+          ctx.fillStyle = "#050507";
+          ctx.fillRect(0, 0, width, height);
+
+          const cols = Math.max(14, Math.min(30, Math.floor(width / 55)));
+          const rows = Math.max(12, Math.min(22, Math.floor(height / 48)));
+          const sx = width / Math.max(1, cols - 1);
+          const sy = height / Math.max(1, rows - 1);
+
+          for (let y = 0; y <= rows; y++) {
+            const baseY = y * sy;
+
+            ctx.beginPath();
+
+            for (let x = -2; x <= cols + 2; x++) {
+              const px = x * sx;
+              const wave =
+                Math.sin(x * 0.42 + time * 1.7 + y * 0.12) * 10 +
+                Math.sin(x * 0.16 - time * 1.08 + y * 0.36) * 7;
+
+              const py = baseY + wave;
+
+              if (x === -2) ctx.moveTo(px, py);
+              else ctx.lineTo(px, py);
+            }
+
+            const alpha = 0.055 + (Math.sin(y * 0.45 + time) + 1) * 0.018;
+            ctx.strokeStyle = `rgba(255,255,255,${alpha.toFixed(3)})`;
+            ctx.lineWidth = 0.7;
+            ctx.stroke();
+          }
+
+          for (let x = 0; x <= cols; x++) {
+            const baseX = x * sx;
+
+            ctx.beginPath();
+
+            for (let y = -2; y <= rows + 2; y++) {
+              const py = y * sy;
+              const wave =
+                Math.sin(y * 0.5 - time * 1.25 + x * 0.14) * 7 +
+                Math.sin(y * 0.19 + time * 1.4 + x * 0.27) * 5;
+
+              const px = baseX + wave;
+
+              if (y === -2) ctx.moveTo(px, py);
+              else ctx.lineTo(px, py);
+            }
+
+            const alpha = 0.035 + (Math.cos(x * 0.5 + time * 0.8) + 1) * 0.012;
+            ctx.strokeStyle = `rgba(255,255,255,${alpha.toFixed(3)})`;
+            ctx.lineWidth = 0.55;
+            ctx.stroke();
+          }
+
+          const glow = ctx.createRadialGradient(
+            width * 0.50, height * 0.44, 0,
+            width * 0.50, height * 0.44, Math.max(width, height) * 0.55
+          );
+          glow.addColorStop(0, "rgba(255,255,255,0.035)");
+          glow.addColorStop(0.4, "rgba(255,255,255,0.012)");
+          glow.addColorStop(1, "rgba(255,255,255,0)");
+
+          ctx.fillStyle = glow;
+          ctx.fillRect(0, 0, width, height);
+
+          raf = requestAnimationFrame(draw);
+        }
+
+        resize();
+        window.addEventListener("resize", resize, { passive: true });
+
+        if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+          draw(0);
+        } else {
+          raf = requestAnimationFrame(draw);
+        }
+      })();
+
+      /* =========================================================
+         MENSAGENS LATERAIS — LOGIN / CADASTRO
+      ========================================================= */
+      const brandMessageKicker = document.getElementById("brandMessageKicker");
+      const brandMessageTitle = document.getElementById("brandMessageTitle");
+      const brandMessageSub = document.getElementById("brandMessageSub");
+      const brandStateLabel = document.getElementById("brandStateLabel");
+      const brandStateBar1 = document.getElementById("brandStateBar1");
+      const brandStateBar2 = document.getElementById("brandStateBar2");
+
+      function animateBrandMessage(signup) {
+        brandMessageTitle.classList.remove("in");
+        brandMessageSub.classList.remove("in");
+        brandMessageTitle.classList.add("out");
+        brandMessageSub.classList.add("out");
+
+        setTimeout(() => {
+          if (signup) {
+            brandMessageKicker.textContent = "KAZER / NOVO COMEÇO";
+            brandMessageTitle.innerHTML = 'Vamos criar<span class="accent-word">sua experiência.</span>';
+            brandMessageSub.textContent =
+              "Crie seu acesso e prepare seu espaço para começar no Kazer.";
+            brandStateLabel.textContent = "criar conta";
+          } else {
+            brandMessageKicker.textContent = "KAZER / BEM-VINDO DE VOLTA";
+            brandMessageTitle.innerHTML = 'Olá de novo<span class="accent-word">vamos continuar?</span>';
+            brandMessageSub.textContent =
+              "Entre na sua conta e retome sua experiência exatamente de onde parou.";
+            brandStateLabel.textContent = "entrar";
+          }
+
+          brandStateBar1.classList.toggle("active", !signup);
+          brandStateBar2.classList.toggle("active", signup);
+
+          brandMessageTitle.classList.remove("out");
+          brandMessageSub.classList.remove("out");
+
+          void brandMessageTitle.offsetWidth;
+          void brandMessageSub.offsetWidth;
+
+          brandMessageTitle.classList.add("in");
+          brandMessageSub.classList.add("in");
+        }, 220);
+      }
 
       /* =========================================================
          SUPABASE — MANTIDO
