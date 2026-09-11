@@ -15,7 +15,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link
-    href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700;800&family=Inter:wght@400;500;600;700&family=UnifrakturMaguntia&display=swap"
+    href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700;800&family=Inter:wght@400;500;600;700&display=swap"
     rel="stylesheet"
   />
 
@@ -1649,7 +1649,7 @@
           ctx.save();
 
           const fontSize = Math.floor(H * .71);
-          ctx.font = `${fontSize}px "UnifrakturMaguntia", serif`;
+          ctx.font = `${fontSize}px "Cinzel", serif`;
           ctx.textAlign = "center";
           ctx.textBaseline = "middle";
 
@@ -1697,7 +1697,7 @@
         };
 
         if (document.fonts?.load) {
-          document.fonts.load('90px "UnifrakturMaguntia"').catch(() => {}).finally(start);
+          document.fonts.load('90px "Cinzel"').catch(() => {}).finally(start);
         } else {
           setTimeout(start, 250);
         }
