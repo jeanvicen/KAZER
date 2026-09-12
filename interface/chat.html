@@ -1332,6 +1332,27 @@
         cursor: default;
       }
 
+      .global-notice-backdrop { position: fixed; z-index: 90; inset: 0; background: rgba(6, 6, 8, .66); backdrop-filter: blur(6px); opacity: 0; pointer-events: none; transition: opacity 220ms var(--ease); }
+      .global-notice-backdrop.visible { opacity: 1; pointer-events: auto; }
+      .global-notice-modal { position: fixed; z-index: 91; top: 50%; left: 50%; display: flex; flex-direction: column; width: min(440px, calc(100vw - 32px)); max-height: min(620px, calc(100dvh - 48px)); overflow: hidden; border: 1px solid rgba(255,255,255,.08); border-radius: 22px; background: var(--page); box-shadow: 0 26px 78px rgba(0,0,0,.60); opacity: 0; transform: translate(-50%, -46%) scale(.97); transition: opacity 220ms var(--ease), transform 220ms var(--ease); pointer-events: none; }
+      .global-notice-modal.visible { opacity: 1; transform: translate(-50%, -50%) scale(1); pointer-events: auto; }
+      .global-notice-head { display: flex; align-items: center; justify-content: flex-end; padding: 13px 13px 0; }
+      .global-notice-close { display: inline-grid; place-items: center; width: 38px; height: 38px; border: 0; border-radius: 11px; background: transparent; color: var(--text-dim); cursor: pointer; }
+      .global-notice-close:hover { background: rgba(255,255,255,.06); color: var(--text); }
+      .global-notice-body { overflow-y: auto; padding: 8px 24px 24px; }
+      .global-notice-kicker { display: block; margin-bottom: 12px; color: #e7bc69; font-size: 10px; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; }
+      .global-notice-body h2 { margin: 0; color: var(--text); font-size: clamp(22px, 5vw, 30px); font-weight: 620; letter-spacing: -.04em; line-height: 1.08; }
+      .global-notice-body p { margin: 16px 0 0; color: var(--text-soft); font-size: 15px; line-height: 1.65; white-space: pre-wrap; }
+      .global-notice-footer { padding: 0 24px 24px; }
+      .global-notice-confirm { width: 100%; min-height: 48px; border: 0; border-radius: 13px; background: #fff; color: #101015; font: inherit; font-size: 14px; font-weight: 680; cursor: pointer; transition: transform 160ms var(--ease), box-shadow 160ms var(--ease); }
+      .global-notice-confirm:hover { box-shadow: 0 10px 25px rgba(255,255,255,.12); transform: translateY(-1px); }
+      .history-global-notice { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 68px; margin-bottom: 12px; padding: 12px 10px; border: 1px solid rgba(231,188,105,.22); border-radius: 12px; background: linear-gradient(100deg, rgba(231,188,105,.10), rgba(255,255,255,.025)); color: var(--text); text-align: left; cursor: pointer; animation: history-fade-up 420ms var(--ease) both; }
+      .history-global-notice:hover { border-color: rgba(231,188,105,.45); background: linear-gradient(100deg, rgba(231,188,105,.15), rgba(255,255,255,.04)); }
+      .history-global-notice-mark { display: inline-grid; place-items: center; width: 34px; height: 34px; flex: 0 0 auto; border-radius: 10px; background: rgba(231,188,105,.15); color: #e7bc69; }
+      .history-global-notice-copy { min-width: 0; }
+      .history-global-notice-copy strong { display: block; overflow: hidden; font-size: 13px; font-weight: 650; text-overflow: ellipsis; white-space: nowrap; }
+      .history-global-notice-copy small { display: block; margin-top: 3px; color: var(--text-dim); font-size: 10px; }
+      .history-global-notice-arrow { margin-left: auto; color: #e7bc69; font-size: 18px; }
       .plans-backdrop {
         position: fixed;
         z-index: 88;
@@ -3376,7 +3397,13 @@
           <button class="connector-single-action" id="connectorSingleAction" type="button"><span class="connector-single-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" width="18" height="18"><path d="M9 3v4M15 3v4"></path><path d="M6 7h12v4a6 6 0 0 1-6 6 6 6 0 0 1-6-6Z"></path><path d="M12 17v4"></path></svg></span><strong>Conectores</strong></button>
         </div>
       </section>
-      <button class="workspace-toggle" id="workspaceToggle" type="button" aria-label="Abrir tarefas e repositórios" aria-controls="workspacePanel" aria-expanded="false"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m13 2-9 12h7l-1 8 9-12h-7l1-8Z"></path></svg></button><aside class="workspace-panel" id="workspacePanel" aria-label="Tarefas e repositórios" aria-hidden="true"><header class="workspace-head"><div class="workspace-head-copy"><span class="workspace-eyebrow">KAZER WORKSPACE</span><h2>Tarefas e repositórios</h2></div><button class="workspace-close" id="workspaceClose" type="button" aria-label="Fechar painel">×</button></header><nav class="workspace-tabs" aria-label="Workspace"><button class="workspace-tab active" type="button" data-workspace-tab="tasks">Tarefas</button><button class="workspace-tab" type="button" data-workspace-tab="repos">Repositórios</button></nav><div class="workspace-content" id="workspaceContent"></div><footer class="workspace-footer" id="workspaceFooter">As tarefas aparecem somente quando o KAZER trabalha com conectores ou repositórios.</footer></aside><div class="toast" id="toast" role="status" aria-live="polite"></div>
+      <button class="workspace-toggle" id="workspaceToggle" type="button" aria-label="Abrir tarefas e repositórios" aria-controls="workspacePanel" aria-expanded="false"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m13 2-9 12h7l-1 8 9-12h-7l1-8Z"></path></svg></button><aside class="workspace-panel" id="workspacePanel" aria-label="Tarefas e repositórios" aria-hidden="true"><header class="workspace-head"><div class="workspace-head-copy"><span class="workspace-eyebrow">KAZER WORKSPACE</span><h2>Tarefas e repositórios</h2></div><button class="workspace-close" id="workspaceClose" type="button" aria-label="Fechar painel">×</button></header><nav class="workspace-tabs" aria-label="Workspace"><button class="workspace-tab active" type="button" data-workspace-tab="tasks">Tarefas</button><button class="workspace-tab" type="button" data-workspace-tab="repos">Repositórios</button></nav><div class="workspace-content" id="workspaceContent"></div><footer class="workspace-footer" id="workspaceFooter">As tarefas aparecem somente quando o KAZER trabalha com conectores ou repositórios.</footer></aside>      <div class="global-notice-backdrop" id="globalNoticeBackdrop" hidden></div>
+      <section class="global-notice-modal" id="globalNoticeModal" role="dialog" aria-modal="true" aria-labelledby="globalNoticeTitle" aria-describedby="globalNoticeMessage" aria-hidden="true" hidden>
+        <header class="global-notice-head"><button class="global-notice-close" id="globalNoticeClose" type="button" aria-label="Fechar anúncio">×</button></header>
+        <div class="global-notice-body"><span class="global-notice-kicker">Novidade no KAZER</span><h2 id="globalNoticeTitle"></h2><p id="globalNoticeMessage"></p></div>
+        <footer class="global-notice-footer"><button class="global-notice-confirm" id="globalNoticeConfirm" type="button">Entendi</button></footer>
+      </section>
+      <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
     </main>
 
@@ -3517,6 +3544,12 @@
         const installNow = document.getElementById("installNow");
         const installLater = document.getElementById("installLater");
         const installDismiss = document.getElementById("installDismiss");
+        const globalNoticeBackdrop = document.getElementById("globalNoticeBackdrop");
+        const globalNoticeModal = document.getElementById("globalNoticeModal");
+        const globalNoticeTitle = document.getElementById("globalNoticeTitle");
+        const globalNoticeMessage = document.getElementById("globalNoticeMessage");
+        const globalNoticeClose = document.getElementById("globalNoticeClose");
+        const globalNoticeConfirm = document.getElementById("globalNoticeConfirm");
           const historyScreen = document.getElementById("historyScreen");
         const historySearchField = document.getElementById("historySearchField");
         const historySearchInput = document.getElementById("historySearchInput");
@@ -3542,6 +3575,9 @@
         let viewMode = new URLSearchParams(window.location.search).get("view") === "chat" ? "new-chat" : "history";
         let historyItems = [];
         let activeChatHistoryId = null;
+        let globalNotice = null;
+        let globalNoticeSeenVersion = null;
+        let globalNoticeLoaded = false;
         const historyStoragePrefix = "kazer-chat-history:";
         let selectedFiles = [];
         const maxClientFileBytes = 4 * 1024 * 1024;
@@ -3698,6 +3734,7 @@
           }
           await safeQuery(kazerSupabase.rpc("touch_user_activity"));
           await loadUsage(false);
+          await loadGlobalNotice();
           window.clearInterval(usageRefreshTimer);
           usageRefreshTimer = window.setInterval(() => loadUsage(false), 60_000);
           await loadRetentionNotice();
@@ -3783,6 +3820,9 @@
           }
         };
 
+        globalNoticeClose?.addEventListener("click", markGlobalNoticeSeen);
+        globalNoticeConfirm?.addEventListener("click", markGlobalNoticeSeen);
+        globalNoticeBackdrop?.addEventListener("click", markGlobalNoticeSeen);
         const loadRetentionNotice = async () => {
           if (!currentUser || !kazerSupabase || settingsState.notifications === false || !retentionBanner) return;
           const result = await kazerSupabase.from("account_notifications").select("id,title,message,warning_days").is("read_at", null).order("created_at", { ascending: false }).limit(1);
@@ -4005,6 +4045,41 @@
 
         const historyIcon = (kind) => kind === "task" ? '<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 4 4L19 6"></path><path d="M12 21a9 9 0 1 0-9-9"></path></svg>' : '<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11.5a7.4 7.4 0 0 1-7.6 7.5 8.2 8.2 0 0 1-3.1-.6L5 20l1.4-3.7a7.2 7.2 0 0 1-1.5-4.5A7.4 7.4 0 0 1 12.4 4 7.4 7.4 0 0 1 20 11.5Z"></path><path d="M8.5 11.5h7"></path></svg>';
 
+        const globalNoticeUrl = "https://raw.githubusercontent.com/jeanvicen/KAZER/main/Control/notificacao.json";
+        const validGlobalNotice = (value) => value && value.ativo === true && Number.isInteger(Number(value.versao)) && Number(value.versao) >= 1 && String(value.titulo || "").trim() && String(value.mensagem || "").trim();
+        const hideGlobalNotice = () => {
+          if (!globalNoticeModal) return;
+          globalNoticeModal.classList.remove("visible"); globalNoticeBackdrop?.classList.remove("visible"); globalNoticeModal.setAttribute("aria-hidden", "true");
+          window.setTimeout(() => { globalNoticeModal.hidden = true; if (globalNoticeBackdrop) globalNoticeBackdrop.hidden = true; }, 230);
+        };
+        const markGlobalNoticeSeen = async () => {
+          const version = Number(globalNotice?.versao);
+          hideGlobalNotice();
+          if (!currentUser || !kazerSupabase || !version) return;
+          try { await kazerSupabase.from("notificacoes_vistas").upsert({ user_id: currentUser.id, versao_vista: version, atualizado_em: new Date().toISOString() }, { onConflict: "user_id" }); globalNoticeSeenVersion = version; } catch {}
+        };
+        const showGlobalNotice = (shouldMarkSeen = false) => {
+          if (!globalNotice || !globalNoticeModal || !globalNoticeBackdrop) return;
+          globalNoticeTitle.textContent = String(globalNotice.titulo).trim(); globalNoticeMessage.textContent = String(globalNotice.mensagem).trim();
+          globalNoticeModal.hidden = false; globalNoticeBackdrop.hidden = false; globalNoticeModal.setAttribute("aria-hidden", "false");
+          requestAnimationFrame(() => { globalNoticeModal.classList.add("visible"); globalNoticeBackdrop.classList.add("visible"); globalNoticeConfirm?.focus(); });
+          globalNoticeModal.dataset.markSeen = shouldMarkSeen ? "true" : "false";
+        };
+        const loadGlobalNotice = async () => {
+          if (!currentUser || !kazerSupabase) return;
+          try {
+            const response = await fetch(globalNoticeUrl + "?t=" + Date.now(), { cache: "no-store", signal: AbortSignal.timeout(3500) });
+            if (!response.ok) return;
+            const data = await response.json();
+            if (!validGlobalNotice(data)) { globalNotice = null; globalNoticeLoaded = true; renderChatHistory(); return; }
+            globalNotice = { ativo: true, versao: Number(data.versao), titulo: String(data.titulo).trim(), mensagem: String(data.mensagem).trim() }; globalNoticeLoaded = true;
+            const seenResult = await Promise.race([kazerSupabase.from("notificacoes_vistas").select("versao_vista").eq("user_id", currentUser.id).maybeSingle(), new Promise((resolve) => window.setTimeout(() => resolve({ data: null, error: { message: "timeout" } }), 2500))]);
+            globalNoticeSeenVersion = Number(seenResult.data?.versao_vista || 0);
+            renderChatHistory();
+            if (settingsState.notifications !== false && !seenResult.error && globalNoticeSeenVersion < globalNotice.versao) showGlobalNotice(true);
+          } catch { globalNotice = null; globalNoticeLoaded = true; renderChatHistory(); }
+        };
+
         const renderChatHistory = () => {
           if (!historyList || !historyEmpty) return;
           const query = String(historySearchInput?.value || "").trim().toLocaleLowerCase();
@@ -4017,11 +4092,13 @@
             return diff === 0 ? "Hoje" : diff === 1 ? "Ontem" : "Mais antigas";
           };
           let previousGroup = "";
-          historyList.innerHTML = filtered.map((item) => {
+          const noticeItem = globalNotice ? '<button class="history-global-notice" type="button" data-global-notice="true"><span class="history-global-notice-mark" aria-hidden="true">✦</span><span class="history-global-notice-copy"><strong>' + escapeHtml(globalNotice.titulo) + '</strong><small>Novidade do KAZER · Toque para ler</small></span><span class="history-global-notice-arrow" aria-hidden="true">›</span></button>' : '';
+          historyList.innerHTML = noticeItem + filtered.map((item) => {
             const group = groupLabel(item.createdAt); const heading = group !== previousGroup ? '<div class="history-group-label" role="heading" aria-level="3">' + group + '</div>' : '';
             previousGroup = group;
             return heading + '<div class="history-item" data-history-row="' + escapeHtml(item.id) + '"><button class="history-item-open" type="button" data-history-id="' + escapeHtml(item.id) + '"><span class="history-item-copy"><strong>' + escapeHtml(item.title) + '</strong><small>' + escapeHtml(item.excerpt || "Conversa com o KAZER") + '</small></span></button><time class="history-item-time" datetime="' + escapeHtml(item.createdAt) + '">' + escapeHtml(historyDateLabel(item.createdAt)) + '</time><button class="history-item-action" type="button" data-history-delete="' + escapeHtml(item.id) + '">Apagar chat</button></div>';
           }).join("");
+          historyList.querySelectorAll("[data-global-notice]").forEach((button) => button.addEventListener("click", () => showGlobalNotice(false)));
           historyList.querySelectorAll("[data-history-id]").forEach((button) => button.addEventListener("click", (event) => {
             if (event.defaultPrevented) return;
             const row = button.closest("[data-history-row]");
@@ -4190,6 +4267,7 @@
           }
           if (isHistory) {
             closeMenus();
+            if (currentUser) loadGlobalNotice();
             toast?.classList.remove("visible");
             loadChatHistory();
           } else {
@@ -5026,8 +5104,9 @@
           settingsState.notifications = !settingsState.notifications;
           persistSettings();
           applySettings();
-          if (settingsState.notifications) loadRetentionNotice();
+          if (settingsState.notifications) { loadRetentionNotice(); if (globalNotice && globalNoticeSeenVersion < globalNotice.versao) showGlobalNotice(true); }
           else if (retentionBanner) hideRetentionNotice();
+          if (!settingsState.notifications) hideGlobalNotice();
         });
         installSwitch.addEventListener("click", () => {
           settingsState.installPrompt = !settingsState.installPrompt;
