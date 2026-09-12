@@ -149,6 +149,21 @@ function parseMessages(value) {
   return messages;
 }
 
+function parseTitleMessages(value) {
+  if (!Array.isArray(value) || value.length === 0 || value.length > MAX_RECEIVED_MESSAGES) return null;
+  let totalChars = 0;
+  const messages = [];
+  for (const item of value.slice(-MAX_MESSAGES)) {
+    if (!item || !["user", "assistant"].includes(item.role) || typeof item.content !== "string") return null;
+    const content = cleanUserContent(item.content);
+    if (!content || content.length > MAX_MESSAGE_CHARS) return null;
+    totalChars += content.length;
+    if (totalChars > MAX_TOTAL_CHARS) return null;
+    messages.push({ role: item.role, content });
+  }
+  return messages;
+}
+
 function parseDataUrl(dataUrl) {
   if (typeof dataUrl !== "string") return null;
   const match = dataUrl.match(/^data:([^;,]+);base64,([a-zA-Z0-9+/=\s]+)$/);
@@ -453,8 +468,9 @@ module.exports = async function handler(request, response) {
 
   const messages = parseMessages(body?.messages);
   if (body?.purpose === "title") {
-    if (!messages) return sendJson(response, 400, { error: "Conversa inválida para gerar título." });
-    const titlePrompt = [{ role: "user", content: "Crie um título curto para esta conversa. Responda SOMENTE com o título, em português, com no máximo 6 palavras, sem aspas, sem ponto final e sem explicações. O título deve representar o objetivo principal do usuário, não copiar literalmente a primeira mensagem.\n\nConversa:\n" + messages.map((item) => `${item.role === "user" ? "Usuário" : "KAZER"}: ${item.content}`).join("\n").slice(0, 6000) }];
+    const titleMessages = parseTitleMessages(body?.messages);
+    if (!titleMessages) return sendJson(response, 400, { error: "Conversa inválida para gerar título." });
+    const titlePrompt = [{ role: "user", content: "Crie um título curto para esta conversa. Responda SOMENTE com o título, em português, com no máximo 6 palavras, sem aspas, sem ponto final e sem explicações. O título deve representar o objetivo principal do usuário, não copiar literalmente a primeira mensagem.\n\nConversa:\n" + titleMessages.map((item) => `${item.role === "user" ? "Usuário" : "KAZER"}: ${item.content}`).join("\n").slice(0, 6000) }];
     const result = await callGroq({ apiKey, models: [process.env.GROQ_MODEL || DEFAULT_TEXT_MODEL], messages: titlePrompt, hasImages: false });
     if (result.failure) return sendJson(response, 502, { error: "Não foi possível gerar o título agora." });
     const title = cleanModelContent(result.data?.choices?.[0]?.message?.content).replace(/[\r\n]+/g, " ").replace(/^['"“”]+|['"“”]+$/g, "").trim().slice(0, 72);

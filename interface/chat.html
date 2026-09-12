@@ -4022,11 +4022,13 @@
             previousGroup = group;
             return heading + '<div class="history-item" data-history-row="' + escapeHtml(item.id) + '"><button class="history-item-open" type="button" data-history-id="' + escapeHtml(item.id) + '"><span class="history-item-copy"><strong>' + escapeHtml(item.title) + '</strong><small>' + escapeHtml(item.excerpt || "Conversa com o KAZER") + '</small></span></button><time class="history-item-time" datetime="' + escapeHtml(item.createdAt) + '">' + escapeHtml(historyDateLabel(item.createdAt)) + '</time><button class="history-item-action" type="button" data-history-delete="' + escapeHtml(item.id) + '">Apagar chat</button></div>';
           }).join("");
-          historyList.querySelectorAll("[data-history-id]").forEach((button) => button.addEventListener("click", () => {
+          historyList.querySelectorAll("[data-history-id]").forEach((button) => button.addEventListener("click", (event) => {
+            if (event.defaultPrevented) return;
             const row = button.closest("[data-history-row]");
             if (!row) return;
             historyList.querySelectorAll("[data-history-row]").forEach((item) => item.classList.remove("is-selected"));
             row.classList.add("is-selected");
+            openChatFromHistory(button.dataset.historyId);
           }));
           historyList.querySelectorAll("[data-history-delete]").forEach((button) => button.addEventListener("click", (event) => {
             event.stopPropagation();
@@ -4106,7 +4108,7 @@
           if (activeChatHistoryId) return activeChatHistoryId;
           const id = window.crypto?.randomUUID?.() || "chat-" + Date.now();
           const items = readChatHistory().filter((item) => item.id !== id);
-          items.unshift({ id, title: "Gerando título…", titleGenerated: false, excerpt: "Conversa com o KAZER", searchText: String(prompt || ""), createdAt: new Date().toISOString(), kind: "chat" });
+          items.unshift({ id, title: "Gerando título…", titleGenerated: false, excerpt: "Conversa com o KAZER", searchText: String(prompt || ""), messages: [{ role: "user", content: String(prompt || "") }], createdAt: new Date().toISOString(), kind: "chat" });
           saveChatHistory(items);
           activeChatHistoryId = id;
           if (viewMode === "history") renderChatHistory();
@@ -4138,6 +4140,27 @@
           if (!item) return;
           item.searchText = ((item.searchText || "") + " " + String(content || "")).trim().slice(0, 12000);
           saveChatHistory(items);
+        };
+
+        const saveChatMessages = (chatId, messages) => {
+          const items = readChatHistory(); const item = items.find((entry) => entry.id === chatId);
+          if (!item) return;
+          item.messages = messages.filter((message) => message && ["user", "assistant"].includes(message.role) && typeof message.content === "string").slice(-40);
+          saveChatHistory(items);
+        };
+
+        const openChatFromHistory = (id) => {
+          const item = readChatHistory().find((entry) => entry.id === id);
+          if (!item) return;
+          activeChatHistoryId = id;
+          conversationMessages = Array.isArray(item.messages) ? item.messages.slice() : [];
+          if (!conversationMessages.length) { showToast("Esta conversa ainda não tem mensagens salvas"); return; }
+          messageList.replaceChildren();
+          conversationMode();
+          conversationMessages.forEach((message) => append(createMessage(message.role, message.content)));
+          setView("new-chat", { push: true });
+          scrollBottom();
+          messageInput.focus();
         };
 
         const updateGreeting = () => {
@@ -4818,6 +4841,7 @@
             append(assistantRow);
             await revealAssistantMessage(assistantRow, answer.trim(), controller.signal);
             conversationMessages.push({ role: "assistant", content: answer.trim() });
+            saveChatMessages(chatId, conversationMessages);
             updateChatSearchText(chatId, answer.trim());
             if (conversationMessages.length === 2) generateChatTitle(chatId, conversationMessages.slice(), controller.signal);
             window.kazerWorkspace?.finishTask?.(taskContext, answer.trim(), data.credit_cost);
@@ -4850,6 +4874,7 @@
           const stopped = "Resposta interrompida. Podemos continuar quando quiser.";
           window.kazerWorkspace?.stopTask?.(window.kazerActiveTaskContext);
           conversationMessages.push({ role: "assistant", content: stopped });
+          if (activeChatHistoryId) saveChatMessages(activeChatHistoryId, conversationMessages);
           append(createMessage("assistant", stopped));
           setBusy(false);
           messageInput.focus();
