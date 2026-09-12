@@ -2722,7 +2722,7 @@
 
       .history-list { display: grid; gap: 0; border-top: 1px solid var(--line-soft); border-top-color: rgba(255,255,255,.05); }
 
-      .history-item { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: center; gap: 12px; min-height: 72px; border-bottom: 1px solid var(--line-soft); animation: history-fade-up 480ms var(--ease) both; transition: background 160ms var(--ease); padding: 0 4px; border-bottom-color: rgba(255,255,255,.042); border-radius: 4px; }
+      .history-item { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 12px; min-height: 72px; border-bottom: 1px solid var(--line-soft); animation: history-fade-up 480ms var(--ease) both; transition: background 160ms var(--ease); padding: 0 4px; border-bottom-color: rgba(255,255,255,.042); border-radius: 4px; }
 
       .history-item:hover,
       .history-item.is-selected { background: rgba(255,255,255,.025); }
@@ -2730,7 +2730,7 @@
       .history-item-open { min-width: 0; padding: 16px 2px; border: 0; background: transparent; color: var(--text); text-align: left; cursor: pointer; }
 
       .history-item-open:focus-visible,
-      .history-item-delete:focus-visible { outline: 2px solid #e7bc69; outline-offset: 4px; }
+      .history-item-action:focus-visible { outline: 2px solid #e7bc69; outline-offset: 4px; }
 
       .history-item:nth-child(2) { animation-delay: 38ms; }
       .history-item:nth-child(3) { animation-delay: 76ms; }
@@ -2742,12 +2742,8 @@
       .history-item-copy strong { display: block; overflow: hidden; color: var(--text); font-size: 14px; font-weight: 450; letter-spacing: -.014em; text-overflow: ellipsis; white-space: nowrap; }
       .history-item-copy small { display: none; }
       .history-item-time { color: var(--text-dim); font-size: 10.5px; white-space: nowrap; letter-spacing: .01em; font-variant-numeric: tabular-nums; }
-      .history-item-delete { display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; margin-right: 2px; border: 0; border-radius: 9px; background: transparent; color: var(--text-dim); cursor: pointer; opacity: 0; transition: opacity 180ms var(--ease), color 180ms var(--ease), background 180ms var(--ease); }
-      .history-item:hover .history-item-delete,
-      .history-item.is-selected .history-item-delete,
-      .history-item-delete:focus-visible { opacity: 1; }
-      .history-item-delete:hover { background: rgba(240,116,116,.12); color: #f1b3a4; }
-      .history-item-delete .icon { width: 17px; height: 17px; }
+      .history-item-action { display: none; align-items: center; min-height: 32px; padding: 0 10px; border: 1px solid rgba(240,116,116,.35); border-radius: 9px; background: rgba(240,116,116,.10); color: #f1b3a4; font: inherit; font-size: 12px; cursor: pointer; }
+      .history-item.is-delete-ready .history-item-action { display: inline-flex; }
 
       .history-empty { display: grid; justify-items: center; padding: 62px 18px 32px; border-top: 1px solid var(--line-soft); color: var(--text-soft); text-align: center; animation: history-fade-up 480ms var(--ease) both; border-top-color: rgba(255,255,255,.05); }
 
@@ -2827,7 +2823,6 @@
         .history-item-open { padding: 15px 0; }
         .history-item-copy strong { font-size: 14px; }
         .history-item-time { font-size: 10px; }
-        .history-item-delete { opacity: 1; margin-right: 0; }
         .history-new-chat { width: 58px; height: 58px; right: 20px; }
         .new-chat-header { height: 70px; padding-right: 14px; padding-left: 14px; }
         .new-chat-back { width: 42px; height: 42px; }
@@ -4006,7 +4001,7 @@
           if (!historyList || !historyEmpty) return;
           const query = String(historySearchInput?.value || "").trim().toLocaleLowerCase();
           const filtered = historyItems.filter((item) => (item.title + " " + (item.excerpt || "")).toLocaleLowerCase().includes(query));
-          historyList.innerHTML = filtered.map((item) => '<div class="history-item" data-history-row="' + escapeHtml(item.id) + '"><button class="history-item-open" type="button" data-history-id="' + escapeHtml(item.id) + '"><span class="history-item-copy"><strong>' + escapeHtml(item.title) + '</strong><small>' + escapeHtml(item.excerpt || "Conversa com o KAZER") + '</small></span></button><time class="history-item-time" datetime="' + escapeHtml(item.createdAt) + '">' + escapeHtml(historyDateLabel(item.createdAt)) + '</time><button class="history-item-delete" type="button" data-history-delete="' + escapeHtml(item.id) + '" aria-label="Excluir ' + escapeHtml(item.title) + '"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16"></path><path d="M10 11v6M14 11v6"></path><path d="M6 7l1 13h10l1-13M9 7V4h6v3"></path></svg></button></div>').join("");
+          historyList.innerHTML = filtered.map((item) => '<div class="history-item" data-history-row="' + escapeHtml(item.id) + '"><button class="history-item-open" type="button" data-history-id="' + escapeHtml(item.id) + '"><span class="history-item-copy"><strong>' + escapeHtml(item.title) + '</strong><small>' + escapeHtml(item.excerpt || "Conversa com o KAZER") + '</small></span></button><time class="history-item-time" datetime="' + escapeHtml(item.createdAt) + '">' + escapeHtml(historyDateLabel(item.createdAt)) + '</time><button class="history-item-action" type="button" data-history-delete="' + escapeHtml(item.id) + '">Apagar chat</button></div>').join("");
           historyList.querySelectorAll("[data-history-id]").forEach((button) => button.addEventListener("click", () => {
             const row = button.closest("[data-history-row]");
             if (!row) return;
@@ -4020,6 +4015,27 @@
             renderChatHistory();
             showToast("Chat excluído");
           }));
+          historyList.querySelectorAll("[data-history-row]").forEach((row) => {
+            let pressTimer = null;
+            let longPress = false;
+            const clearPress = () => { if (pressTimer) window.clearTimeout(pressTimer); pressTimer = null; };
+            row.addEventListener("pointerdown", (event) => {
+              if (event.target.closest("[data-history-delete]")) return;
+              longPress = false;
+              pressTimer = window.setTimeout(() => {
+                longPress = true;
+                historyList.querySelectorAll("[data-history-row]").forEach((item) => item.classList.remove("is-delete-ready"));
+                row.classList.add("is-delete-ready");
+                row.querySelector("[data-history-delete]")?.focus();
+                showToast("Toque em “Apagar chat” para excluir");
+              }, 560);
+            });
+            row.addEventListener("pointerup", clearPress);
+            row.addEventListener("pointercancel", clearPress);
+            row.addEventListener("pointerleave", clearPress);
+            row.addEventListener("click", (event) => { if (longPress) { event.preventDefault(); event.stopPropagation(); longPress = false; } }, true);
+            row.addEventListener("contextmenu", (event) => { event.preventDefault(); row.classList.add("is-delete-ready"); row.querySelector("[data-history-delete]")?.focus(); });
+          });
           const empty = filtered.length === 0;
           historyEmpty.hidden = !empty;
           if (query && !historyItems.length) {
@@ -4061,13 +4077,28 @@
         const rememberChat = (prompt, files = []) => {
           if (activeChatHistoryId) return activeChatHistoryId;
           const id = window.crypto?.randomUUID?.() || "chat-" + Date.now();
-          const title = createChatTitle(prompt, files);
           const items = readChatHistory().filter((item) => item.id !== id);
-          items.unshift({ id, title, excerpt: "Conversa com o KAZER", createdAt: new Date().toISOString(), kind: "chat" });
+          items.unshift({ id, title: "Nova conversa", titleGenerated: false, excerpt: "Conversa com o KAZER", createdAt: new Date().toISOString(), kind: "chat" });
           saveChatHistory(items);
           activeChatHistoryId = id;
           if (viewMode === "history") renderChatHistory();
           return id;
+        };
+
+        const generateChatTitle = async (chatId, messages, signal) => {
+          try {
+            const response = await fetchWithAuth("/api/chat", { method: "POST", body: JSON.stringify({ purpose: "title", messages }), signal });
+            const data = await response.json().catch(() => ({}));
+            if (!response.ok || typeof data.title !== "string" || !data.title.trim()) return;
+            const title = data.title.replace(/[\r\n]+/g, " ").replace(/^['"“”]+|['"“”]+$/g, "").trim().slice(0, 72);
+            if (!title) return;
+            const items = readChatHistory();
+            const item = items.find((entry) => entry.id === chatId);
+            if (!item || item.titleGenerated) return;
+            item.title = title; item.titleGenerated = true;
+            saveChatHistory(items);
+            if (viewMode === "history") renderChatHistory();
+          } catch (error) { if (error?.name !== "AbortError") console.warn("Não foi possível gerar o título do chat", error); }
         };
 
         const updateGreeting = () => {
@@ -4703,7 +4734,7 @@
           if (!text && files.length === 0) return;
 
           const prompt = text || "Analise os arquivos anexados e explique os pontos principais.";
-          rememberChat(prompt, files);
+          const chatId = rememberChat(prompt, files);
           const taskContext = window.kazerWorkspace?.startTask?.({ prompt, attachmentCount: files.length }) || null;
           window.kazerActiveTaskContext = taskContext;
           const mcpConnectorIds = taskContext?.mcpConnectorIds || [];
@@ -4748,6 +4779,7 @@
             append(assistantRow);
             await revealAssistantMessage(assistantRow, answer.trim(), controller.signal);
             conversationMessages.push({ role: "assistant", content: answer.trim() });
+            if (conversationMessages.length === 2) generateChatTitle(chatId, conversationMessages.slice(), controller.signal);
             window.kazerWorkspace?.finishTask?.(taskContext, answer.trim(), data.credit_cost);
           } catch (error) {
             if (error.name === "AbortError" || activeRequestController !== controller) {
