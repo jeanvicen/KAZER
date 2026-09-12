@@ -2739,11 +2739,14 @@
       .history-item:nth-child(6) { animation-delay: 190ms; }
 
       .history-item-copy { min-width: 0; }
-      .history-item-copy strong { display: block; overflow: hidden; color: var(--text); font-size: 14px; font-weight: 450; letter-spacing: -.014em; text-overflow: ellipsis; white-space: nowrap; }
+      .history-item-copy strong { display: block; overflow: hidden; color: var(--text); font-size: 14.5px; font-weight: 570; letter-spacing: -.018em; text-overflow: ellipsis; white-space: nowrap; }
       .history-item-copy small { display: none; }
-      .history-item-time { color: var(--text-dim); font-size: 10.5px; white-space: nowrap; letter-spacing: .01em; font-variant-numeric: tabular-nums; }
-      .history-item-action { display: none; align-items: center; min-height: 32px; padding: 0 10px; border: 1px solid rgba(240,116,116,.35); border-radius: 9px; background: rgba(240,116,116,.10); color: #f1b3a4; font: inherit; font-size: 12px; cursor: pointer; }
-      .history-item.is-delete-ready .history-item-action { display: inline-flex; }
+      .history-item-time { color: color-mix(in srgb, var(--text-dim) 78%, transparent); font-size: 10px; white-space: nowrap; letter-spacing: .01em; font-variant-numeric: tabular-nums; }
+      .history-item-action { display: none; align-items: center; min-height: 36px; padding: 0 12px; border: 1px solid rgba(240,116,116,.35); border-radius: 9px; background: rgba(240,116,116,.10); color: #f1b3a4; font: inherit; font-size: 12px; cursor: pointer; white-space: nowrap; animation: history-action-in 180ms var(--ease) both; }
+      .history-item.is-delete-ready .history-item-action,
+      .history-item.is-swipe-ready .history-item-action { display: inline-flex; }
+      .history-item.is-removing { opacity: 0; transform: translateX(-22px) scale(.98); pointer-events: none; }
+      @keyframes history-action-in { from { opacity: 0; transform: translateX(8px); } to { opacity: 1; transform: translateX(0); } }
 
       .history-empty { display: grid; justify-items: center; padding: 62px 18px 32px; border-top: 1px solid var(--line-soft); color: var(--text-soft); text-align: center; animation: history-fade-up 480ms var(--ease) both; border-top-color: rgba(255,255,255,.05); }
 
@@ -3758,12 +3761,17 @@
           }, reducedMotion ? 520 : 2200);
         };
 
-        const showToast = (message) => {
+        const showToast = (message, options = {}) => {
           if (settingsState.notifications === false) return;
-          toast.textContent = message;
+          toast.replaceChildren();
+          const text = document.createElement("span"); text.textContent = message; toast.appendChild(text);
+          if (options.actionLabel && typeof options.onAction === "function") {
+            const action = document.createElement("button"); action.className = "toast-action"; action.type = "button"; action.textContent = options.actionLabel;
+            action.addEventListener("click", () => { window.clearTimeout(toastTimer); toast.classList.remove("visible"); options.onAction(); }, { once: true }); toast.appendChild(action);
+          }
           toast.classList.add("visible");
           window.clearTimeout(toastTimer);
-          toastTimer = window.setTimeout(() => toast.classList.remove("visible"), 2300);
+          toastTimer = window.setTimeout(() => toast.classList.remove("visible"), options.actionLabel ? 5000 : 2300);
         };
         window.kazerShowToast = showToast;
 
@@ -4000,8 +4008,20 @@
         const renderChatHistory = () => {
           if (!historyList || !historyEmpty) return;
           const query = String(historySearchInput?.value || "").trim().toLocaleLowerCase();
-          const filtered = historyItems.filter((item) => (item.title + " " + (item.excerpt || "")).toLocaleLowerCase().includes(query));
-          historyList.innerHTML = filtered.map((item) => '<div class="history-item" data-history-row="' + escapeHtml(item.id) + '"><button class="history-item-open" type="button" data-history-id="' + escapeHtml(item.id) + '"><span class="history-item-copy"><strong>' + escapeHtml(item.title) + '</strong><small>' + escapeHtml(item.excerpt || "Conversa com o KAZER") + '</small></span></button><time class="history-item-time" datetime="' + escapeHtml(item.createdAt) + '">' + escapeHtml(historyDateLabel(item.createdAt)) + '</time><button class="history-item-action" type="button" data-history-delete="' + escapeHtml(item.id) + '">Apagar chat</button></div>').join("");
+          const filtered = historyItems.filter((item) => (item.title + " " + (item.excerpt || "") + " " + (item.searchText || "")).toLocaleLowerCase().includes(query));
+          const groupLabel = (value) => {
+            const date = new Date(value); const now = new Date();
+            const start = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+            const day = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+            const diff = Math.round((start - day) / 86400000);
+            return diff === 0 ? "Hoje" : diff === 1 ? "Ontem" : "Mais antigas";
+          };
+          let previousGroup = "";
+          historyList.innerHTML = filtered.map((item) => {
+            const group = groupLabel(item.createdAt); const heading = group !== previousGroup ? '<div class="history-group-label" role="heading" aria-level="3">' + group + '</div>' : '';
+            previousGroup = group;
+            return heading + '<div class="history-item" data-history-row="' + escapeHtml(item.id) + '"><button class="history-item-open" type="button" data-history-id="' + escapeHtml(item.id) + '"><span class="history-item-copy"><strong>' + escapeHtml(item.title) + '</strong><small>' + escapeHtml(item.excerpt || "Conversa com o KAZER") + '</small></span></button><time class="history-item-time" datetime="' + escapeHtml(item.createdAt) + '">' + escapeHtml(historyDateLabel(item.createdAt)) + '</time><button class="history-item-action" type="button" data-history-delete="' + escapeHtml(item.id) + '">Apagar chat</button></div>';
+          }).join("");
           historyList.querySelectorAll("[data-history-id]").forEach((button) => button.addEventListener("click", () => {
             const row = button.closest("[data-history-row]");
             if (!row) return;
@@ -4011,9 +4031,14 @@
           historyList.querySelectorAll("[data-history-delete]").forEach((button) => button.addEventListener("click", (event) => {
             event.stopPropagation();
             const id = button.dataset.historyDelete;
+            const removed = historyItems.find((item) => item.id === id);
+            if (!removed) return;
+            const position = historyItems.findIndex((item) => item.id === id);
             saveChatHistory(historyItems.filter((item) => item.id !== id));
-            renderChatHistory();
-            showToast("Chat excluído");
+            const row = button.closest("[data-history-row]");
+            row?.classList.add("is-removing");
+            window.setTimeout(renderChatHistory, 190);
+            showToast("Chat excluído", { actionLabel: "Desfazer", onAction: () => { const items = readChatHistory(); items.splice(Math.min(position, items.length), 0, removed); saveChatHistory(items); renderChatHistory(); showToast("Chat restaurado"); } });
           }));
           historyList.querySelectorAll("[data-history-row]").forEach((row) => {
             let pressTimer = null;
@@ -4035,6 +4060,9 @@
             row.addEventListener("pointerleave", clearPress);
             row.addEventListener("click", (event) => { if (longPress) { event.preventDefault(); event.stopPropagation(); longPress = false; } }, true);
             row.addEventListener("contextmenu", (event) => { event.preventDefault(); row.classList.add("is-delete-ready"); row.querySelector("[data-history-delete]")?.focus(); });
+            let startX = 0; let startY = 0;
+            row.addEventListener("touchstart", (event) => { const touch = event.changedTouches[0]; startX = touch.clientX; startY = touch.clientY; }, { passive: true });
+            row.addEventListener("touchend", (event) => { const touch = event.changedTouches[0]; const dx = touch.clientX - startX; const dy = touch.clientY - startY; if (dx < -52 && Math.abs(dx) > Math.abs(dy) * 1.25) { row.classList.add("is-swipe-ready"); row.querySelector("[data-history-delete]")?.focus(); } else if (dx > 30) row.classList.remove("is-swipe-ready", "is-delete-ready"); }, { passive: true });
           });
           const empty = filtered.length === 0;
           historyEmpty.hidden = !empty;
@@ -4078,7 +4106,7 @@
           if (activeChatHistoryId) return activeChatHistoryId;
           const id = window.crypto?.randomUUID?.() || "chat-" + Date.now();
           const items = readChatHistory().filter((item) => item.id !== id);
-          items.unshift({ id, title: "Nova conversa", titleGenerated: false, excerpt: "Conversa com o KAZER", createdAt: new Date().toISOString(), kind: "chat" });
+          items.unshift({ id, title: "Gerando título…", titleGenerated: false, excerpt: "Conversa com o KAZER", searchText: String(prompt || ""), createdAt: new Date().toISOString(), kind: "chat" });
           saveChatHistory(items);
           activeChatHistoryId = id;
           if (viewMode === "history") renderChatHistory();
@@ -4098,7 +4126,18 @@
             item.title = title; item.titleGenerated = true;
             saveChatHistory(items);
             if (viewMode === "history") renderChatHistory();
-          } catch (error) { if (error?.name !== "AbortError") console.warn("Não foi possível gerar o título do chat", error); }
+          } catch (error) {
+            if (error?.name === "AbortError") return;
+            const items = readChatHistory(); const item = items.find((entry) => entry.id === chatId);
+            if (item && !item.titleGenerated) { item.title = "Nova conversa"; item.titleGenerated = true; saveChatHistory(items); if (viewMode === "history") renderChatHistory(); }
+          }
+        };
+
+        const updateChatSearchText = (chatId, content) => {
+          const items = readChatHistory(); const item = items.find((entry) => entry.id === chatId);
+          if (!item) return;
+          item.searchText = ((item.searchText || "") + " " + String(content || "")).trim().slice(0, 12000);
+          saveChatHistory(items);
         };
 
         const updateGreeting = () => {
@@ -4779,6 +4818,7 @@
             append(assistantRow);
             await revealAssistantMessage(assistantRow, answer.trim(), controller.signal);
             conversationMessages.push({ role: "assistant", content: answer.trim() });
+            updateChatSearchText(chatId, answer.trim());
             if (conversationMessages.length === 2) generateChatTitle(chatId, conversationMessages.slice(), controller.signal);
             window.kazerWorkspace?.finishTask?.(taskContext, answer.trim(), data.credit_cost);
           } catch (error) {
