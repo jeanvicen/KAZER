@@ -3820,9 +3820,6 @@
           }
         };
 
-        globalNoticeClose?.addEventListener("click", markGlobalNoticeSeen);
-        globalNoticeConfirm?.addEventListener("click", markGlobalNoticeSeen);
-        globalNoticeBackdrop?.addEventListener("click", markGlobalNoticeSeen);
         const loadRetentionNotice = async () => {
           if (!currentUser || !kazerSupabase || settingsState.notifications === false || !retentionBanner) return;
           const result = await kazerSupabase.from("account_notifications").select("id,title,message,warning_days").is("read_at", null).order("created_at", { ascending: false }).limit(1);
@@ -4079,6 +4076,9 @@
             if (settingsState.notifications !== false && !seenResult.error && globalNoticeSeenVersion < globalNotice.versao) showGlobalNotice(true);
           } catch { globalNotice = null; globalNoticeLoaded = true; renderChatHistory(); }
         };
+        globalNoticeClose?.addEventListener("click", markGlobalNoticeSeen);
+        globalNoticeConfirm?.addEventListener("click", markGlobalNoticeSeen);
+        globalNoticeBackdrop?.addEventListener("click", markGlobalNoticeSeen);
 
         const renderChatHistory = () => {
           if (!historyList || !historyEmpty) return;
@@ -5290,6 +5290,11 @@
           showToast("Kazer instalado com sucesso");
         });
         window.setTimeout(showInstallBanner, 1400);
+        window.setTimeout(() => {
+          const splash = document.getElementById("appSplash");
+          if (splash) splash.remove();
+          app.dataset.authPending = "false";
+        }, 7000);
         if ("serviceWorker" in navigator && /^https?:$/.test(window.location.protocol)) {
           navigator.serviceWorker.register("/sw.js").catch(() => showToast("O modo instalável será ativado no próximo acesso"));
         }
