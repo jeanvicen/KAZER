@@ -3403,7 +3403,12 @@
         const KAZER_SUPABASE_URL = "https://mqjunopzycdezzjmlhip.supabase.co";
         const KAZER_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1xanVub3B6eWNkZXp6am1saGlwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc4Mzg3NDksImV4cCI6MjEwMzQxNDc0OX0.Y_o2_QQhZzuCjvHdEfxaR5VrAxo7NFenPaDmdHN3bwM";
         const kazerSupabase = window.supabase?.createClient(KAZER_SUPABASE_URL, KAZER_SUPABASE_ANON_KEY, {
-          auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: false }
+          auth: {
+            persistSession: true,
+            autoRefreshToken: true,
+            detectSessionInUrl: false,
+            storage: window.localStorage,
+          }
         });
         const getApiHeaders = async (forceRefresh = false) => {
           if (!kazerSupabase) throw new Error("Sessão inválida ou expirada.");
@@ -3688,10 +3693,11 @@
           }
           let sessionResult = null;
           try {
-            sessionResult = await Promise.race([
-              kazerSupabase.auth.getSession(),
-              new Promise((resolve) => window.setTimeout(() => resolve(null), 5000))
-            ]);
+            sessionResult = await kazerSupabase.auth.getSession();
+            if (!sessionResult?.data?.session) {
+              const refreshed = await kazerSupabase.auth.refreshSession();
+              if (!refreshed.error && refreshed.data?.session) sessionResult = refreshed;
+            }
           } catch (error) {
             sessionResult = null;
           }
