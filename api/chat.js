@@ -143,6 +143,7 @@ function parseMessages(value) {
 
     const content = cleanUserContent(item.content);
     if (!content || content.length > MAX_MESSAGE_CHARS) return null;
+    if (item.role === "assistant" && /^(?:O KAZER não conseguiu concluir a resposta agora\. Tente novamente\.|A resposta recebida estava vazia\. Tente novamente\.|Não foi possível conectar ao chat agora\.)$/i.test(content)) continue;
 
     totalChars += content.length;
     if (totalChars > MAX_TOTAL_CHARS) return null;

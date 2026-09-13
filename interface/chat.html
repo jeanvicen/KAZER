@@ -4933,7 +4933,8 @@
           const historyText = prompt + attachmentLabel;
           const displayText = prompt + attachmentLabel;
           conversationMode();
-          append(createMessage("user", displayText));
+          const userRow = createMessage("user", displayText);
+          append(userRow);
           conversationMessages.push({ role: "user", content: historyText });
           messageInput.value = "";
           selectedFiles = [];
@@ -4980,6 +4981,16 @@
             }
             if (thinking.isConnected) thinking.remove();
             if (assistantRow?.isConnected) assistantRow.remove();
+            if (conversationMessages.at(-1)?.role === "user" && conversationMessages.at(-1)?.content === historyText) {
+              conversationMessages.pop();
+              if (conversationMessages.length) {
+                saveChatMessages(chatId, conversationMessages);
+              } else {
+                saveChatHistory(readChatHistory().filter((item) => item.id !== chatId));
+                if (activeChatHistoryId === chatId) activeChatHistoryId = null;
+              }
+            }
+            if (userRow?.isConnected) userRow.remove();
             window.kazerWorkspace?.failTask?.(taskContext, error.message || "Não foi possível conectar ao chat agora.");
             append(createMessage("assistant", error.message || "Não foi possível conectar ao chat agora."));
           } finally {
