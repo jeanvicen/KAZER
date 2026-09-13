@@ -3135,13 +3135,26 @@
         }
       }
       .memory-group { overflow: hidden; }
+      .memory-activity { position: fixed; z-index: 120; right: 18px; bottom: max(112px, calc(env(safe-area-inset-bottom) + 92px)); display: flex; align-items: center; gap: 10px; padding: 10px 12px; border: 1px solid rgba(140,122,255,.2); border-radius: 12px; background: rgba(22,21,29,.94); color: var(--text-soft); box-shadow: 0 12px 30px rgba(0,0,0,.32); font-size: 11px; animation: memory-activity-in 180ms var(--ease) both; }
+      @keyframes memory-activity-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+      .memory-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 16px; }
+      .memory-toolbar small { display: block; margin-top: 5px; color: var(--text-dim); font-size: 11px; }
+      .memory-save { min-width: 76px; min-height: 34px; border: 1px solid rgba(140,122,255,.36); border-radius: 9px; background: rgba(140,122,255,.13); color: var(--text); cursor: pointer; font-size: 11px; font-weight: 650; }
+      .memory-save:disabled { cursor: default; opacity: .42; }
+      .memory-operation { display: flex; align-items: center; gap: 10px; margin: 0 16px 10px; padding: 9px 11px; border: 1px solid rgba(140,122,255,.18); border-radius: 10px; background: rgba(140,122,255,.07); color: var(--text-soft); font-size: 11px; }
+      .memory-operation-bars { display: flex; align-items: end; gap: 2px; height: 15px; }
+      .memory-operation-bars i { display: block; width: 3px; height: 7px; border-radius: 4px; background: var(--accent); animation: memory-pulse 900ms ease-in-out infinite; }
+      .memory-operation-bars i:nth-child(2) { height: 12px; animation-delay: 120ms; }
+      .memory-operation-bars i:nth-child(3) { height: 9px; animation-delay: 240ms; }
+      .memory-operation-bars i:nth-child(4) { height: 5px; animation-delay: 360ms; }
+      @keyframes memory-pulse { 0%,100% { transform: scaleY(.55); opacity: .4; } 50% { transform: scaleY(1); opacity: 1; } }
       .memory-list { display: grid; gap: 0; }
       .memory-item { display: grid; grid-template-columns: 1fr auto; gap: 12px; padding: 15px 16px; border-top: 1px solid var(--line-soft); animation: history-fade-up 180ms var(--ease) both; }
       .memory-copy { min-width: 0; }
       .memory-meta { display: flex; align-items: center; gap: 8px; margin-bottom: 7px; }
       .memory-pill { display: inline-flex; align-items: center; min-height: 20px; padding: 0 8px; border: 1px solid rgba(140,122,255,.24); border-radius: 999px; background: rgba(140,122,255,.09); color: var(--text-soft); font-size: 9px; font-weight: 650; letter-spacing: .04em; text-transform: capitalize; }
       .memory-date { color: var(--text-dim); font-size: 10px; }
-      .memory-content { color: var(--text); font-size: 12.5px; line-height: 1.52; }
+      .memory-content { width: 100%; min-height: 48px; padding: 0; resize: vertical; border: 0; outline: 0; background: transparent; color: var(--text); font: inherit; font-size: 12.5px; line-height: 1.52; }
       .memory-delete { display: inline-grid; place-items: center; align-self: center; width: 34px; height: 34px; border: 1px solid transparent; border-radius: 10px; background: transparent; color: var(--text-dim); cursor: pointer; transition: color 150ms var(--ease), background 150ms var(--ease), border-color 150ms var(--ease); }
       .memory-delete:hover, .memory-delete:focus-visible { border-color: rgba(240,116,116,.24); background: rgba(240,116,116,.08); color: var(--danger); }
       .memory-delete svg { width: 16px; height: 16px; }
@@ -3258,7 +3271,7 @@
             </section>
             <section class="settings-section" data-settings-panel="memory" hidden>
               <p class="settings-section-intro">O Kazer guarda apenas informações úteis para personalizar suas respostas. Você pode remover qualquer memória quando quiser.</p>
-              <div class="settings-group memory-group"><div class="settings-group-title">O que o Kazer lembra</div><div class="memory-list" id="memoryList" aria-live="polite"><div class="memory-loading" id="memoryLoading">Carregando memórias…</div></div><div class="memory-empty" id="memoryEmpty" hidden>O Kazer ainda está te conhecendo. Continue conversando e as memórias vão aparecer aqui.</div><button class="memory-load-more" id="memoryLoadMore" type="button" hidden>Mostrar mais</button></div>
+              <div class="settings-group memory-group"><div class="memory-toolbar"><div><div class="settings-group-title">O que o Kazer lembra</div><small>Edite livremente o que deve continuar sendo lembrado.</small></div><button class="memory-save" id="memorySave" type="button" disabled>Salvar</button></div><div class="memory-operation" id="memoryOperation" hidden><span class="memory-operation-bars" aria-hidden="true"><i></i><i></i><i></i><i></i></span><span id="memoryOperationText">O Kazer está salvando memória…</span></div><div class="memory-list" id="memoryList" aria-live="polite"><div class="memory-loading" id="memoryLoading">Carregando memórias…</div></div><div class="memory-empty" id="memoryEmpty" hidden>O Kazer ainda está te conhecendo. Continue conversando e as memórias vão aparecer aqui.</div><button class="memory-load-more" id="memoryLoadMore" type="button" hidden>Mostrar mais</button></div>
             </section>
             <section class="settings-section" data-settings-panel="account" hidden>
               <p class="settings-section-intro">Veja a sessão atual e saia da conta quando terminar.</p>
@@ -3412,6 +3425,7 @@
         <footer class="global-notice-footer"><button class="global-notice-confirm" id="globalNoticeConfirm" type="button">Entendi</button></footer>
       </section>
       <div class="toast" id="toast" role="status" aria-live="polite"></div>
+      <div class="memory-activity" id="memoryActivity" hidden role="status" aria-live="polite"><span class="memory-operation-bars" aria-hidden="true"><i></i><i></i><i></i><i></i></span><span id="memoryActivityText">O Kazer está salvando memória…</span></div>
 
     </main>
 
@@ -3532,6 +3546,12 @@
         const memoryLoading = document.getElementById("memoryLoading");
         const memoryEmpty = document.getElementById("memoryEmpty");
         const memoryLoadMore = document.getElementById("memoryLoadMore");
+        const memorySave = document.getElementById("memorySave");
+        const memoryOperation = document.getElementById("memoryOperation");
+        const memoryOperationText = document.getElementById("memoryOperationText");
+        const memoryActivity = document.getElementById("memoryActivity");
+        const memoryActivityText = document.getElementById("memoryActivityText");
+        let memoryActivityTimer = null;
         let memoryOffset = 0;
         let memoryHasMore = false;
         const plansBackdrop = document.getElementById("plansBackdrop");
@@ -3991,7 +4011,7 @@
           setSwitch(installSwitch, settingsState.installPrompt);
         };
 
-        const memoryCategoryLabels = { preference: "Preferência", dislike: "Não gosta", personal_context: "Contexto", project: "Projeto", goal: "Objetivo", habit: "Hábito", communication_style: "Comunicação", technical_knowledge: "Conhecimento", interest: "Interesse", workflow: "Fluxo de trabalho", instruction: "Instrução", important_fact: "Fato importante", temporary_context: "Contexto temporário", relationship_context: "Relacionamento", learning: "Aprendizado", other: "Outro" };
+        const memoryCategoryLabels = { preference: "Preferência", dislike: "Não gosta", personal_context: "Contexto", project: "Projeto", goal: "Objetivo", habit: "Hábito", communication_style: "Comunicação", technical_knowledge: "Conhecimento", interest: "Interesse", workflow: "Fluxo de trabalho", instruction: "Instrução", important_fact: "Fato importante", temporary_context: "Contexto temporário", relationship_context: "Relacionamento", learning: "Aprendizado", conversation_context: "Conversa", other: "Outro" };
         const memoryRelativeDate = (value) => {
           const time = new Date(value || 0).getTime();
           if (!time) return "agora";
@@ -4016,9 +4036,11 @@
           date.className = "memory-date";
           date.textContent = memoryRelativeDate(memory.updatedAt || memory.createdAt);
           meta.append(pill, date);
-          const content = document.createElement("p");
+          const content = document.createElement("textarea");
           content.className = "memory-content";
-          content.textContent = memory.content;
+          content.value = memory.content;
+          content.dataset.memoryId = memory.id;
+          content.addEventListener("input", () => { memorySave.disabled = false; });
           copy.append(meta, content);
           const remove = document.createElement("button");
           remove.className = "memory-delete";
@@ -4041,6 +4063,34 @@
           });
           item.append(copy, remove);
           return item;
+        };
+        const setMemoryOperation = (visible, text = "O Kazer está salvando memória…") => {
+          memoryOperation.hidden = !visible;
+          memoryOperationText.textContent = text;
+        };
+        const showMemoryActivity = (text) => {
+          memoryActivityText.textContent = text;
+          memoryActivity.hidden = false;
+          window.clearTimeout(memoryActivityTimer);
+          memoryActivityTimer = window.setTimeout(() => { memoryActivity.hidden = true; }, 1700);
+        };
+        const saveMemories = async () => {
+          const fields = [...memoryList.querySelectorAll("textarea[data-memory-id]")];
+          if (!fields.length) return;
+          memorySave.disabled = true;
+          setMemoryOperation(true, "O Kazer está atualizando memória…");
+          try {
+            await Promise.all(fields.map(async (field) => {
+              const response = await fetchWithAuth(`/api/memories?id=${encodeURIComponent(field.dataset.memoryId)}`, { method: "PATCH", body: JSON.stringify({ content: field.value.trim() }) });
+              if (!response.ok) throw new Error("memory_save_failed");
+            }));
+            setMemoryOperation(true, "Memória atualizada");
+            window.setTimeout(() => setMemoryOperation(false), 1100);
+          } catch {
+            memorySave.disabled = false;
+            setMemoryOperation(true, "Não foi possível atualizar a memória agora");
+            window.setTimeout(() => setMemoryOperation(false), 1800);
+          }
         };
         const loadMemories = async ({ reset = false } = {}) => {
           if (!memoryList) return;
@@ -5052,6 +5102,7 @@
           const thinking = createThinking();
           append(thinking);
           setBusy(true);
+          showMemoryActivity("O Kazer está atualizando memória…");
           const controller = new AbortController();
           let assistantRow = null;
           activeRequestController = controller;
@@ -5071,8 +5122,8 @@
               throw new Error(data.error || "Não foi possível obter uma resposta.");
             }
             if (data.usage) applyUsageState(data.usage, true);
-            if (data.memory_used) showToast("Memória recuperada");
-            else if (data.memories_updated) showToast("Memória atualizada");
+            if (data.memory_used) showMemoryActivity("O Kazer está consultando sua memória…");
+            else if (data.memories_updated) showMemoryActivity("O Kazer está salvando memória…");
             if (activeRequestController !== controller) return;
             const answer = data.message?.content;
             if (typeof answer !== "string" || !answer.trim()) throw new Error("A resposta recebida estava vazia.");
@@ -5244,6 +5295,7 @@
           });
         });
         memoryLoadMore?.addEventListener("click", () => loadMemories());
+        memorySave?.addEventListener("click", saveMemories);
         settingsSearch.addEventListener("input", () => {
           const query = settingsSearch.value.trim().toLocaleLowerCase();
           settingsNavItems.forEach((item) => {

@@ -28,8 +28,8 @@ function clientMemory(row) {
 }
 
 module.exports = async function handler(request, response) {
-  if (!["GET", "DELETE"].includes(request.method)) {
-    response.setHeader("Allow", "GET, DELETE");
+  if (!["GET", "PATCH", "DELETE"].includes(request.method)) {
+    response.setHeader("Allow", "GET, PATCH, DELETE");
     return sendJson(response, 405, { error: "Método não permitido." });
   }
   if (!isSameOrigin(request) || !hasSafeFetchMetadata(request)) {
@@ -43,6 +43,15 @@ module.exports = async function handler(request, response) {
   if (!user) return sendJson(response, 401, { error: "Sessão inválida ou expirada." });
 
   try {
+    if (request.method === "PATCH") {
+      const id = String(request.query?.id || "").trim();
+      const content = String(request.body?.content || "").trim();
+      if (!/^[0-9a-f-]{36}$/i.test(id) || content.length < 1 || content.length > 2000) {
+        return sendJson(response, 400, { error: "Conteúdo de memória inválido." });
+      }
+      const rows = await supabaseRequest("kazer_memories", { method: "PATCH", query: { id: `eq.${id}`, user_id: `eq.${user.id}` }, body: { content } });
+      return sendJson(response, 200, { memory: Array.isArray(rows) && rows[0] ? clientMemory(rows[0]) : null });
+    }
     if (request.method === "DELETE") {
       const id = String(request.query?.id || "").trim();
       if (!/^[0-9a-f-]{36}$/i.test(id)) return sendJson(response, 400, { error: "Memória inválida." });

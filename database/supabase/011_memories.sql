@@ -1,7 +1,7 @@
 create table if not exists public.kazer_memories (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references auth.users(id) on delete cascade,
-  category text not null default 'other' check (category in ('preference','dislike','personal_context','project','goal','habit','communication_style','technical_knowledge','interest','workflow','instruction','important_fact','temporary_context','relationship_context','learning','other')),
+  category text not null default 'other' check (category in ('preference','dislike','personal_context','project','goal','habit','communication_style','technical_knowledge','interest','workflow','instruction','important_fact','temporary_context','relationship_context','learning','conversation_context','other')),
   content text not null check (char_length(btrim(content)) between 1 and 2000),
   importance numeric(4,3) not null default 0.5 check (importance >= 0 and importance <= 1),
   confidence numeric(4,3) not null default 0.75 check (confidence >= 0 and confidence <= 1),

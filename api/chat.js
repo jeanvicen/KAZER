@@ -37,7 +37,7 @@ const MEMORY_CATEGORIES = new Set([
   "preference", "dislike", "personal_context", "project", "goal", "habit",
   "communication_style", "technical_knowledge", "interest", "workflow",
   "instruction", "important_fact", "temporary_context", "relationship_context",
-  "learning", "other",
+  "learning", "conversation_context", "other",
 ]);
 
 const SYSTEM_PROMPT = [
@@ -266,12 +266,16 @@ async function learnMemories({ apiKey, userId, userMessage, assistantMessage }) 
       models: [process.env.GROQ_MODEL || DEFAULT_TEXT_MODEL],
       hasImages: false,
       messages: [
-        { role: "system", content: "Você extrai memórias úteis e persistentes de uma conversa. Retorne SOMENTE JSON válido no formato {\"memories\":[{\"category\":\"preference|dislike|personal_context|project|goal|habit|communication_style|technical_knowledge|interest|workflow|instruction|important_fact|temporary_context|relationship_context|learning|other\",\"content\":\"frase curta em terceira pessoa\",\"importance\":0.0,\"confidence\":0.0,\"explicit\":true,\"is_pinned\":false}]}. Extraia no máximo 5 itens. Não extraia fatos triviais, temporários, segredos, senhas, tokens, dados financeiros ou informações sensíveis. Só extraia algo se puder ajudar em conversas futuras. Informação explicitamente declarada pelo usuário recebe confidence 1.0; inferências recebem no máximo 0.75. is_pinned só pode ser true quando o usuário pedir explicitamente para lembrar permanentemente." },
+        { role: "system", content: "Você mantém a memória contextual do usuário. Retorne SOMENTE JSON válido no formato {\"memories\":[{\"category\":\"preference|dislike|personal_context|project|goal|habit|communication_style|technical_knowledge|interest|workflow|instruction|important_fact|temporary_context|relationship_context|learning|conversation_context|other\",\"content\":\"resumo curto e útil em terceira pessoa\",\"importance\":0.0,\"confidence\":0.0,\"explicit\":true,\"is_pinned\":false}]}. Crie pelo menos um item conversation_context para cada turno, resumindo o que foi tratado e o que importa para entender a continuidade. Além disso, extraia preferências, projetos, objetivos e instruções quando existirem. Não copie a conversa literalmente. Não extraia senhas, tokens, dados financeiros, documentos de identidade, saúde, localização precisa ou outras informações sensíveis. Não guarde detalhes sem utilidade futura. Informação explicitamente declarada recebe confidence 1.0; inferências recebem no máximo 0.75. is_pinned só pode ser true quando o usuário pedir explicitamente para lembrar permanentemente." },
         { role: "user", content: `Mensagem do usuário:\n${String(userMessage).slice(0, 4000)}\n\nResposta do KAZER:\n${String(assistantMessage).slice(0, 5000)}` },
       ],
     });
     const candidates = parseMemoryCandidates(result?.data?.choices?.[0]?.message?.content);
-    if (!candidates.length) return 0;
+    if (!candidates.length) {
+      const fallback = redactSensitiveText(cleanUserContent(userMessage)).slice(0, 700);
+      if (!fallback) return 0;
+      candidates.push({ category: "conversation_context", content: `Nesta conversa, o usuário tratou de: ${fallback}`, importance: 0.35, confidence: 0.55, is_pinned: false, source: "conversation" });
+    }
     const existing = await supabaseRequest("kazer_memories", { query: { user_id: `eq.${userId}`, select: "id,category,content,importance,confidence,is_pinned", order: "updated_at.desc", limit: 120 } });
     for (const candidate of candidates) {
       const match = (Array.isArray(existing) ? existing : []).find((row) => row.category === candidate.category && memorySimilarity(row.content, candidate.content) >= 0.82);
