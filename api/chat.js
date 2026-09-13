@@ -16,6 +16,7 @@ const {
 const { callUsageRpc } = require("./_usage");
 const { callMcpTool, flattenTools, getConnectedMcpCount, loadMcpRuntime } = require("./_mcp-runtime");
 const { decodeToken, getConnection, githubFetch, repoForClient } = require("./_github");
+const { supabaseRequest } = require("./_kazer-data");
 
 const DEFAULT_TEXT_MODEL = "openai/gpt-oss-120b";
 const MAX_REQUEST_BYTES = 7 * 1024 * 1024;
@@ -32,6 +33,12 @@ const MAX_TOTAL_CHARS = 32000;
 const MAX_FILE_BYTES = 4 * 1024 * 1024;
 const MAX_IMAGES = 3;
 const MAX_EXTRACTED_FILE_CHARS = 18000;
+const MEMORY_CATEGORIES = new Set([
+  "preference", "dislike", "personal_context", "project", "goal", "habit",
+  "communication_style", "technical_knowledge", "interest", "workflow",
+  "instruction", "important_fact", "temporary_context", "relationship_context",
+  "learning", "other",
+]);
 
 const SYSTEM_PROMPT = [
   "Você é o KAZER: um assistente com voz própria, atento ao contexto e feito para conversar de forma natural, útil e humana.",
@@ -199,6 +206,87 @@ function cleanModelContent(value) {
     .trim())
     .slice(0, MAX_OUTPUT_CHARS)
     .trim();
+}
+
+function memoryWords(value) {
+  return new Set(String(value || "").toLocaleLowerCase("pt-BR").normalize("NFD").replace(/[\u0300-\u036f]/g, "").match(/[a-z0-9]{3,}/g) || []);
+}
+
+function memorySimilarity(left, right) {
+  const a = memoryWords(left);
+  const b = memoryWords(right);
+  if (!a.size || !b.size) return 0;
+  let overlap = 0;
+  for (const word of a) if (b.has(word)) overlap += 1;
+  return overlap / Math.max(1, Math.min(a.size, b.size));
+}
+
+async function loadRelevantMemories(userId, prompt) {
+  try {
+    const rows = await supabaseRequest("kazer_memories", { query: { user_id: `eq.${userId}`, select: "id,category,content,importance,confidence,usage_count,last_used_at,expires_at", order: "updated_at.desc", limit: 80 } });
+    const ranked = (Array.isArray(rows) ? rows : [])
+      .filter((row) => !row.expires_at || new Date(row.expires_at).getTime() > Date.now())
+      .map((row) => ({ row, score: memorySimilarity(prompt, row.content) + (Number(row.importance) || 0) * 0.08 }))
+      .filter((item) => item.score >= 0.16)
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 8)
+      .map(({ row }) => `- [${row.category}] ${String(row.content).slice(0, 500)}`);
+    return ranked.length ? `\n\nMEMÓRIAS RELEVANTES DO USUÁRIO (use apenas quando fizer sentido):\n${ranked.join("\n")}` : "";
+  } catch (error) {
+    console.warn("Memory retrieval skipped", error?.message || "unknown");
+    return "";
+  }
+}
+
+function parseMemoryCandidates(value) {
+  const source = String(value || "");
+  const start = source.indexOf("{");
+  const end = source.lastIndexOf("}");
+  if (start < 0 || end <= start) return [];
+  try {
+    const parsed = JSON.parse(source.slice(start, end + 1));
+    const list = Array.isArray(parsed?.memories) ? parsed.memories : [];
+    return list.slice(0, 5).map((item) => ({
+      category: MEMORY_CATEGORIES.has(item?.category) ? item.category : "other",
+      content: cleanUserContent(item?.content).slice(0, 2000),
+      importance: Math.max(0, Math.min(1, Number(item?.importance) || 0.5)),
+      confidence: Math.max(0, Math.min(1, Number(item?.confidence) || 0.75)),
+      is_pinned: Boolean(item?.is_pinned),
+      source: item?.explicit ? "explicit" : "conversation",
+    })).filter((item) => item.content.length >= 3);
+  } catch {
+    return [];
+  }
+}
+
+async function learnMemories({ apiKey, userId, userMessage, assistantMessage }) {
+  try {
+    const result = await callGroq({
+      apiKey,
+      models: [process.env.GROQ_MODEL || DEFAULT_TEXT_MODEL],
+      hasImages: false,
+      messages: [
+        { role: "system", content: "Você extrai memórias úteis e persistentes de uma conversa. Retorne SOMENTE JSON válido no formato {\"memories\":[{\"category\":\"preference|dislike|personal_context|project|goal|habit|communication_style|technical_knowledge|interest|workflow|instruction|important_fact|temporary_context|relationship_context|learning|other\",\"content\":\"frase curta em terceira pessoa\",\"importance\":0.0,\"confidence\":0.0,\"explicit\":true,\"is_pinned\":false}]}. Extraia no máximo 5 itens. Não extraia fatos triviais, temporários, segredos, senhas, tokens, dados financeiros ou informações sensíveis. Só extraia algo se puder ajudar em conversas futuras. Informação explicitamente declarada pelo usuário recebe confidence 1.0; inferências recebem no máximo 0.75. is_pinned só pode ser true quando o usuário pedir explicitamente para lembrar permanentemente." },
+        { role: "user", content: `Mensagem do usuário:\n${String(userMessage).slice(0, 4000)}\n\nResposta do KAZER:\n${String(assistantMessage).slice(0, 5000)}` },
+      ],
+    });
+    const candidates = parseMemoryCandidates(result?.data?.choices?.[0]?.message?.content);
+    if (!candidates.length) return 0;
+    const existing = await supabaseRequest("kazer_memories", { query: { user_id: `eq.${userId}`, select: "id,category,content,importance,confidence,is_pinned", order: "updated_at.desc", limit: 120 } });
+    for (const candidate of candidates) {
+      const match = (Array.isArray(existing) ? existing : []).find((row) => row.category === candidate.category && memorySimilarity(row.content, candidate.content) >= 0.82);
+      if (match) {
+        await supabaseRequest("kazer_memories", { method: "PATCH", query: { id: `eq.${match.id}`, user_id: `eq.${userId}` }, body: { content: candidate.content, importance: Math.max(Number(match.importance) || 0, candidate.importance), confidence: candidate.confidence, is_pinned: Boolean(match.is_pinned || candidate.is_pinned), source: candidate.source } });
+      } else {
+        const created = await supabaseRequest("kazer_memories", { method: "POST", body: { user_id: userId, ...candidate } });
+        if (Array.isArray(created) && created[0] && Array.isArray(existing)) existing.push(created[0]);
+      }
+    }
+    return candidates.length;
+  } catch (error) {
+    console.warn("Memory learning skipped", error?.message || "unknown");
+    return 0;
+  }
 }
 
 function protectKazerIdentity(value) {
@@ -555,7 +643,8 @@ module.exports = async function handler(request, response) {
   const repositoryInstruction = repositoryContext
     ? `\n\nCONTEXTO DE REPOSITÓRIO AUTORIZADO: a pessoa selecionou ${repositoryContext.fullName} (${repositoryContext.htmlUrl}), branch padrão ${repositoryContext.defaultBranch}${repositoryContext.language ? ` e linguagem principal ${repositoryContext.language}` : ""}. Use esse contexto para responder sobre o trabalho pedido; não invente acesso a arquivos ou ações concluídas.`
     : "";
-  const latestText = `${lastMessage.content}${repositoryInstruction}${visualInstruction}${fileInstruction}`.slice(0, MAX_TOTAL_CHARS);
+  const memoryContext = await loadRelevantMemories(user.id, lastMessage.content);
+  const latestText = `${lastMessage.content}${memoryContext}${repositoryInstruction}${visualInstruction}${fileInstruction}`.slice(0, MAX_TOTAL_CHARS);
   const latestContent = hasImages
     ? [{ type: "text", text: latestText }, ...prepared.imageParts]
     : latestText;
@@ -577,6 +666,7 @@ module.exports = async function handler(request, response) {
       return sendJson(response, 502, { error: "A resposta recebida estava vazia. Tente novamente." });
     }
 
+  const memoriesUpdated = await learnMemories({ apiKey, userId: user.id, userMessage: lastMessage.content, assistantMessage: content.trim() });
   return sendJson(response, 200, {
     message: { role: "assistant", content: content.trim() },
     attachments: prepared.fileNames,
@@ -586,5 +676,7 @@ module.exports = async function handler(request, response) {
     mcp_servers_available: mcpServers.length,
     mcp_tools_used: result.mcpToolsUsed || 0,
     repository_context: repositoryContext?.fullName || null,
+    memory_used: Boolean(memoryContext),
+    memories_updated: Number(memoriesUpdated || 0),
   });
 };
