@@ -475,7 +475,7 @@
 
       .thinking-label { min-width: 84px; color: transparent; background: linear-gradient(90deg, var(--text-dim), rgba(200,200,212,0.9), var(--text-dim)); background-size: 210% 100%; background-clip: text; -webkit-background-clip: text; animation: text-shimmer 1.5s linear infinite; }
 
-      .composer-dock { position: absolute; z-index: 15; right: 0; bottom: 0; left: 0; display: flex; justify-content: center; padding: 0 18px max(24px, env(safe-area-inset-bottom)); pointer-events: none; background: linear-gradient(to top,
+      .composer-dock { position: fixed; z-index: 15; right: 0; bottom: 0; left: 0; display: flex; justify-content: center; padding: 0 18px max(16px, env(safe-area-inset-bottom)); pointer-events: none; background: linear-gradient(to top,
           var(--page) 22%,
           color-mix(in srgb, var(--page) 90%, transparent) 65%,
           transparent 100%); }
@@ -2149,7 +2149,7 @@
         .composer-dock {
           padding-right: 17px;
           padding-left: 17px;
-          padding-bottom: max(24px, env(safe-area-inset-bottom));
+          padding-bottom: max(16px, env(safe-area-inset-bottom));
         }
 
         .composer-caption {
