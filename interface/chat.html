@@ -474,6 +474,13 @@
       }
 
       .thinking-label { min-width: 84px; color: transparent; background: linear-gradient(90deg, var(--text-dim), rgba(200,200,212,0.9), var(--text-dim)); background-size: 210% 100%; background-clip: text; -webkit-background-clip: text; animation: text-shimmer 1.5s linear infinite; }
+      .memory-trace { display: inline-flex; flex-direction: column; align-items: flex-start; gap: 5px; margin-top: 3px; }
+      .memory-trace-toggle { display: inline-flex; align-items: center; gap: 6px; padding: 0; border: 0; background: transparent; color: var(--text-dim); font: inherit; font-size: 11px; cursor: pointer; }
+      .memory-trace-toggle:hover { color: var(--text-soft); }
+      .memory-trace-toggle::before { content: "✦"; color: var(--purple); font-size: 13px; }
+      .memory-trace-toggle::after { content: "⌄"; font-size: 13px; transition: transform 180ms var(--ease); }
+      .memory-trace[open] .memory-trace-toggle::after { transform: rotate(180deg); }
+      .memory-trace-panel { max-width: min(360px, 78vw); padding: 9px 11px; border: 1px solid rgba(140,122,255,.18); border-radius: 11px; background: color-mix(in srgb, var(--card-2) 88%, transparent); color: var(--text-dim); font-size: 11px; line-height: 1.45; }
 
       .composer-dock { position: fixed; z-index: 15; right: 0; bottom: 0; left: 0; display: flex; justify-content: center; padding: 0 18px max(16px, env(safe-area-inset-bottom)); pointer-events: none; background: linear-gradient(to top,
           var(--page) 22%,
@@ -5107,6 +5114,26 @@
           return row;
         };
 
+        const addMemoryTrace = (row, data) => {
+          if (!row || (!data?.memory_consulted && !(Number(data?.memories_updated) > 0))) return;
+          const trace = document.createElement("details");
+          trace.className = "memory-trace";
+          const toggle = document.createElement("summary");
+          toggle.className = "memory-trace-toggle";
+          toggle.textContent = Number(data?.memories_updated) > 0 ? "Memória atualizada" : "Memória consultada";
+          const panel = document.createElement("div");
+          panel.className = "memory-trace-panel";
+          const scanned = Number(data?.memory_scanned) || 0;
+          const matches = Number(data?.memory_matches) || 0;
+          panel.textContent = Number(data?.memories_updated) > 0
+            ? `Consultei ${scanned} memória(s) e atualizei ${Number(data.memories_updated)} informação(ões) relevante(s).`
+            : matches > 0
+              ? `Consultei ${scanned} memória(s) e encontrei ${matches} informação(ões) relevante(s) para esta resposta.`
+              : `Consultei ${scanned} memória(s), mas não encontrei uma informação relevante para esta pergunta.`;
+          trace.append(toggle, panel);
+          row.querySelector(".assistant-response")?.append(trace);
+        };
+
         const append = (node) => {
           messageList.appendChild(node);
           scrollBottom();
@@ -5230,6 +5257,7 @@
             if (thinking.isConnected) thinking.remove();
             assistantRow = createMessage("assistant", "", { writing: true });
             append(assistantRow);
+            addMemoryTrace(assistantRow, data);
             await revealAssistantMessage(assistantRow, answer.trim(), controller.signal);
             conversationMessages.push({ role: "assistant", content: answer.trim() });
             saveChatMessages(chatId, conversationMessages);

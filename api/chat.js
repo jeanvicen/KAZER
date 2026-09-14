@@ -19,6 +19,7 @@ const { decodeToken, getConnection, githubFetch, repoForClient } = require("./_g
 const { supabaseRequest } = require("./_kazer-data");
 
 const DEFAULT_TEXT_MODEL = "openai/gpt-oss-120b";
+const DEFAULT_TEXT_FALLBACK_MODEL = "qwen/qwen3.6-27b";
 const MAX_REQUEST_BYTES = 7 * 1024 * 1024;
 const MAX_TOTAL_ATTACHMENT_BYTES = 4 * 1024 * 1024;
 const MAX_OUTPUT_CHARS = 16000;
@@ -221,6 +222,42 @@ function memorySimilarity(left, right) {
   return overlap / Math.max(1, Math.min(a.size, b.size));
 }
 
+const MEMORY_INTENT_TERMS = {
+  name: ["nome", "chamo", "chamar", "name", "called"],
+  preference: ["gosta", "prefere", "preferencia", "favorito", "odeia", "detesta", "gosto", "prefiro"],
+  project: ["projeto", "app", "aplicativo", "site", "repositorio", "kazer", "trabalho"],
+  goal: ["objetivo", "meta", "plano", "quer", "pretende", "precisa"],
+  identity: ["sobre mim", "quem sou", "minha vida", "meu perfil", "usuario"],
+  communication: ["responder", "resposta", "tom", "linguagem", "estilo", "falar"],
+};
+
+function memoryQueryTerms(prompt) {
+  const normalized = String(prompt || "")
+    .toLocaleLowerCase("pt-BR")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+  const terms = new Set(memoryWords(normalized));
+  for (const [intent, words] of Object.entries(MEMORY_INTENT_TERMS)) {
+    if (words.some((word) => normalized.includes(word))) terms.add(`__${intent}`);
+  }
+  return terms;
+}
+
+function memoryIntentScore(prompt, row) {
+  const terms = memoryQueryTerms(prompt);
+  let score = memorySimilarity(prompt, `${row.group_title || ""} ${row.category || ""} ${row.content || ""}`);
+  const category = String(row.category || "");
+  const group = String(row.group_title || "").toLocaleLowerCase("pt-BR");
+  if (terms.has("__name") && /personal_context|important_fact/.test(category)) score += 0.7;
+  if (terms.has("__name") && /sobre voce|identidade|perfil|nome/.test(group)) score += 0.8;
+  if (terms.has("__identity") && /personal_context|important_fact|relationship_context/.test(category)) score += 0.35;
+  if (terms.has("__preference") && /preference|dislike/.test(category)) score += 0.45;
+  if (terms.has("__project") && /project|workflow|technical_knowledge/.test(category)) score += 0.45;
+  if (terms.has("__goal") && /goal|habit|project/.test(category)) score += 0.4;
+  if (terms.has("__communication") && /communication_style|instruction/.test(category)) score += 0.45;
+  return score + (Number(row.importance) || 0) * 0.08;
+}
+
 const GROUP_TITLE_STOP_WORDS = new Set(["a", "as", "o", "os", "um", "uma", "uns", "umas", "de", "da", "das", "do", "dos", "sobre", "the", "about"]);
 
 function normalizeGroupTitle(value) {
@@ -255,18 +292,23 @@ function reuseCompatibleGroupTitle(candidateTitle, existingTitles) {
 
 async function loadRelevantMemories(userId, prompt) {
   try {
-    const rows = await supabaseRequest("kazer_memories", { query: { user_id: `eq.${userId}`, select: "id,category,group_title,content,importance,confidence,usage_count,last_used_at,expires_at", order: "updated_at.desc", limit: 80 } });
+    const rows = await supabaseRequest("kazer_memories", { query: { user_id: `eq.${userId}`, select: "id,category,group_title,content,importance,confidence,usage_count,last_used_at,expires_at,updated_at", order: "updated_at.desc", limit: 5000 } });
     const ranked = (Array.isArray(rows) ? rows : [])
       .filter((row) => !row.expires_at || new Date(row.expires_at).getTime() > Date.now())
-      .map((row) => ({ row, score: memorySimilarity(prompt, row.content) + (Number(row.importance) || 0) * 0.08 }))
-      .filter((item) => item.score >= 0.16)
+      .map((row) => ({ row, score: memoryIntentScore(prompt, row) }))
+      .filter((item) => item.score >= 0.18)
       .sort((a, b) => b.score - a.score)
       .slice(0, 8)
       .map(({ row }) => `- [${row.group_title || row.category}] ${String(row.content).slice(0, 500)}`);
-    return ranked.length ? `\n\nMEMÓRIAS RELEVANTES DO USUÁRIO (use apenas quando fizer sentido):\n${ranked.join("\n")}` : "";
+    return {
+      context: ranked.length ? `\n\nMEMÓRIAS RELEVANTES DO USUÁRIO (use apenas quando fizer sentido):\n${ranked.join("\n")}` : "",
+      scanned: Array.isArray(rows) ? rows.length : 0,
+      matched: ranked.length,
+      requested: [...memoryQueryTerms(prompt)].some((term) => term.startsWith("__")),
+    };
   } catch (error) {
     console.warn("Memory retrieval skipped", error?.message || "unknown");
-    return "";
+    return { context: "", scanned: 0, matched: 0, requested: false };
   }
 }
 
@@ -668,7 +710,7 @@ module.exports = async function handler(request, response) {
         process.env.GROQ_VISION_MODEL || DEFAULT_VISION_MODEL,
         process.env.GROQ_VISION_FALLBACK_MODEL || DEFAULT_VISION_FALLBACK_MODEL,
       ].filter((value, index, values) => values.indexOf(value) === index)
-    : [process.env.GROQ_MODEL || DEFAULT_TEXT_MODEL];
+    : [process.env.GROQ_MODEL || DEFAULT_TEXT_MODEL, process.env.GROQ_FALLBACK_MODEL || DEFAULT_TEXT_FALLBACK_MODEL].filter((value, index, values) => values.indexOf(value) === index);
   const fileInstruction = prepared.fileContext
     ? `\n\nUse os anexos abaixo como contexto para responder:\n\n${prepared.fileContext}`
     : "";
@@ -678,8 +720,8 @@ module.exports = async function handler(request, response) {
   const repositoryInstruction = repositoryContext
     ? `\n\nCONTEXTO DE REPOSITÓRIO AUTORIZADO: a pessoa selecionou ${repositoryContext.fullName} (${repositoryContext.htmlUrl}), branch padrão ${repositoryContext.defaultBranch}${repositoryContext.language ? ` e linguagem principal ${repositoryContext.language}` : ""}. Use esse contexto para responder sobre o trabalho pedido; não invente acesso a arquivos ou ações concluídas.`
     : "";
-  const memoryContext = await loadRelevantMemories(user.id, lastMessage.content);
-  const latestText = `${lastMessage.content}${memoryContext}${repositoryInstruction}${visualInstruction}${fileInstruction}`.slice(0, MAX_TOTAL_CHARS);
+  const memoryLookup = await loadRelevantMemories(user.id, lastMessage.content);
+  const latestText = `${lastMessage.content}${memoryLookup.context}${repositoryInstruction}${visualInstruction}${fileInstruction}`.slice(0, MAX_TOTAL_CHARS);
   const latestContent = hasImages
     ? [{ type: "text", text: latestText }, ...prepared.imageParts]
     : latestText;
@@ -711,7 +753,10 @@ module.exports = async function handler(request, response) {
     mcp_servers_available: mcpServers.length,
     mcp_tools_used: result.mcpToolsUsed || 0,
     repository_context: repositoryContext?.fullName || null,
-    memory_used: Boolean(memoryContext),
+    memory_used: memoryLookup.matched > 0,
+    memory_consulted: memoryLookup.requested || memoryLookup.matched > 0,
+    memory_scanned: memoryLookup.scanned,
+    memory_matches: memoryLookup.matched,
     memories_updated: Number(memoriesUpdated || 0),
   });
 };
