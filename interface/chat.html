@@ -3151,15 +3151,6 @@
           padding: max(12px, env(safe-area-inset-top)) 16px 14px;
         }
       }
-      .memory-activity { position: fixed; z-index: 120; right: 18px; bottom: max(112px, calc(env(safe-area-inset-bottom) + 92px)); display: flex; align-items: center; gap: 10px; padding: 10px 12px; border: 1px solid rgba(140,122,255,.2); border-radius: 12px; background: rgba(22,21,29,.94); color: var(--text-soft); box-shadow: 0 12px 30px rgba(0,0,0,.32); font-size: 11px; animation: memory-activity-in 180ms var(--ease) both; }
-      @keyframes memory-activity-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
-      .memory-operation-bars { display: flex; align-items: end; gap: 2px; height: 15px; }
-      .memory-operation-bars i { display: block; width: 3px; height: 7px; border-radius: 4px; background: var(--accent); animation: memory-pulse 900ms ease-in-out infinite; }
-      .memory-operation-bars i:nth-child(2) { height: 12px; animation-delay: 120ms; }
-      .memory-operation-bars i:nth-child(3) { height: 9px; animation-delay: 240ms; }
-      .memory-operation-bars i:nth-child(4) { height: 5px; animation-delay: 360ms; }
-      @keyframes memory-pulse { 0%,100% { transform: scaleY(.55); opacity: .4; } 50% { transform: scaleY(1); opacity: 1; } }
-
       .memory-screen-backdrop {
         position: fixed;
         z-index: 88;
@@ -3525,7 +3516,6 @@
         <footer class="global-notice-footer"><button class="global-notice-confirm" id="globalNoticeConfirm" type="button">Entendi</button></footer>
       </section>
       <div class="toast" id="toast" role="status" aria-live="polite"></div>
-      <div class="memory-activity" id="memoryActivity" hidden role="status" aria-live="polite"><span class="memory-operation-bars" aria-hidden="true"><i></i><i></i><i></i><i></i></span><span id="memoryActivityText">O Kazer está salvando memória…</span></div>
 
     </main>
 
@@ -3653,15 +3643,6 @@
         const memoryDetailList = document.getElementById("memoryDetailList");
         const memoryLoading = document.getElementById("memoryLoading");
         const memoryEmpty = document.getElementById("memoryEmpty");
-        const memoryActivity = document.getElementById("memoryActivity");
-        const memoryActivityText = document.getElementById("memoryActivityText");
-        const showMemoryActivity = (text) => {
-          memoryActivityText.textContent = text;
-          memoryActivity.hidden = false;
-          window.clearTimeout(memoryActivityTimer);
-          memoryActivityTimer = window.setTimeout(() => { memoryActivity.hidden = true; }, 1700);
-        };
-        let memoryActivityTimer = null;
         let memoriesCache = [];
         let memoriesLoaded = false;
         let activeMemoryGroup = null;
@@ -4135,7 +4116,7 @@
           const date = new Date(time);
           return `Atualizado ${date.toLocaleDateString("pt-BR", { day: "numeric", month: "short", year: "numeric" })}`;
         };
-        const memoryGroupKey = (memory) => memory.group || memory.groupTitle || memory.title || memoryCategoryLabels[memory.category] || "Outros";
+        const memoryGroupKey = (memory) => memory.group_title || memory.group || memory.groupTitle || memory.title || memoryCategoryLabels[memory.category] || "Outros";
         const groupMemories = (memories) => {
           const groups = new Map();
           memories.forEach((memory) => {
@@ -5257,7 +5238,6 @@
           const thinking = createThinking();
           append(thinking);
           setBusy(true);
-          showMemoryActivity("O Kazer está atualizando memória…");
           const controller = new AbortController();
           let assistantRow = null;
           activeRequestController = controller;
@@ -5277,8 +5257,6 @@
               throw new Error(data.error || "Não foi possível obter uma resposta.");
             }
             if (data.usage) applyUsageState(data.usage, true);
-            if (data.memory_used) showMemoryActivity("O Kazer está consultando sua memória…");
-            else if (data.memories_updated) showMemoryActivity("O Kazer está salvando memória…");
             if (activeRequestController !== controller) return;
             const answer = data.message?.content;
             if (typeof answer !== "string" || !answer.trim()) throw new Error("A resposta recebida estava vazia.");

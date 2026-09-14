@@ -20,6 +20,7 @@ function clientMemory(row) {
   return {
     id: row.id,
     category: row.category,
+    group_title: row.group_title || "Outros",
     content: row.content,
     isPinned: Boolean(row.is_pinned),
     createdAt: row.created_at,
@@ -65,7 +66,7 @@ module.exports = async function handler(request, response) {
     const category = String(request.query?.category || "").trim();
     const query = {
       user_id: `eq.${user.id}`,
-      select: "id,category,content,is_pinned,created_at,updated_at",
+      select: "id,category,group_title,content,is_pinned,created_at,updated_at",
       order: "updated_at.desc",
       limit: pageSize,
       offset,

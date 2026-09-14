@@ -16,6 +16,10 @@ Este diretório contém as migrações incrementais do banco usado pelo KAZER. O
 | 6 | `006_usage_rpc_fix.sql` | Correções das RPCs de consumo e grants autenticados. |
 | 7 | `007_credits_150_messages_5h.sql` | Créditos Free, janela de cinco horas e consumo do chat. |
 | 8 | `008_attachment_limit_10_items.sql` | Dez itens de anexo por janela no plano Free e consumo atômico por item. |
+| 9 | `009_google_drive_connections.sql` | Conexões privadas do Google Drive. |
+| 10 | `010_mcp_github_tasks.sql` | Conectores MCP e tarefas vinculadas ao GitHub. |
+| 11 | `011_memories.sql` | Memórias isoladas por usuário, categorias, retenção e limite de registros. |
+| 12 | `012_memory_group_title.sql` | Agrupamento dinâmico de memórias por título decidido pela IA. |
 
 As migrações posteriores dependem de objetos criados pelas anteriores. Não pule arquivos, não os execute fora de ordem e não edite uma migração já aplicada sem registrar uma nova migração corretiva.
 

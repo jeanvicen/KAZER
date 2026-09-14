@@ -221,16 +221,48 @@ function memorySimilarity(left, right) {
   return overlap / Math.max(1, Math.min(a.size, b.size));
 }
 
+const GROUP_TITLE_STOP_WORDS = new Set(["a", "as", "o", "os", "um", "uma", "uns", "umas", "de", "da", "das", "do", "dos", "sobre", "the", "about"]);
+
+function normalizeGroupTitle(value) {
+  return String(value || "")
+    .toLocaleLowerCase("pt-BR")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim()
+    .split(/\s+/)
+    .filter((word) => word && !GROUP_TITLE_STOP_WORDS.has(word))
+    .join(" ");
+}
+
+function groupTitleSimilarity(left, right) {
+  const a = new Set(normalizeGroupTitle(left).split(" ").filter(Boolean));
+  const b = new Set(normalizeGroupTitle(right).split(" ").filter(Boolean));
+  if (!a.size || !b.size) return 0;
+  let overlap = 0;
+  for (const word of a) if (b.has(word)) overlap += 1;
+  return overlap / Math.max(1, Math.min(a.size, b.size));
+}
+
+function reuseCompatibleGroupTitle(candidateTitle, existingTitles) {
+  const title = cleanUserContent(candidateTitle).slice(0, 120);
+  if (!title) return "Outros";
+  const exact = existingTitles.find((existing) => normalizeGroupTitle(existing) === normalizeGroupTitle(title));
+  if (exact) return exact;
+  const compatible = existingTitles.find((existing) => groupTitleSimilarity(existing, title) >= 0.75);
+  return compatible || title;
+}
+
 async function loadRelevantMemories(userId, prompt) {
   try {
-    const rows = await supabaseRequest("kazer_memories", { query: { user_id: `eq.${userId}`, select: "id,category,content,importance,confidence,usage_count,last_used_at,expires_at", order: "updated_at.desc", limit: 80 } });
+    const rows = await supabaseRequest("kazer_memories", { query: { user_id: `eq.${userId}`, select: "id,category,group_title,content,importance,confidence,usage_count,last_used_at,expires_at", order: "updated_at.desc", limit: 80 } });
     const ranked = (Array.isArray(rows) ? rows : [])
       .filter((row) => !row.expires_at || new Date(row.expires_at).getTime() > Date.now())
       .map((row) => ({ row, score: memorySimilarity(prompt, row.content) + (Number(row.importance) || 0) * 0.08 }))
       .filter((item) => item.score >= 0.16)
       .sort((a, b) => b.score - a.score)
       .slice(0, 8)
-      .map(({ row }) => `- [${row.category}] ${String(row.content).slice(0, 500)}`);
+      .map(({ row }) => `- [${row.group_title || row.category}] ${String(row.content).slice(0, 500)}`);
     return ranked.length ? `\n\nMEMÓRIAS RELEVANTES DO USUÁRIO (use apenas quando fizer sentido):\n${ranked.join("\n")}` : "";
   } catch (error) {
     console.warn("Memory retrieval skipped", error?.message || "unknown");
@@ -248,6 +280,7 @@ function parseMemoryCandidates(value) {
     const list = Array.isArray(parsed?.memories) ? parsed.memories : [];
     return list.slice(0, 5).map((item) => ({
       category: MEMORY_CATEGORIES.has(item?.category) ? item.category : "other",
+      group_title: cleanUserContent(item?.group_title || item?.group || "Outros").slice(0, 120),
       content: cleanUserContent(item?.content).slice(0, 2000),
       importance: Math.max(0, Math.min(1, Number(item?.importance) || 0.5)),
       confidence: Math.max(0, Math.min(1, Number(item?.confidence) || 0.75)),
@@ -261,13 +294,15 @@ function parseMemoryCandidates(value) {
 
 async function learnMemories({ apiKey, userId, userMessage, assistantMessage }) {
   try {
+    const existing = await supabaseRequest("kazer_memories", { query: { user_id: `eq.${userId}`, select: "id,category,group_title,content,importance,confidence,is_pinned", order: "updated_at.desc", limit: 120 } });
+    const existingTitles = [...new Set((Array.isArray(existing) ? existing : []).map((row) => row.group_title).filter(Boolean))];
     const result = await callGroq({
       apiKey,
       models: [process.env.GROQ_MODEL || DEFAULT_TEXT_MODEL],
       hasImages: false,
       messages: [
-        { role: "system", content: "Você mantém a memória contextual do usuário. Retorne SOMENTE JSON válido no formato {\"memories\":[{\"category\":\"preference|dislike|personal_context|project|goal|habit|communication_style|technical_knowledge|interest|workflow|instruction|important_fact|temporary_context|relationship_context|learning|conversation_context|other\",\"content\":\"resumo curto e útil em terceira pessoa\",\"importance\":0.0,\"confidence\":0.0,\"explicit\":true,\"is_pinned\":false}]}. Crie pelo menos um item conversation_context para cada turno, resumindo o que foi tratado e o que importa para entender a continuidade. Além disso, extraia preferências, projetos, objetivos e instruções quando existirem. Não copie a conversa literalmente. Não extraia senhas, tokens, dados financeiros, documentos de identidade, saúde, localização precisa ou outras informações sensíveis. Não guarde detalhes sem utilidade futura. Informação explicitamente declarada recebe confidence 1.0; inferências recebem no máximo 0.75. is_pinned só pode ser true quando o usuário pedir explicitamente para lembrar permanentemente." },
-        { role: "user", content: `Mensagem do usuário:\n${String(userMessage).slice(0, 4000)}\n\nResposta do KAZER:\n${String(assistantMessage).slice(0, 5000)}` },
+        { role: "system", content: "Você mantém a memória contextual do usuário. Retorne SOMENTE JSON válido no formato {\"memories\":[{\"group_title\":\"nome curto e descritivo do grupo\",\"category\":\"preference|dislike|personal_context|project|goal|habit|communication_style|technical_knowledge|interest|workflow|instruction|important_fact|temporary_context|relationship_context|learning|conversation_context|other\",\"content\":\"resumo curto e útil em terceira pessoa\",\"importance\":0.0,\"confidence\":0.0,\"explicit\":true,\"is_pinned\":false}]}. Use um group_title dinâmico, sem lista fixa, que descreva o assunto (por exemplo, Sobre você, Kazer, Estilo de comunicação ou um nome de projeto). Antes de escolher um nome novo, considere os grupos existentes informados na mensagem do usuário e reutilize exatamente o nome de um grupo compatível; variações como Kazer e Sobre o Kazer devem ser tratadas como o mesmo assunto. Se houver várias informações do mesmo assunto no turno, use o mesmo grupo. Crie pelo menos um item conversation_context para cada turno, resumindo o que foi tratado e o que importa para entender a continuidade. Além disso, extraia preferências, projetos, objetivos e instruções quando existirem. Não copie a conversa literalmente. Não extraia senhas, tokens, dados financeiros, documentos de identidade, saúde, localização precisa ou outras informações sensíveis. Não guarde detalhes sem utilidade futura. Informação explicitamente declarada recebe confidence 1.0; inferências recebem no máximo 0.75. is_pinned só pode ser true quando o usuário pedir explicitamente para lembrar permanentemente." },
+        { role: "user", content: `Grupos já existentes deste usuário (reutilize um nome compatível quando fizer sentido):\n${existingTitles.length ? existingTitles.join("\n") : "(nenhum)"}\n\nMensagem do usuário:\n${String(userMessage).slice(0, 4000)}\n\nResposta do KAZER:\n${String(assistantMessage).slice(0, 5000)}` },
       ],
     });
     const candidates = parseMemoryCandidates(result?.data?.choices?.[0]?.message?.content);
@@ -276,14 +311,14 @@ async function learnMemories({ apiKey, userId, userMessage, assistantMessage }) 
       if (!fallback) return 0;
       candidates.push({ category: "conversation_context", content: `Nesta conversa, o usuário tratou de: ${fallback}`, importance: 0.35, confidence: 0.55, is_pinned: false, source: "conversation" });
     }
-    const existing = await supabaseRequest("kazer_memories", { query: { user_id: `eq.${userId}`, select: "id,category,content,importance,confidence,is_pinned", order: "updated_at.desc", limit: 120 } });
     for (const candidate of candidates) {
-      const match = (Array.isArray(existing) ? existing : []).find((row) => row.category === candidate.category && memorySimilarity(row.content, candidate.content) >= 0.82);
+      candidate.group_title = reuseCompatibleGroupTitle(candidate.group_title, existingTitles);
+      const match = (Array.isArray(existing) ? existing : []).find((row) => row.group_title === candidate.group_title || (groupTitleSimilarity(row.group_title, candidate.group_title) >= 0.75 && memorySimilarity(row.content, candidate.content) >= 0.35));
       if (match) {
-        await supabaseRequest("kazer_memories", { method: "PATCH", query: { id: `eq.${match.id}`, user_id: `eq.${userId}` }, body: { content: candidate.content, importance: Math.max(Number(match.importance) || 0, candidate.importance), confidence: candidate.confidence, is_pinned: Boolean(match.is_pinned || candidate.is_pinned), source: candidate.source } });
+        await supabaseRequest("kazer_memories", { method: "PATCH", query: { id: `eq.${match.id}`, user_id: `eq.${userId}` }, body: { group_title: match.group_title || candidate.group_title, content: candidate.content, importance: Math.max(Number(match.importance) || 0, candidate.importance), confidence: candidate.confidence, is_pinned: Boolean(match.is_pinned || candidate.is_pinned), source: candidate.source } });
       } else {
         const created = await supabaseRequest("kazer_memories", { method: "POST", body: { user_id: userId, ...candidate } });
-        if (Array.isArray(created) && created[0] && Array.isArray(existing)) existing.push(created[0]);
+        if (Array.isArray(created) && created[0] && Array.isArray(existing)) { existing.push(created[0]); existingTitles.push(candidate.group_title); }
       }
     }
     return candidates.length;
