@@ -3163,6 +3163,9 @@
       }
 
       .memory-screen-backdrop.visible { opacity: 1; pointer-events: auto; }
+      .memory-settings-body { display: grid; gap: 12px; }
+      .memory-detail-back { display: inline-flex; align-items: center; gap: 6px; width: fit-content; padding: 4px 0 8px; border: 0; background: transparent; color: var(--text-soft); font: inherit; cursor: pointer; }
+      .memory-detail-back .icon { width: 16px; height: 16px; }
 
       .memory-screen {
         position: fixed;
@@ -3343,8 +3346,12 @@
             </section>
             <section class="settings-section" data-settings-panel="memory" hidden>
               <p class="settings-section-intro">O Kazer guarda apenas informações úteis para personalizar suas respostas. Você pode revisar e apagar qualquer memória quando quiser.</p>
-              <div class="settings-group">
-                <button class="settings-control settings-control-action" id="openMemoryScreen" type="button"><div><strong>O que o Kazer lembra</strong><small>Veja tudo organizado por assunto e apague o que quiser.</small></div><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"></path></svg></button>
+              <div class="memory-settings-body" id="memorySettingsBody">
+                <button class="memory-detail-back" id="memoryDetailBack" type="button" hidden><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 5-7 7 7 7"></path></svg><span>Todos os grupos</span></button>
+                <div class="memory-groups" id="memoryGroups" aria-live="polite"></div>
+                <div class="memory-detail" id="memoryDetail" hidden><div class="memory-detail-list" id="memoryDetailList" aria-live="polite"></div></div>
+                <div class="memory-loading" id="memoryLoading">Carregando memórias…</div>
+                <div class="memory-empty" id="memoryEmpty" hidden>O Kazer ainda não tem memórias úteis salvas. Continue conversando e informações importantes poderão aparecer aqui.</div>
               </div>
             </section>
             <section class="settings-section" data-settings-panel="account" hidden>
@@ -3352,23 +3359,6 @@
               <div class="settings-group"><div class="settings-group-title">Sessão</div><div class="settings-account-card"><span class="settings-account-avatar" id="settingsAccountAvatar">K</span><div><strong id="settingsAccountName">Kazer</strong><small id="settingsAccountEmail">Conta conectada</small></div><span class="settings-session-badge">ATIVA</span></div><div class="settings-control"><div><strong>Status da sessão</strong><small>A sessão visual está ativa neste navegador.</small></div><span class="settings-status-dot">Ativa</span></div><button class="settings-logout" id="settingsLogoutAction" type="button">Sair da conta<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 17l5-5-5-5M15 12H3"></path><path d="M21 19V5a2 2 0 0 0-2-2h-5"></path></svg></button></div></section>
           </div>
         </section>
-      </section>
-
-      <div class="memory-screen-backdrop" id="memoryScreenBackdrop" hidden></div>
-      <section class="memory-screen" id="memoryScreen" role="dialog" aria-modal="true" aria-label="Memória" aria-hidden="true" hidden>
-        <header class="connectors-head" id="memoryScreenHead">
-          <button class="icon-button" id="memoryScreenBack" type="button" aria-label="Voltar"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 5-7 7 7 7"></path></svg></button>
-          <h2 id="memoryScreenTitle">Memória</h2>
-          <span class="connectors-head-spacer" aria-hidden="true"></span>
-        </header>
-        <div class="memory-screen-body" id="memoryScreenBody">
-          <div class="memory-groups" id="memoryGroups" aria-live="polite"></div>
-          <div class="memory-detail" id="memoryDetail" hidden>
-            <div class="memory-detail-list" id="memoryDetailList" aria-live="polite"></div>
-          </div>
-          <div class="memory-loading" id="memoryLoading">Carregando memórias…</div>
-          <div class="memory-empty" id="memoryEmpty" hidden>O Kazer ainda está te conhecendo. Continue conversando e as memórias vão aparecer aqui.</div>
-        </div>
       </section>
 
       <div class="connectors-backdrop" id="connectorsBackdrop" hidden></div>
@@ -3632,15 +3622,10 @@
         const settingsMobileAccountAvatar = document.getElementById("settingsMobileAccountAvatar");
         const settingsMobilePlan = document.getElementById("settingsMobilePlan");
         const settingsMobileUpgrade = document.getElementById("settingsMobileUpgrade");
-        const openMemoryScreen = document.getElementById("openMemoryScreen");
-        const memoryScreenBackdrop = document.getElementById("memoryScreenBackdrop");
-        const memoryScreen = document.getElementById("memoryScreen");
-        const memoryScreenBack = document.getElementById("memoryScreenBack");
-        const memoryScreenTitle = document.getElementById("memoryScreenTitle");
-        const memoryScreenBody = document.getElementById("memoryScreenBody");
         const memoryGroups = document.getElementById("memoryGroups");
         const memoryDetail = document.getElementById("memoryDetail");
         const memoryDetailList = document.getElementById("memoryDetailList");
+        const memoryDetailBack = document.getElementById("memoryDetailBack");
         const memoryLoading = document.getElementById("memoryLoading");
         const memoryEmpty = document.getElementById("memoryEmpty");
         let memoriesCache = [];
@@ -4202,17 +4187,16 @@
         };
         const openMemoryGroup = (group) => {
           activeMemoryGroup = group.name;
-          memoryScreenTitle.textContent = group.name;
           memoryDetailList.innerHTML = "";
           group.items.forEach((memory) => memoryDetailList.append(renderMemoryDetailItem(memory)));
           memoryGroups.hidden = true;
           memoryDetail.hidden = false;
-          memoryScreenBody.scrollTop = 0;
+          memoryDetailBack.hidden = false;
         };
         const closeMemoryGroup = () => {
           activeMemoryGroup = null;
-          memoryScreenTitle.textContent = "Memória";
           memoryDetail.hidden = true;
+          memoryDetailBack.hidden = true;
           renderMemoryGroups();
         };
         const loadMemories = async () => {
@@ -4233,33 +4217,16 @@
             memoryLoading.hidden = true;
           }
         };
-        const openMemoryScreenModal = () => {
-          closeMenus();
-          memoryScreenBackdrop.hidden = false;
-          memoryScreen.hidden = false;
-          memoryScreen.setAttribute("aria-hidden", "false");
-          requestAnimationFrame(() => {
-            memoryScreenBackdrop.classList.add("visible");
-            memoryScreen.classList.add("visible");
-          });
-          if (!memoriesLoaded) loadMemories();
-          else renderMemoryGroups();
-        };
-        const closeMemoryScreenModal = () => {
-          memoryScreenBackdrop.classList.remove("visible");
-          memoryScreen.classList.remove("visible");
-          window.setTimeout(() => {
-            memoryScreenBackdrop.hidden = true;
-            memoryScreen.hidden = true;
-            closeMemoryGroup();
-          }, 220);
-        };
-
         const renderSettingsSection = (section) => {
           const selected = settingsLabels[section] ? section : "general";
           settingsNavItems.forEach((item) => item.classList.toggle("active", item.dataset.settingsSection === selected));
           settingsPanels.forEach((panel) => { panel.hidden = panel.dataset.settingsPanel !== selected; });
           settingsPanelTitle.textContent = settingsLabels[selected];
+          if (selected === "memory") {
+            closeMemoryGroup();
+            if (!memoriesLoaded) loadMemories();
+            else renderMemoryGroups();
+          }
         };
 
         const openSettings = (section = "general") => {
@@ -5427,12 +5394,7 @@
             if (isMobileSettingsViewport()) settingsPopover.classList.add("mobile-section-open");
           });
         });
-        openMemoryScreen?.addEventListener("click", openMemoryScreenModal);
-        memoryScreenBack?.addEventListener("click", () => {
-          if (activeMemoryGroup) closeMemoryGroup();
-          else closeMemoryScreenModal();
-        });
-        memoryScreenBackdrop?.addEventListener("click", closeMemoryScreenModal);
+        memoryDetailBack?.addEventListener("click", closeMemoryGroup);
         settingsSearch.addEventListener("input", () => {
           const query = settingsSearch.value.trim().toLocaleLowerCase();
           settingsNavItems.forEach((item) => {
