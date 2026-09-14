@@ -21,8 +21,9 @@ Este diretório contém as migrações incrementais do banco usado pelo KAZER. O
 | 11 | `011_memories.sql` | Memórias isoladas por usuário, categorias, retenção e limite de registros. |
 | 12 | `012_memory_group_title.sql` | Agrupamento dinâmico de memórias por título decidido pela IA. |
 | 13 | `013_memory_retention_cleanup.sql` | Limpeza inteligente no limite de 5.000 memórias por usuário. |
+| 14 | `014_daily_token_policy.sql` | 1.500 tokens iniciais preservados, recarga diária somada de 300 tokens e reset lazy em 00:00 UTC. |
 
-As migrações posteriores dependem de objetos criados pelas anteriores. Não pule arquivos, não os execute fora de ordem e não edite uma migração já aplicada sem registrar uma nova migração corretiva.
+As migrações posteriores dependem de objetos criados pelas anteriores. Não pule arquivos, não os execute fora de ordem e não edite uma migração já aplicada sem registrar uma nova migração corretiva. A migração 014 substitui o comportamento anterior de reposição integral em janela de cinco horas.
 
 ## Configuração do Auth
 
@@ -34,7 +35,7 @@ O KAZER não grava senhas ou hashes em tabelas próprias. O Supabase Auth admini
 
 O trigger de novo usuário provisiona `profiles` e `user_settings`. As preferências de notificações, instalação, aparência e idioma podem ser sincronizadas para a conta autenticada, enquanto o navegador mantém um fallback local.
 
-As migrações de uso criam o catálogo e o estado por usuário. O consumo do chat é atômico, aplica reset lazy com bloqueio de linha e impede saldo ou contagem negativa. A migração `008` substitui a assinatura antiga da RPC por `p_attachment_count`, contabilizando cada foto/arquivo individualmente e permitindo no máximo dez itens por janela conforme o plano Free.
+As migrações de uso criam o catálogo e o estado por usuário. O consumo do chat é atômico, aplica reset lazy com bloqueio de linha e impede saldo ou contagem negativa. A migração `008` substitui a assinatura antiga da RPC por `p_attachment_count`, contabilizando cada foto/arquivo individualmente e permitindo no máximo dez itens por janela conforme o plano Free. A migração `014` mantém os 1.500 tokens de boas-vindas no saldo, soma 300 tokens a cada virada de dia UTC e registra a quantidade de recargas aplicadas para evitar duplicidade. O saldo nunca é zerado automaticamente.
 
 ## Retenção
 
