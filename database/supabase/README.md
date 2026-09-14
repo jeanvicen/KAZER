@@ -20,6 +20,7 @@ Este diretório contém as migrações incrementais do banco usado pelo KAZER. O
 | 10 | `010_mcp_github_tasks.sql` | Conectores MCP e tarefas vinculadas ao GitHub. |
 | 11 | `011_memories.sql` | Memórias isoladas por usuário, categorias, retenção e limite de registros. |
 | 12 | `012_memory_group_title.sql` | Agrupamento dinâmico de memórias por título decidido pela IA. |
+| 13 | `013_memory_retention_cleanup.sql` | Limpeza inteligente no limite de 5.000 memórias por usuário. |
 
 As migrações posteriores dependem de objetos criados pelas anteriores. Não pule arquivos, não os execute fora de ordem e não edite uma migração já aplicada sem registrar uma nova migração corretiva.
 

@@ -286,7 +286,7 @@ function parseMemoryCandidates(value) {
       confidence: Math.max(0, Math.min(1, Number(item?.confidence) || 0.75)),
       is_pinned: Boolean(item?.is_pinned),
       source: item?.explicit ? "explicit" : "conversation",
-    })).filter((item) => item.content.length >= 3);
+    })).filter((item) => item.content.length >= 3 && item.category !== "conversation_context");
   } catch {
     return [];
   }
@@ -301,16 +301,12 @@ async function learnMemories({ apiKey, userId, userMessage, assistantMessage }) 
       models: [process.env.GROQ_MODEL || DEFAULT_TEXT_MODEL],
       hasImages: false,
       messages: [
-        { role: "system", content: "Você mantém a memória contextual do usuário. Retorne SOMENTE JSON válido no formato {\"memories\":[{\"group_title\":\"nome curto e descritivo do grupo\",\"category\":\"preference|dislike|personal_context|project|goal|habit|communication_style|technical_knowledge|interest|workflow|instruction|important_fact|temporary_context|relationship_context|learning|conversation_context|other\",\"content\":\"resumo curto e útil em terceira pessoa\",\"importance\":0.0,\"confidence\":0.0,\"explicit\":true,\"is_pinned\":false}]}. Use um group_title dinâmico, sem lista fixa, que descreva o assunto (por exemplo, Sobre você, Kazer, Estilo de comunicação ou um nome de projeto). Antes de escolher um nome novo, considere os grupos existentes informados na mensagem do usuário e reutilize exatamente o nome de um grupo compatível; variações como Kazer e Sobre o Kazer devem ser tratadas como o mesmo assunto. Se houver várias informações do mesmo assunto no turno, use o mesmo grupo. Crie pelo menos um item conversation_context para cada turno, resumindo o que foi tratado e o que importa para entender a continuidade. Além disso, extraia preferências, projetos, objetivos e instruções quando existirem. Não copie a conversa literalmente. Não extraia senhas, tokens, dados financeiros, documentos de identidade, saúde, localização precisa ou outras informações sensíveis. Não guarde detalhes sem utilidade futura. Informação explicitamente declarada recebe confidence 1.0; inferências recebem no máximo 0.75. is_pinned só pode ser true quando o usuário pedir explicitamente para lembrar permanentemente." },
+        { role: "system", content: "Você mantém somente memórias duradouras e realmente úteis do usuário. Retorne SOMENTE JSON válido no formato {\"memories\":[{\"group_title\":\"nome curto e descritivo do grupo\",\"category\":\"preference|dislike|personal_context|project|goal|habit|communication_style|technical_knowledge|interest|workflow|instruction|important_fact|temporary_context|relationship_context|learning|other\",\"content\":\"resumo curto e útil em terceira pessoa\",\"importance\":0.0,\"confidence\":0.0,\"explicit\":true,\"is_pinned\":false}]}. Salve apenas fatos específicos que possam melhorar conversas futuras: preferências estáveis, nome ou identidade que o usuário informou, projetos, objetivos, hábitos, estilo de comunicação, conhecimentos, instruções ou decisões importantes. NÃO salve um item para cada turno, pergunta comum, resposta, saudação, assunto passageiro, pedido isolado ou resumo genérico da conversa. Se não houver algo especial e útil para lembrar, retorne {\"memories\":[]}. Use um group_title dinâmico, sem lista fixa, que descreva o assunto. Antes de escolher um nome novo, considere os grupos existentes informados na mensagem do usuário e reutilize exatamente o nome de um grupo compatível; variações como Kazer e Sobre o Kazer devem ser tratadas como o mesmo assunto. Não copie a conversa literalmente. Não extraia senhas, tokens, dados financeiros, documentos de identidade, saúde, localização precisa ou outras informações sensíveis. Informação explicitamente declarada recebe confidence 1.0; inferências recebem no máximo 0.75. is_pinned só pode ser true quando o usuário pedir explicitamente para lembrar permanentemente." },
         { role: "user", content: `Grupos já existentes deste usuário (reutilize um nome compatível quando fizer sentido):\n${existingTitles.length ? existingTitles.join("\n") : "(nenhum)"}\n\nMensagem do usuário:\n${String(userMessage).slice(0, 4000)}\n\nResposta do KAZER:\n${String(assistantMessage).slice(0, 5000)}` },
       ],
     });
     const candidates = parseMemoryCandidates(result?.data?.choices?.[0]?.message?.content);
-    if (!candidates.length) {
-      const fallback = redactSensitiveText(cleanUserContent(userMessage)).slice(0, 700);
-      if (!fallback) return 0;
-      candidates.push({ category: "conversation_context", content: `Nesta conversa, o usuário tratou de: ${fallback}`, importance: 0.35, confidence: 0.55, is_pinned: false, source: "conversation" });
-    }
+    if (!candidates.length) return 0;
     for (const candidate of candidates) {
       candidate.group_title = reuseCompatibleGroupTitle(candidate.group_title, existingTitles);
       const match = (Array.isArray(existing) ? existing : []).find((row) => row.group_title === candidate.group_title || (groupTitleSimilarity(row.group_title, candidate.group_title) >= 0.75 && memorySimilarity(row.content, candidate.content) >= 0.35));
