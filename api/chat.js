@@ -502,6 +502,7 @@ async function callGroq({ apiKey, models, messages, hasImages, tools = [] }) {
 
   for (const model of models) {
     for (let attempt = 0; attempt < MAX_GROQ_ATTEMPTS_PER_MODEL; attempt += 1) {
+      let retryAfterHeader = null;
       try {
         const requestBody = {
           model,
@@ -525,24 +526,34 @@ async function callGroq({ apiKey, models, messages, hasImages, tools = [] }) {
           body: JSON.stringify(requestBody),
           signal: AbortSignal.timeout(30_000),
         });
+        retryAfterHeader = groqResponse.headers.get("retry-after");
 
         const rawData = await readTextWithLimit(groqResponse, 2 * 1024 * 1024);
         const data = JSON.parse(rawData || "null");
-        if (groqResponse.ok) return { data, model };
+        const choice = data?.choices?.[0];
+        const hasUsableResult = Boolean(choice?.message)
+          && (tools.length
+            ? Array.isArray(choice.message.tool_calls) || typeof choice.message.content === "string"
+            : typeof choice.message.content === "string" && choice.message.content.trim().length > 0);
+        if (groqResponse.ok && hasUsableResult) return { data, model };
 
         lastFailure = {
           status: groqResponse.status,
           model,
-          error: data?.error?.message || "unknown",
+          error: groqResponse.ok ? "empty_model_response" : (data?.error?.message || "unknown"),
         };
 
-        if (!RETRYABLE_GROQ_STATUSES.has(groqResponse.status)) break;
+        if (!groqResponse.ok && !RETRYABLE_GROQ_STATUSES.has(groqResponse.status)) break;
       } catch (error) {
         lastFailure = { status: 0, model, error: error?.message || "network_error" };
       }
 
       if (attempt < MAX_GROQ_ATTEMPTS_PER_MODEL - 1) {
-        await wait(250 * 2 ** attempt);
+        const retryAfter = Number.parseFloat(lastFailure?.status === 429 ? retryAfterHeader : "NaN");
+        const backoff = Number.isFinite(retryAfter)
+          ? Math.min(4000, Math.max(250, retryAfter * 1000))
+          : Math.min(3000, 350 * 2 ** attempt);
+        await wait(backoff + Math.floor(Math.random() * 180));
       }
     }
   }
