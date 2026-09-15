@@ -580,6 +580,16 @@
         transform: scale(0.95);
       }
 
+      .voice-button { position: relative; flex: 0 0 auto; display: inline-flex; align-items: center; justify-content: center; width: 38px; height: 38px; border: 1px solid var(--line); border-radius: 50%; background: rgba(255,255,255,.04); color: var(--text); cursor: pointer; transition: border-color 160ms var(--ease), background 160ms var(--ease), color 160ms var(--ease), transform 160ms var(--ease); }
+      .voice-button:hover { border-color: rgba(255,255,255,.18); background: rgba(255,255,255,.07); }
+      .voice-button:active { transform: scale(.95); }
+      .voice-button[aria-pressed="true"] { border-color: rgba(255,92,92,.7); background: rgba(255,92,92,.14); color: #ff8d8d; animation: voice-pulse 1.25s ease-in-out infinite; }
+      .voice-button:disabled { cursor: default; opacity: .45; }
+      .voice-button .icon { width: 19px; height: 19px; stroke-width: 1.7; }
+      @keyframes voice-pulse { 50% { box-shadow: 0 0 0 5px rgba(255,92,92,.08); } }
+      .app:not(.in-conversation) .voice-button { width: 32px; height: 32px; }
+      .app:not(.in-conversation) .voice-button .icon { width: 16px; height: 16px; }
+
       .attach-button[aria-expanded="true"] { border-color: rgba(255,255,255,.45); background: var(--text); color: var(--page); transform: scale(1.06); box-shadow: 0 0 0 4px color-mix(in srgb, var(--text) 10%, transparent); }
 
       .plus-mark {
@@ -3491,6 +3501,7 @@
               <input class="file-input" id="fileInput" type="file" accept=".pdf,.docx,.txt,.md,.csv,.json,.xml,.html,.htm,.js,.ts,.tsx,.jsx,.css,.py,.java,.sql,.yaml,.yml,.log" multiple hidden />
               <input class="file-input" id="photoInput" type="file" accept="image/jpeg,image/png,image/webp,image/gif" multiple hidden />
               <input class="file-input" id="cameraInput" type="file" accept="image/*" capture="environment" multiple hidden />
+              <button class="voice-button" id="voiceButton" type="button" aria-label="Falar para transcrever" title="Falar para transcrever" aria-pressed="false"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"></rect><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21M8.5 21h7"></path></svg></button>
               <button class="send-button" id="sendButton" type="submit" aria-label="Enviar" disabled><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"></path></svg></button>
               <button class="send-button stop-button" id="stopButton" type="button" aria-label="Parar resposta"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="7" y="7" width="10" height="10" rx="1.5"></rect></svg></button>
             </div>
@@ -3577,6 +3588,7 @@
         const messageInput = document.getElementById("messageInput");
         const sendButton = document.getElementById("sendButton");
         const stopButton = document.getElementById("stopButton");
+        const voiceButton = document.getElementById("voiceButton");
         const attachButton = document.getElementById("attachButton");
         const fileInput = document.getElementById("fileInput");
         const photoInput = document.getElementById("photoInput");
@@ -3704,6 +3716,9 @@
         let usageRefreshTimer = null;
         let busy = false;
         let activeRequestController = null;
+        let voiceRecognition = null;
+        let voiceListening = false;
+        let voiceBaseText = "";
         let toastTimer = null;
         let conversationMessages = [];
         let viewMode = new URLSearchParams(window.location.search).get("view") === "chat" ? "new-chat" : "history";
@@ -4599,6 +4614,58 @@
           sendButton.disabled = busy || (messageInput.value.trim().length === 0 && selectedFiles.length === 0);
         };
 
+        const setVoiceState = (listening) => {
+          voiceListening = listening;
+          voiceButton?.setAttribute("aria-pressed", String(listening));
+          voiceButton?.setAttribute("aria-label", listening ? "Parar gravação" : "Falar para transcrever");
+          voiceButton?.setAttribute("title", listening ? "Parar gravação" : "Falar para transcrever");
+          if (voiceButton) voiceButton.disabled = busy && !listening;
+        };
+
+        const stopVoiceRecognition = () => {
+          if (!voiceRecognition) return;
+          try { voiceRecognition.stop(); } catch { /* já parado */ }
+        };
+
+        const startVoiceRecognition = () => {
+          const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+          if (!Recognition) {
+            showToast("Seu navegador não oferece transcrição de voz. Tente Chrome ou Edge.");
+            return;
+          }
+          if (voiceListening) {
+            stopVoiceRecognition();
+            return;
+          }
+          if (busy) return;
+          voiceBaseText = messageInput.value.trim();
+          voiceRecognition = new Recognition();
+          voiceRecognition.lang = "pt-BR";
+          voiceRecognition.continuous = true;
+          voiceRecognition.interimResults = true;
+          voiceRecognition.maxAlternatives = 1;
+          voiceRecognition.onstart = () => {
+            setVoiceState(true);
+            showToast("Fale agora. Toque no microfone novamente para parar.");
+          };
+          voiceRecognition.onresult = (event) => {
+            const transcript = Array.from(event.results).map((result) => result[0]?.transcript || "").join(" ").trim();
+            messageInput.value = [voiceBaseText, transcript].filter(Boolean).join(voiceBaseText ? " " : "");
+            resizeInput();
+            updateSend();
+          };
+          voiceRecognition.onerror = (event) => {
+            const messages = { "not-allowed": "Permita o acesso ao microfone para usar a voz.", "audio-capture": "Não foi possível acessar o microfone.", "no-speech": "Não ouvi sua voz. Tente novamente." };
+            if (event.error !== "aborted") showToast(messages[event.error] || "Não foi possível transcrever sua voz.");
+          };
+          voiceRecognition.onend = () => {
+            setVoiceState(false);
+            voiceRecognition = null;
+            messageInput.focus();
+          };
+          try { voiceRecognition.start(); } catch { setVoiceState(false); voiceRecognition = null; }
+        };
+
         const scrollBottom = () => {
           requestAnimationFrame(() => conversationArea.scrollTo({ top: conversationArea.scrollHeight, behavior: "smooth" }));
         };
@@ -5160,6 +5227,7 @@
           busy = state;
           composer.classList.toggle("is-busy", state);
           messageInput.disabled = state;
+          if (voiceButton && !voiceListening) voiceButton.disabled = state;
           updateSend();
         };
 
