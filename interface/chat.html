@@ -5336,7 +5336,6 @@
               throw new Error(data.error || "Não foi possível obter uma resposta.");
             }
             if (data.usage) applyUsageState(data.usage, true);
-            if (Number(data.credit_cost) > 0) showToast(`Esta resposta usou ${Number(data.credit_cost)} tokens.`);
             if (activeRequestController !== controller) return;
             const answer = data.message?.content;
             if (typeof answer !== "string" || !answer.trim()) throw new Error("A resposta recebida estava vazia.");
