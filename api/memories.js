@@ -8,7 +8,7 @@ const {
 } = require("./_security");
 const { supabaseRequest } = require("./_kazer-data");
 
-const MAX_PAGE_SIZE = 50;
+const MAX_PAGE_SIZE = 200;
 const CATEGORIES = new Set([
   "preference", "dislike", "personal_context", "project", "goal", "habit",
   "communication_style", "technical_knowledge", "interest", "workflow",

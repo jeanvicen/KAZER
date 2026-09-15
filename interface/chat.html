@@ -4238,7 +4238,7 @@
           memoryEmpty.hidden = true;
           memoryGroups.hidden = true;
           try {
-            const response = await fetchWithAuth(`/api/memories?limit=200&offset=0`, { method: "GET" });
+            const response = await fetchWithAuth(`/api/memories?limit=200&offset=0`, { method: "GET", cache: "no-store" });
             if (!response.ok) throw new Error("memory_load_failed");
             const payload = await response.json();
             memoriesCache = payload.memories || [];
