@@ -6,6 +6,20 @@
 
 [![Status](https://img.shields.io/badge/status-em%20desenvolvimento-6f42c1)](#status-do-projeto) [![Runtime](https://img.shields.io/badge/node-%3E%3D20-339933)](#requisitos) [![Deploy](https://img.shields.io/badge/deploy-vercel-000000)](#publicação-na-vercel)
 
+## Visão rápida da versão atual
+
+O KAZER combina uma interface web/PWA com funções serverless e um banco Supabase protegido por RLS. O navegador nunca é a fonte de verdade para autenticação, tokens ou limites: cada operação é validada novamente no servidor.
+
+| Área | Estado atual |
+|---|---|
+| Continuidade do chat | Mensagens que falham permanecem no histórico e podem ser reenviadas sem perder contexto. |
+| Anexos | JPEG, PNG, WebP, GIF, PDF, DOCX e texto compatível, com allowlist, limites e assinatura binária para formatos estruturados. |
+| Limite de anexos | 10 itens por ciclo diário do plano Free, aplicado no Supabase e reiniciado em 00:00 UTC. |
+| Proteção do código | CODEOWNERS, Dependabot e workflow obrigatório de segurança no GitHub. |
+| Validação local | `npm run check` executa auditoria de segurança e regressões do chat. |
+
+> **Nota de segurança:** um repositório público pode ser clonado. Para impedir acesso ao código, é necessário mantê-lo privado e restringir colaboradores; documentação e avisos autorais não substituem controles de acesso.
+
 ## Aviso de propriedade e uso
 
 Este repositório contém código, interface, textos, identidade visual, fluxos, regras de produto, configurações e materiais do KAZER. **O projeto não é open source e não concede autorização geral para copiar, modificar, redistribuir, vender, sublicenciar, publicar forks, remover avisos, reutilizar a marca ou criar um serviço derivado.** A simples disponibilidade do repositório no GitHub não deve ser interpretada como uma licença de reutilização; o GitHub recomenda que o projeto declare expressamente a licença e observa que, sem licença, aplicam-se os direitos autorais padrão.[1]
