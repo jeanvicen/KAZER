@@ -2,1480 +2,625 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover, user-scalable=no" />
-  <meta name="theme-color" content="#050507" />
-  <meta name="color-scheme" content="dark" />
-  <title>KAZER</title>
-
-  <link rel="icon" href="../download/assets/kazer-login-symbol.png" type="image/png" />
-  <link rel="apple-touch-icon" href="../download/assets/kazer-login-symbol.png" />
-
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>Kazer | Acesso Seguro</title>
+  
+  <!-- Fonte Inter (Moderna e Profissional) -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link
-    href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap"
-    rel="stylesheet"
-  />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  
+  <!-- Supabase JS (CDN Oficial) -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <style>
+    /* =========================================
+       1. VARIÁVEIS E RESET (DARK MODE)
+    ========================================= */
     :root {
-      --bg: #050507;
-      --card: rgba(14, 14, 18, .78);
-      --card-strong: rgba(18, 18, 23, .92);
-      --line: rgba(255,255,255,.09);
-      --line-focus: rgba(139,111,255,.85);
-      --text: #f6f6f8;
-      --muted: rgba(246,246,248,.50);
-      --faint: rgba(246,246,248,.28);
-      --purple: #6c4cf1;
-      --purple-2: #8b6fff;
-      --green: #2ed573;
-      --red: #ff6b6b;
-      --orange: #ffb454;
-      --yellow: #ffd86b;
-      --radius: 24px;
-      --radius-field: 14px;
-      --vh: 1vh;
-      --ease: cubic-bezier(.2,.8,.2,1);
+      --bg-page: #09090b;
+      --bg-overlay: rgba(0, 0, 0, 0.8);
+      --bg-card: #18181b;
+      --bg-input: #09090b;
+      --border: #27272a;
+      --border-focus: #8b6fff;
+      --text-primary: #fafafa;
+      --text-secondary: #a1a1aa;
+      --accent: #8b6fff;
+      --danger: #ef4444;
+      --radius-sm: 8px; /* Cantos levemente quadrados */
+      --radius-md: 12px;
+      --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
     }
 
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      -webkit-tap-highlight-color: transparent;
-    }
-
-    html,
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    
     body {
-      width: 100%;
-      height: 100%;
-      overflow: hidden;
-      background: var(--bg);
-    }
-
-    body {
-      position: fixed;
-      inset: 0;
-      color: var(--text);
-      font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      -webkit-font-smoothing: antialiased;
-      text-rendering: optimizeLegibility;
-      overscroll-behavior: none;
-    }
-
-    button,
-    input {
-      font: inherit;
-    }
-
-    button {
-      appearance: none;
-      border: 0;
-      outline: 0;
-    }
-
-    /* ================= BACKGROUND ================= */
-
-    .background {
-      position: fixed;
-      inset: 0;
-      overflow: hidden;
-      background:
-        radial-gradient(circle at 50% 40%, rgba(108,76,241,.07), transparent 28%),
-        radial-gradient(circle at 8% 95%, rgba(255,255,255,.025), transparent 24%),
-        radial-gradient(circle at 96% 5%, rgba(255,255,255,.02), transparent 22%),
-        #050507;
-    }
-
-    #lineBackground {
-      position: absolute;
-      inset: 0;
-      width: 100%;
-      height: 100%;
-      opacity: .52;
-    }
-
-    .background::after {
-      content: "";
-      position: absolute;
-      inset: 0;
-      pointer-events: none;
-      background:
-        radial-gradient(circle at center, transparent 25%, rgba(5,5,7,.1) 58%, rgba(5,5,7,.52) 100%);
-    }
-
-    /* ================= SPLASH ================= */
-
-    #splash {
-      position: fixed;
-      inset: 0;
-      z-index: 10;
-      display: grid;
-      place-items: center;
-      background: #050507;
-      opacity: 1;
-      visibility: visible;
-      transition: opacity .7s var(--ease), visibility .7s;
-    }
-
-    #splash.hidden {
-      opacity: 0;
-      visibility: hidden;
-      pointer-events: none;
-    }
-
-    .splash-content {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      text-align: center;
-    }
-
-    .splash-icon {
-      position: relative;
-      width: 64px;
-      height: 64px;
-      margin-bottom: 15px;
-    }
-
-    .splash-icon::after {
-      content: "";
-      position: absolute;
-      inset: -20px;
-      border-radius: 50%;
-      background: radial-gradient(circle, rgba(139,111,255,.13), transparent 68%);
-      filter: blur(8px);
-      animation: glow 2.8s ease-in-out infinite;
-    }
-
-    .splash-icon img {
-      position: relative;
-      z-index: 1;
-      width: 100%;
-      height: 100%;
-      object-fit: contain;
-      filter: brightness(1.07);
-    }
-
-    #splashWord {
-      width: min(300px, 68vw);
-      height: auto;
-      display: block;
-    }
-
-    .splash-caption {
-      margin-top: 8px;
-      color: rgba(255,255,255,.30);
-      font-size: 9px;
-      font-weight: 600;
-      letter-spacing: .24em;
-      text-transform: uppercase;
-      opacity: 0;
-      animation: fadeIn .8s ease .4s forwards;
-    }
-
-    .splash-line {
-      width: 120px;
-      height: 1px;
-      margin-top: 24px;
-      overflow: hidden;
-      border-radius: 999px;
-      background: rgba(255,255,255,.07);
-    }
-
-    .splash-line::after {
-      content: "";
-      display: block;
-      width: 45%;
-      height: 100%;
-      background: var(--purple-2);
-      transform: translateX(-110%);
-      animation: sweep 1.5s ease-in-out infinite;
-    }
-
-    /* ================= AUTH ================= */
-
-    #login {
-      position: fixed;
-      inset: 0;
-      z-index: 5;
+      font-family: 'Inter', sans-serif;
+      background-color: var(--bg-page);
+      color: var(--text-primary);
+      height: 100vh;
       display: flex;
       align-items: center;
       justify-content: center;
-      padding:
-        max(18px, env(safe-area-inset-top))
-        max(18px, env(safe-area-inset-right))
-        max(18px, env(safe-area-inset-bottom))
-        max(18px, env(safe-area-inset-left));
-      opacity: 0;
-      visibility: hidden;
-      pointer-events: none;
-      transition: opacity .65s var(--ease), visibility .65s;
-    }
-
-    #login.visible {
-      opacity: 1;
-      visibility: visible;
-      pointer-events: auto;
-    }
-
-    .auth-wrap {
-      width: min(430px, 100%);
-      max-height: calc(100vh - 26px);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-    }
-
-    /* Small brand at top */
-    .top-brand {
-      display: inline-flex;
-      align-items: center;
-      gap: 9px;
-      margin-bottom: 18px;
-      color: rgba(255,255,255,.44);
-      font-size: 10px;
-      font-weight: 600;
-      letter-spacing: .22em;
-      text-transform: uppercase;
-      opacity: 0;
-      transform: translateY(8px);
-    }
-
-    #login.visible .top-brand {
-      animation: up .7s var(--ease) .05s forwards;
-    }
-
-    .top-brand img {
-      width: 18px;
-      height: 18px;
-      object-fit: contain;
-      filter: brightness(1.05);
-    }
-
-    .auth-card {
-      position: relative;
-      width: 100%;
-      padding: 30px;
-      border: 1px solid var(--line);
-      border-radius: var(--radius);
-      background:
-        linear-gradient(180deg, rgba(18,18,23,.88), rgba(10,10,13,.90));
-      box-shadow:
-        0 28px 80px rgba(0,0,0,.42),
-        inset 0 1px 0 rgba(255,255,255,.045);
-      backdrop-filter: blur(24px);
-      -webkit-backdrop-filter: blur(24px);
       overflow: hidden;
-      opacity: 0;
-      transform: translateY(16px);
+      background-image: radial-gradient(circle at 50% 0%, rgba(139, 111, 255, 0.08), transparent 60%);
     }
 
-    #login.visible .auth-card {
-      animation: cardIn .75s var(--ease) .1s forwards;
-    }
-
-    .auth-card::before {
-      content: "";
-      position: absolute;
-      top: 0;
-      left: 15%;
-      right: 15%;
-      height: 1px;
-      background: linear-gradient(90deg, transparent, rgba(139,111,255,.66), transparent);
-    }
-
-    .card-header {
-      text-align: center;
-      margin-bottom: 25px;
-    }
-
-    .card-logo {
-      width: 42px;
-      height: 42px;
-      margin: 0 auto 17px;
-      object-fit: contain;
-      filter: drop-shadow(0 0 14px rgba(139,111,255,.12));
-      animation: float 3.4s ease-in-out infinite;
-    }
-
-    .auth-title {
-      font-size: 28px;
-      line-height: 1.02;
-      letter-spacing: -.045em;
-      font-weight: 700;
-    }
-
-    .auth-subtitle {
-      margin-top: 9px;
-      color: var(--muted);
-      font-size: 12px;
-      line-height: 1.6;
-    }
-
-    /* tiny context line: one useful piece of information only */
-    .context-line {
+    /* =========================================
+       2. BOTÃO PRINCIPAL (PRETO, MEIO QUADRADO)
+    ========================================= */
+    .main-trigger-btn {
       display: inline-flex;
       align-items: center;
-      gap: 7px;
-      margin-top: 13px;
-      color: var(--faint);
-      font-size: 9px;
+      justify-content: center;
+      padding: 14px 36px;
+      background-color: #000000;
+      border: 1px solid #333333;
+      border-radius: var(--radius-sm); /* Levemente quadrado */
+      color: #ffffff;
       font-weight: 600;
-      letter-spacing: .04em;
+      font-size: 15px;
+      letter-spacing: 0.02em;
+      cursor: pointer;
+      transition: all 0.2s var(--ease);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
     }
 
-    .context-dot {
-      width: 5px;
-      height: 5px;
-      border-radius: 50%;
-      background: var(--green);
-      box-shadow: 0 0 0 4px rgba(46,213,115,.06);
-    }
-
-    form {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
-
-    .field-wrap {
-      position: relative;
-      animation: fieldIn .4s var(--ease) both;
-    }
-
-    .field {
-      display: flex;
-      align-items: center;
-      gap: 11px;
-      min-height: 56px;
-      padding: 0 15px;
-      border: 1px solid rgba(255,255,255,.085);
-      border-radius: var(--radius-field);
-      background: rgba(0,0,0,.18);
-      transition:
-        border-color .25s ease,
-        background .25s ease,
-        box-shadow .25s var(--ease),
-        transform .25s var(--ease);
-    }
-
-    .field:hover {
-      background: rgba(255,255,255,.018);
-      border-color: rgba(255,255,255,.12);
-    }
-
-    .field:focus-within {
-      border-color: var(--line-focus);
-      background: rgba(108,76,241,.04);
-      box-shadow:
-        0 0 0 4px rgba(108,76,241,.15),
-        0 10px 30px rgba(0,0,0,.12);
+    .main-trigger-btn:hover {
+      background-color: #111111;
+      border-color: #555555;
       transform: translateY(-1px);
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.6);
     }
 
-    .field svg {
-      flex: 0 0 auto;
-      width: 18px;
-      height: 18px;
-      color: rgba(255,255,255,.36);
-      transition: color .25s ease, opacity .25s ease;
+    .main-trigger-btn:active {
+      transform: translateY(0) scale(0.98);
     }
 
-    .field:focus-within svg {
-      color: var(--purple-3);
-    }
-
-    .field input {
-      width: 100%;
-      min-width: 0;
-      height: 54px;
-      border: 0;
-      outline: 0;
-      background: transparent;
-      color: var(--text);
-      font-size: 16px;
-    }
-
-    .field input::placeholder {
-      color: rgba(246,246,248,.30);
-    }
-
-    .field input:-webkit-autofill,
-    .field input:-webkit-autofill:hover,
-    .field input:-webkit-autofill:focus {
-      -webkit-text-fill-color: var(--text);
-      box-shadow: 0 0 0 1000px rgba(0,0,0,.16) inset;
-      transition: background-color 9999s ease-in-out 0s;
-    }
-
-    .eye {
-      width: 34px;
-      height: 34px;
-      flex: 0 0 auto;
-      display: grid;
-      place-items: center;
-      border-radius: 9px;
-      color: rgba(255,255,255,.43);
-      background: transparent;
-      cursor: pointer;
-      transition: color .18s ease, background .18s ease, transform .18s ease;
-    }
-
-    .eye:hover {
-      color: #fff;
-      background: rgba(255,255,255,.05);
-    }
-
-    .eye:active {
-      transform: scale(.94);
-    }
-
-    .eye-pupil {
-      transform-origin: center;
-      transform-box: fill-box;
-      transition: transform .28s cubic-bezier(.5,0,.5,1), opacity .18s ease;
-    }
-
-    .eye-outline {
-      transform-origin: center;
-      transform-box: fill-box;
-      transition: transform .28s cubic-bezier(.5,0,.5,1);
-    }
-
-    .eye.closed .eye-pupil {
-      transform: scaleY(.05);
-      opacity: 0;
-    }
-
-    .eye.closed .eye-outline {
-      transform: scaleY(.12);
-    }
-
-    /* Signup only */
-    .signup-only {
-      display: none;
-    }
-
-    body.mode-signup .signup-only {
-      display: flex;
-    }
-
-    body.mode-signup .password-note {
-      display: block;
-    }
-
-    /* Strength */
-    .strength {
-      display: none;
-      flex-direction: column;
-      gap: 7px;
-      padding: 2px 1px 0;
-    }
-
-    body.mode-signup .strength.show {
-      display: flex;
-    }
-
-    .strength-track {
-      height: 4px;
-      border-radius: 99px;
-      overflow: hidden;
-      background: rgba(255,255,255,.08);
-    }
-
-    .strength-fill {
-      width: 0;
-      height: 100%;
-      border-radius: inherit;
-      background: var(--red);
-      transition: width .42s cubic-bezier(.4,0,.2,1), background-color .3s ease;
-    }
-
-    .strength-fill.pulse {
-      animation: strengthPulse .42s ease;
-    }
-
-    .strength-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      min-height: 14px;
-    }
-
-    .strength-text,
-    .strength-score {
-      font-size: 10px;
-      font-weight: 600;
-    }
-
-    .strength-text {
-      color: var(--muted);
-    }
-
-    .strength-score {
-      color: rgba(255,255,255,.22);
-    }
-
-    .password-note {
-      display: none;
-      margin-top: -2px;
-      padding: 0 2px;
-      color: var(--faint);
-      font-size: 10px;
-      line-height: 1.5;
-    }
-
-    /* Error */
-    .error {
-      min-height: 18px;
-      padding: 2px;
-      color: var(--red);
-      font-size: 12px;
-      line-height: 1.45;
-    }
-
-    .shake {
-      animation: shake .4s cubic-bezier(.36,.07,.19,.97);
-    }
-
-    /* CTA */
-    .primary {
-      position: relative;
-      overflow: hidden;
-      isolation: isolate;
-      width: 100%;
-      min-height: 56px;
-      border-radius: 15px;
-      border: 1px solid rgba(255,255,255,.10);
-      color: #fff;
-      background: linear-gradient(135deg, var(--purple-2), var(--purple));
-      box-shadow:
-        0 9px 24px rgba(108,76,241,.25),
-        inset 0 1px 0 rgba(255,255,255,.20);
-      font-size: 14px;
-      font-weight: 700;
-      cursor: pointer;
-      transition: transform .15s ease, filter .2s ease, box-shadow .2s ease, opacity .2s ease;
-    }
-
-    .primary::after {
-      content: "";
-      position: absolute;
+    /* =========================================
+       3. OVERLAY E CONTAINER
+    ========================================= */
+    .overlay {
+      position: fixed;
       inset: 0;
-      background: linear-gradient(110deg, transparent 20%, rgba(255,255,255,.15) 48%, transparent 74%);
-      transform: translateX(-100%);
-      transition: transform .7s ease;
-    }
-
-    .primary:hover:not(:disabled) {
-      filter: brightness(1.045);
-      box-shadow:
-        0 12px 30px rgba(108,76,241,.29),
-        inset 0 1px 0 rgba(255,255,255,.22);
-    }
-
-    .primary:hover:not(:disabled)::after {
-      transform: translateX(100%);
-    }
-
-    .primary:active:not(:disabled) {
-      transform: scale(.987);
-    }
-
-    .primary:disabled {
-      opacity: .58;
-      cursor: not-allowed;
-    }
-
-    .button-text {
-      transition: opacity .15s ease;
-    }
-
-    .spinner {
-      position: absolute;
-      left: 50%;
-      top: 50%;
-      width: 21px;
-      height: 21px;
-      margin: -10.5px 0 0 -10.5px;
-      display: none;
-      border: 2px solid rgba(255,255,255,.28);
-      border-top-color: #fff;
-      border-radius: 50%;
-      animation: spin .8s linear infinite;
-    }
-
-    .primary.loading .button-text {
-      opacity: 0;
-    }
-
-    .primary.loading .spinner {
-      display: block;
-    }
-
-    /* Switch */
-    .switch {
+      z-index: 9999;
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 5px;
-      margin-top: 18px;
-      color: var(--muted);
-      font-size: 11px;
+      background-color: var(--bg-overlay);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.3s var(--ease), visibility 0.3s;
+      padding: 20px;
     }
 
-    .switch a {
-      color: #fff;
-      font-weight: 600;
-      text-decoration: none;
+    .overlay.active {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .container {
+      position: relative;
+      width: 100%;
+      max-width: 400px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 36px 32px;
+      box-shadow: 0 24px 64px rgba(0, 0, 0, 0.6);
+      transform: scale(0.96) translateY(10px);
+      transition: transform 0.3s var(--ease);
+    }
+
+    .overlay.active .container {
+      transform: scale(1) translateY(0);
+    }
+
+    /* Botão Fechar (X) */
+    .close-button {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      width: 32px;
+      height: 32px;
+      border-radius: var(--radius-sm);
+      background: transparent;
+      border: 1px solid transparent;
+      color: var(--text-secondary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
       cursor: pointer;
-      border-bottom: 1px solid rgba(255,255,255,.28);
-      transition: opacity .18s ease, border-color .18s ease;
+      transition: all 0.2s ease;
+      font-size: 18px;
     }
 
-    .switch a:hover {
-      opacity: .82;
-      border-color: #fff;
+    .close-button:hover {
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--text-primary);
     }
 
-    .mini-footer {
-      margin-top: 14px;
-      color: rgba(255,255,255,.22);
-      font-size: 9px;
-      letter-spacing: .15em;
-      text-transform: uppercase;
+    /* =========================================
+       4. FORMULÁRIOS E TRANSIÇÕES
+    ========================================= */
+    .form-section {
+      width: 100%;
+      transition: opacity 0.25s ease, transform 0.25s var(--ease);
     }
 
-    /* ================= ANIMATIONS ================= */
-
-    @keyframes cardIn {
-      from { opacity: 0; transform: translateY(18px) scale(.99); }
-      to { opacity: 1; transform: translateY(0) scale(1); }
+    .form-section.hidden {
+      display: none;
+      opacity: 0;
+      transform: translateX(15px);
     }
 
-    @keyframes up {
+    .form-section.active {
+      display: block;
+      opacity: 1;
+      transform: translateX(0);
+      animation: fadeInUp 0.35s var(--ease);
+    }
+
+    @keyframes fadeInUp {
       from { opacity: 0; transform: translateY(8px); }
       to { opacity: 1; transform: translateY(0); }
     }
 
-    @keyframes fieldIn {
-      from { opacity: 0; transform: translateY(7px); }
-      to { opacity: 1; transform: translateY(0); }
+    h1 {
+      font-size: 24px;
+      font-weight: 700;
+      text-align: center;
+      margin-bottom: 6px;
+      color: var(--text-primary);
     }
 
-    @keyframes glow {
-      0%, 100% { opacity: .45; transform: scale(.98); }
-      50% { opacity: .9; transform: scale(1.05); }
+    .switch-text {
+      text-align: center;
+      font-size: 13px;
+      color: var(--text-secondary);
+      margin-bottom: 28px;
     }
 
-    @keyframes float {
-      0%, 100% { transform: translateY(0); }
-      50% { transform: translateY(-3px); }
+    .switch-text span {
+      color: var(--text-primary);
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: underline;
+      text-underline-offset: 3px;
+      transition: color 0.2s;
     }
 
-    @keyframes fadeIn {
-      from { opacity: 0; }
-      to { opacity: 1; }
+    .switch-text span:hover { color: var(--accent); }
+
+    /* =========================================
+       5. CAMPOS DE INPUT
+    ========================================= */
+    .input-group { margin-bottom: 18px; }
+
+    .input-group label {
+      display: block;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      margin-bottom: 8px;
     }
 
-    @keyframes sweep {
-      0% { transform: translateX(-110%); }
-      50%, 100% { transform: translateX(250%); }
+    .input-wrapper {
+      position: relative;
+      display: flex;
+      align-items: center;
     }
 
-    @keyframes strengthPulse {
-      0% { transform: scaleY(1); }
-      45% { transform: scaleY(1.6); }
-      100% { transform: scaleY(1); }
+    .input-wrapper svg.icon-left {
+      position: absolute;
+      left: 14px;
+      width: 18px;
+      height: 18px;
+      color: var(--text-secondary);
+      pointer-events: none;
+      transition: color 0.2s;
     }
 
+    .input-wrapper input {
+      width: 100%;
+      padding: 13px 14px 13px 44px;
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text-primary);
+      font-size: 15px;
+      font-family: inherit;
+      transition: all 0.2s ease;
+    }
+
+    .input-wrapper input::placeholder { color: #52525b; }
+
+    .input-wrapper input:focus {
+      outline: none;
+      border-color: var(--border-focus);
+      box-shadow: 0 0 0 3px rgba(139, 111, 255, 0.15);
+    }
+
+    .input-wrapper input:focus ~ svg.icon-left { color: var(--accent); }
+
+    /* Botão de ver senha */
+    .toggle-password {
+      position: absolute;
+      right: 12px;
+      background: none;
+      border: none;
+      color: var(--text-secondary);
+      cursor: pointer;
+      padding: 4px;
+      display: flex;
+      align-items: center;
+      transition: color 0.2s;
+    }
+    .toggle-password:hover { color: var(--text-primary); }
+
+    /* =========================================
+       6. BOTÃO DE AÇÃO, ERROS E LOADING
+    ========================================= */
+    .submit-btn {
+      width: 100%;
+      padding: 14px;
+      margin-top: 8px;
+      background-color: #000000;
+      border: 1px solid #333333;
+      border-radius: var(--radius-sm); /* Meio quadrado */
+      color: white;
+      font-weight: 600;
+      font-size: 15px;
+      cursor: pointer;
+      position: relative;
+      transition: all 0.2s var(--ease);
+    }
+
+    .submit-btn:hover:not(:disabled) {
+      background-color: #111111;
+      border-color: #555555;
+    }
+
+    .submit-btn:active:not(:disabled) { transform: scale(0.98); }
+
+    .submit-btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .error-message {
+      color: var(--danger);
+      font-size: 13px;
+      text-align: center;
+      margin-top: 16px;
+      min-height: 20px;
+      opacity: 0;
+      transform: translateY(-5px);
+      transition: all 0.3s ease;
+    }
+
+    .error-message.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* Animação de erro (Shake) */
+    .shake { animation: shake 0.4s cubic-bezier(0.36, 0.07, 0.19, 0.97); }
     @keyframes shake {
       0%, 100% { transform: translateX(0); }
-      16% { transform: translateX(-3px); }
-      32% { transform: translateX(3px); }
-      48% { transform: translateX(-3px); }
-      64% { transform: translateX(3px); }
-      80% { transform: translateX(-2px); }
+      20% { transform: translateX(-6px); }
+      40% { transform: translateX(6px); }
+      60% { transform: translateX(-4px); }
+      80% { transform: translateX(4px); }
     }
 
-    @keyframes spin {
-      to { transform: rotate(360deg); }
+    /* Spinner de Loading */
+    .spinner {
+      display: none;
+      width: 18px;
+      height: 18px;
+      border: 2px solid rgba(255,255,255,0.2);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      margin: -9px 0 0 -9px;
     }
 
-    /* ================= RESPONSIVE ================= */
+    .submit-btn.loading .btn-text { opacity: 0; }
+    .submit-btn.loading .spinner { display: block; }
 
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Responsividade Mobile */
     @media (max-width: 480px) {
-      #login {
-        align-items: flex-start;
-      }
-
-      .auth-wrap {
-        width: 100%;
-        padding-top: 4vh;
-        max-height: calc(100vh - 10px);
-      }
-
-      .top-brand {
-        margin-bottom: 14px;
-      }
-
-      .auth-card {
-        padding: 24px 17px 18px;
-        border-radius: 21px;
-      }
-
-      .card-header {
-        margin-bottom: 21px;
-      }
-
-      .card-logo {
-        width: 38px;
-        height: 38px;
-        margin-bottom: 14px;
-      }
-
-      .auth-title {
-        font-size: 25px;
-      }
-
-      .auth-subtitle {
-        font-size: 12px;
-      }
-
-      .mini-footer {
-        display: none;
-      }
-    }
-
-    @media (max-height: 700px) {
-      .auth-card {
-        padding-top: 22px;
-        padding-bottom: 17px;
-      }
-
-      .card-header {
-        margin-bottom: 19px;
-      }
-
-      .field {
-        min-height: 52px;
-      }
-
-      .field input {
-        height: 50px;
-      }
-
-      .primary {
-        min-height: 52px;
-      }
-
-      .switch {
-        margin-top: 14px;
-      }
-    }
-
-    @media (prefers-reduced-motion: reduce) {
-      *,
-      *::before,
-      *::after {
-        animation-duration: .01ms !important;
-        animation-iteration-count: 1 !important;
-        transition-duration: .01ms !important;
-        scroll-behavior: auto !important;
-      }
-
-      #lineBackground {
-        opacity: .45;
-      }
-    }
-
-    :focus-visible {
-      outline: 2px solid var(--purple-2);
-      outline-offset: 3px;
+      .container { padding: 28px 20px; }
+      h1 { font-size: 22px; }
     }
   </style>
 </head>
-
 <body>
-  <div class="background" aria-hidden="true">
-    <canvas id="lineBackground"></canvas>
-  </div>
 
-  <section id="splash" aria-label="Kazer">
-    <div class="splash-content">
-      <div class="splash-icon">
-        <img src="../download/assets/kazer-login-symbol.png" alt="" />
-      </div>
-      <canvas id="splashWord" width="600" height="110"></canvas>
-      <div class="splash-caption">Klipza Studio</div>
-      <div class="splash-line"></div>
-    </div>
-  </section>
+  <!-- Botão Principal (Preto, Meio Quadrado) -->
+  <button class="main-trigger-btn" id="openOverlayBtn">Acessar Kazer</button>
 
-  <main id="login" aria-labelledby="authTitle">
-    <div class="auth-wrap">
-      <div class="top-brand">
-        <img src="../download/assets/kazer-login-symbol.png" alt="" />
-        <span>KAZER</span>
-      </div>
-
-      <section class="auth-card" id="authCard">
-        <div class="card-header">
-          <img class="card-logo" src="../download/assets/kazer-login-symbol.png" alt="" />
-
-          <h1 class="auth-title" id="authTitle">Entrar para continuar</h1>
-
-          <p class="auth-subtitle" id="subText">
-            Acesse sua conta Kazer.
-          </p>
-
-          <div class="context-line">
-            <span class="context-dot"></span>
-            <span>Conexão segura</span>
-          </div>
-        </div>
-
-        <form id="authForm" novalidate>
-          <div class="field-wrap signup-only">
-            <div class="field">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
-                <circle cx="12" cy="8" r="4"/>
-                <path d="M4 20c0-4.4 3.6-7 8-7s8 2.6 8 7"/>
-              </svg>
-              <input
-                type="text"
-                id="displayName"
-                placeholder="Como devemos te chamar?"
-                autocomplete="name"
-                maxlength="80"
-                spellcheck="false"
-              />
+  <!-- Overlay Container -->
+  <div class="overlay" id="overlay">
+    <div class="container" id="authContainer">
+      <button class="close-button" id="closeOverlayBtn" aria-label="Fechar">✕</button>
+      
+      <!-- ================= LOGIN FORM ================= -->
+      <div class="form-section active" id="loginForm">
+        <h1>Bem-vindo de volta</h1>
+        <p class="switch-text">
+          Não tem uma conta? <span id="goToSignup">Criar conta</span>
+        </p>
+        
+        <form id="formLogin">
+          <div class="input-group">
+            <label for="loginEmail">E-mail</label>
+            <div class="input-wrapper">
+              <input type="email" id="loginEmail" placeholder="seu@email.com" required autocomplete="email" />
+              <svg class="icon-left" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
             </div>
           </div>
 
-          <div class="field-wrap">
-            <div class="field">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
-                <path d="M3 6l9 7 9-7"/>
-                <rect x="3" y="5" width="18" height="14" rx="2"/>
-              </svg>
-              <input
-                type="email"
-                id="email"
-                placeholder="seu@email.com"
-                required
-                autocomplete="email"
-                maxlength="254"
-                inputmode="email"
-              />
-            </div>
-          </div>
-
-          <div class="field-wrap">
-            <div class="field">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
-                <rect x="5" y="11" width="14" height="9" rx="2"/>
-                <path d="M8 11V7a4 4 0 0 1 8 0v4"/>
-              </svg>
-
-              <input
-                type="password"
-                id="password"
-                placeholder="Sua senha"
-                required
-                autocomplete="current-password"
-                minlength="10"
-                maxlength="256"
-              />
-
-              <button type="button" class="eye" id="eyeBtnPassword" aria-label="Mostrar senha">
-                <svg id="eyeIconPassword" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
-                  <path class="eye-outline" d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/>
-                  <circle class="eye-pupil" cx="12" cy="12" r="3"/>
-                </svg>
+          <div class="input-group">
+            <label for="loginPassword">Senha</label>
+            <div class="input-wrapper">
+              <input type="password" id="loginPassword" placeholder="••••••••" required autocomplete="current-password" />
+              <svg class="icon-left" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+              <button type="button" class="toggle-password" data-target="loginPassword" aria-label="Mostrar senha">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
               </button>
             </div>
           </div>
 
-          <div class="strength" id="strengthWrap">
-            <div class="strength-track">
-              <div class="strength-fill" id="strengthFill"></div>
-            </div>
-            <div class="strength-row">
-              <span class="strength-text" id="strengthText">Digite uma senha</span>
-              <span class="strength-score" id="strengthScore"></span>
-            </div>
-          </div>
-
-          <div class="password-note signup-only" id="passwordHint">
-            Pelo menos 10 caracteres, 1 letra maiúscula e 1 caractere especial.
-          </div>
-
-          <div class="field-wrap signup-only">
-            <div class="field">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
-                <rect x="5" y="11" width="14" height="9" rx="2"/>
-                <path d="M8 11V7a4 4 0 0 1 8 0v4"/>
-              </svg>
-
-              <input
-                type="password"
-                id="confirmPassword"
-                placeholder="Digite a senha novamente"
-                autocomplete="new-password"
-                minlength="10"
-                maxlength="256"
-              />
-
-              <button type="button" class="eye" id="eyeBtnConfirmPassword" aria-label="Mostrar senha">
-                <svg id="eyeIconConfirmPassword" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
-                  <path class="eye-outline" d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/>
-                  <circle class="eye-pupil" cx="12" cy="12" r="3"/>
-                </svg>
-              </button>
-            </div>
-          </div>
-
-          <div class="error" id="errorMsg" aria-live="polite"></div>
-
-          <button type="submit" class="primary" id="submitBtn">
-            <span class="button-text" id="buttonText">Sign in</span>
-            <span class="spinner" aria-hidden="true"></span>
+          <div class="error-message" id="loginError"></div>
+          <button type="submit" class="submit-btn" id="loginBtn">
+            <span class="btn-text">Entrar</span>
+            <div class="spinner"></div>
           </button>
         </form>
+      </div>
 
-        <div class="switch">
-          <span id="switchText">Não tem conta?</span>
-          <a href="#signup" id="switchLink">Criar conta</a>
-        </div>
+      <!-- ================= SIGNUP FORM ================= -->
+      <div class="form-section hidden" id="signupForm">
+        <h1>Criar sua conta</h1>
+        <p class="switch-text">
+          Já tem uma conta? <span id="goToLogin">Fazer login</span>
+        </p>
+        
+        <form id="formSignup">
+          <div class="input-group">
+            <label for="signupName">Nome de usuário</label>
+            <div class="input-wrapper">
+              <input type="text" id="signupName" placeholder="Como devemos te chamar?" required maxlength="80" />
+              <svg class="icon-left" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            </div>
+          </div>
 
-        <div class="mini-footer">Klipza Studio</div>
-      </section>
+          <div class="input-group">
+            <label for="signupEmail">E-mail</label>
+            <div class="input-wrapper">
+              <input type="email" id="signupEmail" placeholder="seu@email.com" required autocomplete="email" />
+              <svg class="icon-left" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+            </div>
+          </div>
+
+          <div class="input-group">
+            <label for="signupPassword">Senha</label>
+            <div class="input-wrapper">
+              <input type="password" id="signupPassword" placeholder="Mín. 10 chars, 1 maiúscula, 1 especial" required minlength="10" autocomplete="new-password" />
+              <svg class="icon-left" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+              <button type="button" class="toggle-password" data-target="signupPassword" aria-label="Mostrar senha">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+              </button>
+            </div>
+          </div>
+
+          <div class="error-message" id="signupError"></div>
+          <button type="submit" class="submit-btn" id="signupBtn">
+            <span class="btn-text">Criar Conta</span>
+            <div class="spinner"></div>
+          </button>
+        </form>
+      </div>
+
     </div>
-  </main>
+  </div>
 
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
+  <!-- SCRIPT BLINDADO E CONECTADO AO SUPABASE -->
   <script>
     (() => {
       "use strict";
 
-      /* =========================================================
-         VIEWPORT
-      ========================================================= */
-      function setVH() {
-        document.documentElement.style.setProperty("--vh", (window.innerHeight * 0.01) + "px");
-      }
-      setVH();
-      window.addEventListener("resize", setVH, { passive: true });
-      window.addEventListener("orientationchange", setVH, { passive: true });
+      // 1. CONFIGURAÇÃO DO SUPABASE (Nome 'kazerDB' para evitar 100% de conflitos)
+      const SUPABASE_URL = "https://mqjunopzycdezzjmlhip.supabase.co";
+      const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1xanVub3B6eWNkZXp6am1saGlwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc4Mzg3NDksImV4cCI6MjEwMzQxNDc0OX0.Y_o2_QQhZzuCjvHdEfxaR5VrAxo7NFenPaDmdHN3bwM";
+      
+      const kazerDB = window.supabase?.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-      /* =========================================================
-         LINE BACKGROUND
-      ========================================================= */
-      (() => {
-        const canvas = document.getElementById("lineBackground");
-        const ctx = canvas.getContext("2d", { alpha: false });
-        if (!ctx) return;
+      // 2. ELEMENTOS DO DOM
+      const overlay = document.getElementById('overlay');
+      const container = document.getElementById('authContainer');
+      const loginForm = document.getElementById('loginForm');
+      const signupForm = document.getElementById('signupForm');
 
-        let w = 0;
-        let h = 0;
-        let dpr = 1;
+      if (!overlay || !container) return; // Segurança
 
-        function resize() {
-          dpr = Math.min(2, window.devicePixelRatio || 1);
-          w = window.innerWidth;
-          h = window.innerHeight;
-          canvas.width = Math.round(w * dpr);
-          canvas.height = Math.round(h * dpr);
-          canvas.style.width = w + "px";
-          canvas.style.height = h + "px";
-          ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-        }
-
-        function draw(t) {
-          const time = t * 0.00033;
-
-          ctx.fillStyle = "#050507";
-          ctx.fillRect(0, 0, w, h);
-
-          const cols = Math.max(16, Math.min(29, Math.floor(w / 58)));
-          const rows = Math.max(12, Math.min(21, Math.floor(h / 51)));
-          const sx = w / Math.max(1, cols - 1);
-          const sy = h / Math.max(1, rows - 1);
-
-          for (let y = -1; y <= rows + 1; y++) {
-            ctx.beginPath();
-
-            for (let x = -2; x <= cols + 2; x++) {
-              const px = x * sx;
-              const py =
-                y * sy +
-                Math.sin(x * .46 + time * 1.45 + y * .14) * 8 +
-                Math.sin(x * .18 - time + y * .28) * 4;
-
-              if (x === -2) ctx.moveTo(px, py);
-              else ctx.lineTo(px, py);
-            }
-
-            ctx.strokeStyle = "rgba(255,255,255,.034)";
-            ctx.lineWidth = .7;
-            ctx.stroke();
-          }
-
-          for (let x = -1; x <= cols + 1; x++) {
-            ctx.beginPath();
-
-            for (let y = -2; y <= rows + 2; y++) {
-              const px =
-                x * sx +
-                Math.sin(y * .50 - time * 1.12 + x * .19) * 5 +
-                Math.sin(y * .20 + time * 1.1 + x * .21) * 3;
-
-              const py = y * sy;
-
-              if (y === -2) ctx.moveTo(px, py);
-              else ctx.lineTo(px, py);
-            }
-
-            ctx.strokeStyle = "rgba(139,111,255,.016)";
-            ctx.lineWidth = .55;
-            ctx.stroke();
-          }
-
-          requestAnimationFrame(draw);
-        }
-
-        resize();
-        window.addEventListener("resize", resize, { passive: true });
-        requestAnimationFrame(draw);
-      })();
-
-      /* =========================================================
-         METALLIC KAZER
-      ========================================================= */
-      function initKazerWordmark(canvas) {
-        const ctx = canvas.getContext("2d");
-        if (!ctx) return;
-
-        const W = canvas.width;
-        const H = canvas.height;
-
-        const draw = (t) => {
-          ctx.clearRect(0, 0, W, H);
-          ctx.save();
-
-          const size = Math.floor(H * .73);
-          ctx.font = `${size}px "Cinzel", serif`;
-          ctx.textAlign = "center";
-          ctx.textBaseline = "middle";
-
-          const shift = (t * .00014) % 1;
-
-          const grad = ctx.createLinearGradient(
-            W * (-.5 + shift),
-            0,
-            W * (1 + shift),
-            0
-          );
-
-          grad.addColorStop(0, "#51525b");
-          grad.addColorStop(.18, "#e1e2e8");
-          grad.addColorStop(.32, "#a49bff");
-          grad.addColorStop(.46, "#ffffff");
-          grad.addColorStop(.59, "#6e6b9e");
-          grad.addColorStop(.76, "#ececf0");
-          grad.addColorStop(1, "#50515a");
-
-          ctx.fillStyle = grad;
-          ctx.shadowColor = "rgba(139,111,255,.13)";
-          ctx.shadowBlur = 11;
-          ctx.fillText("KAZER", W / 2, H / 2 + 2);
-
-          const sheen = ctx.createLinearGradient(0, 0, 0, H);
-          sheen.addColorStop(0, "rgba(255,255,255,.26)");
-          sheen.addColorStop(.48, "rgba(255,255,255,0)");
-          sheen.addColorStop(1, "rgba(0,0,0,.18)");
-
-          ctx.globalCompositeOperation = "source-atop";
-          ctx.fillStyle = sheen;
-          ctx.fillRect(0, 0, W, H);
-
-          ctx.restore();
-          requestAnimationFrame(draw);
-        };
-
-        const start = () => requestAnimationFrame(draw);
-
-        if (document.fonts?.load) {
-          document.fonts.load('90px "Cinzel"').catch(() => {}).finally(start);
-        } else {
-          setTimeout(start, 200);
-        }
+      // 3. FUNÇÕES DE UI
+      function openOverlay() {
+        overlay.classList.add('active');
+        clearErrors();
       }
 
-      initKazerWordmark(document.getElementById("splashWord"));
-
-      /* =========================================================
-         ELEMENTS
-      ========================================================= */
-      const splash = document.getElementById("splash");
-      const login = document.getElementById("login");
-      const authCard = document.getElementById("authCard");
-
-      const authForm = document.getElementById("authForm");
-      const authTitle = document.getElementById("authTitle");
-      const subText = document.getElementById("subText");
-      const buttonText = document.getElementById("buttonText");
-      const submitBtn = document.getElementById("submitBtn");
-      const switchText = document.getElementById("switchText");
-      const switchLink = document.getElementById("switchLink");
-      const errorMsg = document.getElementById("errorMsg");
-
-      const displayName = document.getElementById("displayName");
-      const email = document.getElementById("email");
-      const password = document.getElementById("password");
-      const confirmPassword = document.getElementById("confirmPassword");
-
-      const strength = document.getElementById("strengthWrap");
-      const strengthFill = document.getElementById("strengthFill");
-      const strengthText = document.getElementById("strengthText");
-      const strengthScore = document.getElementById("strengthScore");
-
-      let isSignup = false;
-
-      /* =========================================================
-         PASSWORD EYE
-      ========================================================= */
-      function togglePassword(id) {
-        const input = document.getElementById(id);
-        const suffix = id.charAt(0).toUpperCase() + id.slice(1);
-        const button = document.getElementById("eyeBtn" + suffix);
-        const icon = document.getElementById("eyeIcon" + suffix);
-
-        const hidden = input.type === "password";
-        input.type = hidden ? "text" : "password";
-        icon.classList.toggle("closed", hidden);
-        button.setAttribute("aria-label", hidden ? "Ocultar senha" : "Mostrar senha");
+      function closeOverlay() {
+        overlay.classList.remove('active');
+        clearErrors();
       }
 
-      document.getElementById("eyeBtnPassword").addEventListener("click", () => togglePassword("password"));
-      document.getElementById("eyeBtnConfirmPassword").addEventListener("click", () => togglePassword("confirmPassword"));
-
-      /* =========================================================
-         MODE
-      ========================================================= */
-      function clearError() {
-        errorMsg.textContent = "";
-        errorMsg.removeAttribute("data-type");
-        authCard.classList.remove("shake");
-      }
-
-      function setMode(signup) {
-        isSignup = signup;
-        document.body.classList.toggle("mode-signup", signup);
-
-        if (signup) {
-          authTitle.textContent = "Criar sua conta";
-          subText.textContent = "Seu espaço começa aqui.";
-          switchText.textContent = "Já tem conta?";
-          switchLink.textContent = "Entrar";
-
-          displayName.setAttribute("required", "true");
-          confirmPassword.setAttribute("required", "true");
-          password.setAttribute("autocomplete", "new-password");
-        } else {
-          authTitle.textContent = "Entrar para continuar";
-          subText.textContent = "Acesse sua conta Kazer.";
-          switchText.textContent = "Não tem conta?";
-          switchLink.textContent = "Criar conta";
-
-          displayName.removeAttribute("required");
-          confirmPassword.removeAttribute("required");
-          password.setAttribute("autocomplete", "current-password");
-
-          strength.classList.remove("show");
-          strengthFill.style.width = "0%";
-        }
-
-        buttonText.textContent = signup ? "Criar conta" : "Sign in";
-        clearError();
-
-        window.history.replaceState(null, "", signup ? "#signup" : "#login");
-
-        requestAnimationFrame(() => {
-          (signup ? displayName : email).focus({ preventScroll: true });
+      function clearErrors() {
+        document.querySelectorAll('.error-message').forEach(el => {
+          el.textContent = '';
+          el.classList.remove('visible');
         });
+        container.classList.remove('shake');
       }
 
-      switchLink.addEventListener("click", (event) => {
-        event.preventDefault();
+      function showError(elementId, message) {
+        const el = document.getElementById(elementId);
+        if (el) {
+          el.textContent = message;
+          el.classList.add('visible');
+          container.classList.remove('shake');
+          void container.offsetWidth; // Força reflow para reiniciar animação
+          container.classList.add('shake');
+        }
+      }
 
-        authCard.classList.remove("shake");
-        authCard.style.transform = "scale(.995)";
+      function setLoading(btnId, isLoading) {
+        const btn = document.getElementById(btnId);
+        if (btn) {
+          btn.classList.toggle('loading', isLoading);
+          btn.disabled = isLoading;
+        }
+      }
+
+      // 4. EVENT LISTENERS DE NAVEGAÇÃO
+      document.getElementById('openOverlayBtn')?.addEventListener('click', openOverlay);
+      document.getElementById('closeOverlayBtn')?.addEventListener('click', closeOverlay);
+
+      overlay.addEventListener('click', (e) => {
+        if (e.target === overlay) closeOverlay();
+      });
+
+      document.getElementById('goToSignup')?.addEventListener('click', () => {
+        loginForm.classList.remove('active');
+        loginForm.classList.add('hidden');
         setTimeout(() => {
-          authCard.style.transform = "";
-          setMode(!isSignup);
-        }, 80);
+          signupForm.classList.remove('hidden');
+          signupForm.classList.add('active');
+          clearErrors();
+        }, 150);
       });
 
-      /* =========================================================
-         PASSWORD STRENGTH
-      ========================================================= */
-      const config = {
-        0: { pct: 3, color: "var(--red)", text: "Digite uma senha", score: "" },
-        1: { pct: 25, color: "var(--red)", text: "Senha fraca — capriche mais", score: "1/4" },
-        2: { pct: 50, color: "var(--orange)", text: "Quase lá, dá pra melhorar", score: "2/4" },
-        3: { pct: 75, color: "var(--yellow)", text: "Boa senha!", score: "3/4" },
-        4: { pct: 100, color: "var(--green)", text: "Senha forte, mandou bem!", score: "4/4" }
-      };
-
-      function getPasswordStrength(value) {
-        if (!value) return 0;
-
-        let score = 0;
-        if (value.length >= 6) score++;
-        if (value.length >= 10) score++;
-        if (/[A-Z]/.test(value)) score++;
-        if (/[^A-Za-z0-9]/.test(value)) score++;
-        if (/[0-9]/.test(value)) score++;
-
-        if (value.length < 6) score = Math.min(score, 1);
-        return Math.min(score, 4);
-      }
-
-      function validPassword(value) {
-        return (
-          value.length >= 10 &&
-          value.length <= 256 &&
-          /[A-Z]/.test(value) &&
-          /[^A-Za-z0-9]/.test(value)
-        );
-      }
-
-      function updateStrength(value) {
-        if (!value) {
-          strength.classList.remove("show");
-          return;
-        }
-
-        strength.classList.add("show");
-
-        const level = getPasswordStrength(value);
-        const item = config[level];
-
-        strengthFill.style.width = item.pct + "%";
-        strengthFill.style.backgroundColor = item.color;
-        strengthText.style.color = item.color;
-        strengthText.textContent = item.text;
-        strengthScore.textContent = item.score;
-
-        strengthFill.classList.remove("pulse");
-        void strengthFill.offsetWidth;
-        strengthFill.classList.add("pulse");
-      }
-
-      password.addEventListener("input", () => {
-        if (isSignup) updateStrength(password.value);
-        checkMatch();
+      document.getElementById('goToLogin')?.addEventListener('click', () => {
+        signupForm.classList.remove('active');
+        signupForm.classList.add('hidden');
+        setTimeout(() => {
+          loginForm.classList.remove('hidden');
+          loginForm.classList.add('active');
+          clearErrors();
+        }, 150);
       });
 
-      function checkMatch() {
-        if (!isSignup) return;
+      // Toggle Mostrar/Ocultar Senha
+      document.querySelectorAll('.toggle-password').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const inputId = btn.getAttribute('data-target');
+          const input = document.getElementById(inputId);
+          if (input) {
+            const isPassword = input.type === 'password';
+            input.type = isPassword ? 'text' : 'password';
+            btn.style.color = isPassword ? 'var(--accent)' : 'var(--text-secondary)';
+          }
+        });
+      });
 
-        if (!confirmPassword.value) {
-          if (errorMsg.dataset.type === "mismatch") clearError();
+      // 5. LÓGICA DE LOGIN
+      document.getElementById('formLogin')?.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        clearErrors();
+        
+        const email = document.getElementById('loginEmail').value.trim();
+        const password = document.getElementById('loginPassword').value;
+
+        if (!email || !password) {
+          showError('loginError', 'Preencha todos os campos.');
           return;
         }
 
-        if (password.value !== confirmPassword.value) {
-          errorMsg.textContent = "Acho que a senha de confirmação não ficou igual à primeira.";
-          errorMsg.dataset.type = "mismatch";
-        } else if (errorMsg.dataset.type === "mismatch") {
-          clearError();
-        }
-      }
-
-      confirmPassword.addEventListener("input", checkMatch);
-
-      /* =========================================================
-         SUPABASE — MANTIDO
-      ========================================================= */
-      const KAZER_SUPABASE_URL = "https://mqjunopzycdezzjmlhip.supabase.co";
-      const KAZER_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1xanVub3B6eWNkZXp6am1saGlwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc4Mzg3NDksImV4cCI6MjEwMzQxNDc0OX0.Y_o2_QQhZzuCjvHdEfxaR5VrAxo7NFenPaDmdHN3bwM";
-
-      const kazerSupabase = window.supabase?.createClient(
-        KAZER_SUPABASE_URL,
-        KAZER_SUPABASE_ANON_KEY,
-        {
-          auth: {
-            persistSession: true,
-            autoRefreshToken: true,
-            detectSessionInUrl: false,
-            storage: window.localStorage,
-          }
-        }
-      );
-
-      function authErrorMessage(error) {
-        const msg = String(error?.message || "").toLowerCase();
-
-        if (msg.includes("invalid login credentials")) {
-          return "E-mail ou senha incorretos. Que tal verificar o Caps Lock?";
-        }
-
-        if (msg.includes("email not confirmed")) {
-          return "O acesso por e-mail ainda não está liberado no projeto Kazer.";
-        }
-
-        if (msg.includes("user already registered")) {
-          return "Este e-mail já tem uma conta. Vamos entrar?";
-        }
-
-        if (msg.includes("password")) {
-          return "Sua senha ainda tá fraca — use pelo menos 10 caracteres, 1 letra maiúscula e 1 caractere especial.";
-        }
-
-        return "Não foi possível concluir agora. Tente novamente.";
-      }
-
-      function setLoading(loading) {
-        submitBtn.disabled = loading;
-        submitBtn.classList.toggle("loading", loading);
-      }
-
-      authForm.addEventListener("submit", async (event) => {
-        event.preventDefault();
-        clearError();
-
-        if (!kazerSupabase) {
-          errorMsg.textContent = "A conexão segura do Kazer não carregou. Atualize a página.";
-          return;
-        }
-
-        const name = displayName.value.trim();
-        const mail = email.value.trim();
-        const pass = password.value;
-        const confirm = confirmPassword.value;
-
-        if (!mail) {
-          errorMsg.textContent = "Digite seu e-mail para continuar.";
-          email.focus();
-          return;
-        }
-
-        if (!pass) {
-          errorMsg.textContent = "Digite sua senha para continuar.";
-          password.focus();
-          return;
-        }
-
-        if (isSignup) {
-          if (!name || name.length > 80) {
-            errorMsg.textContent = "Informe um nome válido de até 80 caracteres.";
-            displayName.focus();
-            return;
-          }
-
-          if (!validPassword(pass)) {
-            errorMsg.textContent =
-              "Sua senha ainda tá fraca — use pelo menos 10 caracteres, 1 letra maiúscula e 1 caractere especial.";
-            password.focus();
-            return;
-          }
-
-          if (pass !== confirm) {
-            errorMsg.textContent = "Acho que a senha de confirmação não ficou igual à primeira.";
-            confirmPassword.focus();
-            return;
-          }
-        }
-
-        setLoading(true);
+        setLoading('loginBtn', true);
 
         try {
-          const result = isSignup
-            ? await kazerSupabase.auth.signUp({
-                email: mail,
-                password: pass,
-                options: {
-                  data: { display_name: name },
-                  emailRedirectTo: `${window.location.origin}/chat`
-                }
-              })
-            : await kazerSupabase.auth.signInWithPassword({
-                email: mail,
-                password: pass
-              });
+          const { data, error } = await kazerDB.auth.signInWithPassword({ email, password });
+          if (error) throw error;
 
-          if (result.error) throw result.error;
+          document.querySelector('#loginBtn .btn-text').textContent = 'Sucesso!';
+          setTimeout(() => window.location.href = '/chat', 800);
 
-          if (!result.data.session) {
-            throw new Error("A sessão imediata ainda não está habilitada no projeto Kazer.");
-          }
+        } catch (error) {
+          let msg = 'Falha ao fazer login.';
+          if (error.message.includes('Invalid login credentials')) msg = 'E-mail ou senha incorretos.';
+          if (error.message.includes('Email not confirmed')) msg = 'Confirme seu e-mail antes de entrar.';
+          showError('loginError', msg);
+          setLoading('loginBtn', false);
+        }
+      });
 
-          if (isSignup && result.data.user?.id) {
+      // 6. LÓGICA DE CADASTRO (SIGNUP)
+      document.getElementById('formSignup')?.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        clearErrors();
+        
+        const name = document.getElementById('signupName').value.trim();
+        const email = document.getElementById('signupEmail').value.trim();
+        const password = document.getElementById('signupPassword').value;
+
+        // Validação de senha forte
+        const passwordRegex = /^(?=.*[A-Z])(?=.*[^A-Za-z0-9]).{10,}$/;
+        if (!passwordRegex.test(password)) {
+          showError('signupError', 'Senha: mín. 10 caracteres, 1 maiúscula e 1 especial.');
+          setLoading('signupBtn', false);
+          return;
+        }
+
+        setLoading('signupBtn', true);
+
+        try {
+          const { data, error } = await kazerDB.auth.signUp({
+            email,
+            password,
+            options: {
+              data: { display_name: name },
+              emailRedirectTo: `${window.location.origin}/chat`
+            }
+          });
+
+          if (error) throw error;
+
+          // Atualizar perfil (ignora erro se a tabela não existir)
+          if (data.user) {
             try {
-              await kazerSupabase
-                .from("profiles")
-                .update({ display_name: name })
-                .eq("id", result.data.user.id);
+              await kazerDB.from('profiles').update({ display_name: name }).eq('id', data.user.id);
             } catch (_) {}
           }
 
-          try {
-            await kazerSupabase.rpc("touch_user_activity");
-          } catch (_) {}
+          document.querySelector('#signupBtn .btn-text').textContent = 'Conta criada!';
+          setTimeout(() => window.location.href = '/chat', 1000);
 
-          window.location.assign("/chat");
         } catch (error) {
-          errorMsg.textContent = authErrorMessage(error);
-
-          authCard.classList.remove("shake");
-          void authCard.offsetWidth;
-          authCard.classList.add("shake");
-
-          setLoading(false);
+          let msg = 'Não foi possível criar a conta.';
+          if (error.message.includes('User already registered')) msg = 'E-mail já cadastrado. Tente fazer login.';
+          showError('signupError', msg);
+          setLoading('signupBtn', false);
         }
       });
 
-      /* =========================================================
-         BOOT / SESSION
-      ========================================================= */
-      window.addEventListener("load", async () => {
-        let session = null;
-
+      // 7. VERIFICAÇÃO DE SESSÃO AO CARREGAR
+      window.addEventListener('load', async () => {
         try {
-          const result = await kazerSupabase?.auth.getSession();
-          session = result?.data?.session || null;
-        } catch (_) {
-          session = null;
-        }
-
-        if (session) {
-          setTimeout(() => {
-            window.location.assign("/chat");
-          }, 1500);
-          return;
-        }
-
-        setTimeout(() => {
-          splash.classList.add("hidden");
-
-          setTimeout(() => {
-            login.classList.add("visible");
-
-            if (window.location.hash === "#signup") {
-              setMode(true);
-            } else {
-              setMode(false);
-            }
-          }, 700);
-        }, 2500);
+          const { data: { session } } = await kazerDB.auth.getSession();
+          if (session) window.location.href = '/chat';
+        } catch (_) {}
       });
+
     })();
   </script>
 </body>
