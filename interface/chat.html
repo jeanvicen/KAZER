@@ -5352,20 +5352,19 @@
           } catch (error) {
             if (error.name === "AbortError" || activeRequestController !== controller) {
               if (assistantRow?.isConnected) assistantRow.remove();
+              selectedFiles = files;
+              renderAttachments();
+              updateSend();
               return;
             }
             if (thinking.isConnected) thinking.remove();
             if (assistantRow?.isConnected) assistantRow.remove();
-            if (conversationMessages.at(-1)?.role === "user" && conversationMessages.at(-1)?.content === historyText) {
-              conversationMessages.pop();
-              if (conversationMessages.length) {
-                saveChatMessages(chatId, conversationMessages);
-              } else {
-                saveChatHistory(readChatHistory().filter((item) => item.id !== chatId));
-                if (activeChatHistoryId === chatId) activeChatHistoryId = null;
-              }
-            }
-            if (userRow?.isConnected) userRow.remove();
+            // A mensagem que falhou continua sendo contexto válido e pode ser
+            // reenviada sem obrigar a pessoa a redigitar tudo.
+            saveChatMessages(chatId, conversationMessages);
+            selectedFiles = files;
+            renderAttachments();
+            updateSend();
             window.kazerWorkspace?.failTask?.(taskContext, error.message || "Não foi possível conectar ao chat agora.");
             append(createMessage("assistant", error.message || "Não foi possível conectar ao chat agora."));
           } finally {
