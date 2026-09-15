@@ -408,6 +408,16 @@ function isAllowedAttachment(attachment, parsed) {
   if (parsed.mimeType === "application/pdf" || parsed.mimeType === "application/vnd.openxmlformats-officedocument.wordprocessingml.document") return true;
   return /\.(pdf|docx)$/i.test(String(attachment.name || ""));
 }
+function hasExpectedFileSignature(mimeType, buffer) {
+  if (!Buffer.isBuffer(buffer) || buffer.length < 4) return false;
+  if (mimeType === "image/jpeg") return buffer[0] === 0xff && buffer[1] === 0xd8 && buffer[2] === 0xff;
+  if (mimeType === "image/png") return buffer.subarray(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]));
+  if (mimeType === "image/gif") return buffer.subarray(0, 4).toString("ascii") === "GIF8";
+  if (mimeType === "image/webp") return buffer.subarray(0, 4).toString("ascii") === "RIFF" && buffer.subarray(8, 12).toString("ascii") === "WEBP";
+  if (mimeType === "application/pdf") return buffer.subarray(0, 5).toString("ascii") === "%PDF-";
+  if (mimeType === "application/vnd.openxmlformats-officedocument.wordprocessingml.document") return buffer.subarray(0, 4).equals(Buffer.from([0x50, 0x4b, 0x03, 0x04]));
+  return true;
+}
 
 async function extractFileText(attachment, parsed) {
   if (isTextFile(attachment, parsed)) {
@@ -449,6 +459,7 @@ async function prepareAttachments(attachments) {
     const safeAttachment = { ...attachment, name: cleanFileName(attachment.name) };
     const parsed = parseDataUrl(safeAttachment.data);
     if (!parsed || !isAllowedAttachment(safeAttachment, parsed)) throw new Error("attachment_type_invalid");
+    if (!isTextFile(safeAttachment, parsed) && !hasExpectedFileSignature(parsed.mimeType, parsed.buffer)) throw new Error("attachment_signature_invalid");
     totalAttachmentBytes += parsed.buffer.length;
     if (totalAttachmentBytes > MAX_TOTAL_ATTACHMENT_BYTES) throw new Error("attachments_too_large");
     fileNames.push(safeAttachment.name);
@@ -663,7 +674,7 @@ module.exports = async function handler(request, response) {
   try {
     prepared = await prepareAttachments(body?.attachments);
   } catch (error) {
-    const status = ["too_many_images", "image_type_invalid", "attachment_type_invalid", "attachments_invalid", "attachment_invalid"].includes(error.message) ? 400 : error.message === "attachments_too_large" ? 413 : 422;
+    const status = ["too_many_images", "image_type_invalid", "attachment_type_invalid", "attachment_signature_invalid", "attachments_invalid", "attachment_invalid"].includes(error.message) ? 400 : error.message === "attachments_too_large" ? 413 : 422;
     return sendJson(response, status, { error: "Um ou mais anexos não puderam ser processados." });
   }
 
