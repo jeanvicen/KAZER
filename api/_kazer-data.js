@@ -59,7 +59,7 @@ function safeJson(value, fallback) {
   }
 }
 
-async function supabaseRequest(path, { method = "GET", body, query } = {}) {
+async function supabaseRequest(path, { method = "GET", body, query, timeoutMs = 8000 } = {}) {
   const baseUrl = getSupabaseUrl();
   const url = new URL(`${baseUrl}/rest/v1/${path}`);
   if (query) {
@@ -77,7 +77,7 @@ async function supabaseRequest(path, { method = "GET", body, query } = {}) {
       ...(method !== "GET" ? { Prefer: "return=representation" } : {}),
     },
     body: body === undefined ? undefined : JSON.stringify(body),
-    signal: AbortSignal.timeout(8000),
+    signal: AbortSignal.timeout(timeoutMs),
   });
   const text = await response.text();
   let data = null;
