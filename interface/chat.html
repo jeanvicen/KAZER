@@ -7,7 +7,7 @@
     <title>KAZER</title>
     <meta name="description" content="Kazer: converse, organize e crie em um espaço inteligente." />
     <link rel="manifest" href="../download/manifest.webmanifest" />
-    <link rel="icon" href="../download/assets/kazer-logo.jpg" type="image/jpeg" />
+    <link rel="icon" href="../download/assets/kazer-mark.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="../download/icons/kazer-192.png" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -3291,6 +3291,31 @@
       .memory-delete:hover, .memory-delete:focus-visible { border-color: rgba(240,116,116,.24); background: rgba(240,116,116,.08); color: var(--danger); }
       .memory-delete svg { width: 16px; height: 16px; }
       .memory-loading, .memory-empty { padding: 30px 18px; color: var(--text-dim); font-size: 12.5px; line-height: 1.55; text-align: center; }
+
+
+      /* KAZER identity tab: bounded extension, intentionally independent from chat state. */
+      .kazer-identity-view {
+        position: fixed; z-index: 8; inset: 0; display: grid; place-items: center;
+        padding: 96px 24px 150px; background: var(--page); opacity: 0; pointer-events: none;
+        visibility: hidden; transition: opacity 220ms var(--ease), visibility 0s linear 220ms;
+      }
+      .kazer-identity-view[aria-hidden="false"] { opacity: 1; pointer-events: auto; visibility: visible; transition-delay: 0s; }
+      .kazer-identity-mark { width: clamp(94px, 25vw, 168px); height: clamp(94px, 25vw, 168px); background: url("../download/assets/kazer-mark.svg") center / contain no-repeat; filter: drop-shadow(0 18px 42px rgba(0,0,0,.42)); animation: kazer-mark-enter 500ms var(--ease) both; }
+      .kazer-bottom-nav { position: fixed; z-index: 30; right: 0; bottom: 0; left: 0; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); align-items: center; min-height: 68px; padding: 6px max(18px, env(safe-area-inset-left)) max(6px, env(safe-area-inset-bottom)) max(18px, env(safe-area-inset-right)); border-top: 1px solid rgba(255,255,255,.09); background: rgba(5,5,6,.96); box-shadow: 0 -12px 34px rgba(0,0,0,.28); backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px); }
+      .kazer-bottom-nav-item { display: inline-flex; align-items: center; justify-content: center; min-width: 44px; min-height: 52px; border-radius: 14px; background: transparent; color: rgba(255,255,255,.42); cursor: pointer; transition: color 160ms var(--ease), background 160ms var(--ease), transform 160ms var(--ease); }
+      .kazer-bottom-nav-item:hover, .kazer-bottom-nav-item:focus-visible { background: rgba(255,255,255,.06); color: #fff; }
+      .kazer-bottom-nav-item:active { transform: scale(.94); }
+      .kazer-bottom-nav-item[aria-current="page"] { color: #fff; }
+      .kazer-bottom-nav-item .kazer-nav-mark { width: 26px; height: 26px; background: currentColor; mask: url("../download/assets/kazer-mark.svg") center / contain no-repeat; -webkit-mask: url("../download/assets/kazer-mark.svg") center / contain no-repeat; }
+      .kazer-bottom-nav-item[aria-current="page"] .kazer-nav-mark { filter: drop-shadow(0 0 9px rgba(255,255,255,.28)); }
+      .kazer-bottom-nav-spacer { min-height: 52px; }
+      .app.identity-active .conversation-area, .app.identity-active .composer-dock, .app.identity-active .workspace-toggle { visibility: hidden; pointer-events: none; }
+      .app:not(.identity-active) .composer-dock { padding-bottom: calc(16px + 68px + env(safe-area-inset-bottom)); }
+      .app:not(.identity-active):not(.in-conversation) .composer-dock { padding-bottom: 0; }
+      .app.identity-active .topbar { z-index: 9; }
+      @keyframes kazer-mark-enter { from { opacity: 0; transform: translateY(10px) scale(.86); } to { opacity: 1; transform: translateY(0) scale(1); } }
+      @media (min-width: 681px) { .kazer-bottom-nav { right: auto; left: 50%; width: min(560px, calc(100vw - 32px)); border: 1px solid rgba(255,255,255,.09); border-bottom: 0; border-radius: 20px 20px 0 0; transform: translateX(-50%); } }
+      @media (prefers-reduced-motion: reduce) { .kazer-identity-mark { animation: none; } .kazer-identity-view { transition: none; } }
     </style>
   </head>
   <body>
@@ -3519,6 +3544,18 @@
         <section class="message-list" id="messageList" hidden aria-live="polite"></section>
       </section>
 
+      <section class="kazer-identity-view" id="kazerIdentityView" aria-label="Identidade do KAZER" aria-hidden="true" hidden>
+        <span class="kazer-identity-mark" aria-hidden="true"></span>
+      </section>
+
+      <nav class="kazer-bottom-nav" aria-label="Navegação principal">
+        <span class="kazer-bottom-nav-spacer" aria-hidden="true"></span>
+        <span class="kazer-bottom-nav-spacer" aria-hidden="true"></span>
+        <button class="kazer-bottom-nav-item" id="kazerIdentityTab" type="button" aria-label="Abrir identidade do KAZER" aria-current="false"><span class="kazer-nav-mark" aria-hidden="true"></span></button>
+        <span class="kazer-bottom-nav-spacer" aria-hidden="true"></span>
+        <span class="kazer-bottom-nav-spacer" aria-hidden="true"></span>
+      </nav>
+
       <div class="composer-dock">
         <form class="composer" id="composer" autocomplete="off">
           <div class="composer-box">
@@ -3608,6 +3645,17 @@
         const webKazerAction = document.getElementById("webKazerAction");
         const settingsAction = document.getElementById("settingsAction");
         const logoutAction = document.getElementById("logoutAction");
+        const kazerIdentityView = document.getElementById("kazerIdentityView");
+        const kazerIdentityTab = document.getElementById("kazerIdentityTab");
+        let kazerIdentityActive = false;
+        const toggleKazerIdentity = (active) => {
+          kazerIdentityActive = Boolean(active);
+          app.classList.toggle("identity-active", kazerIdentityActive);
+          if (kazerIdentityView) { kazerIdentityView.hidden = !kazerIdentityActive; kazerIdentityView.setAttribute("aria-hidden", String(!kazerIdentityActive)); }
+          kazerIdentityTab?.setAttribute("aria-current", kazerIdentityActive ? "page" : "false");
+          if (kazerIdentityActive && typeof closeMenus === "function") closeMenus();
+        };
+        kazerIdentityTab?.addEventListener("click", () => toggleKazerIdentity(!kazerIdentityActive));
         const newChatButton = document.getElementById("newChatButton");
         const conversationArea = document.getElementById("conversationArea");
         const emptyState = document.getElementById("emptyState");
