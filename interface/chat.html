@@ -4520,10 +4520,14 @@
         };
 
         const generateChatTitle = async (chatId, messages, signal) => {
+          const useFallbackTitle = () => {
+            const items = readChatHistory(); const item = items.find((entry) => entry.id === chatId);
+            if (item && !item.titleGenerated) { item.title = "Nova conversa"; item.titleGenerated = true; saveChatHistory(items); if (viewMode === "history") renderChatHistory(); }
+          };
           try {
             const response = await fetchWithAuth("/api/chat", { method: "POST", body: JSON.stringify({ purpose: "title", messages }), signal });
             const data = await response.json().catch(() => ({}));
-            if (!response.ok || typeof data.title !== "string" || !data.title.trim()) return;
+            if (!response.ok || typeof data.title !== "string" || !data.title.trim()) { useFallbackTitle(); return; }
             const title = data.title.replace(/[\r\n]+/g, " ").replace(/^['"“”]+|['"“”]+$/g, "").trim().slice(0, 72);
             if (!title) return;
             const items = readChatHistory();
@@ -4534,8 +4538,7 @@
             if (viewMode === "history") renderChatHistory();
           } catch (error) {
             if (error?.name === "AbortError") return;
-            const items = readChatHistory(); const item = items.find((entry) => entry.id === chatId);
-            if (item && !item.titleGenerated) { item.title = "Nova conversa"; item.titleGenerated = true; saveChatHistory(items); if (viewMode === "history") renderChatHistory(); }
+            useFallbackTitle();
           }
         };
 
