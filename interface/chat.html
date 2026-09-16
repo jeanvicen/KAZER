@@ -4524,7 +4524,7 @@
           if (activeChatHistoryId) return activeChatHistoryId;
           const id = window.crypto?.randomUUID?.() || "chat-" + Date.now();
           const items = readChatHistory().filter((item) => item.id !== id);
-          items.unshift({ id, title: "Gerando título…", titleGenerated: false, excerpt: "Conversa com o KAZER", searchText: String(prompt || ""), messages: [{ role: "user", content: String(prompt || "") }], createdAt: new Date().toISOString(), kind: "chat" });
+          items.unshift({ id, title: createChatTitle(prompt, files), titleGenerated: false, excerpt: "Conversa com o KAZER", searchText: String(prompt || ""), messages: [{ role: "user", content: String(prompt || "") }], createdAt: new Date().toISOString(), kind: "chat" });
           saveChatHistory(items);
           activeChatHistoryId = id;
           if (viewMode === "history") renderChatHistory();
@@ -4534,14 +4534,14 @@
         const generateChatTitle = async (chatId, messages, signal) => {
           const useFallbackTitle = () => {
             const items = readChatHistory(); const item = items.find((entry) => entry.id === chatId);
-            if (item && !item.titleGenerated) { item.title = "Nova conversa"; item.titleGenerated = true; saveChatHistory(items); if (viewMode === "history") renderChatHistory(); }
+            if (item && !item.titleGenerated) { if (!item.title || /^Gerando título…?$/.test(item.title.trim())) item.title = "Nova conversa"; item.titleGenerated = true; saveChatHistory(items); if (viewMode === "history") renderChatHistory(); }
           };
           try {
             const response = await fetchWithAuth("/api/chat", { method: "POST", body: JSON.stringify({ purpose: "title", messages }), signal });
             const data = await response.json().catch(() => ({}));
             if (!response.ok || typeof data.title !== "string" || !data.title.trim()) { useFallbackTitle(); return; }
             const title = data.title.replace(/[\r\n]+/g, " ").replace(/^['"“”]+|['"“”]+$/g, "").trim().slice(0, 72);
-            if (!title) return;
+            if (!title || /^(nova conversa|gerando título|conversa inicial|sem título)$/i.test(title)) { useFallbackTitle(); return; }
             const items = readChatHistory();
             const item = items.find((entry) => entry.id === chatId);
             if (!item || item.titleGenerated) return;
