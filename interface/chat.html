@@ -4251,6 +4251,13 @@
             memoryLoading.hidden = true;
           }
         };
+        const invalidateMemories = () => {
+          memoriesLoaded = false;
+          const activePanel = settingsPanels.find((panel) => !panel.hidden);
+          if (settingsPopover?.classList.contains("visible") && activePanel?.dataset.settingsPanel === "memory") {
+            loadMemories();
+          }
+        };
         const renderSettingsSection = (section) => {
           const selected = settingsLabels[section] ? section : "general";
           settingsNavItems.forEach((item) => item.classList.toggle("active", item.dataset.settingsSection === selected));
@@ -5347,6 +5354,7 @@
             conversationMessages.push({ role: "assistant", content: answer.trim() });
             saveChatMessages(chatId, conversationMessages);
             updateChatSearchText(chatId, answer.trim());
+            if (Number(data?.memories_updated) > 0) invalidateMemories();
             if (conversationMessages.length === 2) generateChatTitle(chatId, conversationMessages.slice(), controller.signal);
             window.kazerWorkspace?.finishTask?.(taskContext, answer.trim(), data.credit_cost);
           } catch (error) {
