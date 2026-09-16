@@ -3294,13 +3294,6 @@
 
 
       /* KAZER identity tab: bounded extension, intentionally independent from chat state. */
-      .kazer-identity-view {
-        position: fixed; z-index: 8; inset: 0; display: grid; place-items: center;
-        padding: 96px 24px 150px; background: var(--page); opacity: 0; pointer-events: none;
-        visibility: hidden; transition: opacity 220ms var(--ease), visibility 0s linear 220ms;
-      }
-      .kazer-identity-view[aria-hidden="false"] { opacity: 1; pointer-events: auto; visibility: visible; transition-delay: 0s; }
-      .kazer-identity-mark { width: clamp(94px, 25vw, 168px); height: clamp(94px, 25vw, 168px); background: url("../download/assets/kazer-mark.svg") center / contain no-repeat; filter: drop-shadow(0 18px 42px rgba(0,0,0,.42)); animation: kazer-mark-enter 500ms var(--ease) both; }
       .kazer-bottom-nav { position: fixed; z-index: 30; right: 0; bottom: 0; left: 0; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); align-items: center; min-height: 68px; padding: 6px max(18px, env(safe-area-inset-left)) max(6px, env(safe-area-inset-bottom)) max(18px, env(safe-area-inset-right)); border-top: 1px solid rgba(255,255,255,.09); background: rgba(5,5,6,.96); box-shadow: 0 -12px 34px rgba(0,0,0,.28); backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px); transform: translateY(100%); opacity: 0; pointer-events: none; transition: transform 240ms var(--ease), opacity 180ms ease; }
       .kazer-bottom-nav.is-revealed { transform: translateY(0); opacity: 1; pointer-events: auto; }
       .kazer-nav-reveal-zone { position: fixed; z-index: 29; right: 0; bottom: 0; left: 0; height: 20px; cursor: ns-resize; }
@@ -3312,9 +3305,7 @@
       .kazer-bottom-nav-item[aria-current="page"] .kazer-nav-mark { filter: drop-shadow(0 0 9px rgba(255,255,255,.28)); }
       .kazer-bottom-nav-spacer { min-height: 52px; }
       .app:not(.in-conversation) .composer-dock { padding-bottom: 0; }
-      @keyframes kazer-mark-enter { from { opacity: 0; transform: translateY(10px) scale(.86); } to { opacity: 1; transform: translateY(0) scale(1); } }
       @media (min-width: 681px) { .kazer-bottom-nav { right: auto; left: 50%; width: min(560px, calc(100vw - 32px)); border: 1px solid rgba(255,255,255,.09); border-bottom: 0; border-radius: 20px 20px 0 0; transform: translateX(-50%) translateY(100%); } .kazer-bottom-nav.is-revealed { transform: translateX(-50%) translateY(0); } }
-      @media (prefers-reduced-motion: reduce) { .kazer-identity-mark { animation: none; } .kazer-identity-view { transition: none; } }
     </style>
   </head>
   <body>
@@ -3543,10 +3534,6 @@
         <section class="message-list" id="messageList" hidden aria-live="polite"></section>
       </section>
 
-      <section class="kazer-identity-view" id="kazerIdentityView" aria-label="Identidade do KAZER" aria-hidden="true" hidden>
-        <span class="kazer-identity-mark" aria-hidden="true"></span>
-      </section>
-
       <nav class="kazer-bottom-nav" aria-label="Navegação principal">
         <span class="kazer-bottom-nav-spacer" aria-hidden="true"></span>
         <span class="kazer-bottom-nav-spacer" aria-hidden="true"></span>
@@ -3645,7 +3632,6 @@
         const webKazerAction = document.getElementById("webKazerAction");
         const settingsAction = document.getElementById("settingsAction");
         const logoutAction = document.getElementById("logoutAction");
-        const kazerIdentityView = document.getElementById("kazerIdentityView");
         const kazerIdentityTab = document.getElementById("kazerIdentityTab");
         const kazerBottomNav = document.querySelector(".kazer-bottom-nav");
         const kazerNavRevealZone = document.getElementById("kazerNavRevealZone");
