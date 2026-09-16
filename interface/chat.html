@@ -3316,10 +3316,10 @@
     </style>
     <script>
       window.setTimeout(() => {
-        const app = document.getElementById("app");
-        const splash = document.getElementById("appSplash");
-        if (splash) splash.remove();
-        if (app) app.dataset.authPending = "false";
+        const fallbackApp = document.getElementById("app");
+        const fallbackSplash = document.getElementById("appSplash");
+        if (fallbackSplash) fallbackSplash.remove();
+        if (fallbackApp) fallbackApp.dataset.authPending = "false";
       }, 6500);
   </head>
   <body>
