@@ -4288,9 +4288,9 @@
         };
         const invalidateMemories = () => {
           memoriesLoaded = false;
-          const activePanel = settingsPanels.find((panel) => !panel.hidden);
+          const activePanel = Array.from(settingsPanels).find((panel) => !panel.hidden);
           if (settingsPopover?.classList.contains("visible") && activePanel?.dataset.settingsPanel === "memory") {
-            loadMemories();
+            void loadMemories().catch((error) => console.warn("Memory refresh failed", error?.message || "unknown"));
           }
         };
         const renderSettingsSection = (section) => {
