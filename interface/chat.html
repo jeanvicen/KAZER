@@ -3314,6 +3314,13 @@
       .app:not(.in-conversation) .composer-dock { padding-bottom: 0; }
       @media (min-width: 681px) { .kazer-bottom-nav { right: auto; left: 50%; width: min(560px, calc(100vw - 32px)); border: 1px solid rgba(255,255,255,.09); border-bottom: 0; border-radius: 20px 20px 0 0; transform: translateX(-50%) translateY(100%); } .kazer-bottom-nav.is-revealed { transform: translateX(-50%) translateY(0); } }
     </style>
+    <script>
+      window.setTimeout(() => {
+        const app = document.getElementById("app");
+        const splash = document.getElementById("appSplash");
+        if (splash) splash.remove();
+        if (app) app.dataset.authPending = "false";
+      }, 6500);
   </head>
   <body>
     <main class="app" id="app" data-auth-pending="true">
@@ -3642,7 +3649,7 @@
         const kazerIdentityTab = document.getElementById("kazerIdentityTab");
         const kazerBottomNav = document.querySelector(".kazer-bottom-nav");
         const kazerNavRevealZone = document.getElementById("kazerNavRevealZone");
-        const kazerNavItems = new Map([["kazer", kazerIdentityTab].filter(([, item]) => item)]);
+        const kazerNavItems = new Map(kazerIdentityTab ? [["kazer", kazerIdentityTab]] : []);
         const setKazerActiveView = (view) => {
           const nextView = String(view || "kazer");
           kazerBottomNav?.setAttribute("data-active-view", nextView);
