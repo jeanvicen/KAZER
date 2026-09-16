@@ -112,7 +112,7 @@
         height: clamp(48px, 13vw, 72px);
         flex: 0 0 auto;
         margin: 0;
-        background: url("../download/assets/kazer-login-symbol.png") center / contain no-repeat;
+        background: url("../download/assets/kazer-mark-glyph.svg") center / contain no-repeat;
         animation: app-splash-symbol-pulse 2600ms ease-in-out infinite;
       }
 
@@ -3321,6 +3321,7 @@
         if (fallbackSplash) fallbackSplash.remove();
         if (fallbackApp) fallbackApp.dataset.authPending = "false";
       }, 6500);
+    </script>
   </head>
   <body>
     <main class="app" id="app" data-auth-pending="true">
