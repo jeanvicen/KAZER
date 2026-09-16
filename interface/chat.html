@@ -4348,7 +4348,19 @@
         const readChatHistory = () => {
           try {
             const stored = JSON.parse(localStorage.getItem(historyStorageKey()) || "[]");
-            return Array.isArray(stored) ? stored.filter((item) => item && item.id && item.title) : [];
+            if (!Array.isArray(stored)) return [];
+            let changed = false;
+            const items = stored.filter((item) => item && item.id && item.title).map((item) => {
+              if (/^Gerando título…?$/.test(String(item.title).trim())) {
+                changed = true;
+                return { ...item, title: "Nova conversa", titleGenerated: true };
+              }
+              return item;
+            });
+            if (changed) {
+              try { localStorage.setItem(historyStorageKey(), JSON.stringify(items.slice(0, 10))); } catch {}
+            }
+            return items;
           } catch {
             return [];
           }
