@@ -3308,7 +3308,45 @@
       .kazer-bottom-action svg { width: 23px; height: 23px; }
       .kazer-bottom-action .kazer-bottom-k { width: 24px; height: 24px; background: currentColor; mask: url("../download/assets/kazer-mark-glyph.svg") center / contain no-repeat; -webkit-mask: url("../download/assets/kazer-mark-glyph.svg") center / contain no-repeat; }
       .app.in-conversation .kazer-bottom-strip,
-      .app.new-chat-active:not(.kazer-active) .kazer-bottom-strip { display: none !important; }
+      .app.new-chat-active:not(.kazer-active) .kazer-bottom-strip,
+      .app.direct-active .kazer-bottom-strip { display: none !important; }
+      .kazer-menu-backdrop { position: fixed; z-index: 70; inset: 0; background: rgba(0,0,0,.48); opacity: 0; pointer-events: none; transition: opacity 180ms var(--ease); }
+      .kazer-menu-backdrop.visible { opacity: 1; pointer-events: auto; }
+      .kazer-menu { position: fixed; z-index: 71; right: 50%; bottom: calc(62px + env(safe-area-inset-bottom) + 10px); display: grid; width: min(260px, calc(100vw - 32px)); padding: 7px; border: 1px solid var(--line); border-radius: 18px; background: color-mix(in srgb, var(--card) 96%, transparent); box-shadow: 0 18px 50px rgba(0,0,0,.48); opacity: 0; visibility: hidden; transform: translate(50%, 10px) scale(.97); transition: opacity 180ms var(--ease), transform 180ms var(--ease), visibility 180ms; }
+      .kazer-menu.visible { opacity: 1; visibility: visible; transform: translate(50%, 0) scale(1); }
+      .kazer-menu-option { display: flex; align-items: center; gap: 12px; min-height: 52px; padding: 0 12px; border-radius: 13px; background: transparent; color: var(--text); text-align: left; cursor: pointer; }
+      .kazer-menu-option:hover, .kazer-menu-option:focus-visible { background: rgba(255,255,255,.07); }
+      .kazer-menu-option-icon { display: grid; place-items: center; width: 30px; height: 30px; border-radius: 10px; background: rgba(255,255,255,.07); color: var(--text-soft); }
+      .kazer-menu-option-copy { display: grid; gap: 3px; }
+      .kazer-menu-option-copy strong { font-size: 13px; font-weight: 650; }
+      .kazer-menu-option-copy small { color: var(--text-dim); font-size: 11px; }
+      .direct-screen { position: fixed; z-index: 46; inset: 0; display: flex; flex-direction: column; background: var(--page); color: var(--text); }
+      .direct-screen[hidden] { display: none; }
+      .direct-header { display: flex; align-items: center; gap: 12px; min-height: 74px; padding: max(16px, env(safe-area-inset-top)) 18px 0; border-bottom: 1px solid var(--line-soft); }
+      .direct-back { display: grid; place-items: center; width: 40px; height: 40px; border: 1px solid var(--line); border-radius: 50%; background: transparent; color: var(--text); cursor: pointer; }
+      .direct-title { margin: 0; font-size: 18px; font-weight: 650; letter-spacing: -.03em; }
+      .direct-search { display: flex; align-items: center; gap: 9px; margin: 16px 18px 8px; padding: 0 13px; min-height: 44px; border: 1px solid var(--line); border-radius: 14px; background: var(--card); }
+      .direct-search input { flex: 1; min-width: 0; border: 0; outline: 0; background: transparent; color: var(--text); font-size: 13px; }
+      .direct-search input::placeholder { color: var(--text-dim); }
+      .direct-list { flex: 1; overflow-y: auto; padding: 6px 18px 90px; }
+      .direct-row { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 70px; padding: 8px 4px; border-bottom: 1px solid var(--line-soft); background: transparent; color: var(--text); text-align: left; cursor: pointer; }
+      .direct-row:hover { background: rgba(255,255,255,.035); }
+      .direct-avatar { display: grid; place-items: center; width: 44px; height: 44px; flex: 0 0 auto; border-radius: 50%; background: var(--card-2); color: var(--text); font-size: 15px; font-weight: 700; }
+      .direct-row-copy { min-width: 0; flex: 1; }
+      .direct-row-top { display: flex; justify-content: space-between; gap: 10px; }
+      .direct-row-top strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; }
+      .direct-row-top time { color: var(--text-dim); font-size: 10px; }
+      .direct-row-copy p { margin: 5px 0 0; overflow: hidden; color: var(--text-soft); font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
+      .direct-empty { padding: 48px 20px; color: var(--text-dim); font-size: 13px; line-height: 1.55; text-align: center; }
+      .direct-chat { position: fixed; z-index: 47; inset: 0; display: flex; flex-direction: column; background: var(--page); }
+      .direct-chat[hidden] { display: none; }
+      .direct-chat-header { display: flex; align-items: center; gap: 11px; min-height: 66px; padding: max(12px, env(safe-area-inset-top)) 18px 0; border-bottom: 1px solid var(--line-soft); }
+      .direct-chat-messages { flex: 1; overflow-y: auto; padding: 18px; }
+      .direct-bubble { max-width: 78%; margin: 0 0 10px; padding: 10px 13px; border-radius: 16px; background: var(--card-2); color: var(--text); font-size: 13px; line-height: 1.45; }
+      .direct-bubble.mine { margin-left: auto; background: var(--text); color: var(--accent-ink); }
+      .direct-composer { display: flex; gap: 8px; padding: 10px 14px max(12px, env(safe-area-inset-bottom)); border-top: 1px solid var(--line-soft); }
+      .direct-composer input { flex: 1; min-width: 0; min-height: 42px; padding: 0 13px; border: 1px solid var(--line); border-radius: 14px; outline: 0; background: var(--card); color: var(--text); }
+      .direct-composer button { width: 42px; border-radius: 13px; background: var(--text); color: var(--accent-ink); cursor: pointer; }
       @media (min-width: 681px) { .kazer-bottom-strip { right: auto; left: 50%; width: min(560px, calc(100vw - 32px)); transform: translateX(-50%); border: 1px solid rgba(255,255,255,.08); border-bottom: 0; border-radius: 18px 18px 0 0; } }
     </style>
     <script>
@@ -3553,6 +3591,17 @@
         <button class="kazer-bottom-action" type="button" aria-label="Notificações"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 9a6 6 0 0 0-12 0c0 6-2.5 6.5-2.5 8h15c0-1.5-2.5-2-2.5-8"></path><path d="M10 20h4"></path></svg></button>
         <button class="kazer-bottom-action" type="button" aria-label="Conversas"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11.5a7.4 7.4 0 0 1-7.6 7.5 8.2 8.2 0 0 1-3.1-.6L5 20l1.4-3.7a7.2 7.2 0 0 1-1.5-4.5A7.4 7.4 0 0 1 12.4 4 7.4 7.4 0 0 1 20 11.5Z"></path></svg></button>
       </nav>
+      <div class="kazer-menu-backdrop" id="kazerMenuBackdrop"></div>
+      <div class="kazer-menu" id="kazerMenu" role="menu" aria-label="Opções do K">
+        <button class="kazer-menu-option" id="kazerAiOption" type="button" role="menuitem"><span class="kazer-menu-option-icon">K</span><span class="kazer-menu-option-copy"><strong>K de Kazer</strong><small>Conversar com a IA</small></span></button>
+        <button class="kazer-menu-option" id="kazerDirectOption" type="button" role="menuitem"><span class="kazer-menu-option-icon">•••</span><span class="kazer-menu-option-copy"><strong>Conversas</strong><small>Conversas entre usuários</small></span></button>
+      </div>
+      <section class="direct-screen" id="directScreen" hidden aria-label="Conversas">
+        <header class="direct-header"><button class="direct-back" id="directBack" type="button" aria-label="Voltar"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="m15 5-7 7 7 7"></path></svg></button><h1 class="direct-title">Conversas</h1></header>
+        <label class="direct-search"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-4-4"></path></svg><input id="directSearch" type="search" placeholder="Buscar usuário para conversar..." autocomplete="off" /></label>
+        <div class="direct-list" id="directList"><div class="direct-empty">Suas conversas aparecerão aqui.</div></div>
+      </section>
+      <section class="direct-chat" id="directChat" hidden aria-label="Chat direto"><header class="direct-chat-header"><button class="direct-back" id="directChatBack" type="button" aria-label="Voltar para conversas"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="m15 5-7 7 7 7"></path></svg></button><span class="direct-avatar" id="directChatAvatar">?</span><strong id="directChatName">Conversa</strong></header><div class="direct-chat-messages" id="directChatMessages"><div class="direct-empty">Nenhuma mensagem ainda.</div></div><form class="direct-composer" id="directComposer"><input id="directMessageInput" type="text" placeholder="Mensagem..." autocomplete="off" /><button type="submit" aria-label="Enviar">↑</button></form></section>
       <div class="composer-dock">
         <form class="composer" id="composer" autocomplete="off">
           <div class="composer-box">
@@ -3781,6 +3830,22 @@
         const historyEmptyMessage = document.getElementById("historyEmptyMessage");
         const historyNewChat = document.getElementById("historyNewChat");
         const kazerHistoryButton = document.getElementById("kazerHistoryButton");
+        const kazerMenu = document.getElementById("kazerMenu");
+        const kazerMenuBackdrop = document.getElementById("kazerMenuBackdrop");
+        const kazerAiOption = document.getElementById("kazerAiOption");
+        const kazerDirectOption = document.getElementById("kazerDirectOption");
+        const directScreen = document.getElementById("directScreen");
+        const directChat = document.getElementById("directChat");
+        const directBack = document.getElementById("directBack");
+        const directChatBack = document.getElementById("directChatBack");
+        const directSearch = document.getElementById("directSearch");
+        const directList = document.getElementById("directList");
+        const directChatName = document.getElementById("directChatName");
+        const directChatAvatar = document.getElementById("directChatAvatar");
+        const directChatMessages = document.getElementById("directChatMessages");
+        const directComposer = document.getElementById("directComposer");
+        const directMessageInput = document.getElementById("directMessageInput");
+
         const newChatHeader = document.getElementById("newChatHeader");
         const newChatBack = document.getElementById("newChatBack");
         const newChatCredit = document.getElementById("newChatCredit");
@@ -5483,6 +5548,64 @@
 
         historySearchInput?.addEventListener("input", renderChatHistory);
         kazerHistoryButton?.addEventListener("click", () => setView("kazer", { push: true }));
+        let activeDirectUser = null;
+        const closeKazerMenu = () => { kazerMenu?.classList.remove("visible"); kazerMenuBackdrop?.classList.remove("visible"); };
+        const openKazerMenu = () => { closeMenus(); kazerMenu?.classList.add("visible"); kazerMenuBackdrop?.classList.add("visible"); };
+        const showDirectScreen = async () => { closeKazerMenu(); directScreen.hidden = false; directChat.hidden = true; app.classList.add("direct-active"); await loadDirectList(); directSearch?.focus(); };
+        const hideDirectScreen = () => { directScreen.hidden = true; directChat.hidden = true; app.classList.remove("direct-active"); };
+        const directProfileName = (profile) => String(profile?.display_name || "Usuário Kazer").trim();
+        const renderDirectUsers = (users) => {
+          if (!users.length) { directList.innerHTML = '<div class="direct-empty">Nenhum usuário encontrado.</div>'; return; }
+          directList.innerHTML = users.map((user) => { const name = directProfileName(user); return '<button class="direct-row" type="button" data-direct-user="' + escapeHtml(user.id) + '"><span class="direct-avatar">' + escapeHtml(name.slice(0, 1).toUpperCase()) + '</span><span class="direct-row-copy"><span class="direct-row-top"><strong>' + escapeHtml(name) + '</strong></span><p>Iniciar uma conversa</p></span></button>'; }).join("");
+          directList.querySelectorAll("[data-direct-user]").forEach((row) => row.addEventListener("click", () => openDirectChat({ id: row.dataset.directUser, name: row.querySelector("strong")?.textContent || "Usuário Kazer" })));
+        };
+        const renderDirectConversations = async () => {
+          if (!currentUser || !kazerSupabase) { directList.innerHTML = '<div class="direct-empty">Entre na sua conta para usar as Conversas.</div>'; return; }
+          const { data: conversations, error } = await kazerSupabase.from("direct_conversations").select("id,user_one,user_two,updated_at").or("user_one.eq." + currentUser.id + ",user_two.eq." + currentUser.id).order("updated_at", { ascending: false });
+          if (error) { directList.innerHTML = '<div class="direct-empty">A área de Conversas precisa da migração 015 do Supabase.</div>'; return; }
+          if (!conversations?.length) { directList.innerHTML = '<div class="direct-empty">Nenhuma conversa ainda.<br>Busque um usuário acima para iniciar.</div>'; return; }
+          const ids = conversations.map((item) => item.user_one === currentUser.id ? item.user_two : item.user_one);
+          const { data: profiles } = await kazerSupabase.from("profiles").select("id,display_name").in("id", ids);
+          const profileMap = new Map((profiles || []).map((profile) => [profile.id, profile]));
+          directList.innerHTML = conversations.map((item) => { const userId = item.user_one === currentUser.id ? item.user_two : item.user_one; const name = directProfileName(profileMap.get(userId)); return '<button class="direct-row" type="button" data-direct-conversation="' + item.id + '" data-direct-user="' + userId + '"><span class="direct-avatar">' + escapeHtml(name.slice(0, 1).toUpperCase()) + '</span><span class="direct-row-copy"><span class="direct-row-top"><strong>' + escapeHtml(name) + '</strong><time>' + escapeHtml(historyDateLabel(item.updated_at)) + '</time></span><p>Conversa direta</p></span></button>'; }).join("");
+          directList.querySelectorAll("[data-direct-conversation]").forEach((row) => row.addEventListener("click", () => openDirectChat({ id: row.dataset.directUser, name: row.querySelector("strong")?.textContent || "Usuário Kazer", conversationId: row.dataset.directConversation })));
+        };
+        const loadDirectList = async () => {
+          const query = String(directSearch?.value || "").trim();
+          if (!query) return renderDirectConversations();
+          if (!currentUser || !kazerSupabase) { directList.innerHTML = '<div class="direct-empty">Entre na sua conta para buscar usuários.</div>'; return; }
+          const { data, error } = await kazerSupabase.from("profiles").select("id,display_name").ilike("display_name", "%" + query.replace(/[%_]/g, "") + "%").neq("id", currentUser.id).limit(20);
+          if (error) { directList.innerHTML = '<div class="direct-empty">A busca de usuários precisa da migração 015 do Supabase.</div>'; return; }
+          renderDirectUsers(data || []);
+        };
+        const openDirectChat = async (user) => {
+          activeDirectUser = user;
+          if (!user.conversationId && currentUser && kazerSupabase) {
+            const { data: existing } = await kazerSupabase.from("direct_conversations").select("id").or("and(user_one.eq." + currentUser.id + ",user_two.eq." + user.id + "),and(user_one.eq." + user.id + ",user_two.eq." + currentUser.id + ")").maybeSingle();
+            user.conversationId = existing?.id;
+            if (!user.conversationId) { const created = await kazerSupabase.from("direct_conversations").insert({ user_one: currentUser.id, user_two: user.id }).select("id").single(); user.conversationId = created.data?.id; }
+          }
+          directChatName.textContent = user.name; directChatAvatar.textContent = user.name.slice(0,1).toUpperCase(); directScreen.hidden = true; directChat.hidden = false; await loadDirectMessages(); directMessageInput.focus();
+        };
+        const loadDirectMessages = async () => {
+          if (!activeDirectUser?.conversationId || !kazerSupabase) { directChatMessages.innerHTML = '<div class="direct-empty">Nenhuma mensagem ainda.</div>'; return; }
+          const { data } = await kazerSupabase.from("direct_messages").select("id,sender_id,body,created_at").eq("conversation_id", activeDirectUser.conversationId).order("created_at", { ascending: true });
+          directChatMessages.innerHTML = data?.length ? data.map((message) => '<div class="direct-bubble ' + (message.sender_id === currentUser?.id ? "mine" : "") + '">' + escapeHtml(message.body) + '</div>').join("") : '<div class="direct-empty">Nenhuma mensagem ainda.</div>';
+          directChatMessages.scrollTop = directChatMessages.scrollHeight;
+        };
+        kazerHistoryButton?.addEventListener("click", openKazerMenu);
+        let kazerPressTimer = 0;
+        kazerHistoryButton?.addEventListener("pointerdown", () => { kazerPressTimer = window.setTimeout(openKazerMenu, 420); }, { passive: true });
+        kazerHistoryButton?.addEventListener("pointerup", () => window.clearTimeout(kazerPressTimer), { passive: true });
+        kazerHistoryButton?.addEventListener("pointercancel", () => window.clearTimeout(kazerPressTimer), { passive: true });
+        kazerAiOption?.addEventListener("click", () => { closeKazerMenu(); setView("new-chat", { push: true }); });
+        kazerDirectOption?.addEventListener("click", showDirectScreen);
+        kazerMenuBackdrop?.addEventListener("click", closeKazerMenu);
+        directBack?.addEventListener("click", hideDirectScreen);
+        directChatBack?.addEventListener("click", showDirectScreen);
+        directSearch?.addEventListener("input", loadDirectList);
+        directComposer?.addEventListener("submit", async (event) => { event.preventDefault(); const text = directMessageInput.value.trim(); if (!text || !activeDirectUser?.conversationId || !currentUser || !kazerSupabase) return; const result = await kazerSupabase.from("direct_messages").insert({ conversation_id: activeDirectUser.conversationId, sender_id: currentUser.id, body: text }); if (!result.error) { directMessageInput.value = ""; await loadDirectMessages(); } });
+
         historyNewChat?.addEventListener("click", (event) => {
           event.preventDefault();
           event.stopPropagation();
