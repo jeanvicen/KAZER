@@ -3300,6 +3300,7 @@
 
 
       .app:not(.in-conversation) .composer-dock { padding-bottom: 0; }
+      .kazer-bottom-strip { position: fixed; z-index: 12; right: 0; bottom: 0; left: 0; height: 46px; padding-bottom: env(safe-area-inset-bottom); border-top: 1px solid rgba(255,255,255,.055); background: #050505; pointer-events: none; }
     </style>
     <script>
       window.setTimeout(() => {
@@ -3536,6 +3537,7 @@
         <section class="message-list" id="messageList" hidden aria-live="polite"></section>
       </section>
 
+      <div class="kazer-bottom-strip" aria-hidden="true"></div>
       <div class="composer-dock">
         <form class="composer" id="composer" autocomplete="off">
           <div class="composer-box">
