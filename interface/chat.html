@@ -3299,25 +3299,7 @@
       .memory-loading, .memory-empty { padding: 30px 18px; color: var(--text-dim); font-size: 12.5px; line-height: 1.55; text-align: center; }
 
 
-      /* KAZER identity tab: bounded extension, intentionally independent from chat state. */
-      .kazer-bottom-nav { position: fixed; z-index: 30; right: 0; bottom: 0; left: 0; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); align-items: center; min-height: 54px; padding: 4px max(18px, env(safe-area-inset-left)) max(4px, env(safe-area-inset-bottom)) max(18px, env(safe-area-inset-right)); border-top: 1px solid rgba(255,255,255,.09); background: rgba(5,5,6,.96); box-shadow: 0 -12px 34px rgba(0,0,0,.28); backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px); transform: translateY(100%); opacity: 0; pointer-events: none; transition: transform 240ms var(--ease), opacity 180ms ease; }
-      .kazer-bottom-nav.is-revealed { transform: translateY(0); opacity: 1; pointer-events: auto; }
-      .kazer-nav-reveal-zone { position: fixed; z-index: 29; right: 0; bottom: 5px; left: 0; display: flex; justify-content: center; height: 22px; pointer-events: none; }
-      .kazer-nav-reveal-button { display: inline-flex; align-items: center; gap: 5px; height: 22px; padding: 0 10px; border: 1px solid rgba(255,255,255,.12); border-radius: 999px; background: rgba(15,15,18,.92); color: rgba(255,255,255,.62); font-size: 10px; letter-spacing: .02em; cursor: pointer; pointer-events: auto; box-shadow: 0 3px 14px rgba(0,0,0,.24); }
-      .kazer-nav-reveal-button::before { content: ""; width: 6px; height: 6px; border-top: 1.5px solid currentColor; border-left: 1.5px solid currentColor; transform: rotate(45deg) translateY(2px); }
-      .kazer-bottom-nav.is-revealed + .kazer-nav-reveal-zone { opacity: 0; pointer-events: none; }
-      .kazer-bottom-nav-item { display: inline-flex; align-items: center; justify-content: center; min-width: 40px; min-height: 42px; border-radius: 12px; background: transparent; color: rgba(255,255,255,.42); cursor: pointer; transition: color 160ms var(--ease), background 160ms var(--ease), transform 160ms var(--ease); }
-      .kazer-bottom-nav-item:hover, .kazer-bottom-nav-item:focus-visible { background: rgba(255,255,255,.06); color: #fff; }
-      .kazer-bottom-nav-item:active { transform: scale(.94); }
-      .kazer-bottom-nav-item[aria-current="page"] { color: #fff; }
-      .kazer-bottom-nav-item .kazer-nav-mark { width: 22px; height: 22px; background: currentColor; mask: url("../download/assets/kazer-mark-glyph.svg") center / contain no-repeat; -webkit-mask: url("../download/assets/kazer-mark-glyph.svg") center / contain no-repeat; }
-      .kazer-bottom-nav-item[aria-current="page"] .kazer-nav-mark { filter: drop-shadow(0 0 9px rgba(255,255,255,.28)); }
-      .kazer-bottom-nav-spacer { min-height: 42px; }
-      .kazer-bottom-nav-slot { display: inline-flex; align-items: center; justify-content: center; min-height: 42px; }
-      .app.nav-open.in-conversation .composer-dock { transform: translateY(-58px); }
-      .app.nav-open.in-conversation .kazer-nav-reveal-zone { bottom: 92px; }
       .app:not(.in-conversation) .composer-dock { padding-bottom: 0; }
-      @media (min-width: 681px) { .kazer-bottom-nav { right: auto; left: 50%; width: min(560px, calc(100vw - 32px)); border: 1px solid rgba(255,255,255,.09); border-bottom: 0; border-radius: 20px 20px 0 0; transform: translateX(-50%) translateY(100%); } .kazer-bottom-nav.is-revealed { transform: translateX(-50%) translateY(0); } }
     </style>
     <script>
       window.setTimeout(() => {
@@ -3554,15 +3536,6 @@
         <section class="message-list" id="messageList" hidden aria-live="polite"></section>
       </section>
 
-      <nav class="kazer-bottom-nav" id="kazerBottomNav" aria-label="Navegação principal" data-active-view="kazer">
-        <span class="kazer-bottom-nav-slot" data-nav-slot="left-1"><span class="kazer-bottom-nav-spacer" aria-hidden="true"></span></span>
-        <span class="kazer-bottom-nav-slot" data-nav-slot="left-2"><span class="kazer-bottom-nav-spacer" aria-hidden="true"></span></span>
-        <button class="kazer-bottom-nav-item" id="kazerIdentityTab" type="button" data-nav-view="kazer" aria-label="KAZER — contexto atual" aria-current="page"><span class="kazer-nav-mark" aria-hidden="true"></span></button>
-        <span class="kazer-bottom-nav-slot" data-nav-slot="right-1"><span class="kazer-bottom-nav-spacer" aria-hidden="true"></span></span>
-        <span class="kazer-bottom-nav-slot" data-nav-slot="right-2"><span class="kazer-bottom-nav-spacer" aria-hidden="true"></span></span>
-      </nav>
-      <span class="kazer-nav-reveal-zone" id="kazerNavRevealZone"><button class="kazer-nav-reveal-button" id="kazerNavRevealButton" type="button" aria-label="Abrir navegação">Navegação</button></span>
-
       <div class="composer-dock">
         <form class="composer" id="composer" autocomplete="off">
           <div class="composer-box">
@@ -3652,14 +3625,9 @@
         const webKazerAction = document.getElementById("webKazerAction");
         const settingsAction = document.getElementById("settingsAction");
         const logoutAction = document.getElementById("logoutAction");
-        const kazerIdentityTab = document.getElementById("kazerIdentityTab");
-        const kazerBottomNav = document.querySelector(".kazer-bottom-nav");
-        const kazerNavRevealZone = document.getElementById("kazerNavRevealZone");
-        const kazerNavRevealButton = document.getElementById("kazerNavRevealButton");
-        const kazerNavItems = new Map(kazerIdentityTab ? [["kazer", kazerIdentityTab]] : []);
+        const kazerNavItems = new Map();
         const setKazerActiveView = (view) => {
           const nextView = String(view || "kazer");
-          kazerBottomNav?.setAttribute("data-active-view", nextView);
           kazerNavItems.forEach((item, key) => item.setAttribute("aria-current", key === nextView ? "page" : "false"));
           window.dispatchEvent(new CustomEvent("kazer:navigation-change", { detail: { view: nextView } }));
           return nextView;
@@ -3667,26 +3635,8 @@
         window.kazerNavigation = {
           register(view, item) { if (view && item) kazerNavItems.set(String(view), item); return () => kazerNavItems.delete(String(view)); },
           go(view) { return setKazerActiveView(view); },
-          current() { return kazerBottomNav?.dataset.activeView || "kazer"; }
+          current() { return "kazer"; }
         };
-        let kazerNavAutoCloseTimer = 0;
-        const concealKazerNav = () => {
-          window.clearTimeout(kazerNavAutoCloseTimer);
-          kazerBottomNav?.classList.remove("is-revealed");
-          app.classList.remove("nav-open");
-        };
-        const revealKazerNav = () => {
-          kazerBottomNav?.classList.add("is-revealed");
-          app.classList.add("nav-open");
-          window.clearTimeout(kazerNavAutoCloseTimer);
-          kazerNavAutoCloseTimer = window.setTimeout(concealKazerNav, 15000);
-        };
-        kazerNavRevealButton?.addEventListener("click", revealKazerNav);
-        kazerNavRevealZone?.addEventListener("pointerdown", (event) => {
-          if (event.target === kazerNavRevealZone) revealKazerNav();
-        }, { passive: true });
-        kazerBottomNav?.addEventListener("pointerdown", revealKazerNav, { passive: true });
-        kazerBottomNav?.addEventListener("click", revealKazerNav);
         setKazerActiveView("kazer");
         const newChatButton = document.getElementById("newChatButton");
         const conversationArea = document.getElementById("conversationArea");
