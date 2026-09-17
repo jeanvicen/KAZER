@@ -3300,7 +3300,15 @@
 
 
       .app:not(.in-conversation) .composer-dock { padding-bottom: 0; }
-      .kazer-bottom-strip { position: fixed; z-index: 12; right: 0; bottom: 0; left: 0; height: 46px; padding-bottom: env(safe-area-inset-bottom); border-top: 1px solid rgba(255,255,255,.055); background: #050505; pointer-events: none; }
+      .kazer-bottom-strip { position: fixed; z-index: 12; right: 0; bottom: 0; left: 0; display: flex; align-items: center; justify-content: space-around; height: 62px; padding: 4px max(14px, env(safe-area-inset-left)) max(4px, env(safe-area-inset-bottom)) max(14px, env(safe-area-inset-right)); border-top: 1px solid rgba(255,255,255,.08); background: #050505; }
+      .kazer-bottom-action { display: inline-flex; align-items: center; justify-content: center; width: 46px; height: 46px; border-radius: 14px; background: transparent; color: rgba(255,255,255,.62); cursor: pointer; transition: color 160ms var(--ease), background 160ms var(--ease), transform 160ms var(--ease); }
+      .kazer-bottom-action:hover, .kazer-bottom-action:focus-visible { background: rgba(255,255,255,.07); color: #fff; }
+      .kazer-bottom-action:active { transform: scale(.92); }
+      .kazer-bottom-action.active { color: #fff; }
+      .kazer-bottom-action svg { width: 23px; height: 23px; }
+      .kazer-bottom-action .kazer-bottom-k { width: 24px; height: 24px; background: currentColor; mask: url("../download/assets/kazer-mark-glyph.svg") center / contain no-repeat; -webkit-mask: url("../download/assets/kazer-mark-glyph.svg") center / contain no-repeat; }
+      .app.in-conversation .kazer-bottom-strip { display: none; }
+      @media (min-width: 681px) { .kazer-bottom-strip { right: auto; left: 50%; width: min(560px, calc(100vw - 32px)); transform: translateX(-50%); border: 1px solid rgba(255,255,255,.08); border-bottom: 0; border-radius: 18px 18px 0 0; } }
     </style>
     <script>
       window.setTimeout(() => {
@@ -3537,7 +3545,13 @@
         <section class="message-list" id="messageList" hidden aria-live="polite"></section>
       </section>
 
-      <div class="kazer-bottom-strip" aria-hidden="true"></div>
+      <nav class="kazer-bottom-strip" aria-label="Navegação principal">
+        <button class="kazer-bottom-action active" type="button" aria-label="Início"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m4 10.5 8-6 8 6v8.2a1.3 1.3 0 0 1-1.3 1.3H5.3A1.3 1.3 0 0 1 4 18.7z"></path></svg></button>
+        <button class="kazer-bottom-action" type="button" aria-label="Pesquisar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.6"></circle><path d="m16 16 4.4 4.4"></path></svg></button>
+        <button class="kazer-bottom-action" type="button" aria-label="KAZER"><span class="kazer-bottom-k" aria-hidden="true"></span></button>
+        <button class="kazer-bottom-action" type="button" aria-label="Notificações"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 9a6 6 0 0 0-12 0c0 6-2.5 6.5-2.5 8h15c0-1.5-2.5-2-2.5-8"></path><path d="M10 20h4"></path></svg></button>
+        <button class="kazer-bottom-action" type="button" aria-label="Conversas"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11.5a7.4 7.4 0 0 1-7.6 7.5 8.2 8.2 0 0 1-3.1-.6L5 20l1.4-3.7a7.2 7.2 0 0 1-1.5-4.5A7.4 7.4 0 0 1 12.4 4 7.4 7.4 0 0 1 20 11.5Z"></path></svg></button>
+      </nav>
       <div class="composer-dock">
         <form class="composer" id="composer" autocomplete="off">
           <div class="composer-box">
