@@ -3308,7 +3308,7 @@
       .kazer-bottom-action svg { width: 23px; height: 23px; }
       .kazer-bottom-action .kazer-bottom-k { width: 24px; height: 24px; background: currentColor; mask: url("../download/assets/kazer-mark-glyph.svg") center / contain no-repeat; -webkit-mask: url("../download/assets/kazer-mark-glyph.svg") center / contain no-repeat; }
       .app.in-conversation .kazer-bottom-strip,
-      .app.new-chat-active .kazer-bottom-strip { display: none !important; }
+      .app.new-chat-active:not(.kazer-active) .kazer-bottom-strip { display: none !important; }
       @media (min-width: 681px) { .kazer-bottom-strip { right: auto; left: 50%; width: min(560px, calc(100vw - 32px)); transform: translateX(-50%); border: 1px solid rgba(255,255,255,.08); border-bottom: 0; border-radius: 18px 18px 0 0; } }
     </style>
     <script>
@@ -3547,9 +3547,9 @@
       </section>
 
       <nav class="kazer-bottom-strip" aria-label="Navegação principal">
-        <button class="kazer-bottom-action active" type="button" aria-label="Início"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m4 10.5 8-6 8 6v8.2a1.3 1.3 0 0 1-1.3 1.3H5.3A1.3 1.3 0 0 1 4 18.7z"></path></svg></button>
+        <button class="kazer-bottom-action" type="button" aria-label="Início"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m4 10.5 8-6 8 6v8.2a1.3 1.3 0 0 1-1.3 1.3H5.3A1.3 1.3 0 0 1 4 18.7z"></path></svg></button>
         <button class="kazer-bottom-action" type="button" aria-label="Pesquisar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.6"></circle><path d="m16 16 4.4 4.4"></path></svg></button>
-        <button class="kazer-bottom-action" id="kazerHistoryButton" type="button" aria-label="Abrir histórico de chats"><span class="kazer-bottom-k" aria-hidden="true"></span></button>
+        <button class="kazer-bottom-action active" id="kazerHistoryButton" type="button" aria-label="Abrir Kazer"><span class="kazer-bottom-k" aria-hidden="true"></span></button>
         <button class="kazer-bottom-action" type="button" aria-label="Notificações"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 9a6 6 0 0 0-12 0c0 6-2.5 6.5-2.5 8h15c0-1.5-2.5-2-2.5-8"></path><path d="M10 20h4"></path></svg></button>
         <button class="kazer-bottom-action" type="button" aria-label="Conversas"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11.5a7.4 7.4 0 0 1-7.6 7.5 8.2 8.2 0 0 1-3.1-.6L5 20l1.4-3.7a7.2 7.2 0 0 1-1.5-4.5A7.4 7.4 0 0 1 12.4 4 7.4 7.4 0 0 1 20 11.5Z"></path></svg></button>
       </nav>
@@ -3797,7 +3797,7 @@
         let voiceBaseText = "";
         let toastTimer = null;
         let conversationMessages = [];
-        let viewMode = new URLSearchParams(window.location.search).get("view") === "history" ? "history" : "new-chat";
+        let viewMode = new URLSearchParams(window.location.search).get("view") === "history" ? "history" : "kazer";
         let historyItems = [];
         let activeChatHistoryId = null;
         let globalNotice = null;
@@ -4595,10 +4595,11 @@
         };
 
         const setView = (nextView, { push = false } = {}) => {
-          viewMode = nextView === "new-chat" ? "new-chat" : "history";
+          viewMode = nextView === "history" ? "history" : nextView === "new-chat" ? "new-chat" : "kazer";
           const isHistory = viewMode === "history";
           app.classList.toggle("history-active", isHistory);
           app.classList.toggle("new-chat-active", !isHistory);
+          app.classList.toggle("kazer-active", viewMode === "kazer");
           if (historyScreen) {
             historyScreen.hidden = !isHistory;
             historyScreen.setAttribute("aria-hidden", String(!isHistory));
@@ -4609,7 +4610,7 @@
           }
           if (push) {
             const url = new URL(window.location.href);
-            url.searchParams.set("view", isHistory ? "history" : "chat");
+            url.searchParams.set("view", isHistory ? "history" : viewMode === "new-chat" ? "chat" : "kazer");
             window.history.pushState({ view: viewMode }, "", url);
           }
           if (isHistory) {
@@ -5481,7 +5482,7 @@
 
 
         historySearchInput?.addEventListener("input", renderChatHistory);
-        kazerHistoryButton?.addEventListener("click", () => setView("history", { push: true }));
+        kazerHistoryButton?.addEventListener("click", () => setView("kazer", { push: true }));
         historyNewChat?.addEventListener("click", (event) => {
           event.preventDefault();
           event.stopPropagation();
@@ -5489,7 +5490,7 @@
           requestNewChat();
         });
         newChatBack?.addEventListener("click", () => setView("history", { push: true }));
-        window.addEventListener("popstate", () => setView(new URLSearchParams(window.location.search).get("view") === "history" ? "history" : "new-chat"));
+        window.addEventListener("popstate", () => { const view = new URLSearchParams(window.location.search).get("view"); setView(view === "history" ? "history" : view === "chat" ? "new-chat" : "kazer"); });
 
         historyBrand?.addEventListener("click", () => openSettings());
         settingsAction.addEventListener("click", () => openSettings());
