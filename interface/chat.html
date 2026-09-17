@@ -3300,14 +3300,14 @@
 
 
       .app:not(.in-conversation) .composer-dock { padding-bottom: 0; }
-      .kazer-bottom-strip { position: fixed; z-index: 50; right: 0; bottom: 0; left: 0; display: flex; align-items: center; justify-content: space-around; height: 62px; padding: 4px max(14px, env(safe-area-inset-left)) max(4px, env(safe-area-inset-bottom)) max(14px, env(safe-area-inset-right)); border-top: 1px solid rgba(255,255,255,.08); background: #050505; }
+      .kazer-bottom-strip { position: fixed; z-index: 50; right: 0; bottom: 0; left: 0; display: flex !important; visibility: visible !important; opacity: 1 !important; align-items: center; justify-content: space-around; height: 62px; padding: 4px max(14px, env(safe-area-inset-left)) max(4px, env(safe-area-inset-bottom)) max(14px, env(safe-area-inset-right)); border-top: 1px solid rgba(255,255,255,.08); background: #050505; }
       .kazer-bottom-action { display: inline-flex; align-items: center; justify-content: center; width: 46px; height: 46px; border-radius: 14px; background: transparent; color: rgba(255,255,255,.62); cursor: pointer; transition: color 160ms var(--ease), background 160ms var(--ease), transform 160ms var(--ease); }
       .kazer-bottom-action:hover, .kazer-bottom-action:focus-visible { background: rgba(255,255,255,.07); color: #fff; }
       .kazer-bottom-action:active { transform: scale(.92); }
       .kazer-bottom-action.active { color: #fff; }
       .kazer-bottom-action svg { width: 23px; height: 23px; }
       .kazer-bottom-action .kazer-bottom-k { width: 24px; height: 24px; background: currentColor; mask: url("../download/assets/kazer-mark-glyph.svg") center / contain no-repeat; -webkit-mask: url("../download/assets/kazer-mark-glyph.svg") center / contain no-repeat; }
-      .app.in-conversation .kazer-bottom-strip { display: none; }
+      .app.in-conversation .kazer-bottom-strip { display: none !important; }
       @media (min-width: 681px) { .kazer-bottom-strip { right: auto; left: 50%; width: min(560px, calc(100vw - 32px)); transform: translateX(-50%); border: 1px solid rgba(255,255,255,.08); border-bottom: 0; border-radius: 18px 18px 0 0; } }
     </style>
     <script>
