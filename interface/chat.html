@@ -5969,23 +5969,7 @@
           app.dataset.authPending = "false";
         }, 7000);
         if ("serviceWorker" in navigator && /^https?:$/.test(window.location.protocol)) {
-          const refreshAfterServiceWorkerUpdate = () => {
-            if (sessionStorage.getItem("kazer-sw-refreshing") === "1") return;
-            sessionStorage.setItem("kazer-sw-refreshing", "1");
-            window.location.reload();
-          };
-          navigator.serviceWorker.addEventListener("controllerchange", refreshAfterServiceWorkerUpdate, { once: true });
-          navigator.serviceWorker.register("/sw.js", { updateViaCache: "none" }).then((registration) => {
-            sessionStorage.removeItem("kazer-sw-refreshing");
-            registration.update().catch(() => {});
-            registration.addEventListener("updatefound", () => {
-              const worker = registration.installing;
-              if (!worker) return;
-              worker.addEventListener("statechange", () => {
-                if (worker.state === "installed" && navigator.serviceWorker.controller) registration.waiting?.postMessage({ type: "SKIP_WAITING" });
-              });
-            });
-          }).catch(() => showToast("O modo instalável será ativado no próximo acesso"));
+          navigator.serviceWorker.register("/sw.js").catch(() => showToast("O modo instalável será ativado no próximo acesso"));
         }
 
         window.addEventListener("resize", resizeInput);
