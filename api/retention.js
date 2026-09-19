@@ -151,6 +151,16 @@ module.exports = async function handler(request, response) {
       warningsCreated += Array.isArray(createdRows) ? createdRows.length : 0;
     }
 
+    const notificationCutoff = new Date(now);
+    notificationCutoff.setUTCMonth(notificationCutoff.getUTCMonth() - 1);
+    const oldNotificationsUrl = new URL('/rest/v1/account_notifications', `${supabaseUrl}/`).toString()
+      + `?created_at=lt.${encodeURIComponent(notificationCutoff.toISOString())}`;
+    const oldNotifications = await supabaseRequest(oldNotificationsUrl, {
+      method: 'DELETE',
+      headers: { Prefer: 'return=representation' },
+    }, serviceKey);
+    const notificationsDeleted = Array.isArray(oldNotifications) ? oldNotifications.length : 0;
+
     const deleteEnabled = process.env.RETENTION_DELETE_ENABLED === 'true';
     const deleted = [];
     if (deleteEnabled) {
@@ -167,6 +177,8 @@ module.exports = async function handler(request, response) {
       scanned: (inactiveUsers || []).length,
       warningCandidates: warningCandidates.length,
       warningsCreated,
+      notificationCutoff: notificationCutoff.toISOString(),
+      notificationsDeleted,
       deletionCandidates: deletionCandidates.length,
       deleteEnabled,
       deleted: deleted.length,

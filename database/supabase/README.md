@@ -24,6 +24,7 @@ Este diretório contém as migrações incrementais do banco usado pelo KAZER. O
 | 14 | `014_daily_token_policy.sql` | 1.500 tokens iniciais preservados, recarga diária somada de 300 tokens e reset lazy em 00:00 UTC. |
 | 15 | `015_direct_conversations.sql` | Diretório público de nomes e conversas/mensagens 1-a-1 com RLS por participante. |
 | 16 | `016_security_rls_rpc_cleanup.sql` | `FORCE RLS` para catálogo/uso e revogação de RPCs legadas, sem alterar saldos ou limites. |
+| 17 | `017_notification_retention.sql` | Tabela de confirmações globais, RLS próprio e limpeza de `account_notifications` com mais de um mês. |
 
 As migrações posteriores dependem de objetos criados pelas anteriores. Não pule arquivos, não os execute fora de ordem e não edite uma migração já aplicada sem registrar uma nova migração corretiva. A migração 014 substitui o comportamento anterior de reposição integral em janela de cinco horas. A migração 016 é somente de segurança: não recalcula, zera, concede ou remove créditos.
 
@@ -43,7 +44,7 @@ As migrações de uso criam o catálogo e o estado por usuário. O consumo do ch
 
 A coluna de atividade apoia a busca de contas inativas. O endpoint `/api/retention` é protegido por `CRON_SECRET`, cria avisos nas janelas previstas e só pode excluir contas quando `RETENTION_DELETE_ENABLED=true`. Mantenha essa flag como `false` até revisar backup, restauração, avisos, suporte e reversão.
 
-O agendamento diário está em `vercel.json`, às 04:00 UTC. A exclusão administrativa, quando habilitada, é permanente, limitada por execução e depende de `SUPABASE_SERVICE_ROLE_KEY`. Nunca coloque a service role no navegador, no repositório, em issues, em logs ou em parâmetros de URL.
+O agendamento diário está em `vercel.json`, às 04:00 UTC. Ele cria avisos de inatividade e apaga automaticamente registros de `account_notifications` com mais de um mês; isso não altera créditos, saldos, limites ou resets. A exclusão administrativa, quando habilitada, é permanente, limitada por execução e depende de `SUPABASE_SERVICE_ROLE_KEY`. Nunca coloque a service role no navegador, no repositório, em issues, em logs ou em parâmetros de URL.
 
 ## Validação pós-migração
 

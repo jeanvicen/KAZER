@@ -11,7 +11,7 @@ const DEFAULT_SUPABASE_URL = "https://mqjunopzycdezzjmlhip.supabase.co";
 const MAX_PAGE_SIZE = 100;
 
 function getSupabaseUrl() {
-  const value = process.env.SUPABASE_URL || (process.env.NODE_ENV === "production" ? "" : DEFAULT_SUPABASE_URL);
+  const value = process.env.SUPABASE_URL || DEFAULT_SUPABASE_URL;
   try {
     const url = new URL(value);
     if (url.protocol !== "https:" || url.username || url.password) throw new Error("invalid_supabase_url");

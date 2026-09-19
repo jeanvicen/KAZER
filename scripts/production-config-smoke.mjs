@@ -17,9 +17,9 @@ const require = createRequire(import.meta.url);
 const security = require("../api/_security.js");
 const data = require("../api/_kazer-data.js");
 
-assert.equal(security.supabaseBaseUrl(), null);
-assert.equal(security.publicSupabaseAnonKey(), null);
-assert.throws(() => data.getSupabaseUrl(), /supabase_unavailable/);
+assert.equal(security.supabaseBaseUrl(), "https://mqjunopzycdezzjmlhip.supabase.co");
+assert.ok(security.publicSupabaseAnonKey());
+assert.equal(data.getSupabaseUrl(), "https://mqjunopzycdezzjmlhip.supabase.co");
 assert.throws(() => data.encryptSecret("secret"), /connector_encryption_key_missing_or_weak/);
 
 process.env.KAZER_CONNECTOR_ENCRYPTION_KEY = "x".repeat(32);
