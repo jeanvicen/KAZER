@@ -5,7 +5,7 @@ const source = await readFile(new URL("../interface/chat.html", import.meta.url)
 
 // Guardrails: confirm the production UI contains the invalidation and no-cache load.
 assert.match(source, /if \(Number\(data\?\.memories_updated\) > 0\) invalidateMemories\(\);/);
-assert.match(source, /fetchWithAuth\(`\/api\/memories\?limit=200&offset=\$\{offset\}`, \{ method: "GET", cache: "no-store" \}\)/);
+assert.match(source, /fetchWithAuth\(`\/api\/memories\?limit=200&offset=0`, \{ method: "GET", cache: "no-store" \}\)/);
 assert.match(source, /memoriesLoaded = false;/);
 
 // Simulate the UI state and the API response before/after the chat update.
