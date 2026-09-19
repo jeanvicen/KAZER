@@ -3,17 +3,14 @@ const { requireUser } = require("./_kazer-data");
 const { getGitHubConfig, setCookie, signState } = require("./_github");
 
 function tokenFromRequest(request) {
-  const query = request?.query || {};
-  const queryToken = String(query.access_token || query.accessToken || "").trim();
-  if (queryToken) return queryToken;
   const body = request?.body;
   if (!body || typeof body !== "object") return "";
   return String(body.access_token || body.accessToken || "").trim();
 }
 
 module.exports = async function handler(request, response) {
-  if (request.method !== "GET" && request.method !== "POST") {
-    response.setHeader("Allow", "GET, POST");
+  if (request.method !== "POST") {
+    response.setHeader("Allow", "POST");
     response.status(405).setHeader("Content-Type", "text/plain; charset=utf-8");
     return response.end("Método não permitido.");
   }

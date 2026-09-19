@@ -7,11 +7,11 @@ const {
   sendJson,
 } = require("./_security");
 
-const PUBLIC_SUPABASE_URL = "https://mqjunopzycdezzjmlhip.supabase.co";
+const DEFAULT_SUPABASE_URL = "https://mqjunopzycdezzjmlhip.supabase.co";
 const MAX_PAGE_SIZE = 100;
 
 function getSupabaseUrl() {
-  const value = process.env.SUPABASE_URL || PUBLIC_SUPABASE_URL;
+  const value = process.env.SUPABASE_URL || (process.env.NODE_ENV === "production" ? "" : DEFAULT_SUPABASE_URL);
   try {
     const url = new URL(value);
     if (url.protocol !== "https:" || url.username || url.password) throw new Error("invalid_supabase_url");
@@ -29,6 +29,9 @@ function getServiceKey() {
 
 function getEncryptionKey() {
   const configured = String(process.env.KAZER_CONNECTOR_ENCRYPTION_KEY || "").trim();
+  if (process.env.NODE_ENV === "production" && configured.length < 32) {
+    throw new Error("connector_encryption_key_missing_or_weak");
+  }
   const source = configured || getServiceKey();
   return crypto.createHash("sha256").update(source, "utf8").digest();
 }

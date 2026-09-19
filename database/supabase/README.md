@@ -23,8 +23,9 @@ Este diretório contém as migrações incrementais do banco usado pelo KAZER. O
 | 13 | `013_memory_retention_cleanup.sql` | Limpeza inteligente no limite de 5.000 memórias por usuário. |
 | 14 | `014_daily_token_policy.sql` | 1.500 tokens iniciais preservados, recarga diária somada de 300 tokens e reset lazy em 00:00 UTC. |
 | 15 | `015_direct_conversations.sql` | Diretório público de nomes e conversas/mensagens 1-a-1 com RLS por participante. |
+| 16 | `016_security_rls_rpc_cleanup.sql` | `FORCE RLS` para catálogo/uso e revogação de RPCs legadas, sem alterar saldos ou limites. |
 
-As migrações posteriores dependem de objetos criados pelas anteriores. Não pule arquivos, não os execute fora de ordem e não edite uma migração já aplicada sem registrar uma nova migração corretiva. A migração 014 substitui o comportamento anterior de reposição integral em janela de cinco horas.
+As migrações posteriores dependem de objetos criados pelas anteriores. Não pule arquivos, não os execute fora de ordem e não edite uma migração já aplicada sem registrar uma nova migração corretiva. A migração 014 substitui o comportamento anterior de reposição integral em janela de cinco horas. A migração 016 é somente de segurança: não recalcula, zera, concede ou remove créditos.
 
 ## Configuração do Auth
 

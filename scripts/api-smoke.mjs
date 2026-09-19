@@ -67,8 +67,8 @@ assert.ok(directAuthorizeUrl.searchParams.get("state"));
 
 const getDirectResponse = responseOf();
 await directHandler({ ...request, method: "GET", headers: { ...request.headers, host: "kazer.example" }, query: { access_token: "test-bearer-token-123456" } }, getDirectResponse);
-assert.equal(getDirectResponse.statusCode, 302);
-assert.match(getDirectResponse.headers.Location, /^https:\/\/github\.com\/login\/oauth\/authorize\?/);
+assert.equal(getDirectResponse.statusCode, 405);
+assert.equal(getDirectResponse.headers.Allow, "POST");
 
 await import("node:fs/promises").then((fs) => fs.writeFile("/tmp/kazer-api-smoke-restored", "ok"));
 globalThis.fetch = originalFetch;

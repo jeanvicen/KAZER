@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import crypto from "node:crypto";
+import fs from "node:fs/promises";
 import { createRequire } from "node:module";
 
 process.env.SUPABASE_SERVICE_ROLE_KEY = "test-service-key";
@@ -11,11 +12,16 @@ process.env.GITHUB_OAUTH_STATE_SECRET = "state-secret";
 const require = createRequire(import.meta.url);
 const { signState } = require("../api/_github.js");
 const handler = require("../api/_github-callback-handler.js");
+const authorizeHandler = require("../api/_github-authorize-handler.js");
+const workspaceSource = await fs.readFile(new URL("../interface/kazer-workspace.js", import.meta.url), "utf8");
+assert.match(workspaceSource, /api\("\/api\/github-connect"\)/, "frontend deve iniciar OAuth pelo endpoint autenticado");
+assert.doesNotMatch(workspaceSource, /github-authorize\?access_token=/, "token Supabase não pode aparecer na URL OAuth");
 
 function responseOf() {
   return {
     headers: {}, statusCode: 200, body: "",
     setHeader(name, value) { this.headers[name] = value; },
+    status(code) { this.statusCode = code; return this; },
     end(value = "") { this.body = value; },
   };
 }
@@ -40,6 +46,10 @@ const mismatchedCookieResponse = responseOf();
 await handler({ method: "GET", headers: { host: "kazer.vercel.app", cookie: "kazer_github_oauth=other-state" }, query: { code: "github-code", state } }, mismatchedCookieResponse);
 assert.equal(mismatchedCookieResponse.statusCode, 302);
 assert.match(mismatchedCookieResponse.headers.Location, /github=error/);
+
+const queryTokenResponse = responseOf();
+await authorizeHandler({ method: "GET", headers: { host: "kazer.vercel.app" }, query: { access_token: "session-token" } }, queryTokenResponse);
+assert.equal(queryTokenResponse.statusCode, 405);
 
 globalThis.fetch = originalFetch;
 console.log("github-oauth-smoke: OK");

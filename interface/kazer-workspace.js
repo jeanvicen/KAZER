@@ -195,10 +195,11 @@
     if (connectGitHub.inProgress) return;
     connectGitHub.inProgress = true;
     try {
-      const sessionResult = await supabase?.auth.getSession();
-      const accessToken = sessionResult?.data?.session?.access_token;
-      if (!accessToken) throw new Error("Sessão inválida ou expirada.");
-      window.location.assign(`/api/github-authorize?access_token=${encodeURIComponent(accessToken)}`);
+      const data = await api("/api/github-connect");
+      if (!data.url || !/^https:\/\/github\.com\/login\/oauth\/authorize\?/.test(data.url)) {
+        throw new Error("GitHub OAuth não configurado.");
+      }
+      window.location.assign(data.url);
     } catch (error) {
       notify(error.message);
     } finally {

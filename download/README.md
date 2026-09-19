@@ -6,9 +6,9 @@ Este diretório reúne os arquivos de distribuição do mesmo Kazer publicado em
 
 - `manifest.webmanifest`: identidade, cores, ícone de abertura e rota inicial.
 - `sw.js`: cache básico do app shell e suporte offline.
-- `assets/kazer-logo.jpg`: logo principal existente.
-- `assets/kazer-login-symbol.png`: símbolo transparente existente, usado no lançamento do PWA e no empacotamento Android.
-- `icons/kazer-192.png` e `icons/kazer-512.png`: ícones existentes preservados separadamente.
+- `assets/kazer-symbol.png`: símbolo canônico enviado para a nova identidade visual do Kazer.
+- `assets/kazer-logo.jpg` e `assets/kazer-login-symbol.png`: cópias compatíveis do novo símbolo para superfícies legadas.
+- `icons/kazer-192.png` e `icons/kazer-512.png`: ícones PWA gerados a partir do novo símbolo.
 
 ## Integração web
 

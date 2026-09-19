@@ -1,5 +1,6 @@
 const { connectorSecretPayload, supabaseRequest } = require("./_kazer-data");
 
+const dns = require("node:dns").promises;
 const net = require("node:net");
 const MCP_PROTOCOL_VERSION = "2025-06-18";
 const MAX_SERVERS = 8;
@@ -67,8 +68,18 @@ function isAllowedRemoteUrl(value) {
   } catch { return false; }
 }
 
+async function assertPublicRemoteHost(value) {
+  const url = new URL(String(value || ""));
+  if (isPrivateHost(url.hostname)) throw new Error("MCP URL não permitida");
+  const addresses = await dns.lookup(url.hostname, { all: true, verbatim: true });
+  if (!addresses.length || addresses.some((entry) => isPrivateHost(entry.address))) {
+    throw new Error("MCP host resolve para endereço privado");
+  }
+}
+
 async function mcpRequest(server, method, params, id) {
   if (!isAllowedRemoteUrl(server?.url)) throw new Error("MCP URL não permitida");
+  await assertPublicRemoteHost(server.url);
   const headers = { ...server.headers };
   if (server.sessionId) headers["Mcp-Session-Id"] = server.sessionId;
   const response = await fetch(server.url, {

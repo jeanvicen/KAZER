@@ -7,9 +7,25 @@ const crypto = require("node:crypto");
 const rateBuckets = new Map();
 const MAX_RATE_BUCKETS = 5000;
 const DEFAULT_AUTH_TIMEOUT_MS = 5000;
-// Fallback público do projeto Supabase; chaves privadas nunca entram no cliente.
-const PUBLIC_SUPABASE_URL = "https://mqjunopzycdezzjmlhip.supabase.co";
-const PUBLIC_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1xanVub3B6eWNkZXp6am1saGlwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc4Mzg3NDksImV4cCI6MjEwMzQxNDc0OX0.Y_o2_QQhZzuCjvHdEfxaR5VrAxo7NFenPaDmdHN3bwM";
+// Fallback público de desenvolvimento; em produção, configure os valores explicitamente.
+const DEFAULT_SUPABASE_URL = "https://mqjunopzycdezzjmlhip.supabase.co";
+const DEFAULT_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1xanVub3B6eWNkZXp6am1saGlwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc4Mzg3NDksImV4cCI6MjEwMzQxNDc0OX0.Y_o2_QQhZzuCjvHdEfxaR5VrAxo7NFenPaDmdHN3bwM";
+
+function configuredSupabaseUrl() {
+  const value = String(process.env.SUPABASE_URL || (process.env.NODE_ENV === "production" ? "" : DEFAULT_SUPABASE_URL)).trim();
+  try {
+    const url = new URL(value);
+    if (url.protocol !== "https:" || url.username || url.password) return null;
+    return url.origin;
+  } catch {
+    return null;
+  }
+}
+
+function configuredSupabaseAnonKey() {
+  const value = String(process.env.SUPABASE_ANON_KEY || (process.env.NODE_ENV === "production" ? "" : DEFAULT_SUPABASE_ANON_KEY)).trim();
+  return value || null;
+}
 
 function sendJson(response, status, payload, extraHeaders = {}) {
   response.status(status);
@@ -74,24 +90,17 @@ function getBearerToken(request) {
 }
 
 function publicSupabaseAnonKey() {
-  return PUBLIC_SUPABASE_ANON_KEY;
+  return configuredSupabaseAnonKey();
 }
 
 function supabaseBaseUrl() {
-  const value = PUBLIC_SUPABASE_URL;
-  try {
-    const url = new URL(value);
-    if (url.protocol !== "https:" || url.username || url.password) return null;
-    return url.origin;
-  } catch {
-    return null;
-  }
+  return configuredSupabaseUrl();
 }
 
 async function authenticateUser(request) {
   const token = getBearerToken(request);
   const baseUrl = supabaseBaseUrl();
-  const anonKey = PUBLIC_SUPABASE_ANON_KEY;
+  const anonKey = configuredSupabaseAnonKey();
   if (!token || !baseUrl || !anonKey) return null;
 
   try {
@@ -135,6 +144,7 @@ function rateLimit(request, bucketName, { limit, windowMs = 60_000, identity = "
   const resetAt = Math.ceil((bucket.startedAt + windowMs) / 1000);
   return {
     allowed: bucket.count <= limit,
+    limit,
     remaining,
     resetAt,
     retryAfter: Math.max(1, Math.ceil((bucket.startedAt + windowMs - now) / 1000)),
