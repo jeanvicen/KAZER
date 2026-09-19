@@ -8,6 +8,33 @@ const {
 } = require("./_security");
 const { supabaseRequest } = require("./_kazer-data");
 
+function safeLearningUrl(value) {
+  try {
+    const url = new URL(String(value || "").trim());
+    if (!/^https?:$/.test(url.protocol) || url.username || url.password) return null;
+    const hostname = url.hostname.toLowerCase();
+    if (hostname === "localhost" || hostname.endsWith(".localhost") || hostname === "127.0.0.1" || hostname === "::1" || hostname.startsWith("10.") || hostname.startsWith("192.168.") || /^172\.(1[6-9]|2\d|3[0-1])\./.test(hostname)) return null;
+    return url;
+  } catch {
+    return null;
+  }
+}
+
+function readablePageText(html) {
+  return String(html || "")
+    .replace(/<script[\s\S]*?<\/script>/gi, " ")
+    .replace(/<style[\s\S]*?<\/style>/gi, " ")
+    .replace(/<noscript[\s\S]*?<\/noscript>/gi, " ")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/&nbsp;/gi, " ")
+    .replace(/&amp;/gi, "&")
+    .replace(/&quot;/gi, '"')
+    .replace(/&#39;/gi, "'")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, 12000);
+}
+
 const MAX_PAGE_SIZE = 200;
 const CATEGORIES = new Set([
   "preference", "dislike", "personal_context", "project", "goal", "habit",
@@ -29,8 +56,8 @@ function clientMemory(row) {
 }
 
 module.exports = async function handler(request, response) {
-  if (!["GET", "PATCH", "DELETE"].includes(request.method)) {
-    response.setHeader("Allow", "GET, PATCH, DELETE");
+  if (!["GET", "POST", "PATCH", "DELETE"].includes(request.method)) {
+    response.setHeader("Allow", "GET, POST, PATCH, DELETE");
     return sendJson(response, 405, { error: "Método não permitido." });
   }
   if (!isSameOrigin(request) || !hasSafeFetchMetadata(request)) {
@@ -44,6 +71,18 @@ module.exports = async function handler(request, response) {
   if (!user) return sendJson(response, 401, { error: "Sessão inválida ou expirada." });
 
   try {
+    if (request.method === "POST") {
+      const url = safeLearningUrl(request.body?.url);
+      if (!url) return sendJson(response, 400, { error: "URL não permitida." });
+      const page = await fetch(url, { headers: { Accept: "text/html,text/plain", "User-Agent": "KAZER-Learning/1.0" }, signal: AbortSignal.timeout(10_000) });
+      if (!page.ok) return sendJson(response, 422, { error: "Não foi possível ler esse link." });
+      const text = readablePageText(await page.text());
+      if (text.length < 40) return sendJson(response, 422, { error: "Esse link não tem conteúdo legível." });
+      const title = url.hostname.replace(/^www\./, "");
+      const content = `Fonte: ${url.href}\nConteúdo aprendido de ${title}: ${text}`.slice(0, 16000);
+      const rows = await supabaseRequest("kazer_memories", { method: "POST", body: { user_id: user.id, category: "learning", group_title: "Habilidades e ensinamentos", content, importance: 0.8, confidence: 0.75, source: url.href, is_pinned: false } });
+      return sendJson(response, 201, { memory: Array.isArray(rows) && rows[0] ? clientMemory(rows[0]) : null });
+    }
     if (request.method === "PATCH") {
       const id = String(request.query?.id || "").trim();
       const content = String(request.body?.content || "").trim();
