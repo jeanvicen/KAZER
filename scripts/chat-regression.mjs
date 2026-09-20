@@ -5,6 +5,7 @@ const root = new URL("..", import.meta.url).pathname;
 const chatApi = await readFile(`${root}/api/chat.js`, "utf8");
 const chatUi = await readFile(`${root}/interface/chat.html`, "utf8");
 const usagePolicy = await readFile(`${root}/database/supabase/014_daily_token_policy.sql`, "utf8");
+const apk = await readFile(`${root}/download/android/kazer.apk`);
 
 const assert = (condition, message) => {
   if (!condition) throw new Error(message);
@@ -22,6 +23,8 @@ assert(chatUi.includes('id="voiceButton"') && chatUi.includes('data-voice-state=
 assert(chatUi.includes("getUserMedia") && chatUi.includes("noiseSuppression: true"), "A captura de voz não prioriza uma entrada de áudio limpa");
 assert(chatUi.includes('data-voice-state="ready"') && chatUi.includes("Texto convertido"), "O fluxo de voz não confirma a transcrição final");
 assert(chatUi.includes("installProgress") && chatUi.includes("installCompletionTimer"), "A instalação não possui progresso nem timeout");
+assert(chatUi.includes('fetch("/download/android/kazer.apk"') && chatUi.includes('link.download = "kazer.apk"'), "O botão não baixa o APK real");
 assert(chatUi.includes("appinstalled") && chatUi.includes("setInstallProgress(100"), "A instalação não confirma conclusão real");
+assert(apk.length > 1000000 && apk.subarray(0, 2).toString() === "PK", "O APK publicado não é um pacote Android válido");
 assert(usagePolicy.includes("attachment_reset_at") && usagePolicy.includes("kazer_next_daily_reset"), "A política de anexos não possui reset temporal");
 console.log("chat-regression: OK — contexto, anexos, assinatura, reset temporal, voz e instalação verificados.");

@@ -3387,10 +3387,10 @@
       <aside class="install-banner" id="installBanner" aria-live="polite" data-install-state="idle" hidden>
         <img class="install-logo" src="../download/icons/kazer-192.png" alt="Logo Kazer" />
         <div class="install-copy">
-          <strong id="installTitle">Instalar Kazer?</strong>
-          <small id="installMessage">Tenha o Kazer na sua tela inicial para abrir mais rápido.</small>
+          <strong id="installTitle">Baixar o Kazer para Android?</strong>
+          <small id="installMessage">Baixe o APK do Kazer e instale como qualquer outro app no Android.</small>
           <div class="install-progress" id="installProgress" role="progressbar" aria-label="Progresso da instalação" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span class="install-progress-bar" id="installProgressBar"></span></div>
-          <div class="install-actions"><button class="install-primary" id="installNow" type="button">Instalar agora</button><button class="install-secondary" id="installLater" type="button">Agora não</button></div>
+          <div class="install-actions"><button class="install-primary" id="installNow" type="button">Baixar APK</button><button class="install-secondary" id="installLater" type="button">Agora não</button></div>
         </div>
         <button class="install-dismiss" id="installDismiss" type="button" aria-label="Fechar aviso">×</button>
       </aside>
@@ -4125,7 +4125,7 @@
 
         const showInstallBanner = () => {
           if (isStandalone() || !settingsState.installPrompt || !settingsPopover.hidden || sessionStorage.getItem("kazer-install-dismissed") === "1") return;
-          setInstallState("idle", "Instalar Kazer?", "Tenha o Kazer na sua tela inicial para abrir mais rápido.");
+          setInstallState("idle", "Baixar o Kazer para Android?", "Baixe o APK do Kazer e instale como qualquer outro app no Android.");
           setInstallProgress(0, { active: false });
           installBanner.hidden = false;
           requestAnimationFrame(() => installBanner.classList.add("visible"));
@@ -4139,46 +4139,50 @@
 
         const installKazer = async () => {
           if (installBusy) return;
-          if (!deferredInstallPrompt) {
-            setInstallState("error", "Instalação pelo navegador", "Abra o menu do navegador e escolha “Instalar app” ou “Adicionar à tela inicial”.");
-            setInstallProgress(0, { active: false });
-            showToast("Este navegador não liberou a instalação automática. Use o menu ⋮ para instalar o Kazer.");
-            return;
-          }
           installBusy = true;
-          setInstallState("busy", "Preparando instalação…", "O sistema está preparando o Kazer. Não feche esta janela.");
-          setInstallProgress(12, { active: true, indeterminate: true });
+          setInstallState("busy", "Baixando APK…", "O download aparecerá nas Transferências do Chrome.");
+          setInstallProgress(0, { active: true });
           installNow.disabled = true;
+          const controller = new AbortController();
+          installCompletionTimer = window.setTimeout(() => controller.abort(), 30000);
           try {
-            deferredInstallPrompt.prompt();
-            const choice = await deferredInstallPrompt.userChoice;
-            deferredInstallPrompt = null;
-            if (choice.outcome !== "accepted") {
-              installBusy = false;
-              installNow.disabled = false;
-              setInstallState("idle", "Instalar Kazer?", "Tenha o Kazer na sua tela inicial para abrir mais rápido.");
-              setInstallProgress(0, { active: false });
-              showToast("Instalação cancelada");
-              return;
+            const response = await fetch("/download/android/kazer.apk", { cache: "no-store", signal: controller.signal });
+            if (!response.ok || !response.body) throw new Error("APK indisponível");
+            const total = Number(response.headers.get("content-length")) || 0;
+            const reader = response.body.getReader();
+            const chunks = [];
+            let received = 0;
+            while (true) {
+              const { done, value } = await reader.read();
+              if (done) break;
+              chunks.push(value);
+              received += value.byteLength;
+              setInstallProgress(total ? received / total * 100 : 42, { active: true, indeterminate: !total });
             }
-            setInstallState("busy", "Instalando Kazer…", "Download concluído. Finalizando a instalação no dispositivo.");
-            setInstallProgress(72, { active: true, indeterminate: true });
+            const apkBlob = new Blob(chunks, { type: "application/vnd.android.package-archive" });
+            const downloadUrl = URL.createObjectURL(apkBlob);
+            const link = document.createElement("a");
+            link.href = downloadUrl;
+            link.download = "kazer.apk";
+            link.rel = "noopener";
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            window.setTimeout(() => URL.revokeObjectURL(downloadUrl), 10000);
             window.clearTimeout(installCompletionTimer);
-            installCompletionTimer = window.setTimeout(() => {
-              if (!installBusy) return;
-              installBusy = false;
-              installNow.disabled = false;
-              setInstallState("error", "A instalação demorou", "O navegador não confirmou a instalação. Tente pelo menu do navegador.");
-              setInstallProgress(0, { active: false });
-              showToast("A instalação não foi confirmada pelo navegador.");
-            }, 15000);
-          } catch (error) {
             installBusy = false;
             installNow.disabled = false;
-            setInstallState("error", "Não foi possível instalar", "Tente novamente ou use o menu do navegador para instalar o app.");
+            setInstallState("success", "APK baixado ✓", "Abra as Transferências do Chrome e toque em kazer.apk para instalar.");
+            setInstallProgress(100, { active: true });
+            showToast("APK baixado. Abra as Transferências para instalar.");
+          } catch (error) {
+            window.clearTimeout(installCompletionTimer);
+            installBusy = false;
+            installNow.disabled = false;
+            setInstallState("error", "Não foi possível baixar o APK", "Verifique a conexão e tente novamente.");
             setInstallProgress(0, { active: false });
-            showToast("Não foi possível iniciar a instalação.");
-            console.warn("Kazer install failed", error);
+            showToast("O APK ainda não está disponível para download.");
+            console.warn("Kazer APK download failed", error);
           }
         };
 

@@ -10,8 +10,11 @@ O build produz dois formatos:
 |---|---|
 | `app-release-signed.apk` | Instalação direta e testes em um aparelho Android. |
 | `app-release-bundle.aab` | Formato de envio para um app novo na Google Play. |
+| `/download/android/kazer.apk` | APK Android compilado e baixável pelo botão do Kazer. |
 
 A Google Play normalmente recebe o `.aab`; o `.apk` fica para teste, instalação manual ou distribuição fora da loja.
+
+O botão **Baixar APK** da interface baixa `/download/android/kazer.apk` com o nome `kazer.apk`. O Chrome mostra o arquivo em **Transferências**; ao tocar nele, o Android abre o instalador do pacote. O arquivo publicado atualmente é uma build de teste assinada pelo fluxo `assembleDebug`; para distribuição de produção, gere `app-release-signed.apk` com uma chave de assinatura de produção fora do repositório.
 
 ## Build local
 
