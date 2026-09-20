@@ -5912,7 +5912,24 @@
           app.dataset.authPending = "false";
         }, 7000);
         if ("serviceWorker" in navigator && /^https?:$/.test(window.location.protocol)) {
-          navigator.serviceWorker.register("/sw.js").catch(() => showToast("O modo instalável será ativado no próximo acesso"));
+          let refreshingForUpdate = false;
+          navigator.serviceWorker.addEventListener("controllerchange", () => {
+            if (refreshingForUpdate) return;
+            refreshingForUpdate = true;
+            window.location.reload();
+          });
+          const updateServiceWorker = async () => {
+            try {
+              const registration = await navigator.serviceWorker.register("/sw.js", { updateViaCache: "none" });
+              await registration.update();
+            } catch {
+              showToast("A atualização automática será tentada novamente em instantes");
+            }
+          };
+          updateServiceWorker();
+          window.setInterval(updateServiceWorker, 5 * 60 * 1000);
+          window.addEventListener("pageshow", updateServiceWorker);
+          document.addEventListener("visibilitychange", () => { if (!document.hidden) updateServiceWorker(); });
         }
 
         window.addEventListener("resize", resizeInput);
