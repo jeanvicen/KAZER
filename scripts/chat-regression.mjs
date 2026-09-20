@@ -18,5 +18,8 @@ assert(chatApi.includes("MAX_IMAGES"), "A API não limita a quantidade de imagen
 assert(chatUi.includes("selectedFiles = files;"), "O frontend não preserva anexos depois de uma falha");
 assert(chatUi.includes("A mensagem que falhou continua sendo contexto válido"), "O frontend ainda remove o contexto quando a resposta falha");
 assert(!chatUi.includes("conversationMessages.pop();"), "O frontend ainda descarta a mensagem que falhou");
+assert(chatUi.includes('id="voiceButton"') && chatUi.includes('data-voice-state="idle"'), "O controle de voz não possui estado inicial acessível");
+assert(chatUi.includes("getUserMedia") && chatUi.includes("noiseSuppression: true"), "A captura de voz não prioriza uma entrada de áudio limpa");
+assert(chatUi.includes('data-voice-state="ready"') && chatUi.includes("Texto convertido"), "O fluxo de voz não confirma a transcrição final");
 assert(usagePolicy.includes("attachment_reset_at") && usagePolicy.includes("kazer_next_daily_reset"), "A política de anexos não possui reset temporal");
-console.log("chat-regression: OK — contexto, anexos, assinatura e reset temporal verificados.");
+console.log("chat-regression: OK — contexto, anexos, assinatura, reset temporal e voz verificados.");

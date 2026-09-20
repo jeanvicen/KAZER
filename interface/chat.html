@@ -614,13 +614,25 @@
         transform: scale(0.95);
       }
 
-      .voice-button { position: relative; flex: 0 0 auto; display: inline-flex; align-items: center; justify-content: center; width: 38px; height: 38px; border: 1px solid var(--line); border-radius: 50%; background: rgba(255,255,255,.04); color: var(--text); cursor: pointer; transition: border-color 160ms var(--ease), background 160ms var(--ease), color 160ms var(--ease), transform 160ms var(--ease); }
+      .voice-button { --voice-level: .18; position: relative; flex: 0 0 auto; display: inline-flex; align-items: center; justify-content: center; width: 38px; height: 38px; border: 1px solid var(--line); border-radius: 50%; background: rgba(255,255,255,.04); color: var(--text); cursor: pointer; transition: border-color 180ms var(--ease), background 180ms var(--ease), color 180ms var(--ease), transform 180ms var(--ease), box-shadow 220ms var(--ease); }
       .voice-button:hover { border-color: rgba(255,255,255,.18); background: rgba(255,255,255,.07); }
       .voice-button:active { transform: scale(.95); }
-      .voice-button[aria-pressed="true"] { border-color: rgba(255,92,92,.7); background: rgba(255,92,92,.14); color: #ff8d8d; animation: voice-pulse 1.25s ease-in-out infinite; }
+      .voice-button[aria-pressed="true"] { border-color: rgba(255,74,94,.82); background: radial-gradient(circle at 50% 46%, rgba(255,91,98,.34), rgba(255,60,80,.12) 62%, rgba(255,60,80,.04)); color: #ff9a9e; box-shadow: 0 0 calc(10px + var(--voice-level) * 22px) rgba(255,65,81,.26), 0 0 0 5px rgba(255,65,81,.07); animation: voice-pulse 1.45s ease-in-out infinite; }
+      .voice-button[data-voice-state="stopping"] { border-color: rgba(255,214,127,.72); background: rgba(255,204,105,.11); color: #ffe0a2; }
+      .voice-button[data-voice-state="ready"] { border-color: rgba(125,232,178,.72); background: rgba(125,232,178,.12); color: #a9f2c9; box-shadow: 0 0 0 4px rgba(125,232,178,.07); }
       .voice-button:disabled { cursor: default; opacity: .45; }
       .voice-button .icon { width: 19px; height: 19px; stroke-width: 1.7; }
-      @keyframes voice-pulse { 50% { box-shadow: 0 0 0 5px rgba(255,92,92,.08); } }
+      .voice-button .voice-wave { display: inline-flex; align-items: center; justify-content: center; gap: 2px; width: 20px; height: 22px; }
+      .voice-button .voice-wave i { display: block; width: 2px; height: 7px; border-radius: 99px; background: currentColor; transform: scaleY(calc(.7 + var(--voice-level) * 1.5)); transition: transform 90ms ease; }
+      .voice-button .voice-wave i:nth-child(2) { height: 13px; transform: scaleY(calc(.7 + var(--voice-level) * 1.8)); }
+      .voice-button .voice-wave i:nth-child(3) { height: 18px; transform: scaleY(calc(.7 + var(--voice-level) * 2)); }
+      .voice-button .voice-wave i:nth-child(4) { height: 11px; transform: scaleY(calc(.7 + var(--voice-level) * 1.7)); }
+      .voice-button .voice-check { display: none; width: 20px; height: 20px; stroke-width: 2.35; stroke-linecap: round; stroke-linejoin: round; }
+      .voice-button[data-voice-state="ready"] .voice-wave,
+      .voice-button[data-voice-state="stopping"] .voice-wave { display: none; }
+      .voice-button[data-voice-state="ready"] .voice-check,
+      .voice-button[data-voice-state="stopping"] .voice-check { display: block; }
+      @keyframes voice-pulse { 50% { transform: translateY(-1px); } }
       .app:not(.in-conversation) .voice-button { width: 32px; height: 32px; }
       .app:not(.in-conversation) .voice-button .icon { width: 16px; height: 16px; }
 
@@ -3580,7 +3592,7 @@
               <input class="file-input" id="fileInput" type="file" accept=".pdf,.docx,.txt,.md,.csv,.json,.xml,.html,.htm,.js,.ts,.tsx,.jsx,.css,.py,.java,.sql,.yaml,.yml,.log" multiple hidden />
               <input class="file-input" id="photoInput" type="file" accept="image/jpeg,image/png,image/webp,image/gif" multiple hidden />
               <input class="file-input" id="cameraInput" type="file" accept="image/*" capture="environment" multiple hidden />
-              <button class="voice-button" id="voiceButton" type="button" aria-label="Falar para transcrever" title="Falar para transcrever" aria-pressed="false"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"></rect><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21M8.5 21h7"></path></svg></button>
+              <button class="voice-button" id="voiceButton" type="button" aria-label="Falar para transcrever" title="Falar para transcrever" aria-pressed="false" data-voice-state="idle"><svg class="icon voice-mic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"></rect><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21M8.5 21h7"></path></svg><span class="voice-wave" aria-hidden="true"><i></i><i></i><i></i><i></i></span><svg class="voice-check" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m5 12.5 4.2 4.2L19 7"></path></svg></button>
               <button class="send-button" id="sendButton" type="submit" aria-label="Enviar" disabled><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"></path></svg></button>
               <button class="send-button stop-button" id="stopButton" type="button" aria-label="Parar resposta"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="7" y="7" width="10" height="10" rx="1.5"></rect></svg></button>
             </div>
@@ -3828,6 +3840,12 @@
         let voiceRecognition = null;
         let voiceListening = false;
         let voiceBaseText = "";
+        let voiceStopRequested = false;
+        let voiceStream = null;
+        let voiceAudioContext = null;
+        let voiceAnalyser = null;
+        let voiceMeterFrame = 0;
+        let voiceRestartTimer = null;
         let toastTimer = null;
         let conversationMessages = [];
         let viewMode = new URLSearchParams(window.location.search).get("view") === "history" ? "history" : "kazer";
@@ -4710,20 +4728,73 @@
           sendButton.disabled = busy || (messageInput.value.trim().length === 0 && selectedFiles.length === 0);
         };
 
-        const setVoiceState = (listening) => {
+        const setVoiceState = (state) => {
+          const listening = state === "recording";
           voiceListening = listening;
           voiceButton?.setAttribute("aria-pressed", String(listening));
-          voiceButton?.setAttribute("aria-label", listening ? "Parar gravação" : "Falar para transcrever");
-          voiceButton?.setAttribute("title", listening ? "Parar gravação" : "Falar para transcrever");
-          if (voiceButton) voiceButton.disabled = busy && !listening;
+          voiceButton?.setAttribute("data-voice-state", state);
+          voiceButton?.setAttribute("aria-label", listening ? "Parar gravação e converter voz" : state === "stopping" ? "Convertendo fala em texto" : state === "ready" ? "Transcrição pronta" : "Falar para transcrever");
+          voiceButton?.setAttribute("title", listening ? "Toque para parar e converter" : state === "stopping" ? "Convertendo fala em texto…" : state === "ready" ? "Texto convertido — toque para gravar novamente" : "Falar para transcrever");
+          if (voiceButton) voiceButton.disabled = busy && !listening && state !== "ready";
+        };
+
+        const stopVoiceMeter = () => {
+          if (voiceMeterFrame) cancelAnimationFrame(voiceMeterFrame);
+          voiceMeterFrame = 0;
+          if (voiceButton) voiceButton.style.removeProperty("--voice-level");
+          voiceAudioContext?.close().catch(() => {});
+          voiceAudioContext = null;
+          voiceAnalyser = null;
+          voiceStream?.getTracks().forEach((track) => track.stop());
+          voiceStream = null;
+        };
+
+        const startVoiceMeter = (stream) => {
+          const AudioContext = window.AudioContext || window.webkitAudioContext;
+          if (!AudioContext || !stream) return;
+          try {
+            voiceAudioContext = new AudioContext();
+            voiceAnalyser = voiceAudioContext.createAnalyser();
+            voiceAnalyser.fftSize = 256;
+            voiceAnalyser.smoothingTimeConstant = .78;
+            voiceAudioContext.createMediaStreamSource(stream).connect(voiceAnalyser);
+            const samples = new Uint8Array(voiceAnalyser.fftSize);
+            const tick = () => {
+              if (!voiceAnalyser || !voiceListening) return;
+              voiceAnalyser.getByteTimeDomainData(samples);
+              let sum = 0;
+              for (const sample of samples) {
+                const normalized = (sample - 128) / 128;
+                sum += normalized * normalized;
+              }
+              const level = Math.min(1, Math.max(.08, Math.sqrt(sum / samples.length) * 3.8));
+              voiceButton?.style.setProperty("--voice-level", level.toFixed(3));
+              voiceMeterFrame = requestAnimationFrame(tick);
+            };
+            tick();
+          } catch (error) {
+            console.warn("Kazer voice meter unavailable", error);
+          }
+        };
+
+        const releaseVoiceCapture = () => {
+          if (voiceRestartTimer) window.clearTimeout(voiceRestartTimer);
+          voiceRestartTimer = null;
+          stopVoiceMeter();
         };
 
         const stopVoiceRecognition = () => {
-          if (!voiceRecognition) return;
-          try { voiceRecognition.stop(); } catch { /* já parado */ }
+          voiceStopRequested = true;
+          if (!voiceRecognition) {
+            releaseVoiceCapture();
+            setVoiceState(messageInput.value.trim() ? "ready" : "idle");
+            return;
+          }
+          setVoiceState("stopping");
+          try { voiceRecognition.stop(); } catch { /* já parado; onend conclui a conversão */ }
         };
 
-        const startVoiceRecognition = () => {
+        const startVoiceRecognition = async () => {
           const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
           if (!Recognition) {
             showToast("Seu navegador não oferece transcrição de voz. Tente Chrome ou Edge.");
@@ -4734,15 +4805,26 @@
             return;
           }
           if (busy) return;
+          if (voiceButton?.dataset.voiceState === "ready") setVoiceState("idle");
           voiceBaseText = messageInput.value.trim();
+          voiceStopRequested = false;
+          setVoiceState("stopping");
+          try {
+            voiceStream = await navigator.mediaDevices?.getUserMedia?.({ audio: { channelCount: 1, sampleRate: 48000, echoCancellation: true, noiseSuppression: true, autoGainControl: true } });
+          } catch (error) {
+            setVoiceState("idle");
+            showToast(error?.name === "NotAllowedError" ? "Permita o acesso ao microfone para usar a voz." : "Não foi possível acessar o microfone.");
+            return;
+          }
           voiceRecognition = new Recognition();
           voiceRecognition.lang = "pt-BR";
           voiceRecognition.continuous = true;
           voiceRecognition.interimResults = true;
           voiceRecognition.maxAlternatives = 1;
           voiceRecognition.onstart = () => {
-            setVoiceState(true);
-            showToast("Fale agora. Toque no microfone novamente para parar.");
+            setVoiceState("recording");
+            startVoiceMeter(voiceStream);
+            showToast("Fale agora. Toque novamente para parar e converter.");
           };
           voiceRecognition.onresult = (event) => {
             const transcript = Array.from(event.results).map((result) => result[0]?.transcript || "").join(" ").trim();
@@ -4751,15 +4833,46 @@
             updateSend();
           };
           voiceRecognition.onerror = (event) => {
-            const messages = { "not-allowed": "Permita o acesso ao microfone para usar a voz.", "audio-capture": "Não foi possível acessar o microfone.", "no-speech": "Não ouvi sua voz. Tente novamente." };
-            if (event.error !== "aborted") showToast(messages[event.error] || "Não foi possível transcrever sua voz.");
+            const messages = { "not-allowed": "Permita o acesso ao microfone para usar a voz.", "audio-capture": "Não foi possível acessar o microfone.", "network": "A transcrição precisa de conexão. Tente novamente.", "no-speech": "Não ouvi sua voz. Fale mais perto do microfone." };
+            if (event.error !== "aborted" && event.error !== "no-speech") showToast(messages[event.error] || "Não foi possível transcrever sua voz.");
+            if (["not-allowed", "audio-capture"].includes(event.error)) voiceStopRequested = true;
           };
           voiceRecognition.onend = () => {
-            setVoiceState(false);
+            const endedRecognition = voiceRecognition;
             voiceRecognition = null;
-            messageInput.focus();
+            if (!voiceStopRequested && voiceListening && endedRecognition) {
+              voiceRestartTimer = window.setTimeout(() => {
+                try {
+                  voiceRecognition = endedRecognition;
+                  voiceRecognition.start();
+                } catch {
+                  voiceRecognition = null;
+                  voiceStopRequested = true;
+                  releaseVoiceCapture();
+                  setVoiceState(messageInput.value.trim() ? "ready" : "idle");
+                  updateSend();
+                }
+              }, 120);
+              return;
+            }
+            releaseVoiceCapture();
+            const hasText = messageInput.value.trim().length > voiceBaseText.length;
+            setVoiceState(hasText ? "ready" : "idle");
+            if (hasText) {
+              resizeInput();
+              updateSend();
+              showToast("Texto convertido. Revise e toque em enviar.");
+              messageInput.focus();
+            } else if (voiceStopRequested) {
+              showToast("Não encontrei fala para converter. Tente novamente.");
+            }
           };
-          try { voiceRecognition.start(); } catch { setVoiceState(false); voiceRecognition = null; }
+          try { voiceRecognition.start(); } catch (error) {
+            voiceRecognition = null;
+            releaseVoiceCapture();
+            setVoiceState("idle");
+            showToast("Não foi possível iniciar a gravação. Tente novamente.");
+          }
         };
 
         const scrollBottom = () => {
@@ -5849,7 +5962,14 @@
         fileInput.addEventListener("change", () => addFiles(fileInput.files));
         photoInput.addEventListener("change", () => addFiles(photoInput.files));
         cameraInput.addEventListener("change", () => addFiles(cameraInput.files));
+        voiceButton?.addEventListener("click", startVoiceRecognition);
+        window.addEventListener("pagehide", () => {
+          voiceStopRequested = true;
+          try { voiceRecognition?.abort(); } catch { /* já encerrado */ }
+          releaseVoiceCapture();
+        });
         messageInput.addEventListener("input", () => {
+          if (!voiceListening && voiceButton?.dataset.voiceState === "ready") setVoiceState("idle");
           resizeInput();
           updateSend();
         });
