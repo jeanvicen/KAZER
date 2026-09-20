@@ -1685,6 +1685,11 @@
         color: var(--text);
       }
 
+      .settings-nav-item-coming { margin-top: 7px; border-color: color-mix(in srgb, var(--purple) 32%, transparent); background: color-mix(in srgb, var(--purple) 8%, transparent); color: var(--text); }
+      .settings-nav-item-coming:hover { border-color: color-mix(in srgb, var(--purple) 44%, var(--line-soft)); background: color-mix(in srgb, var(--purple) 12%, var(--card)); }
+      .settings-nav-item-coming .settings-nav-icon { color: var(--purple); }
+      .settings-nav-coming-badge { margin-left: auto; color: var(--purple); font-size: 8px; font-weight: 700; letter-spacing: .09em; }
+
       .settings-nav-icon {
         display: inline-flex;
         align-items: center;
@@ -3438,6 +3443,7 @@
             <button class="settings-nav-item" type="button" data-settings-section="data"><span class="settings-nav-icon settings-nav-icon-text" aria-hidden="true">▣</span><span class="settings-nav-icon settings-nav-icon-svg" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="10" rx="2"></rect><path d="M8 11V8a4 4 0 0 1 8 0v3"></path></svg></span><span>Dados e privacidade</span></button>
             <button class="settings-nav-item" type="button" data-settings-section="documents"><span class="settings-nav-icon settings-nav-icon-text" aria-hidden="true">▤</span><span class="settings-nav-icon settings-nav-icon-svg" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h9l3 3v15H6z"></path><path d="M14 3v4h4M9 12h6M9 16h6"></path></svg></span><span>Documentos</span></button>
             <button class="settings-nav-item" type="button" data-settings-section="memory"><span class="settings-nav-icon settings-nav-icon-text" aria-hidden="true">✦</span><span class="settings-nav-icon settings-nav-icon-svg" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 14 9l6 3-6 3-2 6-2-6-6-3 6-3 2-6Z"></path></svg></span><span>Memória</span></button>
+            <button class="settings-nav-item settings-nav-item-coming" id="nexoSkillsNavButton" type="button" aria-label="NEXO Mente e Skills, em breve"><span class="settings-nav-icon" aria-hidden="true">✦</span><span>NEXO // MENTE &amp; SKILLS</span><span class="settings-nav-coming-badge">EM BREVE</span></button>
             <button class="settings-nav-item" type="button" data-settings-section="account"><span class="settings-nav-icon settings-nav-icon-text" aria-hidden="true">◎</span><span class="settings-nav-icon settings-nav-icon-svg" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 20 6v5c0 4.8-3.2 8.5-8 10-4.8-1.5-8-5.2-8-10V6l8-3Z"></path><path d="m8.6 12 2.2 2.2 4.7-4.7"></path></svg></span><span>Conta e segurança</span></button>
           </nav>
         </aside>

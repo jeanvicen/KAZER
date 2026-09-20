@@ -21,7 +21,7 @@ assert(chatUi.includes("A mensagem que falhou continua sendo contexto válido"),
 assert(!chatUi.includes("conversationMessages.pop();"), "O frontend ainda descarta a mensagem que falhou");
 assert(!/voice|microphone|getUserMedia|SpeechRecognition|voiceButton/i.test(chatUi), "A interface ainda contém referências ao microfone");
 assert(!chatUi.includes("getUserMedia") && !chatUi.includes("SpeechRecognition"), "O JavaScript ainda tenta acessar o microfone");
-assert(chatUi.includes('id="nexoSkillsButton"') && chatUi.includes("NEXO // MENTE &amp; SKILLS"), "A opção NEXO // MENTE & SKILLS não está nas configurações");
+assert(chatUi.includes('id="nexoSkillsButton"') && chatUi.includes('id="nexoSkillsNavButton"') && chatUi.includes("NEXO // MENTE &amp; SKILLS"), "A opção NEXO // MENTE & SKILLS não está nas configurações");
 assert(!chatUi.includes("nexoSkillsButton.addEventListener"), "A opção NEXO // MENTE & SKILLS já possui uma ação antes da hora");
 assert(chatUi.includes("installProgress") && chatUi.includes("installCompletionTimer"), "A instalação não possui progresso nem timeout");
 assert(chatUi.includes('fetch("/download/android/kazer.apk"') && chatUi.includes('link.download = "kazer.apk"'), "O botão não baixa o APK real");
