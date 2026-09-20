@@ -16,11 +16,11 @@
   "iconUrl": "https://kazer.vercel.app/download/icons/kazer-512.png",
   "splashScreenFadeOutDuration": 300,
   "signingKey": {
-    "path": ".secrets/kazer-dev.keystore",
-    "alias": "kazer-dev"
+    "path": ".secrets/kazer-release.keystore",
+    "alias": "kazer-release"
   },
-  "appVersionName": "2",
-  "appVersionCode": 2,
+  "appVersionName": "3",
+  "appVersionCode": 3,
   "shortcuts": [],
   "generatorApp": "bubblewrap-cli",
   "webManifestUrl": "https://kazer.vercel.app/download/manifest.webmanifest",
@@ -37,8 +37,8 @@
   "orientation": "portrait-primary",
   "fingerprints": [
     {
-      "name": "local-development",
-      "value": "95:3D:B7:9E:C6:67:E5:4D:FE:41:DF:BE:5A:7C:B9:31:6B:91:83:57:58:C5:2E:33:54:ED:B2:E4:DD:9B:02:17"
+      "name": "release",
+      "value": "A6:39:E4:26:94:AB:A7:35:AE:6B:ED:27:04:CC:50:F3:4B:65:61:06:82:27:4A:AB:30:6B:F1:5C:85:63:15:5D"
     }
   ],
   "additionalTrustedOrigins": [],
@@ -47,5 +47,5 @@
   "fileHandlers": [],
   "launchHandlerClientMode": "",
   "displayOverride": [],
-  "appVersion": "2"
+  "appVersion": "3"
 }

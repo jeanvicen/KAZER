@@ -26,6 +26,6 @@ assert(!chatUi.includes("nexoSkillsButton.addEventListener"), "A opção NEXO //
 assert(chatUi.includes("installProgress") && chatUi.includes("installCompletionTimer"), "A instalação não possui progresso nem timeout");
 assert(chatUi.includes('fetch("/download/android/kazer.apk"') && chatUi.includes('link.download = "kazer.apk"'), "O botão não baixa o APK real");
 assert(chatUi.includes("appinstalled") && chatUi.includes("setInstallProgress(100"), "A instalação não confirma conclusão real");
-assert(apk.length > 1000000 && apk.subarray(0, 2).toString() === "PK", "O APK publicado não é um pacote Android válido");
+assert(apk.length > 500000 && apk.subarray(0, 2).toString() === "PK", "O APK release publicado não é um pacote Android válido");
 assert(usagePolicy.includes("attachment_reset_at") && usagePolicy.includes("kazer_next_daily_reset"), "A política de anexos não possui reset temporal");
 console.log("chat-regression: OK — contexto, anexos, assinatura, reset temporal, instalação e remoção do microfone verificados.");

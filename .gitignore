@@ -6,6 +6,8 @@ node_modules/
 .notes/
 
 # Credenciais, chaves e certificados nunca devem entrar no Git.
+.secrets/
+**/.secrets/
 *.pem
 *.key
 *.p12

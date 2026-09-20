@@ -18,9 +18,9 @@ A página `interface/chat.html` exibe o aviso **Instalar Kazer?** e usa o prompt
 
 A pasta `android/twa/` contém um projeto Trusted Web Activity gerado a partir do manifesto público. Ele abre `https://kazer.vercel.app/chat` sem duplicar a interface dentro do APK.
 
-O projeto gera `app-release-signed.apk` para testes e `app-release-bundle.aab` para envio à Google Play. Esses binários e qualquer chave de assinatura são ignorados pelo Git e não são publicados no repositório. As instruções completas ficam em `android/README.md`.
+O projeto gera um APK release assinado para instalação manual em `android/kazer.apk`. O projeto TWA foi criado com Bubblewrap e o build de release usa uma keystore protegida fora do Git. As instruções completas ficam em `android/README.md`.
 
-O arquivo `.well-known/assetlinks.json` mantém a associação entre o domínio e a chave local de desenvolvimento. Antes de uma publicação real, a impressão digital deve ser trocada pela chave de produção usada pelo Play Console.
+O arquivo `.well-known/assetlinks.json` associa o domínio às fingerprints de release e de desenvolvimento, permitindo que instalações antigas de teste continuem válidas enquanto o APK release usa a chave nova.
 
 ## Outras plataformas
 
