@@ -21,5 +21,7 @@ assert(!chatUi.includes("conversationMessages.pop();"), "O frontend ainda descar
 assert(chatUi.includes('id="voiceButton"') && chatUi.includes('data-voice-state="idle"'), "O controle de voz não possui estado inicial acessível");
 assert(chatUi.includes("getUserMedia") && chatUi.includes("noiseSuppression: true"), "A captura de voz não prioriza uma entrada de áudio limpa");
 assert(chatUi.includes('data-voice-state="ready"') && chatUi.includes("Texto convertido"), "O fluxo de voz não confirma a transcrição final");
+assert(chatUi.includes("installProgress") && chatUi.includes("installCompletionTimer"), "A instalação não possui progresso nem timeout");
+assert(chatUi.includes("appinstalled") && chatUi.includes("setInstallProgress(100"), "A instalação não confirma conclusão real");
 assert(usagePolicy.includes("attachment_reset_at") && usagePolicy.includes("kazer_next_daily_reset"), "A política de anexos não possui reset temporal");
-console.log("chat-regression: OK — contexto, anexos, assinatura, reset temporal e voz verificados.");
+console.log("chat-regression: OK — contexto, anexos, assinatura, reset temporal, voz e instalação verificados.");

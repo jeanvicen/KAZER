@@ -2012,6 +2012,31 @@
 
       .install-copy small { margin-top: 4px; color: var(--text-dim); font-size: 10px; line-height: 1.35; }
 
+      .install-progress {
+        display: none;
+        height: 4px;
+        margin-top: 9px;
+        overflow: hidden;
+        border-radius: 99px;
+        background: rgba(255,255,255,.09);
+      }
+      .install-progress-bar {
+        width: 0%;
+        height: 100%;
+        border-radius: inherit;
+        background: linear-gradient(90deg, #8c7aff, #d8d2ff);
+        box-shadow: 0 0 12px rgba(140,122,255,.55);
+        transition: width 280ms ease;
+      }
+      .install-progress.is-active { display: block; }
+      .install-progress.is-indeterminate .install-progress-bar { width: 42%; animation: install-progress-slide 1.2s ease-in-out infinite; }
+      .install-banner[data-install-state="success"] .install-progress-bar { background: linear-gradient(90deg, #72dca8, #c1f7d7); box-shadow: 0 0 12px rgba(114,220,168,.5); }
+      .install-banner[data-install-state="error"] .install-progress-bar { background: #ff9a9a; box-shadow: none; }
+      @keyframes install-progress-slide { 0% { transform: translateX(-115%); } 100% { transform: translateX(250%); } }
+      .install-banner[data-install-state="busy"] .install-primary { opacity: .7; pointer-events: none; }
+      .install-banner[data-install-state="busy"] .install-secondary,
+      .install-banner[data-install-state="success"] .install-actions { display: none; }
+
       .install-actions {
         display: flex;
         align-items: center;
@@ -3359,12 +3384,13 @@
         </div>
         <span class="app-splash-credit">Klipza Studio</span>
       </div>
-      <aside class="install-banner" id="installBanner" aria-live="polite" hidden>
+      <aside class="install-banner" id="installBanner" aria-live="polite" data-install-state="idle" hidden>
         <img class="install-logo" src="../download/icons/kazer-192.png" alt="Logo Kazer" />
         <div class="install-copy">
-          <strong>Instalar Kazer?</strong>
-          <small>Tenha o Kazer na sua tela inicial para abrir mais rápido.</small>
-          <div class="install-actions"><button class="install-primary" id="installNow" type="button">Instalar agora</button><button id="installLater" type="button">Agora não</button></div>
+          <strong id="installTitle">Instalar Kazer?</strong>
+          <small id="installMessage">Tenha o Kazer na sua tela inicial para abrir mais rápido.</small>
+          <div class="install-progress" id="installProgress" role="progressbar" aria-label="Progresso da instalação" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span class="install-progress-bar" id="installProgressBar"></span></div>
+          <div class="install-actions"><button class="install-primary" id="installNow" type="button">Instalar agora</button><button class="install-secondary" id="installLater" type="button">Agora não</button></div>
         </div>
         <button class="install-dismiss" id="installDismiss" type="button" aria-label="Fechar aviso">×</button>
       </aside>
@@ -3791,6 +3817,10 @@
         const attachmentResetValue = document.getElementById("attachmentResetValue");
         const attachmentProButton = document.getElementById("attachmentProButton");
         const installBanner = document.getElementById("installBanner");
+        const installTitle = document.getElementById("installTitle");
+        const installMessage = document.getElementById("installMessage");
+        const installProgress = document.getElementById("installProgress");
+        const installProgressBar = document.getElementById("installProgressBar");
         const installNow = document.getElementById("installNow");
         const installLater = document.getElementById("installLater");
         const installDismiss = document.getElementById("installDismiss");
@@ -3833,6 +3863,8 @@
         const greetingTime = document.getElementById("greetingTime");
         const greetingName = document.getElementById("greetingName");
         let deferredInstallPrompt = null;
+        let installBusy = false;
+        let installCompletionTimer = null;
         let usageState = null;
         let usageRefreshTimer = null;
         let busy = false;
@@ -4076,8 +4108,25 @@
 
         const isStandalone = () => window.matchMedia?.("(display-mode: standalone)").matches || window.navigator.standalone === true;
 
+        const setInstallProgress = (value, { active = true, indeterminate = false } = {}) => {
+          if (!installProgress || !installProgressBar) return;
+          const progress = Math.max(0, Math.min(100, Number(value) || 0));
+          installProgress.classList.toggle("is-active", active);
+          installProgress.classList.toggle("is-indeterminate", indeterminate);
+          installProgress.setAttribute("aria-valuenow", String(Math.round(progress)));
+          installProgressBar.style.width = `${progress}%`;
+        };
+
+        const setInstallState = (state, title, message) => {
+          installBanner?.setAttribute("data-install-state", state);
+          if (installTitle && title) installTitle.textContent = title;
+          if (installMessage && message) installMessage.textContent = message;
+        };
+
         const showInstallBanner = () => {
           if (isStandalone() || !settingsState.installPrompt || !settingsPopover.hidden || sessionStorage.getItem("kazer-install-dismissed") === "1") return;
+          setInstallState("idle", "Instalar Kazer?", "Tenha o Kazer na sua tela inicial para abrir mais rápido.");
+          setInstallProgress(0, { active: false });
           installBanner.hidden = false;
           requestAnimationFrame(() => installBanner.classList.add("visible"));
         };
@@ -4089,16 +4138,48 @@
         };
 
         const installKazer = async () => {
-          if (deferredInstallPrompt) {
+          if (installBusy) return;
+          if (!deferredInstallPrompt) {
+            setInstallState("error", "Instalação pelo navegador", "Abra o menu do navegador e escolha “Instalar app” ou “Adicionar à tela inicial”.");
+            setInstallProgress(0, { active: false });
+            showToast("Este navegador não liberou a instalação automática. Use o menu ⋮ para instalar o Kazer.");
+            return;
+          }
+          installBusy = true;
+          setInstallState("busy", "Preparando instalação…", "O sistema está preparando o Kazer. Não feche esta janela.");
+          setInstallProgress(12, { active: true, indeterminate: true });
+          installNow.disabled = true;
+          try {
             deferredInstallPrompt.prompt();
             const choice = await deferredInstallPrompt.userChoice;
             deferredInstallPrompt = null;
-            hideInstallBanner(true);
-            showToast(choice.outcome === "accepted" ? "Kazer instalado" : "Instalação cancelada");
-            return;
+            if (choice.outcome !== "accepted") {
+              installBusy = false;
+              installNow.disabled = false;
+              setInstallState("idle", "Instalar Kazer?", "Tenha o Kazer na sua tela inicial para abrir mais rápido.");
+              setInstallProgress(0, { active: false });
+              showToast("Instalação cancelada");
+              return;
+            }
+            setInstallState("busy", "Instalando Kazer…", "Download concluído. Finalizando a instalação no dispositivo.");
+            setInstallProgress(72, { active: true, indeterminate: true });
+            window.clearTimeout(installCompletionTimer);
+            installCompletionTimer = window.setTimeout(() => {
+              if (!installBusy) return;
+              installBusy = false;
+              installNow.disabled = false;
+              setInstallState("error", "A instalação demorou", "O navegador não confirmou a instalação. Tente pelo menu do navegador.");
+              setInstallProgress(0, { active: false });
+              showToast("A instalação não foi confirmada pelo navegador.");
+            }, 15000);
+          } catch (error) {
+            installBusy = false;
+            installNow.disabled = false;
+            setInstallState("error", "Não foi possível instalar", "Tente novamente ou use o menu do navegador para instalar o app.");
+            setInstallProgress(0, { active: false });
+            showToast("Não foi possível iniciar a instalação.");
+            console.warn("Kazer install failed", error);
           }
-          hideInstallBanner(true);
-          showToast("Use o menu do navegador e escolha Adicionar à tela inicial");
         };
 
         const closeCustomSelects = () => {
@@ -5998,8 +6079,14 @@
         });
         window.addEventListener("appinstalled", () => {
           deferredInstallPrompt = null;
-          hideInstallBanner(true);
+          installBusy = false;
+          window.clearTimeout(installCompletionTimer);
+          setInstallState("success", "Kazer instalado ✓", "O app foi instalado no dispositivo e já está pronto para abrir.");
+          setInstallProgress(100, { active: true });
+          installNow.disabled = false;
+          sessionStorage.setItem("kazer-install-dismissed", "1");
           showToast("Kazer instalado com sucesso");
+          window.setTimeout(() => hideInstallBanner(false), 1500);
         });
         window.setTimeout(showInstallBanner, 1400);
         window.setTimeout(() => {
