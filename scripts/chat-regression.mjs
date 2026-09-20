@@ -22,6 +22,8 @@ assert(!chatUi.includes("conversationMessages.pop();"), "O frontend ainda descar
 assert(chatUi.includes('id="voiceButton"') && chatUi.includes('data-voice-state="idle"'), "O controle de voz não possui estado inicial acessível");
 assert(chatUi.includes("getUserMedia") && chatUi.includes("noiseSuppression: true"), "A captura de voz não prioriza uma entrada de áudio limpa");
 assert(chatUi.includes('data-voice-state="ready"') && chatUi.includes("Texto convertido"), "O fluxo de voz não confirma a transcrição final");
+assert(chatUi.includes("voiceRecordingPanel") && chatUi.includes("voiceRecordingWave") && chatUi.includes("voiceCancelButton") && chatUi.includes("voiceConfirmButton"), "A cápsula de gravação não possui os controles da referência");
+assert(chatUi.includes("#e53d43") && chatUi.includes("voiceRecordingTime"), "A gravação não possui waveform vermelha e cronômetro");
 assert(chatUi.includes("installProgress") && chatUi.includes("installCompletionTimer"), "A instalação não possui progresso nem timeout");
 assert(chatUi.includes('fetch("/download/android/kazer.apk"') && chatUi.includes('link.download = "kazer.apk"'), "O botão não baixa o APK real");
 assert(chatUi.includes("appinstalled") && chatUi.includes("setInstallProgress(100"), "A instalação não confirma conclusão real");

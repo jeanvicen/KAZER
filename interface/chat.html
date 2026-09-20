@@ -552,6 +552,29 @@
           0 0 0 3px rgba(140,122,255,.08),
           inset 0 1px 0 rgba(255,255,255,.038); }
 
+      .voice-recording-panel { position: absolute; z-index: 3; inset: 0; display: none; flex-direction: column; justify-content: space-between; padding: 17px 20px 9px; border-radius: inherit; background: #242424; }
+      .composer-box.is-voice-recording { min-height: 112px; border-color: rgba(255,255,255,.09); background: #242424; }
+      .composer-box.is-voice-recording .message-input { visibility: hidden; }
+      .composer-box.is-voice-recording .voice-recording-panel { display: flex; }
+      .voice-recording-top { display: flex; align-items: center; gap: 12px; min-width: 0; }
+      .voice-recording-wave { display: flex; align-items: center; justify-content: center; gap: 4px; min-width: 0; flex: 1; height: 25px; overflow: hidden; }
+      .voice-recording-wave i { display: block; width: 5px; height: 7px; flex: 0 0 5px; border-radius: 99px; background: #e53d43; box-shadow: 0 0 7px rgba(229,61,67,.42); transform: scaleY(.8); transition: height 100ms ease, opacity 100ms ease; }
+      .voice-recording-wave i:nth-child(3n) { height: 13px; }
+      .voice-recording-wave i:nth-child(5n) { height: 20px; }
+      .voice-recording-wave i:nth-child(7n) { height: 10px; }
+      .voice-recording-time { flex: 0 0 auto; color: #c7c7c7; font-size: 17px; font-variant-numeric: tabular-nums; letter-spacing: .01em; }
+      .voice-recording-actions { display: flex; align-items: center; justify-content: space-between; }
+      .voice-recording-action { display: inline-flex; align-items: center; justify-content: center; width: 58px; height: 58px; border: 0; border-radius: 50%; background: #303030; color: #e8e8e8; cursor: pointer; transition: background 160ms var(--ease), transform 160ms var(--ease); }
+      .voice-recording-action:hover { background: #3a3a3a; }
+      .voice-recording-action:active { transform: scale(.94); }
+      .voice-recording-action .icon { width: 30px; height: 30px; stroke-width: 1.8; }
+      .voice-recording-confirm { margin-right: 2px; }
+      .voice-recording-confirm .icon { width: 29px; height: 29px; }
+      .composer-box.is-voice-recording .composer-controls { display: none; }
+      .voice-recording-send { width: 58px; height: 58px; background: #fff; color: #161616; box-shadow: none; }
+      .voice-recording-send .icon { width: 31px; height: 31px; stroke-width: 2.2; }
+      .voice-recording-send:disabled { background: #fff; color: #161616; opacity: .9; }
+
       .message-input { width: 100%; min-height: 52px; max-height: 200px; padding: 16px 20px 8px; resize: none; border: 0; outline: 0; overflow-y: auto; background: transparent; color: var(--text); font-size: 15.5px; font-weight: 360; line-height: 1.46; letter-spacing: .003em; }
 
       .message-input::placeholder { color: var(--text-dim); opacity: 1; font-weight: 360; }
@@ -3611,6 +3634,10 @@
       <div class="composer-dock">
         <form class="composer" id="composer" autocomplete="off">
           <div class="composer-box">
+            <div class="voice-recording-panel" id="voiceRecordingPanel" aria-hidden="true">
+              <div class="voice-recording-top"><div class="voice-recording-wave" id="voiceRecordingWave" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div><span class="voice-recording-time" id="voiceRecordingTime">0:00</span></div>
+              <div class="voice-recording-actions"><button class="voice-recording-action" id="voiceCancelButton" type="button" aria-label="Cancelar gravação" title="Cancelar gravação"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"></path></svg></button><button class="voice-recording-action voice-recording-confirm" id="voiceConfirmButton" type="button" aria-label="Concluir gravação" title="Concluir gravação"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12.5 4.2 4.2L19 7"></path></svg></button><button class="send-button voice-recording-send" id="voiceRecordingSend" type="submit" aria-label="Enviar transcrição" title="Enviar transcrição" disabled><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"></path></svg></button></div>
+            </div>
             <textarea class="message-input" id="messageInput" rows="1" placeholder="Envie uma mensagem..." aria-label="Mensagem"></textarea>
             <div class="composer-controls">
               <button class="attach-button" id="attachButton" type="button" aria-label="Abrir opções de envio" title="Abrir opções de envio" aria-controls="attachmentSheet" aria-expanded="false"><span class="plus-mark" aria-hidden="true">+</span></button>
@@ -3715,10 +3742,17 @@
         const emptyState = document.getElementById("emptyState");
         const messageList = document.getElementById("messageList");
         const composer = document.getElementById("composer");
+        const composerBox = document.querySelector(".composer-box");
         const messageInput = document.getElementById("messageInput");
         const sendButton = document.getElementById("sendButton");
         const stopButton = document.getElementById("stopButton");
         const voiceButton = document.getElementById("voiceButton");
+        const voiceRecordingPanel = document.getElementById("voiceRecordingPanel");
+        const voiceRecordingWave = document.getElementById("voiceRecordingWave");
+        const voiceRecordingTime = document.getElementById("voiceRecordingTime");
+        const voiceCancelButton = document.getElementById("voiceCancelButton");
+        const voiceConfirmButton = document.getElementById("voiceConfirmButton");
+        const voiceRecordingSend = document.getElementById("voiceRecordingSend");
         const attachButton = document.getElementById("attachButton");
         const fileInput = document.getElementById("fileInput");
         const photoInput = document.getElementById("photoInput");
@@ -3878,6 +3912,8 @@
         let voiceAnalyser = null;
         let voiceMeterFrame = 0;
         let voiceRestartTimer = null;
+        let voiceClockTimer = null;
+        let voiceStartedAt = 0;
         let toastTimer = null;
         let conversationMessages = [];
         let viewMode = new URLSearchParams(window.location.search).get("view") === "history" ? "history" : "kazer";
@@ -4811,16 +4847,29 @@
 
         const updateSend = () => {
           sendButton.disabled = busy || (messageInput.value.trim().length === 0 && selectedFiles.length === 0);
+          if (voiceRecordingSend) voiceRecordingSend.disabled = busy || messageInput.value.trim().length === 0;
         };
 
         const setVoiceState = (state) => {
           const listening = state === "recording";
+          const panelVisible = listening || state === "stopping";
           voiceListening = listening;
+          composerBox?.classList.toggle("is-voice-recording", panelVisible);
+          voiceRecordingPanel?.setAttribute("aria-hidden", String(!panelVisible));
           voiceButton?.setAttribute("aria-pressed", String(listening));
           voiceButton?.setAttribute("data-voice-state", state);
           voiceButton?.setAttribute("aria-label", listening ? "Parar gravação e converter voz" : state === "stopping" ? "Convertendo fala em texto" : state === "ready" ? "Transcrição pronta" : "Falar para transcrever");
           voiceButton?.setAttribute("title", listening ? "Toque para parar e converter" : state === "stopping" ? "Convertendo fala em texto…" : state === "ready" ? "Texto convertido — toque para gravar novamente" : "Falar para transcrever");
           if (voiceButton) voiceButton.disabled = busy && !listening && state !== "ready";
+          if (listening) {
+            if (!voiceClockTimer) voiceClockTimer = window.setInterval(() => {
+              const elapsed = Math.max(0, Math.floor((Date.now() - voiceStartedAt) / 1000));
+              if (voiceRecordingTime) voiceRecordingTime.textContent = `${Math.floor(elapsed / 60)}:${String(elapsed % 60).padStart(2, "0")}`;
+            }, 250);
+          } else if (voiceClockTimer) {
+            window.clearInterval(voiceClockTimer);
+            voiceClockTimer = null;
+          }
         };
 
         const stopVoiceMeter = () => {
@@ -4854,6 +4903,11 @@
               }
               const level = Math.min(1, Math.max(.08, Math.sqrt(sum / samples.length) * 3.8));
               voiceButton?.style.setProperty("--voice-level", level.toFixed(3));
+              [...(voiceRecordingWave?.children || [])].forEach((bar, index) => {
+                const variation = .48 + ((Math.sin(index * 1.9 + performance.now() / 180) + 1) / 2) * .52;
+                bar.style.height = `${Math.round(4 + level * variation * 20)}px`;
+                bar.style.opacity = String(.55 + level * .45);
+              });
               voiceMeterFrame = requestAnimationFrame(tick);
             };
             tick();
@@ -4877,6 +4931,19 @@
           }
           setVoiceState("stopping");
           try { voiceRecognition.stop(); } catch { /* já parado; onend conclui a conversão */ }
+        };
+
+        const cancelVoiceRecording = () => {
+          voiceStopRequested = true;
+          try { voiceRecognition?.abort(); } catch { /* já encerrado */ }
+          voiceRecognition = null;
+          messageInput.value = voiceBaseText;
+          releaseVoiceCapture();
+          setVoiceState("idle");
+          resizeInput();
+          updateSend();
+          messageInput.focus();
+          showToast("Gravação cancelada");
         };
 
         const startVoiceRecognition = async () => {
@@ -4907,6 +4974,8 @@
           voiceRecognition.interimResults = true;
           voiceRecognition.maxAlternatives = 1;
           voiceRecognition.onstart = () => {
+            voiceStartedAt = Date.now();
+            if (voiceRecordingTime) voiceRecordingTime.textContent = "0:00";
             setVoiceState("recording");
             startVoiceMeter(voiceStream);
             showToast("Fale agora. Toque novamente para parar e converter.");
@@ -6048,6 +6117,8 @@
         photoInput.addEventListener("change", () => addFiles(photoInput.files));
         cameraInput.addEventListener("change", () => addFiles(cameraInput.files));
         voiceButton?.addEventListener("click", startVoiceRecognition);
+        voiceCancelButton?.addEventListener("click", cancelVoiceRecording);
+        voiceConfirmButton?.addEventListener("click", stopVoiceRecognition);
         window.addEventListener("pagehide", () => {
           voiceStopRequested = true;
           try { voiceRecognition?.abort(); } catch { /* já encerrado */ }
