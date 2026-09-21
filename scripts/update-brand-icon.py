@@ -4,13 +4,16 @@ from pathlib import Path
 
 from PIL import Image
 
-SOURCE = Path('/home/ubuntu/upload/1000081917.jpg')
+SOURCE = Path('/home/ubuntu/upload/1000082107.jpg')
 ROOT = Path(__file__).resolve().parents[1]
 
-# The supplied reference is a presentation frame; this crop isolates the centered
-# rounded-square mark while keeping its original black surround and proportions.
+# The supplied reference is a presentation frame; this centered square crop keeps
+# the complete black/red composition while making the mark safe for app icons.
 image = Image.open(SOURCE).convert('RGB')
-crop = image.crop((278, 152, 460, 334))
+side = min(image.size)
+left = (image.width - side) // 2
+top = (image.height - side) // 2
+crop = image.crop((left, top, left + side, top + side))
 master = crop.resize((1024, 1024), Image.Resampling.LANCZOS)
 
 png_buffer = BytesIO()
