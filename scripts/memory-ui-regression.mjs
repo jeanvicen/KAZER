@@ -15,6 +15,10 @@ assert.match(source, /data-memory-filter="work"/);
 assert.match(source, /Editar memória/);
 assert.match(source, /Apagar esta memória\?/);
 assert.match(source, /Sua memória ainda está vazia/);
+assert.match(source, /\.settings-panel-scroll \{ flex: 1; min-width: 0; min-height: 0;/);
+assert.match(source, /\.memory-settings-body \{ display: grid; gap: 16px; width: 100%; min-width: 0; max-width: 100%; overflow: hidden;/);
+assert.match(source, /\.memory-content-text .*word-break: break-word;/);
+assert.match(source, /text\.textContent = memory\.content/);
 assert.doesNotMatch(source, /Não usar/);
 
 // Simulate the UI state and the API response before/after the chat update.
