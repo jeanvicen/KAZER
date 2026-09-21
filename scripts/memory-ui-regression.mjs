@@ -7,6 +7,15 @@ const source = await readFile(new URL("../interface/chat.html", import.meta.url)
 assert.match(source, /if \(Number\(data\?\.memories_updated\) > 0\) invalidateMemories\(\);/);
 assert.match(source, /fetchWithAuth\(`\/api\/memories\?limit=200&offset=0`, \{ method: "GET", cache: "no-store" \}\)/);
 assert.match(source, /memoriesLoaded = false;/);
+assert.match(source, /O que o Kazer sabe sobre você/);
+assert.match(source, /Buscar nas suas memórias/);
+assert.match(source, /data-memory-filter="personal"/);
+assert.match(source, /data-memory-filter="projects"/);
+assert.match(source, /data-memory-filter="work"/);
+assert.match(source, /Editar memória/);
+assert.match(source, /Apagar esta memória\?/);
+assert.match(source, /Sua memória ainda está vazia/);
+assert.doesNotMatch(source, /Não usar/);
 
 // Simulate the UI state and the API response before/after the chat update.
 let memoriesLoaded = true;
