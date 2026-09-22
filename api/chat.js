@@ -87,6 +87,26 @@ function cleanUserContent(value) {
     .trim();
 }
 
+function cleanMemoryContent(value) {
+  let content = cleanUserContent(value).replace(/\r\n/g, "\n");
+  const codeMarkers = [
+    "document.createElementNS(",
+    "const makeMemoryChevron",
+    "svg.setAttribute(",
+    "svg.innerHTML =",
+    "memory-group-chevron",
+    "<script",
+    "</script>",
+  ];
+  const markerIndex = codeMarkers.reduce((lowest, marker) => {
+    const index = content.indexOf(marker);
+    return index >= 0 && index < lowest ? index : lowest;
+  }, content.length);
+  if (markerIndex < content.length) content = content.slice(0, markerIndex).trim();
+  if (/^(?:const|let|var|function)\s+[A-Za-z_$][\w$]*\s*=/.test(content)) return "";
+  return content.slice(0, 2000).trim();
+}
+
 function normalizeRepositoryContext(value) {
   if (!value || typeof value !== "object") return null;
   const fullName = cleanUserContent(value.fullName).slice(0, 160);
@@ -287,7 +307,11 @@ async function loadRelevantMemories(userId, prompt) {
       .filter((item) => item.score >= 0.18)
       .sort((a, b) => b.score - a.score)
       .slice(0, 8)
-      .map(({ row }) => `- [${row.group_title || row.category}] ${String(row.content).slice(0, 500)}`);
+      .map(({ row }) => {
+        const content = cleanMemoryContent(row.content);
+        return content ? `- [${row.group_title || row.category}] ${content.slice(0, 500)}` : "";
+      })
+      .filter(Boolean);
     return {
       context: ranked.length ? `\n\nMEMÓRIAS RELEVANTES DO USUÁRIO (use apenas quando fizer sentido):\n${ranked.join("\n")}` : "",
       scanned: Array.isArray(rows) ? rows.length : 0,
@@ -311,7 +335,7 @@ function parseMemoryCandidates(value) {
     return list.slice(0, 5).map((item) => ({
       category: MEMORY_CATEGORIES.has(item?.category) ? item.category : "other",
       group_title: cleanUserContent(item?.group_title || item?.group || "Outros").slice(0, 120),
-      content: cleanUserContent(item?.content).slice(0, 2000),
+      content: cleanMemoryContent(item?.content),
       importance: Math.max(0, Math.min(1, Number(item?.importance) || 0.5)),
       confidence: Math.max(0, Math.min(1, Number(item?.confidence) || 0.75)),
       is_pinned: Boolean(item?.is_pinned),
