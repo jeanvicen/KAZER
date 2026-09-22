@@ -173,8 +173,9 @@
         pointer-events: auto;
       }
 
-      .chat-history-back { position: absolute; top: max(18px, env(safe-area-inset-top)); right: clamp(18px, 4vw, 42px); display: grid !important; place-items: center; width: 46px; height: 46px; border: 1px solid rgba(255,120,120,.5); border-radius: 50%; background: linear-gradient(145deg, #c83d45, #8f2029); color: #fff; cursor: pointer; box-shadow: 0 8px 24px rgba(155,31,40,.35); backdrop-filter: blur(14px); }
-      .chat-history-back:hover { border-color: #ffb0b0; background: linear-gradient(145deg, #d84b53, #a32832); transform: translateY(-1px); }
+      .chat-history-back { position: absolute; top: max(18px, env(safe-area-inset-top)); right: clamp(18px, 4vw, 42px); display: grid !important; place-items: center; width: 50px; height: 43px; border: 1px solid rgba(240,111,118,.34); border-radius: 14px; background: linear-gradient(145deg, rgba(42,32,38,.92), rgba(19,19,25,.94)); color: #f07a80; cursor: pointer; box-shadow: 0 8px 24px rgba(0,0,0,.22), inset 0 1px 0 rgba(255,255,255,.08); backdrop-filter: blur(16px); transition: transform 180ms var(--ease), border-color 180ms var(--ease), background 180ms var(--ease), box-shadow 180ms var(--ease); }
+      .chat-history-back .icon { width: 21px; height: 21px; filter: drop-shadow(0 0 5px rgba(240,111,118,.35)); }
+      .chat-history-back:hover { border-color: rgba(255,165,169,.72); background: linear-gradient(145deg, rgba(75,40,47,.96), rgba(27,21,29,.96)); box-shadow: 0 10px 26px rgba(0,0,0,.3), 0 0 0 3px rgba(240,111,118,.08); transform: translateY(-1px); }
       .app.history-active .chat-history-back { display: none !important; }
 
       .credit-indicator { position: absolute; top: max(18px, env(safe-area-inset-top)); left: clamp(18px, 4vw, 40px); display: inline-flex; align-items: center; gap: 8px; min-height: 40px; padding: 0 13px; border: 1px solid rgba(255,255,255,.14); border-radius: 999px; background: color-mix(in srgb, var(--card) 86%, transparent); color: var(--text); box-shadow: 0 4px 16px rgba(0,0,0,.18); backdrop-filter: blur(18px); transition: transform 260ms var(--ease), border-color 260ms var(--ease), box-shadow 260ms var(--ease); border-color: rgba(255,255,255,.075); -webkit-backdrop-filter: blur(18px); }
@@ -3322,7 +3323,7 @@
       </header>
 
       <header class="topbar" aria-label="Barra de conversa">
-        <button class="chat-history-back" id="chatHistoryBack" type="button" aria-label="Abrir histórico de chats" title="Histórico de chats"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"></circle><path d="M12 7.5v5l3.2 2"></path></svg></button>
+        <button class="chat-history-back" id="chatHistoryBack" type="button" aria-label="Abrir histórico de chats" title="Histórico de chats"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4.5 12a7.5 7.5 0 1 0 2.2-5.3"></path><path d="M4.5 5.3v4.2h4.2"></path><path d="M12 8.2v4.2l2.8 1.7"></path></svg></button>
         <div class="credit-indicator" id="creditIndicator" aria-label="Saldo de tokens" hidden><span class="credit-indicator-value" id="creditBalanceValue">0</span></div>
       </header>
 
@@ -5334,7 +5335,10 @@
           requestNewChat();
         });
         newChatBack?.addEventListener("click", () => setView("history", { push: true }));
-        chatHistoryBack?.addEventListener("click", () => setView("history", { push: true }));
+        chatHistoryBack?.addEventListener("click", (event) => {
+          event.preventDefault();
+          window.location.assign("?view=history");
+        });
         window.addEventListener("popstate", () => { const view = new URLSearchParams(window.location.search).get("view"); setView(view === "history" ? "history" : view === "chat" ? "new-chat" : "kazer"); });
 
         historyBrand?.addEventListener("click", () => openSettings());
