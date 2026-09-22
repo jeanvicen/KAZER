@@ -2,17 +2,13 @@ from base64 import b64encode
 from io import BytesIO
 from pathlib import Path
 
-from PIL import Image, ImageEnhance, ImageOps
+from PIL import Image
 
 ROOT = Path(__file__).resolve().parents[1]
 SOURCE = ROOT / 'download/assets/kazer-icon-source.png'
 # The source is the supplied square KAZER brand mark, prepared for launcher size.
 image = Image.open(SOURCE).convert('RGB')
-crop = ImageOps.autocontrast(image, cutoff=1)
-crop = ImageEnhance.Contrast(crop).enhance(1.08)
-crop = ImageEnhance.Brightness(crop).enhance(1.05)
-crop = ImageEnhance.Color(crop).enhance(1.08)
-master = crop.resize((1024, 1024), Image.Resampling.LANCZOS)
+master = image.resize((1024, 1024), Image.Resampling.LANCZOS)
 
 png_buffer = BytesIO()
 master.save(png_buffer, format='PNG', optimize=True)
