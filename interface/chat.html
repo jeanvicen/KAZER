@@ -173,9 +173,9 @@
         pointer-events: auto;
       }
 
-      .chat-history-back { position: absolute; top: max(18px, env(safe-area-inset-top)); right: clamp(18px, 4vw, 42px); display: none; place-items: center; width: 46px; height: 46px; border: 1px solid var(--line); border-radius: 50%; background: color-mix(in srgb, var(--card) 72%, transparent); color: var(--text); cursor: pointer; box-shadow: 0 10px 28px rgba(0,0,0,.16); backdrop-filter: blur(14px); }
-      .chat-history-back:hover { border-color: rgba(255,255,255,.42); background: var(--card-2); }
-      .app.kazer-active .chat-history-back { display: grid; }
+      .chat-history-back { position: absolute; top: max(18px, env(safe-area-inset-top)); right: clamp(18px, 4vw, 42px); display: grid !important; place-items: center; width: 46px; height: 46px; border: 1px solid rgba(255,120,120,.5); border-radius: 50%; background: linear-gradient(145deg, #c83d45, #8f2029); color: #fff; cursor: pointer; box-shadow: 0 8px 24px rgba(155,31,40,.35); backdrop-filter: blur(14px); }
+      .chat-history-back:hover { border-color: #ffb0b0; background: linear-gradient(145deg, #d84b53, #a32832); transform: translateY(-1px); }
+      .app.history-active .chat-history-back { display: none !important; }
 
       .credit-indicator { position: absolute; top: max(18px, env(safe-area-inset-top)); left: clamp(18px, 4vw, 40px); display: inline-flex; align-items: center; gap: 8px; min-height: 40px; padding: 0 13px; border: 1px solid rgba(255,255,255,.14); border-radius: 999px; background: color-mix(in srgb, var(--card) 86%, transparent); color: var(--text); box-shadow: 0 4px 16px rgba(0,0,0,.18); backdrop-filter: blur(18px); transition: transform 260ms var(--ease), border-color 260ms var(--ease), box-shadow 260ms var(--ease); border-color: rgba(255,255,255,.075); -webkit-backdrop-filter: blur(18px); }
       .credit-indicator.is-changing {
@@ -3322,7 +3322,7 @@
       </header>
 
       <header class="topbar" aria-label="Barra de conversa">
-        <button class="chat-history-back" id="chatHistoryBack" type="button" aria-label="Voltar ao histórico"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"></path></svg></button>
+        <button class="chat-history-back" id="chatHistoryBack" type="button" aria-label="Abrir histórico de chats" title="Histórico de chats"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"></circle><path d="M12 7.5v5l3.2 2"></path></svg></button>
         <div class="credit-indicator" id="creditIndicator" aria-label="Saldo de tokens" hidden><span class="credit-indicator-value" id="creditBalanceValue">0</span></div>
       </header>
 
