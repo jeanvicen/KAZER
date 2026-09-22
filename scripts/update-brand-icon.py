@@ -4,17 +4,15 @@ from pathlib import Path
 
 from PIL import Image, ImageEnhance, ImageOps
 
-SOURCE = Path('/home/ubuntu/upload/1000082107.jpg')
 ROOT = Path(__file__).resolve().parents[1]
-
-# The supplied reference is a poster frame. For an installed-app icon, use a
-# tight square around the crowned figure instead of the large black poster margin.
+SOURCE = ROOT / 'download/assets/kazer-icon-source.png'
+# The generated source is an original square icon: a cracked black crowned
+# statue with red rim light, designed to remain legible at launcher size.
 image = Image.open(SOURCE).convert('RGB')
-crop = image.crop((135, 58, 585, 508))
-crop = ImageOps.autocontrast(crop, cutoff=1)
-crop = ImageEnhance.Contrast(crop).enhance(1.22)
-crop = ImageEnhance.Brightness(crop).enhance(1.18)
-crop = ImageEnhance.Color(crop).enhance(1.18)
+crop = ImageOps.autocontrast(image, cutoff=1)
+crop = ImageEnhance.Contrast(crop).enhance(1.08)
+crop = ImageEnhance.Brightness(crop).enhance(1.05)
+crop = ImageEnhance.Color(crop).enhance(1.08)
 master = crop.resize((1024, 1024), Image.Resampling.LANCZOS)
 
 png_buffer = BytesIO()
@@ -58,7 +56,7 @@ for name in ('kazer-logo.svg', 'kazer-mark.svg', 'kazer-mark-glyph.svg'):
         '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" '
         'role="img" aria-labelledby="title desc">\n'
         '  <title id="title">Símbolo KAZER</title>\n'
-        '  <desc id="desc">Ícone KAZER com o personagem de chapéu sobre fundo preto.</desc>\n'
+        '  <desc id="desc">Ícone KAZER com uma estátua preta coroada e textura de pedra rachada.</desc>\n'
         f'  <image href="data:image/png;base64,{embedded_png}" width="1024" height="1024" preserveAspectRatio="none"/>\n'
         '</svg>\n'
     )

@@ -16,12 +16,30 @@ const CATEGORIES = new Set([
   "learning", "other",
 ]);
 
+function cleanMemoryContent(value) {
+  let content = String(value ?? "").replace(/\r\n/g, "\n").trim();
+  const markers = [
+    "const makeMemoryChevron",
+    "document.createElementNS(",
+    "createElementNS(",
+    "svg.setAttribute(",
+    "svg.className",
+    "svg.innerHTML =",
+  ];
+  const markerIndex = markers.reduce((lowest, marker) => {
+    const index = content.indexOf(marker);
+    return index >= 0 && index < lowest ? index : lowest;
+  }, content.length);
+  if (markerIndex < content.length) content = content.slice(0, markerIndex).trim();
+  return content || "Conteúdo da memória indisponível.";
+}
+
 function clientMemory(row) {
   return {
     id: row.id,
     category: row.category,
     group_title: row.group_title || "Outros",
-    content: row.content,
+    content: cleanMemoryContent(row.content),
     isPinned: Boolean(row.is_pinned),
     createdAt: row.created_at,
     updatedAt: row.updated_at,
@@ -46,7 +64,7 @@ module.exports = async function handler(request, response) {
   try {
     if (request.method === "PATCH") {
       const id = String(request.query?.id || "").trim();
-      const content = String(request.body?.content || "").trim();
+      const content = cleanMemoryContent(request.body?.content);
       if (!/^[0-9a-f-]{36}$/i.test(id) || content.length < 1 || content.length > 2000) {
         return sendJson(response, 400, { error: "Conteúdo de memória inválido." });
       }
