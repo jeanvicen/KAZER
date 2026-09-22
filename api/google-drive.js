@@ -1,4 +1,5 @@
 const { authenticateUser, applyRateLimit, isSameOrigin, hasSafeFetchMetadata, rateLimit, sendJson, requestExceedsLimit } = require("./_security");
+const { callUsageRpc } = require("./_usage");
 const { accessTokenForRequest, deleteConnection, driveFetch, getConnection } = require("./_google-drive");
 const { emit, narrate, startEventStream } = require("./_plugin-runtime");
 
@@ -18,6 +19,7 @@ module.exports = async (request, response) => {
   if (requestExceedsLimit(request, MAX_BODY)) return sendJson(response, 413, { error: "Arquivo grande demais." });
   const body = bodyOf(request); if (!body || !["search", "read", "upload"].includes(body.action)) return sendJson(response, 400, { error: "Ação do Google Drive inválida." });
   let accessToken; try { accessToken = await accessTokenForRequest(request, user.id); } catch (error) { const status = error.message.includes("not_connected") || error.message.includes("reconnect") ? 409 : 503; return sendJson(response, status, { error: status === 409 ? "Conecte o Google Drive antes de usar esta ação." : "Não foi possível acessar o Google Drive." }); }
+  let usage; try { usage = await callUsageRpc(request, "consume_chat_usage", { p_credit_amount: 10, p_attachment_count: 0 }); } catch (error) { if (error.code === "credits_limit_reached") return sendJson(response, 402, { error: "Você atingiu seu limite de créditos.", usage: { credits_limit_reached: true } }); return sendJson(response, 503, { error: "Não foi possível validar os limites da conta agora." }); }
   startStream(response); const apiKey = process.env.GROQ_API_KEY;
   try {
     await dynamicNarration(response, apiKey, `Ação real iniciada no Google Drive: ${body.action}. Pedido específico: ${String(body.query || body.name || "operação de arquivo").slice(0, 300)}.`);
@@ -41,6 +43,6 @@ Content-Type: ${body.mimeType || "text/plain"}\r
       const responseUpload = await fetch("https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,name,mimeType,webViewLink", { method: "POST", headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": `multipart/related; boundary=${boundary}` }, body: multipart, signal: AbortSignal.timeout(30000) }); const uploaded = await responseUpload.json().catch(() => ({})); if (!responseUpload.ok) throw new Error(uploaded?.error?.message || "upload_failed");
       await dynamicNarration(response, apiKey, `O upload terminou com sucesso. O arquivo criado se chama “${name}”.`); emit(response, "result", { action: body.action, file: uploaded });
     }
-    emit(response, "done", {}); response.end();
+    emit(response, "done", { usage }); response.end();
   } catch (error) { emit(response, "error", { error: error.message === "search_query_required" ? "Informe o que deseja buscar." : "Não foi possível concluir a ação no Google Drive." }); response.end(); }
 };

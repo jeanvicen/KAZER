@@ -54,7 +54,7 @@
 | `PUBLIC_APP_ORIGINS` aponta para a origem HTTPS exata, sem barra final. | [ ] |
 | `/`, `/login`, `/chat`, `/documentos`, `/sw.js` e `/manifest.webmanifest` funcionam. | [ ] |
 | Headers CSP, HSTS, framing, MIME e cache foram conferidos no domínio de produção. | [ ] |
-| Chat, WebKazer, logout, Nova conversa e conectores foram testados com conta de teste. | [ ] |
+| Chat, WebKazer, anexos, logout e Nova conversa foram testados com conta de teste. | [ ] |
 | O deploy foi associado ao commit correto e o release foi registrado. | [ ] |
 
 ## 6. Pós-publicação
@@ -63,7 +63,7 @@
 |---|:---:|
 | O site abre em dispositivo móvel e desktop. | [ ] |
 | Não há erro inesperado no console ou nas funções serverless. | [ ] |
-| O banco apresenta contas, notificações, memórias, conectores, tarefas e policies esperados. | [ ] |
+| O banco apresenta uso, resets, notificações e policies esperados. | [ ] |
 | Os alertas ou logs de autenticação, abuso e falhas estão sendo acompanhados. | [ ] |
 | O titular arquivou commit, tag, changelog, evidências e decisão de publicação. | [ ] |
 | Mudanças relevantes foram refletidas na central pública de documentos. | [ ] |

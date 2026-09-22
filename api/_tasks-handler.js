@@ -44,7 +44,7 @@ module.exports = async function handler(request, response) {
     if (request.method === "GET") {
       const rows = await supabaseRequest("kazer_tasks", {
         query: {
-          select: "id,title,prompt,task_type,repo_url,selected_agent,selected_model,mcp_connector_ids,status,progress,logs,result,error,created_at,updated_at,completed_at",
+          select: "id,title,prompt,task_type,repo_url,selected_agent,selected_model,mcp_connector_ids,status,progress,logs,result,error,credit_cost,created_at,updated_at,completed_at",
           user_id: `eq.${user.id}`,
           order: "created_at.desc",
           limit: 60,
@@ -71,6 +71,7 @@ module.exports = async function handler(request, response) {
       if (body.progress !== undefined) payload.progress = Math.max(0, Math.min(100, Number(body.progress) || 0));
       if (body.result !== undefined) payload.result = text(body.result, 16000) || null;
       if (body.error !== undefined) payload.error = text(body.error, 2000) || null;
+      if (body.creditCost !== undefined) payload.credit_cost = Math.max(0, Math.min(1000, Number(body.creditCost) || 0));
       if (body.logs !== undefined && Array.isArray(body.logs)) payload.logs = body.logs.slice(-100).map((item) => ({
         type: ["info", "command", "error", "success"].includes(item?.type) ? item.type : "info",
         message: text(item?.message, 1000),
@@ -85,7 +86,7 @@ module.exports = async function handler(request, response) {
 
     const prompt = text(body.prompt, 8000);
     if (!prompt) return badRequest(response, "Informe o que a tarefa deve fazer.");
-    const taskType = ["chat", "coding", "research"].includes(body.taskType) ? body.taskType : "chat";
+    const taskType = ["chat", "coding", "research", "file"].includes(body.taskType) ? body.taskType : "chat";
     const status = ["pending", "processing"].includes(body.status) ? body.status : "pending";
     const payload = {
       user_id: user.id,
@@ -99,6 +100,7 @@ module.exports = async function handler(request, response) {
       status,
       progress: Math.max(0, Math.min(100, Number(body.progress) || 0)),
       logs: Array.isArray(body.logs) ? body.logs.slice(-100) : [],
+      credit_cost: Math.max(0, Math.min(1000, Number(body.creditCost) || 0)),
     };
     const rows = await supabaseRequest("kazer_tasks", { method: "POST", body: payload });
     const row = Array.isArray(rows) ? rows[0] : rows;

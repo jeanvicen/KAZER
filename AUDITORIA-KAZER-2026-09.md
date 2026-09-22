@@ -4,17 +4,17 @@
 
 ## Conclusão executiva
 
-O KAZER é uma aplicação web/PWA estática hospedada na Vercel, com funções serverless Node.js e Supabase como camada de autenticação e persistência. A base técnica está mais madura do que um protótipo: existe autenticação server-side nas rotas principais, RLS/`FORCE ROW LEVEL SECURITY` nas migrações, criptografia AES-GCM para tokens de conectores, limites técnicos de payload, cabeçalhos de segurança, testes smoke/regressivos e documentação de operação.
+O KAZER é uma aplicação web/PWA estática hospedada na Vercel, com funções serverless Node.js e Supabase como camada de autenticação e persistência. A base técnica está mais madura do que um protótipo: existe autenticação server-side nas rotas principais, RLS/`FORCE ROW LEVEL SECURITY` nas migrações, criptografia AES-GCM para tokens de conectores, allowlist de anexos, limites de payload, cabeçalhos de segurança, testes smoke/regressivos e documentação de operação.
 
 A auditoria encontrou e corrigiu dois problemas reais. O fluxo GitHub havia regredido para inserir o token de sessão Supabase na URL; isso podia fazer webviews abrirem o próprio KAZER em vez da tela OAuth e expunha o token a histórico, logs e referências. O frontend agora chama `/api/github-connect` com `Authorization` e só navega para a URL OAuth retornada. Também foi adicionada uma verificação de DNS para MCPs remotos, reduzindo o risco de um domínio externo resolver para endereço privado.
 
-Os riscos restantes não são um bypass de RLS confirmado, mas a validação do banco real, o rate limit não distribuído e a necessidade de validar o deploy real. A rodada de 22 de setembro de 2026 removeu a política de créditos, saldo, recarga e anexos do produto; a confirmação operacional da migração corretiva ainda é necessária. O backend agora respeita `SUPABASE_URL` e `SUPABASE_ANON_KEY`; em `NODE_ENV=production`, não aceita mais fallback embutido. A chave dedicada `KAZER_CONNECTOR_ENCRYPTION_KEY` também é obrigatória e deve ter pelo menos 32 caracteres em produção. A validação operacional com duas contas Supabase, tokens reais, webviews e domínio Vercel ainda depende de um ambiente público autenticado.
+Os riscos restantes não são um bypass de RLS confirmado, mas a validação do banco real, o rate limit não distribuído e a necessidade de validar o deploy real. Jean confirmou que a política atual de créditos está correta; nenhum valor, saldo, recarga ou janela foi alterado nesta rodada. O backend agora respeita `SUPABASE_URL` e `SUPABASE_ANON_KEY`; em `NODE_ENV=production`, não aceita mais fallback embutido. A chave dedicada `KAZER_CONNECTOR_ENCRYPTION_KEY` também é obrigatória e deve ter pelo menos 32 caracteres em produção. A validação operacional com duas contas Supabase, tokens reais, webviews e domínio Vercel ainda depende de um ambiente público autenticado.
 
 ## 1. Arquitetura e inventário
 
-A interface está em `interface/`, com `login.html`, `chat.html`, `kazer-workspace.js` e a central de documentos. O backend serverless está em `api/`, incluindo chat, pesquisa web, memória, retenção, Google Drive, GitHub, MCPs e tarefas. As migrações incrementais ativas do Supabase estão em `database/supabase/001`–`004`, `009`–`013`, `015`, `017` e `018`; a 018 remove estruturas legadas de consumo. O diretório `download/` contém PWA, service worker, manifesto, ícones e um empacotamento Android TWA; `download/ios/` é apenas preparação documental. Os scripts em `scripts/` cobrem segurança, chat, MCP, OAuth, memória, uso e APIs.
+A interface está em `interface/`, com `login.html`, `chat.html`, `kazer-workspace.js` e a central de documentos. O backend serverless está em `api/`, incluindo chat, pesquisa web, uso, memória, retenção, Google Drive, GitHub, MCPs e tarefas. As migrações incrementais do Supabase estão em `database/supabase/001`–`016`; a 016 é somente de segurança e ainda precisa ser aplicada no projeto real. O diretório `download/` contém PWA, service worker, manifesto, ícones e um empacotamento Android TWA; `download/ios/` é apenas preparação documental. Os scripts em `scripts/` cobrem segurança, chat, MCP, OAuth, memória, uso e APIs.
 
-O chat mantém o histórico textual na sessão da página e não possui upload ou processamento de anexos. O WebKazer pesquisa fontes públicas e resume server-side. GitHub usa OAuth com state assinado, token criptografado e consultas filtradas por usuário. MCPs remotos são configurados por usuário, com segredos cifrados e descoberta de ferramentas. A memória é estruturada por categoria, possui deduplicação no backend, limite de 5.000 registros e RLS operacional via acesso server-side.
+O chat mantém o histórico visual na sessão da página. Anexos são processados em memória e podem conter imagens, PDF, DOCX e texto. O WebKazer pesquisa fontes públicas e resume server-side. GitHub usa OAuth com state assinado, token criptografado e consultas filtradas por usuário. MCPs remotos são configurados por usuário, com segredos cifrados e descoberta de ferramentas. A memória é estruturada por categoria, possui deduplicação no backend, limite de 5.000 registros e RLS operacional via acesso server-side.
 
 ## 2. Segurança
 
@@ -22,10 +22,10 @@ O chat mantém o histórico textual na sessão da página e não possui upload o
 
 - Nenhuma chave privada de Groq, Gemini, GitHub, Supabase `service_role` ou chave privada foi encontrada no estado atual ou na varredura de padrões do histórico Git.
 - A chave Supabase `anon` aparece no cliente e em fallback server-side. Isso é aceitável como chave pública, desde que RLS permaneça aplicado; não substitui autorização.
-- Chat, pesquisa, memória, conectores e tarefas validam bearer token no Supabase Auth. Rotas de conectores e tarefas usam `requireUser`, que combina origem, Fetch Metadata e autenticação.
-- Migrações aplicam RLS e `FORCE ROW LEVEL SECURITY` às tabelas sensíveis; a 018 remove tabelas e RPCs legadas de consumo. Funções `SECURITY DEFINER` usam `set search_path = public` e os grants foram reduzidos.
+- Chat, pesquisa, memória e uso validam bearer token no Supabase Auth. Rotas de conectores e tarefas usam `requireUser`, que combina origem, Fetch Metadata e autenticação.
+- Migrações aplicam RLS e `FORCE ROW LEVEL SECURITY` às tabelas sensíveis; a 016 completa esse endurecimento para catálogo/uso. Funções `SECURITY DEFINER` usam `set search_path = public` e os grants foram reduzidos.
 - Tokens de GitHub/MCP/Drive são armazenados cifrados com AES-256-GCM. A resposta ao cliente remove o payload secreto.
-- Há limites de corpo, caracteres, respostas externas, timeout e rate limit por IP/usuário. O rate limit atual é best effort por instância serverless.
+- Há limites de corpo, anexos, caracteres, respostas externas, timeout e rate limit por IP/usuário. O rate limit atual é best effort por instância serverless.
 - O frontend escapa conteúdo dinâmico antes de `innerHTML`; mensagens e bolhas de chat usam texto escapado. A CSP restringe origens externas, embora ainda permita `unsafe-inline` para scripts e estilos por causa da arquitetura HTML atual.
 
 ### Vulnerabilidades e melhorias
@@ -44,9 +44,9 @@ O chat mantém o histórico textual na sessão da página e não possui upload o
 
 ### Verificações executadas
 
-`npm run security:check`, `npm run security:audit -- --audit-level=high` (**0 vulnerabilidades**), os smoke tests ativos (`api`, `github-oauth`, `mcp`), regressões de chat e memória, `node --check` em todas as APIs e `git diff --check` passaram. A entrega HTTP local de login, chat, manifesto e service worker respondeu `200`. Também foi validado que produção falha sem configuração Supabase explícita e sem chave dedicada de criptografia.
+`npm run security:check`, `npm run security:audit -- --audit-level=high` (**0 vulnerabilidades**), todos os smoke tests (`api`, `github-oauth`, `mcp`, `usage-policy`), regressões de chat e memória, `node --check` em todas as APIs e `git diff --check` passaram. A entrega HTTP local de login, chat, manifesto e service worker respondeu `200`. Também foi validado que produção falha sem configuração Supabase explícita e sem chave dedicada de criptografia.
 
-A análise responsiva está coberta no CSS por breakpoints móveis, `dvh`, safe-area, workspace lateral e layout desktop. O código foi inspecionado para mobile, tablet e desktop, mas não houve execução visual real em iOS Safari, Android Chrome, desktop Chromium/Firefox/Safari nem teste com leitor de tela. Esses testes exigem um preview público ou ambiente WebView e devem ser tratados como pendência operacional, não como aprovação.
+A análise responsiva está coberta no CSS por breakpoints móveis, `dvh`, safe-area, sheet de anexos, workspace lateral e layout desktop. O código foi inspecionado para mobile, tablet e desktop, mas não houve execução visual real em iOS Safari, Android Chrome, desktop Chromium/Firefox/Safari nem teste com leitor de tela. Esses testes exigem um preview público ou ambiente WebView e devem ser tratados como pendência operacional, não como aprovação.
 
 ### Correção aplicada
 
@@ -61,13 +61,13 @@ Foi adicionada uma regressão que falha se o frontend voltar a construir `github
 
 ### Pendências de teste que exigem Jean
 
-Aprovar uma janela de teste com duas contas Supabase e ambiente Vercel real; confirmar as migrações aplicadas; testar login, logout, sessão expirada, memória cruzada, chat textual, migração corretiva, conectores MCP, GitHub em webview iOS/Android e navegação externa. Também é necessário decidir se a política de diretório público de perfis é intencional.
+Aprovar uma janela de teste com duas contas Supabase e ambiente Vercel real; confirmar as migrações aplicadas; testar login, logout, sessão expirada, memória cruzada, anexos concorrentes, consumo de créditos, conectores MCP, GitHub em webview iOS/Android e navegação externa. Também é necessário decidir se a política de diretório público de perfis é intencional.
 
-## 4. Remoção dos controles de consumo e revisão do Supabase
+## 4. Política de créditos confirmada e revisão do Supabase
 
-A implementação atual não mantém créditos, saldo, recargas, catálogo de planos, RPCs de consumo ou anexos no chat. A migração `018_remove_consumption_controls.sql` remove essas estruturas em ambientes que ainda as possuam e preserva Auth, perfis, preferências, memórias, conectores, tarefas e conversas.
+Jean confirmou que a política atual está correta e deve permanecer intacta. A implementação canônica é a migração `014_daily_token_policy.sql`: 1.500 créditos iniciais, 300 créditos adicionados por virada de dia UTC, saldo não zerado automaticamente e reset lazy atômico. Os limites de anexos permanecem aqueles definidos no catálogo e nas migrações aplicadas. Nenhum SQL de créditos foi alterado nesta rodada.
 
-O README de `database/supabase` foi alinhado para documentar a migração `018_remove_consumption_controls.sql`. A confirmação do estado real do projeto Supabase continua pendente porque a credencial disponível retornou HTTP 401 e a ferramenta SQL conectada não tinha projeto ativo; não foi seguro executar SQL sem autenticação válida.
+O README de `database/supabase` foi alinhado para deixar claro que a migração `016_security_rls_rpc_cleanup.sql` é somente de segurança. A confirmação do estado real do projeto Supabase continua pendente porque a credencial disponível retornou HTTP 401 e a ferramenta SQL conectada não tinha projeto ativo; não foi seguro executar SQL sem autenticação válida.
 
 ## 5. Modelo atual e recomendação de migração
 
@@ -79,10 +79,10 @@ O catálogo API consultado nesta sessão oferece `gpt-5-mini` por US$ 0,25/1M to
 
 - `gpt-5-mini` como padrão de chat e tarefas comuns;
 - `gpt-5` somente para operações explicitamente complexas, coding profundo, revisão de repositório ou fallback de qualidade;
-- `gemini-3-flash-preview` para pesquisa e contexto longo, sujeito a teste de qualidade;
+- `gemini-3-flash-preview` para anexos multimodais e contexto longo, sujeito a teste de qualidade;
 - manter Groq como caminho de baixa latência/fallback até o benchmark confirmar equivalência.
 
-A migração deve introduzir um adaptador de provedor, testes dourados de 50–100 prompts reais anonimizados, métricas de latência, taxa de erro, custo por operação, qualidade de código e satisfação. O orçamento operacional deve ser acompanhado por observabilidade e limites do provedor, sem criar saldo ou cobrança no produto. Como o proxy GPT não expõe streaming nesta sessão, o efeito visual progressivo atual teria de continuar sendo simulado ou implementado via outro provedor.
+A migração deve introduzir um adaptador de provedor, testes dourados de 50–100 prompts reais anonimizados, métricas de latência, taxa de erro, custo por operação, qualidade de código e satisfação. O contrato de créditos do KAZER deve permanecer independente do preço bruto do provedor. Como o proxy GPT não expõe streaming nesta sessão, o efeito visual progressivo atual teria de continuar sendo simulado ou implementado via outro provedor.
 
 ## 6. Direção estratégica
 
@@ -94,11 +94,11 @@ O diferencial de confiança deve ser visível: cada ação conectada precisa ind
 
 | Prioridade | Entrega | Critério de conclusão |
 |---|---|---|
-| P0 | Aplicar limpeza de consumo | Aplicar a migração 018 e validar que Auth, perfis, tarefas e conectores continuam íntegros |
+| P0 | ~~Unificar política Free~~ | **Confirmado sem alteração:** preservar a migração 014 e validar o estado real do Supabase com credencial válida |
 | P0 | Fechar OAuth GitHub corrigido no domínio real | GitHub abre em desktop, Android WebView/TWA e iOS Safari; nenhum token em URL/log |
 | P0 | ~~Tornar chave de criptografia dedicada obrigatória~~ | **Concluído no código:** produção rejeita chave ausente/fraca; falta configurar e validar rotação no ambiente real |
-| P0 | Validar migração 018 no Supabase real | Tabelas e RPCs legadas removidas sem afetar as tabelas de conta e integração |
-| P1 | Rate limit distribuído | Rajadas concorrentes não ultrapassam limites técnicos por IP/usuário |
+| P0 | Aplicar migração 016 de segurança no Supabase | `FORCE RLS` em catálogo/uso e RPCs legadas revogadas, sem alteração de créditos |
+| P1 | Rate limit distribuído e orçamento por operação | Rajadas concorrentes não ultrapassam o limite; custo é registrado por usuário |
 | P1 | Teste visual automatizado em breakpoints e navegadores | Capturas aprovadas para 375×812, 768×1024 e 1440×900, com foco/teclado |
 | P1 | Roteador de modelos com benchmark dourado | Política de seleção baseada em qualidade, latência e custo medidos |
 | P1 | Permissões de conectores e aprovação de ferramentas | Usuário autoriza servidor/ferramenta/ação individualmente |
@@ -109,8 +109,10 @@ O diferencial de confiança deve ser visível: cada ação conectada precisa ind
 ## Referências
 
 [1]: https://github.com/jeanvicen/KAZER "Repositório KAZER"
+[2]: https://app.notion.com/p/e8d3f543c3aa4c228a0ad1c8f5c0c73b "KAZER — Limites do plano Free"
 [3]: https://app.notion.com/p/79a7df0eeb4d4844ab0eed46c4133d2f "Sistema de Memória Individual — Kaser AI"
 [4]: https://app.notion.com/p/4b493fddeee3444ab0eed46c4133d2f "Sistema de trabalho do agente"
+[5]: https://app.notion.com/p/f58485b43f6b4552bcfde78501ec5216 "Sistema de Monetização — KAZER"
 [6]: https://console.groq.com/docs/models "Groq — Supported Models"
 [7]: https://developers.openai.com/api/docs/pricing "OpenAI API Pricing"
 [8]: https://platform.claude.com/docs/en/models/overview "Anthropic Claude Models Overview"

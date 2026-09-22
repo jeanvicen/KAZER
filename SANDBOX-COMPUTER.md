@@ -233,9 +233,9 @@ Cada tarefa deve produzir:
 
 A auditoria deve permitir responder: **quem fez o quê, em qual ambiente, com qual permissão, em qual arquivo, com qual resultado e depois de qual aprovação?**
 
-## 13. Limites técnicos de recursos
+## 13. Limites e monetização
 
-Antes de lançar qualquer execução persistente, definir quotas técnicas independentes do custo bruto da infraestrutura:
+A política de créditos do Kazer deve permanecer separada do custo bruto da infraestrutura. Antes de lançar, definir quotas técnicas independentes:
 
 - minutos de execução;
 - CPU e RAM máximas;
@@ -246,7 +246,7 @@ Antes de lançar qualquer execução persistente, definir quotas técnicas indep
 - tarefas simultâneas;
 - custo de modelos e conectores.
 
-O sandbox pode começar com execução efêmera e limites baixos. Persistência, maior tempo de execução e mais recursos devem depender de uma decisão explícita do produto e de controles técnicos mensuráveis.
+O plano Free pode começar com sandbox efêmero e limites baixos. Persistência, maior tempo de execução e mais recursos podem ser benefícios de planos pagos, mas nenhum limite deve ser alterado sem decisão explícita do produto.
 
 ## 14. Roadmap técnico
 

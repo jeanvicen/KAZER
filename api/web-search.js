@@ -13,6 +13,7 @@ const {
   requestExceedsLimit,
   sendJson,
 } = require("./_security");
+const { callUsageRpc, calculateWebSearchCreditCost } = require("./_usage");
 
 const DEFAULT_MODEL = "gemini-2.5-flash-lite";
 const MAX_QUERY_CHARS = 240;
@@ -155,13 +156,48 @@ module.exports = async function handler(request, response) {
     return sendJson(response, 502, { error: "Não foi possível consultar as fontes públicas agora." });
   }
 
+  const creditCost = calculateWebSearchCreditCost(query, mode, sources.length);
+  let usage;
+  try {
+    usage = await callUsageRpc(request, "consume_kazer_usage", {
+      p_credit_amount: creditCost,
+      p_attachment_count: 0,
+    });
+  } catch (initialError) {
+    let error = initialError;
+    if (initialError.status === 404 || (initialError.status === 400 && initialError.code === "usage_rpc_failed")) {
+      try {
+        usage = await callUsageRpc(request, "consume_chat_usage", {
+          p_credit_amount: creditCost,
+          p_attachment_count: 0,
+        });
+        error = null;
+      } catch (fallbackError) {
+        error = fallbackError;
+      }
+    }
+    if (!error) {
+      // Compatibilidade temporária com ambientes que ainda não aplicaram a migração 014.
+    } else if (error.code === "credits_limit_reached") {
+      return sendJson(response, 402, {
+        error: "Você está aguardando a próxima recarga diária de tokens.",
+        usage: { credits_limit_reached: true, waiting_for_daily_tokens: true },
+      });
+    } else {
+      console.error("WebKazer usage reservation failed", error?.message || "unknown");
+      return sendJson(response, 503, { error: "Não foi possível validar os tokens da conta agora." });
+    }
+  }
+
   if (!sources.length) {
     return sendJson(response, 200, {
       query,
       mode,
       summary: "Nenhuma fonte pública foi encontrada para esta pesquisa.",
       sources: [],
-      searchQueries: [query]
+      searchQueries: [query],
+      usage,
+      credit_cost: creditCost,
     });
   }
 
@@ -181,15 +217,15 @@ module.exports = async function handler(request, response) {
     });
   } catch (error) {
     console.error("Gemini summary network failure", error?.message || "unknown");
-    return sendJson(response, 200, { query, mode, summary: "As fontes foram encontradas, mas o resumo automático está temporariamente indisponível.", sources, searchQueries: [query], summaryUnavailable: true });
+    return sendJson(response, 200, { query, mode, summary: "As fontes foram encontradas, mas o resumo automático está temporariamente indisponível.", sources, searchQueries: [query], summaryUnavailable: true, usage, credit_cost: creditCost });
   }
 
   const rawSummary = await readTextWithLimit(geminiResponse, MAX_UPSTREAM_SUMMARY_BYTES).catch(() => "");
   const data = JSON.parse(rawSummary || "null");
   if (!geminiResponse.ok) {
     console.error("Gemini summary failed", { status: geminiResponse.status, message: data?.error?.message || "unknown" });
-    return sendJson(response, 200, { query, mode, summary: "As fontes foram encontradas, mas o resumo automático está temporariamente indisponível. Você ainda pode abrir cada fonte ou enviar os dados ao KAZER.", sources, searchQueries: [query], summaryUnavailable: true });
+    return sendJson(response, 200, { query, mode, summary: "As fontes foram encontradas, mas o resumo automático está temporariamente indisponível. Você ainda pode abrir cada fonte ou enviar os dados ao KAZER.", sources, searchQueries: [query], summaryUnavailable: true, usage, credit_cost: creditCost });
   }
 
-  return sendJson(response, 200, { query, mode, summary: redactSensitiveText(parseGeminiText(data)).slice(0, 4000) || "As fontes foram encontradas. Abra uma delas para consultar os detalhes.", sources, searchQueries: [query] });
+  return sendJson(response, 200, { query, mode, summary: redactSensitiveText(parseGeminiText(data)).slice(0, 4000) || "As fontes foram encontradas. Abra uma delas para consultar os detalhes.", sources, searchQueries: [query], usage, credit_cost: creditCost });
 };

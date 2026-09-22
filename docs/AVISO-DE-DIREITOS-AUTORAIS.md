@@ -17,7 +17,7 @@ A Lei nº 9.609/1998 trata a proteção de programas de computador sob o regime 
 | Grupo | Exemplos no projeto |
 |---|---|
 | Código | HTML, CSS, JavaScript, Node.js, SQL, scripts, funções serverless, regras de validação e lógica de produto. |
-| Produto | Nome KAZER, conceitos de navegação, fluxos de conta, chat, WebKazer, retenção e PWA. |
+| Produto | Nome KAZER, conceitos de navegação, fluxos de conta, chat, WebKazer, créditos, anexos, retenção e PWA. |
 | Conteúdo | Textos da interface, mensagens, documentação, prompts, políticas, avisos e descrições originais. |
 | Visual | Logos, símbolos, ícones, imagens, tipografia, cores, composição, ilustrações e elementos de marca. |
 | Distribuição | Manifesto, service worker, materiais de instalação, listagens, artefatos de publicação e configuração de rotas. |

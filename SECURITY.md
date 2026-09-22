@@ -21,19 +21,19 @@ Os itens que ainda exigem ação operacional são a aplicação das migrações 
 | 1 | Esconder API keys | **Implementado com ressalva** | `GROQ_API_KEY`, `GEMINI_API_KEY`, `SUPABASE_SERVICE_ROLE_KEY` e `CRON_SECRET` são lidos no servidor. A chave Supabase `anon` permanece no cliente porque é uma chave pública de baixo privilégio; RLS continua obrigatório. |
 | 2 | Limpar secrets do Git | **Implementado no estado atual + script local** | Foi feita varredura do histórico e do estado atual por chaves de provedor, tokens GitHub, blocos de chave privada, `service_role` e `sb_secret`; não foram encontrados segredos privados. O comando `npm run security:check` torna essa verificação reproduzível antes de cada publicação. Se uma chave real já tiver sido exposta fora destes padrões, ela deve ser revogada e recriada. |
 | 3 | Public key do banco | **Implementado** | O navegador usa apenas a chave pública `anon` do Supabase. Não há `service_role` no HTML, no PWA ou no Kazer Coder. |
-| 4 | Ativar RLS | **Implementado no SQL; aplicar no ambiente** | As migrações 001 e 003 habilitam RLS e policies por `auth.uid()`. A nova `004_security_hardening.sql` adiciona `FORCE ROW LEVEL SECURITY`, revoga grants desnecessários e restringe funções; a migração 018 remove as estruturas legadas de consumo em ambientes que ainda as possuam. Execute as migrações ativas na ordem indicada. |
+| 4 | Ativar RLS | **Implementado no SQL; aplicar no ambiente** | As migrações 001 e 003 habilitam RLS e policies por `auth.uid()`. A nova `004_security_hardening.sql` adiciona `FORCE ROW LEVEL SECURITY`, revoga grants desnecessários e restringe funções; as migrações 005–008 adicionam uso, créditos, resets e contagem de anexos. Execute as oito migrações na ordem indicada. |
 | 5 | Criptografia de dados | **Parcial, com TLS aplicado** | As integrações usam HTTPS; a configuração adiciona HSTS e `upgrade-insecure-requests`. A criptografia em repouso do Supabase, Vercel e provedores externos depende das configurações e garantias desses serviços e não foi presumida como verificada pelo código. O KAZER não implementa criptografia adicional de mensagens em banco próprio. |
 | 6 | Auth server-side | **Implementado para APIs próprias** | `/api/chat` e `/api/web-search` exigem bearer token e validam o usuário no endpoint `/auth/v1/user` do Supabase. `/api/retention` exige `CRON_SECRET` comparado de forma segura. O acesso direto do cliente ao Supabase continua protegido por Auth + RLS. |
 | 7 | Restringir acessos | **Implementado** | Grants de tabelas e execução de funções são mínimos; policies restringem linhas ao usuário. APIs recusam métodos, origens/metadados de navegação inadequados e sessões inválidas. Tabelas de avisos/manutenção são somente leitura pública por decisão funcional explícita. |
-| 8 | Bloquear mass assignment | **Implementado** | SQL permite atualizar apenas colunas de preferência e `display_name`; IDs e linhas não podem ser inseridos/apagados pelo cliente. As APIs aceitam somente roles `user`/`assistant`, campos de mensagem previstos e modos de pesquisa permitidos. |
+| 8 | Bloquear mass assignment | **Implementado** | SQL permite atualizar apenas colunas de preferência e `display_name`; IDs e linhas não podem ser inseridos/apagados pelo cliente. As APIs aceitam somente roles `user`/`assistant`, campos de anexos previstos e modos de pesquisa permitidos. |
 | 9 | Proteger cookies/sessão | **Parcial por arquitetura** | O app não cria cookies próprios. O Supabase JS persiste a sessão no armazenamento do navegador; o token não é colocado na URL, `detectSessionInUrl` foi desativado e o logout chama `signOut`. Para garantia de cookie `HttpOnly` seria necessário migrar a sessão para um backend que emita cookies; isso não faz parte da arquitetura estática atual. |
 | 10 | Hash nas senhas | **Delegado ao Supabase Auth** | A senha é enviada somente ao fluxo `signUp`/`signInWithPassword` do Supabase Auth; o KAZER não grava senha nem hash em tabelas próprias. A regra local exige pelo menos 10 caracteres, uma maiúscula e um caractere especial, sem substituir a validação do provedor. |
-| 11 | Rate limit | **Implementado como best effort serverless** | Chat: 8 requisições/minuto por IP e 12/minuto por usuário. Pesquisa: 10/minuto por IP e 6/minuto por usuário. A camada comum adiciona `Retry-After` e cabeçalhos `X-RateLimit-*`. Como o Vercel serverless pode ter múltiplas instâncias, limites distribuídos exigem um armazenamento externo; os limites operacionais dos provedores também devem ser configurados. |
+| 11 | Rate limit | **Implementado como best effort serverless** | Chat: 8 requisições/minuto por IP e 12/minuto por usuário. Pesquisa: 10/minuto por IP e 6/minuto por usuário. A camada comum adiciona `Retry-After` e cabeçalhos `X-RateLimit-*`. Como o Vercel serverless pode ter múltiplas instâncias, limites distribuídos exigem um armazenamento externo; os limites operacionais de custo dos provedores também devem ser configurados. |
 | 12 | Bot protection | **Defesa em profundidade implementada; CAPTCHA pendente** | Autenticação, origem, Fetch Metadata, rate limit, limites de payload e timeouts reduzem automação abusiva. Não há CAPTCHA/Turnstile integrado; adicionar esse desafio é uma decisão de produto para tráfego público de maior risco. |
 | 13 | Queries parametrizadas | **Implementado** | Consultas do cliente usam filtros Supabase (`eq`, `is`, `order`, `limit`) e o job codifica parâmetros ao montar URLs REST. A pesquisa web consulta somente provedores fixos; nenhum URL controlado pelo usuário é buscado pelo servidor. |
-| 14 | Validação dos inputs | **Implementado** | Há limites de corpo, mensagens, caracteres totais, modos de pesquisa, mensagens, pesquisa, senha, nome e e-mail. Os limites são verificados no cliente e novamente no servidor. |
+| 14 | Validação dos inputs | **Implementado** | Há limites de corpo, mensagens, caracteres totais, modos de pesquisa, número/tipo/tamanho de anexos, nomes de arquivo, senha, nome e e-mail. Os limites são verificados no cliente e novamente no servidor. |
 | 15 | Evitar vazamento de conteúdo | **Implementado com transparência de fluxo** | Erros internos não são devolvidos diretamente; logs removem tokens/chaves; respostas do modelo removem blocos de raciocínio, referências a infraestrutura e padrões comuns de tokens. Resultados web são escapados antes do HTML. O conteúdo solicitado ainda pode ser enviado ao provedor de IA necessário à função, conforme a política de privacidade. |
-| 16 | Conteúdo enviado ao chat | **Implementado** | O chat aceita mensagens textuais autenticadas, com limites de corpo, histórico e caracteres totais. Não há upload ou processamento de anexos no composer. |
+| 16 | Restringir uploads | **Implementado** | O servidor aceita no máximo 10 anexos por envio, 4 MB por arquivo e 4 MB no total do envio, 3 imagens e tipos de imagem, texto, PDF e DOCX explicitamente permitidos. O nome é normalizado, arquivos são processados em memória e texto extraído é truncado. |
 | 17 | Trim das respostas de API | **Implementado** | Respostas externas têm timeout e limite de bytes; conteúdo extraído é limitado; respostas do chat são limitadas a 12.000 caracteres e o resumo web a 4.000 caracteres. APIs próprias retornam JSON sem cache. |
 | 18 | Security headers | **Implementado no Vercel** | `Content-Security-Policy`, `Strict-Transport-Security`, `X-Content-Type-Options`, `X-Frame-Options: DENY`, `Referrer-Policy`, `Permissions-Policy`, `Cross-Origin-Opener-Policy`, `Cross-Origin-Resource-Policy` e `X-DNS-Prefetch-Control` foram adicionados. A CSP restringe scripts, fontes, conexões e frames.[^4] |
 | 19 | Forçar HTTPS | **Implementado para produção Vercel; validar domínio** | HSTS e `upgrade-insecure-requests` foram configurados e todos os upstreams usam HTTPS. Confirme no domínio de produção que o redirecionamento HTTP→HTTPS do Vercel está ativo antes de divulgar o endereço. |
@@ -45,7 +45,7 @@ Os itens que ainda exigem ação operacional são a aplicação das migrações 
 |---|---|
 | `SECURITY.md` | Registro central dos 20 critérios, limites, evidências e pendências operacionais. |
 | `api/_security.js` | Autenticação Supabase, origem, Fetch Metadata, rate limit, limites de corpo, timeout/leitura limitada, comparação segura e redaction. |
-| `api/chat.js` | Auth server-side, rate limit, moderação, limites textuais, limite de saída e timeout do provedor. |
+| `api/chat.js` | Auth server-side, rate limit, allowlist de anexos, normalização de nomes, limite de saída e timeout do provedor. |
 | `api/web-search.js` | Auth server-side, rate limit, validação de modo, timeout e limite dos provedores de busca/resumo. |
 | `api/retention.js` | Comparação segura do cron, URL Supabase validada, respostas limitadas e flag explícita para exclusões. |
 | `database/supabase/004_security_hardening.sql` | `FORCE RLS`, grants mínimos, constraint de nome e revogação de funções internas. |
@@ -57,7 +57,7 @@ Os itens que ainda exigem ação operacional são a aplicação das migrações 
 
 Antes de publicar, configure como variáveis **privadas** no Vercel `GROQ_API_KEY`, `GEMINI_API_KEY`, `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY` e `CRON_SECRET`. Configure também `PUBLIC_APP_ORIGINS` com a origem HTTPS exata, sem barra final. Não copie nenhum desses valores para HTML, documentação pública, logs ou parâmetros de URL.
 
-Execute as migrações Supabase ativas na ordem documentada em `database/supabase/README.md`, incluindo `018_remove_consumption_controls.sql` em ambientes que receberam o sistema legado. Depois, teste com duas contas: cada usuário deve ler e alterar somente seu próprio perfil, preferências, memórias, conectores, tarefas e notificações; uma conta não deve acessar o registro da outra; e nenhuma sessão deve chamar as APIs sem bearer válido.
+Execute as migrações Supabase na ordem `001_auth_accounts.sql`, `002_inactivity_retention.sql`, `003_retention_notifications.sql`, `004_security_hardening.sql`, `005_usage_limits.sql`, `006_usage_rpc_fix.sql`, `007_credits_150_messages_5h.sql` e `008_attachment_limit_10_items.sql`. Depois, teste com duas contas: cada usuário deve ler e alterar somente seu próprio perfil, preferências, uso e notificações; uma conta não deve acessar o registro da outra; e nenhuma sessão deve chamar as APIs sem bearer válido.
 
 Mantenha `RETENTION_DELETE_ENABLED=false` até revisar backup, avisos, suporte e procedimento de recuperação. A exclusão administrativa é permanente. Só altere para `true` após um teste controlado e uma confirmação operacional independente.
 
@@ -86,7 +86,7 @@ Não execute o job de retenção com credenciais reais durante testes sem confir
 | Esconder chaves | As chaves privadas da IA (`GROQ_API_KEY` e `GEMINI_API_KEY`) são lidas somente em funções serverless. O navegador usa apenas a chave pública anon do Supabase, protegida por Auth e RLS. | `api/chat.js`, `api/web-search.js`, `interface/login.html`, `.env.example` |
 | Rate limit | O chat aplica limites por IP e por usuário autenticado; a pesquisa web também aplica limites separados e envia cabeçalhos `X-RateLimit-*` e `Retry-After`. | `api/_security.js`, `api/chat.js`, `api/web-search.js` |
 | Bloqueio XSS | Mensagens do usuário são inseridas com `textContent`; respostas e resultados web são escapados antes de qualquer `innerHTML`. O backend remove caracteres de controle e limita payloads e respostas. | `interface/chat.html`, `api/chat.js`, `api/web-search.js` |
-| Prompt injection | O prompt server-side trata mensagens e resultados de pesquisa como dados não confiáveis e instrui a IA a ignorar tentativas de alterar regras, revelar o prompt ou assumir outra identidade. | `api/chat.js`, `api/web-search.js` |
+| Prompt injection | O prompt server-side trata mensagens, anexos e resultados de pesquisa como dados não confiáveis e instrui a IA a ignorar tentativas de alterar regras, revelar o prompt ou assumir outra identidade. | `api/chat.js`, `api/web-search.js` |
 | Autenticação | As APIs exigem bearer token de sessão e validam o token no endpoint Auth do Supabase antes de processar a solicitação. | `api/_security.js`, `api/chat.js`, `api/web-search.js` |
 | Moderação da IA | Pedidos com padrões operacionais de violência, fabricação de armas/explosivos, invasão, malware, roubo, fraude e crimes são bloqueados antes da chamada ao provedor. | `api/chat.js` (`HIGH_RISK_PATTERNS`) |
 | HTTPS | A configuração da Vercel usa HSTS, `upgrade-insecure-requests`, CSP e conexões HTTPS para os serviços externos. A confirmação do domínio de produção continua sendo operacional. | `vercel.json` |
@@ -110,7 +110,7 @@ Esta seção consolida os itens adicionais do checklist recebido e não substitu
 
 **Implementado:** as rotas privadas de chat e pesquisa validam no servidor o bearer token da sessão Supabase; o usuário é identificado pelo token validado, não por `user_id` enviado pelo cliente. O Supabase Auth administra expiração, revogação, login, cadastro e recuperação de senha.
 
-**Pendente de teste operacional:** testar explicitamente acesso sem login, token inválido, token expirado, sessão revogada e tentativas de alterar identificadores de usuário, mensagens ou memórias. O app não possui uma camada própria de JWT nem cookies `HttpOnly`; utiliza o token de sessão do Supabase conforme a arquitetura atual.
+**Pendente de teste operacional:** testar explicitamente acesso sem login, token inválido, token expirado, sessão revogada e tentativas de alterar identificadores de usuário, mensagens, memórias ou arquivos. O app não possui uma camada própria de JWT nem cookies `HttpOnly`; utiliza o token de sessão do Supabase conforme a arquitetura atual.
 
 ### 3. Autorização, banco, memória e RAG
 
@@ -120,13 +120,13 @@ Esta seção consolida os itens adicionais do checklist recebido e não substitu
 
 ### 4. Rate limiting e abuso
 
-**Implementado:** chat e pesquisa possuem limites por IP e por usuário autenticado, limites de corpo, limites de histórico e timeouts. **Parcial:** login, cadastro e recuperação de senha são executados pelo Supabase Auth e dependem dos limites e proteções configurados nesse serviço; não há um endpoint próprio do KAZER para pagamentos, créditos ou criação de tokens.
+**Implementado:** chat e pesquisa possuem limites por IP e por usuário autenticado, limites de corpo, limites de anexos e timeouts. **Parcial:** login, cadastro e recuperação de senha são executados pelo Supabase Auth e dependem dos limites e proteções configurados nesse serviço; não há um endpoint próprio do KAZER para pagamentos, créditos ou criação de tokens.
 
-O rate limit em memória é best effort em serverless e não substitui limite distribuído do provedor. Antes de produção, deve-se testar rajadas simultâneas e consumo excessivo de recursos.
+O rate limit em memória é best effort em serverless e não substitui limite distribuído do provedor. Antes de produção, deve-se testar rajadas simultâneas, abuso de anexos e consumo excessivo de recursos.
 
 ### 5. Segurança da IA e prompt injection
 
-**Implementado:** instruções internas são separadas dos dados do usuário; mensagens e resultados de pesquisa são tratados como não confiáveis; o prompt ordena ignorar tentativas de alterar regras, revelar instruções internas, assumir outra identidade ou executar ações não autorizadas. O endpoint não expõe ferramentas gerais ao modelo e não contém secrets no prompt.
+**Implementado:** instruções internas são separadas dos dados do usuário; mensagens, anexos e resultados de pesquisa são tratados como não confiáveis; o prompt ordena ignorar tentativas de alterar regras, revelar instruções internas, assumir outra identidade ou executar ações não autorizadas. O endpoint não expõe ferramentas gerais ao modelo e não contém secrets no prompt.
 
 **Pendente de teste autorizado:** tentar prompt injection, exfiltração de contexto, manipulação de conteúdo recuperado e solicitações de ações não permitidas em ambiente controlado. A proteção por prompt é defesa em profundidade e não é garantia absoluta.
 
@@ -136,11 +136,11 @@ O rate limit em memória é best effort em serverless e não substitui limite di
 
 **SSRF:** o servidor consulta somente provedores de busca fixos e não acessa URLs arbitrárias fornecidas pelo usuário. URLs retornadas como fontes são apresentadas ao cliente, não buscadas pelo servidor como destino controlável pelo usuário.
 
-### 7. Conteúdo textual
+### 7. Uploads
 
-**Implementado:** o chat aceita somente mensagens textuais autenticadas; há validação de papel, tamanho por mensagem, tamanho total do histórico, corpo máximo, moderação e tratamento do conteúdo como dado não confiável.
+**Implementado:** há allowlist de tipos, validação de MIME/extensão, limite de tamanho, limite de quantidade, normalização de nomes, processamento em memória e extração limitada. Arquivos enviados não são executados.
 
-**Pendente se o produto voltar a aceitar conteúdo binário no chat:** definir associação por usuário/tenant, autorização em toda leitura, armazenamento privado e validação de formatos antes de reintroduzir o recurso.
+**Pendente se o produto ganhar armazenamento persistente:** associar cada arquivo ao usuário/tenant, validar autorização em toda leitura, manter armazenamento privado e testar extensão falsa, MIME inesperado e nomes malformados.
 
 ### 8. Pagamentos, webhooks e administração
 
@@ -162,8 +162,8 @@ O rate limit em memória é best effort em serverless e não substitui limite di
 
 1. Testar APIs sem login, com token inválido, expirado e revogado.
 2. Testar isolamento entre duas contas e confirmar que IDs enviados pelo cliente não alteram a identidade autenticada.
-3. Enviar requests grandes, tipos inesperados, muitos itens de histórico e múltiplas requisições simultâneas.
-4. Testar HTML, Markdown e conteúdo malicioso vindo do usuário, da IA e de fontes web.
+3. Enviar requests grandes, tipos inesperados, muitas mensagens, muitos anexos e múltiplas requisições simultâneas.
+4. Testar HTML, Markdown e conteúdo malicioso vindo do usuário, da IA, de fontes web e de anexos.
 5. Testar tentativas de prompt injection sem usar dados reais ou ações destrutivas.
 6. Confirmar headers HTTPS no domínio de produção e revisar logs para garantir ausência de secrets.
 7. Executar `npm run security:check` e `npm run security:audit -- --audit-level=high` antes de cada publicação.

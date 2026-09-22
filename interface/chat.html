@@ -130,7 +130,7 @@
         animation: app-splash-fade-up 800ms ease 900ms forwards;
       }
 
-      .app-splash-attribution {
+      .app-splash-credit {
         position: absolute;
         right: 24px;
         bottom: clamp(36px, 9vh, 64px);
@@ -173,12 +173,38 @@
         pointer-events: auto;
       }
 
-
-
-
-
-
-      @media (max-width: 560px) { }
+      .credit-indicator { position: absolute; top: max(18px, env(safe-area-inset-top)); left: clamp(18px, 4vw, 40px); display: inline-flex; align-items: center; gap: 8px; min-height: 40px; padding: 0 13px; border: 1px solid rgba(255,255,255,.14); border-radius: 999px; background: color-mix(in srgb, var(--card) 86%, transparent); color: var(--text); box-shadow: 0 4px 16px rgba(0,0,0,.18); backdrop-filter: blur(18px); transition: transform 260ms var(--ease), border-color 260ms var(--ease), box-shadow 260ms var(--ease); border-color: rgba(255,255,255,.075); -webkit-backdrop-filter: blur(18px); }
+      .credit-indicator.is-changing {
+        transform: translateY(-1px) scale(1.035);
+        border-color: rgba(231,188,105,.55);
+        box-shadow: 0 0 22px rgba(231,188,105,.15);
+      }
+      .credit-indicator.is-consuming {
+        animation: credit-consume-pulse 620ms cubic-bezier(.22, 1, .36, 1);
+      }
+      .credit-indicator-value {
+        min-width: 3ch;
+        font-size: 15px;
+        font-weight: 700;
+        letter-spacing: -.025em;
+        font-variant-numeric: tabular-nums;
+        will-change: transform, opacity;
+      }
+      .credit-indicator.is-consuming .credit-indicator-value {
+        animation: credit-value-consume 620ms cubic-bezier(.22, 1, .36, 1);
+      }
+      @keyframes credit-consume-pulse {
+        0% { transform: translateY(0) scale(1); box-shadow: 0 4px 16px rgba(0,0,0,.18); }
+        35% { transform: translateY(-2px) scale(1.055); box-shadow: 0 0 28px rgba(231,188,105,.24); }
+        100% { transform: translateY(0) scale(1); box-shadow: 0 4px 16px rgba(0,0,0,.18); }
+      }
+      @keyframes credit-value-consume {
+        0% { opacity: 1; transform: translateY(0); }
+        35% { opacity: .62; transform: translateY(-1px) scale(.94); }
+        68% { opacity: .9; transform: translateY(1px) scale(1.03); }
+        100% { opacity: 1; transform: translateY(0) scale(1); }
+      }
+      @media (max-width: 560px) { .credit-indicator { left: 14px; min-height: 36px; padding: 0 10px; } .credit-indicator-value { font-size: 15px; } }
 
       .conversation-title { color: transparent; background: var(--metal-gradient); background-size: 230% 100%; background-clip: text; -webkit-background-clip: text; font-size: 17px; font-weight: 440; letter-spacing: -.022em; opacity: 0; transform: translateY(-5px); transition: opacity 240ms var(--ease), transform 240ms var(--ease); animation: metal-word-shine 4.4s linear infinite; }
 
@@ -543,7 +569,9 @@
 
       .composer-controls { position: relative; display: flex; align-items: center; gap: 7px; padding: 4px 10px 11px; }
 
-
+      .composer-controls-spacer {
+        flex: 1 1 auto;
+      }
 
       .app:not(.in-conversation) .composer-controls {
         padding: 2px 8px 8px;
@@ -582,90 +610,224 @@
         opacity: 0.96;
       }
 
+      .attach-button { position: relative; flex: 0 0 auto; display: inline-flex; align-items: center; justify-content: center; width: 38px; height: 38px; border: 1px solid var(--line); border-radius: 50%; background: rgba(255,255,255,.04); color: var(--text); cursor: pointer; box-shadow: none; transition: border-color 160ms var(--ease), background 160ms var(--ease),
+                    transform 160ms var(--ease); border-color: rgba(255,255,255,.09); }
 
+      .attach-button:hover { border-color: rgba(255,255,255,.18); background: rgba(255,255,255,.07); color: var(--text); box-shadow: none; }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-      @media (min-width: 681px) {
-
-
-
+      .attach-button:active {
+        transform: scale(0.95);
       }
 
+      .attach-button[aria-expanded="true"] { border-color: rgba(255,255,255,.45); background: var(--text); color: var(--page); transform: scale(1.06); box-shadow: 0 0 0 4px color-mix(in srgb, var(--text) 10%, transparent); }
 
+      .plus-mark {
+        display: block;
+        font-size: 26px;
+        font-weight: 300;
+        line-height: 1;
+        transform: translateY(-1px) rotate(0deg) scale(1);
+        transition: transform 320ms cubic-bezier(.34, 1.56, .64, 1);
+      }
 
+      .attach-button[aria-expanded="true"] .plus-mark {
+        transform: translateY(-1px) rotate(135deg) scale(1.1);
+      }
 
+      .app:not(.in-conversation) .attach-button {
+        width: 32px;
+        height: 32px;
+      }
 
+      .app:not(.in-conversation) .plus-mark {
+        font-size: 22px;
+      }
 
+      .attachment-backdrop {
+        position: fixed;
+        z-index: 88;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.62);
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 180ms var(--ease);
+      }
 
+      .attachment-backdrop.visible {
+        opacity: 1;
+        pointer-events: auto;
+      }
 
+      .attachment-sheet { position: fixed; z-index: 90; right: 0; bottom: 0; left: 0; display: flex; flex-direction: column; max-height: min(540px, calc(100dvh - 74px)); padding: 12px max(18px, env(safe-area-inset-right)) max(10px, env(safe-area-inset-bottom)) max(18px, env(safe-area-inset-left)); overflow: hidden; border: 1px solid rgba(255, 255, 255, 0.13); border-bottom: 0; border-radius: 24px 24px 0 0; background: color-mix(in srgb, var(--page) 97%, transparent); box-shadow: 0 -22px 66px rgba(0,0,0,.54); opacity: 0; visibility: hidden; pointer-events: none; transform: translateY(104%); transition: opacity 190ms var(--ease), transform 320ms cubic-bezier(.22, 1.1, .36, 1), visibility 320ms var(--ease); border-color: rgba(255,255,255,.09); backdrop-filter: blur(26px); -webkit-backdrop-filter: blur(26px); }
 
+      .attachment-sheet.visible {
+        opacity: 1;
+        visibility: visible;
+        pointer-events: auto;
+        transform: translateY(0);
+      }
 
+      .attachment-sheet-handle { width: 36px; height: 3.5px; margin: 0 auto 12px; border-radius: 999px; background: rgba(255,255,255,.16); flex: 0 0 auto; margin-bottom: 14px; }
+
+      .attachment-sheet-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 0 2px 12px;
+        flex: 0 0 auto;
+      }
+
+      .attachment-sheet-head h2 { margin: 0; color: var(--text); font-size: 16.5px; font-weight: 620; letter-spacing: -.025em; }
+
+      .attachment-sheet-close { display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; border: 1px solid var(--line); border-radius: 10px; background: rgba(255,255,255,.04); color: var(--text-dim); cursor: pointer; font-size: 20px; font-weight: 250; line-height: 1; transition: background 150ms var(--ease), color 150ms var(--ease); border-color: rgba(255,255,255,.08); }
+
+      .attachment-sheet-close:hover { background: rgba(255,255,255,.08); color: var(--text); }
+
+      .attachment-sheet-close:active {
+        transform: scale(0.95);
+      }
+
+      .attachment-sheet-scroll {
+        min-height: 0;
+        overflow-y: auto;
+        overscroll-behavior: contain;
+        padding: 2px 0 10px;
+        scrollbar-width: thin;
+      }
+
+      .attachment-sheet-action {
+        display: flex;
+        align-items: center;
+        width: 100%;
+        gap: 14px;
+        padding: 13px 4px;
+        border: 0;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        background: transparent;
+        color: var(--text);
+        cursor: pointer;
+        text-align: left;
+        transition: background 160ms var(--ease), color 160ms var(--ease), transform 160ms var(--ease);
+      }
+
+      .attachment-sheet-action:hover {
+        background: rgba(255, 255, 255, 0.06);
+      }
+
+      .attachment-sheet-action:active {
+        transform: scale(0.985);
+      }
+
+      .attachment-actions-grid {
+        display: flex;
+        flex-direction: row;
+        flex-wrap: nowrap;
+        align-items: stretch;
+        gap: 8px;
+        width: 100%;
+        padding: 2px 0 16px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      }
+
+      .attachment-grid-action { display: flex; flex: 1 1 0; flex-direction: column; align-items: center; justify-content: center; min-width: 0; min-height: 94px; gap: 8px; padding: 12px 4px 10px; border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 18px; background: rgba(255,255,255,.022); text-align: center; border-color: rgba(255,255,255,.07); transition: border-color 155ms var(--ease), background 155ms var(--ease),
+                    transform 155ms var(--ease); }
+
+      .attachment-grid-action:hover { border-color: rgba(255,255,255,.16); background: rgba(255,255,255,.052); transform: translateY(-1px); }
+
+      .attachment-grid-action .attachment-sheet-icon { width: 44px; height: 44px; flex-basis: 44px; border-radius: 14px; }
+
+      .attachment-grid-action .attachment-sheet-copy {
+        align-items: center;
+        gap: 0;
+      }
+
+      .attachment-grid-action .attachment-sheet-copy strong {
+        font-size: 13px;
+        font-weight: 500;
+      }
+
+      .attachment-grid-action .attachment-sheet-copy small {
+        display: none;
+      }
+
+      .attachment-sheet-icon { display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; flex: 0 0 44px; border: 1px solid var(--line); border-radius: 13px; background: rgba(255,255,255,.05); color: var(--text); border-color: rgba(255,255,255,.08); }
+
+      .attachment-sheet-icon .icon { width: 21px; height: 21px; color: var(--text-soft); }
+
+      .attachment-sheet-copy {
+        display: flex;
+        min-width: 0;
+        flex-direction: column;
+        gap: 3px;
+      }
+
+      .attachment-sheet-copy strong { font-size: 12.5px; font-weight: 540; letter-spacing: -.01em; }
+
+      .attachment-sheet-copy small {
+        color: var(--text-soft);
+        font-size: 11px;
+      }
+
+      .attachment-sheet-more { margin: 8px 0 0; padding: 18px 4px 4px; border-top: 1px solid rgba(255, 255, 255, 0.08); color: var(--text-dim); font-size: 10.5px; text-align: center; border-top-color: rgba(255,255,255,.055); }
+      @media (min-width: 681px) {
+        .attachment-sheet {
+          right: auto;
+          left: 50%;
+          width: min(520px, calc(100vw - 36px));
+          border-bottom: 1px solid rgba(255, 255, 255, 0.13);
+          border-radius: 25px 25px 0 0;
+          transform: translate(-50%, 104%);
+        }
+
+        .attachment-sheet.visible {
+          transform: translate(-50%, 0);
+        }
+      }
+
+      .attachment-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin: 8px 2px 0;
+      }
+
+      .attachment-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        max-width: 100%;
+        padding: 7px 10px;
+        overflow: hidden;
+        border: 1px solid var(--line-soft);
+        border-radius: 10px;
+        background: var(--card-2);
+        color: var(--text-soft);
+        font-size: 11px;
+      }
+
+      .attachment-chip span {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .attachment-remove {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        background: transparent;
+        color: var(--text-dim);
+        cursor: pointer;
+      }
+
+      .attachment-remove:hover {
+        background: var(--line-soft);
+        color: var(--text);
+      }
 
       .stop-button {
         display: none;
@@ -1226,51 +1388,74 @@
       .history-global-notice-copy strong { display: block; overflow: hidden; font-size: 13px; font-weight: 650; text-overflow: ellipsis; white-space: nowrap; }
       .history-global-notice-copy small { display: block; margin-top: 3px; color: var(--text-dim); font-size: 10px; }
       .history-global-notice-arrow { margin-left: auto; color: #e7bc69; font-size: 18px; }
+      .plans-backdrop {
+        position: fixed;
+        z-index: 88;
+        inset: 0;
+        background: rgba(6, 6, 8, 0.66);
+        backdrop-filter: blur(6px);
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 220ms var(--ease);
+      }
 
+      .plans-backdrop.visible {
+        opacity: 1;
+        pointer-events: auto;
+      }
 
+      .plans-screen { position: fixed; z-index: 89; top: 50%; left: 50%; display: flex; flex-direction: column; width: min(440px, calc(100vw - 32px)); max-height: calc(100dvh - 64px); overflow: hidden; border: 1px solid var(--line); border-radius: 22px; background: var(--page); box-shadow: 0 26px 78px rgba(0,0,0,.60); opacity: 0; transform: translate(-50%, -46%) scale(0.97); transition: opacity 220ms var(--ease), transform 220ms var(--ease); pointer-events: none; border-color: rgba(255,255,255,.075); }
 
+      .plans-screen.visible {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
+        pointer-events: auto;
+      }
 
+      .plans-head { display: flex; flex: 0 0 auto; align-items: center; gap: 10px; padding: 15px 13px; border-bottom: 1px solid var(--line-soft); border-bottom-color: rgba(255,255,255,.06); }
 
+      .plans-head h2 { flex: 1 1 auto; margin: 0; color: var(--text); font-size: 15px; font-weight: 640; text-align: center; letter-spacing: -.024em; }
 
+      .plans-body { display: flex; flex-direction: column; gap: 12px; overflow-y: auto; padding: 16px 14px 22px; }
 
+      .plan-card {
+        border-radius: 20px;
+        padding: 18px;
+      }
 
+      .plan-card-current { border: 1px solid var(--line-soft); background: rgba(255,255,255,.022); border-color: rgba(255,255,255,.065); border-radius: 17px; padding: 17px; }
 
+      .plan-card-label { display: block; margin-bottom: 9px; color: var(--text-dim); font-size: 9.5px; font-weight: 700; letter-spacing: .16em; }
 
+      .plan-card-name { display: block; color: var(--text); font-size: 19px; font-weight: 620; letter-spacing: -.032em; }
 
+      .plan-card-desc { margin: 6px 0 0; color: var(--text-dim); font-size: 12.5px; line-height: 1.56; margin-top: 7px; }
 
+      .plan-card-pro { position: relative; overflow: hidden; border: 1px solid rgba(213, 174, 87, 0.4); background: radial-gradient(circle at 12% -8%, rgba(210,165,70,.13) 0%, transparent 55%),
+                    #0f0e08; box-shadow: 0 14px 40px rgba(120,90,18,.12),
+                    inset 0 1px 0 rgba(255,240,110,.05); border-color: rgba(210,165,70,.32); border-radius: 17px; padding: 17px; }
 
+      .plan-card-pro-badge { display: inline-block; color: transparent; background: linear-gradient(105deg, #8a6d2c 0%, #f8e7ab 18%, #cba14c 35%, #fff6da 48%, #7c5f26 66%, #e7cd8c 82%, #8a6d2c 100%); background-size: 230% 100%; background-clip: text; -webkit-background-clip: text; font-size: 12px; font-weight: 800; letter-spacing: .18em; animation: metal-word-shine 4.8s linear infinite; }
 
+      .plan-card-pro-price { display: flex; align-items: baseline; gap: 3px; margin: 11px 0 15px; color: #ecd7a3; }
 
+      .plan-card-pro-currency { font-size: 14px; font-weight: 640; }
+      .plan-card-pro-value { font-size: 30px; font-weight: 700; letter-spacing: -.025em; }
+      .plan-card-pro-period { color: var(--text-dim); font-size: 12.5px; }
 
+      .plan-card-pro-list { display: flex; flex-direction: column; gap: 7px; margin: 0 0 16px; padding: 0; list-style: none; margin-bottom: 14px; }
 
+      .plan-card-pro-list li { position: relative; padding-left: 20px; color: var(--text-soft); font-size: 12.5px; line-height: 1.5; }
 
+      .plan-card-pro-list li::before { position: absolute; left: 0; color: #cfa040; content: "✓"; font-weight: 700; }
 
+      .plan-card-pro button { width: 100%; min-height: 44px; border: 0; border-radius: 12px; background: linear-gradient(105deg, #8a6d2c 0%, #f8e7ab 18%, #cba14c 35%, #fff6da 48%, #7c5f26 66%, #e7cd8c 82%, #8a6d2c 100%); background-size: 230% 100%; color: #201808; font-size: 13.5px; font-weight: 720; cursor: pointer; animation: metal-word-shine 4.8s linear infinite; transition: transform 150ms var(--ease), filter 150ms var(--ease); letter-spacing: -.012em; }
 
+      .plan-card-pro button:active {
+        transform: scale(0.98);
+      }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+      .plan-card-pro-note { margin: 12px 0 0; color: var(--text-dim); font-size: 11px; line-height: 1.5; text-align: center; margin-top: 11px; }
 
       @media (max-width: 520px) {
         .connectors-screen {
@@ -1305,9 +1490,19 @@
           border-radius: 24px 24px 0 0;
         }
 
+        .plans-screen {
+          top: auto;
+          bottom: 0;
+          left: 0;
+          transform: translateY(100%);
+          width: 100%;
+          max-height: 88dvh;
+          border-radius: 24px 24px 0 0;
+        }
 
-
-
+        .plans-screen.visible {
+          transform: translateY(0);
+        }
       }
 
       section.settings-popover { position: fixed; z-index: 90; top: 50%; right: auto; left: 50%; display: grid; grid-template-columns: 250px minmax(0, 1fr); width: min(960px, calc(100vw - 40px)); height: min(720px, calc(100vh - 40px)); max-height: calc(100vh - 40px); overflow: hidden; border: 1px solid var(--line); border-radius: 20px; background: var(--card); box-shadow: 0 32px 96px rgba(0,0,0,.68),
@@ -1363,27 +1558,90 @@
         font-size: 10px;
       }
 
+      .settings-mobile-account-plan {
+        display: grid;
+        justify-items: end;
+        gap: 6px;
+        flex: 0 0 auto;
+      }
 
+      .settings-mobile-account-plan-label {
+        color: var(--text-dim);
+        font-size: 8px;
+        font-weight: 700;
+        letter-spacing: 0.16em;
+      }
 
+      .settings-mobile-account-plan-value {
+        color: var(--text);
+        font-size: 11px;
+        font-weight: 650;
+      }
 
+      .settings-mobile-upgrade {
+        min-height: 29px;
+        padding: 0 10px;
+        border: 1px solid color-mix(in srgb, var(--accent) 70%, var(--line));
+        border-radius: 999px;
+        background: var(--accent);
+        color: var(--accent-ink);
+        font: inherit;
+        font-size: 10px;
+        font-weight: 700;
+        cursor: pointer;
+        transition: transform 150ms var(--ease), filter 150ms var(--ease);
+      }
 
+      .settings-mobile-upgrade:hover {
+        filter: brightness(1.08);
+      }
 
+      .settings-mobile-upgrade:active {
+        transform: scale(0.97);
+      }
 
+      .settings-mobile-account-credit {
+        display: flex;
+        align-items: flex-end;
+        gap: 12px;
+        justify-content: flex-end;
+        margin-top: 16px;
+        padding-top: 13px;
+        border-top: 1px solid var(--line-soft);
+      }
 
+      .settings-mobile-credit-next {
+        max-width: 170px;
+        color: var(--text-dim);
+        font-size: 10px;
+        line-height: 1.35;
+        text-align: right;
+      }
 
+      .settings-mobile-credit-copy {
+        display: flex;
+        align-items: baseline;
+        justify-content: flex-end;
+        gap: 8px;
+      }
 
+      .settings-mobile-credit-label {
+        color: var(--text-dim);
+        font-size: 8px;
+        font-weight: 700;
+        letter-spacing: 0.16em;
+        line-height: 1;
+        text-transform: uppercase;
+      }
 
-
-
-
-
-
-
-
-
-
-
-
+      .settings-mobile-credit-balance {
+        color: var(--text);
+        font-size: 26px;
+        font-weight: 650;
+        letter-spacing: -0.06em;
+        line-height: 1;
+        font-variant-numeric: tabular-nums;
+      }
 
       .settings-mobile-account-avatar {
         display: inline-flex;
@@ -1399,7 +1657,9 @@
         font-weight: 700;
       }
 
-
+      .settings-mobile-account-card.is-changing .settings-mobile-credit-balance {
+        color: var(--purple);
+      }
 
       .settings-search { display: flex; align-items: center; gap: 8px; min-height: 38px; padding: 0 11px; border: 1px solid var(--line); border-radius: 10px; background: rgba(255,255,255,.038); border-color: rgba(255,255,255,.075); transition: border-color 160ms var(--ease), box-shadow 160ms var(--ease); }
 
@@ -1816,15 +2076,15 @@
         color: var(--text) !important;
       }
 
-
-
-
-
-
-
-
-
-
+      .attachment-limit-banner { position: absolute; z-index: 16; right: 18px; bottom: calc(max(24px, env(safe-area-inset-bottom)) + 178px); left: 18px; display: grid; gap: 4px; width: min(640px, calc(100% - 36px)); margin: 0 auto; padding: 12px 15px; border: 1px solid rgba(231,188,105,.26); border-radius: 14px; background: color-mix(in srgb, var(--card) 92%, transparent); box-shadow: 0 10px 26px rgba(0,0,0,.18); backdrop-filter: blur(14px); color: var(--text-soft); border-color: rgba(231,188,105,.22); -webkit-backdrop-filter: blur(14px); }
+      .attachment-limit-banner strong { color: var(--text); font-size: 12.5px; font-weight: 600; letter-spacing: -.012em; }
+      .attachment-limit-banner span, .attachment-limit-banner small { font-size: 12px; }
+      .attachment-limit-banner button, .credit-limit-card button { justify-self: start; margin-top: 5px; padding: 8px 11px; border-radius: 9px; background: var(--text); color: var(--accent-ink); font-size: 12px; font-weight: 700; cursor: pointer; }
+      .credit-limit-modal { position: fixed; z-index: 80; inset: 0; display: grid; place-items: center; padding: 22px; background: rgba(0,0,0,.64); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
+      .credit-limit-card { width: min(390px,100%); padding: 26px; border: 1px solid rgba(231,188,105,.3); border-radius: 20px; background: var(--card); box-shadow: 0 22px 62px rgba(0,0,0,.38); text-align: center; border-color: rgba(231,188,105,.24); }
+      .credit-limit-card h2 { margin: 12px 0 8px; color: var(--text); font-size: 19px; font-weight: 620; letter-spacing: -.032em; }
+      .credit-limit-card p, .credit-limit-card small { display: block; margin: 0 0 10px; color: var(--text-soft); line-height: 1.45; }
+      .credit-limit-card button { justify-self: center; margin-top: 10px; }
 
       .retention-banner { position: fixed; z-index: 111; top: 86px; left: 50%; display: flex; align-items: flex-start; gap: 12px; width: min(440px, calc(100vw - 32px)); padding: 13px; border: 1px solid color-mix(in srgb, var(--warning) 58%, var(--line)); border-radius: 16px; background: color-mix(in srgb, var(--card) 97%, transparent); box-shadow: 0 14px 42px rgba(0,0,0,.42); opacity: 0; pointer-events: none; transform: translate(-50%, -12px) scale(0.98); transition: opacity 190ms var(--ease), transform 220ms var(--ease); backdrop-filter: blur(18px); border-color: rgba(231,188,105,.4); -webkit-backdrop-filter: blur(18px); }
 
@@ -2151,15 +2411,33 @@
           font-size: 14px;
         }
 
+        .settings-mobile-account-plan {
+          gap: 5px;
+        }
 
+        .settings-mobile-account-credit {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 10px;
+          margin: 0;
+          padding: 12px 14px;
+          border-top: 0;
+          border-radius: 14px;
+          background: color-mix(in srgb, var(--page) 60%, transparent);
+        }
 
+        .settings-mobile-credit-copy {
+          justify-content: flex-start;
+        }
 
+        .settings-mobile-credit-balance {
+          font-size: 24px;
+        }
 
-
-
-
-
-
+        .settings-mobile-upgrade {
+          min-height: 28px;
+        }
 
         .settings-mobile-back {
           display: none;
@@ -2382,8 +2660,8 @@
       .mcp-brand-icon.playwright { background: #253d33; color: #6fe0a6; }
       .profile-integration-action strong { font-size: 10.5px; font-weight: 600; letter-spacing: -.01em; }
       .profile-integration-action small { color: var(--text-dim); font-size: 9px; text-align: center; }
-
-
+      .attachment-grid-action.mcp-grid-action { border-color: rgba(197,58,63,.35); }
+      .attachment-grid-action.workspace-grid-action { border-color: rgba(105,210,161,.25); }
       .workspace-toggle { position: fixed; z-index: 61; top: 50%; left: 12px; display: inline-flex; align-items: center; justify-content: center; width: 42px; height: 42px; border: 1px solid var(--line); border-radius: 13px; background: color-mix(in srgb, var(--card) 88%, transparent); color: var(--text); box-shadow: 0 7px 20px rgba(0,0,0,.22); cursor: pointer; transform: translateY(-50%); transition: border-color 170ms var(--ease), background 170ms var(--ease),
                     transform 180ms var(--ease); border-color: rgba(255,255,255,.085); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); }
       .workspace-toggle:hover, .workspace-toggle[aria-expanded="true"] { border-color: rgba(197,58,63,.65); background: var(--card-2); transform: translateY(-50%) scale(1.04); }
@@ -2455,13 +2733,14 @@
       .mcp-form-actions { display: flex; justify-content: flex-end; gap: 8px; padding-top: 4px; }
       .mcp-primary-button { min-height: 36px; padding: 0 14px; border-radius: 9px; background: var(--text); color: var(--accent-ink); font-size: 11px; font-weight: 700; cursor: pointer; }
       .mcp-secondary-button { min-height: 36px; padding: 0 14px; border: 1px solid var(--line); border-radius: 9px; background: transparent; color: var(--text); font-size: 11px; cursor: pointer; }
-
-
+      .connector-single-action { display: flex; align-items: center; gap: 12px; width: 100%; margin-top: 10px; padding: 13px 14px; border: 1px solid var(--line-soft); border-radius: 16px; background: rgba(197,58,63,.038); color: var(--text); text-align: left; font-size: 13px; font-weight: 570; cursor: pointer; transition: border-color 155ms var(--ease), background 155ms var(--ease),
+                    transform 155ms var(--ease); border-color: rgba(197,58,63,.22); letter-spacing: -.01em; }
+      .connector-single-action:hover { border-color: rgba(197,58,63,.48); background: rgba(197,58,63,.09); transform: translateY(-1px); }
       .connector-single-icon { display: inline-grid; place-items: center; width: 33px; height: 33px; flex: 0 0 auto; border-radius: 11px; background: rgba(197,58,63,.14); color: #f0a0a3; font-size: 16px; }
       @media (max-width: 680px) { .workspace-toggle { display: none; } .workspace-panel { top: 76px; bottom: 8px; left: 8px; width: min(360px, calc(100vw - 16px)); } .mcp-presets-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .mcp-modal-body { padding: 16px; } }
-
-
-      @media (max-width: 680px) { }
+      .attachment-actions-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); border-bottom-color: rgba(255,255,255,.055); padding: 4px 0 14px; gap: 9px; }
+      .attachment-actions-grid .attachment-grid-action { min-width: 0; min-height: 96px; }
+      @media (max-width: 680px) { .attachment-actions-grid { gap: 7px; } .attachment-actions-grid .attachment-grid-action { min-height: 84px; padding: 10px 4px; } .attachment-actions-grid .attachment-grid-action .attachment-sheet-icon { width: 38px; height: 38px; flex-basis: 38px; border-radius: 12px; } }
       @media (prefers-reduced-motion: reduce) { .workspace-panel, .workspace-toggle, .workspace-progress span { transition: none; } }
 
 
@@ -2615,10 +2894,10 @@
       .new-chat-brand { position: absolute; left: 50%; color: transparent; background: var(--metal-gradient); background-size: 230% 100%; background-clip: text; -webkit-background-clip: text; font-size: 16px; font-weight: 620; letter-spacing: .28em; padding-left: .28em; transform: translateX(-50%); animation: metal-word-shine 4.4s linear infinite; }
       .new-chat-back { width: 42px; height: 42px; border-radius: 14px; border-color: rgba(255,255,255,.09); background: color-mix(in srgb, var(--card) 72%, transparent); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); }
       .new-chat-back .icon { width: 20px; height: 20px; }
-
-
-
-
+      .new-chat-credit { display: inline-flex; align-items: baseline; gap: 7px; min-height: 40px; padding: 0 13px; border: 1px solid rgba(255,255,255,.14); border-radius: 12px; background: color-mix(in srgb, var(--card) 82%, transparent); color: var(--text); box-shadow: 0 6px 22px rgba(0,0,0,.16); backdrop-filter: blur(14px); border-color: rgba(255,255,255,.09); -webkit-backdrop-filter: blur(14px); }
+      .new-chat-credit-value { min-width: 2ch; color: var(--text); font-size: 15.5px; font-weight: 740; font-variant-numeric: tabular-nums; letter-spacing: -.02em; }
+      .new-chat-credit-label { color: var(--text-dim); font-size: 9.5px; font-weight: 750; letter-spacing: .11em; text-transform: uppercase; }
+      .new-chat-credit.is-changing { border-color: rgba(231,188,105,.55); box-shadow: 0 0 22px rgba(231,188,105,.15); transform: translateY(-1px) scale(1.035); }
 
       .new-chat-greeting {
         display: none;
@@ -2643,7 +2922,7 @@
       .app.new-chat-active .conversation-area { padding-top: 0; }
       .app.new-chat-active .new-chat-header { display: block; height: 0; padding: 0; }
       .app.new-chat-active .new-chat-brand,
-
+      .app.new-chat-active .new-chat-credit { display: none; }
       .app.new-chat-active .new-chat-back { position: fixed; z-index: 52; top: max(18px, env(safe-area-inset-top)); right: clamp(18px, 4vw, 42px); }
       .app.history-active .profile-popover { right: auto; left: clamp(18px, 4vw, 42px); }
       .app.history-active .install-banner,
@@ -2663,8 +2942,8 @@
         .history-new-chat { width: 58px; height: 58px; right: 20px; }
         .new-chat-header { height: 70px; padding-right: 14px; padding-left: 14px; }
         .new-chat-back { width: 42px; height: 42px; }
-
-
+        .new-chat-credit { min-height: 36px; padding: 0 10px; }
+        .new-chat-credit-value { font-size: 15px; }
         .new-chat-brand { font-size: 15px; }
         .app.new-chat-active .empty-state { padding-top: 27vh; }
       }
@@ -2689,9 +2968,13 @@
         box-shadow: 0 4px 14px rgba(0,0,0,.32);
       }
 
+      .attachment-grid-action:active {
+        transform: scale(0.97);
+      }
 
-
-
+      .connector-single-action:active {
+        transform: scale(0.98);
+      }
 
       .profile-popover,
       .web-popover {
@@ -2734,15 +3017,50 @@
         filter: brightness(1.08);
       }
 
+      .plans-head .icon-button {
+        width: 36px;
+        height: 36px;
+        border: 1px solid rgba(255,255,255,.085);
+        background: rgba(255,255,255,.04);
+        border-radius: 12px;
+        transition: border-color 150ms var(--ease), background 150ms var(--ease);
+      }
 
+      .plans-head .icon-button:hover {
+        border-color: rgba(255,255,255,.17);
+        background: rgba(255,255,255,.075);
+      }
 
-
-
-
+      .plan-card-pro button:hover {
+        filter: brightness(1.07);
+      }
 
       .web-search:focus-within {
         border-color: rgba(255,255,255,.18);
         box-shadow: 0 0 0 3px rgba(197,58,63,.09);
+      }
+
+      .credit-limit-card p,
+      .credit-limit-card small {
+        font-size: 13px;
+        color: var(--text-soft);
+        line-height: 1.5;
+      }
+
+      .credit-limit-card button,
+      .attachment-limit-banner button {
+        background: var(--text);
+        color: var(--accent-ink);
+        border-radius: 10px;
+        font-size: 12px;
+        font-weight: 700;
+        padding: 8px 13px;
+        transition: filter 140ms var(--ease);
+      }
+
+      .credit-limit-card button:hover,
+      .attachment-limit-banner button:hover {
+        filter: brightness(1.07);
       }
 
       .workspace-toggle:hover,
@@ -2751,14 +3069,17 @@
         background: rgba(197,58,63,.08);
         transform: translateY(-50%) scale(1.04);
       }
+
       .conversation-area,
       .settings-panel-scroll,
       .history-content,
       .connectors-body,
+      .plans-body,
       .workspace-content {
         scrollbar-width: thin;
         scrollbar-color: rgba(255,255,255,.07) transparent;
       }
+
       .conversation-area::-webkit-scrollbar,
       .settings-panel-scroll::-webkit-scrollbar,
       .history-content::-webkit-scrollbar,
@@ -2766,6 +3087,7 @@
       .workspace-content::-webkit-scrollbar {
         width: 4px;
       }
+
       .conversation-area::-webkit-scrollbar-thumb,
       .settings-panel-scroll::-webkit-scrollbar-thumb,
       .history-content::-webkit-scrollbar-thumb,
@@ -2788,7 +3110,11 @@
                     0 0 0 3px rgba(197,58,63,.09);
       }
 
-
+      :root[data-theme="light"] .attachment-sheet {
+        background: rgba(246,246,249,.97);
+        border-color: rgba(0,0,0,.09);
+        box-shadow: 0 -16px 48px rgba(0,0,0,.13);
+      }
 
       :root[data-theme="light"] .history-screen {
         background: radial-gradient(ellipse at 50% -24%, rgba(197,58,63,.04) 0%, transparent 55%), var(--page);
@@ -2821,7 +3147,10 @@
       }
 
       :root[data-theme="light"] .connectors-screen,
-
+      :root[data-theme="light"] .plans-screen {
+        background: var(--page);
+        border-color: rgba(0,0,0,.09);
+      }
 
       :root[data-theme="light"] .connector-custom-card {
         background: #fff;
@@ -2857,13 +3186,27 @@
           letter-spacing: -.015em;
         }
 
+        .settings-mobile-account-plan-label {
+          font-size: 7.5px;
+          letter-spacing: .18em;
+          color: var(--text-dim);
+        }
 
+        .settings-mobile-account-plan-value {
+          font-size: 11px;
+          font-weight: 620;
+        }
 
+        .settings-mobile-credit-balance {
+          font-size: 23px;
+          font-weight: 640;
+          letter-spacing: -.06em;
+        }
 
-
-
-
-
+        .settings-mobile-credit-label {
+          font-size: 7.5px;
+          letter-spacing: .18em;
+        }
 
         .settings-nav {
           background: var(--card);
@@ -3033,7 +3376,7 @@
           <span class="app-splash-symbol" aria-hidden="true"></span>
           <strong class="app-splash-title" id="appSplashTitle">KAZER</strong>
         </div>
-        <span class="app-splash-attribution">Klipza Studio</span>
+        <span class="app-splash-credit">Klipza Studio</span>
       </div>
       <aside class="install-banner" id="installBanner" aria-live="polite" data-install-state="idle" hidden>
         <img class="install-logo" src="../download/icons/kazer-192.png" alt="Logo Kazer" />
@@ -3070,8 +3413,12 @@
       <header class="new-chat-header" id="newChatHeader" aria-label="Novo chat" aria-hidden="true" hidden>
         <button class="new-chat-back" id="newChatBack" type="button" aria-label="Voltar ao histórico"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"></path></svg></button>
         <span class="new-chat-brand" aria-label="KAZER">KAZER</span>
+        <div class="new-chat-credit" id="newChatCredit" aria-label="Saldo de tokens"><span class="new-chat-credit-value" id="newChatCreditBalance">0</span><span class="new-chat-credit-label">tokens</span></div>
       </header>
 
+      <header class="topbar" aria-label="Barra de conversa">
+        <div class="credit-indicator" id="creditIndicator" aria-label="Saldo de tokens" hidden><span class="credit-indicator-value" id="creditBalanceValue">0</span></div>
+      </header>
 
       <div class="profile-popover" id="profilePopover" role="dialog" aria-label="Perfil">
         <div class="profile-summary">
@@ -3079,6 +3426,8 @@
           <div><strong id="profileDisplayName">Kazer</strong><small id="profileEmail">Conta conectada</small></div>
         </div>
         <div class="menu-actions">
+          <button class="pro-action" id="proAction" type="button" aria-label="Obter Kazer Pro"><span class="pro-badge">PRO</span><span class="pro-copy"><strong>Kazer Pro</strong><small>Obter mais do KAZER</small></span><svg class="icon pro-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"></path></svg></button>
+
           <div class="profile-more" id="profileMore"><button class="profile-more-toggle" id="profileMoreToggle" type="button" aria-expanded="false"><span>Mais opções</span><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg></button><div class="profile-more-options"><div class="profile-integrations-grid"><button class="profile-integration-action" id="githubProfileAction" type="button"><span class="profile-integration-icon github" aria-hidden="true"><svg viewBox="0 0 24 24" role="img"><path d="M12 2.5a9.5 9.5 0 0 0-3 18.51c.48.09.65-.21.65-.46v-1.7c-2.65.58-3.2-1.12-3.2-1.12-.44-1.1-1.06-1.4-1.06-1.4-.87-.6.07-.59.07-.59.96.07 1.47.99 1.47.99.85 1.46 2.22 1.04 2.76.8.09-.62.33-1.04.6-1.28-2.12-.24-4.35-1.06-4.35-4.72 0-1.04.37-1.9.98-2.57-.1-.24-.43-1.22.1-2.54 0 0 .8-.26 2.62.98A9.1 9.1 0 0 1 12 7.08a9 9 0 0 1 2.38.32c1.82-1.24 2.62-.98 2.62-.98.53 1.32.2 2.3.1 2.54.61.67.98 1.53.98 2.57 0 3.67-2.23 4.48-4.36 4.72.34.3.64.88.64 1.77v2.62c0 .25.17.55.65.46A9.5 9.5 0 0 0 12 2.5Z"></path></svg></span><strong>GitHub</strong><small id="githubProfileStatus">Autorizar acesso aos repositórios</small></button><button class="profile-integration-action" id="mcpProfileAction" type="button"><span class="profile-integration-icon" aria-hidden="true">⌁</span><strong>Conectores</strong><small id="mcpProfileStatus">Conectores prontos</small></button></div><button class="profile-more-option" id="webKazerAction" type="button"><span>WebKazer<br><small>Pesquisa na web</small></span><span aria-hidden="true">↗</span></button></div></div>
           <button class="menu-action" id="settingsAction" type="button"><span>Settings</span><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6 7 7M17 17l1.4 1.4M18.4 5.6 17 7M7 17l-1.4 1.4"></path><circle cx="12" cy="12" r="3.5"></circle></svg></button>
         </div>
@@ -3092,7 +3441,9 @@
             <div class="settings-mobile-account-top">
               <span class="settings-mobile-account-avatar" id="settingsMobileAccountAvatar">K</span>
               <div class="settings-mobile-account-identity"><strong id="settingsMobileAccountName">Kazer</strong><small id="settingsMobileAccountEmail">Conta conectada</small></div>
+              <div class="settings-mobile-account-plan"><span class="settings-mobile-account-plan-label">PLANO</span><strong class="settings-mobile-account-plan-value" id="settingsMobilePlan">Free</strong><button class="settings-mobile-upgrade" id="settingsMobileUpgrade" type="button" hidden>Atualizar</button></div>
             </div>
+            <div class="settings-mobile-account-credit"><span class="settings-mobile-credit-next" id="settingsMobileCreditNext">Próxima recarga: —</span><div class="settings-mobile-credit-copy"><span class="settings-mobile-credit-label">TOKENS</span><span class="settings-mobile-credit-balance" id="settingsMobileCreditBalance" aria-label="Saldo de tokens">0</span></div></div>
           </div>
           <label class="settings-search"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-4-4"></path></svg><input id="settingsSearch" type="search" placeholder="Pesquisar configuração" autocomplete="off" /></label>
           <nav class="settings-nav-list" aria-label="Categorias de configurações">
@@ -3199,6 +3550,35 @@
         </div>
       </section>
 
+      <div class="plans-backdrop" id="plansBackdrop" hidden></div>
+      <section class="plans-screen" id="plansScreen" role="dialog" aria-modal="true" aria-label="Planos do Kazer" aria-hidden="true" hidden>
+        <header class="plans-head">
+          <button class="icon-button" id="plansBack" type="button" aria-label="Fechar"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"></path></svg></button>
+          <h2>Planos</h2>
+          <span class="connectors-head-spacer" aria-hidden="true"></span>
+        </header>
+        <div class="plans-body">
+          <article class="plan-card plan-card-current">
+            <span class="plan-card-label">SEU PLANO ATUAL</span>
+            <strong class="plan-card-name">Free</strong>
+            <p class="plan-card-desc">Acesso essencial ao Kazer, com 1.500 tokens iniciais que não expiram e 300 tokens adicionados diariamente.</p>
+          </article>
+          <article class="plan-card plan-card-pro">
+            <span class="plan-card-pro-badge">KAZER PRO</span>
+            <div class="plan-card-pro-price"><span class="plan-card-pro-currency">R$</span><span class="plan-card-pro-value">59,99</span><span class="plan-card-pro-period">/mês</span></div>
+            <ul class="plan-card-pro-list">
+              <li>Tokens ampliados todos os meses</li>
+              <li>Mais anexos por conversa</li>
+              <li>Prioridade em novos recursos</li>
+            </ul>
+            <button type="button" id="plansProAction">Assinar Kazer Pro</button>
+            <p class="plan-card-pro-note">Em desenvolvimento — os pagamentos ainda não estão disponíveis.</p>
+          </article>
+        </div>
+      </section>
+
+      <aside class="attachment-limit-banner" id="attachmentLimitBanner" hidden aria-live="polite"><strong>Você usou seu limite de anexos.</strong><span>Mude para o Kazer Pro para enviar mais anexos.</span><small>Seus anexos serão liberados em <b id="attachmentResetValue">—</b>.</small><button type="button" id="attachmentProButton">Conhecer Kazer Pro</button></aside>
+      <section class="credit-limit-modal" id="creditLimitModal" hidden role="dialog" aria-modal="true" aria-labelledby="creditLimitTitle"><div class="credit-limit-card"><h2 id="creditLimitTitle">Você está aguardando tokens.</h2><p>Seu saldo acabou. Os tokens que você não usa ficam guardados e 300 novos tokens são adicionados diariamente.</p><small>Próxima recarga diária: <b id="creditResetValue">—</b>.</small><button type="button" id="creditProButton">Conhecer Kazer Pro</button></div></section>
       <div class="web-popover" id="webPopover" role="dialog" aria-label="WebKazer">
         <h2>WebKazer</h2>
         <p class="web-subtitle">Pesquise na web, imagens, vídeos e notícias; traga contexto para o KAZER.</p>
@@ -3241,21 +3621,23 @@
           <p class="composer-caption">KAZER organiza seus próximos passos</p>
         </form>
       </div>
+
       <div class="attachment-backdrop" id="attachmentBackdrop" hidden></div>
       <section class="attachment-sheet" id="attachmentSheet" role="dialog" aria-modal="true" aria-labelledby="attachmentSheetTitle" aria-hidden="true" hidden>
         <div class="attachment-sheet-handle" aria-hidden="true"></div>
-        <header class="attachment-sheet-head"><h2 id="attachmentSheetTitle">Adicionar ao Kazer</h2><button class="attachment-sheet-close" id="attachmentSheetClose" type="button" aria-label="Fechar opções">×</button></header>
+        <header class="attachment-sheet-head">
+          <h2 id="attachmentSheetTitle">Adicionar ao Kazer</h2>
+          <button class="attachment-sheet-close" id="attachmentSheetClose" type="button" aria-label="Fechar opções">×</button>
+        </header>
         <div class="attachment-sheet-scroll">
           <div class="attachment-actions-grid">
-            <button class="attachment-sheet-action attachment-grid-action" id="cameraAction" type="button"><span class="attachment-sheet-icon" aria-hidden="true">⌾</span><span class="attachment-sheet-copy"><strong>Câmera</strong></span></button>
-            <button class="attachment-sheet-action attachment-grid-action" id="photoAction" type="button"><span class="attachment-sheet-icon" aria-hidden="true">▧</span><span class="attachment-sheet-copy"><strong>Fotos</strong></span></button>
-            <button class="attachment-sheet-action attachment-grid-action" id="fileAction" type="button"><span class="attachment-sheet-icon" aria-hidden="true">▤</span><span class="attachment-sheet-copy"><strong>Arquivos</strong></span></button>
+            <button class="attachment-sheet-action attachment-grid-action" id="cameraAction" type="button"><span class="attachment-sheet-icon" aria-hidden="true"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8.5h3l1.5-2h7L17 8.5h3A1.5 1.5 0 0 1 21.5 10v8A1.5 1.5 0 0 1 20 19.5H4A1.5 1.5 0 0 1 2.5 18v-8A1.5 1.5 0 0 1 4 8.5Z"></path><circle cx="12" cy="13.8" r="3.1"></circle></svg></span><span class="attachment-sheet-copy"><strong>Câmera</strong></span></button>
+            <button class="attachment-sheet-action attachment-grid-action" id="photoAction" type="button"><span class="attachment-sheet-icon" aria-hidden="true"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"></rect><circle cx="8.5" cy="9" r="1.4"></circle><path d="m4.5 17 4.7-4.6 3.1 3 5 4.7"></path></svg></span><span class="attachment-sheet-copy"><strong>Fotos</strong></span></button>
+            <button class="attachment-sheet-action attachment-grid-action" id="fileAction" type="button"><span class="attachment-sheet-icon" aria-hidden="true"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H6.5A1.5 1.5 0 0 0 5 4.5v15A1.5 1.5 0 0 0 6.5 21h11a1.5 1.5 0 0 0 1.5-1.5V8Z"></path><path d="M14 3v5h5M8.5 13h7M8.5 16.5h7"></path></svg></span><span class="attachment-sheet-copy"><strong>Arquivos</strong></span></button>
           </div>
-          <button class="connector-single-action" id="connectorSingleAction" type="button"><span class="connector-single-icon" aria-hidden="true">⌘</span><strong>Conectores</strong></button>
+          <button class="connector-single-action" id="connectorSingleAction" type="button"><span class="connector-single-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" width="18" height="18"><path d="M9 3v4M15 3v4"></path><path d="M6 7h12v4a6 6 0 0 1-6 6 6 6 0 0 1-6-6Z"></path><path d="M12 17v4"></path></svg></span><strong>Conectores</strong></button>
         </div>
       </section>
-
-
       <button class="workspace-toggle" id="workspaceToggle" type="button" aria-label="Abrir tarefas e repositórios" aria-controls="workspacePanel" aria-expanded="false"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m13 2-9 12h7l-1 8 9-12h-7l1-8Z"></path></svg></button><aside class="workspace-panel" id="workspacePanel" aria-label="Tarefas e repositórios" aria-hidden="true"><header class="workspace-head"><div class="workspace-head-copy"><span class="workspace-eyebrow">KAZER WORKSPACE</span><h2>Tarefas e repositórios</h2></div><button class="workspace-close" id="workspaceClose" type="button" aria-label="Fechar painel">×</button></header><nav class="workspace-tabs" aria-label="Workspace"><button class="workspace-tab active" type="button" data-workspace-tab="tasks">Tarefas</button><button class="workspace-tab" type="button" data-workspace-tab="repos">Repositórios</button></nav><div class="workspace-content" id="workspaceContent"></div><footer class="workspace-footer" id="workspaceFooter">As tarefas aparecem somente quando o KAZER trabalha com conectores ou repositórios.</footer></aside>      <div class="global-notice-backdrop" id="globalNoticeBackdrop" hidden></div>
       <section class="global-notice-modal" id="globalNoticeModal" role="dialog" aria-modal="true" aria-labelledby="globalNoticeTitle" aria-describedby="globalNoticeMessage" aria-hidden="true" hidden>
         <header class="global-notice-head"><button class="global-notice-close" id="globalNoticeClose" type="button" aria-label="Fechar anúncio">×</button></header>
@@ -3389,6 +3771,9 @@
         const settingsMobileAccountName = document.getElementById("settingsMobileAccountName");
         const settingsMobileAccountEmail = document.getElementById("settingsMobileAccountEmail");
         const settingsMobileAccountAvatar = document.getElementById("settingsMobileAccountAvatar");
+        const settingsMobilePlan = document.getElementById("settingsMobilePlan");
+        const settingsMobileUpgrade = document.getElementById("settingsMobileUpgrade");
+        const settingsMobileCreditNext = document.getElementById("settingsMobileCreditNext");
         const memoryGroups = document.getElementById("memoryGroups");
         const memoryDetail = document.getElementById("memoryDetail");
         const memoryDetailList = document.getElementById("memoryDetailList");
@@ -3409,6 +3794,11 @@
         let memoriesLoaded = false;
         let activeMemoryGroup = null;
         let activeMemoryFilter = "all";
+        const plansBackdrop = document.getElementById("plansBackdrop");
+        const plansScreen = document.getElementById("plansScreen");
+        const plansBack = document.getElementById("plansBack");
+        const plansProAction = document.getElementById("plansProAction");
+        const settingsMobileCreditBalance = document.getElementById("settingsMobileCreditBalance");
         const webSearchForm = document.getElementById("webSearchForm");
         const webQuery = document.getElementById("webQuery");
         const webSources = document.getElementById("webSources");
@@ -3421,6 +3811,14 @@
         const retentionMessage = document.getElementById("retentionMessage");
         const retentionKeepActive = document.getElementById("retentionKeepActive");
         const retentionDismiss = document.getElementById("retentionDismiss");
+        const creditIndicator = document.getElementById("creditIndicator");
+        const creditBalanceValue = document.getElementById("creditBalanceValue");
+        const creditLimitModal = document.getElementById("creditLimitModal");
+        const creditResetValue = document.getElementById("creditResetValue");
+        const creditProButton = document.getElementById("creditProButton");
+        const attachmentLimitBanner = document.getElementById("attachmentLimitBanner");
+        const attachmentResetValue = document.getElementById("attachmentResetValue");
+        const attachmentProButton = document.getElementById("attachmentProButton");
         const installBanner = document.getElementById("installBanner");
         const installTitle = document.getElementById("installTitle");
         const installMessage = document.getElementById("installMessage");
@@ -3463,11 +3861,15 @@
 
         const newChatHeader = document.getElementById("newChatHeader");
         const newChatBack = document.getElementById("newChatBack");
+        const newChatCredit = document.getElementById("newChatCredit");
+        const newChatCreditBalance = document.getElementById("newChatCreditBalance");
         const greetingTime = document.getElementById("greetingTime");
         const greetingName = document.getElementById("greetingName");
         let deferredInstallPrompt = null;
         let installBusy = false;
         let installCompletionTimer = null;
+        let usageState = null;
+        let usageRefreshTimer = null;
         let busy = false;
         let activeRequestController = null;
         let toastTimer = null;
@@ -3479,6 +3881,8 @@
         let globalNoticeSeenVersion = null;
         let globalNoticeLoaded = false;
         const historyStoragePrefix = "kazer-chat-history:";
+        let selectedFiles = [];
+        const maxClientFileBytes = 4 * 1024 * 1024;
         const settingsStorageKey = "kazer-settings";
         const draftStorageKey = "kazer-draft";
         const defaultSettings = { appearance: "dark", language: "pt-BR", notifications: true, installPrompt: true };
@@ -3511,6 +3915,90 @@
           [profileEmail, settingsAccountEmail, settingsMobileAccountEmail].forEach((element) => { if (element) element.textContent = email; });
           [settingsAccountAvatar, settingsMobileAccountAvatar].forEach((element) => { if (element) element.textContent = initial; });
           updateGreeting();
+        };
+
+        const formatResetTime = (value) => {
+          if (!value) return "—";
+          const date = new Date(value);
+          if (Number.isNaN(date.getTime())) return "—";
+          return new Intl.DateTimeFormat("pt-BR", { dateStyle: "short", timeStyle: "short", timeZone: "UTC" }).format(date) + " UTC";
+        };
+
+        const animateCreditBalance = (target, animate = true) => {
+          const targets = [creditBalanceValue, settingsMobileCreditBalance, newChatCreditBalance].filter(Boolean);
+          if (!targets.length) return;
+          const next = Math.max(0, Number(target) || 0);
+          const previous = Number(targets[0].dataset.value ?? next);
+          targets.forEach((element) => { element.dataset.value = String(next); });
+          if (!animate || previous === next) {
+            targets.forEach((element) => { element.textContent = String(next); });
+            return;
+          }
+          const isConsuming = next < previous;
+          creditIndicator?.classList.add("is-changing");
+          if (isConsuming) {
+            creditIndicator?.classList.remove("is-consuming");
+            void creditIndicator?.offsetWidth;
+            creditIndicator?.classList.add("is-consuming");
+          }
+          settingsMobileAccountCard?.classList.add("is-changing");
+          const start = performance.now();
+          const duration = isConsuming ? 620 : 420;
+          const step = (now) => {
+            const progress = Math.min(1, (now - start) / duration);
+            const eased = 1 - Math.pow(1 - progress, 3);
+            const value = String(Math.round(previous + (next - previous) * eased));
+            targets.forEach((element) => { element.textContent = value; });
+            if (progress < 1) requestAnimationFrame(step);
+            else {
+              targets.forEach((element) => { element.textContent = String(next); });
+              window.setTimeout(() => {
+                creditIndicator?.classList.remove("is-changing");
+                creditIndicator?.classList.remove("is-consuming");
+                settingsMobileAccountCard?.classList.remove("is-changing");
+              }, isConsuming ? 120 : 180);
+            }
+          };
+          requestAnimationFrame(step);
+        };
+
+        const applyUsageState = (next, animate = true) => {
+          if (!next || typeof next !== "object") return;
+          usageState = next;
+          if (creditIndicator) creditIndicator.hidden = false;
+          const normalizedPlan = String(next.plan || "free").trim().toLowerCase().replace(/[-\s]+/g, "_");
+          const isProPlan = normalizedPlan === "pro" || normalizedPlan === "kazer_pro";
+          if (settingsMobilePlan) settingsMobilePlan.textContent = isProPlan ? "Kazer Pro" : "Free";
+          if (settingsMobileUpgrade) settingsMobileUpgrade.hidden = isProPlan;
+          animateCreditBalance(next.credits_balance, animate);
+          if (creditResetValue) creditResetValue.textContent = formatResetTime(next.next_credit_reset_at);
+          if (settingsMobileCreditNext) settingsMobileCreditNext.textContent = `Próxima recarga: ${formatResetTime(next.next_credit_reset_at)}`;
+          if (attachmentResetValue) attachmentResetValue.textContent = formatResetTime(next.attachment_reset_at);
+          if (attachmentLimitBanner) attachmentLimitBanner.hidden = next.attachment_limit_reached !== true;
+          if (creditLimitModal) creditLimitModal.hidden = next.credits_limit_reached !== true;
+        };
+
+        const loadUsage = async (animate = true) => {
+          try {
+            const response = await fetchWithAuth("/api/usage", { method: "GET" });
+            const data = await response.json().catch(() => null);
+            if (!response.ok) throw new Error(data?.error || "usage_unavailable");
+            applyUsageState(data, animate);
+            return data;
+          } catch (error) {
+            console.warn("Kazer usage sync failed", error?.message || "unknown");
+            return null;
+          }
+        };
+
+        const showCreditLimit = () => {
+          if (creditLimitModal) creditLimitModal.hidden = false;
+          if (creditResetValue) creditResetValue.textContent = formatResetTime(usageState?.next_credit_reset_at);
+        };
+
+        const showAttachmentLimit = () => {
+          if (attachmentLimitBanner) attachmentLimitBanner.hidden = false;
+          if (attachmentResetValue) attachmentResetValue.textContent = formatResetTime(usageState?.attachment_reset_at);
         };
 
         const loadAccount = async () => {
@@ -3556,7 +4044,10 @@
             applySettings();
           }
           await safeQuery(kazerSupabase.rpc("touch_user_activity"));
+          await loadUsage(false);
           await loadGlobalNotice();
+          window.clearInterval(usageRefreshTimer);
+          usageRefreshTimer = window.setInterval(() => loadUsage(false), 60_000);
           await loadRetentionNotice();
           if (new URLSearchParams(window.location.search).get("tool") === "web") window.setTimeout(openWeb, 180);
           return true;
@@ -3730,8 +4221,44 @@
           config.trigger?.focus();
         };
 
+        let attachmentSheetTimer = null;
+
+
+        const closeAttachmentSheet = (restoreFocus = false) => {
+          if (!attachmentSheet || !attachmentBackdrop) return;
+          window.clearTimeout(attachmentSheetTimer);
+          attachmentSheet.classList.remove("visible");
+          attachmentBackdrop.classList.remove("visible");
+          attachmentSheet.setAttribute("aria-hidden", "true");
+          attachButton.setAttribute("aria-expanded", "false");
+          attachmentSheetTimer = window.setTimeout(() => {
+            if (!attachmentSheet.classList.contains("visible")) {
+              attachmentSheet.hidden = true;
+              attachmentBackdrop.hidden = true;
+            }
+          }, 270);
+          if (restoreFocus) attachButton.focus();
+        };
+
+        const openAttachmentSheet = () => {
+          if (!attachmentSheet || !attachmentBackdrop) return;
+          closeMenus();
+          window.clearTimeout(attachmentSheetTimer);
+          attachmentSheet.hidden = false;
+          attachmentBackdrop.hidden = false;
+          attachmentSheet.setAttribute("aria-hidden", "false");
+          attachButton.setAttribute("aria-expanded", "true");
+          requestAnimationFrame(() => {
+            attachmentBackdrop.classList.add("visible");
+            attachmentSheet.classList.add("visible");
+          });
+        };
+        window.kazerOpenAttachmentSheet = openAttachmentSheet;
+        window.kazerCloseAttachmentSheet = closeAttachmentSheet;
+
         const closeMenus = () => {
           closeCustomSelects();
+          closeAttachmentSheet();
           profilePopover.classList.remove("visible");
           settingsPopover.classList.remove("visible", "mobile-section-open");
           settingsBackdrop.classList.remove("visible");
@@ -3771,7 +4298,7 @@
           const categories = new Set(items.map((item) => item.category));
           if (categories.has("project")) return "Contexto do seu principal projeto";
           if (categories.has("communication_style")) return "Como você prefere receber respostas";
-          if (categories.has("goal")) return "Objetivos e metas que ajudam o Kazer a acompanhar você";
+          if (categories.has("goal")) return "Planos e metas que ajudam o Kazer a acompanhar você";
           if (categories.has("preference")) return "Preferências que ajudam a personalizar suas respostas";
           return `Informações organizadas em ${name}`;
         };
@@ -4090,11 +4617,12 @@
 
         const titleCase = (value) => String(value || "").replace(/\b\w/g, (letter) => letter.toUpperCase());
 
-        const createChatTitle = (prompt) => {
+        const createChatTitle = (prompt, files = []) => {
           const source = String(prompt || "").replace(/\s+/g, " ").trim();
           const normalized = source.toLocaleLowerCase();
           const meaningful = source.replace(/[^\p{L}\p{N}\s-]/gu, " ").split(/\s+/).filter((word) => word.length > 2 && !/^(para|com|uma|uns|das|dos|que|como|por|esse|essa|isso|mais|meu|minha|você|voce|the|and|for|with|this|that)$/i.test(word));
           if (/^(oi|olá|ola|e aí|e ai|bom dia|boa tarde|boa noite|hello|hi)[!.?\s]*$/i.test(source)) return "Conversa inicial";
+          if (files.length && !source) return "Análise de arquivos";
           if (/landing page|página|pagina|site|website|interface|tela|app|aplicativo|design|layout/i.test(normalized)) return "Projeto de interface e design";
           if (/código|codigo|bug|erro|programa|javascript|python|api|repositório|repositorio/i.test(normalized)) return "Análise e solução técnica";
           if (/imagem|foto|logo|visual|ilustra|diagrama|gráfico|grafico/i.test(normalized)) return "Criação visual e direção de arte";
@@ -4104,11 +4632,11 @@
           return topic ? "Ideias sobre " + topic : "Nova conversa";
         };
 
-        const rememberChat = (prompt) => {
+        const rememberChat = (prompt, files = []) => {
           if (activeChatHistoryId) return activeChatHistoryId;
           const id = window.crypto?.randomUUID?.() || "chat-" + Date.now();
           const items = readChatHistory().filter((item) => item.id !== id);
-          items.unshift({ id, title: createChatTitle(prompt), titleGenerated: false, excerpt: "Conversa com o KAZER", searchText: String(prompt || ""), messages: [{ role: "user", content: String(prompt || "") }], createdAt: new Date().toISOString(), kind: "chat" });
+          items.unshift({ id, title: createChatTitle(prompt, files), titleGenerated: false, excerpt: "Conversa com o KAZER", searchText: String(prompt || ""), messages: [{ role: "user", content: String(prompt || "") }], createdAt: new Date().toISOString(), kind: "chat" });
           saveChatHistory(items);
           activeChatHistoryId = id;
           if (viewMode === "history") renderChatHistory();
@@ -4209,7 +4737,8 @@
           const sourceCards = (result?.sources || []).map((source, index) => '<div class="web-source"><strong>' + (index + 1) + '. ' + escapeHtml(source.title || "Fonte") + '</strong><span>Fonte encontrada na pesquisa do WebKazer.</span><a href="' + escapeHtml(source.uri) + '" target="_blank" rel="noopener noreferrer">Abrir fonte ↗</a></div>').join('');
           const encoded = encodeURIComponent(query);
           const quickLinks = [['Web', 'https://www.google.com/search?q='], ['Imagens', 'https://www.google.com/search?tbm=isch&q='], ['Vídeos', 'https://www.youtube.com/results?search_query='], ['Notícias', 'https://news.google.com/search?q=']].map(([label, base]) => '<a class="web-source" href="' + base + encoded + '" target="_blank" rel="noopener noreferrer"><strong>' + label + '</strong><span>Abrir resultados externos para “' + cleanQuery + '” ↗</span></a>').join('');
-          webSources.innerHTML = '<div class="web-source"><strong>Resumo da pesquisa</strong><span>' + summary + '</span><a href="#" data-use-web="' + cleanQuery + '">Enviar para o KAZER →</a></div>' + sourceCards + quickLinks;
+          const usageNote = Number(result?.credit_cost) > 0 ? '<small>Esta pesquisa usou ' + Number(result.credit_cost) + ' tokens.</small>' : '';
+          webSources.innerHTML = '<div class="web-source"><strong>Resumo da pesquisa</strong><span>' + summary + '</span>' + usageNote + '<a href="#" data-use-web="' + cleanQuery + '">Enviar para o KAZER →</a></div>' + sourceCards + quickLinks;
           webEmpty.hidden = true;
           const contextLink = webSources.querySelector("[data-use-web]");
           contextLink?.addEventListener("click", (event) => {
@@ -4233,8 +4762,10 @@
             const remaining = Math.max(0, 650 - (Date.now() - startedAt));
             await new Promise((resolve) => window.setTimeout(resolve, remaining));
             if (!response.ok) {
+              if (response.status === 402) { await loadUsage(false); showCreditLimit(); }
               throw new Error(result?.error || "Pesquisa indisponível");
             }
+            if (result?.usage) applyUsageState(result.usage, true);
             renderWebResults(query, result);
           } catch (error) {
             webSources.innerHTML = '<div class="web-source"><strong>Não foi possível concluir a pesquisa</strong><span>' + escapeHtml(error?.message || "Tente novamente em instantes.") + '</span><a href="#" data-retry-web="' + escapeHtml(query) + '">Tentar novamente</a></div>';
@@ -4250,7 +4781,7 @@
         };
 
         const updateSend = () => {
-          const hasContent = messageInput.value.trim().length > 0;
+          const hasContent = messageInput.value.trim().length > 0 || selectedFiles.length > 0;
           sendButton.classList.toggle("has-text", hasContent);
           sendButton.disabled = busy || !hasContent;
         };
@@ -4818,75 +5349,85 @@
           updateSend();
         };
 
-        let selectedFiles = [];
-        const fileToDataUrl = (file) => new Promise((resolve, reject) => {
-          const reader = new FileReader();
-          reader.onload = () => resolve({ name: file.name, data: reader.result });
-          reader.onerror = reject;
-          reader.readAsDataURL(file);
-        });
         const renderAttachments = () => {
           attachmentList.replaceChildren();
           attachmentList.hidden = selectedFiles.length === 0;
           selectedFiles.forEach((file, index) => {
-            const chip = document.createElement("span");
+            const chip = document.createElement("div");
             chip.className = "attachment-chip";
-            const label = document.createElement("span");
-            label.textContent = file.name;
+            const name = document.createElement("span");
+            name.textContent = file.name;
             const remove = document.createElement("button");
             remove.className = "attachment-remove";
             remove.type = "button";
-            remove.setAttribute("aria-label", `Remover ${file.name}`);
+            remove.setAttribute("aria-label", "Remover " + file.name);
             remove.textContent = "×";
-            remove.addEventListener("click", () => { selectedFiles.splice(index, 1); renderAttachments(); });
-            chip.append(label, remove);
+            remove.addEventListener("click", () => {
+              selectedFiles.splice(index, 1);
+              renderAttachments();
+              updateSend();
+            });
+            chip.append(name, remove);
             attachmentList.appendChild(chip);
           });
         };
-        const closeAttachmentSheet = () => {
-          attachmentSheet?.classList.remove("visible");
-          attachmentBackdrop?.classList.remove("visible");
-          if (attachmentSheet) { attachmentSheet.hidden = true; attachmentSheet.setAttribute("aria-hidden", "true"); }
-          if (attachmentBackdrop) attachmentBackdrop.hidden = true;
-          attachButton?.setAttribute("aria-expanded", "false");
+
+        const addFiles = (fileList) => {
+          if (usageState?.attachment_limit_reached === true) {
+            showAttachmentLimit();
+            showToast("Você atingiu o limite de anexos do plano Free.");
+            return;
+          }
+          const incoming = [...fileList];
+          const accountRemaining = Math.max(0, Number(usageState?.attachment_remaining ?? 10));
+          const selectionLimit = Math.min(10, accountRemaining);
+          const totalBytes = selectedFiles.reduce((sum, file) => sum + file.size, 0);
+          for (const file of incoming) {
+            if (selectedFiles.length >= selectionLimit) {
+              const remainingToSelect = Math.max(0, selectionLimit - selectedFiles.length);
+              showToast(remainingToSelect > 0 ? `Você ainda pode selecionar ${remainingToSelect} anexo(s)` : "Você pode selecionar até 10 anexos por envio");
+              break;
+            }
+            if (file.size > maxClientFileBytes || totalBytes + file.size > maxClientFileBytes) {
+              showToast("Cada envio pode ter até 4 MB em anexos");
+              continue;
+            }
+            if (selectedFiles.some((current) => current.name === file.name && current.size === file.size)) continue;
+            selectedFiles.push(file);
+          }
+          fileInput.value = "";
+          photoInput.value = "";
+          cameraInput.value = "";
+          renderAttachments();
+          updateSend();
         };
-        const openAttachmentSheet = () => {
-          if (!attachmentSheet || !attachmentBackdrop) return;
-          attachmentSheet.hidden = false; attachmentBackdrop.hidden = false;
-          attachmentSheet.setAttribute("aria-hidden", "false"); attachButton?.setAttribute("aria-expanded", "true");
-          requestAnimationFrame(() => { attachmentSheet.classList.add("visible"); attachmentBackdrop.classList.add("visible"); });
-        };
-        const addFiles = (list) => {
-          const incoming = Array.from(list || []).filter((file) => file && file.size <= 4 * 1024 * 1024);
-          selectedFiles = [...selectedFiles, ...incoming].slice(0, 10);
-          renderAttachments(); closeAttachmentSheet();
-        };
-        attachButton?.addEventListener("click", openAttachmentSheet);
-        attachmentSheetClose?.addEventListener("click", closeAttachmentSheet);
-        attachmentBackdrop?.addEventListener("click", closeAttachmentSheet);
-        cameraAction?.addEventListener("click", () => cameraInput?.click());
-        photoAction?.addEventListener("click", () => photoInput?.click());
-        fileAction?.addEventListener("click", () => fileInput?.click());
-        fileInput?.addEventListener("change", () => { addFiles(fileInput.files); fileInput.value = ""; });
-        photoInput?.addEventListener("change", () => { addFiles(photoInput.files); photoInput.value = ""; });
-        cameraInput?.addEventListener("change", () => { addFiles(cameraInput.files); cameraInput.value = ""; });
-        connectorSingleAction?.addEventListener("click", () => { closeAttachmentSheet(); openConnectorsScreen(); });
+
+        const fileToDataUrl = (file) => new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve({ name: file.name, type: file.type || "application/octet-stream", data: reader.result });
+          reader.onerror = () => reject(new Error("Não foi possível ler o anexo."));
+          reader.readAsDataURL(file);
+        });
 
         const submit = async () => {
           if (busy) return;
-          const prompt = messageInput.value.trim();
-          if (!prompt && selectedFiles.length === 0) return;
-          const attachmentPayload = await Promise.all(selectedFiles.map(fileToDataUrl));
+          const text = messageInput.value.trim();
+          const files = [...selectedFiles];
+          if (!text && files.length === 0) return;
 
-          const chatId = rememberChat(prompt || selectedFiles.map((file) => file.name).join(", "));
-          const taskContext = window.kazerWorkspace?.startTask?.({ prompt }) || null;
+          const prompt = text || "Analise os arquivos anexados e explique os pontos principais.";
+          const chatId = rememberChat(prompt, files);
+          const taskContext = window.kazerWorkspace?.startTask?.({ prompt, attachmentCount: files.length }) || null;
           window.kazerActiveTaskContext = taskContext;
           const mcpConnectorIds = taskContext?.mcpConnectorIds || [];
           const githubRepo = taskContext?.repo || null;
+          const attachmentLabel = files.length ? "\n\nAnexos enviados: " + files.map((file) => file.name).join(", ") : "";
+          const historyText = prompt + attachmentLabel;
+          const displayText = prompt + attachmentLabel;
           conversationMode();
-          const userRow = createMessage("user", prompt);
+          const userRow = createMessage("user", displayText);
           append(userRow);
-          conversationMessages.push({ role: "user", content: prompt });
+          conversationMessages.push({ role: "user", content: historyText });
           messageInput.value = "";
           selectedFiles = [];
           renderAttachments();
@@ -4899,14 +5440,20 @@
           activeRequestController = controller;
 
           try {
+            const attachments = await Promise.all(files.map(fileToDataUrl));
             if (activeRequestController !== controller) return;
             const result = await fetchWithAuth("/api/chat", {
               method: "POST",
-              body: JSON.stringify({ messages: conversationMessages, attachments: attachmentPayload, mcpConnectorIds, githubRepo }),
+              body: JSON.stringify({ messages: conversationMessages, attachments, mcpConnectorIds, githubRepo }),
               signal: controller.signal,
             });
             const data = await result.json().catch(() => ({}));
-            if (!result.ok) throw new Error(data.error || "Não foi possível obter uma resposta.");
+            if (!result.ok) {
+              if (result.status === 402) { await loadUsage(false); showCreditLimit(); }
+              if (result.status === 409) { await loadUsage(false); showAttachmentLimit(); }
+              throw new Error(data.error || "Não foi possível obter uma resposta.");
+            }
+            if (data.usage) applyUsageState(data.usage, true);
             if (activeRequestController !== controller) return;
             const answer = data.message?.content;
             if (typeof answer !== "string" || !answer.trim()) throw new Error("A resposta recebida estava vazia.");
@@ -4920,10 +5467,12 @@
             updateChatSearchText(chatId, answer.trim());
             if (Number(data?.memories_updated) > 0) invalidateMemories();
             if (conversationMessages.length === 2) generateChatTitle(chatId, conversationMessages.slice(), controller.signal);
-            window.kazerWorkspace?.finishTask?.(taskContext, answer.trim());
+            window.kazerWorkspace?.finishTask?.(taskContext, answer.trim(), data.credit_cost);
           } catch (error) {
             if (error.name === "AbortError" || activeRequestController !== controller) {
               if (assistantRow?.isConnected) assistantRow.remove();
+              selectedFiles = files;
+              renderAttachments();
               updateSend();
               return;
             }
@@ -4932,6 +5481,8 @@
             // A mensagem que falhou continua sendo contexto válido e pode ser
             // reenviada sem obrigar a pessoa a redigitar tudo.
             saveChatMessages(chatId, conversationMessages);
+            selectedFiles = files;
+            renderAttachments();
             updateSend();
             window.kazerWorkspace?.failTask?.(taskContext, error.message || "Não foi possível conectar ao chat agora.");
             append(createMessage("assistant", error.message || "Não foi possível conectar ao chat agora."));
@@ -4967,6 +5518,8 @@
           setBusy(false);
           conversationMessages = [];
           activeChatHistoryId = null;
+          selectedFiles = [];
+          renderAttachments();
           messageList.replaceChildren();
           messageList.hidden = true;
           emptyState.hidden = false;
@@ -5059,6 +5612,32 @@
           profileMoreToggle.setAttribute("aria-expanded", String(isOpen));
         });
         webKazerAction.addEventListener("click", () => openWeb());
+        const openPro = () => { closeMenus(); showToast("Kazer Pro: página de compra em breve"); };
+        const openPlansScreen = () => {
+          closeMenus();
+          plansBackdrop.hidden = false;
+          plansScreen.hidden = false;
+          plansScreen.setAttribute("aria-hidden", "false");
+          requestAnimationFrame(() => {
+            plansBackdrop.classList.add("visible");
+            plansScreen.classList.add("visible");
+          });
+        };
+        const closePlansScreen = () => {
+          plansBackdrop.classList.remove("visible");
+          plansScreen.classList.remove("visible");
+          window.setTimeout(() => {
+            plansBackdrop.hidden = true;
+            plansScreen.hidden = true;
+          }, 220);
+        };
+        settingsMobileUpgrade?.addEventListener("click", openPlansScreen);
+        plansBack?.addEventListener("click", closePlansScreen);
+        plansBackdrop?.addEventListener("click", closePlansScreen);
+        plansProAction?.addEventListener("click", () => showToast("Kazer Pro: pagamentos em desenvolvimento"));
+        proAction.addEventListener("click", openPro);
+        creditProButton?.addEventListener("click", openPro);
+        attachmentProButton?.addEventListener("click", openPro);
         webModes.addEventListener("click", (event) => {
           const button = event.target.closest("[data-web-mode]");
           if (!button) return;
@@ -5085,7 +5664,7 @@
 
         settingsLogoutAction.addEventListener("click", logout);
         document.addEventListener("click", (event) => {
-          if (!event.target.closest(".profile-popover") && !event.target.closest("#historyBrand") && !event.target.closest(".settings-popover") && !event.target.closest(".web-popover")) closeMenus();
+          if (!event.target.closest(".profile-popover") && !event.target.closest("#historyBrand") && !event.target.closest(".settings-popover") && !event.target.closest(".web-popover") && !event.target.closest(".attachment-sheet") && !event.target.closest("#attachButton")) closeMenus();
         });
 
         closeSettings.addEventListener("click", closeSettingsModal);
@@ -5158,6 +5737,10 @@
         });
         document.addEventListener("keydown", (event) => {
           if (event.key !== "Escape") return;
+          if (attachmentSheet.classList.contains("visible")) {
+            closeAttachmentSheet(true);
+            return;
+          }
           if (customSelects.some(({ root }) => root?.classList.contains("open"))) {
             closeCustomSelects();
             return;
@@ -5169,7 +5752,28 @@
           event.preventDefault();
           submit();
         });
+        attachButton.addEventListener("click", (event) => {
+          event.stopPropagation();
+          if (attachmentSheet.classList.contains("visible")) closeAttachmentSheet(true);
+          else openAttachmentSheet();
+        });
+        attachmentSheetClose.addEventListener("click", () => closeAttachmentSheet(true));
+        attachmentBackdrop.addEventListener("click", () => closeAttachmentSheet(true));
+        const openAttachmentInput = (input) => {
+          if (usageState?.attachment_limit_reached === true) {
+            closeAttachmentSheet(true);
+            showAttachmentLimit();
+            showToast("Você atingiu o limite de anexos do plano Free.");
+            return;
+          }
+          closeAttachmentSheet();
+          input.click();
+        };
+        cameraAction.addEventListener("click", () => openAttachmentInput(cameraInput));
+        photoAction.addEventListener("click", () => openAttachmentInput(photoInput));
+        fileAction.addEventListener("click", () => openAttachmentInput(fileInput));
         const openConnectorsScreen = () => {
+          closeAttachmentSheet(true);
           closeMenus();
           connectorsAddMenu.hidden = true;
           connectorsAddToggle.setAttribute("aria-expanded", "false");
@@ -5181,7 +5785,6 @@
             connectorsScreen.classList.add("visible");
           });
         };
-        window.kazerOpenConnectorsScreen = openConnectorsScreen;
         const closeConnectorsScreen = () => {
           connectorsAddMenu.hidden = true;
           connectorsAddToggle.setAttribute("aria-expanded", "false");
@@ -5217,6 +5820,7 @@
             connectorCustomModal.hidden = true;
           }, 220);
         };
+        connectorSingleAction?.addEventListener("click", openConnectorsScreen);
         connectorsBack?.addEventListener("click", closeConnectorsScreen);
         connectorsBackdrop?.addEventListener("click", closeConnectorsScreen);
         connectorsAddToggle?.addEventListener("click", (event) => {
@@ -5264,6 +5868,9 @@
             connectorsAddToggle.setAttribute("aria-expanded", "false");
           }
         });
+        fileInput.addEventListener("change", () => addFiles(fileInput.files));
+        photoInput.addEventListener("change", () => addFiles(photoInput.files));
+        cameraInput.addEventListener("change", () => addFiles(cameraInput.files));
         messageInput.addEventListener("input", () => {
           resizeInput();
           updateSend();

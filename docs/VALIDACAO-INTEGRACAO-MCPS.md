@@ -25,8 +25,8 @@ O SQL Editor exibiu a confirmação de operações potencialmente destrutivas; a
 
 ## Resultado da migração
 
-O Supabase exibiu **Success. No rows returned** para a migração 010 no ambiente `main`/`PRODUCTION`. O registro abaixo é histórico e antecede a remoção do sistema de consumo; a migração 018 precisa ser aplicada no ambiente correspondente antes de considerar o estado atual validado.
+O Supabase exibiu **Success. No rows returned** para a migração 010 no ambiente `main`/`PRODUCTION`. Em seguida, foi preparada uma consulta read-only que verifica a existência das três tabelas, o RLS/force RLS e a RPC `consume_kazer_usage`, sem ler dados privados de usuários.
 
 ## Validação read-only concluída
 
-A consulta histórica retornou `tables` com `kazer_github_connections`, `kazer_mcp_connectors` e `kazer_tasks`; `rls` com `enabled: true` e `forced: true` nas três tabelas; e a RPC de consumo ainda existente naquele momento. Após aplicar `018_remove_consumption_controls.sql`, a validação deve confirmar que MCPs, GitHub e tarefas continuam protegidos e que as RPCs e tabelas de saldo foram removidas.
+A consulta de validação retornou `tables` com `kazer_github_connections`, `kazer_mcp_connectors` e `kazer_tasks`; `rls` com `enabled: true` e `forced: true` nas três tabelas; e `rpc: true` para `consume_kazer_usage`. Portanto, a estrutura necessária para MCPs, GitHub, tarefas e consumo variável de créditos está criada e protegida no banco de produção.

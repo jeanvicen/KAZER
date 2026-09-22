@@ -10,7 +10,7 @@
 
 Ao acessar, criar uma conta ou utilizar o KAZER, você declara que leu estas regras e se compromete a usar o serviço de forma legal, segura, respeitosa e compatível com a legislação aplicável. Se não concordar, não utilize o serviço. Quando uma funcionalidade tiver regras adicionais exibidas na própria tela, elas complementam estes Termos para aquela funcionalidade.
 
-O KAZER é uma interface web/PWA de conversa textual com inteligência artificial que pode oferecer respostas, escrita, organização de ideias e pesquisa na web pelo WebKazer. Recursos, limites, provedores, disponibilidade e fluxos podem mudar. Existe um plugin Google Drive funcional, com autorização oficial do Google, busca, leitura e salvamento de arquivos; outras integrações podem ser adicionadas no futuro.
+O KAZER é uma interface web/PWA de conversa com inteligência artificial que pode oferecer respostas, escrita, organização de ideias, análise de imagens e arquivos compatíveis e pesquisa na web pelo WebKazer. Recursos, limites, provedores, preços, disponibilidade e fluxos podem mudar. Existe um plugin Google Drive funcional, com autorização oficial do Google, busca, leitura e salvamento de arquivos; outras integrações podem ser adicionadas no futuro; a área Kazer Pro também não representa, neste estado, uma compra concluída.
 
 ## 2. Conta e segurança de acesso
 
@@ -20,11 +20,11 @@ Você deve informar rapidamente qualquer uso não autorizado pelo canal oficial.
 
 ## 3. Conteúdo enviado pelo usuário
 
-Você continua titular dos direitos que já possuía sobre mensagens e demais conteúdos enviados, desde que tenha autorização para utilizá-los. Você declara que o conteúdo não viola direitos de terceiros e que possui as permissões necessárias para que o KAZER o processe.
+Você continua titular dos direitos que já possuía sobre mensagens, imagens, arquivos e demais materiais enviados, desde que tenha autorização para utilizá-los. Você declara que o conteúdo não viola direitos de terceiros e que possui as permissões necessárias para que o KAZER o processe.
 
 Para executar uma solicitação, você autoriza o KAZER, somente na medida técnica necessária, a receber, processar, transmitir aos serviços necessários, adaptar para formatos internos e manter temporariamente o conteúdo no fluxo correspondente. Essa autorização é limitada à operação do recurso solicitado, não transfere a titularidade do seu conteúdo e não autoriza automaticamente publicidade, venda, publicação ou finalidade diferente. Os detalhes de tratamento devem ser lidos na política de privacidade aplicável.
 
-Não envie senhas, chaves privadas, tokens, dados bancários completos, documentos de terceiros sem autorização ou informações sensíveis que não sejam necessárias. Antes de enviar conteúdo, revise o texto e remova dados que não façam parte do objetivo da solicitação.
+Não envie senhas, chaves privadas, tokens, dados bancários completos, documentos de terceiros sem autorização ou informações sensíveis que não sejam necessárias. Antes de enviar arquivos, revise o conteúdo e remova dados que não façam parte do objetivo da análise.
 
 ## 4. Uso permitido e proibido
 
@@ -68,9 +68,11 @@ O KAZER pode depender de Supabase, Vercel, provedores de IA, mecanismos de busca
 
 Links externos não são uma recomendação nem uma garantia de conteúdo, segurança, disponibilidade ou titularidade. O usuário deve revisar os termos do serviço externo antes de enviar dados, instalar software ou tomar uma decisão.
 
-## 8. Limites técnicos
+## 8. Créditos, anexos e limites
 
-O serviço pode aplicar rate limiting, limites de tamanho, limites de histórico, uso por IP e uso por conta. Esses limites técnicos podem ser ajustados por manutenção, segurança, disponibilidade do provedor ou alteração de produto. Não tente contorná-los por automação, múltiplas contas ou manipulação de requisições.
+O serviço pode aplicar créditos, limites por janela, rate limiting, limites de tamanho, tipos de arquivo, quantidade de imagens, uso por IP e uso por conta. Os limites exibidos podem ser ajustados por manutenção, segurança, custo, plano ou alteração de produto. Não tente contorná-los por automação, múltiplas contas ou manipulação de requisições.
+
+Qualquer plano pago, preço, renovação, benefício ou condição comercial somente será válido quando exibido em uma tela oficial de compra e confirmado por fluxo autorizado. A interface Kazer Pro em desenvolvimento não constitui contrato de compra nem promessa de benefício.
 
 ## 9. Disponibilidade, alterações e encerramento
 

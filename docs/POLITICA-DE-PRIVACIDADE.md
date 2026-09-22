@@ -31,8 +31,8 @@ O fluxo técnico atual pode envolver as categorias abaixo. A lista precisa ser c
 |---|---|---|
 | Conta | E-mail, identificador de usuário, nome de exibição, estado de sessão e metadados de autenticação. | Cadastro, login e Supabase Auth. |
 | Preferências | Tema, idioma, avisos e aviso de instalação. | Settings, armazenamento local e `user_settings`. |
-| Conteúdo | Mensagens e histórico textual enviado na requisição. | Entrada voluntária no chat. |
-| Integrações | Conteúdo necessário para uma ação autorizada no Google Drive ou em conectores ativos. | Ação iniciada pelo usuário. |
+| Conteúdo | Mensagens, histórico enviado na requisição, imagens e arquivos compatíveis. | Entrada voluntária no chat. |
+| Uso | Créditos, contagem de anexos, plano e horários de reset. | RPCs e `user_usage`. |
 | Retenção | Última atividade e notificações de inatividade. | Uso autenticado e job de retenção. |
 | Técnico e segurança | IP ou identificadores derivados, origem, Fetch Metadata, método, limites e eventos de erro. | Requisições e controles server-side. |
 | Contato | Conteúdo enviado voluntariamente por e-mail ou canal oficial. | Solicitação do usuário. |
@@ -41,12 +41,13 @@ O KAZER não deve exigir que o usuário envie dados sensíveis para usar o recur
 
 ## 4. Finalidades e bases a confirmar
 
-As finalidades típicas do fluxo são autenticar a conta, entregar o chat textual, realizar pesquisa, executar integrações autorizadas, manter preferências, prevenir abuso, proteger a infraestrutura, responder a solicitações, cumprir obrigações legais e comunicar mudanças relevantes. Cada operação precisa ter sua base legal documentada pelo controlador real.
+As finalidades típicas do fluxo são autenticar a conta, entregar o chat, processar anexos, realizar pesquisa, manter preferências, contabilizar uso, prevenir abuso, proteger a infraestrutura, responder a solicitações, cumprir obrigações legais e comunicar mudanças relevantes. Cada operação precisa ter sua base legal documentada pelo controlador real.
 
 | Finalidade | Dados envolvidos | Base legal |
 |---|---|---|
 | Criar e manter conta | Cadastro, autenticação e preferências. | **A confirmar pelo controlador.** |
-| Responder mensagens e executar integrações autorizadas | Mensagens, contexto textual e dados necessários à ação escolhida. | **A confirmar; pode envolver execução de serviço solicitado.** |
+| Responder mensagens e analisar anexos | Mensagens, imagens, arquivos e contexto. | **A confirmar; pode envolver execução de serviço solicitado.** |
+| Medir créditos e anexos | Identificador, plano e uso. | **A confirmar pelo controlador.** |
 | Segurança e prevenção de abuso | Metadados técnicos e eventos de requisição. | **A confirmar pelo controlador.** |
 | Retenção e avisos | Última atividade, conta e notificações. | **A confirmar e alinhar ao prazo publicado.** |
 | Atendimento e direitos | Dados fornecidos no contato. | **A confirmar pelo controlador.** |
@@ -56,7 +57,7 @@ A tabela não deve ser lida como escolha automática de base legal. O titular pr
 
 ## 5. Serviços externos e transferências
 
-Para produzir uma resposta ou resumo, o conteúdo necessário pode ser transmitido aos provedores configurados para chat, pesquisa ou resumo. O Supabase pode tratar autenticação e dados de conta; a Vercel pode executar hospedagem, funções e cron; outros serviços podem processar requisições conforme suas próprias políticas.
+Para produzir uma resposta ou resumo, o conteúdo necessário pode ser transmitido aos provedores configurados para chat, visão, pesquisa ou resumo. O Supabase pode tratar autenticação e dados de conta; a Vercel pode executar hospedagem, funções e cron; outros serviços podem processar requisições conforme suas próprias políticas.
 
 Antes de habilitar produção, mantenha um inventário com nome do fornecedor, função, categorias de dados, local de processamento, retenção, subcontratados, contrato, medidas de segurança e procedimento de incidente. Se houver transferência internacional ou processamento fora do país do titular, a hipótese e as salvaguardas devem ser verificadas pelo controlador.
 
@@ -72,7 +73,7 @@ A sessão de autenticação é gerida pelo Supabase JS no navegador, com renova�
 
 As informações devem ser mantidas pelo tempo necessário à finalidade, à segurança, ao atendimento de direitos ou a obrigações legais, com prazos definidos em uma tabela interna de retenção. O KAZER possui um job de inatividade que pode emitir avisos e, somente com flag administrativa explícita, encaminhar exclusões permanentes. Mantenha `RETENTION_DELETE_ENABLED=false` até concluir backup, restauração, comunicação e aprovação.
 
-Preferências locais podem ser removidas pelo usuário no navegador. Para dados de conta, mensagens ou notificações mantidos no backend, o procedimento de acesso, correção ou exclusão deve ser confirmado pelo controlador e executado com verificação de identidade adequada. Exclusão de conta não deve apagar registros cuja conservação seja exigida por lei, segurança ou defesa de direitos, desde que a retenção seja documentada.
+Preferências locais podem ser removidas pelo usuário no navegador. Para dados de conta, mensagens, uso ou notificações mantidos no backend, o procedimento de acesso, correção ou exclusão deve ser confirmado pelo controlador e executado com verificação de identidade adequada. Exclusão de conta não deve apagar registros cuja conservação seja exigida por lei, segurança ou defesa de direitos, desde que a retenção seja documentada.
 
 ## 8. Direitos e solicitações
 
@@ -82,7 +83,7 @@ O KAZER pode pedir informação adicional para evitar fraude e proteger a conta.
 
 ## 9. Segurança
 
-O projeto aplica autenticação server-side nas APIs privadas, RLS no Supabase, limites de corpo, rate limiting best effort, timeouts, escaping de conteúdo, headers de segurança, ausência de cache em APIs e redaction de padrões comuns de segredos. Esses controles reduzem risco, mas não garantem invulnerabilidade.
+O projeto aplica autenticação server-side nas APIs privadas, RLS no Supabase, limites de corpo, rate limiting best effort, timeouts, allowlist de anexos, escaping de conteúdo, headers de segurança, ausência de cache em APIs e redaction de padrões comuns de segredos. Esses controles reduzem risco, mas não garantem invulnerabilidade.
 
 O usuário deve proteger sua sessão, usar navegador atualizado, sair de dispositivos compartilhados, não inserir segredos desnecessários e comunicar comportamentos suspeitos sem incluir credenciais. Incidentes devem ser avaliados e comunicados conforme a lei, os contratos e o plano operacional do controlador.
 
