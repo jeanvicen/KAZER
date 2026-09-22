@@ -1,5 +1,6 @@
 import { readFile } from "node:fs/promises";
 import { execFileSync } from "node:child_process";
+import { writeFileSync, unlinkSync } from "node:fs";
 
 const root = new URL("..", import.meta.url).pathname;
 const chatApi = await readFile(`${root}/api/chat.js`, "utf8");
@@ -11,6 +12,17 @@ const assert = (condition, message) => {
 };
 
 execFileSync(process.execPath, ["--check", `${root}/api/chat.js`]);
+const inlineScripts = [...chatUi.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/gi)]
+  .map((match) => match[1])
+  .filter((script) => script.trim())
+  .join("\n");
+const inlineCheckPath = "/tmp/kazer-chat-inline-regression.js";
+writeFileSync(inlineCheckPath, inlineScripts);
+try {
+  execFileSync(process.execPath, ["--check", inlineCheckPath]);
+} finally {
+  unlinkSync(inlineCheckPath);
+}
 assert(chatApi.includes("hasExpectedFileSignature"), "A API não valida assinatura dos anexos");
 assert(chatApi.includes("attachment_signature_invalid"), "A API não rejeita assinatura de anexo inválida");
 assert(chatApi.includes("MAX_TOTAL_ATTACHMENT_BYTES"), "A API não limita o tamanho total dos anexos");

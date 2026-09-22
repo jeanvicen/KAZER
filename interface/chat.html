@@ -5418,6 +5418,7 @@
             renderSettingsSection(item.dataset.settingsSection);
             if (isMobileSettingsViewport()) settingsPopover.classList.add("mobile-section-open");
           });
+        });
         settingsSearch.addEventListener("input", () => {
           const query = settingsSearch.value.trim().toLocaleLowerCase();
           settingsNavItems.forEach((item) => {
