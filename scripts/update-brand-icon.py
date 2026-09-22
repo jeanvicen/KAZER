@@ -6,8 +6,7 @@ from PIL import Image, ImageEnhance, ImageOps
 
 ROOT = Path(__file__).resolve().parents[1]
 SOURCE = ROOT / 'download/assets/kazer-icon-source.png'
-# The generated source is an original square icon: a cracked black crowned
-# statue with red rim light, designed to remain legible at launcher size.
+# The source is the supplied square KAZER brand mark, prepared for launcher size.
 image = Image.open(SOURCE).convert('RGB')
 crop = ImageOps.autocontrast(image, cutoff=1)
 crop = ImageEnhance.Contrast(crop).enhance(1.08)
@@ -48,6 +47,15 @@ for path, size in outputs.items():
     else:
         resized.save(path, format='PNG', optimize=True)
 
+# Keep Android launch screens aligned with the same mark.
+for path in ROOT.glob('download/android/twa/app/src/main/res/drawable-*/splash.png'):
+    current = Image.open(path).convert('RGB')
+    canvas = Image.new('RGB', current.size, (7, 7, 10))
+    side = max(1, int(min(current.size) * 0.72))
+    icon = master.resize((side, side), Image.Resampling.LANCZOS)
+    canvas.paste(icon, ((current.width - side) // 2, (current.height - side) // 2))
+    canvas.save(path, format='PNG', optimize=True)
+
 # The SVG brand assets are kept as self-contained wrappers around the same mark
 # so no old K-shaped artwork remains in the distribution set.
 for name in ('kazer-logo.svg', 'kazer-mark.svg', 'kazer-mark-glyph.svg'):
@@ -56,7 +64,7 @@ for name in ('kazer-logo.svg', 'kazer-mark.svg', 'kazer-mark-glyph.svg'):
         '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" '
         'role="img" aria-labelledby="title desc">\n'
         '  <title id="title">Símbolo KAZER</title>\n'
-        '  <desc id="desc">Ícone KAZER com uma estátua preta coroada e textura de pedra rachada.</desc>\n'
+        '  <desc id="desc">Símbolo visual oficial do KAZER.</desc>\n'
         f'  <image href="data:image/png;base64,{embedded_png}" width="1024" height="1024" preserveAspectRatio="none"/>\n'
         '</svg>\n'
     )
