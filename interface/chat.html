@@ -5337,7 +5337,7 @@
         newChatBack?.addEventListener("click", () => setView("history", { push: true }));
         chatHistoryBack?.addEventListener("click", (event) => {
           event.preventDefault();
-          window.location.assign("?view=history");
+          setView("history", { push: true });
         });
         window.addEventListener("popstate", () => { const view = new URLSearchParams(window.location.search).get("view"); setView(view === "history" ? "history" : view === "chat" ? "new-chat" : "kazer"); });
 
