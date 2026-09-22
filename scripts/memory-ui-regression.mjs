@@ -25,6 +25,8 @@ assert.match(source, /memory-group-chevron/);
 assert.match(source, /document\.createElementNS\(/);
 assert.match(source, /memoriesCache = Array\.isArray\(payload\.memories\) \? payload\.memories\.map\(normalizeMemory\)/);
 assert.match(source, /text\.textContent = cleanMemoryContent\(memory\.content\)/);
+assert.match(source, /item\.append\(marker, copy, makeMemoryChevron\(\)\)/);
+assert.doesNotMatch(source, /item\.append\(marker, copy, makeMemoryChevron\);/);
 assert.doesNotMatch(source, /Não usar/);
 assert.match(chatApi, /function cleanMemoryContent\(value\)/);
 assert.match(chatApi, /content: cleanMemoryContent\(item\?\.content\)/);

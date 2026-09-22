@@ -4376,7 +4376,7 @@
             const name = document.createElement("span"); name.className = "memory-group-name"; name.textContent = group.name;
             const description = document.createElement("span"); description.className = "memory-group-description"; description.textContent = memoryGroupDescriptions(group.name, group.items);
             const meta = document.createElement("span"); meta.className = "memory-group-meta"; meta.textContent = `${group.items.length} ${group.items.length === 1 ? "memória" : "memórias"} · atualizado ${memoryRelativeDate(group.updatedAt).replace(/^há /, "")}`;
-            copy.append(name, description, meta); item.append(marker, copy, makeMemoryChevron); item.addEventListener("click", () => openMemoryGroup(group)); memoryGroups.append(item);
+            copy.append(name, description, meta); item.append(marker, copy, makeMemoryChevron()); item.addEventListener("click", () => openMemoryGroup(group)); memoryGroups.append(item);
           });
         };
         const openMemoryModal = ({ title, description, value = "", confirmLabel, danger = false, onConfirm }) => {
