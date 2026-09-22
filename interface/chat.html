@@ -4298,10 +4298,10 @@
         const memoryCategoryLabels = { preference: "Preferências", dislike: "Não gosta", personal_context: "Sobre você", project: "Projetos", goal: "Objetivos", habit: "Hábitos", communication_style: "Estilo de comunicação", technical_knowledge: "Conhecimento técnico", interest: "Interesses", workflow: "Fluxo de trabalho", instruction: "Instruções", important_fact: "Fatos importantes", temporary_context: "Contexto temporário", relationship_context: "Relacionamentos", learning: "Aprendizado", conversation_context: "Conversas", other: "Outros" };
         const cleanMemoryContent = (value) => {
           let text = String(value ?? "").replace(/\r\n/g, "\n").trim();
-          const corruptionMarkers = ["document.createElementNS(", "document.createElement(", "const makeMemoryChevron", "svg.setAttribute(", "svg.innerHTML =", "memory-group-chevron", "<script", "</script>"];
+          const corruptionMarkers = ["const svg", "let svg", "var svg", "document.createElementNS(", "document.createElement(", "const makeMemoryChevron", "svg.setAttribute(", "svg.innerHTML =", "memory-group-chevron", "<script", "</script>"];
           const markerIndex = corruptionMarkers.reduce((lowest, marker) => { const index = text.indexOf(marker); return index >= 0 && index < lowest ? index : lowest; }, text.length);
           if (markerIndex < text.length) text = text.slice(0, markerIndex).trim();
-          if (/^(?:const|let|var|function)\s+[A-Za-z_$][\w$]*\s*=/.test(text)) text = "";
+          if (/[{}`]|(?:const|let|var|function)\s+[A-Za-z_$][\w$]*\s*=|document\.|\.setAttribute\(|\.innerHTML\s*=/.test(text)) text = "";
           return text || "Conteúdo da memória indisponível.";
         };
         const normalizeMemory = (memory) => ({ ...memory, content: cleanMemoryContent(memory?.content) });
