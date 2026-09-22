@@ -16,10 +16,10 @@ const assert = (condition, message) => {
 
 execFileSync(process.execPath, ["--check", `${root}/api/chat.js`]);
 assert(chatApi.includes("authenticateUser") && chatApi.includes("MAX_REQUEST_BYTES"), "A API não mantém autenticação e limite técnico de corpo");
-assert(!/attachment|attachments|credit_cost|credits_balance|consume_.*usage/i.test(chatApi), "A API de chat ainda contém lógica de anexos ou consumo");
+assert(chatApi.includes("prepareAttachments") && chatApi.includes("MAX_TOTAL_ATTACHMENT_BYTES") && !/credit_cost|credits_balance|consume_.*usage/i.test(chatApi), "A API de chat não mantém anexos ou contém lógica de consumo");
 assert(!/attachment|attachments|credit_cost|credits_balance|consume_.*usage/i.test(searchApi), "A API de pesquisa ainda contém lógica de consumo");
 assert(!/callUsageRpc|credit|usage/i.test(driveApi), "A API do Google Drive ainda contém cobrança por uso");
-assert(!chatUi.includes("selectedFiles") && !chatUi.includes("attachmentSheet") && !chatUi.includes("plansScreen"), "A interface ainda contém superfícies de anexos ou planos");
+assert(chatUi.includes('id="attachButton"') && chatUi.includes('id="cameraAction"') && chatUi.includes('id="photoAction"') && chatUi.includes('id="fileAction"') && chatUi.includes('id="connectorSingleAction"') && chatUi.includes("selectedFiles") && !chatUi.includes("plansScreen"), "A interface não mantém os controles de envio e conectores esperados");
 assert(chatUi.includes('id="connectorsScreen"') && chatUi.includes("window.kazerOpenConnectorsScreen"), "O acesso aos conectores foi removido junto com anexos");
 assert(chatUi.includes("A mensagem que falhou continua sendo contexto válido"), "O frontend ainda remove o contexto quando a resposta falha");
 assert(!chatUi.includes("conversationMessages.pop();"), "O frontend ainda descarta a mensagem que falhou");

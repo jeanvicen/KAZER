@@ -19,6 +19,12 @@ const { supabaseRequest } = require("./_kazer-data");
 
 const DEFAULT_TEXT_MODEL = "openai/gpt-oss-120b";
 const DEFAULT_TEXT_FALLBACK_MODEL = "qwen/qwen3.6-27b";
+const DEFAULT_VISION_MODEL = "qwen/qwen3.8-27b";
+const DEFAULT_VISION_FALLBACK_MODEL = "qwen/qwen3.6-27b";
+const MAX_FILE_BYTES = 4 * 1024 * 1024;
+const MAX_IMAGES = 3;
+const MAX_EXTRACTED_FILE_CHARS = 18000;
+const MAX_TOTAL_ATTACHMENT_BYTES = 10 * 1024 * 1024;
 const MAX_REQUEST_BYTES = 7 * 1024 * 1024;
 const MAX_OUTPUT_CHARS = 16000;
 const MAX_GROQ_ATTEMPTS_PER_MODEL = 2;
@@ -396,11 +402,119 @@ function protectKazerIdentity(value) {
   return result.replace(/\n{3,}/g, "\n\n").trim();
 }
 
+function cleanFileName(value) {
+  return String(value || "")
+    .replace(/[\u0000-\u001f\u007f/\\]/g, "_")
+    .trim()
+    .slice(0, 120) || "anexo";
+}
+
+function isTextFile(attachment, parsed) {
+  if (parsed.mimeType.startsWith("text/")) return true;
+  const name = String(attachment.name || "").toLowerCase();
+  return /\.(txt|md|csv|json|xml|html|htm|js|ts|tsx|jsx|css|py|java|sql|yaml|yml|log)$/i.test(name);
+}
+
+function isAllowedAttachment(attachment, parsed) {
+  if (parsed.mimeType.startsWith("image/")) return true;
+  if (isTextFile(attachment, parsed)) return true;
+  if (parsed.mimeType === "application/pdf" || parsed.mimeType === "application/vnd.openxmlformats-officedocument.wordprocessingml.document") return true;
+  return /\.(pdf|docx)$/i.test(String(attachment.name || ""));
+}
+function hasExpectedFileSignature(mimeType, buffer) {
+  if (!Buffer.isBuffer(buffer) || buffer.length < 4) return false;
+  if (mimeType === "image/jpeg") return buffer[0] === 0xff && buffer[1] === 0xd8 && buffer[2] === 0xff;
+  if (mimeType === "image/png") return buffer.subarray(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]));
+  if (mimeType === "image/gif") return buffer.subarray(0, 4).toString("ascii") === "GIF8";
+  if (mimeType === "image/webp") return buffer.subarray(0, 4).toString("ascii") === "RIFF" && buffer.subarray(8, 12).toString("ascii") === "WEBP";
+  if (mimeType === "application/pdf") return buffer.subarray(0, 5).toString("ascii") === "%PDF-";
+  if (mimeType === "application/vnd.openxmlformats-officedocument.wordprocessingml.document") return buffer.subarray(0, 4).equals(Buffer.from([0x50, 0x4b, 0x03, 0x04]));
+  return true;
+}
+
+async function extractFileText(attachment, parsed) {
+  if (isTextFile(attachment, parsed)) {
+    return cleanExtractedText(parsed.buffer.toString("utf8"));
+  }
+
+  if (parsed.mimeType === "application/pdf" || String(attachment.name || "").toLowerCase().endsWith(".pdf")) {
+    const pdfParse = require("pdf-parse");
+    const result = await pdfParse(parsed.buffer);
+    return cleanExtractedText(result.text);
+  }
+
+  if (
+    parsed.mimeType === "application/vnd.openxmlformats-officedocument.wordprocessingml.document" ||
+    String(attachment.name || "").toLowerCase().endsWith(".docx")
+  ) {
+    const mammoth = require("mammoth");
+    const result = await mammoth.extractRawText({ buffer: parsed.buffer });
+    return cleanExtractedText(result.value);
+  }
+
+  return "";
+}
+
+async function prepareAttachments(attachments) {
+  if (attachments == null) return { imageParts: [], fileContext: "", fileNames: [] };
+  if (!Array.isArray(attachments) || attachments.length > 10) throw new Error("attachments_invalid");
+
+  const imageParts = [];
+  const fileSections = [];
+  const fileNames = [];
+  let totalAttachmentBytes = 0;
+
+  for (const attachment of attachments) {
+    if (!attachment || typeof attachment.name !== "string" || typeof attachment.data !== "string") {
+      throw new Error("attachment_invalid");
+    }
+
+    const safeAttachment = { ...attachment, name: cleanFileName(attachment.name) };
+    const parsed = parseDataUrl(safeAttachment.data);
+    if (!parsed || !isAllowedAttachment(safeAttachment, parsed)) throw new Error("attachment_type_invalid");
+    if (!isTextFile(safeAttachment, parsed) && !hasExpectedFileSignature(parsed.mimeType, parsed.buffer)) throw new Error("attachment_signature_invalid");
+    totalAttachmentBytes += parsed.buffer.length;
+    if (totalAttachmentBytes > MAX_TOTAL_ATTACHMENT_BYTES) throw new Error("attachments_too_large");
+    fileNames.push(safeAttachment.name);
+
+    if (parsed.mimeType.startsWith("image/")) {
+      if (imageParts.length >= MAX_IMAGES) throw new Error("too_many_images");
+      if (!["image/jpeg", "image/png", "image/webp", "image/gif"].includes(parsed.mimeType)) {
+        throw new Error("image_type_invalid");
+      }
+      imageParts.push({
+        type: "image_url",
+        image_url: { url: parsed.dataUrl },
+      });
+      continue;
+    }
+
+    let extractedText = "";
+    try {
+      extractedText = await extractFileText(safeAttachment, parsed);
+    } catch (error) {
+      console.error("File extraction failed", { error: error?.message || "unknown" });
+    }
+
+    if (extractedText) {
+      fileSections.push(`Arquivo: ${safeAttachment.name}\nConteúdo extraído:\n${extractedText}`);
+    } else {
+      fileSections.push(`Arquivo: ${safeAttachment.name}\nNão foi possível extrair texto deste formato no servidor.`);
+    }
+  }
+
+  return {
+    imageParts,
+    fileContext: fileSections.join("\n\n---\n\n"),
+    fileNames,
+  };
+}
+
 function wait(milliseconds) {
   return new Promise((resolve) => setTimeout(resolve, milliseconds));
 }
 
-async function callGroq({ apiKey, models, messages, tools = [], timeoutMs = 30_000, maxAttempts = MAX_GROQ_ATTEMPTS_PER_MODEL }) {
+async function callGroq({ apiKey, models, messages, hasImages = false, tools = [], timeoutMs = 30_000, maxAttempts = MAX_GROQ_ATTEMPTS_PER_MODEL }) {
   let lastFailure = null;
 
   for (const model of models) {
@@ -410,7 +524,7 @@ async function callGroq({ apiKey, models, messages, tools = [], timeoutMs = 30_0
         const requestBody = {
           model,
           messages: [{ role: "system", content: SYSTEM_PROMPT }, ...messages],
-          temperature: 0.6,
+          temperature: hasImages ? 0.7 : 0.6,
           max_completion_tokens: 2200,
         };
         if (tools.length) requestBody.tools = tools;
@@ -464,10 +578,10 @@ async function callGroq({ apiKey, models, messages, tools = [], timeoutMs = 30_0
   return { failure: lastFailure };
 }
 
-async function callGroqWithMcp({ apiKey, models, messages, mcpServers }) {
+async function callGroqWithMcp({ apiKey, models, messages, hasImages = false, mcpServers }) {
   const { tools, byName } = flattenTools(mcpServers || []);
   let currentMessages = [...messages];
-  let result = await callGroq({ apiKey, models, messages: currentMessages, tools });
+  let result = await callGroq({ apiKey, models, messages: currentMessages, hasImages, tools });
   if (result.failure || !tools.length) return { ...result, mcpToolsUsed: 0 };
 
   let toolsUsed = 0;
@@ -495,7 +609,7 @@ async function callGroqWithMcp({ apiKey, models, messages, mcpServers }) {
       }
       currentMessages.push({ role: "tool", tool_call_id: toolCall.id, content: toolContent });
     }
-    result = await callGroq({ apiKey, models, messages: currentMessages, tools });
+    result = await callGroq({ apiKey, models, messages: currentMessages, hasImages, tools });
     if (result.failure) break;
   }
   return { ...result, mcpToolsUsed: toolsUsed };
@@ -569,9 +683,23 @@ module.exports = async function handler(request, response) {
     return sendJson(response, 422, { error: "Não posso processar esse conteúdo. Reformule o pedido de forma segura e respeitosa." });
   }
 
+  let prepared;
+  try {
+    prepared = await prepareAttachments(body?.attachments);
+  } catch (error) {
+    const status = ["too_many_images", "image_type_invalid", "attachment_type_invalid", "attachment_signature_invalid", "attachments_invalid", "attachment_invalid"].includes(error.message) ? 400 : error.message === "attachments_too_large" ? 413 : 422;
+    return sendJson(response, status, { error: "Um ou mais anexos não puderam ser processados." });
+  }
   const lastMessage = messages[messages.length - 1];
   const mcpServers = await loadMcpRuntime(user.id, body?.mcpConnectorIds);
-  const models = [process.env.GROQ_MODEL || DEFAULT_TEXT_MODEL, process.env.GROQ_FALLBACK_MODEL || DEFAULT_TEXT_FALLBACK_MODEL].filter((value, index, values) => values.indexOf(value) === index);
+  const hasImages = prepared.imageParts.length > 0;
+  const models = (hasImages
+    ? [process.env.GROQ_VISION_MODEL || DEFAULT_VISION_MODEL, process.env.GROQ_VISION_FALLBACK_MODEL || DEFAULT_VISION_FALLBACK_MODEL]
+    : [process.env.GROQ_MODEL || DEFAULT_TEXT_MODEL, process.env.GROQ_FALLBACK_MODEL || DEFAULT_TEXT_FALLBACK_MODEL]
+  ).filter((value, index, values) => values.indexOf(value) === index);
+  const fileInstruction = prepared.fileContext
+    ? `\n\nUse os anexos abaixo como contexto para responder:\n\n${prepared.fileContext}`
+    : "";
   const visualInstruction = VISUAL_REQUEST_PATTERN.test(String(lastMessage.content || ""))
     ? "\n\nINSTRUÇÃO DE RENDERIZAÇÃO: este pedido tem intenção visual. Entregue o resultado visual dentro da resposta usando um bloco ```kazer-svg ou ```kazer-html. Não devolva o SVG/HTML como bloco de código comum, não use mermaid e não entregue apenas instruções para o usuário executar. Intercale uma explicação curta com o visual renderizável."
     : "";
@@ -579,13 +707,14 @@ module.exports = async function handler(request, response) {
     ? `\n\nCONTEXTO DE REPOSITÓRIO AUTORIZADO: a pessoa selecionou ${repositoryContext.fullName} (${repositoryContext.htmlUrl}), branch padrão ${repositoryContext.defaultBranch}${repositoryContext.language ? ` e linguagem principal ${repositoryContext.language}` : ""}. Use esse contexto para responder sobre o trabalho pedido; não invente acesso a arquivos ou ações concluídas.`
     : "";
   const memoryLookup = await loadRelevantMemories(user.id, lastMessage.content);
-  const latestText = `${lastMessage.content}${memoryLookup.context}${repositoryInstruction}${visualInstruction}`.slice(0, MAX_TOTAL_CHARS);
+  const latestText = `${lastMessage.content}${memoryLookup.context}${repositoryInstruction}${visualInstruction}${fileInstruction}`.slice(0, MAX_TOTAL_CHARS);
+  const latestContent = hasImages ? [{ type: "text", text: latestText }, ...prepared.imageParts] : latestText;
   const apiMessages = [
     ...messages.slice(0, -1),
-    { role: "user", content: latestText },
+    { role: "user", content: latestContent },
   ];
 
-  const result = await callGroqWithMcp({ apiKey, models, messages: apiMessages, mcpServers });
+  const result = await callGroqWithMcp({ apiKey, models, messages: apiMessages, hasImages, mcpServers });
   if (result.failure) {
     console.error("Groq request failed", result.failure);
     return sendJson(response, 502, { error: "O KAZER não conseguiu concluir a resposta agora. Tente novamente." });
@@ -610,6 +739,7 @@ module.exports = async function handler(request, response) {
   }
   return sendJson(response, 200, {
     message: { role: "assistant", content: content.trim() },
+    attachments: prepared.fileNames,
     mcp_servers_available: mcpServers.length,
     mcp_tools_used: result.mcpToolsUsed || 0,
     repository_context: repositoryContext?.fullName || null,

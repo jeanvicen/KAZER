@@ -3228,14 +3228,33 @@
           <div class="composer-box">
             <textarea class="message-input" id="messageInput" rows="1" placeholder="Envie uma mensagem..." aria-label="Mensagem"></textarea>
             <div class="composer-controls">
+              <button class="attach-button" id="attachButton" type="button" aria-label="Abrir opções de envio" title="Abrir opções de envio" aria-controls="attachmentSheet" aria-expanded="false"><span class="plus-mark" aria-hidden="true">+</span></button>
               <span class="composer-controls-spacer" aria-hidden="true"></span>
+              <input class="file-input" id="fileInput" type="file" accept=".pdf,.docx,.txt,.md,.csv,.json,.xml,.html,.htm,.js,.ts,.tsx,.jsx,.css,.py,.java,.sql,.yaml,.yml,.log" multiple hidden />
+              <input class="file-input" id="photoInput" type="file" accept="image/jpeg,image/png,image/webp,image/gif" multiple hidden />
+              <input class="file-input" id="cameraInput" type="file" accept="image/*" capture="environment" multiple hidden />
               <button class="send-button" id="sendButton" type="submit" aria-label="Enviar"><svg class="icon icon-send" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"></path></svg><svg class="icon icon-mic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 15a3 3 0 0 0 3-3V6a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3Z"></path><path d="M19 11a7 7 0 0 1-14 0M12 18v3"></path></svg></button>
               <button class="send-button stop-button" id="stopButton" type="button" aria-label="Parar resposta"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="7" y="7" width="10" height="10" rx="1.5"></rect></svg></button>
             </div>
           </div>
+          <div class="attachment-list" id="attachmentList" hidden aria-live="polite"></div>
           <p class="composer-caption">KAZER organiza seus próximos passos</p>
         </form>
       </div>
+      <div class="attachment-backdrop" id="attachmentBackdrop" hidden></div>
+      <section class="attachment-sheet" id="attachmentSheet" role="dialog" aria-modal="true" aria-labelledby="attachmentSheetTitle" aria-hidden="true" hidden>
+        <div class="attachment-sheet-handle" aria-hidden="true"></div>
+        <header class="attachment-sheet-head"><h2 id="attachmentSheetTitle">Adicionar ao Kazer</h2><button class="attachment-sheet-close" id="attachmentSheetClose" type="button" aria-label="Fechar opções">×</button></header>
+        <div class="attachment-sheet-scroll">
+          <div class="attachment-actions-grid">
+            <button class="attachment-sheet-action attachment-grid-action" id="cameraAction" type="button"><span class="attachment-sheet-icon" aria-hidden="true">⌾</span><span class="attachment-sheet-copy"><strong>Câmera</strong></span></button>
+            <button class="attachment-sheet-action attachment-grid-action" id="photoAction" type="button"><span class="attachment-sheet-icon" aria-hidden="true">▧</span><span class="attachment-sheet-copy"><strong>Fotos</strong></span></button>
+            <button class="attachment-sheet-action attachment-grid-action" id="fileAction" type="button"><span class="attachment-sheet-icon" aria-hidden="true">▤</span><span class="attachment-sheet-copy"><strong>Arquivos</strong></span></button>
+          </div>
+          <button class="connector-single-action" id="connectorSingleAction" type="button"><span class="connector-single-icon" aria-hidden="true">⌘</span><strong>Conectores</strong></button>
+        </div>
+      </section>
+
 
       <button class="workspace-toggle" id="workspaceToggle" type="button" aria-label="Abrir tarefas e repositórios" aria-controls="workspacePanel" aria-expanded="false"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m13 2-9 12h7l-1 8 9-12h-7l1-8Z"></path></svg></button><aside class="workspace-panel" id="workspacePanel" aria-label="Tarefas e repositórios" aria-hidden="true"><header class="workspace-head"><div class="workspace-head-copy"><span class="workspace-eyebrow">KAZER WORKSPACE</span><h2>Tarefas e repositórios</h2></div><button class="workspace-close" id="workspaceClose" type="button" aria-label="Fechar painel">×</button></header><nav class="workspace-tabs" aria-label="Workspace"><button class="workspace-tab active" type="button" data-workspace-tab="tasks">Tarefas</button><button class="workspace-tab" type="button" data-workspace-tab="repos">Repositórios</button></nav><div class="workspace-content" id="workspaceContent"></div><footer class="workspace-footer" id="workspaceFooter">As tarefas aparecem somente quando o KAZER trabalha com conectores ou repositórios.</footer></aside>      <div class="global-notice-backdrop" id="globalNoticeBackdrop" hidden></div>
       <section class="global-notice-modal" id="globalNoticeModal" role="dialog" aria-modal="true" aria-labelledby="globalNoticeTitle" aria-describedby="globalNoticeMessage" aria-hidden="true" hidden>
@@ -3310,6 +3329,18 @@
         const messageInput = document.getElementById("messageInput");
         const sendButton = document.getElementById("sendButton");
         const stopButton = document.getElementById("stopButton");
+        const attachButton = document.getElementById("attachButton");
+        const fileInput = document.getElementById("fileInput");
+        const photoInput = document.getElementById("photoInput");
+        const cameraInput = document.getElementById("cameraInput");
+        const attachmentList = document.getElementById("attachmentList");
+        const attachmentBackdrop = document.getElementById("attachmentBackdrop");
+        const attachmentSheet = document.getElementById("attachmentSheet");
+        const attachmentSheetClose = document.getElementById("attachmentSheetClose");
+        const cameraAction = document.getElementById("cameraAction");
+        const photoAction = document.getElementById("photoAction");
+        const fileAction = document.getElementById("fileAction");
+        const connectorSingleAction = document.getElementById("connectorSingleAction");
         const connectorsBackdrop = document.getElementById("connectorsBackdrop");
         const connectorsScreen = document.getElementById("connectorsScreen");
         const connectorsBack = document.getElementById("connectorsBack");
@@ -4787,12 +4818,67 @@
           updateSend();
         };
 
+        let selectedFiles = [];
+        const fileToDataUrl = (file) => new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve({ name: file.name, data: reader.result });
+          reader.onerror = reject;
+          reader.readAsDataURL(file);
+        });
+        const renderAttachments = () => {
+          attachmentList.replaceChildren();
+          attachmentList.hidden = selectedFiles.length === 0;
+          selectedFiles.forEach((file, index) => {
+            const chip = document.createElement("span");
+            chip.className = "attachment-chip";
+            const label = document.createElement("span");
+            label.textContent = file.name;
+            const remove = document.createElement("button");
+            remove.className = "attachment-remove";
+            remove.type = "button";
+            remove.setAttribute("aria-label", `Remover ${file.name}`);
+            remove.textContent = "×";
+            remove.addEventListener("click", () => { selectedFiles.splice(index, 1); renderAttachments(); });
+            chip.append(label, remove);
+            attachmentList.appendChild(chip);
+          });
+        };
+        const closeAttachmentSheet = () => {
+          attachmentSheet?.classList.remove("visible");
+          attachmentBackdrop?.classList.remove("visible");
+          if (attachmentSheet) { attachmentSheet.hidden = true; attachmentSheet.setAttribute("aria-hidden", "true"); }
+          if (attachmentBackdrop) attachmentBackdrop.hidden = true;
+          attachButton?.setAttribute("aria-expanded", "false");
+        };
+        const openAttachmentSheet = () => {
+          if (!attachmentSheet || !attachmentBackdrop) return;
+          attachmentSheet.hidden = false; attachmentBackdrop.hidden = false;
+          attachmentSheet.setAttribute("aria-hidden", "false"); attachButton?.setAttribute("aria-expanded", "true");
+          requestAnimationFrame(() => { attachmentSheet.classList.add("visible"); attachmentBackdrop.classList.add("visible"); });
+        };
+        const addFiles = (list) => {
+          const incoming = Array.from(list || []).filter((file) => file && file.size <= 4 * 1024 * 1024);
+          selectedFiles = [...selectedFiles, ...incoming].slice(0, 10);
+          renderAttachments(); closeAttachmentSheet();
+        };
+        attachButton?.addEventListener("click", openAttachmentSheet);
+        attachmentSheetClose?.addEventListener("click", closeAttachmentSheet);
+        attachmentBackdrop?.addEventListener("click", closeAttachmentSheet);
+        cameraAction?.addEventListener("click", () => cameraInput?.click());
+        photoAction?.addEventListener("click", () => photoInput?.click());
+        fileAction?.addEventListener("click", () => fileInput?.click());
+        fileInput?.addEventListener("change", () => { addFiles(fileInput.files); fileInput.value = ""; });
+        photoInput?.addEventListener("change", () => { addFiles(photoInput.files); photoInput.value = ""; });
+        cameraInput?.addEventListener("change", () => { addFiles(cameraInput.files); cameraInput.value = ""; });
+        connectorSingleAction?.addEventListener("click", () => { closeAttachmentSheet(); openConnectorsScreen(); });
+
         const submit = async () => {
           if (busy) return;
           const prompt = messageInput.value.trim();
-          if (!prompt) return;
+          if (!prompt && selectedFiles.length === 0) return;
+          const attachmentPayload = await Promise.all(selectedFiles.map(fileToDataUrl));
 
-          const chatId = rememberChat(prompt);
+          const chatId = rememberChat(prompt || selectedFiles.map((file) => file.name).join(", "));
           const taskContext = window.kazerWorkspace?.startTask?.({ prompt }) || null;
           window.kazerActiveTaskContext = taskContext;
           const mcpConnectorIds = taskContext?.mcpConnectorIds || [];
@@ -4802,6 +4888,8 @@
           append(userRow);
           conversationMessages.push({ role: "user", content: prompt });
           messageInput.value = "";
+          selectedFiles = [];
+          renderAttachments();
           resizeInput();
           const thinking = createThinking();
           append(thinking);
@@ -4814,7 +4902,7 @@
             if (activeRequestController !== controller) return;
             const result = await fetchWithAuth("/api/chat", {
               method: "POST",
-              body: JSON.stringify({ messages: conversationMessages, mcpConnectorIds, githubRepo }),
+              body: JSON.stringify({ messages: conversationMessages, attachments: attachmentPayload, mcpConnectorIds, githubRepo }),
               signal: controller.signal,
             });
             const data = await result.json().catch(() => ({}));
