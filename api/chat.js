@@ -90,7 +90,11 @@ function cleanUserContent(value) {
 function cleanMemoryContent(value) {
   let content = cleanUserContent(value).replace(/\r\n/g, "\n");
   const codeMarkers = [
-    "document.createElementNS(",
+    "const svg",
+    "let svg",
+    "var svg",
+    "document.createElementNS",
+    "document.createElement",
     "const makeMemoryChevron",
     "svg.setAttribute(",
     "svg.innerHTML =",
@@ -99,11 +103,11 @@ function cleanMemoryContent(value) {
     "</script>",
   ];
   const markerIndex = codeMarkers.reduce((lowest, marker) => {
-    const index = content.indexOf(marker);
+    const index = content.toLocaleLowerCase().indexOf(marker.toLocaleLowerCase());
     return index >= 0 && index < lowest ? index : lowest;
   }, content.length);
   if (markerIndex < content.length) content = content.slice(0, markerIndex).trim();
-  if (/^(?:const|let|var|function)\s+[A-Za-z_$][\w$]*\s*=/.test(content)) return "";
+  if (/[{}`]|(?:const|let|var|function)\s+[A-Za-z_$][\w$]*\s*=|document\s*\.\s*|\.\s*(?:setAttribute|innerHTML)\s*=/.test(content)) return "";
   return content.slice(0, 2000).trim();
 }
 

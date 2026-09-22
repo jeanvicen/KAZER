@@ -1,4 +1,4 @@
-const CACHE_NAME = "kazer-shell-v20";
+const CACHE_NAME = "kazer-shell-v21";
 const APP_SHELL = [
   "/chat",
   "/chat.html",

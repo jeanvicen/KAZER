@@ -22,6 +22,9 @@ function cleanMemoryContent(value) {
     "const svg",
     "let svg",
     "var svg",
+    "const svg",
+    "let svg",
+    "var svg",
     "const makeMemoryChevron",
     "document.createElementNS(",
     "createElementNS(",
@@ -30,11 +33,11 @@ function cleanMemoryContent(value) {
     "svg.innerHTML =",
   ];
   const markerIndex = markers.reduce((lowest, marker) => {
-    const index = content.indexOf(marker);
+    const index = content.toLocaleLowerCase().indexOf(marker.toLocaleLowerCase());
     return index >= 0 && index < lowest ? index : lowest;
   }, content.length);
   if (markerIndex < content.length) content = content.slice(0, markerIndex).trim();
-  if (/[{}`]|(?:const|let|var|function)\s+[A-Za-z_$][\w$]*\s*=|document\.|\.setAttribute\(|\.innerHTML\s*=/.test(content)) {
+  if (/[{}`]|(?:const|let|var|function)\s+[A-Za-z_$][\w$]*\s*=|document\s*\.\s*|\.\s*(?:setAttribute|innerHTML)\s*=/.test(content)) {
     return "Conteúdo da memória indisponível.";
   }
   return content || "Conteúdo da memória indisponível.";
