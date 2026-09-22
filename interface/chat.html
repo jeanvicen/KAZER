@@ -3877,7 +3877,7 @@
         let activeRequestController = null;
         let toastTimer = null;
         let conversationMessages = [];
-        let viewMode = new URLSearchParams(window.location.search).get("view") === "history" ? "history" : "kazer";
+        let viewMode = new URLSearchParams(window.location.search).get("view") === "history" ? "history" : "new-chat";
         let historyItems = [];
         let activeChatHistoryId = null;
         let globalNotice = null;
@@ -4729,7 +4729,7 @@
           }
           if (push) {
             const url = new URL(window.location.href);
-            url.searchParams.set("view", isHistory ? "history" : viewMode === "new-chat" ? "chat" : "kazer");
+            url.searchParams.set("view", isHistory ? "history" : "chat");
             window.history.pushState({ view: viewMode }, "", url);
           }
           if (isHistory) {
@@ -5550,7 +5550,7 @@
 
 
         historySearchInput?.addEventListener("input", renderChatHistory);
-        kazerHistoryButton?.addEventListener("click", () => setView("kazer", { push: true }));
+        kazerHistoryButton?.addEventListener("click", () => setView("history", { push: true }));
         let activeDirectUser = null;
         const closeKazerMenu = () => { kazerMenu?.classList.remove("visible"); kazerMenuBackdrop?.classList.remove("visible"); };
         const openKazerMenu = () => { closeMenus(); kazerMenu?.classList.add("visible"); kazerMenuBackdrop?.classList.add("visible"); };
@@ -5616,7 +5616,7 @@
           requestNewChat();
         });
         newChatBack?.addEventListener("click", () => setView("history", { push: true }));
-        window.addEventListener("popstate", () => { const view = new URLSearchParams(window.location.search).get("view"); setView(view === "history" ? "history" : view === "chat" ? "new-chat" : "kazer"); });
+        window.addEventListener("popstate", () => { setView(new URLSearchParams(window.location.search).get("view") === "history" ? "history" : "new-chat"); });
 
         historyBrand?.addEventListener("click", () => openSettings());
         settingsAction.addEventListener("click", () => openSettings());
