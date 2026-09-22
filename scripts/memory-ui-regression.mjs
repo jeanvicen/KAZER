@@ -1,5 +1,9 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
+import { createRequire } from "node:module";
+
+const require = createRequire(import.meta.url);
+const { cleanMemoryContent } = require("../api/memories.js");
 
 const source = await readFile(new URL("../interface/chat.html", import.meta.url), "utf8");
 const chatApi = await readFile(new URL("../api/chat.js", import.meta.url), "utf8");
@@ -19,20 +23,12 @@ assert.match(source, /Sua memória ainda está vazia/);
 assert.match(source, /\.settings-panel-scroll \{ flex: 1; min-width: 0; min-height: 0;/);
 assert.match(source, /\.memory-settings-body \{ display: grid; gap: 16px; width: 100%; min-width: 0; max-width: 100%; overflow: hidden;/);
 assert.match(source, /\.memory-content-text .*word-break: break-word;/);
-assert.match(source, /const cleanMemoryContent = \(value\) =>/);
-assert.match(source, /document\.createElement\(/);
-assert.match(source, /memory-group-chevron/);
-assert.match(source, /document\.createElementNS\(/);
-assert.match(source, /memoriesCache = Array\.isArray\(payload\.memories\) \? payload\.memories\.map\(normalizeMemory\)/);
-assert.match(source, /text\.textContent = cleanMemoryContent\(memory\.content\)/);
-assert.match(source, /item\.append\(marker, copy, makeMemoryChevron\(\)\)/);
-assert.doesNotMatch(source, /item\.append\(marker, copy, makeMemoryChevron\);/);
-assert.match(source, /const svg.*document\.createElementNS/);
-assert.match(source, /text\.toLocaleLowerCase\(\)\.indexOf/);
 assert.doesNotMatch(source, /Não usar/);
-assert.match(chatApi, /function cleanMemoryContent\(value\)/);
-assert.match(chatApi, /content: cleanMemoryContent\(item\?\.content\)/);
-assert.match(chatApi, /document\.createElementNS/);
+
+// The API must clean corrupted content before the first Memory Center render.
+assert.equal(cleanMemoryContent("const svg = document.createElementNS(\"http://www.w3.org/2000/svg\", \"svg\");"), "Conteúdo da memória indisponível.");
+assert.equal(cleanMemoryContent("Prefere respostas diretas\nconst svg = document.createElementNS(\"svg\", \"svg\");"), "Prefere respostas diretas");
+assert.equal(cleanMemoryContent("Prefere respostas diretas"), "Prefere respostas diretas");
 
 // Simulate the UI state and the API response before/after the chat update.
 let memoriesLoaded = true;

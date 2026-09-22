@@ -19,25 +19,17 @@ const CATEGORIES = new Set([
 function cleanMemoryContent(value) {
   let content = String(value ?? "").replace(/\r\n/g, "\n").trim();
   const markers = [
-    "const svg",
-    "let svg",
-    "var svg",
-    "const svg",
-    "let svg",
-    "var svg",
-    "const makeMemoryChevron",
-    "document.createElementNS(",
-    "createElementNS(",
-    "svg.setAttribute(",
-    "svg.className",
-    "svg.innerHTML =",
+    "const svg", "let svg", "var svg", "const makeMemoryChevron",
+    "document.createElementNS", "document.createElement", "createElementNS",
+    "svg.setAttribute", "svg.className", "svg.innerHTML", "memory-group-chevron",
+    "<script", "</script>", "<path d=",
   ];
   const markerIndex = markers.reduce((lowest, marker) => {
     const index = content.toLocaleLowerCase().indexOf(marker.toLocaleLowerCase());
     return index >= 0 && index < lowest ? index : lowest;
   }, content.length);
   if (markerIndex < content.length) content = content.slice(0, markerIndex).trim();
-  if (/[{}`]|(?:const|let|var|function)\s+[A-Za-z_$][\w$]*\s*=|document\s*\.\s*|\.\s*(?:setAttribute|innerHTML)\s*=/.test(content)) {
+  if (/[{}`]|(?:const|let|var|function)\s+[A-Za-z_$][\w$]*\s*=|document\s*\.\s*|\.\s*(?:setAttribute|innerHTML)\s*=|(?:createElementNS|setAttribute|className\.baseVal)\s*\(/.test(content)) {
     return "Conteúdo da memória indisponível.";
   }
   return content || "Conteúdo da memória indisponível.";
@@ -106,3 +98,5 @@ module.exports = async function handler(request, response) {
     return sendJson(response, 503, { error: "Não foi possível carregar as memórias agora." });
   }
 };
+
+module.exports.cleanMemoryContent = cleanMemoryContent;
