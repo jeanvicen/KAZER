@@ -173,7 +173,7 @@
         pointer-events: auto;
       }
 
-      .chat-history-back { position: absolute; top: max(18px, env(safe-area-inset-top)); right: clamp(18px, 4vw, 42px); display: grid !important; place-items: center; width: 50px; height: 43px; border: 1px solid rgba(240,111,118,.34); border-radius: 14px; background: linear-gradient(145deg, rgba(42,32,38,.92), rgba(19,19,25,.94)); color: #f07a80; cursor: pointer; box-shadow: 0 8px 24px rgba(0,0,0,.22), inset 0 1px 0 rgba(255,255,255,.08); backdrop-filter: blur(16px); transition: transform 180ms var(--ease), border-color 180ms var(--ease), background 180ms var(--ease), box-shadow 180ms var(--ease); }
+      .chat-history-back { position: absolute; z-index: 80; top: max(18px, env(safe-area-inset-top)); right: clamp(18px, 4vw, 42px); display: grid !important; place-items: center; width: 50px; height: 43px; border: 1px solid rgba(240,111,118,.34); border-radius: 14px; background: linear-gradient(145deg, rgba(42,32,38,.92), rgba(19,19,25,.94)); color: #f07a80; cursor: pointer; pointer-events: auto !important; touch-action: manipulation; text-decoration: none; box-shadow: 0 8px 24px rgba(0,0,0,.22), inset 0 1px 0 rgba(255,255,255,.08); backdrop-filter: blur(16px); transition: transform 180ms var(--ease), border-color 180ms var(--ease), background 180ms var(--ease), box-shadow 180ms var(--ease); }
       .chat-history-back .icon { width: 21px; height: 21px; filter: drop-shadow(0 0 5px rgba(240,111,118,.35)); }
       .chat-history-back:hover { border-color: rgba(255,165,169,.72); background: linear-gradient(145deg, rgba(75,40,47,.96), rgba(27,21,29,.96)); box-shadow: 0 10px 26px rgba(0,0,0,.3), 0 0 0 3px rgba(240,111,118,.08); transform: translateY(-1px); }
       .app.history-active .chat-history-back { display: none !important; }
@@ -3323,7 +3323,7 @@
       </header>
 
       <header class="topbar" aria-label="Barra de conversa">
-        <button class="chat-history-back" id="chatHistoryBack" type="button" aria-label="Abrir histórico de chats" title="Histórico de chats"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4.5 12a7.5 7.5 0 1 0 2.2-5.3"></path><path d="M4.5 5.3v4.2h4.2"></path><path d="M12 8.2v4.2l2.8 1.7"></path></svg></button>
+        <a class="chat-history-back" id="chatHistoryBack" href="?view=history" aria-label="Abrir histórico de chats" title="Histórico de chats"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4.5 12a7.5 7.5 0 1 0 2.2-5.3"></path><path d="M4.5 5.3v4.2h4.2"></path><path d="M12 8.2v4.2l2.8 1.7"></path></svg></a>
         <div class="credit-indicator" id="creditIndicator" aria-label="Saldo de tokens" hidden><span class="credit-indicator-value" id="creditBalanceValue">0</span></div>
       </header>
 
