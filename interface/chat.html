@@ -3317,7 +3317,6 @@
       </section>
 
       <header class="new-chat-header" id="newChatHeader" aria-label="Novo chat" aria-hidden="true" hidden>
-        <button class="new-chat-back" id="newChatBack" type="button" aria-label="Voltar ao histórico"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"></path></svg></button>
         <span class="new-chat-brand" aria-label="KAZER">KAZER</span>
         <div class="new-chat-credit" id="newChatCredit" aria-label="Saldo de tokens"><span class="new-chat-credit-value" id="newChatCreditBalance">0</span><span class="new-chat-credit-label">tokens</span></div>
       </header>
@@ -3733,7 +3732,6 @@
         const directMessageInput = document.getElementById("directMessageInput");
 
         const newChatHeader = document.getElementById("newChatHeader");
-        const newChatBack = document.getElementById("newChatBack");
         const chatHistoryBack = document.getElementById("chatHistoryBack");
         const newChatCredit = document.getElementById("newChatCredit");
         const newChatCreditBalance = document.getElementById("newChatCreditBalance");
@@ -5334,7 +5332,6 @@
           setView("new-chat", { push: true });
           requestNewChat();
         });
-        newChatBack?.addEventListener("click", () => setView("history", { push: true }));
         chatHistoryBack?.addEventListener("click", (event) => {
           event.preventDefault();
           setView("history", { push: true });
