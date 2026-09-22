@@ -4295,15 +4295,6 @@
           setSwitch(installSwitch, settingsState.installPrompt);
         };
 
-        const cleanMemoryContent = (value) => {
-          let text = String(value ?? "").replace(/\r\n/g, "\n").trim();
-          const markers = ["const svg", "let svg", "var svg", "document.createElementNS", "document.createElement", "const makeMemoryChevron", "svg.setAttribute", "svg.innerHTML", "memory-group-chevron", "<script", "</script>"];
-          const markerIndex = markers.reduce((lowest, marker) => { const index = text.toLocaleLowerCase().indexOf(marker.toLocaleLowerCase()); return index >= 0 && index < lowest ? index : lowest; }, text.length);
-          if (markerIndex < text.length) text = text.slice(0, markerIndex).trim();
-          if (/[{}`]|(?:const|let|var|function)\s+[A-Za-z_$][\w$]*\s*=|document\s*\.\s*|\.\s*(?:setAttribute|innerHTML)\s*=/.test(text)) return "Conteúdo da memória indisponível.";
-          return text.slice(0, 2000).trim() || "Conteúdo da memória indisponível.";
-        };
-        const normalizeMemory = (memory) => ({ ...memory, content: cleanMemoryContent(memory?.content) });
         const memoryCategoryLabels = { preference: "Preferências", dislike: "Não gosta", personal_context: "Sobre você", project: "Projetos", goal: "Objetivos", habit: "Hábitos", communication_style: "Estilo de comunicação", technical_knowledge: "Conhecimento técnico", interest: "Interesses", workflow: "Fluxo de trabalho", instruction: "Instruções", important_fact: "Fatos importantes", temporary_context: "Contexto temporário", relationship_context: "Relacionamentos", learning: "Aprendizado", conversation_context: "Conversas", other: "Outros" };
         const memoryCategoryGroups = { personal: new Set(["preference", "dislike", "personal_context", "habit", "communication_style", "relationship_context", "important_fact"]), projects: new Set(["project", "technical_knowledge", "workflow", "learning"]), work: new Set(["goal", "instruction", "temporary_context", "conversation_context"]) };
         const memoryGroupDescriptions = (name, items) => {
@@ -4339,7 +4330,7 @@
         const memoryMatchesView = (memory) => {
           const query = memorySearchInput?.value.trim().toLocaleLowerCase() || "";
           const matchesFilter = activeMemoryFilter === "all" || memoryFilterFor(memory) === activeMemoryFilter;
-          const haystack = [cleanMemoryContent(memory.content), memoryGroupKey(memory), memory.category, memoryCategoryLabel(memory.category)].join(" ").toLocaleLowerCase();
+          const haystack = [memory.content, memoryGroupKey(memory), memory.category, memoryCategoryLabel(memory.category)].join(" ").toLocaleLowerCase();
           return matchesFilter && (!query || haystack.includes(query));
         };
         const updateMemorySummary = () => {
@@ -4376,7 +4367,7 @@
             const name = document.createElement("span"); name.className = "memory-group-name"; name.textContent = group.name;
             const description = document.createElement("span"); description.className = "memory-group-description"; description.textContent = memoryGroupDescriptions(group.name, group.items);
             const meta = document.createElement("span"); meta.className = "memory-group-meta"; meta.textContent = `${group.items.length} ${group.items.length === 1 ? "memória" : "memórias"} · atualizado ${memoryRelativeDate(group.updatedAt).replace(/^há /, "")}`;
-            copy.append(name, description, meta); item.append(marker, copy, makeMemoryChevron()); item.addEventListener("click", () => openMemoryGroup(group)); memoryGroups.append(item);
+            copy.append(name, description, meta); item.append(marker, copy, makeMemoryChevron); item.addEventListener("click", () => openMemoryGroup(group)); memoryGroups.append(item);
           });
         };
         const openMemoryModal = ({ title, description, value = "", confirmLabel, danger = false, onConfirm }) => {
@@ -4394,12 +4385,12 @@
           confirm.addEventListener("click", async () => { if (!danger && !textarea.value.trim()) { textarea.focus(); return; } confirm.disabled = true; cancel.disabled = true; try { await onConfirm(textarea.value.trim()); close(); } catch { confirm.disabled = false; cancel.disabled = false; } });
           actions.append(cancel, confirm); modal.append(heading, copy); if (!danger) modal.append(textarea); modal.append(actions); backdrop.append(modal); document.body.append(backdrop); document.addEventListener("keydown", onKey); if (!danger) { textarea.focus(); textarea.setSelectionRange(textarea.value.length, textarea.value.length); } else confirm.focus();
         };
-        const editMemory = (memory) => openMemoryModal({ title: "Editar memória", description: "Corrija apenas o conteúdo. O grupo e a categoria serão preservados.", value: cleanMemoryContent(memory.content), confirmLabel: "Salvar alteração", onConfirm: async (content) => { const response = await fetchWithAuth(`/api/memories?id=${encodeURIComponent(memory.id)}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ content }) }); if (!response.ok) throw new Error("memory_edit_failed"); const payload = await response.json(); const updated = payload.memory || { ...memory, content }; memoriesCache = memoriesCache.map((entry) => entry.id === memory.id ? normalizeMemory({ ...entry, ...updated }) : entry); renderMemoryGroups(); if (activeMemoryGroup) openMemoryGroup(groupMemories(memoriesCache.filter(memoryMatchesView)).find((group) => group.name === activeMemoryGroup) || { name: activeMemoryGroup, items: [] }); showToast("Memória atualizada"); } });
+        const editMemory = (memory) => openMemoryModal({ title: "Editar memória", description: "Corrija apenas o conteúdo. O grupo e a categoria serão preservados.", value: memory.content, confirmLabel: "Salvar alteração", onConfirm: async (content) => { const response = await fetchWithAuth(`/api/memories?id=${encodeURIComponent(memory.id)}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ content }) }); if (!response.ok) throw new Error("memory_edit_failed"); const payload = await response.json(); const updated = payload.memory || { ...memory, content }; memoriesCache = memoriesCache.map((entry) => entry.id === memory.id ? { ...entry, ...updated } : entry); renderMemoryGroups(); if (activeMemoryGroup) openMemoryGroup(groupMemories(memoriesCache.filter(memoryMatchesView)).find((group) => group.name === activeMemoryGroup) || { name: activeMemoryGroup, items: [] }); showToast("Memória atualizada"); } });
         const deleteMemory = (memory) => openMemoryModal({ title: "Apagar esta memória?", description: "Ela deixará de ser usada pelo Kazer em futuras conversas.", confirmLabel: "Apagar memória", danger: true, value: undefined, onConfirm: async () => { const response = await fetchWithAuth(`/api/memories?id=${encodeURIComponent(memory.id)}`, { method: "DELETE" }); if (!response.ok) throw new Error("memory_delete_failed"); memoriesCache = memoriesCache.filter((entry) => entry.id !== memory.id); renderMemoryGroups(); if (activeMemoryGroup) { const group = groupMemories(memoriesCache.filter(memoryMatchesView)).find((entry) => entry.name === activeMemoryGroup); if (group) openMemoryGroup(group); else closeMemoryGroup(); } showToast("Memória apagada"); } });
         const renderMemoryDetailItem = (memory) => {
           const item = document.createElement("article"); item.className = "memory-item";
           const copy = document.createElement("div"); copy.className = "memory-copy";
-          const text = document.createElement("p"); text.className = "memory-content-text"; text.textContent = cleanMemoryContent(memory.content);
+          const text = document.createElement("p"); text.className = "memory-content-text"; text.textContent = memory.content;
           const meta = document.createElement("div"); meta.className = "memory-item-meta";
           const category = document.createElement("span"); category.className = "memory-category"; category.textContent = memoryCategoryLabel(memory.category);
           const date = document.createElement("span"); date.textContent = `atualizada ${memoryRelativeDate(memory.updatedAt || memory.createdAt)}`; meta.append(category, date); copy.append(text, meta);
@@ -4409,7 +4400,7 @@
         };
         const openMemoryGroup = (group) => { activeMemoryGroup = group.name; memoryDetailTitle.textContent = group.name; memoryDetailDescription.textContent = memoryGroupDescriptions(group.name, group.items); memoryDetailList.replaceChildren(...group.items.map(renderMemoryDetailItem)); memoryGroups.hidden = true; memoryEmpty.hidden = true; memoryDetail.hidden = false; };
         const closeMemoryGroup = () => { activeMemoryGroup = null; memoryDetail.hidden = true; memoryDetailList.replaceChildren(); renderMemoryGroups(); };
-        const loadMemories = async () => { memoryLoading.hidden = false; memoryError.hidden = true; memoryEmpty.hidden = true; memoryGroups.hidden = true; try { const response = await fetchWithAuth(`/api/memories?limit=200&offset=0`, { method: "GET", cache: "no-store" }); if (!response.ok) throw new Error("memory_load_failed"); const payload = await response.json(); memoriesCache = Array.isArray(payload.memories) ? payload.memories.map(normalizeMemory) : []; memoriesLoaded = true; renderMemoryGroups(); } catch { memoryError.textContent = "Não foi possível carregar suas memórias agora. Verifique sua sessão e tente novamente."; memoryError.hidden = false; } finally { memoryLoading.hidden = true; } };
+        const loadMemories = async () => { memoryLoading.hidden = false; memoryError.hidden = true; memoryEmpty.hidden = true; memoryGroups.hidden = true; try { const response = await fetchWithAuth(`/api/memories?limit=200&offset=0`, { method: "GET", cache: "no-store" }); if (!response.ok) throw new Error("memory_load_failed"); const payload = await response.json(); memoriesCache = Array.isArray(payload.memories) ? payload.memories : []; memoriesLoaded = true; renderMemoryGroups(); } catch { memoryError.textContent = "Não foi possível carregar suas memórias agora. Verifique sua sessão e tente novamente."; memoryError.hidden = false; } finally { memoryLoading.hidden = true; } };
         const invalidateMemories = () => {
           memoriesLoaded = false;
           const activePanel = Array.from(settingsPanels).find((panel) => !panel.hidden);
