@@ -55,7 +55,7 @@ assert(publicApiFiles.length <= 12, `Vercel Hobby: ${publicApiFiles.length} fun�
 assert(sql001.includes("enable row level security") && sql001.includes("profiles_select_own") && sql001.includes("user_settings_select_own"), "Migração principal sem RLS/policies esperadas");
 assert(sql003.includes("enable row level security") && sql003.includes("account_notifications_select_own"), "Notificações sem RLS/policy esperada");
 assert(sql004.includes("force row level security") && sql004.includes("revoke insert, delete"), "Migração de endurecimento incompleta");
-assert(sql010.includes("kazer_mcp_connectors") && sql010.includes("kazer_github_connections") && sql010.includes("kazer_tasks") && sql010.includes("force row level security") && sql010.includes("consume_kazer_usage"), "Migração de MCP/GitHub/tarefas incompleta");
+assert(sql010.includes("kazer_mcp_connectors") && sql010.includes("kazer_github_connections") && sql010.includes("kazer_tasks") && sql010.includes("force row level security") && !sql010.includes("consume_kazer_usage"), "Migração de MCP/GitHub/tarefas incompleta");
 assert(sql016.includes("plan_catalog force row level security") && sql016.includes("user_usage force row level security") && sql016.includes("consume_chat_usage") && sql016.includes("consume_kazer_usage"), "Migração final sem FORCE RLS ou limpeza de RPCs legadas");
 assert(sql017.includes("notificacoes_vistas") && sql017.includes("cleanup_old_account_notifications") && sql017.includes("interval '1 month'"), "Migração de notificações sem RLS/limpeza mensal");
 for (const required of ["GROQ_API_KEY=", "GEMINI_API_KEY=", "SUPABASE_SERVICE_ROLE_KEY=", "CRON_SECRET=", "RETENTION_DELETE_ENABLED=false"]) {

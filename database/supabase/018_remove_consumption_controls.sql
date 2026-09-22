@@ -1,6 +1,6 @@
 -- Kazer: remoção do sistema legado de consumo, créditos, planos e limites de anexos.
 -- Esta migração é destrutiva apenas para as estruturas exclusivas desse sistema.
--- Auth, perfis, preferências, memórias, conectores, tarefas e conversas permanecem intactos.
+-- Auth, perfis, preferências, conectores, tarefas e conversas permanecem intactos.
 
 begin;
 
