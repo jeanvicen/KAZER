@@ -3323,7 +3323,7 @@
       </header>
 
       <header class="topbar" aria-label="Barra de conversa">
-        <a class="chat-history-back" id="chatHistoryBack" href="?view=history" aria-label="Abrir histórico de chats" title="Histórico de chats"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4.5 12a7.5 7.5 0 1 0 2.2-5.3"></path><path d="M4.5 5.3v4.2h4.2"></path><path d="M12 8.2v4.2l2.8 1.7"></path></svg></a>
+        <a class="chat-history-back" id="chatHistoryBack" href="?view=history" aria-label="Abrir histórico de chats" title="Histórico de chats" onclick="event.preventDefault(); const app=document.getElementById('app'), history=document.getElementById('historyScreen'), header=document.getElementById('newChatHeader'); app?.classList.add('history-active'); app?.classList.remove('new-chat-active','kazer-active'); if (history) { history.hidden=false; history.setAttribute('aria-hidden','false'); } if (header) { header.hidden=true; header.setAttribute('aria-hidden','true'); } window.history.pushState({view:'history'}, '', '?view=history');"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4.5 12a7.5 7.5 0 1 0 2.2-5.3"></path><path d="M4.5 5.3v4.2h4.2"></path><path d="M12 8.2v4.2l2.8 1.7"></path></svg></a>
         <div class="credit-indicator" id="creditIndicator" aria-label="Saldo de tokens" hidden><span class="credit-indicator-value" id="creditBalanceValue">0</span></div>
       </header>
 
