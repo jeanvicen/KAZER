@@ -1,53 +1,34 @@
-# Integração Supabase do KAZER
+# Supabase do KAZER
 
-Este diretório contém as migrações incrementais do banco usado pelo KAZER. O navegador usa apenas a chave pública `anon`/publishable; chaves `service_role`, `sb_secret`, credenciais de IA e `CRON_SECRET` devem existir somente em variáveis privadas do servidor.
+As migrações desta pasta são aplicadas em ordem no projeto Supabase do KAZER. O Supabase Auth continua sendo a fonte de verdade para credenciais, sessão, expiração, renovação, login, cadastro e logout. O KAZER não grava senhas ou hashes em tabelas próprias.
 
-> **Importante:** as migrações devem ser aplicadas no SQL Editor de um ambiente controlado, na ordem numérica. Faça backup, confirme o projeto de destino e teste com contas não produtivas antes de aplicar mudanças em produção.
+## Migrações
 
-## Ordem de aplicação
-
-| Ordem | Arquivo | Conteúdo |
+| Ordem | Arquivo | Responsabilidade |
 |---:|---|---|
-| 1 | `001_auth_accounts.sql` | Perfis, preferências, avisos públicos, trigger de novo usuário, atividade e RLS inicial. |
-| 2 | `002_inactivity_retention.sql` | Índice e apoio à consulta de contas inativas. |
-| 3 | `003_retention_notifications.sql` | Notificações privadas de retenção e policies próprias. |
-| 4 | `004_security_hardening.sql` | `FORCE RLS`, grants mínimos, constraints e revogações. |
-| 5 | `005_usage_limits.sql` | Catálogo de planos, tabela de uso, resets e RPCs iniciais. |
-| 6 | `006_usage_rpc_fix.sql` | Correções das RPCs de consumo e grants autenticados. |
-| 7 | `007_credits_150_messages_5h.sql` | Créditos Free, janela de cinco horas e consumo do chat. |
-| 8 | `008_attachment_limit_10_items.sql` | Dez itens de anexo por janela no plano Free e consumo atômico por item. |
-| 9 | `009_google_drive_connections.sql` | Conexões privadas do Google Drive. |
-| 10 | `010_mcp_github_tasks.sql` | Conectores MCP e tarefas vinculadas ao GitHub. |
-| 11 | `011_memories.sql` | Memórias isoladas por usuário, categorias, retenção e limite de registros. |
-| 12 | `012_memory_group_title.sql` | Agrupamento dinâmico de memórias por título decidido pela IA. |
-| 13 | `013_memory_retention_cleanup.sql` | Limpeza inteligente no limite de 5.000 memórias por usuário. |
-| 14 | `014_daily_token_policy.sql` | 1.500 tokens iniciais preservados, recarga diária somada de 300 tokens e reset lazy em 00:00 UTC. |
-| 15 | `015_direct_conversations.sql` | Diretório público de nomes e conversas/mensagens 1-a-1 com RLS por participante. |
-| 16 | `016_security_rls_rpc_cleanup.sql` | `FORCE RLS` para catálogo/uso e revogação de RPCs legadas, sem alterar saldos ou limites. |
-| 17 | `017_notification_retention.sql` | Tabela de confirmações globais, RLS próprio e limpeza de `account_notifications` com mais de um mês. |
+| 1 | `001_auth_accounts.sql` | Perfis, preferências, trigger de provisionamento de conta e funções de atividade. |
+| 2 | `002_inactivity_retention.sql` | Retenção de contas inativas. |
+| 3 | `003_retention_notifications.sql` | Avisos privados de retenção e policies próprias. |
+| 4 | `004_security_hardening.sql` | RLS, grants mínimos, constraints e revogações. |
+| 5 | `009_google_drive_connections.sql` | Conexões privadas do Google Drive. |
+| 6 | `010_mcp_github_tasks.sql` | Conectores MCP, conexão GitHub e tarefas sem metadados de cobrança. |
+| 7 | `011_memories.sql` | Memórias isoladas por usuário. |
+| 8 | `012_memory_group_title.sql` | Títulos de grupos de memória. |
+| 9 | `013_memory_retention_cleanup.sql` | Retenção técnica de memórias não fixadas. |
+| 10 | `015_direct_conversations.sql` | Diretório de nomes e conversas/mensagens 1-a-1 com RLS por participante. |
+| 11 | `017_notification_retention.sql` | Confirmações globais e limpeza de avisos antigos. |
+| 12 | `018_remove_consumption_controls.sql` | Remove tabelas, colunas, RPCs, triggers e políticas exclusivas do antigo controle de consumo. |
 
-As migrações posteriores dependem de objetos criados pelas anteriores. Não pule arquivos, não os execute fora de ordem e não edite uma migração já aplicada sem registrar uma nova migração corretiva. A migração 014 substitui o comportamento anterior de reposição integral em janela de cinco horas. A migração 016 é somente de segurança: não recalcula, zera, concede ou remove créditos.
+As migrações de conta e autenticação devem continuar sendo executadas antes das migrações de dados de usuário. A migração `018_remove_consumption_controls.sql` é corretiva para ambientes que já receberam o sistema antigo; em uma instalação nova, as migrações removidas não devem ser executadas.
 
-## Configuração do Auth
+## Auth e isolamento
 
-O login usa `signInWithPassword`. O cadastro usa `signUp` com `user_metadata.display_name`. O fluxo atual espera que a configuração de confirmação de e-mail no provedor Supabase esteja alinhada ao produto; confirme isso em **Authentication → Providers → Email** antes de testar o redirecionamento automático para `/chat`.
-
-O KAZER não grava senhas ou hashes em tabelas próprias. O Supabase Auth administra sessão, expiração, renovação, login, cadastro e logout. A chave pública não é uma autorização para ignorar RLS: toda tabela de usuário deve continuar limitada por `auth.uid()`.
-
-## Dados e uso
-
-O trigger de novo usuário provisiona `profiles` e `user_settings`. As preferências de notificações, instalação, aparência e idioma podem ser sincronizadas para a conta autenticada, enquanto o navegador mantém um fallback local.
-
-As migrações de uso criam o catálogo e o estado por usuário. O consumo do chat é atômico, aplica reset lazy com bloqueio de linha e impede saldo ou contagem negativa. A migração `008` substitui a assinatura antiga da RPC por `p_attachment_count`, contabilizando cada foto/arquivo individualmente e permitindo no máximo dez itens por janela conforme o plano Free. A migração `014` mantém os 1.500 tokens de boas-vindas no saldo, soma 300 tokens a cada virada de dia UTC e registra a quantidade de recargas aplicadas para evitar duplicidade. O saldo nunca é zerado automaticamente.
+O trigger de novo usuário cria apenas `profiles` e `user_settings`. As preferências de notificações, instalação, aparência e idioma podem ser sincronizadas para a conta autenticada, enquanto o navegador mantém um fallback local. Toda tabela de usuário permanece limitada por `auth.uid()` ou é acessada pelo backend autenticado.
 
 ## Retenção
 
-A coluna de atividade apoia a busca de contas inativas. O endpoint `/api/retention` é protegido por `CRON_SECRET`, cria avisos nas janelas previstas e só pode excluir contas quando `RETENTION_DELETE_ENABLED=true`. Mantenha essa flag como `false` até revisar backup, restauração, avisos, suporte e reversão.
+O endpoint `/api/retention` é protegido por `CRON_SECRET`. A exclusão administrativa somente ocorre quando `RETENTION_DELETE_ENABLED=true`; mantenha essa flag como `false` até revisar backup, restauração, avisos, suporte e reversão. O job diário da Vercel cria avisos de inatividade e remove notificações antigas.
 
-O agendamento diário está em `vercel.json`, às 04:00 UTC. Ele cria avisos de inatividade e apaga automaticamente registros de `account_notifications` com mais de um mês; isso não altera créditos, saldos, limites ou resets. A exclusão administrativa, quando habilitada, é permanente, limitada por execução e depende de `SUPABASE_SERVICE_ROLE_KEY`. Nunca coloque a service role no navegador, no repositório, em issues, em logs ou em parâmetros de URL.
+## Validação
 
-## Validação pós-migração
-
-Use duas contas de teste e confirme que cada uma consegue ler somente o próprio perfil, preferências, uso e notificações. Tente também acessar sem sessão, com bearer inválido, com sessão revogada e com identificador de outra conta. Verifique o saldo inicial, o reset, a contagem individual de anexos, o bloqueio de limite e a chamada das RPCs por uma role não autorizada.
-
-Registre a data, o projeto, os arquivos aplicados, o resultado, o responsável e o plano de rollback. A aplicação das migrações não deve ser considerada concluída apenas porque o SQL foi aceito pelo editor; o comportamento e as policies precisam ser testados.
+Após aplicar a migração de limpeza, confirme que `profiles`, `user_settings`, `kazer_tasks`, `kazer_memories`, conectores e conversas continuam disponíveis. Confirme também que o cadastro cria perfil e preferências, que login, refresh e logout continuam usando Supabase Auth e que `/api/chat` não faz chamadas de consumo ou envio de anexos.

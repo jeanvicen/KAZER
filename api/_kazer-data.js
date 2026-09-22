@@ -147,7 +147,6 @@ function taskForClient(row) {
     logs: Array.isArray(row.logs) ? row.logs : safeJson(row.logs, []),
     result: row.result || null,
     error: row.error || null,
-    creditCost: Number(row.credit_cost || 0),
     createdAt: row.created_at,
     updatedAt: row.updated_at,
     completedAt: row.completed_at,

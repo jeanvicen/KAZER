@@ -26,7 +26,7 @@ globalThis.fetch = async (input, init = {}) => {
     return new Response(JSON.stringify([]), { status: 200 });
   }
   if (url.includes("/rest/v1/kazer_tasks")) {
-    return new Response(JSON.stringify([{ id: "task-1", user_id: "user-1", prompt: "Criar uma tela", title: "Criar uma tela", task_type: "chat", repo_url: null, selected_agent: null, selected_model: null, mcp_connector_ids: [], status: "processing", progress: 15, logs: [], result: null, error: null, credit_cost: 10, created_at: new Date().toISOString(), updated_at: new Date().toISOString(), completed_at: null }]), { status: 201 });
+    return new Response(JSON.stringify([{ id: "task-1", user_id: "user-1", prompt: "Criar uma tela", title: "Criar uma tela", task_type: "chat", repo_url: null, selected_agent: null, selected_model: null, mcp_connector_ids: [], status: "processing", progress: 15, logs: [], result: null, error: null, created_at: new Date().toISOString(), updated_at: new Date().toISOString(), completed_at: null }]), { status: 201 });
   }
   throw new Error(`unexpected fetch ${url}`);
 };

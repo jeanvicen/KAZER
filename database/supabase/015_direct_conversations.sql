@@ -1,4 +1,4 @@
--- Kazer: conversas 1-a-1 entre usuários. Aplicar após 014_daily_token_policy.sql.
+-- Kazer: conversas 1-a-1 entre usuários. Aplicar após as migrações de conta e integrações.
 create table if not exists public.direct_conversations (
   id uuid primary key default gen_random_uuid(),
   user_one uuid not null references auth.users(id) on delete cascade,

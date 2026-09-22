@@ -1,6 +1,6 @@
 -- Kazer: retenção de notificações.
 -- Mantém somente notificações recentes e uma confirmação compacta por usuário.
--- Não altera créditos, saldos, limites ou resets.
+-- Não altera Auth, perfis, memórias, conectores ou tarefas.
 
 create table if not exists public.notificacoes_vistas (
   user_id uuid primary key references auth.users(id) on delete cascade,

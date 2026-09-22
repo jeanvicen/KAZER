@@ -43,42 +43,6 @@
     }
   }
 
-  function closeAttachmentSheet() {
-    const sheet = $("#attachmentSheet");
-    const backdrop = $("#attachmentBackdrop");
-    if (!sheet || !backdrop) return;
-    sheet.classList.remove("visible");
-    backdrop.classList.remove("visible");
-    sheet.setAttribute("aria-hidden", "true");
-    sheet.hidden = true;
-    backdrop.hidden = true;
-    $("#attachButton")?.setAttribute("aria-expanded", "false");
-  }
-
-  function openWorkspace(tab = state.tab) {
-    state.tab = tab;
-    workspace?.classList.add("visible");
-    workspace?.setAttribute("aria-hidden", "false");
-    toggle?.setAttribute("aria-expanded", "true");
-    renderWorkspace();
-    if (tab === "tasks") refreshTasks();
-    if (tab === "repos") refreshRepos();
-  }
-
-  function closeWorkspace() {
-    workspace?.classList.remove("visible");
-    workspace?.setAttribute("aria-hidden", "true");
-    toggle?.setAttribute("aria-expanded", "false");
-  }
-
-  function statusText(status) {
-    return ({ pending: "Aguardando", processing: "Em andamento", completed: "Concluída", error: "Falhou", stopped: "Parada" })[status] || status || "Aguardando";
-  }
-
-  function repoFromUrl(value) {
-    try { return new URL(value).pathname.split("/").filter(Boolean).slice(0, 2).join("/"); } catch { return "Sem repositório"; }
-  }
-
   const CONNECTOR_REQUEST_PATTERN = /\b(?:github|git hub|reposit[oó]rio|repos?|branch|commit|pull request|merge|issue|bug|c[oó]digo|projeto|deploy|mcp|conector|integra[cç][aã]o|conectar|servidor|arquivo no github)\b/i;
   function isConnectorRequest(prompt) { return CONNECTOR_REQUEST_PATTERN.test(String(prompt || "")); }
   function isConnectorTask(task) {
@@ -122,7 +86,7 @@
       const status = String(task.status || "pending");
       const mcpCount = Array.isArray(task.mcpConnectorIds) ? task.mcpConnectorIds.length : 0;
       const repository = taskRepositoryLabel(task);
-      return `<article class="workspace-card"><div class="workspace-card-head"><strong class="workspace-card-title">${escapeHtml(task.title || task.prompt)}</strong><span class="workspace-status ${escapeHtml(status)}">${escapeHtml(statusText(status))}</span></div><div class="workspace-card-meta">${escapeHtml(repository === "Sem repositório" ? "Operação de conector" : repository)} · ${escapeHtml(formatDate(task.createdAt))}${mcpCount ? ` · ${mcpCount} MCP${mcpCount > 1 ? "s" : ""}` : ""}</div><div class="workspace-progress" aria-label="${Number(task.progress || 0)}%"><span style="width:${Math.max(0, Math.min(100, Number(task.progress || 0)))}%"></span></div>${task.creditCost ? `<div class="workspace-card-meta">Custo desta tarefa: ${Number(task.creditCost)} créditos</div>` : ""}</article>`;
+      return `<article class="workspace-card"><div class="workspace-card-head"><strong class="workspace-card-title">${escapeHtml(task.title || task.prompt)}</strong><span class="workspace-status ${escapeHtml(status)}">${escapeHtml(statusText(status))}</span></div><div class="workspace-card-meta">${escapeHtml(repository === "Sem repositório" ? "Operação de conector" : repository)} · ${escapeHtml(formatDate(task.createdAt))}${mcpCount ? ` · ${mcpCount} MCP${mcpCount > 1 ? "s" : ""}` : ""}</div><div class="workspace-progress" aria-label="${Number(task.progress || 0)}%"><span style="width:${Math.max(0, Math.min(100, Number(task.progress || 0)))}%"></span></div></article>`;
     }).join("");
   }
 
@@ -222,13 +186,12 @@
   }
 
   function openMcpModal(editing = null) {
-    window.kazerCloseAttachmentSheet?.();
     state.mcpModal = { editing, view: editing ? "form" : "list" };
     renderMcpModal();
   }
 
   function openConnectorStrip() {
-    window.kazerOpenAttachmentSheet?.();
+    window.kazerOpenConnectorsScreen?.();
     window.setTimeout(() => connectorStripList?.scrollIntoView({ block: "nearest", behavior: "smooth" }), 80);
   }
 
@@ -334,17 +297,17 @@
     });
   }
 
-  function startTask({ prompt, attachmentCount = 0 } = {}) {
+  function startTask({ prompt } = {}) {
     const mcpConnectorIds = Array.isArray(window.kazerMcpSelection) ? window.kazerMcpSelection : [];
     const repository = repoForPrompt(prompt);
     const connectorIntent = isConnectorRequest(prompt);
     const connectorContext = connectorIntent && (Boolean(repository) || mcpConnectorIds.length > 0);
     if (!connectorContext) return null;
     const clientId = window.crypto?.randomUUID?.() || `task-${Date.now()}-${Math.random().toString(16).slice(2)}`;
-    const promise = api("/api/tasks", { method: "POST", body: JSON.stringify({ title: String(prompt || "").slice(0, 72), prompt, taskType: repository ? "coding" : "chat", status: "processing", progress: 15, repoUrl: repository?.htmlUrl || repository?.cloneUrl || null, mcpConnectorIds, logs: [{ type: "info", message: "Operação de conector iniciada no chat" }], creditCost: 0 }) }).then((data) => data.task);
+    const promise = api("/api/tasks", { method: "POST", body: JSON.stringify({ title: String(prompt || "").slice(0, 72), prompt, taskType: repository ? "coding" : "chat", status: "processing", progress: 15, repoUrl: repository?.htmlUrl || repository?.cloneUrl || null, mcpConnectorIds, logs: [{ type: "info", message: "Operação de conector iniciada no chat" }] }) }).then((data) => data.task);
     state.pendingTasks.set(clientId, promise);
     promise.then((task) => { if (task) state.tasks = [task, ...state.tasks.filter((item) => item.id !== task.id)]; if (workspace?.classList.contains("visible") && state.tab === "tasks") renderTasks(); }).catch(() => {});
-    return { id: clientId, mcpConnectorIds, attachmentCount, connectorContext: true, repo: repository || null };
+    return { id: clientId, mcpConnectorIds, connectorContext: true, repo: repository || null };
   }
 
   async function updateTask(context, patch) {
@@ -361,7 +324,7 @@
 
   window.kazerWorkspace = {
     startTask,
-    finishTask: (context, result, creditCost) => updateTask(context, { status: "completed", progress: 100, result: String(result || "").slice(0, 16000), creditCost: Number(creditCost) || 0, logs: [{ type: "success", message: "Tarefa concluída" }] }),
+    finishTask: (context, result) => updateTask(context, { status: "completed", progress: 100, result: String(result || "").slice(0, 16000), logs: [{ type: "success", message: "Tarefa concluída" }] }),
     failTask: (context, error) => updateTask(context, { status: "error", progress: 100, error: String(error || "Falha na tarefa").slice(0, 2000), logs: [{ type: "error", message: String(error || "Falha na tarefa").slice(0, 1000) }] }),
     stopTask: (context) => updateTask(context, { status: "stopped", progress: 100, error: "Resposta interrompida pelo usuário.", logs: [{ type: "info", message: "Tarefa interrompida pelo usuário" }] }),
     refresh: refreshTasks,
