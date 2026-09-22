@@ -2,18 +2,19 @@ from base64 import b64encode
 from io import BytesIO
 from pathlib import Path
 
-from PIL import Image
+from PIL import Image, ImageEnhance, ImageOps
 
 SOURCE = Path('/home/ubuntu/upload/1000082107.jpg')
 ROOT = Path(__file__).resolve().parents[1]
 
-# The supplied reference is a presentation frame; this centered square crop keeps
-# the complete black/red composition while making the mark safe for app icons.
+# The supplied reference is a poster frame. For an installed-app icon, use a
+# tight square around the crowned figure instead of the large black poster margin.
 image = Image.open(SOURCE).convert('RGB')
-side = min(image.size)
-left = (image.width - side) // 2
-top = (image.height - side) // 2
-crop = image.crop((left, top, left + side, top + side))
+crop = image.crop((135, 58, 585, 508))
+crop = ImageOps.autocontrast(crop, cutoff=1)
+crop = ImageEnhance.Contrast(crop).enhance(1.22)
+crop = ImageEnhance.Brightness(crop).enhance(1.18)
+crop = ImageEnhance.Color(crop).enhance(1.18)
 master = crop.resize((1024, 1024), Image.Resampling.LANCZOS)
 
 png_buffer = BytesIO()

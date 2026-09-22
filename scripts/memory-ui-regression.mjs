@@ -18,7 +18,10 @@ assert.match(source, /Sua memória ainda está vazia/);
 assert.match(source, /\.settings-panel-scroll \{ flex: 1; min-width: 0; min-height: 0;/);
 assert.match(source, /\.memory-settings-body \{ display: grid; gap: 16px; width: 100%; min-width: 0; max-width: 100%; overflow: hidden;/);
 assert.match(source, /\.memory-content-text .*word-break: break-word;/);
-assert.match(source, /text\.textContent = memory\.content/);
+assert.match(source, /const cleanMemoryContent = \(value\) =>/);
+assert.match(source, /document\.createElementNS\(/);
+assert.match(source, /memoriesCache = Array\.isArray\(payload\.memories\) \? payload\.memories\.map\(normalizeMemory\)/);
+assert.match(source, /text\.textContent = cleanMemoryContent\(memory\.content\)/);
 assert.doesNotMatch(source, /Não usar/);
 
 // Simulate the UI state and the API response before/after the chat update.
