@@ -3833,6 +3833,28 @@
         .attachment-status-indicator { animation: none !important; }
         .attachment-preview-image { transition-duration: .01ms !important; }
       }
+      .composer.is-busy .attach-button, .attach-button:disabled { opacity: .4; cursor: not-allowed; pointer-events: none; }
+      .message-attachment-open { display: block; width: 100%; padding: 0; overflow: hidden; border: 0; border-radius: 11px; background: transparent; color: inherit; text-align: left; cursor: zoom-in; }
+      .message-attachment-open:focus-visible { outline: 2px solid rgba(231,188,105,.88); outline-offset: 3px; }
+      .message-attachment-open:hover .message-attachment-media { border-color: rgba(231,188,105,.32); }
+      .photo-viewer-backdrop { position: fixed; z-index: 170; inset: 0; background: rgba(0,0,0,.88); opacity: 0; pointer-events: none; backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); transition: opacity 190ms ease; }
+      .photo-viewer-backdrop.visible { opacity: 1; pointer-events: auto; }
+      .photo-viewer { position: fixed; z-index: 171; inset: 0; display: grid; grid-template-rows: minmax(0,1fr) auto; justify-items: center; gap: 10px; padding: max(20px, env(safe-area-inset-top)) max(14px, env(safe-area-inset-right)) max(16px, env(safe-area-inset-bottom)) max(14px, env(safe-area-inset-left)); overflow: hidden; background: rgba(5,5,7,.94); color: #f3f1ed; opacity: 0; visibility: hidden; pointer-events: none; transition: opacity 190ms ease, visibility 190ms ease; }
+      .photo-viewer[hidden] { display: none; }
+      .photo-viewer.visible { opacity: 1; visibility: visible; pointer-events: auto; }
+      .photo-viewer-stage { display: grid; place-items: center; width: 100%; min-height: 0; padding: 0 8px; }
+      .photo-viewer-stage img { display: block; max-width: 100%; max-height: calc(100dvh - 104px - env(safe-area-inset-top) - env(safe-area-inset-bottom)); object-fit: contain; border-radius: 12px; box-shadow: 0 20px 65px rgba(0,0,0,.45); user-select: none; -webkit-user-drag: none; }
+      .photo-viewer-close { position: fixed; z-index: 2; top: max(14px, env(safe-area-inset-top)); right: max(14px, env(safe-area-inset-right)); display: grid; place-items: center; width: 46px; height: 46px; border: 1px solid rgba(255,255,255,.19); border-radius: 15px; background: rgba(28,28,32,.74); color: #fff; font-size: 24px; font-weight: 300; line-height: 1; cursor: pointer; backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); }
+      .photo-viewer-close:hover { border-color: rgba(231,188,105,.48); background: rgba(45,39,32,.9); }
+      .photo-viewer-caption { max-width: min(86vw, 760px); margin: 0; overflow: hidden; color: rgba(255,255,255,.66); font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
+      @media (max-width: 520px) {
+        .photo-viewer { gap: 8px; padding: max(16px, env(safe-area-inset-top)) 10px max(14px, env(safe-area-inset-bottom)); }
+        .photo-viewer-stage { padding: 0; }
+        .photo-viewer-stage img { max-width: 100%; max-height: calc(100dvh - 94px - env(safe-area-inset-top) - env(safe-area-inset-bottom)); border-radius: 9px; }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .photo-viewer, .photo-viewer-backdrop { transition-duration: .01ms !important; }
+      }
     </style>
     <script>
       window.setTimeout(() => {
@@ -4125,6 +4147,12 @@
           <button class="connector-single-action" id="connectorSingleAction" type="button"><span class="connector-single-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" width="18" height="18"><path d="M9 3v4M15 3v4"></path><path d="M6 7h12v4a6 6 0 0 1-6 6 6 6 0 0 1-6-6Z"></path><path d="M12 17v4"></path></svg></span><strong>Conectores</strong></button>
         </div>
       </section>
+      <div class="photo-viewer-backdrop" id="photoViewerBackdrop" hidden></div>
+      <section class="photo-viewer" id="photoViewer" role="dialog" aria-modal="true" aria-label="Visualização da foto" aria-hidden="true" hidden>
+        <button class="photo-viewer-close" id="photoViewerClose" type="button" aria-label="Fechar foto ampliada">×</button>
+        <div class="photo-viewer-stage"><img id="photoViewerImage" alt="Foto ampliada" /></div>
+        <p class="photo-viewer-caption" id="photoViewerCaption"></p>
+      </section>
       <button class="workspace-toggle" id="workspaceToggle" type="button" aria-label="Abrir tarefas e repositórios" aria-controls="workspacePanel" aria-expanded="false"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m13 2-9 12h7l-1 8 9-12h-7l1-8Z"></path></svg></button><aside class="workspace-panel" id="workspacePanel" aria-label="Tarefas e repositórios" aria-hidden="true"><header class="workspace-head"><div class="workspace-head-copy"><span class="workspace-eyebrow">KAZER WORKSPACE</span><h2>Tarefas e repositórios</h2></div><button class="workspace-close" id="workspaceClose" type="button" aria-label="Fechar painel">×</button></header><nav class="workspace-tabs" aria-label="Workspace"><button class="workspace-tab active" type="button" data-workspace-tab="tasks">Tarefas</button><button class="workspace-tab" type="button" data-workspace-tab="repos">Repositórios</button></nav><div class="workspace-content" id="workspaceContent"></div><footer class="workspace-footer" id="workspaceFooter">As tarefas aparecem somente quando o KAZER trabalha com conectores ou repositórios.</footer></aside>      <div class="global-notice-backdrop" id="globalNoticeBackdrop" hidden></div>
       <section class="global-notice-modal" id="globalNoticeModal" role="dialog" aria-modal="true" aria-labelledby="globalNoticeTitle" aria-describedby="globalNoticeMessage" aria-hidden="true" hidden>
         <header class="global-notice-head"><button class="global-notice-close" id="globalNoticeClose" type="button" aria-label="Fechar anúncio">×</button></header>
@@ -4206,6 +4234,12 @@
         const attachmentBackdrop = document.getElementById("attachmentBackdrop");
         const attachmentSheet = document.getElementById("attachmentSheet");
         const attachmentSheetClose = document.getElementById("attachmentSheetClose");
+        const photoViewerBackdrop = document.getElementById("photoViewerBackdrop");
+        const photoViewer = document.getElementById("photoViewer");
+        const photoViewerImage = document.getElementById("photoViewerImage");
+        const photoViewerCaption = document.getElementById("photoViewerCaption");
+        const photoViewerClose = document.getElementById("photoViewerClose");
+        let photoViewerReturnFocus = null;
         const cameraAction = document.getElementById("cameraAction");
         const photoAction = document.getElementById("photoAction");
         const fileAction = document.getElementById("fileAction");
@@ -5765,6 +5799,38 @@
           });
         };
 
+        let photoViewerTimer = 0;
+        const openPhotoViewer = (url, name, trigger) => {
+          if (!url || !photoViewer || !photoViewerImage || !photoViewerBackdrop) return;
+          window.clearTimeout(photoViewerTimer);
+          photoViewerReturnFocus = trigger || document.activeElement;
+          photoViewerImage.src = url;
+          photoViewerImage.alt = name ? "Foto ampliada: " + name : "Foto ampliada";
+          photoViewerCaption.textContent = name || "Foto";
+          photoViewer.hidden = false;
+          photoViewerBackdrop.hidden = false;
+          photoViewer.setAttribute("aria-hidden", "false");
+          requestAnimationFrame(() => {
+            photoViewerBackdrop.classList.add("visible");
+            photoViewer.classList.add("visible");
+            photoViewerClose?.focus();
+          });
+        };
+        const closePhotoViewer = (restoreFocus = true) => {
+          if (!photoViewer || photoViewer.hidden) return;
+          window.clearTimeout(photoViewerTimer);
+          photoViewer.classList.remove("visible");
+          photoViewerBackdrop.classList.remove("visible");
+          photoViewer.setAttribute("aria-hidden", "true");
+          photoViewerTimer = window.setTimeout(() => {
+            if (photoViewer.classList.contains("visible")) return;
+            photoViewer.hidden = true;
+            photoViewerBackdrop.hidden = true;
+            photoViewerImage.removeAttribute("src");
+          }, 220);
+          if (restoreFocus && photoViewerReturnFocus?.isConnected) photoViewerReturnFocus.focus();
+        };
+
         const createLegacyAttachmentCard = (name) => {
           const card = document.createElement("div");
           card.className = "message-attachment-card is-legacy";
@@ -5805,7 +5871,18 @@
           details.className = inMessage ? "message-attachment-details" : "attachment-chip-details";
           details.textContent = attachmentExtension(file) + " · " + attachmentSizeLabel(file?.size);
           copy.append(name, details);
-          card.append(preview, copy);
+          if (inMessage && preview.querySelector("img[data-attachment-preview-url]")) {
+            const openPhoto = document.createElement("button");
+            openPhoto.className = "message-attachment-open";
+            openPhoto.type = "button";
+            openPhoto.dataset.photoViewer = "true";
+            openPhoto.setAttribute("aria-label", "Abrir foto em tamanho ampliado: " + String(file?.name || "imagem"));
+            openPhoto.title = "Toque para ampliar";
+            openPhoto.appendChild(preview);
+            card.append(openPhoto, copy);
+          } else {
+            card.append(preview, copy);
+          }
           if (!inMessage) return { card, status: null };
           const status = document.createElement("div");
           status.className = "message-attachment-status";
@@ -5900,6 +5977,8 @@
           busy = state;
           composer.classList.toggle("is-busy", state);
           messageInput.disabled = state;
+          attachButton.disabled = state;
+          attachButton.setAttribute("aria-disabled", String(state));
           updateSend();
         };
 
@@ -6002,9 +6081,17 @@
           let assistantRow = null;
           activeRequestController = controller;
           const restoreAttachmentsAfterFailedSend = () => {
-            if (!files.length || activeChatHistoryId !== chatId) return;
+            const attachmentWasSent = messageAttachmentFiles.get(chatId)?.get(messageIndex)?.state === "sent";
+            if (attachmentWasSent || !files.length || activeChatHistoryId !== chatId) return;
             selectedFiles = files;
             renderAttachments();
+            updateSend();
+          };
+          const clearAlreadySentAttachments = () => {
+            if (!files.length) return;
+            selectedFiles = selectedFiles.filter((candidate) => !files.some((sent) => sent === candidate || (sent.name === candidate.name && sent.size === candidate.size && Number(sent.lastModified || 0) === Number(candidate.lastModified || 0))));
+            renderAttachments();
+            releaseUnusedAttachmentPreviewUrls();
             updateSend();
           };
 
@@ -6027,7 +6114,10 @@
               if (result.status === 409) { await loadUsage(false); showAttachmentLimit(); }
               throw new Error(data.error || "Não foi possível obter uma resposta.");
             }
-            if (files.length) setMessageAttachmentStatus(userRow, "sent");
+            if (files.length) {
+              setMessageAttachmentStatus(userRow, "sent");
+              clearAlreadySentAttachments();
+            }
             if (data.usage) applyUsageState(data.usage, true);
             if (activeRequestController !== controller) {
               if (messageAttachmentFiles.get(chatId)?.get(messageIndex)?.state !== "sent") setMessageAttachmentStatus(userRow, "interrupted");
@@ -6338,6 +6428,10 @@
         });
         document.addEventListener("keydown", (event) => {
           if (event.key !== "Escape") return;
+          if (photoViewer && !photoViewer.hidden) {
+            closePhotoViewer();
+            return;
+          }
           if (attachmentSheet.classList.contains("visible")) {
             closeAttachmentSheet(true);
             return;
@@ -6360,6 +6454,16 @@
         });
         attachmentSheetClose.addEventListener("click", () => closeAttachmentSheet(true));
         attachmentBackdrop.addEventListener("click", () => closeAttachmentSheet(true));
+        photoViewerClose?.addEventListener("click", () => closePhotoViewer());
+        photoViewerBackdrop?.addEventListener("click", () => closePhotoViewer());
+        messageList.addEventListener("click", (event) => {
+          const trigger = event.target?.closest?.("[data-photo-viewer]");
+          if (!trigger || !messageList.contains(trigger)) return;
+          const image = trigger.querySelector("img[data-attachment-preview-url]");
+          if (!image?.dataset.attachmentPreviewUrl) return;
+          event.preventDefault();
+          openPhotoViewer(image.dataset.attachmentPreviewUrl, image.alt.replace(/^Prévia de /, ""), trigger);
+        });
         const openAttachmentInput = (input) => {
           if (usageState?.attachment_limit_reached === true) {
             closeAttachmentSheet(true);
