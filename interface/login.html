@@ -371,9 +371,213 @@
       .container { padding: 28px 20px; }
       h1 { font-size: 22px; }
     }
+
+
+    /* KAZER access experience — visual layer only */
+    :root {
+      --bg-page: #070709;
+      --bg-overlay: rgba(5, 5, 8, .82);
+      --bg-card: rgba(17, 17, 21, .92);
+      --bg-input: rgba(7, 7, 10, .78);
+      --border: rgba(255,255,255,.10);
+      --border-focus: #e54855;
+      --text-primary: #f5f4f2;
+      --text-secondary: #a5a4ad;
+      --accent: #e54855;
+      --danger: #ff737d;
+      --ease: cubic-bezier(.22, 1, .36, 1);
+    }
+
+    body {
+      position: relative;
+      isolation: isolate;
+      background: #070709;
+      background-image:
+        radial-gradient(circle at 50% 14%, rgba(229,72,85,.13), transparent 28%),
+        radial-gradient(circle at 15% 90%, rgba(229,72,85,.055), transparent 30%);
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      z-index: -2;
+      inset: 0;
+      opacity: .28;
+      pointer-events: none;
+      background-image: linear-gradient(rgba(255,255,255,.022) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.022) 1px, transparent 1px);
+      background-size: 48px 48px;
+      mask-image: linear-gradient(to bottom, black, transparent 78%);
+    }
+
+    body::after {
+      content: "";
+      position: fixed;
+      z-index: -1;
+      width: min(54vw, 620px);
+      aspect-ratio: 1;
+      left: 50%;
+      top: 48%;
+      border: 1px solid rgba(229,72,85,.12);
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+      box-shadow: 0 0 0 30px rgba(229,72,85,.018), 0 0 80px rgba(229,72,85,.055);
+      pointer-events: none;
+    }
+
+    .login-brand {
+      top: 50%;
+      left: clamp(24px, 12vw, 190px);
+      transform: translateY(-50%);
+      align-items: flex-start;
+      gap: 16px;
+      width: min(360px, 34vw);
+      pointer-events: auto;
+      animation: brand-arrive .9s var(--ease) both;
+    }
+
+    .login-brand::before {
+      content: "KAZER / PERSONAL SPACE";
+      color: rgba(229,72,85,.82);
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: .22em;
+    }
+
+    .login-brand img {
+      width: clamp(78px, 10vw, 116px);
+      height: clamp(78px, 10vw, 116px);
+      border-radius: 24%;
+      box-shadow: 0 18px 55px rgba(0,0,0,.56), 0 0 0 1px rgba(229,72,85,.17), 0 0 38px rgba(229,72,85,.11);
+      animation: mark-breathe 5.8s ease-in-out infinite;
+    }
+
+    .login-brand strong {
+      font-size: 16px;
+      letter-spacing: .34em;
+    }
+
+    .login-brand::after {
+      content: "Seu contexto. Seu próximo passo.";
+      max-width: 280px;
+      color: var(--text-secondary);
+      font-size: clamp(18px, 2vw, 25px);
+      font-weight: 500;
+      line-height: 1.18;
+      letter-spacing: -.035em;
+    }
+
+    .main-trigger-btn {
+      position: fixed;
+      right: clamp(24px, 12vw, 190px);
+      bottom: clamp(28px, 16vh, 150px);
+      min-width: 180px;
+      padding: 15px 25px;
+      border-color: rgba(229,72,85,.35);
+      border-radius: 999px;
+      background: #f5f4f2;
+      color: #101014;
+      box-shadow: 0 14px 34px rgba(0,0,0,.34), 0 0 0 0 rgba(229,72,85,0);
+      animation: button-arrive .9s .12s var(--ease) both;
+    }
+
+    .main-trigger-btn:hover { border-color: #e54855; background: #fff; box-shadow: 0 16px 38px rgba(0,0,0,.42), 0 0 0 5px rgba(229,72,85,.10); }
+
+    .overlay { padding: 18px; }
+
+    .container {
+      max-width: 430px;
+      padding: 30px 30px 32px;
+      border-color: rgba(255,255,255,.12);
+      border-radius: 24px;
+      background: linear-gradient(145deg, rgba(24,24,29,.97), rgba(13,13,17,.97));
+      box-shadow: 0 30px 100px rgba(0,0,0,.62), 0 0 0 1px rgba(229,72,85,.035);
+    }
+
+    .container::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 32px;
+      right: 32px;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(229,72,85,.72), transparent);
+    }
+
+    .auth-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 0 42px 30px 0; color: var(--text-secondary); font-size: 10px; letter-spacing: .16em; text-transform: uppercase; }
+    .auth-header strong { color: var(--text-primary); letter-spacing: .25em; font-size: 11px; }
+    .auth-header span { display: inline-flex; align-items: center; gap: 7px; }
+    .auth-header span::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: #69d2a1; box-shadow: 0 0 12px rgba(105,210,161,.65); }
+
+    .close-button { border-radius: 50%; }
+    .close-button:hover { border-color: rgba(229,72,85,.28); background: rgba(229,72,85,.09); color: #fff; }
+
+    h1 { font-size: clamp(24px, 4vw, 29px); letter-spacing: -.045em; }
+    .switch-text { margin-bottom: 26px; }
+    .switch-link { border: 0; padding: 0; background: none; color: var(--text-primary); font: inherit; font-weight: 600; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
+    .switch-link:hover, .switch-link:focus-visible { color: var(--accent); }
+
+    .input-group { margin-bottom: 16px; }
+    .input-group label { color: #c2c0c5; }
+    .input-wrapper input { min-height: 50px; border-radius: 14px; border-color: rgba(255,255,255,.10); }
+    .input-wrapper input:focus { border-color: var(--border-focus); box-shadow: 0 0 0 4px rgba(229,72,85,.12); }
+    .input-wrapper input:focus ~ svg.icon-left { color: var(--accent); }
+
+    .submit-btn { min-height: 50px; margin-top: 10px; border: 0; border-radius: 14px; background: #f5f4f2; color: #0b0b0e; box-shadow: 0 10px 24px rgba(0,0,0,.24); }
+    .submit-btn:hover:not(:disabled) { border: 0; background: #fff; box-shadow: 0 12px 28px rgba(0,0,0,.32), 0 0 0 4px rgba(229,72,85,.10); }
+    .submit-btn:active:not(:disabled) { transform: translateY(1px) scale(.99); }
+    .error-message { color: #ff8b93; }
+    .shake { animation: error-pulse .38s var(--ease); }
+    @keyframes error-pulse { 0%,100% { box-shadow: 0 30px 100px rgba(0,0,0,.62), 0 0 0 1px rgba(229,72,85,.035); } 45% { box-shadow: 0 30px 100px rgba(0,0,0,.62), 0 0 0 5px rgba(229,72,85,.12); } }
+
+    .intro-screen { position: fixed; z-index: 10000; inset: 0; display: grid; place-items: center; overflow: hidden; background: #070709; color: var(--text-primary); transition: opacity .62s var(--ease), visibility .62s; }
+    .intro-screen.is-done { opacity: 0; visibility: hidden; pointer-events: none; }
+    .intro-screen::before { content: ""; position: absolute; width: min(88vw, 760px); aspect-ratio: 1; border: 1px solid rgba(229,72,85,.16); border-radius: 50%; box-shadow: 0 0 0 34px rgba(229,72,85,.018), 0 0 100px rgba(229,72,85,.08); animation: intro-orbit 2.2s var(--ease) both; }
+    .intro-screen::after { content: ""; position: absolute; inset: 0; background-image: linear-gradient(rgba(255,255,255,.022) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.022) 1px, transparent 1px); background-size: 48px 48px; opacity: .25; mask-image: linear-gradient(to bottom, black, transparent 82%); }
+    .intro-content { position: relative; z-index: 1; display: grid; justify-items: center; gap: 20px; text-align: center; padding: 24px; animation: intro-content-in 1.05s var(--ease) both; }
+    .intro-mark { width: clamp(104px, 22vw, 164px); aspect-ratio: 1; border-radius: 25%; object-fit: cover; box-shadow: 0 24px 80px rgba(0,0,0,.6), 0 0 0 1px rgba(229,72,85,.22), 0 0 55px rgba(229,72,85,.15); animation: intro-mark-in 1.1s var(--ease) both, mark-breathe 5.8s 1.1s ease-in-out infinite; }
+    .intro-kicker { color: rgba(229,72,85,.86); font-size: 10px; font-weight: 700; letter-spacing: .28em; text-transform: uppercase; }
+    .intro-title { font-size: clamp(21px, 4vw, 30px); font-weight: 600; letter-spacing: -.04em; }
+    .intro-copy { max-width: 280px; color: var(--text-secondary); font-size: 13px; line-height: 1.5; }
+    .intro-skip { position: absolute; z-index: 2; right: max(20px, env(safe-area-inset-right)); bottom: max(20px, env(safe-area-inset-bottom)); border: 1px solid rgba(255,255,255,.16); border-radius: 999px; padding: 9px 13px; background: rgba(7,7,9,.58); color: var(--text-secondary); font: inherit; font-size: 12px; cursor: pointer; }
+    .intro-skip:hover, .intro-skip:focus-visible { border-color: rgba(229,72,85,.5); color: var(--text-primary); }
+
+    @keyframes brand-arrive { from { opacity: 0; transform: translateY(-50%) translateX(-18px); } to { opacity: 1; transform: translateY(-50%) translateX(0); } }
+    @keyframes button-arrive { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes mark-breathe { 0%,100% { transform: scale(1); } 50% { transform: scale(1.018); } }
+    @keyframes intro-content-in { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes intro-mark-in { from { opacity: 0; transform: scale(.72) rotate(-5deg); filter: saturate(.6) brightness(.65); } to { opacity: 1; transform: scale(1) rotate(0); filter: none; } }
+    @keyframes intro-orbit { from { opacity: 0; transform: scale(.72) rotate(-12deg); } to { opacity: 1; transform: scale(1) rotate(0); } }
+
+    @media (max-width: 760px) {
+      body { align-items: flex-end; padding: 0; }
+      body::after { width: 92vw; top: 28%; }
+      .login-brand { position: absolute; top: max(48px, env(safe-area-inset-top)); left: 50%; width: calc(100% - 48px); align-items: center; text-align: center; transform: translateX(-50%); }
+      .login-brand::after { font-size: 20px; }
+      .main-trigger-btn { right: 24px; bottom: max(28px, env(safe-area-inset-bottom)); left: 24px; width: calc(100% - 48px); }
+      .overlay { align-items: flex-end; padding: 10px 10px max(10px, env(safe-area-inset-bottom)); }
+      .container { max-width: none; padding: 28px 20px 24px; border-radius: 24px 24px 18px 18px; max-height: calc(100dvh - 22px); overflow-y: auto; }
+      .container::before { left: 25%; right: 25%; }
+      .auth-header { margin-bottom: 24px; }
+      .intro-screen::before { width: 122vw; }
+      .intro-copy { max-width: 250px; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; scroll-behavior: auto !important; transition-duration: .01ms !important; }
+    }
   </style>
 </head>
 <body>
+
+  <div class="intro-screen" id="introScreen" role="dialog" aria-label="Abertura do Kazer">
+    <div class="intro-content">
+      <span class="intro-kicker">KAZER / PERSONAL SPACE</span>
+      <img class="intro-mark" src="../download/assets/kazer-symbol.png" alt="" aria-hidden="true" />
+      <h1 class="intro-title">Seu contexto. Seu próximo passo.</h1>
+      <p class="intro-copy">Um espaço pessoal para conversar, organizar e construir.</p>
+    </div>
+    <button class="intro-skip" id="introSkip" type="button">Pular abertura</button>
+  </div>
 
   <div class="login-brand" aria-label="Kazer">
     <img src="../download/assets/kazer-symbol.png" alt="Símbolo Kazer" />
@@ -381,18 +585,19 @@
   </div>
 
   <!-- Botão Principal (Preto, Meio Quadrado) -->
-  <button class="main-trigger-btn" id="openOverlayBtn">Acessar Kazer</button>
+  <button class="main-trigger-btn" id="openOverlayBtn">Entrar no KAZER <span aria-hidden="true">↗</span></button>
 
   <!-- Overlay Container -->
   <div class="overlay" id="overlay">
     <div class="container" id="authContainer">
+      <div class="auth-header"><strong>KAZER</strong><span>Espaço pessoal</span></div>
       <button class="close-button" id="closeOverlayBtn" aria-label="Fechar">✕</button>
       
       <!-- ================= LOGIN FORM ================= -->
       <div class="form-section active" id="loginForm">
         <h1>Bem-vindo de volta</h1>
         <p class="switch-text">
-          Não tem uma conta? <span id="goToSignup">Criar conta</span>
+          Não tem uma conta? <button class="switch-link" id="goToSignup" type="button">Criar conta</button>
         </p>
         
         <form id="formLogin">
@@ -415,7 +620,7 @@
             </div>
           </div>
 
-          <div class="error-message" id="loginError"></div>
+          <div class="error-message" id="loginError" role="alert" aria-live="polite"></div>
           <button type="submit" class="submit-btn" id="loginBtn">
             <span class="btn-text">Entrar</span>
             <div class="spinner"></div>
@@ -427,7 +632,7 @@
       <div class="form-section hidden" id="signupForm">
         <h1>Criar sua conta</h1>
         <p class="switch-text">
-          Já tem uma conta? <span id="goToLogin">Fazer login</span>
+          Já tem uma conta? <button class="switch-link" id="goToLogin" type="button">Fazer login</button>
         </p>
         
         <form id="formSignup">
@@ -458,7 +663,7 @@
             </div>
           </div>
 
-          <div class="error-message" id="signupError"></div>
+          <div class="error-message" id="signupError" role="alert" aria-live="polite"></div>
           <button type="submit" class="submit-btn" id="signupBtn">
             <span class="btn-text">Criar Conta</span>
             <div class="spinner"></div>
@@ -474,6 +679,28 @@
     (() => {
       "use strict";
 
+      // A abertura é uma experiência visual local. Não altera autenticação nem Supabase.
+      const introScreen = document.getElementById('introScreen');
+      const introSkip = document.getElementById('introSkip');
+      const introKey = 'kazer-login-intro-seen-v1';
+      let introTimer = null;
+      const finishIntro = () => {
+        if (!introScreen || introScreen.classList.contains('is-done')) return;
+        window.clearTimeout(introTimer);
+        try { window.localStorage.setItem(introKey, '1'); } catch (_) {}
+        introScreen.classList.add('is-done');
+        window.setTimeout(() => introScreen.remove(), 700);
+      };
+      let hasSeenIntro = false;
+      try { hasSeenIntro = window.localStorage.getItem(introKey) === '1'; } catch (_) {}
+      if (hasSeenIntro) {
+        introScreen?.remove();
+      } else if (introScreen) {
+        const reducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+        introTimer = window.setTimeout(finishIntro, reducedMotion ? 500 : 2600);
+        introSkip?.addEventListener('click', finishIntro);
+      }
+
       // 1. CONFIGURAÇÃO DO SUPABASE (Nome 'kazerDB' para evitar 100% de conflitos)
       const SUPABASE_URL = "https://mqjunopzycdezzjmlhip.supabase.co";
       const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1xanVub3B6eWNkZXp6am1saGlwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc4Mzg3NDksImV4cCI6MjEwMzQxNDc0OX0.Y_o2_QQhZzuCjvHdEfxaR5VrAxo7NFenPaDmdHN3bwM";
@@ -482,6 +709,7 @@
 
       // 2. ELEMENTOS DO DOM
       const overlay = document.getElementById('overlay');
+      const openOverlayBtn = document.getElementById('openOverlayBtn');
       const container = document.getElementById('authContainer');
       const loginForm = document.getElementById('loginForm');
       const signupForm = document.getElementById('signupForm');
@@ -491,12 +719,16 @@
       // 3. FUNÇÕES DE UI
       function openOverlay() {
         overlay.classList.add('active');
+        document.body.classList.add('modal-open');
         clearErrors();
+        window.setTimeout(() => document.getElementById('loginEmail')?.focus(), 220);
       }
 
       function closeOverlay() {
         overlay.classList.remove('active');
+        document.body.classList.remove('modal-open');
         clearErrors();
+        openOverlayBtn?.focus();
       }
 
       function clearErrors() {
@@ -527,7 +759,10 @@
       }
 
       // 4. EVENT LISTENERS DE NAVEGAÇÃO
-      document.getElementById('openOverlayBtn')?.addEventListener('click', openOverlay);
+      openOverlayBtn?.addEventListener('click', openOverlay);
+      document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape' && overlay.classList.contains('active')) closeOverlay();
+      });
       document.getElementById('closeOverlayBtn')?.addEventListener('click', closeOverlay);
 
       overlay.addEventListener('click', (e) => {
