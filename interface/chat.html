@@ -3470,32 +3470,73 @@
       }
 
 
-      /* Planos KAZER — apresentação de marca e comparação */
-      .plans-screen { width: min(980px, calc(100vw - 40px)); height: min(790px, calc(100dvh - 40px)); max-height: calc(100dvh - 40px); border-color: rgba(229,72,85,.22); background: radial-gradient(720px 340px at 84% 0%, rgba(229,72,85,.09), transparent 75%), var(--page); box-shadow: 0 36px 110px rgba(0,0,0,.72), 0 0 0 1px rgba(229,72,85,.04), 0 0 80px rgba(229,72,85,.045); }
-      .plans-head { min-height: 82px; }
+      /* Loja KAZER — espaço de catálogo, responsivo e sem conteúdo cortado */
+      .plans-screen { width: min(1040px, calc(100vw - 40px)); height: min(820px, calc(100dvh - 40px)); max-height: calc(100dvh - 40px); border-color: rgba(229,72,85,.22); background: radial-gradient(760px 360px at 84% 0%, rgba(229,72,85,.085), transparent 74%), var(--page); box-shadow: 0 36px 110px rgba(0,0,0,.72), 0 0 0 1px rgba(229,72,85,.04), 0 0 80px rgba(229,72,85,.045); }
+      .plans-head { min-height: 80px; }
       .plans-head-copy > span { color: #e7bc69; }
-      .plans-brand-banner { position: relative; display: flex; align-items: center; gap: 18px; min-height: 142px; margin: 16px 20px 4px; padding: 21px 25px; overflow: hidden; border: 1px solid rgba(229,72,85,.20); border-radius: 22px; background: linear-gradient(112deg, rgba(229,72,85,.12), rgba(242,140,107,.035) 44%, rgba(255,255,255,.02) 100%); }
+      .plans-brand-banner { position: relative; display: flex; align-items: center; gap: 18px; min-height: 132px; flex: 0 0 auto; margin: 14px 22px 4px; padding: 20px 24px; overflow: hidden; border: 1px solid rgba(229,72,85,.20); border-radius: 22px; background: linear-gradient(112deg, rgba(229,72,85,.12), rgba(242,140,107,.035) 44%, rgba(255,255,255,.02) 100%); }
       .plans-brand-banner::before { position: absolute; inset: 0; background: linear-gradient(100deg, transparent 32%, rgba(255,255,255,.035) 50%, transparent 70%); content: ""; pointer-events: none; }
-      .plans-brand-mark { position: relative; z-index: 1; display: grid; place-items: center; width: 62px; height: 62px; flex: 0 0 auto; overflow: hidden; border: 1px solid rgba(229,72,85,.24); border-radius: 18px; background: #08090b; box-shadow: 0 12px 32px rgba(0,0,0,.38), 0 0 30px rgba(229,72,85,.11); }
+      .plans-brand-mark { position: relative; z-index: 1; display: grid; place-items: center; width: 60px; height: 60px; flex: 0 0 auto; overflow: hidden; border: 1px solid rgba(229,72,85,.24); border-radius: 18px; background: #08090b; box-shadow: 0 12px 32px rgba(0,0,0,.38), 0 0 30px rgba(229,72,85,.11); }
       .plans-brand-mark img { display: block; width: 100%; height: 100%; object-fit: cover; }
       .plans-brand-copy { position: relative; z-index: 1; min-width: 0; }
       .plans-brand-copy > span { display: block; margin-bottom: 7px; color: #e8b76c; font-size: 8px; font-weight: 800; letter-spacing: .19em; }
-      .plans-brand-copy h3 { margin: 0; color: var(--text); font-size: clamp(19px, 3vw, 27px); font-weight: 650; letter-spacing: -.05em; line-height: 1.12; }
+      .plans-brand-copy h3 { margin: 0; color: var(--text); font-size: clamp(20px, 3vw, 28px); font-weight: 650; letter-spacing: -.05em; line-height: 1.12; }
       .plans-brand-copy p { max-width: 570px; margin: 7px 0 0; color: var(--text-dim); font-size: 11px; line-height: 1.5; }
       .plans-brand-orbit { position: absolute; top: 50%; right: -40px; width: 220px; height: 220px; border: 1px solid rgba(229,72,85,.17); border-radius: 50%; box-shadow: 0 0 0 22px rgba(229,72,85,.018), 0 0 0 48px rgba(229,72,85,.012), inset 0 0 32px rgba(229,72,85,.03); transform: translateY(-50%); pointer-events: none; }
       .plans-brand-orbit i { position: absolute; top: 25%; left: 14%; width: 6px; height: 6px; border-radius: 50%; background: #e54855; box-shadow: 0 0 16px rgba(229,72,85,.8); }
-      .plans-body { flex: 1; min-height: 0; align-content: start; padding-top: 16px; }
+      .plans-body { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); align-items: stretch; align-content: start; flex: 1; min-height: 0; width: min(920px, 100%); margin: 0 auto; padding: 13px 22px 28px; overflow-y: auto; overscroll-behavior: contain; }
+      .plans-section-heading { display: flex; grid-column: 1 / -1; align-items: baseline; justify-content: space-between; gap: 12px; padding: 5px 2px 1px; }
+      .plans-section-heading > span { color: var(--text-soft); font-size: 9px; font-weight: 800; letter-spacing: .18em; }
+      .plans-section-heading small { color: var(--text-dim); font-size: 10px; }
+      .plan-card { min-width: 0; min-height: 430px; }
+      .plan-card-current, .plan-card-pro { height: 100%; }
       .plan-card-pro { box-shadow: 0 18px 50px rgba(120,90,18,.18), 0 0 0 1px rgba(231,188,105,.05), inset 0 1px 0 rgba(255,240,110,.06); }
       @media (max-width: 680px) {
-        .plans-screen { width: 100%; height: min(94dvh, 900px); max-height: 94dvh; }
-        .plans-head { min-height: 76px; }
-        .plans-brand-banner { min-height: 120px; gap: 13px; margin: 11px 10px 2px; padding: 16px 14px; border-radius: 19px; }
+        .plans-screen { top: 0; right: 0; bottom: 0; left: 0; width: 100%; height: 100dvh; max-height: 100dvh; border: 0; border-radius: 0; transform: translateY(100%); }
+        .plans-screen.visible { transform: translateY(0); }
+        .plans-head { position: relative; z-index: 3; min-height: 76px; padding: max(12px, env(safe-area-inset-top)) 12px 12px; background: var(--page); }
+        .plans-head-copy h2 { font-size: clamp(16px, 4.8vw, 21px); }
+        .plans-head-copy small { font-size: 10px; }
+        .plans-brand-banner { min-height: 116px; gap: 13px; margin: 12px 12px 3px; padding: 16px 14px; border-radius: 19px; }
         .plans-brand-mark { width: 48px; height: 48px; border-radius: 15px; }
         .plans-brand-copy > span { margin-bottom: 5px; font-size: 7px; letter-spacing: .14em; }
         .plans-brand-copy h3 { font-size: clamp(17px, 5vw, 22px); }
-        .plans-brand-copy p { font-size: 9px; }
-        .plans-brand-orbit { right: -112px; width: 200px; height: 200px; opacity: .8; }
-        .plans-body { min-height: 0; padding-top: 10px; }
+        .plans-brand-copy p { max-width: 340px; font-size: 9.5px; }
+        .plans-brand-orbit { right: -122px; width: 205px; height: 205px; opacity: .76; }
+        .plans-body { display: grid; grid-template-columns: minmax(0,1fr); gap: 12px; width: 100%; padding: 15px 14px max(28px, env(safe-area-inset-bottom)); overflow-y: auto; }
+        .plans-section-heading { align-items: flex-start; flex-direction: column; gap: 4px; padding: 2px 3px 3px; }
+        .plans-section-heading > span { font-size: 8px; }
+        .plans-section-heading small { font-size: 9px; }
+        .plan-card { min-height: unset; height: auto; padding: 19px 18px; border-radius: 20px; }
+        .plan-card-topline { align-items: center; flex-direction: row; }
+        .plan-card-label { font-size: 9px; }
+        .plan-current-pill, .plan-pro-pill { font-size: 7px; }
+        .plan-card-name { margin-top: 11px; font-size: 24px; }
+        .plan-card-free-price { flex-wrap: nowrap; gap: 8px; margin-top: 12px; }
+        .plan-card-free-price strong { font-size: 27px; }
+        .plan-card-free-price span { font-size: 10px; }
+        .plan-card-desc, .plan-card-pro .plan-card-desc { min-height: 0; font-size: 11px; }
+        .plan-card-divider { margin: 14px 0 12px; }
+        .plan-card-compare-list { gap: 10px; }
+        .plan-card-compare-list li { grid-template-columns: 17px minmax(0,1fr); gap: 7px; font-size: 11px; line-height: 1.4; }
+        .plan-card-cycle { margin-top: 16px; padding-top: 12px; }
+        .plan-card-cycle strong { font-size: 13px; }
+        .plan-card-cycle small { font-size: 9px; }
+        .plan-card-current-foot { margin-top: 13px; padding-top: 10px; font-size: 9px; }
+        .plan-card-pro-tagline { min-height: 0; margin-top: 11px; font-size: 11px; }
+        .plan-card-pro-price { gap: 3px; margin-top: 11px; }
+        .plan-card-pro-currency { font-size: 13px; }
+        .plan-card-pro-value { font-size: 34px; }
+        .plan-card-pro-period { font-size: 10px; }
+        .plan-card-pro-list { gap: 10px; }
+        .plan-card-pro-list li { font-size: 10.5px; }
+        .plan-card-pro button { min-height: 48px; margin-top: 16px; padding: 0 12px; border-radius: 13px; font-size: 11px; }
+        .plan-card-pro-note { margin-top: 10px; font-size: 9px; }
+      }
+      @media (max-width: 360px) {
+        .plans-brand-banner { margin-right: 9px; margin-left: 9px; }
+        .plans-body { padding-right: 10px; padding-left: 10px; }
+        .plan-card { padding-right: 15px; padding-left: 15px; }
       }
       @media (prefers-reduced-motion: reduce) {
         .plans-brand-banner::before { display: none; }
@@ -3677,7 +3718,7 @@
       <section class="plans-screen" id="plansScreen" role="dialog" aria-modal="true" aria-label="Planos do Kazer" aria-hidden="true" hidden>
         <header class="plans-head">
           <button class="icon-button" id="plansBack" type="button" aria-label="Fechar"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"></path></svg></button>
-          <div class="plans-head-copy"><span>KAZER · PLANOS</span><h2>Escolha seu próximo nível</h2><small>Compare as opções e encontre seu espaço.</small></div>
+          <div class="plans-head-copy"><span>LOJA KAZER</span><h2>Escolha o que combina com você</h2><small>Planos pensados para acompanhar seu jeito de criar.</small></div>
           <span class="connectors-head-spacer" aria-hidden="true"></span>
         </header>
         <div class="plans-brand-banner">
@@ -3686,6 +3727,7 @@
           <span class="plans-brand-orbit" aria-hidden="true"><i></i></span>
         </div>
         <div class="plans-body">
+          <div class="plans-section-heading"><span>PLANOS DISPONÍVEIS</span><small>Compare benefícios e escolha seu ritmo.</small></div>
           <article class="plan-card plan-card-current" aria-label="Plano Free atual">
             <div class="plan-card-topline"><span class="plan-card-label">FREE</span><span class="plan-current-pill">SEU PLANO ATUAL</span></div>
             <strong class="plan-card-name">Essencial</strong>
