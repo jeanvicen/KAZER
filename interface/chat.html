@@ -3373,6 +3373,8 @@
       @media (prefers-reduced-motion: reduce) {
         .settings-mobile-upgrade { animation: none; }
       }
+
+      .settings-mobile-account-credit > .settings-mobile-upgrade { display: inline-flex; align-items: center; justify-content: center; width: 100%; margin-top: 4px; }
     </style>
     <script>
       window.setTimeout(() => {
@@ -3455,9 +3457,9 @@
             <div class="settings-mobile-account-top">
               <span class="settings-mobile-account-avatar" id="settingsMobileAccountAvatar">K</span>
               <div class="settings-mobile-account-identity"><strong id="settingsMobileAccountName">Kazer</strong><small id="settingsMobileAccountEmail">Conta conectada</small></div>
-              <div class="settings-mobile-account-plan"><span class="settings-mobile-account-plan-label">PLANO</span><strong class="settings-mobile-account-plan-value" id="settingsMobilePlan">Free</strong><button class="settings-mobile-upgrade" id="settingsMobileUpgrade" type="button" hidden>Atualizar para Kazer Pro</button></div>
+              <div class="settings-mobile-account-plan"><span class="settings-mobile-account-plan-label">PLANO</span><strong class="settings-mobile-account-plan-value" id="settingsMobilePlan">Free</strong></div>
             </div>
-            <div class="settings-mobile-account-credit"><div class="settings-usage-heading"><span class="settings-mobile-credit-label">USO DO CICLO</span><strong class="settings-mobile-credit-balance" id="settingsMobileCreditBalance" aria-label="Porcentagem de uso">—%</strong></div><div class="settings-usage-meter" role="progressbar" aria-label="Uso do ciclo" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span id="settingsUsageBar"></span></div><span class="settings-mobile-credit-next" id="settingsMobileCreditNext">Próxima atualização: —</span></div>
+            <div class="settings-mobile-account-credit"><div class="settings-usage-heading"><span class="settings-mobile-credit-label">USO DO CICLO</span><strong class="settings-mobile-credit-balance" id="settingsMobileCreditBalance" aria-label="Porcentagem de uso">—%</strong></div><div class="settings-usage-meter" role="progressbar" aria-label="Uso do ciclo" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span id="settingsUsageBar"></span></div><span class="settings-mobile-credit-next" id="settingsMobileCreditNext">Próxima atualização: —</span><button class="settings-mobile-upgrade" id="settingsMobileUpgrade" type="button">Atualizar para Kazer Pro</button></div>
           </div>
           <label class="settings-search"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-4-4"></path></svg><input id="settingsSearch" type="search" placeholder="Pesquisar configuração" autocomplete="off" /></label>
           <nav class="settings-nav-list" aria-label="Categorias de configurações">
@@ -5822,6 +5824,7 @@
     <script src="/interface/kazer-workspace.js"></script>
   </body>
 </html>
+
 
 
 
