@@ -3855,6 +3855,43 @@
       @media (prefers-reduced-motion: reduce) {
         .photo-viewer, .photo-viewer-backdrop { transition-duration: .01ms !important; }
       }
+
+      /* Mensagens longas do usuário */
+      .message-bubble.is-collapsible { position: relative; }
+      .message-bubble.is-collapsed { max-height: calc(1.52em * 5 + 24px); overflow: hidden; }
+      .message-bubble.is-collapsed::after { position: absolute; right: 0; bottom: 0; left: 0; height: 2.25em; background: linear-gradient(to bottom, transparent, var(--card-2)); content: ""; pointer-events: none; }
+      .message-bubble.is-expanded { max-height: none; overflow: visible; }
+      .message-expand-toggle { justify-self: end; display: inline-flex; align-items: center; gap: 6px; width: max-content; margin: -3px 2px 0; padding: 3px 2px; border: 0; background: transparent; color: var(--text-dim); font: inherit; font-size: 12px; font-weight: 570; line-height: 1.2; cursor: pointer; transition: color 160ms var(--ease); }
+      .message-expand-toggle:hover { color: var(--text); }
+      .message-expand-toggle:focus-visible { outline: 2px solid rgba(231,188,105,.78); outline-offset: 3px; border-radius: 4px; }
+      .message-expand-chevron { display: inline-block; font-size: 15px; line-height: 1; transform: translateY(-1px); transition: transform 180ms var(--ease); }
+      .message-expand-toggle[aria-expanded="true"] .message-expand-chevron { transform: rotate(180deg); }
+
+      /* Identidade KAZER no estado de pensamento: núcleo + órbitas, sem estrela genérica */
+      .assistant-marker img.assistant-mark-image { display: block; width: 100%; height: 100%; object-fit: contain; filter: none; }
+      .thinking-row { gap: 11px; min-height: 36px; }
+      .thinking-symbol { position: relative; display: inline-grid; place-items: center; width: 36px; height: 36px; flex: 0 0 36px; margin: 0; color: var(--text-soft); }
+      .thinking-orbit { position: absolute; inset: 2px 3px; border: 1px solid rgba(197,58,63,.27); border-top-color: #c53a3f; border-right-color: rgba(231,188,105,.75); border-radius: 50%; transform: rotate(-28deg) scaleX(.76); animation: kazer-orbit-forward 1.8s linear infinite; }
+      .thinking-orbit::after { position: absolute; top: 3px; left: 50%; width: 4px; height: 4px; border-radius: 50%; background: #e7bc69; box-shadow: 0 0 7px rgba(231,188,105,.38); content: ""; transform: translate(-50%,-50%); }
+      .thinking-orbit-secondary { position: absolute; inset: 7px 0; border: 1px solid rgba(197,58,63,.22); border-left-color: rgba(231,188,105,.75); border-right-color: transparent; border-radius: 50%; opacity: .86; transform: rotate(38deg) scaleY(.72); animation: kazer-orbit-reverse 2.35s linear infinite; }
+      .thinking-orbit-secondary::after { position: absolute; right: 3px; top: 50%; width: 3px; height: 3px; border-radius: 50%; background: #c53a3f; content: ""; transform: translateY(-50%); }
+      .thinking-mark { position: relative; z-index: 1; display: block; width: 15px; height: 15px; object-fit: contain; }
+      .thinking-label { display: inline-flex; align-items: center; gap: 4px; min-width: 0; color: var(--text-soft); background: none; font-size: 13px; font-weight: 560; letter-spacing: .012em; animation: none; }
+      .thinking-dots { display: inline-flex; align-items: center; gap: 3px; margin-left: 1px; }
+      .thinking-dots span { display: block; width: 3px; height: 3px; border-radius: 50%; background: #e7bc69; opacity: .22; animation: kazer-thinking-dot 1.15s ease-in-out infinite; }
+      .thinking-dots span:nth-child(2) { animation-delay: .16s; }
+      .thinking-dots span:nth-child(3) { animation-delay: .32s; }
+      @keyframes kazer-orbit-forward { to { transform: rotate(332deg) scaleX(.76); } }
+      @keyframes kazer-orbit-reverse { to { transform: rotate(-322deg) scaleY(.72); } }
+      @keyframes kazer-thinking-dot { 0%, 72%, 100% { opacity: .22; transform: translateY(0); } 34% { opacity: .95; transform: translateY(-2px); } }
+      @media (max-width: 520px) {
+        .thinking-symbol { width: 34px; height: 34px; flex-basis: 34px; }
+        .thinking-label { font-size: 12.5px; }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .thinking-orbit, .thinking-orbit-secondary, .thinking-dots span { animation: none !important; }
+        .thinking-dots span { opacity: .72; }
+      }
     </style>
     <script>
       window.setTimeout(() => {
@@ -5245,12 +5282,18 @@
 
         const timeNow = () => new Intl.DateTimeFormat("pt-BR", { hour: "2-digit", minute: "2-digit" }).format(new Date());
 
-        const assistantSymbolMarkup = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.55" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2.6 13.8 10.2 21.4 12l-7.6 1.8L12 21.4l-1.8-7.6L2.6 12l7.6-1.8L12 2.6Z"></path><circle cx="12" cy="12" r="1.1" fill="currentColor" stroke="none"></circle></svg>';
+        const assistantMarkAsset = "../download/assets/kazer-mark.svg?v=20260922";
 
         const createAssistantSymbol = (className) => {
           const symbol = document.createElement("span");
           symbol.className = className;
-          symbol.innerHTML = assistantSymbolMarkup;
+          const mark = document.createElement("img");
+          mark.className = "assistant-mark-image";
+          mark.src = assistantMarkAsset;
+          mark.alt = "";
+          mark.setAttribute("aria-hidden", "true");
+          mark.decoding = "async";
+          symbol.appendChild(mark);
           return symbol;
         };
 
@@ -5901,6 +5944,60 @@
           return { card, status };
         };
 
+        const addUserMessageExpansion = (bubble, content, messageText) => {
+          const lineBreakCount = (messageText.match(/\n/g) || []).length;
+          if (messageText.length <= 120 && lineBreakCount < 5) {
+            content.appendChild(bubble);
+            return;
+          }
+          bubble.classList.add("is-collapsible", "is-collapsed");
+          bubble.dataset.expandableMessage = "true";
+          const toggle = document.createElement("button");
+          toggle.className = "message-expand-toggle";
+          toggle.type = "button";
+          toggle.hidden = true;
+          toggle.setAttribute("aria-expanded", "false");
+          toggle.setAttribute("aria-label", "Expandir mensagem completa");
+          const label = document.createElement("span");
+          label.className = "message-expand-label";
+          label.textContent = "Ver mais";
+          const chevron = document.createElement("span");
+          chevron.className = "message-expand-chevron";
+          chevron.setAttribute("aria-hidden", "true");
+          chevron.textContent = "⌄";
+          toggle.append(label, chevron);
+          let expanded = false;
+          const paintState = () => {
+            bubble.classList.toggle("is-collapsed", !expanded);
+            bubble.classList.toggle("is-expanded", expanded);
+            label.textContent = expanded ? "Ver menos" : "Ver mais";
+            chevron.textContent = "⌄";
+            toggle.setAttribute("aria-expanded", String(expanded));
+            toggle.setAttribute("aria-label", expanded ? "Recolher mensagem" : "Expandir mensagem completa");
+          };
+          const measureOverflow = () => {
+            bubble.classList.add("is-collapsible", "is-collapsed");
+            bubble.classList.remove("is-expanded");
+            const needsExpansion = bubble.scrollHeight > bubble.clientHeight + 1;
+            if (!needsExpansion) {
+              expanded = false;
+              bubble.classList.remove("is-collapsible", "is-collapsed", "is-expanded");
+              toggle.hidden = true;
+              toggle.setAttribute("aria-expanded", "false");
+              return;
+            }
+            toggle.hidden = false;
+            paintState();
+          };
+          toggle.addEventListener("click", () => {
+            expanded = !expanded;
+            paintState();
+          });
+          content.append(bubble, toggle);
+          bubble.measureMessageExpansion = measureOverflow;
+          requestAnimationFrame(measureOverflow);
+        };
+
         const createMessage = (role, text, options = {}) => {
           const row = document.createElement("article");
           row.className = "message-row " + role;
@@ -5920,7 +6017,7 @@
               const bubble = document.createElement("div");
               bubble.className = "message-bubble";
               bubble.textContent = messageText;
-              content.appendChild(bubble);
+              addUserMessageExpansion(bubble, content, messageText);
             }
             const attachments = Array.isArray(options.attachments) ? options.attachments : [];
             const legacyAttachmentNames = Array.isArray(options.legacyAttachmentNames) ? options.legacyAttachmentNames : [];
@@ -5960,10 +6057,33 @@
           row.className = "message-row assistant";
           const thinking = document.createElement("div");
           thinking.className = "thinking-row";
+          thinking.setAttribute("role", "status");
+          thinking.setAttribute("aria-live", "polite");
+          const symbol = document.createElement("span");
+          symbol.className = "thinking-symbol";
+          symbol.setAttribute("aria-hidden", "true");
+          const outerOrbit = document.createElement("span");
+          outerOrbit.className = "thinking-orbit";
+          const innerOrbit = document.createElement("span");
+          innerOrbit.className = "thinking-orbit-secondary";
+          const mark = document.createElement("img");
+          mark.className = "thinking-mark";
+          mark.src = assistantMarkAsset;
+          mark.alt = "";
+          mark.decoding = "async";
+          symbol.append(outerOrbit, innerOrbit, mark);
           const label = document.createElement("span");
           label.className = "thinking-label";
-          label.textContent = "Thinking";
-          thinking.append(createAssistantSymbol("thinking-symbol"), label);
+          const copy = document.createElement("span");
+          copy.textContent = "KAZER está pensando";
+          const dots = document.createElement("span");
+          dots.className = "thinking-dots";
+          dots.setAttribute("aria-hidden", "true");
+          for (let index = 0; index < 3; index += 1) {
+            dots.appendChild(document.createElement("span"));
+          }
+          label.append(copy, dots);
+          thinking.append(symbol, label);
           row.appendChild(thinking);
           return row;
         };
@@ -6443,6 +6563,11 @@
           if (!settingsPopover.hidden) closeSettingsModal();
         });
 
+        window.addEventListener("resize", () => {
+          window.requestAnimationFrame(() => {
+            messageList.querySelectorAll('.message-bubble[data-expandable-message="true"]').forEach((bubble) => bubble.measureMessageExpansion?.());
+          });
+        }, { passive: true });
         composer.addEventListener("submit", (event) => {
           event.preventDefault();
           submit();
