@@ -563,9 +563,135 @@
     @media (prefers-reduced-motion: reduce) {
       *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; scroll-behavior: auto !important; transition-duration: .01ms !important; }
     }
+
+
+    /* Círculo de Presença — camada visual do acesso */
+    .presence-field {
+      position: fixed;
+      z-index: 0;
+      top: 50%;
+      left: 50%;
+      width: min(52vw, 620px);
+      aspect-ratio: 1;
+      transform: translate(-50%, -50%);
+      border-radius: 50%;
+      opacity: .74;
+      pointer-events: none;
+      transition: transform .8s var(--ease), opacity .45s ease;
+      mix-blend-mode: screen;
+    }
+
+    .presence-ring {
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      pointer-events: none;
+    }
+
+    .presence-ring-main {
+      border: 1px solid rgba(229,72,85,.30);
+      box-shadow: 0 0 48px rgba(229,72,85,.08), inset 0 0 48px rgba(229,72,85,.025);
+      animation: presence-breathe 7s ease-in-out infinite;
+    }
+
+    .presence-ring-inner {
+      inset: 13%;
+      border: 1px solid rgba(245,240,235,.08);
+      box-shadow: 0 0 32px rgba(229,72,85,.08);
+      animation: presence-inner-breathe 5.4s ease-in-out infinite reverse;
+    }
+
+    .presence-sweep {
+      position: absolute;
+      inset: -1px;
+      border-radius: 50%;
+      background: conic-gradient(from 220deg, transparent 0 67%, rgba(229,72,85,.0) 72%, rgba(229,72,85,.75) 77%, rgba(242,140,107,.22) 80%, transparent 86% 100%);
+      -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 2px), #000 calc(100% - 1px));
+      mask: radial-gradient(farthest-side, transparent calc(100% - 2px), #000 calc(100% - 1px));
+      animation: presence-sweep 9s linear infinite;
+    }
+
+    .presence-core {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: #e54855;
+      box-shadow: 0 0 0 5px rgba(229,72,85,.08), 0 0 24px rgba(229,72,85,.65);
+      transform: translate(-50%, -50%);
+      animation: presence-core 5s ease-in-out infinite;
+    }
+
+    .presence-connector {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: clamp(100px, 15vw, 230px);
+      height: 1px;
+      transform: translateY(-50%) rotate(-8deg) scaleX(.25);
+      transform-origin: left center;
+      opacity: 0;
+      background: linear-gradient(90deg, rgba(229,72,85,.72), rgba(229,72,85,0));
+      transition: transform .38s var(--ease), opacity .25s ease;
+    }
+
+    body[data-focus-field] .presence-field { opacity: .92; }
+    body[data-focus-field] .presence-connector { opacity: .88; transform: translateY(-50%) rotate(-8deg) scaleX(1); }
+    body[data-focus-field="loginPassword"] .presence-connector { transform: translateY(-50%) rotate(8deg) scaleX(1); }
+    body[data-focus-field="signupName"] .presence-connector { transform: translateY(-50%) rotate(-18deg) scaleX(1); }
+    body[data-auth-mode="signup"] .presence-field { transform: translate(-50%, -50%) scale(1.08); }
+    body[data-auth-mode="signup"] .presence-ring-main { border-color: rgba(242,140,107,.34); }
+
+    .login-brand, .main-trigger-btn { z-index: 1; }
+    .input-wrapper::after {
+      content: "";
+      position: absolute;
+      right: 16px;
+      bottom: 0;
+      left: 16px;
+      height: 1px;
+      width: 0;
+      background: linear-gradient(90deg, #e54855, #f28c6b, transparent);
+      opacity: 0;
+      transition: width .35s var(--ease), opacity .25s ease;
+      pointer-events: none;
+    }
+    .input-wrapper:focus-within::after { width: calc(100% - 32px); opacity: 1; }
+
+    .auth-header span { transition: color .25s ease; }
+    body[data-focus-field] .auth-header span { color: #d9b0a8; }
+    .switch-link { transition: color .25s ease, transform .25s var(--ease); }
+    .switch-link:active { transform: translateY(1px); }
+
+    @keyframes presence-breathe { 0%,100% { transform: scale(.985); opacity: .76; } 50% { transform: scale(1.012); opacity: 1; } }
+    @keyframes presence-inner-breathe { 0%,100% { transform: scale(.98); opacity: .58; } 50% { transform: scale(1.018); opacity: 1; } }
+    @keyframes presence-sweep { to { transform: rotate(360deg); } }
+    @keyframes presence-core { 0%,100% { transform: translate(-50%, -50%) scale(.72); opacity: .55; } 50% { transform: translate(-50%, -50%) scale(1.08); opacity: 1; } }
+
+    @media (max-width: 760px) {
+      .presence-field { top: 29%; width: min(82vw, 390px); opacity: .56; }
+      body[data-auth-mode="signup"] .presence-field { transform: translate(-50%, -50%) scale(1.06); }
+      .presence-connector { display: none; }
+      .input-wrapper::after { right: 14px; left: 14px; }
+      .input-wrapper:focus-within::after { width: calc(100% - 28px); }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .presence-field, .presence-field *, .input-wrapper::after { animation: none !important; transition: none !important; }
+    }
   </style>
 </head>
 <body>
+
+  <div class="presence-field" aria-hidden="true">
+    <span class="presence-ring presence-ring-main"></span>
+    <span class="presence-ring presence-ring-inner"></span>
+    <span class="presence-sweep"></span>
+    <span class="presence-core"></span>
+    <span class="presence-connector"></span>
+  </div>
 
   <div class="intro-screen" id="introScreen" role="dialog" aria-label="Abertura do Kazer">
     <div class="intro-content">
@@ -594,7 +720,7 @@
       <div class="form-section active" id="loginForm">
         <h1>Bem-vindo de volta</h1>
         <p class="switch-text">
-          Não tem uma conta? <button class="switch-link" id="goToSignup" type="button">Criar conta</button>
+          Ainda não tem um espaço? <button class="switch-link" id="goToSignup" type="button">Criar seu espaço</button>
         </p>
         
         <form id="formLogin">
@@ -627,9 +753,9 @@
 
       <!-- ================= SIGNUP FORM ================= -->
       <div class="form-section hidden" id="signupForm">
-        <h1>Criar sua conta</h1>
+        <h1>Criar seu espaço</h1>
         <p class="switch-text">
-          Já tem uma conta? <button class="switch-link" id="goToLogin" type="button">Fazer login</button>
+          Já tem um espaço? <button class="switch-link" id="goToLogin" type="button">Fazer login</button>
         </p>
         
         <form id="formSignup">
@@ -662,7 +788,7 @@
 
           <div class="error-message" id="signupError" role="alert" aria-live="polite"></div>
           <button type="submit" class="submit-btn" id="signupBtn">
-            <span class="btn-text">Criar Conta</span>
+            <span class="btn-text">Abrir meu espaço</span>
             <div class="spinner"></div>
           </button>
         </form>
@@ -710,6 +836,16 @@
       const signupForm = document.getElementById('signupForm');
 
       if (!overlay || !container) return; // Segurança
+
+      document.body.dataset.authMode = signupForm?.classList.contains('active') ? 'signup' : 'login';
+      document.querySelectorAll('.input-wrapper input').forEach((input) => {
+        input.addEventListener('focus', () => { document.body.dataset.focusField = input.id; });
+        input.addEventListener('blur', () => {
+          window.setTimeout(() => {
+            if (!document.querySelector('.input-wrapper input:focus')) delete document.body.dataset.focusField;
+          }, 0);
+        });
+      });
 
       // 3. FUNÇÕES DE UI
       function openOverlay() {
@@ -765,6 +901,7 @@
       });
 
       document.getElementById('goToSignup')?.addEventListener('click', () => {
+        document.body.dataset.authMode = 'signup';
         loginForm.classList.remove('active');
         loginForm.classList.add('hidden');
         setTimeout(() => {
@@ -775,6 +912,7 @@
       });
 
       document.getElementById('goToLogin')?.addEventListener('click', () => {
+        document.body.dataset.authMode = 'login';
         signupForm.classList.remove('active');
         signupForm.classList.add('hidden');
         setTimeout(() => {
@@ -889,4 +1027,5 @@
   </script>
 </body>
 </html>
+
 
