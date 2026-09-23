@@ -646,6 +646,7 @@
     body[data-auth-mode="signup"] .presence-ring-main { border-color: rgba(242,140,107,.34); }
 
     .login-brand, .main-trigger-btn { z-index: 1; }
+    body.intro-active .login-brand, body.intro-active .main-trigger-btn { visibility: hidden; opacity: 0; pointer-events: none; }
     .input-wrapper::after {
       content: "";
       position: absolute;
@@ -812,13 +813,17 @@
         window.clearTimeout(introTimer);
         try { window.localStorage.setItem(introKey, '1'); } catch (_) {}
         introScreen.classList.add('is-done');
-        window.setTimeout(() => introScreen.remove(), 700);
+        window.setTimeout(() => {
+          introScreen.remove();
+          document.body.classList.remove('intro-active');
+        }, 700);
       };
       let hasSeenIntro = false;
       try { hasSeenIntro = window.localStorage.getItem(introKey) === '1'; } catch (_) {}
       if (hasSeenIntro) {
         introScreen?.remove();
       } else if (introScreen) {
+        document.body.classList.add('intro-active');
         const reducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
         introTimer = window.setTimeout(finishIntro, reducedMotion ? 500 : 2600);
       }
@@ -1028,6 +1033,7 @@
   </script>
 </body>
 </html>
+
 
 
 
