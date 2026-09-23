@@ -773,7 +773,7 @@
       <h1 class="return-title" id="returnTitle">Olá, você já esteve aqui.</h1>
       <p class="return-copy">Notamos que o KAZER já foi usado neste dispositivo. Quer continuar para o seu espaço?</p>
       <button class="return-primary" id="returnContinue" type="button">Continuar para meu espaço</button>
-      <button class="return-secondary" id="returnOther" type="button">Usar outra conta</button>
+      <button class="return-secondary" id="returnOther" type="button">Criar um novo espaço</button>
     </div>
   </div>
 
@@ -942,11 +942,12 @@
       });
 
       // 3. FUNÇÕES DE UI
-      function openOverlay() {
+      function openOverlay(options = {}) {
         overlay.classList.add('active');
         document.body.classList.add('modal-open');
         clearErrors();
-        window.setTimeout(() => document.getElementById('loginEmail')?.focus(), 220);
+        const focusId = options.focusId || 'loginEmail';
+        if (focusId) window.setTimeout(() => document.getElementById(focusId)?.focus(), 220);
       }
 
       function closeOverlay() {
@@ -994,19 +995,30 @@
         if (e.target === overlay) closeOverlay();
       });
 
-      function leaveReturnScreen() {
+      function leaveReturnScreen(destination = 'login') {
         if (!returnScreen || returnScreen.hasAttribute('hidden')) return;
         returnScreen.classList.add('is-done');
         window.setTimeout(() => {
           returnScreen.setAttribute('hidden', '');
           returnScreen.classList.remove('is-done');
           document.body.classList.remove('return-active');
-          openOverlay();
+
+          if (destination === 'signup') {
+            document.body.dataset.authMode = 'signup';
+            loginForm.classList.remove('active');
+            loginForm.classList.add('hidden');
+            signupForm.classList.remove('hidden');
+            signupForm.classList.add('active');
+            openOverlay({ focusId: 'signupName' });
+          } else {
+            document.body.dataset.authMode = 'login';
+            openOverlay({ focusId: 'loginEmail' });
+          }
         }, 540);
       }
 
-      returnContinue?.addEventListener('click', leaveReturnScreen);
-      returnOther?.addEventListener('click', leaveReturnScreen);
+      returnContinue?.addEventListener('click', () => leaveReturnScreen('login'));
+      returnOther?.addEventListener('click', () => leaveReturnScreen('signup'));
 
       document.getElementById('goToSignup')?.addEventListener('click', () => {
         document.body.dataset.authMode = 'signup';
@@ -1135,6 +1147,7 @@
   </script>
 </body>
 </html>
+
 
 
 
