@@ -3375,6 +3375,99 @@
       }
 
       .settings-mobile-account-credit > .settings-mobile-upgrade { display: inline-flex; align-items: center; justify-content: center; width: 100%; margin-top: 4px; }
+
+
+      /* Comparador de planos em duas colunas */
+      .plans-screen { width: min(900px, calc(100vw - 40px)); height: min(690px, calc(100dvh - 48px)); max-height: calc(100dvh - 48px); border-radius: 27px; border-color: rgba(229,72,85,.20); background: radial-gradient(620px 260px at 86% 0%, rgba(229,72,85,.08), transparent 72%), var(--page); box-shadow: 0 34px 100px rgba(0,0,0,.70), 0 0 0 1px rgba(229,72,85,.035); }
+      .plans-head { min-height: 92px; padding: 18px 22px; border-bottom-color: rgba(229,72,85,.12); }
+      .plans-head-copy { min-width: 0; flex: 1; text-align: center; }
+      .plans-head-copy > span { display: block; margin-bottom: 5px; color: #e7bc69; font-size: 9px; font-weight: 800; letter-spacing: .21em; }
+      .plans-head-copy h2 { margin: 0; color: var(--text); font-size: clamp(19px, 3vw, 25px); font-weight: 650; letter-spacing: -.045em; white-space: nowrap; }
+      .plans-head-copy small { display: block; margin-top: 5px; color: var(--text-dim); font-size: 11px; }
+      .plans-body { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: stretch; gap: 16px; flex: 1; padding: 20px; overflow-y: auto; }
+      .plan-card { display: flex; flex-direction: column; min-width: 0; border-radius: 21px; padding: 21px; }
+      .plan-card-current { border-color: rgba(255,255,255,.10); background: linear-gradient(155deg, rgba(255,255,255,.045), rgba(255,255,255,.012)); }
+      .plan-card-topline { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 24px; }
+      .plan-card-label { margin: 0; color: var(--text-soft); font-size: 10px; letter-spacing: .18em; }
+      .plan-current-pill, .plan-pro-pill { flex: 0 0 auto; padding: 5px 8px; border: 1px solid rgba(255,255,255,.12); border-radius: 999px; color: var(--text-dim); font-size: 7px; font-weight: 750; letter-spacing: .09em; }
+      .plan-card-name { margin-top: 10px; font-size: 23px; }
+      .plan-card-free-price { display: flex; align-items: baseline; gap: 8px; margin-top: 13px; color: var(--text); }
+      .plan-card-free-price strong { font-size: 27px; letter-spacing: -.055em; }
+      .plan-card-free-price span { color: var(--text-dim); font-size: 11px; }
+      .plan-card-desc { min-height: 37px; margin: 8px 0 0; font-size: 11px; line-height: 1.5; }
+      .plan-card-divider { width: 100%; height: 1px; flex: 0 0 auto; margin: 16px 0 13px; background: var(--line-soft); }
+      .plan-card-compare-list { display: grid; gap: 11px; margin: 0; padding: 0; list-style: none; }
+      .plan-card-compare-list li { display: grid; grid-template-columns: 17px minmax(0,1fr); align-items: start; gap: 7px; color: var(--text-soft); font-size: 11px; line-height: 1.4; }
+      .plan-feature-check { color: #80d0a5; font-weight: 800; }
+      .plan-feature-muted { color: var(--text-dim); }
+      .plan-card-cycle { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 3px 8px; margin-top: auto; padding: 13px 0 0; }
+      .plan-cycle-label { color: var(--text-dim); font-size: 8px; font-weight: 750; letter-spacing: .16em; }
+      .plan-card-cycle strong { color: var(--text); font-size: 14px; white-space: nowrap; }
+      .plan-card-cycle strong i { color: var(--purple); font-style: normal; }
+      .plan-card-cycle small { grid-column: 1 / -1; color: var(--text-dim); font-size: 9px; line-height: 1.4; }
+      .plan-card-current-foot { display: flex; align-items: center; gap: 7px; margin-top: 13px; padding-top: 11px; border-top: 1px solid var(--line-soft); color: var(--text-dim); font-size: 9px; }
+      .plan-current-dot { width: 6px; height: 6px; border-radius: 50%; background: #80d0a5; box-shadow: 0 0 10px rgba(128,208,165,.5); }
+      .plan-card-pro { border-color: rgba(222,184,92,.48); background: radial-gradient(380px 200px at 20% 0%, rgba(210,165,70,.17), transparent 75%), linear-gradient(155deg, #17140c, #0e0d09); box-shadow: 0 18px 48px rgba(120,90,18,.15), inset 0 1px 0 rgba(255,240,110,.07); }
+      .plan-card-pro-badge { font-size: 11px; }
+      .plan-pro-pill { border-color: rgba(231,188,105,.25); color: #e7bc69; }
+      .plan-card-pro-tagline { min-height: 32px; margin: 10px 0 0; color: #e8d49d; font-size: 11px; line-height: 1.45; }
+      .plan-card-pro-price { margin: 9px 0 0; }
+      .plan-card-pro-value { font-size: 33px; }
+      .plan-card-pro .plan-card-desc { min-height: 32px; }
+      .plan-card-pro .plan-card-divider { background: rgba(231,188,105,.17); }
+      .plan-card-pro-list { gap: 10px; margin: 0; }
+      .plan-card-pro-list li { padding-left: 0; font-size: 10.5px; }
+      .plan-card-pro-list li::before { content: none; }
+      .plan-feature-pro { color: #e7bc69; font-size: 11px; }
+      .plan-card-pro-list li strong { color: #f4dfaa; font-weight: 750; }
+      .plan-card-pro button { display: flex; align-items: center; justify-content: center; gap: 9px; min-height: 48px; margin-top: auto; border-radius: 13px; font-size: 12px; }
+      .plan-card-pro button span { font-size: 17px; }
+      .plan-card-pro-note { margin: 9px 0 0; font-size: 9px; line-height: 1.4; }
+      @media (max-width: 680px) {
+        .plans-screen { top: auto; right: 0; bottom: 0; left: 0; width: 100%; height: min(91dvh, 820px); max-height: 91dvh; border-radius: 25px 25px 0 0; transform: translateY(100%); }
+        .plans-screen.visible { transform: translateY(0); }
+        .plans-head { min-height: 86px; gap: 7px; padding: 13px 12px; }
+        .plans-head-copy h2 { font-size: clamp(16px, 4.7vw, 21px); }
+        .plans-head-copy small { font-size: 10px; }
+        .plans-body { grid-template-columns: repeat(2, minmax(0,1fr)); gap: 9px; padding: 12px 10px max(18px, env(safe-area-inset-bottom)); }
+        .plan-card { padding: 13px 11px; border-radius: 18px; }
+        .plan-card-topline { align-items: flex-start; flex-direction: column; gap: 6px; }
+        .plan-card-label { font-size: 9px; }
+        .plan-current-pill, .plan-pro-pill { padding: 4px 6px; font-size: 6.5px; }
+        .plan-card-name { margin-top: 9px; font-size: 20px; }
+        .plan-card-free-price { flex-wrap: wrap; gap: 3px 6px; margin-top: 10px; }
+        .plan-card-free-price strong { font-size: 23px; }
+        .plan-card-free-price span { font-size: 9px; }
+        .plan-card-desc { min-height: 52px; font-size: 10px; }
+        .plan-card-divider { margin: 11px 0 10px; }
+        .plan-card-compare-list { gap: 9px; }
+        .plan-card-compare-list li { grid-template-columns: 14px minmax(0,1fr); gap: 5px; font-size: 9px; line-height: 1.35; }
+        .plan-card-cycle { margin-top: auto; padding-top: 12px; }
+        .plan-card-cycle strong { font-size: 12px; }
+        .plan-card-cycle small { font-size: 8px; }
+        .plan-card-current-foot { margin-top: 10px; padding-top: 9px; font-size: 8px; }
+        .plan-card-pro-tagline { min-height: 55px; margin-top: 9px; font-size: 10px; }
+        .plan-card-pro-price { gap: 2px; flex-wrap: nowrap; margin-top: 7px; }
+        .plan-card-pro-currency { font-size: 11px; }
+        .plan-card-pro-value { font-size: clamp(23px, 7vw, 30px); }
+        .plan-card-pro-period { font-size: 9px; }
+        .plan-card-pro .plan-card-desc { min-height: 52px; }
+        .plan-card-pro-list { gap: 8px; }
+        .plan-card-pro-list li { font-size: 8.5px; }
+        .plan-card-pro button { min-height: 43px; margin-top: auto; padding: 0 7px; border-radius: 11px; font-size: 9px; line-height: 1.2; }
+        .plan-card-pro button span { font-size: 14px; }
+        .plan-card-pro-note { font-size: 8px; }
+      }
+      @media (max-width: 360px) {
+        .plans-body { gap: 7px; padding-right: 8px; padding-left: 8px; }
+        .plan-card { padding-right: 9px; padding-left: 9px; }
+        .plan-card-compare-list li { font-size: 8px; }
+        .plan-card-pro-value { font-size: 22px; }
+        .plan-card-pro button { font-size: 8px; }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .plans-screen, .plan-card-pro button { transition: none !important; animation: none !important; }
+      }
     </style>
     <script>
       window.setTimeout(() => {
@@ -3552,29 +3645,41 @@
       <section class="plans-screen" id="plansScreen" role="dialog" aria-modal="true" aria-label="Planos do Kazer" aria-hidden="true" hidden>
         <header class="plans-head">
           <button class="icon-button" id="plansBack" type="button" aria-label="Fechar"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"></path></svg></button>
-          <div class="plans-head-copy"><span>SEU PRÓXIMO NÍVEL</span><h2>Mais espaço para pensar.</h2></div>
+          <div class="plans-head-copy"><span>PLANOS KAZER</span><h2>Escolha como quer avançar</h2><small>Compare seu plano atual com o Kazer Pro.</small></div>
           <span class="connectors-head-spacer" aria-hidden="true"></span>
         </header>
         <div class="plans-body">
-          <article class="plan-card plan-card-current">
-            <span class="plan-card-label">SEU PLANO ATUAL · FREE</span>
-            <strong class="plan-card-name">Free</strong>
-            <p class="plan-card-desc">Comece com clareza. Seu ciclo de uso avança conforme você conversa, cria e explora.</p>
-            <div class="plan-card-free-cycle"><strong>0% <span>→</span> 100%</strong><small>Reinício no dia 1 ou 2 · nova experiência em preparação</small></div>
+          <article class="plan-card plan-card-current" aria-label="Plano Free atual">
+            <div class="plan-card-topline"><span class="plan-card-label">FREE</span><span class="plan-current-pill">SEU PLANO ATUAL</span></div>
+            <strong class="plan-card-name">Essencial</strong>
+            <div class="plan-card-free-price"><strong>Grátis</strong><span>para começar</span></div>
+            <p class="plan-card-desc">Converse, crie e explore o KAZER com o uso essencial.</p>
+            <div class="plan-card-divider"></div>
+            <ul class="plan-card-compare-list">
+              <li><span class="plan-feature-check">✓</span><span>Recursos essenciais do KAZER</span></li>
+              <li><span class="plan-feature-check">✓</span><span>Uso acompanhado por ciclo</span></li>
+              <li><span class="plan-feature-check">✓</span><span>Chat e memória disponíveis</span></li>
+              <li><span class="plan-feature-muted">—</span><span>Limite padrão de conectores e anexos</span></li>
+            </ul>
+            <div class="plan-card-cycle"><span class="plan-cycle-label">SEU CICLO</span><strong>0% <i>→</i> 100%</strong><small>O uso reinicia no próximo ciclo mensal.</small></div>
+            <div class="plan-card-current-foot"><span class="plan-current-dot"></span>Você está neste plano</div>
           </article>
-          <article class="plan-card plan-card-pro">
-            <span class="plan-card-pro-badge">KAZER PRO</span>
+
+          <article class="plan-card plan-card-pro" aria-label="Plano Kazer Pro">
+            <div class="plan-card-topline"><span class="plan-card-pro-badge">KAZER PRO</span><span class="plan-pro-pill">MAIS PODER</span></div>
             <p class="plan-card-pro-tagline">Mais contexto. Mais inteligência. Mais KAZER.</p>
             <div class="plan-card-pro-price"><span class="plan-card-pro-currency">R$</span><span class="plan-card-pro-value">59,90</span><span class="plan-card-pro-period">/mês</span></div>
-            <ul class="plan-card-pro-list">
-              <li><strong>+35% de uso por dia</strong></li>
-              <li>Mais inteligência e domínio de contexto</li>
-              <li>Mais memória e aprendizagem contínua</li>
-              <li>Mais usos de conectores e anexos</li>
-              <li>Prioridade em novos recursos</li>
+            <p class="plan-card-desc">Para quem quer levar ideias mais longe, todos os dias.</p>
+            <div class="plan-card-divider"></div>
+            <ul class="plan-card-compare-list plan-card-pro-list">
+              <li><span class="plan-feature-pro">✦</span><span><strong>+35% de uso por dia</strong></span></li>
+              <li><span class="plan-feature-pro">✦</span><span>Mais inteligência e domínio de contexto</span></li>
+              <li><span class="plan-feature-pro">✦</span><span>Mais memória e aprendizagem contínua</span></li>
+              <li><span class="plan-feature-pro">✦</span><span>Mais usos de conectores e anexos</span></li>
+              <li><span class="plan-feature-pro">✦</span><span>Prioridade em novos recursos</span></li>
             </ul>
-            <button type="button" id="plansProAction">Quero atualizar para o Pro</button>
-            <p class="plan-card-pro-note">Em preparação — os pagamentos serão liberados em breve.</p>
+            <button type="button" id="plansProAction">Quero atualizar para o Pro <span aria-hidden="true">↗</span></button>
+            <p class="plan-card-pro-note">Pagamento ainda não disponível. Estamos preparando o lançamento.</p>
           </article>
         </div>
       </section>
@@ -5824,6 +5929,7 @@
     <script src="/interface/kazer-workspace.js"></script>
   </body>
 </html>
+
 
 
 
