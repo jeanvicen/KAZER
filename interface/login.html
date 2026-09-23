@@ -4,7 +4,9 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
   <title>Kazer | Acesso Seguro</title>
-  <link rel="icon" href="../download/assets/kazer-symbol.png" type="image/png" />
+  <link rel="icon" href="../download/assets/kazer-mark.svg?v=20260922" type="image/svg+xml" />
+  <link rel="alternate icon" href="../download/assets/kazer-symbol.png?v=20260922" type="image/png" />
+  <meta name="theme-color" content="#070709" />
   <link rel="apple-touch-icon" href="../download/icons/kazer-192.png" />
   
   <!-- Fonte Inter (Moderna e Profissional) -->
@@ -683,6 +685,73 @@
     @media (prefers-reduced-motion: reduce) {
       .presence-field, .presence-field *, .input-wrapper::after { animation: none !important; transition: none !important; }
     }
+
+    .return-screen {
+      position: fixed;
+      z-index: 9998;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      overflow: hidden;
+      background: #070709;
+      color: var(--text-primary);
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity .52s var(--ease), visibility .52s;
+    }
+    .return-screen[hidden] { display: none; }
+    .return-screen:not([hidden]) { opacity: 1; visibility: visible; }
+    .return-screen.is-done { opacity: 0; visibility: hidden; pointer-events: none; }
+    .return-screen::before {
+      content: "";
+      position: absolute;
+      width: min(86vw, 680px);
+      aspect-ratio: 1;
+      border: 1px solid rgba(229,72,85,.16);
+      border-radius: 50%;
+      box-shadow: 0 0 0 30px rgba(229,72,85,.018), 0 0 90px rgba(229,72,85,.08);
+    }
+    .return-screen::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      opacity: .22;
+      background-image: linear-gradient(rgba(255,255,255,.022) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.022) 1px, transparent 1px);
+      background-size: 48px 48px;
+      mask-image: linear-gradient(to bottom, black, transparent 82%);
+      pointer-events: none;
+    }
+    .return-content {
+      position: relative;
+      z-index: 1;
+      display: grid;
+      justify-items: center;
+      width: min(100% - 40px, 380px);
+      text-align: center;
+      animation: return-content-in .72s var(--ease) both;
+    }
+    .return-kicker { margin-bottom: 24px; color: rgba(229,72,85,.86); font-size: 10px; font-weight: 700; letter-spacing: .25em; text-transform: uppercase; }
+    .return-logo { width: 92px; height: 92px; margin-bottom: 26px; border-radius: 24%; object-fit: cover; box-shadow: 0 20px 60px rgba(0,0,0,.58), 0 0 0 1px rgba(229,72,85,.2), 0 0 42px rgba(229,72,85,.14); animation: mark-breathe 5.8s ease-in-out infinite; }
+    .return-title { margin-bottom: 10px; color: var(--text-primary); font-size: clamp(25px, 5vw, 32px); font-weight: 600; letter-spacing: -.05em; }
+    .return-copy { max-width: 300px; margin-bottom: 28px; color: var(--text-secondary); font-size: 14px; line-height: 1.55; }
+    .return-primary, .return-secondary { width: min(100%, 300px); min-height: 50px; border-radius: 14px; font: inherit; font-size: 14px; font-weight: 650; cursor: pointer; transition: transform .25s var(--ease), box-shadow .25s ease, border-color .25s ease, background .25s ease; }
+    .return-primary { border: 0; background: #f5f4f2; color: #0b0b0e; box-shadow: 0 12px 28px rgba(0,0,0,.28); }
+    .return-primary:hover, .return-primary:focus-visible { background: #fff; box-shadow: 0 14px 32px rgba(0,0,0,.38), 0 0 0 4px rgba(229,72,85,.11); transform: translateY(-1px); }
+    .return-secondary { margin-top: 10px; border: 1px solid rgba(255,255,255,.13); background: rgba(255,255,255,.025); color: var(--text-secondary); }
+    .return-secondary:hover, .return-secondary:focus-visible { border-color: rgba(229,72,85,.42); color: var(--text-primary); }
+    body.return-active .login-brand, body.return-active .main-trigger-btn { visibility: hidden; opacity: 0; pointer-events: none; }
+    @keyframes return-content-in { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+
+    @media (max-width: 760px) {
+      .return-logo { width: 82px; height: 82px; margin-bottom: 22px; }
+      .return-title { font-size: 27px; }
+      .return-copy { margin-bottom: 24px; }
+      .return-screen::before { width: 118vw; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .return-screen *, .return-screen::before, .return-screen::after { animation: none !important; transition: none !important; }
+    }
   </style>
 </head>
 <body>
@@ -693,6 +762,19 @@
     <span class="presence-sweep"></span>
     <span class="presence-core"></span>
     <span class="presence-connector"></span>
+  </div>
+
+
+
+  <div class="return-screen" id="returnScreen" role="dialog" aria-modal="true" aria-labelledby="returnTitle" hidden>
+    <div class="return-content">
+      <span class="return-kicker">KAZER / SEU ESPAÇO</span>
+      <img class="return-logo" src="../download/assets/kazer-mark.svg?v=20260922" alt="Símbolo Kazer" />
+      <h1 class="return-title" id="returnTitle">Olá, você já esteve aqui.</h1>
+      <p class="return-copy">Notamos que o KAZER já foi usado neste dispositivo. Quer continuar para o seu espaço?</p>
+      <button class="return-primary" id="returnContinue" type="button">Continuar para meu espaço</button>
+      <button class="return-secondary" id="returnOther" type="button">Usar outra conta</button>
+    </div>
   </div>
 
   <div class="intro-screen" id="introScreen" role="dialog" aria-label="Abertura do Kazer">
@@ -806,6 +888,9 @@
 
       // A abertura é uma experiência visual local. Não altera autenticação nem Supabase.
       const introScreen = document.getElementById('introScreen');
+      const returnScreen = document.getElementById('returnScreen');
+      const returnContinue = document.getElementById('returnContinue');
+      const returnOther = document.getElementById('returnOther');
       const introKey = 'kazer-login-intro-seen-v1';
       let introTimer = null;
       const finishIntro = () => {
@@ -822,6 +907,9 @@
       try { hasSeenIntro = window.localStorage.getItem(introKey) === '1'; } catch (_) {}
       if (hasSeenIntro) {
         introScreen?.remove();
+        returnScreen?.removeAttribute('hidden');
+        document.body.classList.add('return-active');
+        window.setTimeout(() => returnContinue?.focus(), 180);
       } else if (introScreen) {
         document.body.classList.add('intro-active');
         const reducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
@@ -905,6 +993,20 @@
       overlay.addEventListener('click', (e) => {
         if (e.target === overlay) closeOverlay();
       });
+
+      function leaveReturnScreen() {
+        if (!returnScreen || returnScreen.hasAttribute('hidden')) return;
+        returnScreen.classList.add('is-done');
+        window.setTimeout(() => {
+          returnScreen.setAttribute('hidden', '');
+          returnScreen.classList.remove('is-done');
+          document.body.classList.remove('return-active');
+          openOverlay();
+        }, 540);
+      }
+
+      returnContinue?.addEventListener('click', leaveReturnScreen);
+      returnOther?.addEventListener('click', leaveReturnScreen);
 
       document.getElementById('goToSignup')?.addEventListener('click', () => {
         document.body.dataset.authMode = 'signup';
