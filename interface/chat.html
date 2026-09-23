@@ -3779,6 +3779,60 @@
         .empty-brand-lockup .empty-word { animation: none !important; }
         .attachment-sheet, .composer-box, .chat-history-back, .send-button, .attach-button { transition-duration: .01ms !important; }
       }
+
+      /* Anexos — prévias reais e estados de envio */
+      .attachment-list { display: flex; flex-wrap: nowrap; gap: 8px; max-width: 100%; margin: 9px 2px 0; padding: 0 1px 3px; overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: none; }
+      .attachment-list::-webkit-scrollbar { display: none; }
+      .attachment-chip { position: relative; display: grid; grid-template-columns: 54px minmax(0,1fr) 38px; align-items: center; gap: 9px; flex: 0 0 min(250px, 84vw); min-height: 70px; padding: 7px; border: 1px solid rgba(231,188,105,.16); border-radius: 17px; background: linear-gradient(145deg, color-mix(in srgb, var(--card-2) 94%, #fff 6%), color-mix(in srgb, var(--card) 96%, transparent)); box-shadow: 0 8px 20px rgba(0,0,0,.10), inset 0 1px 0 rgba(255,255,255,.035); }
+      .attachment-chip-preview { position: relative; display: grid; place-items: center; width: 54px; height: 54px; overflow: hidden; border: 1px solid rgba(231,188,105,.14); border-radius: 12px; background: color-mix(in srgb, var(--card) 82%, transparent); color: #d9bd82; }
+      .attachment-chip-preview.is-file, .attachment-chip-preview.is-unavailable { background: linear-gradient(145deg, rgba(231,188,105,.095), rgba(197,58,63,.055)); }
+      .attachment-preview-image { display: block; width: 100%; height: 100%; object-fit: cover; opacity: 1; transition: opacity 180ms ease; }
+      .attachment-chip-preview.is-loading .attachment-preview-image,
+      .message-attachment-media.is-loading .attachment-preview-image { opacity: 0; }
+      .attachment-chip-preview.is-loading::after,
+      .message-attachment-media.is-loading::after { position: absolute; width: 17px; height: 17px; border: 2px solid rgba(231,188,105,.2); border-top-color: #e7bc69; border-radius: 50%; content: ""; animation: attachment-preview-spin 850ms linear infinite; }
+      .attachment-preview-fallback { display: grid; place-items: center; width: 100%; height: 100%; color: #e7bc69; font-size: 9px; font-weight: 800; letter-spacing: .06em; }
+      .attachment-chip-copy { display: grid; gap: 4px; min-width: 0; overflow: hidden; }
+      .attachment-chip-name { display: block; overflow: hidden; color: var(--text); font-size: 10px; font-weight: 620; line-height: 1.3; text-overflow: ellipsis; white-space: nowrap; }
+      .attachment-chip-details { color: var(--text-dim); font-size: 8px; letter-spacing: .07em; text-transform: uppercase; }
+      .attachment-remove { display: grid; place-items: center; width: 36px; height: 36px; border: 1px solid rgba(255,255,255,.07); border-radius: 12px; background: rgba(255,255,255,.035); color: var(--text-dim); font-size: 18px; line-height: 1; }
+      .attachment-remove:hover { border-color: rgba(231,188,105,.24); background: rgba(231,188,105,.07); color: var(--text); }
+      .user-message-content { display: grid; justify-items: end; gap: 9px; width: min(100%, 540px); }
+      .user-message-content .message-bubble { max-width: 100%; }
+      .message-attachment-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 148px), 180px)); justify-content: end; gap: 9px; width: 100%; }
+      .message-attachment-card { display: grid; gap: 7px; min-width: 0; overflow: hidden; padding: 7px; border: 1px solid rgba(231,188,105,.14); border-radius: 16px; background: linear-gradient(145deg, color-mix(in srgb, var(--card-2) 92%, #fff 8%), color-mix(in srgb, var(--card) 97%, transparent)); box-shadow: 0 10px 24px rgba(0,0,0,.14), inset 0 1px 0 rgba(255,255,255,.04); }
+      .message-attachment-media { position: relative; display: grid; place-items: center; width: 100%; aspect-ratio: 4 / 3; overflow: hidden; border: 1px solid rgba(255,255,255,.06); border-radius: 11px; background: color-mix(in srgb, var(--page) 88%, var(--purple) 12%); color: #e7bc69; }
+      .message-attachment-media.is-file, .message-attachment-media.is-unavailable { min-height: 72px; aspect-ratio: 16 / 7; background: linear-gradient(145deg, rgba(231,188,105,.08), rgba(197,58,63,.045)); }
+      .message-attachment-media .attachment-preview-fallback { font-size: 11px; }
+      .message-attachment-copy { display: grid; gap: 3px; min-width: 0; padding: 0 2px; }
+      .message-attachment-name { display: block; overflow: hidden; color: var(--text); font-size: 9px; font-weight: 600; line-height: 1.3; text-overflow: ellipsis; white-space: nowrap; }
+      .message-attachment-details { color: var(--text-dim); font-size: 7.5px; letter-spacing: .08em; text-transform: uppercase; }
+      .message-attachment-status { display: flex; align-items: center; gap: 6px; min-height: 18px; padding: 0 2px; color: var(--text-dim); font-size: 8px; line-height: 1.2; }
+      .attachment-status-indicator { position: relative; display: inline-grid; place-items: center; width: 13px; height: 13px; flex: 0 0 13px; border: 1.5px solid rgba(231,188,105,.22); border-top-color: #e7bc69; border-radius: 50%; animation: attachment-preview-spin 850ms linear infinite; }
+      .message-attachment-status[data-state="sent"] { color: #80cfa4; }
+      .message-attachment-status[data-state="sent"] .attachment-status-indicator { border: 0; color: #80cfa4; animation: none; }
+      .message-attachment-status[data-state="sent"] .attachment-status-indicator::after { content: "✓"; font-size: 12px; font-weight: 800; }
+      .message-attachment-status[data-state="failed"], .message-attachment-status[data-state="interrupted"] { color: #e8a29a; }
+      .message-attachment-status[data-state="failed"] .attachment-status-indicator,
+      .message-attachment-status[data-state="interrupted"] .attachment-status-indicator { border: 0; color: #e8a29a; animation: none; }
+      .message-attachment-status[data-state="failed"] .attachment-status-indicator::after,
+      .message-attachment-status[data-state="interrupted"] .attachment-status-indicator::after { content: "!"; font-size: 11px; font-weight: 800; }
+      @keyframes attachment-preview-spin { to { transform: rotate(360deg); } }
+      :root[data-theme="light"] .attachment-chip,
+      :root[data-theme="light"] .message-attachment-card { border-color: rgba(128,95,39,.18); background: linear-gradient(145deg, #fff, #f3f1ec); box-shadow: 0 8px 22px rgba(20,20,26,.08); }
+      :root[data-theme="light"] .attachment-chip-preview,
+      :root[data-theme="light"] .message-attachment-media { border-color: rgba(128,95,39,.12); }
+      @media (max-width: 520px) {
+        .attachment-chip { flex-basis: min(235px, 80vw); }
+        .message-attachment-grid { grid-template-columns: repeat(auto-fill, minmax(min(100%, 128px), 168px)); gap: 7px; }
+        .message-attachment-card { padding: 6px; border-radius: 14px; }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .attachment-chip-preview.is-loading::after,
+        .message-attachment-media.is-loading::after,
+        .attachment-status-indicator { animation: none !important; }
+        .attachment-preview-image { transition-duration: .01ms !important; }
+      }
     </style>
     <script>
       window.setTimeout(() => {
@@ -4298,6 +4352,8 @@
         let globalNoticeLoaded = false;
         const historyStoragePrefix = "kazer-chat-history:";
         let selectedFiles = [];
+        const attachmentPreviewUrls = new Map();
+        const messageAttachmentFiles = new Map();
         const maxClientFileBytes = 4 * 1024 * 1024;
         const settingsStorageKey = "kazer-settings";
         const draftStorageKey = "kazer-draft";
@@ -5022,9 +5078,30 @@
           activeChatHistoryId = id;
           conversationMessages = Array.isArray(item.messages) ? item.messages.slice() : [];
           if (!conversationMessages.length) { showToast("Esta conversa ainda não tem mensagens salvas"); return; }
+          const sessionAttachments = messageAttachmentFiles.get(id);
           messageList.replaceChildren();
+          releaseUnusedAttachmentPreviewUrls();
           conversationMode();
-          conversationMessages.forEach((message) => append(createMessage(message.role, message.content)));
+          conversationMessages.forEach((message, index) => {
+            const attachmentRecord = sessionAttachments?.get(index);
+            const files = attachmentRecord?.files || [];
+            let displayText = message.content;
+            let legacyAttachmentNames = [];
+            if (message.role === "user") {
+              const legacySuffix = String(message.content || "").match(/\n\nAnexos enviados:\s*([\s\S]*)$/);
+              if (legacySuffix) {
+                displayText = String(message.content || "").slice(0, legacySuffix.index).trim();
+                if (!files.length) legacyAttachmentNames = legacySuffix[1].split(/,\s*/).map((name) => name.trim()).filter(Boolean);
+                if (displayText === "Analise os arquivos anexados e explique os pontos principais.") displayText = "";
+              }
+            }
+            const row = createMessage(message.role, displayText, { attachments: files, legacyAttachmentNames, attachmentState: attachmentRecord?.state || "sent" });
+            if (files.length) {
+              row.dataset.chatId = id;
+              row.dataset.attachmentMessageIndex = String(index);
+            }
+            append(row);
+          });
           setView("new-chat", { push: true });
           scrollBottom();
           messageInput.focus();
@@ -5601,6 +5678,152 @@
           }
         };
 
+        const attachmentExtension = (file) => {
+          const match = String(file?.name || "").match(/\.([^.]+)$/);
+          return (match?.[1] || "ARQ").slice(0, 5).toUpperCase();
+        };
+
+        const isImageAttachment = (file) => Boolean(file?.type?.startsWith("image/")) || /\.(?:avif|gif|heic|heif|jpe?g|png|webp)$/i.test(String(file?.name || ""));
+
+        const attachmentSizeLabel = (bytes) => {
+          const size = Number(bytes || 0);
+          if (!Number.isFinite(size) || size <= 0) return "Tamanho indisponível";
+          if (size < 1024 * 1024) return Math.max(1, Math.round(size / 1024)) + " KB";
+          return (size / (1024 * 1024)).toLocaleString("pt-BR", { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + " MB";
+        };
+
+        const getAttachmentPreviewUrl = (file) => {
+          if (!isImageAttachment(file) || typeof window.URL?.createObjectURL !== "function" || !(window.Blob && file instanceof window.Blob)) return "";
+          if (!attachmentPreviewUrls.has(file)) {
+            try { attachmentPreviewUrls.set(file, window.URL.createObjectURL(file)); } catch { return ""; }
+          }
+          return attachmentPreviewUrls.get(file) || "";
+        };
+
+        const releaseUnusedAttachmentPreviewUrls = () => {
+          const liveUrls = new Set(Array.from(document.querySelectorAll("[data-attachment-preview-url]"), (element) => element.dataset.attachmentPreviewUrl));
+          attachmentPreviewUrls.forEach((url, file) => {
+            if (liveUrls.has(url)) return;
+            window.URL?.revokeObjectURL?.(url);
+            attachmentPreviewUrls.delete(file);
+          });
+        };
+
+        const makeAttachmentImagePreview = (file, className) => {
+          const preview = document.createElement("div");
+          preview.className = className + (isImageAttachment(file) ? " is-image is-loading" : " is-file");
+          if (isImageAttachment(file)) {
+            const url = getAttachmentPreviewUrl(file);
+            if (url) {
+              const image = document.createElement("img");
+              image.className = "attachment-preview-image";
+              image.alt = "Prévia de " + String(file.name || "imagem");
+              image.dataset.attachmentPreviewUrl = url;
+              image.addEventListener("load", () => preview.classList.remove("is-loading"), { once: true });
+              image.addEventListener("error", () => {
+                preview.classList.remove("is-loading");
+                preview.classList.add("is-unavailable");
+                image.remove();
+                const fallback = document.createElement("span");
+                fallback.className = "attachment-preview-fallback";
+                fallback.textContent = attachmentExtension(file);
+                preview.appendChild(fallback);
+              }, { once: true });
+              image.src = url;
+              preview.appendChild(image);
+              if (image.complete && image.naturalWidth) preview.classList.remove("is-loading");
+              return preview;
+            }
+            preview.classList.remove("is-loading");
+            preview.classList.add("is-unavailable");
+          }
+          const type = document.createElement("span");
+          type.className = "attachment-preview-fallback";
+          type.textContent = attachmentExtension(file);
+          preview.appendChild(type);
+          return preview;
+        };
+
+        const attachmentStatusLabels = {
+          preparing: "Preparando...",
+          uploading: "Enviando ao KAZER...",
+          sent: "Enviado",
+          failed: "Não enviado",
+          interrupted: "Envio interrompido",
+        };
+
+        const setMessageAttachmentStatus = (row, state) => {
+          if (!row) return;
+          const chatId = row.dataset.chatId;
+          const messageIndex = Number(row.dataset.attachmentMessageIndex);
+          const record = messageAttachmentFiles.get(chatId)?.get(messageIndex);
+          if (record) record.state = state;
+          row.querySelectorAll("[data-attachment-status]").forEach((status) => {
+            status.dataset.state = state;
+            const label = status.querySelector("[data-attachment-status-label]");
+            if (label) label.textContent = attachmentStatusLabels[state] || attachmentStatusLabels.preparing;
+          });
+        };
+
+        const createLegacyAttachmentCard = (name) => {
+          const card = document.createElement("div");
+          card.className = "message-attachment-card is-legacy";
+          const preview = document.createElement("div");
+          preview.className = "message-attachment-media is-file";
+          const type = document.createElement("span");
+          type.className = "attachment-preview-fallback";
+          const extension = String(name || "").match(/\.([^.]+)$/)?.[1] || "ARQ";
+          type.textContent = extension.slice(0, 5).toUpperCase();
+          preview.appendChild(type);
+          const copy = document.createElement("div");
+          copy.className = "message-attachment-copy";
+          const title = document.createElement("strong");
+          title.className = "message-attachment-name";
+          title.textContent = name || "Arquivo";
+          title.title = title.textContent;
+          const details = document.createElement("small");
+          details.className = "message-attachment-details";
+          details.textContent = "Prévia não salva no histórico";
+          copy.append(title, details);
+          card.append(preview, copy);
+          return card;
+        };
+
+        const createAttachmentCard = (file, { surface = "composer", state = "preparing" } = {}) => {
+          const inMessage = surface === "message";
+          const card = document.createElement("div");
+          card.className = inMessage ? "message-attachment-card" : "attachment-chip";
+          if (isImageAttachment(file)) card.classList.add("is-image");
+          const preview = makeAttachmentImagePreview(file, inMessage ? "message-attachment-media" : "attachment-chip-preview");
+          const copy = document.createElement("div");
+          copy.className = inMessage ? "message-attachment-copy" : "attachment-chip-copy";
+          const name = document.createElement("strong");
+          name.className = inMessage ? "message-attachment-name" : "attachment-chip-name";
+          name.textContent = String(file?.name || "Arquivo");
+          name.title = name.textContent;
+          const details = document.createElement("small");
+          details.className = inMessage ? "message-attachment-details" : "attachment-chip-details";
+          details.textContent = attachmentExtension(file) + " · " + attachmentSizeLabel(file?.size);
+          copy.append(name, details);
+          card.append(preview, copy);
+          if (!inMessage) return { card, status: null };
+          const status = document.createElement("div");
+          status.className = "message-attachment-status";
+          status.dataset.attachmentStatus = "true";
+          status.dataset.state = state;
+          status.setAttribute("role", "status");
+          status.setAttribute("aria-live", "polite");
+          const indicator = document.createElement("span");
+          indicator.className = "attachment-status-indicator";
+          indicator.setAttribute("aria-hidden", "true");
+          const statusLabel = document.createElement("span");
+          statusLabel.dataset.attachmentStatusLabel = "true";
+          statusLabel.textContent = attachmentStatusLabels[state] || attachmentStatusLabels.preparing;
+          status.append(indicator, statusLabel);
+          card.appendChild(status);
+          return { card, status };
+        };
+
         const createMessage = (role, text, options = {}) => {
           const row = document.createElement("article");
           row.className = "message-row " + role;
@@ -5613,10 +5836,25 @@
             response.append(createAssistantSymbol("assistant-marker"), content);
             row.appendChild(response);
           } else {
-            const bubble = document.createElement("div");
-            bubble.className = "message-bubble";
-            bubble.textContent = text;
-            row.appendChild(bubble);
+            const content = document.createElement("div");
+            content.className = "user-message-content";
+            const messageText = String(text || "").trim();
+            if (messageText) {
+              const bubble = document.createElement("div");
+              bubble.className = "message-bubble";
+              bubble.textContent = messageText;
+              content.appendChild(bubble);
+            }
+            const attachments = Array.isArray(options.attachments) ? options.attachments : [];
+            const legacyAttachmentNames = Array.isArray(options.legacyAttachmentNames) ? options.legacyAttachmentNames : [];
+            if (attachments.length || legacyAttachmentNames.length) {
+              const grid = document.createElement("div");
+              grid.className = "message-attachment-grid";
+              attachments.forEach((file) => grid.appendChild(createAttachmentCard(file, { surface: "message", state: options.attachmentState || "preparing" }).card));
+              legacyAttachmentNames.forEach((name) => grid.appendChild(createLegacyAttachmentCard(name)));
+              content.appendChild(grid);
+            }
+            row.appendChild(content);
           }
           const meta = document.createElement("div");
           meta.className = "message-meta";
@@ -5669,22 +5907,21 @@
           attachmentList.replaceChildren();
           attachmentList.hidden = selectedFiles.length === 0;
           selectedFiles.forEach((file, index) => {
-            const chip = document.createElement("div");
-            chip.className = "attachment-chip";
-            const name = document.createElement("span");
-            name.textContent = file.name;
+            const { card } = createAttachmentCard(file);
             const remove = document.createElement("button");
             remove.className = "attachment-remove";
             remove.type = "button";
-            remove.setAttribute("aria-label", "Remover " + file.name);
+            remove.setAttribute("aria-label", "Remover anexo: " + String(file.name || "arquivo"));
+            remove.title = "Remover anexo";
             remove.textContent = "×";
             remove.addEventListener("click", () => {
               selectedFiles.splice(index, 1);
               renderAttachments();
+              releaseUnusedAttachmentPreviewUrls();
               updateSend();
             });
-            chip.append(name, remove);
-            attachmentList.appendChild(chip);
+            card.appendChild(remove);
+            attachmentList.appendChild(card);
           });
         };
 
@@ -5739,9 +5976,19 @@
           const githubRepo = taskContext?.repo || null;
           const attachmentLabel = files.length ? "\n\nAnexos enviados: " + files.map((file) => file.name).join(", ") : "";
           const historyText = prompt + attachmentLabel;
-          const displayText = prompt + attachmentLabel;
+          const displayText = text;
+          const messageIndex = conversationMessages.length;
+          if (files.length) {
+            const filesByMessage = messageAttachmentFiles.get(chatId) || new Map();
+            filesByMessage.set(messageIndex, { files, state: "preparing" });
+            messageAttachmentFiles.set(chatId, filesByMessage);
+          }
           conversationMode();
-          const userRow = createMessage("user", displayText);
+          const userRow = createMessage("user", displayText, { attachments: files, attachmentState: "preparing" });
+          if (files.length) {
+            userRow.dataset.chatId = chatId;
+            userRow.dataset.attachmentMessageIndex = String(messageIndex);
+          }
           append(userRow);
           conversationMessages.push({ role: "user", content: historyText });
           messageInput.value = "";
@@ -5754,10 +6001,21 @@
           const controller = new AbortController();
           let assistantRow = null;
           activeRequestController = controller;
+          const restoreAttachmentsAfterFailedSend = () => {
+            if (!files.length || activeChatHistoryId !== chatId) return;
+            selectedFiles = files;
+            renderAttachments();
+            updateSend();
+          };
 
           try {
             const attachments = await Promise.all(files.map(fileToDataUrl));
-            if (activeRequestController !== controller) return;
+            if (activeRequestController !== controller) {
+              setMessageAttachmentStatus(userRow, "interrupted");
+              restoreAttachmentsAfterFailedSend();
+              return;
+            }
+            setMessageAttachmentStatus(userRow, "uploading");
             const result = await fetchWithAuth("/api/chat", {
               method: "POST",
               body: JSON.stringify({ messages: conversationMessages, attachments, mcpConnectorIds, githubRepo }),
@@ -5769,8 +6027,13 @@
               if (result.status === 409) { await loadUsage(false); showAttachmentLimit(); }
               throw new Error(data.error || "Não foi possível obter uma resposta.");
             }
+            if (files.length) setMessageAttachmentStatus(userRow, "sent");
             if (data.usage) applyUsageState(data.usage, true);
-            if (activeRequestController !== controller) return;
+            if (activeRequestController !== controller) {
+              if (messageAttachmentFiles.get(chatId)?.get(messageIndex)?.state !== "sent") setMessageAttachmentStatus(userRow, "interrupted");
+              restoreAttachmentsAfterFailedSend();
+              return;
+            }
             const answer = data.message?.content;
             if (typeof answer !== "string" || !answer.trim()) throw new Error("A resposta recebida estava vazia.");
             if (thinking.isConnected) thinking.remove();
@@ -5784,20 +6047,18 @@
             window.kazerWorkspace?.finishTask?.(taskContext, answer.trim(), data.credit_cost);
           } catch (error) {
             if (error.name === "AbortError" || activeRequestController !== controller) {
+              if (messageAttachmentFiles.get(chatId)?.get(messageIndex)?.state !== "sent") setMessageAttachmentStatus(userRow, "interrupted");
               if (assistantRow?.isConnected) assistantRow.remove();
-              selectedFiles = files;
-              renderAttachments();
-              updateSend();
+              restoreAttachmentsAfterFailedSend();
               return;
             }
+            if (messageAttachmentFiles.get(chatId)?.get(messageIndex)?.state !== "sent") setMessageAttachmentStatus(userRow, "failed");
             if (thinking.isConnected) thinking.remove();
             if (assistantRow?.isConnected) assistantRow.remove();
             // A mensagem que falhou continua sendo contexto válido e pode ser
             // reenviada sem obrigar a pessoa a redigitar tudo.
             saveChatMessages(chatId, conversationMessages);
-            selectedFiles = files;
-            renderAttachments();
-            updateSend();
+            restoreAttachmentsAfterFailedSend();
             window.kazerWorkspace?.failTask?.(taskContext, error.message || "Não foi possível conectar ao chat agora.");
             append(createMessage("assistant", error.message || "Não foi possível conectar ao chat agora."));
           } finally {
@@ -5843,8 +6104,10 @@
           conversationMessages = [];
           activeChatHistoryId = null;
           selectedFiles = [];
+          messageAttachmentFiles.clear();
           renderAttachments();
           messageList.replaceChildren();
+          releaseUnusedAttachmentPreviewUrls();
           messageList.hidden = true;
           emptyState.hidden = false;
           app.classList.remove("in-conversation");
