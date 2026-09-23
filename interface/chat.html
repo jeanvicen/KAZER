@@ -3348,6 +3348,31 @@
         .settings-mobile-account-credit { margin-top: 2px; padding-top: 14px; }
         .settings-usage-heading .settings-mobile-credit-balance { font-size: 28px; }
       }
+
+
+      /* Kazer Pro — convite de upgrade sem pressionar quem já é Pro */
+      .settings-mobile-upgrade { min-height: 34px; padding: 0 13px; border-color: rgba(245,220,120,.55); background: linear-gradient(105deg, #8f6421, #f8e7ab 48%, #b98227); background-size: 220% 100%; color: #211705; box-shadow: 0 7px 20px rgba(197,145,43,.16); animation: pro-cta-shine 4.2s linear infinite; font-size: 10px; letter-spacing: .01em; }
+      .settings-mobile-upgrade:hover { filter: brightness(1.08); transform: translateY(-1px); }
+      .plans-head-copy { min-width: 0; flex: 1; text-align: center; }
+      .plans-head-copy > span { display: block; margin-bottom: 4px; color: #e6bd67; font-size: 8px; font-weight: 800; letter-spacing: .2em; }
+      .plans-head-copy h2 { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      .plan-card-free-cycle { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-top: 16px; padding-top: 13px; border-top: 1px solid var(--line-soft); }
+      .plan-card-free-cycle strong { color: var(--text); font-size: 14px; letter-spacing: -.035em; }
+      .plan-card-free-cycle strong span { color: var(--purple); }
+      .plan-card-free-cycle small { max-width: 170px; color: var(--text-dim); font-size: 9.5px; line-height: 1.35; text-align: right; }
+      .plan-card-pro { box-shadow: 0 16px 45px rgba(120,90,18,.18), 0 0 0 1px rgba(245,220,120,.045), inset 0 1px 0 rgba(255,240,110,.05); }
+      .plan-card-pro-tagline { margin: 9px 0 0; color: #e8d49d; font-size: 12px; line-height: 1.4; }
+      .plan-card-pro-list li strong { color: #f3dc9d; font-weight: 700; }
+      .plan-card-pro button { box-shadow: 0 10px 26px rgba(210,165,70,.15); }
+      @keyframes pro-cta-shine { from { background-position: 210% center; } to { background-position: -30% center; } }
+      @media (max-width: 520px) {
+        .plans-head-copy h2 { font-size: 16px; }
+        .plan-card-free-cycle { align-items: flex-start; flex-direction: column; gap: 5px; }
+        .plan-card-free-cycle small { max-width: none; text-align: left; }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .settings-mobile-upgrade { animation: none; }
+      }
     </style>
     <script>
       window.setTimeout(() => {
@@ -3430,7 +3455,7 @@
             <div class="settings-mobile-account-top">
               <span class="settings-mobile-account-avatar" id="settingsMobileAccountAvatar">K</span>
               <div class="settings-mobile-account-identity"><strong id="settingsMobileAccountName">Kazer</strong><small id="settingsMobileAccountEmail">Conta conectada</small></div>
-              <div class="settings-mobile-account-plan"><span class="settings-mobile-account-plan-label">PLANO</span><strong class="settings-mobile-account-plan-value" id="settingsMobilePlan">Free</strong><button class="settings-mobile-upgrade" id="settingsMobileUpgrade" type="button" hidden>Atualizar</button></div>
+              <div class="settings-mobile-account-plan"><span class="settings-mobile-account-plan-label">PLANO</span><strong class="settings-mobile-account-plan-value" id="settingsMobilePlan">Free</strong><button class="settings-mobile-upgrade" id="settingsMobileUpgrade" type="button" hidden>Atualizar para Kazer Pro</button></div>
             </div>
             <div class="settings-mobile-account-credit"><div class="settings-usage-heading"><span class="settings-mobile-credit-label">USO DO CICLO</span><strong class="settings-mobile-credit-balance" id="settingsMobileCreditBalance" aria-label="Porcentagem de uso">—%</strong></div><div class="settings-usage-meter" role="progressbar" aria-label="Uso do ciclo" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span id="settingsUsageBar"></span></div><span class="settings-mobile-credit-next" id="settingsMobileCreditNext">Próxima atualização: —</span></div>
           </div>
@@ -3525,25 +3550,29 @@
       <section class="plans-screen" id="plansScreen" role="dialog" aria-modal="true" aria-label="Planos do Kazer" aria-hidden="true" hidden>
         <header class="plans-head">
           <button class="icon-button" id="plansBack" type="button" aria-label="Fechar"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"></path></svg></button>
-          <h2>Planos</h2>
+          <div class="plans-head-copy"><span>SEU PRÓXIMO NÍVEL</span><h2>Mais espaço para pensar.</h2></div>
           <span class="connectors-head-spacer" aria-hidden="true"></span>
         </header>
         <div class="plans-body">
           <article class="plan-card plan-card-current">
-            <span class="plan-card-label">SEU PLANO ATUAL</span>
+            <span class="plan-card-label">SEU PLANO ATUAL · FREE</span>
             <strong class="plan-card-name">Free</strong>
-            <p class="plan-card-desc">Uso essencial do Kazer, com limite percentual e reposição progressiva.</p>
+            <p class="plan-card-desc">Comece com clareza. Seu ciclo de uso avança conforme você conversa, cria e explora.</p>
+            <div class="plan-card-free-cycle"><strong>0% <span>→</span> 100%</strong><small>Reinício no dia 1 ou 2 · nova experiência em preparação</small></div>
           </article>
           <article class="plan-card plan-card-pro">
             <span class="plan-card-pro-badge">KAZER PRO</span>
+            <p class="plan-card-pro-tagline">Mais contexto. Mais inteligência. Mais KAZER.</p>
             <div class="plan-card-pro-price"><span class="plan-card-pro-currency">R$</span><span class="plan-card-pro-value">59,90</span><span class="plan-card-pro-period">/mês</span></div>
             <ul class="plan-card-pro-list">
-              <li>Limite de uso ampliado</li>
-              <li>Mais anexos por conversa</li>
+              <li><strong>+35% de uso por dia</strong></li>
+              <li>Mais inteligência e domínio de contexto</li>
+              <li>Mais memória e aprendizagem contínua</li>
+              <li>Mais usos de conectores e anexos</li>
               <li>Prioridade em novos recursos</li>
             </ul>
-            <button type="button" id="plansProAction">Assinar Kazer Pro</button>
-            <p class="plan-card-pro-note">Em desenvolvimento — os pagamentos ainda não estão disponíveis.</p>
+            <button type="button" id="plansProAction">Quero atualizar para o Pro</button>
+            <p class="plan-card-pro-note">Em preparação — os pagamentos serão liberados em breve.</p>
           </article>
         </div>
       </section>
@@ -3955,6 +3984,7 @@
           const isProPlan = normalizedPlan === "pro" || normalizedPlan === "kazer_pro";
           if (settingsMobilePlan) settingsMobilePlan.textContent = isProPlan ? "Kazer Pro" : "Free";
           if (settingsMobileUpgrade) settingsMobileUpgrade.hidden = isProPlan;
+          if (proAction) proAction.hidden = isProPlan;
           updateUsageDisplay(next, animate);
           if (creditResetValue) creditResetValue.textContent = formatResetTime(next.next_credit_reset_at);
           if (settingsMobileCreditNext) settingsMobileCreditNext.textContent = `Próxima atualização: ${formatResetTime(next.next_credit_reset_at)}`;
