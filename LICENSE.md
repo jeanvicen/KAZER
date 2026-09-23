@@ -1,7 +1,7 @@
 # KAZER — Licença proprietária
 
 **Versão:** 1.0 · **Data:** 31 de agosto de 2026  
-**Titular declarado:** Jean V. / `@jeanvicen` · identidade pública `0neajx` · Klipza Studio  
+**Titular declarado:** Jean V. / `@jeanvicen` · identidade pública `0neajx` · KLYPZA  
 **Contato publicado no projeto:** klipzastudio@gmail.com
 
 > **Rascunho para revisão jurídica.** Antes de usar este texto como instrumento definitivo, substitua a identificação pública pelos dados legais completos do titular e valide jurisdição, direitos obrigatórios, exceções legais e regras de consumo aplicáveis.
@@ -23,7 +23,7 @@ Sem autorização escrita e específica do titular, é proibido, na medida permi
 | Distribuir | Não publicar, vender, sublicenciar, compartilhar, espelhar, empacotar, hospedar ou disponibilizar cópias. |
 | Explorar comercialmente | Não monetizar, revender, oferecer como serviço, integrar a produto de terceiros ou usar em atividade comercial. |
 | Remover atribuição | Não remover, ocultar, alterar ou falsificar avisos de autoria, copyright, licença, marca ou origem. |
-| Usar a marca | Não usar `KAZER`, `Klipza Studio`, `0neajx`, logotipos, símbolos ou elementos visuais para sugerir afiliação, patrocínio ou oficialidade. |
+| Usar a marca | Não usar `KAZER`, `KLYPZA`, `0neajx`, logotipos, símbolos ou elementos visuais para sugerir afiliação, patrocínio ou oficialidade. |
 | Interferir ou abusar | Não contornar autenticação, limites, controles de segurança, rate limits, políticas de uso ou mecanismos de proteção. |
 | Extrair componentes | Não desmontar ou extrair código, componentes, prompts, assets ou regras para reutilização em outro sistema, ressalvadas exceções legais obrigatórias. |
 
@@ -58,3 +58,4 @@ O software é fornecido no estado em que se encontra, sem promessa de disponibil
 ## 8. Referências
 
 [1]: https://www.planalto.gov.br/ccivil_03/leis/l9609.htm "Planalto — Lei nº 9.609/1998"
+

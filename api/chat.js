@@ -1,5 +1,5 @@
 /*
- * KAZER — Copyright © 2026 Jean V. / @jeanvicen · 0neajx · Klipza Studio.
+ * KAZER — Copyright © 2026 Jean V. / @jeanvicen · 0neajx · KLYPZA.
  * Código proprietário. Consulte /LICENSE.md antes de reutilizar este arquivo.
  */
 const {
@@ -600,3 +600,4 @@ module.exports = async function handler(request, response) {
     repository_context: repositoryContext?.fullName || null,
   });
 };
+

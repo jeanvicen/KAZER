@@ -1,7 +1,7 @@
 # KAZER — Termos de uso
 
 **Versão informativa:** 1.0 · **Última atualização:** 31 de agosto de 2026  
-**Titular declarado:** Jean V. / `@jeanvicen` · identidade pública `0neajx` · Klipza Studio  
+**Titular declarado:** Jean V. / `@jeanvicen` · identidade pública `0neajx` · KLYPZA  
 **Contato:** klipzastudio@gmail.com
 
 > **Rascunho para revisão jurídica.** Este documento organiza regras operacionais e de propriedade intelectual para o KAZER, mas não é aconselhamento jurídico. Antes de publicação definitiva, um advogado deve confirmar a identidade do titular, controlador e operador, país de atuação, jurisdição, regras de consumidor, tratamento de dados, procedimento de notificações e cláusulas permitidas.
@@ -106,3 +106,4 @@ A identificação do titular, o foro, a lei aplicável, a responsabilidade por d
 
 [1]: https://www.planalto.gov.br/ccivil_03/leis/l9609.htm "Planalto — Lei nº 9.609/1998"
 [2]: https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/licensing-a-repository "GitHub Docs — Licensing a repository"
+

@@ -2,7 +2,7 @@
 
 > **KAZER** é um espaço web/PWA de conversa com inteligência artificial para explicar, escrever, organizar ideias, analisar conteúdo e transformar pedidos em próximos passos.
 >
-> **Titularidade declarada no projeto:** Jean V. / `@jeanvicen` · identidade pública `0neajx` · Klipza Studio. Substitua esta identificação pelos dados legais completos do titular antes de uma publicação comercial ou de um aviso jurídico definitivo.
+> **Titularidade declarada no projeto:** Jean V. / `@jeanvicen` · identidade pública `0neajx` · KLYPZA. Substitua esta identificação pelos dados legais completos do titular antes de uma publicação comercial ou de um aviso jurídico definitivo.
 
 [![Status](https://img.shields.io/badge/status-em%20desenvolvimento-6f42c1)](#status-do-projeto) [![Runtime](https://img.shields.io/badge/node-%3E%3D20-339933)](#requisitos) [![Deploy](https://img.shields.io/badge/deploy-vercel-000000)](#publicação-na-vercel)
 
@@ -344,3 +344,4 @@ O KAZER agora possui um plugin Google Drive com autorização OAuth 2.0 pelo ser
 Para ativar a integração, habilite a Google Drive API no [Google Cloud Console](https://console.cloud.google.com/apis/library/drive.googleapis.com), crie um cliente OAuth do tipo **Web application** e cadastre exatamente `https://SEU_DOMINIO/api/google-drive-callback` como URI de redirecionamento. Configure no ambiente do servidor `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_DRIVE_REDIRECT_URI`, `GOOGLE_DRIVE_TOKEN_KEY` e `SUPABASE_SERVICE_ROLE_KEY`. A chave `GOOGLE_DRIVE_TOKEN_KEY` deve ser longa, aleatória e privada; alterá-la invalida os tokens armazenados.
 
 Execute a migration `database/supabase/009_google_drive_connections.sql` no Supabase. A tabela guarda somente tokens cifrados no servidor e não concede leitura de tokens ao cliente. O sistema de narração usa eventos SSE produzidos durante a operação; cada fala é gerada dinamicamente com base na etapa real da ação, e não por frases fixas pré-programadas.
+

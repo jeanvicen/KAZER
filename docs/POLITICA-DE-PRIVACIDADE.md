@@ -1,7 +1,7 @@
 # KAZER — Aviso de privacidade
 
 **Versão informativa:** 1.0 · **Última atualização:** 31 de agosto de 2026  
-**Titular declarado:** Jean V. / `@jeanvicen` · identidade pública `0neajx` · Klipza Studio  
+**Titular declarado:** Jean V. / `@jeanvicen` · identidade pública `0neajx` · KLYPZA  
 **Canal para solicitações:** klipzastudio@gmail.com
 
 > **Rascunho para revisão jurídica.** Este documento descreve o fluxo técnico observado no repositório, mas não define sozinho o controlador, o operador, a base legal, os prazos de retenção, o encarregado, as transferências internacionais ou as obrigações contratuais. Complete esses pontos com advogado e com os contratos reais dos serviços utilizados.
@@ -16,7 +16,7 @@ O KAZER deve tratar somente o necessário para a finalidade informada, proteger 
 
 | Papel | Identificação atual |
 |---|---|
-| Titular declarado do projeto | Jean V. / `@jeanvicen` · `0neajx` · Klipza Studio. Confirmar nome empresarial ou pessoa física legal. |
+| Titular declarado do projeto | Jean V. / `@jeanvicen` · `0neajx` · KLYPZA. Confirmar nome empresarial ou pessoa física legal. |
 | Controlador | **A confirmar juridicamente** conforme a operação e a oferta do serviço. |
 | Encarregado/canal de privacidade | **A confirmar**; canal provisório: klipzastudio@gmail.com. |
 | Operadores e provedores | Supabase, Vercel, provedores de IA, busca, CDN, navegador e demais serviços efetivamente habilitados. Confirmar contratos e localidade. |
@@ -98,3 +98,4 @@ Este Aviso pode ser atualizado quando o produto, os fornecedores, os fluxos de d
 ## 12. Referências
 
 [1]: https://www.planalto.gov.br/ccivil_03/_ato2015-2018/2018/lei/l13709.htm "Planalto — Lei nº 13.709/2018 (LGPD)"
+

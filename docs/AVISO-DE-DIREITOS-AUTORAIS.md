@@ -1,7 +1,7 @@
 # KAZER — Aviso de direitos autorais e propriedade intelectual
 
 **Versão:** 1.0 · **Data:** 31 de agosto de 2026  
-**Titular declarado:** Jean V. / `@jeanvicen` · identidade pública `0neajx` · Klipza Studio  
+**Titular declarado:** Jean V. / `@jeanvicen` · identidade pública `0neajx` · KLYPZA  
 **Canal:** klipzastudio@gmail.com
 
 > **Rascunho para revisão jurídica.** Este aviso registra a posição autoral do projeto, mas não substitui registro, contrato, prova de titularidade, notificação formal ou orientação de advogado.
@@ -40,7 +40,7 @@ Sem autorização escrita específica, não são permitidos, na medida autorizad
 - remover, falsificar, ocultar ou alterar avisos de copyright, licença, marca ou autoria;
 - traduzir, adaptar, reescrever, extrair ou reimplementar componentes a partir do código proprietário para criar produto derivado;
 - hospedar o KAZER, oferecer acesso como serviço, revender, sublicenciar ou monetizar qualquer parte;
-- usar `KAZER`, `Klipza Studio`, `0neajx`, logos, ícones, cores ou aparência para criar confusão de origem, parceria ou aprovação;
+- usar `KAZER`, `KLYPZA`, `0neajx`, logos, ícones, cores ou aparência para criar confusão de origem, parceria ou aprovação;
 - copiar prompts, regras de comportamento, textos, fluxos de produto, documentação ou materiais de lançamento;
 - contornar limites, autenticação, rate limits, controles de segurança ou políticas para obter ou reutilizar conteúdo protegido;
 - utilizar o material em treinamento, dataset, demonstração comercial ou publicação pública sem a autorização exigida.
@@ -86,3 +86,4 @@ Por isso, antes de publicar novas versões, remova segredos, dados pessoais, cha
 
 [1]: https://www.planalto.gov.br/ccivil_03/leis/l9609.htm "Planalto — Lei nº 9.609/1998"
 [2]: https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/managing-repository-settings/setting-repository-visibility "GitHub Docs — Setting repository visibility"
+

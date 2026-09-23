@@ -1,6 +1,6 @@
 # KAZER — Aviso de autoria e componentes
 
-**Copyright © 2026 Jean V. / `@jeanvicen` · identidade pública `0neajx` · Klipza Studio. Todos os direitos reservados.**
+**Copyright © 2026 Jean V. / `@jeanvicen` · identidade pública `0neajx` · KLYPZA. Todos os direitos reservados.**
 
 Este aviso acompanha o repositório KAZER e cobre, salvo indicação expressa em contrário, o código, a arquitetura, a interface, os textos, os prompts, os fluxos, as regras de produto, a documentação, os logos, os ícones, as imagens originais e a identidade visual distribuídos pelo projeto.
 
@@ -21,3 +21,4 @@ Não remova, oculte, falsifique ou altere este aviso, `LICENSE.md`, os cabeçalh
 Pedidos de licença, uso de marca, reprodução, distribuição ou esclarecimento devem ser enviados para **klipzastudio@gmail.com**. Até haver autorização escrita específica, o uso permanece não autorizado.
 
 > Este documento é um rascunho operacional e deve ser revisado por advogado antes de ser usado como declaração jurídica definitiva.
+
