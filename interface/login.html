@@ -538,10 +538,8 @@
     .intro-kicker { color: rgba(229,72,85,.86); font-size: 10px; font-weight: 700; letter-spacing: .28em; text-transform: uppercase; }
     .intro-title { font-size: clamp(21px, 4vw, 30px); font-weight: 600; letter-spacing: -.04em; }
     .intro-copy { max-width: 280px; color: var(--text-secondary); font-size: 13px; line-height: 1.5; }
-    .intro-skip { position: absolute; z-index: 2; right: max(20px, env(safe-area-inset-right)); bottom: max(20px, env(safe-area-inset-bottom)); border: 1px solid rgba(255,255,255,.16); border-radius: 999px; padding: 9px 13px; background: rgba(7,7,9,.58); color: var(--text-secondary); font: inherit; font-size: 12px; cursor: pointer; }
-    .intro-skip:hover, .intro-skip:focus-visible { border-color: rgba(229,72,85,.5); color: var(--text-primary); }
-
     @keyframes brand-arrive { from { opacity: 0; transform: translateY(-50%) translateX(-18px); } to { opacity: 1; transform: translateY(-50%) translateX(0); } }
+    @keyframes mobile-brand-arrive { from { opacity: 0; transform: translateX(-50%) translateY(10px); } to { opacity: 1; transform: translateX(-50%) translateY(0); } }
     @keyframes button-arrive { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
     @keyframes mark-breathe { 0%,100% { transform: scale(1); } 50% { transform: scale(1.018); } }
     @keyframes intro-content-in { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
@@ -551,7 +549,7 @@
     @media (max-width: 760px) {
       body { align-items: flex-end; padding: 0; }
       body::after { width: 92vw; top: 28%; }
-      .login-brand { position: absolute; top: max(48px, env(safe-area-inset-top)); left: 50%; width: calc(100% - 48px); align-items: center; text-align: center; transform: translateX(-50%); }
+      .login-brand { position: absolute; top: max(48px, env(safe-area-inset-top)); left: 50%; width: calc(100% - 48px); align-items: center; text-align: center; transform: translateX(-50%); animation: mobile-brand-arrive .9s var(--ease) both; }
       .login-brand::after { font-size: 20px; }
       .main-trigger-btn { right: 24px; bottom: max(28px, env(safe-area-inset-bottom)); left: 24px; width: calc(100% - 48px); }
       .overlay { align-items: flex-end; padding: 10px 10px max(10px, env(safe-area-inset-bottom)); }
@@ -576,7 +574,6 @@
       <h1 class="intro-title">Seu contexto. Seu próximo passo.</h1>
       <p class="intro-copy">Um espaço pessoal para conversar, organizar e construir.</p>
     </div>
-    <button class="intro-skip" id="introSkip" type="button">Pular abertura</button>
   </div>
 
   <div class="login-brand" aria-label="Kazer">
@@ -681,7 +678,6 @@
 
       // A abertura é uma experiência visual local. Não altera autenticação nem Supabase.
       const introScreen = document.getElementById('introScreen');
-      const introSkip = document.getElementById('introSkip');
       const introKey = 'kazer-login-intro-seen-v1';
       let introTimer = null;
       const finishIntro = () => {
@@ -698,7 +694,6 @@
       } else if (introScreen) {
         const reducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
         introTimer = window.setTimeout(finishIntro, reducedMotion ? 500 : 2600);
-        introSkip?.addEventListener('click', finishIntro);
       }
 
       // 1. CONFIGURAÇÃO DO SUPABASE (Nome 'kazerDB' para evitar 100% de conflitos)
@@ -894,3 +889,4 @@
   </script>
 </body>
 </html>
+
