@@ -3327,6 +3327,27 @@
       @media (prefers-reduced-motion: reduce) {
         .settings-section:not([hidden]) { animation: none !important; }
       }
+
+
+      /* Uso percentual e configurações — camada visual */
+      .settings-menu-icon { justify-content: center; width: 54px; padding: 0; }
+      .settings-menu-icon .icon { width: 21px; height: 21px; color: var(--text-soft); transition: color 180ms var(--ease), transform 180ms var(--ease); }
+      .settings-menu-icon:hover .icon { color: var(--purple); transform: rotate(24deg); }
+      .settings-mobile-account-credit { display: grid; gap: 9px; align-items: stretch; }
+      .settings-usage-heading { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+      .settings-usage-heading .settings-mobile-credit-label { color: var(--text-dim); }
+      .settings-usage-heading .settings-mobile-credit-balance { font-size: 25px; letter-spacing: -.055em; }
+      .settings-usage-meter { position: relative; width: 100%; height: 7px; overflow: hidden; border-radius: 999px; background: rgba(255,255,255,.09); }
+      .settings-usage-meter span { display: block; width: 0%; height: 100%; border-radius: inherit; background: linear-gradient(90deg, #c93745, #f28c6b); box-shadow: 0 0 16px rgba(229,72,85,.42); transition: width 520ms var(--ease); }
+      .settings-mobile-credit-next { justify-self: start; text-align: left; }
+      .new-chat-credit-value, .credit-indicator-value { min-width: 3ch; }
+      .plan-card-pro-value { font-variant-numeric: tabular-nums; }
+      @media (max-width: 680px) {
+        .settings-menu-icon { width: 48px; min-height: 50px; }
+        .settings-menu-icon .icon { width: 23px; height: 23px; }
+        .settings-mobile-account-credit { margin-top: 2px; padding-top: 14px; }
+        .settings-usage-heading .settings-mobile-credit-balance { font-size: 28px; }
+      }
     </style>
     <script>
       window.setTimeout(() => {
@@ -3380,12 +3401,12 @@
 
       <header class="new-chat-header" id="newChatHeader" aria-label="Novo chat" aria-hidden="true" hidden>
         <span class="new-chat-brand" aria-label="KAZER">KAZER</span>
-        <div class="new-chat-credit" id="newChatCredit" aria-label="Saldo de tokens"><span class="new-chat-credit-value" id="newChatCreditBalance">0</span><span class="new-chat-credit-label">tokens</span></div>
+        <div class="new-chat-credit" id="newChatCredit" aria-label="Uso do ciclo"><span class="new-chat-credit-value" id="newChatCreditBalance">0</span><span class="new-chat-credit-label">uso</span></div>
       </header>
 
       <header class="topbar" aria-label="Barra de conversa">
         <a class="chat-history-back" id="chatHistoryBack" href="?view=history" aria-label="Abrir histórico de chats" title="Histórico de chats" onclick="event.preventDefault(); const app=document.getElementById('app'), history=document.getElementById('historyScreen'), header=document.getElementById('newChatHeader'); app?.classList.add('history-active'); app?.classList.remove('new-chat-active','kazer-active'); if (history) { history.hidden=false; history.setAttribute('aria-hidden','false'); } if (header) { header.hidden=true; header.setAttribute('aria-hidden','true'); } window.history.pushState({view:'history'}, '', '?view=history');"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4.5 12a7.5 7.5 0 1 0 2.2-5.3"></path><path d="M4.5 5.3v4.2h4.2"></path><path d="M12 8.2v4.2l2.8 1.7"></path></svg></a>
-        <div class="credit-indicator" id="creditIndicator" aria-label="Saldo de tokens" hidden><span class="credit-indicator-value" id="creditBalanceValue">0</span></div>
+        <div class="credit-indicator" id="creditIndicator" aria-label="Uso do ciclo" hidden><span class="credit-indicator-value" id="creditBalanceValue">0</span></div>
       </header>
 
       <div class="profile-popover" id="profilePopover" role="dialog" aria-label="Perfil">
@@ -3394,10 +3415,10 @@
           <div><strong id="profileDisplayName">Kazer</strong><small id="profileEmail">Conta conectada</small></div>
         </div>
         <div class="menu-actions">
-          <button class="pro-action" id="proAction" type="button" aria-label="Obter Kazer Pro"><span class="pro-badge">PRO</span><span class="pro-copy"><strong>Kazer Pro</strong><small>Obter mais do KAZER</small></span><svg class="icon pro-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"></path></svg></button>
+          <button class="pro-action" id="proAction" type="button" aria-label="Obter Kazer Pro"><span class="pro-badge">PRO</span><span class="pro-copy"><strong>Kazer Pro</strong><small>R$ 59,90/mês · em breve</small></span><svg class="icon pro-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"></path></svg></button>
 
           <div class="profile-more" id="profileMore"><button class="profile-more-toggle" id="profileMoreToggle" type="button" aria-expanded="false"><span>Mais opções</span><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg></button><div class="profile-more-options"><div class="profile-integrations-grid"><button class="profile-integration-action" id="githubProfileAction" type="button"><span class="profile-integration-icon github" aria-hidden="true"><svg viewBox="0 0 24 24" role="img"><path d="M12 2.5a9.5 9.5 0 0 0-3 18.51c.48.09.65-.21.65-.46v-1.7c-2.65.58-3.2-1.12-3.2-1.12-.44-1.1-1.06-1.4-1.06-1.4-.87-.6.07-.59.07-.59.96.07 1.47.99 1.47.99.85 1.46 2.22 1.04 2.76.8.09-.62.33-1.04.6-1.28-2.12-.24-4.35-1.06-4.35-4.72 0-1.04.37-1.9.98-2.57-.1-.24-.43-1.22.1-2.54 0 0 .8-.26 2.62.98A9.1 9.1 0 0 1 12 7.08a9 9 0 0 1 2.38.32c1.82-1.24 2.62-.98 2.62-.98.53 1.32.2 2.3.1 2.54.61.67.98 1.53.98 2.57 0 3.67-2.23 4.48-4.36 4.72.34.3.64.88.64 1.77v2.62c0 .25.17.55.65.46A9.5 9.5 0 0 0 12 2.5Z"></path></svg></span><strong>GitHub</strong><small id="githubProfileStatus">Autorizar acesso aos repositórios</small></button><button class="profile-integration-action" id="mcpProfileAction" type="button"><span class="profile-integration-icon" aria-hidden="true">⌁</span><strong>Conectores</strong><small id="mcpProfileStatus">Conectores prontos</small></button></div><button class="profile-more-option" id="webKazerAction" type="button"><span>WebKazer<br><small>Pesquisa na web</small></span><span aria-hidden="true">↗</span></button></div></div>
-          <button class="menu-action" id="settingsAction" type="button"><span>Configurações</span><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6 7 7M17 17l1.4 1.4M18.4 5.6 17 7M7 17l-1.4 1.4"></path><circle cx="12" cy="12" r="3.5"></circle></svg></button>
+          <button class="menu-action settings-menu-icon" id="settingsAction" type="button" aria-label="Configurações" title="Configurações"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6 7 7M17 17l1.4 1.4M18.4 5.6 17 7M7 17l-1.4 1.4"></path><circle cx="12" cy="12" r="3.5"></circle></svg></button>
         </div>
       </div>
 
@@ -3411,7 +3432,7 @@
               <div class="settings-mobile-account-identity"><strong id="settingsMobileAccountName">Kazer</strong><small id="settingsMobileAccountEmail">Conta conectada</small></div>
               <div class="settings-mobile-account-plan"><span class="settings-mobile-account-plan-label">PLANO</span><strong class="settings-mobile-account-plan-value" id="settingsMobilePlan">Free</strong><button class="settings-mobile-upgrade" id="settingsMobileUpgrade" type="button" hidden>Atualizar</button></div>
             </div>
-            <div class="settings-mobile-account-credit"><span class="settings-mobile-credit-next" id="settingsMobileCreditNext">Próxima recarga: —</span><div class="settings-mobile-credit-copy"><span class="settings-mobile-credit-label">TOKENS</span><span class="settings-mobile-credit-balance" id="settingsMobileCreditBalance" aria-label="Saldo de tokens">0</span></div></div>
+            <div class="settings-mobile-account-credit"><div class="settings-usage-heading"><span class="settings-mobile-credit-label">USO DO CICLO</span><strong class="settings-mobile-credit-balance" id="settingsMobileCreditBalance" aria-label="Porcentagem de uso">—%</strong></div><div class="settings-usage-meter" role="progressbar" aria-label="Uso do ciclo" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span id="settingsUsageBar"></span></div><span class="settings-mobile-credit-next" id="settingsMobileCreditNext">Próxima atualização: —</span></div>
           </div>
           <label class="settings-search"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-4-4"></path></svg><input id="settingsSearch" type="search" placeholder="Pesquisar configuração" autocomplete="off" /></label>
           <nav class="settings-nav-list" aria-label="Categorias de configurações">
@@ -3511,13 +3532,13 @@
           <article class="plan-card plan-card-current">
             <span class="plan-card-label">SEU PLANO ATUAL</span>
             <strong class="plan-card-name">Free</strong>
-            <p class="plan-card-desc">Acesso essencial ao Kazer, com 1.500 tokens iniciais que não expiram e 300 tokens adicionados diariamente.</p>
+            <p class="plan-card-desc">Uso essencial do Kazer, com limite percentual e reposição progressiva.</p>
           </article>
           <article class="plan-card plan-card-pro">
             <span class="plan-card-pro-badge">KAZER PRO</span>
-            <div class="plan-card-pro-price"><span class="plan-card-pro-currency">R$</span><span class="plan-card-pro-value">59,99</span><span class="plan-card-pro-period">/mês</span></div>
+            <div class="plan-card-pro-price"><span class="plan-card-pro-currency">R$</span><span class="plan-card-pro-value">59,90</span><span class="plan-card-pro-period">/mês</span></div>
             <ul class="plan-card-pro-list">
-              <li>Tokens ampliados todos os meses</li>
+              <li>Limite de uso ampliado</li>
               <li>Mais anexos por conversa</li>
               <li>Prioridade em novos recursos</li>
             </ul>
@@ -3528,7 +3549,7 @@
       </section>
 
       <aside class="attachment-limit-banner" id="attachmentLimitBanner" hidden aria-live="polite"><strong>Você usou seu limite de anexos.</strong><span>Mude para o Kazer Pro para enviar mais anexos.</span><small>Seus anexos serão liberados em <b id="attachmentResetValue">—</b>.</small><button type="button" id="attachmentProButton">Conhecer Kazer Pro</button></aside>
-      <section class="credit-limit-modal" id="creditLimitModal" hidden role="dialog" aria-modal="true" aria-labelledby="creditLimitTitle"><div class="credit-limit-card"><h2 id="creditLimitTitle">Você está aguardando tokens.</h2><p>Seu saldo acabou. Os tokens que você não usa ficam guardados e 300 novos tokens são adicionados diariamente.</p><small>Próxima recarga diária: <b id="creditResetValue">—</b>.</small><button type="button" id="creditProButton">Conhecer Kazer Pro</button></div></section>
+      <section class="credit-limit-modal" id="creditLimitModal" hidden role="dialog" aria-modal="true" aria-labelledby="creditLimitTitle"><div class="credit-limit-card"><h2 id="creditLimitTitle">Seu limite de uso foi alcançado.</h2><p>O ciclo de uso será atualizado conforme a regra vigente do seu plano. Você poderá acompanhar tudo por porcentagem.</p><small>Próxima atualização: <b id="creditResetValue">—</b>.</small><button type="button" id="creditProButton">Conhecer Kazer Pro</button></div></section>
       <div class="web-popover" id="webPopover" role="dialog" aria-label="WebKazer">
         <h2>WebKazer</h2>
         <p class="web-subtitle">Pesquise na web, imagens, vídeos e notícias; traga contexto para o KAZER.</p>
@@ -3729,6 +3750,7 @@
         const plansBack = document.getElementById("plansBack");
         const plansProAction = document.getElementById("plansProAction");
         const settingsMobileCreditBalance = document.getElementById("settingsMobileCreditBalance");
+        const settingsUsageBar = document.getElementById("settingsUsageBar");
         const webSearchForm = document.getElementById("webSearchForm");
         const webQuery = document.getElementById("webQuery");
         const webSources = document.getElementById("webSources");
@@ -3854,6 +3876,39 @@
           return new Intl.DateTimeFormat("pt-BR", { dateStyle: "short", timeStyle: "short", timeZone: "UTC" }).format(date) + " UTC";
         };
 
+        const getUsagePercent = (next) => {
+          if (!next || typeof next !== "object") return null;
+          const direct = [next.usage_percent, next.usage_percentage, next.percent_used, next.percentage_used]
+            .map(Number).find((value) => Number.isFinite(value));
+          if (Number.isFinite(direct)) return Math.max(0, Math.min(100, Math.round(direct)));
+          const remaining = [next.usage_remaining_percent, next.remaining_percent]
+            .map(Number).find((value) => Number.isFinite(value));
+          if (Number.isFinite(remaining)) return Math.max(0, Math.min(100, Math.round(100 - remaining)));
+          const used = [next.credits_used, next.used_credits, next.usage_used]
+            .map(Number).find((value) => Number.isFinite(value));
+          const limit = [next.credits_limit, next.usage_limit, next.monthly_credits_limit]
+            .map(Number).find((value) => Number.isFinite(value) && value > 0);
+          if (Number.isFinite(used) && Number.isFinite(limit)) return Math.max(0, Math.min(100, Math.round((used / limit) * 100)));
+          return null;
+        };
+
+        const updateUsageDisplay = (next, animate = true) => {
+          const percent = getUsagePercent(next);
+          const targets = [creditBalanceValue, settingsMobileCreditBalance, newChatCreditBalance].filter(Boolean);
+          const label = percent === null ? "—%" : `${percent}%`;
+          targets.forEach((element) => { element.textContent = label; element.dataset.value = percent === null ? "" : String(percent); });
+          if (settingsUsageBar) {
+            settingsUsageBar.style.width = `${percent === null ? 0 : percent}%`;
+            settingsUsageBar.parentElement?.setAttribute("aria-valuenow", String(percent === null ? 0 : percent));
+          }
+          if (settingsMobileAccountCard && animate && percent !== null) {
+            settingsMobileAccountCard.classList.remove("is-changing");
+            void settingsMobileAccountCard.offsetWidth;
+            settingsMobileAccountCard.classList.add("is-changing");
+            window.setTimeout(() => settingsMobileAccountCard.classList.remove("is-changing"), 560);
+          }
+        };
+
         const animateCreditBalance = (target, animate = true) => {
           const targets = [creditBalanceValue, settingsMobileCreditBalance, newChatCreditBalance].filter(Boolean);
           if (!targets.length) return;
@@ -3900,9 +3955,9 @@
           const isProPlan = normalizedPlan === "pro" || normalizedPlan === "kazer_pro";
           if (settingsMobilePlan) settingsMobilePlan.textContent = isProPlan ? "Kazer Pro" : "Free";
           if (settingsMobileUpgrade) settingsMobileUpgrade.hidden = isProPlan;
-          animateCreditBalance(next.credits_balance, animate);
+          updateUsageDisplay(next, animate);
           if (creditResetValue) creditResetValue.textContent = formatResetTime(next.next_credit_reset_at);
-          if (settingsMobileCreditNext) settingsMobileCreditNext.textContent = `Próxima recarga: ${formatResetTime(next.next_credit_reset_at)}`;
+          if (settingsMobileCreditNext) settingsMobileCreditNext.textContent = `Próxima atualização: ${formatResetTime(next.next_credit_reset_at)}`;
           if (attachmentResetValue) attachmentResetValue.textContent = formatResetTime(next.attachment_reset_at);
           if (attachmentLimitBanner) attachmentLimitBanner.hidden = next.attachment_limit_reached !== true;
           if (creditLimitModal) creditLimitModal.hidden = next.credits_limit_reached !== true;
@@ -5737,5 +5792,6 @@
     <script src="/interface/kazer-workspace.js"></script>
   </body>
 </html>
+
 
 
