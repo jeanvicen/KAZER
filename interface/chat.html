@@ -3470,59 +3470,35 @@
       }
 
 
-      /* Loja modular KAZER: categorias separadas para crescer sem apertar o comparativo */
-      .plans-screen { width: min(980px, calc(100vw - 40px)); height: min(790px, calc(100dvh - 40px)); max-height: calc(100dvh - 40px); }
-      .plans-head { min-height: 86px; }
+      /* Planos KAZER — apresentação de marca e comparação */
+      .plans-screen { width: min(980px, calc(100vw - 40px)); height: min(790px, calc(100dvh - 40px)); max-height: calc(100dvh - 40px); border-color: rgba(229,72,85,.22); background: radial-gradient(720px 340px at 84% 0%, rgba(229,72,85,.09), transparent 75%), var(--page); box-shadow: 0 36px 110px rgba(0,0,0,.72), 0 0 0 1px rgba(229,72,85,.04), 0 0 80px rgba(229,72,85,.045); }
+      .plans-head { min-height: 82px; }
       .plans-head-copy > span { color: #e7bc69; }
-      .plans-category-nav { display: flex; flex: 0 0 auto; align-items: center; gap: 7px; padding: 12px 20px 11px; border-bottom: 1px solid var(--line-soft); overflow-x: auto; scrollbar-width: none; }
-      .plans-category-nav::-webkit-scrollbar { display: none; }
-      .plans-category-tab { display: inline-flex; align-items: center; gap: 8px; min-height: 39px; padding: 0 14px; border: 1px solid transparent; border-radius: 999px; background: transparent; color: var(--text-dim); font: inherit; font-size: 11px; font-weight: 620; white-space: nowrap; cursor: pointer; transition: color 180ms var(--ease), background 180ms var(--ease), border-color 180ms var(--ease), transform 180ms var(--ease); }
-      .plans-category-tab:hover { color: var(--text); background: rgba(255,255,255,.04); }
-      .plans-category-tab.active { border-color: rgba(229,72,85,.28); background: rgba(229,72,85,.10); color: var(--text); box-shadow: inset 0 0 0 1px rgba(229,72,85,.035); }
-      .plans-tab-icon { color: #e7bc69; font-size: 15px; }
-      .plans-tab-soon { margin-left: 2px; padding: 3px 6px; border: 1px solid rgba(255,255,255,.09); border-radius: 999px; color: var(--text-dim); font-size: 7px; font-weight: 750; letter-spacing: .06em; text-transform: uppercase; }
-      .plans-store-content { flex: 1; min-height: 0; overflow: auto; scrollbar-width: thin; scrollbar-color: var(--line) transparent; }
-      .plans-store-panel { min-height: 100%; }
-      .plans-store-panel[hidden] { display: none !important; }
-      .plans-store-panel:not([hidden]) { animation: plans-panel-in .28s var(--ease) both; }
-      .plans-body { min-height: 100%; align-content: start; }
-      .plans-next-categories { display: flex; grid-column: 1 / -1; align-items: center; gap: 12px; margin: 0 20px 18px; padding: 13px 15px; border: 1px solid rgba(229,72,85,.14); border-radius: 15px; background: linear-gradient(105deg, rgba(229,72,85,.07), rgba(255,255,255,.015)); }
-      .plans-next-icon { display: grid; place-items: center; width: 33px; height: 33px; flex: 0 0 auto; border: 1px solid rgba(229,72,85,.22); border-radius: 11px; color: #e7bc69; font-size: 17px; }
-      .plans-next-categories > span:nth-child(2) { display: grid; gap: 3px; min-width: 0; flex: 1; }
-      .plans-next-categories strong { color: var(--text); font-size: 10px; }
-      .plans-next-categories small { color: var(--text-dim); font-size: 9px; line-height: 1.4; }
-      .plans-next-categories button { display: inline-flex; align-items: center; gap: 7px; flex: 0 0 auto; padding: 8px 10px; border: 1px solid rgba(255,255,255,.10); border-radius: 999px; background: rgba(255,255,255,.035); color: var(--text-soft); font: inherit; font-size: 9px; font-weight: 650; cursor: pointer; transition: background 160ms ease, color 160ms ease, border-color 160ms ease; }
-      .plans-next-categories button:hover { border-color: rgba(229,72,85,.35); background: rgba(229,72,85,.09); color: var(--text); }
-      .plans-coming-panel { padding: 26px clamp(16px, 4vw, 38px) 34px; }
-      .plans-coming-heading { max-width: 660px; margin: 4px 0 24px; }
-      .plans-coming-eyebrow { color: #e7bc69; font-size: 9px; font-weight: 800; letter-spacing: .2em; }
-      .plans-coming-heading h3 { margin: 9px 0 8px; color: var(--text); font-size: clamp(22px, 3.4vw, 31px); letter-spacing: -.045em; line-height: 1.15; }
-      .plans-coming-heading p { max-width: 590px; margin: 0; color: var(--text-dim); font-size: 12px; line-height: 1.6; }
-      .plans-product-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr)); gap: 13px; }
-      .plans-product-card { position: relative; min-height: 178px; padding: 17px; overflow: hidden; border: 1px solid var(--line-soft); border-radius: 19px; background: linear-gradient(150deg, rgba(255,255,255,.035), rgba(255,255,255,.01)); }
-      .plans-product-card::after { position: absolute; right: -52px; bottom: -72px; width: 150px; height: 150px; border: 1px solid rgba(229,72,85,.12); border-radius: 50%; box-shadow: 0 0 0 18px rgba(229,72,85,.018); content: ""; pointer-events: none; }
-      .plans-product-symbol { display: grid; place-items: center; width: 36px; height: 36px; margin-bottom: 17px; border: 1px solid rgba(229,72,85,.23); border-radius: 12px; background: rgba(229,72,85,.075); color: #e7bc69; font-size: 17px; }
-      .plans-product-status { position: absolute; top: 18px; right: 16px; color: var(--text-dim); font-size: 7px; font-weight: 750; letter-spacing: .12em; }
-      .plans-product-card h4 { margin: 0 0 6px; color: var(--text); font-size: 13px; font-weight: 650; letter-spacing: -.02em; }
-      .plans-product-card p { max-width: 280px; margin: 0; color: var(--text-dim); font-size: 10px; line-height: 1.5; }
-      @keyframes plans-panel-in { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+      .plans-brand-banner { position: relative; display: flex; align-items: center; gap: 18px; min-height: 142px; margin: 16px 20px 4px; padding: 21px 25px; overflow: hidden; border: 1px solid rgba(229,72,85,.20); border-radius: 22px; background: linear-gradient(112deg, rgba(229,72,85,.12), rgba(242,140,107,.035) 44%, rgba(255,255,255,.02) 100%); }
+      .plans-brand-banner::before { position: absolute; inset: 0; background: linear-gradient(100deg, transparent 32%, rgba(255,255,255,.035) 50%, transparent 70%); content: ""; pointer-events: none; }
+      .plans-brand-mark { position: relative; z-index: 1; display: grid; place-items: center; width: 62px; height: 62px; flex: 0 0 auto; overflow: hidden; border: 1px solid rgba(229,72,85,.24); border-radius: 18px; background: #08090b; box-shadow: 0 12px 32px rgba(0,0,0,.38), 0 0 30px rgba(229,72,85,.11); }
+      .plans-brand-mark img { display: block; width: 100%; height: 100%; object-fit: cover; }
+      .plans-brand-copy { position: relative; z-index: 1; min-width: 0; }
+      .plans-brand-copy > span { display: block; margin-bottom: 7px; color: #e8b76c; font-size: 8px; font-weight: 800; letter-spacing: .19em; }
+      .plans-brand-copy h3 { margin: 0; color: var(--text); font-size: clamp(19px, 3vw, 27px); font-weight: 650; letter-spacing: -.05em; line-height: 1.12; }
+      .plans-brand-copy p { max-width: 570px; margin: 7px 0 0; color: var(--text-dim); font-size: 11px; line-height: 1.5; }
+      .plans-brand-orbit { position: absolute; top: 50%; right: -40px; width: 220px; height: 220px; border: 1px solid rgba(229,72,85,.17); border-radius: 50%; box-shadow: 0 0 0 22px rgba(229,72,85,.018), 0 0 0 48px rgba(229,72,85,.012), inset 0 0 32px rgba(229,72,85,.03); transform: translateY(-50%); pointer-events: none; }
+      .plans-brand-orbit i { position: absolute; top: 25%; left: 14%; width: 6px; height: 6px; border-radius: 50%; background: #e54855; box-shadow: 0 0 16px rgba(229,72,85,.8); }
+      .plans-body { flex: 1; min-height: 0; align-content: start; padding-top: 16px; }
+      .plan-card-pro { box-shadow: 0 18px 50px rgba(120,90,18,.18), 0 0 0 1px rgba(231,188,105,.05), inset 0 1px 0 rgba(255,240,110,.06); }
       @media (max-width: 680px) {
         .plans-screen { width: 100%; height: min(94dvh, 900px); max-height: 94dvh; }
-        .plans-head { min-height: 80px; }
-        .plans-category-nav { gap: 3px; padding: 9px 11px; }
-        .plans-category-tab { min-height: 37px; padding: 0 10px; font-size: 10px; }
-        .plans-tab-soon { font-size: 6px; }
-        .plans-store-content { overscroll-behavior: contain; }
-        .plans-next-categories { flex-wrap: wrap; margin: 0 10px 15px; padding: 12px; }
-        .plans-next-categories > span:nth-child(2) { flex-basis: calc(100% - 50px); }
-        .plans-next-categories button { margin-left: 45px; }
-        .plans-coming-panel { padding: 21px 14px max(24px, env(safe-area-inset-bottom)); }
-        .plans-coming-heading { margin-bottom: 17px; }
-        .plans-product-grid { grid-template-columns: repeat(auto-fit, minmax(min(100%, 145px), 1fr)); gap: 9px; }
-        .plans-product-card { min-height: 160px; padding: 14px; border-radius: 16px; }
+        .plans-head { min-height: 76px; }
+        .plans-brand-banner { min-height: 120px; gap: 13px; margin: 11px 10px 2px; padding: 16px 14px; border-radius: 19px; }
+        .plans-brand-mark { width: 48px; height: 48px; border-radius: 15px; }
+        .plans-brand-copy > span { margin-bottom: 5px; font-size: 7px; letter-spacing: .14em; }
+        .plans-brand-copy h3 { font-size: clamp(17px, 5vw, 22px); }
+        .plans-brand-copy p { font-size: 9px; }
+        .plans-brand-orbit { right: -112px; width: 200px; height: 200px; opacity: .8; }
+        .plans-body { min-height: 0; padding-top: 10px; }
       }
       @media (prefers-reduced-motion: reduce) {
-        .plans-store-panel:not([hidden]) { animation: none !important; }
+        .plans-brand-banner::before { display: none; }
       }
     </style>
     <script>
@@ -3698,19 +3674,17 @@
       </section>
 
       <div class="plans-backdrop" id="plansBackdrop" hidden></div>
-      <section class="plans-screen" id="plansScreen" role="dialog" aria-modal="true" aria-label="Loja do Kazer" aria-hidden="true" hidden>
+      <section class="plans-screen" id="plansScreen" role="dialog" aria-modal="true" aria-label="Planos do Kazer" aria-hidden="true" hidden>
         <header class="plans-head">
           <button class="icon-button" id="plansBack" type="button" aria-label="Fechar"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"></path></svg></button>
-          <div class="plans-head-copy"><span>LOJA KAZER</span><h2>Seu espaço, do seu jeito.</h2><small>Planos, modelos e recursos em um só lugar.</small></div>
+          <div class="plans-head-copy"><span>KAZER · PLANOS</span><h2>Escolha seu próximo nível</h2><small>Compare as opções e encontre seu espaço.</small></div>
           <span class="connectors-head-spacer" aria-hidden="true"></span>
         </header>
-        <nav class="plans-category-nav" id="plansCategoryNav" role="tablist" aria-label="Categorias da loja Kazer">
-          <button class="plans-category-tab active" id="plansTabPlans" type="button" role="tab" aria-selected="true" aria-controls="plansPanelPlans" tabindex="0" data-plans-category="plans"><span class="plans-tab-icon" aria-hidden="true">◈</span>Planos</button>
-          <button class="plans-category-tab" id="plansTabModels" type="button" role="tab" aria-selected="false" aria-controls="plansPanelModels" tabindex="-1" data-plans-category="models"><span class="plans-tab-icon" aria-hidden="true">✳</span>Modelos<span class="plans-tab-soon">Em breve</span></button>
-          <button class="plans-category-tab" id="plansTabExtras" type="button" role="tab" aria-selected="false" aria-controls="plansPanelExtras" tabindex="-1" data-plans-category="extras"><span class="plans-tab-icon" aria-hidden="true">＋</span>Mais recursos<span class="plans-tab-soon">Em breve</span></button>
-        </nav>
-        <div class="plans-store-content">
-          <section class="plans-store-panel" id="plansPanelPlans" role="tabpanel" aria-labelledby="plansTabPlans" data-plans-panel="plans">
+        <div class="plans-brand-banner">
+          <span class="plans-brand-mark"><img src="../download/assets/kazer-mark.svg?v=20260922" alt="Símbolo KAZER" /></span>
+          <div class="plans-brand-copy"><span>MAIS POSSIBILIDADES, NO SEU RITMO</span><h3>Mais espaço para suas ideias.</h3><p>Do essencial ao Pro: escolha como quer conversar, criar e explorar com o KAZER.</p></div>
+          <span class="plans-brand-orbit" aria-hidden="true"><i></i></span>
+        </div>
         <div class="plans-body">
           <article class="plan-card plan-card-current" aria-label="Plano Free atual">
             <div class="plan-card-topline"><span class="plan-card-label">FREE</span><span class="plan-current-pill">SEU PLANO ATUAL</span></div>
@@ -3744,25 +3718,6 @@
             <button type="button" id="plansProAction">Quero atualizar para o Pro <span aria-hidden="true">↗</span></button>
             <p class="plan-card-pro-note">Pagamento ainda não disponível. Estamos preparando o lançamento.</p>
           </article>
-        </div>
-            <div class="plans-next-categories"><span class="plans-next-icon" aria-hidden="true">✧</span><span><strong>A loja vai crescer junto com o KAZER.</strong><small>Modelos de IA, expansão de uso e novos recursos terão suas próprias áreas.</small></span><button type="button" data-open-plans-category="models">Explorar o que vem aí <span aria-hidden="true">→</span></button></div>
-          </section>
-          <section class="plans-store-panel plans-coming-panel" id="plansPanelModels" role="tabpanel" aria-labelledby="plansTabModels" data-plans-panel="models" hidden>
-            <div class="plans-coming-heading"><span class="plans-coming-eyebrow">CATÁLOGO EM PREPARAÇÃO</span><h3>Modelos para diferentes jeitos de pensar.</h3><p>Estamos preparando uma área onde você poderá conhecer e escolher modelos para suas tarefas. Nenhum modelo está disponível para compra por enquanto.</p></div>
-            <div class="plans-product-grid">
-              <article class="plans-product-card"><span class="plans-product-symbol" aria-hidden="true">✳</span><span class="plans-product-status">EM BREVE</span><h4>Modelos de IA</h4><p>Veja as opções e compare o que cada modelo faz melhor.</p></article>
-              <article class="plans-product-card"><span class="plans-product-symbol" aria-hidden="true">◌</span><span class="plans-product-status">EM BREVE</span><h4>Modelos especialistas</h4><p>Uma seleção organizada por tipo de tarefa e necessidade.</p></article>
-              <article class="plans-product-card"><span class="plans-product-symbol" aria-hidden="true">↗</span><span class="plans-product-status">EM BREVE</span><h4>Uso por modelo</h4><p>Informações claras sobre disponibilidade e consumo antes de escolher.</p></article>
-            </div>
-          </section>
-          <section class="plans-store-panel plans-coming-panel" id="plansPanelExtras" role="tabpanel" aria-labelledby="plansTabExtras" data-plans-panel="extras" hidden>
-            <div class="plans-coming-heading"><span class="plans-coming-eyebrow">RECURSOS EM PREPARAÇÃO</span><h3>Adicione capacidades quando fizer sentido.</h3><p>Novos recursos serão apresentados separadamente, com preço e condições claros antes de qualquer compra.</p></div>
-            <div class="plans-product-grid">
-              <article class="plans-product-card"><span class="plans-product-symbol" aria-hidden="true">◉</span><span class="plans-product-status">EM BREVE</span><h4>Expansão de uso</h4><p>Mais flexibilidade para acompanhar seu ritmo de trabalho.</p></article>
-              <article class="plans-product-card"><span class="plans-product-symbol" aria-hidden="true">⌘</span><span class="plans-product-status">EM BREVE</span><h4>Conectores</h4><p>Opções ampliadas para conectar suas ferramentas ao KAZER.</p></article>
-              <article class="plans-product-card"><span class="plans-product-symbol" aria-hidden="true">◎</span><span class="plans-product-status">EM BREVE</span><h4>Memória e aprendizagem</h4><p>Recursos adicionais para aprofundar o contexto do seu espaço.</p></article>
-            </div>
-          </section>
         </div>
       </section>
 
@@ -5700,35 +5655,6 @@
         settingsMobileUpgrade?.addEventListener("click", openPlansScreen);
         plansBack?.addEventListener("click", closePlansScreen);
         plansBackdrop?.addEventListener("click", closePlansScreen);
-        const plansCategoryNav = document.getElementById("plansCategoryNav");
-        const setPlansCategory = (category) => {
-          const tabs = [...document.querySelectorAll("[data-plans-category]")];
-          const panels = [...document.querySelectorAll("[data-plans-panel]")];
-          const selected = tabs.some((tab) => tab.dataset.plansCategory === category) ? category : "plans";
-          tabs.forEach((tab) => {
-            const active = tab.dataset.plansCategory === selected;
-            tab.classList.toggle("active", active);
-            tab.setAttribute("aria-selected", String(active));
-            tab.tabIndex = active ? 0 : -1;
-          });
-          panels.forEach((panel) => { panel.hidden = panel.dataset.plansPanel !== selected; });
-        };
-        plansCategoryNav?.addEventListener("click", (event) => {
-          const tab = event.target.closest("[data-plans-category]");
-          if (tab) setPlansCategory(tab.dataset.plansCategory);
-        });
-        plansCategoryNav?.addEventListener("keydown", (event) => {
-          if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
-          const tabs = [...plansCategoryNav.querySelectorAll("[data-plans-category]")];
-          const current = Math.max(0, tabs.findIndex((tab) => tab.getAttribute("aria-selected") === "true"));
-          const next = event.key === "Home" ? 0 : event.key === "End" ? tabs.length - 1 : (current + (event.key === "ArrowRight" ? 1 : -1) + tabs.length) % tabs.length;
-          event.preventDefault();
-          tabs[next]?.focus();
-          setPlansCategory(tabs[next]?.dataset.plansCategory || "plans");
-        });
-        document.querySelectorAll("[data-open-plans-category]").forEach((button) => {
-          button.addEventListener("click", () => setPlansCategory(button.dataset.openPlansCategory));
-        });
         plansProAction?.addEventListener("click", () => showToast("Kazer Pro: pagamentos em desenvolvimento"));
         proAction.addEventListener("click", openPro);
         creditProButton?.addEventListener("click", openPro);
