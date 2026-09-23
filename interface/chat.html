@@ -3856,9 +3856,15 @@
         .photo-viewer, .photo-viewer-backdrop { transition-duration: .01ms !important; }
       }
 
-      /* Mensagens longas do usuário */
+      /* Mensagens e respostas com tipografia mais confortável */
+      .message-bubble { font-size: clamp(16px, 3.8vw, 19px); line-height: 1.68; letter-spacing: .006em; word-spacing: .01em; }
+      .assistant-text { font-size: clamp(16px, 3.9vw, 19px); line-height: 1.76; letter-spacing: .008em; word-spacing: .018em; }
+      .assistant-content { gap: 16px; }
+      .assistant-content p { line-height: 1.78; }
+      .assistant-content ul, .assistant-content ol { padding-left: 1.35em; }
+      .assistant-content li + li { margin-top: 9px; }
       .message-bubble.is-collapsible { position: relative; }
-      .message-bubble.is-collapsed { max-height: calc(1.52em * 5 + 24px); overflow: hidden; }
+      .message-bubble.is-collapsed { max-height: calc(1.68em * 5 + 24px); overflow: hidden; }
       .message-bubble.is-collapsed::after { position: absolute; right: 0; bottom: 0; left: 0; height: 2.25em; background: linear-gradient(to bottom, transparent, var(--card-2)); content: ""; pointer-events: none; }
       .message-bubble.is-expanded { max-height: none; overflow: visible; }
       .message-expand-toggle { justify-self: end; display: inline-flex; align-items: center; gap: 6px; width: max-content; margin: -3px 2px 0; padding: 3px 2px; border: 0; background: transparent; color: var(--text-dim); font: inherit; font-size: 12px; font-weight: 570; line-height: 1.2; cursor: pointer; transition: color 160ms var(--ease); }
@@ -3867,30 +3873,40 @@
       .message-expand-chevron { display: inline-block; font-size: 15px; line-height: 1; transform: translateY(-1px); transition: transform 180ms var(--ease); }
       .message-expand-toggle[aria-expanded="true"] .message-expand-chevron { transform: rotate(180deg); }
 
-      /* Identidade KAZER no estado de pensamento: núcleo + órbitas, sem estrela genérica */
+      /* Identidade KAZER no estado de pensamento: átomos em órbita e aparição do símbolo oficial */
       .assistant-marker img.assistant-mark-image { display: block; width: 100%; height: 100%; object-fit: contain; filter: none; }
-      .thinking-row { gap: 11px; min-height: 36px; }
-      .thinking-symbol { position: relative; display: inline-grid; place-items: center; width: 36px; height: 36px; flex: 0 0 36px; margin: 0; color: var(--text-soft); }
-      .thinking-orbit { position: absolute; inset: 2px 3px; border: 1px solid rgba(197,58,63,.27); border-top-color: #c53a3f; border-right-color: rgba(231,188,105,.75); border-radius: 50%; transform: rotate(-28deg) scaleX(.76); animation: kazer-orbit-forward 1.8s linear infinite; }
-      .thinking-orbit::after { position: absolute; top: 3px; left: 50%; width: 4px; height: 4px; border-radius: 50%; background: #e7bc69; box-shadow: 0 0 7px rgba(231,188,105,.38); content: ""; transform: translate(-50%,-50%); }
-      .thinking-orbit-secondary { position: absolute; inset: 7px 0; border: 1px solid rgba(197,58,63,.22); border-left-color: rgba(231,188,105,.75); border-right-color: transparent; border-radius: 50%; opacity: .86; transform: rotate(38deg) scaleY(.72); animation: kazer-orbit-reverse 2.35s linear infinite; }
-      .thinking-orbit-secondary::after { position: absolute; right: 3px; top: 50%; width: 3px; height: 3px; border-radius: 50%; background: #c53a3f; content: ""; transform: translateY(-50%); }
-      .thinking-mark { position: relative; z-index: 1; display: block; width: 15px; height: 15px; object-fit: contain; }
-      .thinking-label { display: inline-flex; align-items: center; gap: 4px; min-width: 0; color: var(--text-soft); background: none; font-size: 13px; font-weight: 560; letter-spacing: .012em; animation: none; }
+      .message-expand-toggle { font-size: 13px; }
+      .thinking-row { gap: 13px; min-height: 54px; }
+      .thinking-symbol { position: relative; display: inline-grid; place-items: center; width: 54px; height: 54px; flex: 0 0 54px; margin: 0; color: var(--text-soft); }
+      .thinking-orbit { position: absolute; top: 50%; left: 50%; width: 48px; height: 20px; margin: -10px 0 0 -24px; border: 1px solid rgba(197,58,63,.3); border-radius: 50%; }
+      .thinking-orbit::after { position: absolute; top: 1px; left: 50%; width: 5px; height: 5px; border-radius: 50%; background: #e7bc69; box-shadow: 0 0 8px rgba(231,188,105,.42); content: ""; transform: translate(-50%,-50%); }
+      .thinking-orbit-a { border-top-color: rgba(197,58,63,.96); border-bottom-color: rgba(197,58,63,.18); transform: rotate(0deg); animation: kazer-atom-spin-a 3.15s linear infinite, kazer-atom-phase 4s ease-in-out infinite; }
+      .thinking-orbit-b { border-top-color: rgba(231,188,105,.88); border-bottom-color: rgba(231,188,105,.18); transform: rotate(60deg); animation: kazer-atom-spin-b 4.05s linear infinite reverse, kazer-atom-phase 4s ease-in-out infinite; }
+      .thinking-orbit-b::after { background: #c53a3f; box-shadow: 0 0 8px rgba(197,58,63,.42); }
+      .thinking-orbit-c { border-top-color: rgba(255,255,255,.68); border-right-color: rgba(197,58,63,.7); transform: rotate(120deg); animation: kazer-atom-spin-c 3.7s linear infinite, kazer-atom-phase 4s ease-in-out infinite; }
+      .thinking-core { position: absolute; z-index: 1; width: 5px; height: 5px; border-radius: 50%; background: #c53a3f; box-shadow: 0 0 10px rgba(197,58,63,.58); animation: kazer-core-breathe 1.5s ease-in-out infinite; }
+      .thinking-mark { position: absolute; z-index: 2; display: block; width: 21px; height: 21px; object-fit: contain; opacity: 0; animation: kazer-mark-flash 4s cubic-bezier(.22,1,.36,1) infinite; }
+      .thinking-label { display: inline-flex; align-items: center; gap: 4px; min-width: 0; color: var(--text-soft); background: none; font-size: 14.5px; font-weight: 570; letter-spacing: .014em; animation: none; }
       .thinking-dots { display: inline-flex; align-items: center; gap: 3px; margin-left: 1px; }
-      .thinking-dots span { display: block; width: 3px; height: 3px; border-radius: 50%; background: #e7bc69; opacity: .22; animation: kazer-thinking-dot 1.15s ease-in-out infinite; }
+      .thinking-dots span { display: block; width: 3.5px; height: 3.5px; border-radius: 50%; background: #e7bc69; opacity: .22; animation: kazer-thinking-dot 1.15s ease-in-out infinite; }
       .thinking-dots span:nth-child(2) { animation-delay: .16s; }
       .thinking-dots span:nth-child(3) { animation-delay: .32s; }
-      @keyframes kazer-orbit-forward { to { transform: rotate(332deg) scaleX(.76); } }
-      @keyframes kazer-orbit-reverse { to { transform: rotate(-322deg) scaleY(.72); } }
+      @keyframes kazer-atom-spin-a { to { transform: rotate(360deg); } }
+      @keyframes kazer-atom-spin-b { to { transform: rotate(420deg); } }
+      @keyframes kazer-atom-spin-c { to { transform: rotate(480deg); } }
+      @keyframes kazer-atom-phase { 0%, 16% { opacity: .9; } 23% { opacity: .68; } 29%, 41% { opacity: .06; } 49% { opacity: .74; } 100% { opacity: .9; } }
+      @keyframes kazer-mark-flash { 0%, 23% { opacity: 0; transform: scale(.72); } 29%, 41% { opacity: 1; transform: scale(1); } 49%, 100% { opacity: 0; transform: scale(.82); } }
+      @keyframes kazer-core-breathe { 0%, 100% { opacity: .58; transform: scale(.82); } 50% { opacity: 1; transform: scale(1.28); } }
       @keyframes kazer-thinking-dot { 0%, 72%, 100% { opacity: .22; transform: translateY(0); } 34% { opacity: .95; transform: translateY(-2px); } }
       @media (max-width: 520px) {
-        .thinking-symbol { width: 34px; height: 34px; flex-basis: 34px; }
-        .thinking-label { font-size: 12.5px; }
+        .thinking-symbol { width: 50px; height: 50px; flex-basis: 50px; }
+        .thinking-label { font-size: 14px; }
       }
       @media (prefers-reduced-motion: reduce) {
-        .thinking-orbit, .thinking-orbit-secondary, .thinking-dots span { animation: none !important; }
-        .thinking-dots span { opacity: .72; }
+        .thinking-orbit, .thinking-core, .thinking-mark, .thinking-dots span { animation: none !important; }
+        .thinking-orbit { opacity: .34 !important; }
+        .thinking-mark { opacity: 1 !important; transform: none !important; }
+        .thinking-core, .thinking-dots span { opacity: .72; }
       }
     </style>
     <script>
@@ -6062,16 +6078,20 @@
           const symbol = document.createElement("span");
           symbol.className = "thinking-symbol";
           symbol.setAttribute("aria-hidden", "true");
-          const outerOrbit = document.createElement("span");
-          outerOrbit.className = "thinking-orbit";
-          const innerOrbit = document.createElement("span");
-          innerOrbit.className = "thinking-orbit-secondary";
+          const orbitOne = document.createElement("span");
+          orbitOne.className = "thinking-orbit thinking-orbit-a";
+          const orbitTwo = document.createElement("span");
+          orbitTwo.className = "thinking-orbit thinking-orbit-b";
+          const orbitThree = document.createElement("span");
+          orbitThree.className = "thinking-orbit thinking-orbit-c";
+          const core = document.createElement("span");
+          core.className = "thinking-core";
           const mark = document.createElement("img");
           mark.className = "thinking-mark";
           mark.src = assistantMarkAsset;
           mark.alt = "";
           mark.decoding = "async";
-          symbol.append(outerOrbit, innerOrbit, mark);
+          symbol.append(orbitOne, orbitTwo, orbitThree, core, mark);
           const label = document.createElement("span");
           label.className = "thinking-label";
           const copy = document.createElement("span");
