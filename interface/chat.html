@@ -3265,6 +3265,68 @@
       .direct-composer { display: flex; gap: 8px; padding: 10px 14px max(12px, env(safe-area-inset-bottom)); border-top: 1px solid var(--line-soft); }
       .direct-composer input { flex: 1; min-width: 0; min-height: 42px; padding: 0 13px; border: 1px solid var(--line); border-radius: 14px; outline: 0; background: var(--card); color: var(--text); }
       .direct-composer button { width: 42px; border-radius: 13px; background: var(--text); color: var(--accent-ink); cursor: pointer; }
+
+
+      /* Settings refresh — KAZER / KLYPZA */
+      :root { --settings-signal: #e54855; --settings-signal-soft: rgba(229,72,85,.11); --purple: #e54855; }
+      :root[data-theme="light"] { --settings-signal: #c93745; --settings-signal-soft: rgba(201,55,69,.10); --purple: #c93745; }
+      section.settings-popover { width: min(1000px, calc(100vw - 48px)); height: min(740px, calc(100vh - 48px)); border-color: rgba(229,72,85,.20); border-radius: 26px; background: linear-gradient(145deg, rgba(21,21,27,.98), rgba(11,11,15,.98)); box-shadow: 0 36px 110px rgba(0,0,0,.74), 0 0 0 1px rgba(229,72,85,.045), 0 0 70px rgba(229,72,85,.055); }
+      .settings-backdrop.visible { background: rgba(0,0,0,.68); backdrop-filter: blur(10px); }
+      .settings-nav { padding: 22px 14px 18px; background: linear-gradient(180deg, rgba(229,72,85,.065), rgba(255,255,255,.012) 38%, rgba(0,0,0,.12)); border-right-color: rgba(255,255,255,.07); }
+      .settings-mobile-title { letter-spacing: -.035em; }
+      .settings-search { border-radius: 999px; background: rgba(255,255,255,.035); border-color: rgba(255,255,255,.09); }
+      .settings-search:focus-within { border-color: rgba(229,72,85,.58); box-shadow: 0 0 0 4px rgba(229,72,85,.10); }
+      .settings-nav-list { gap: 5px; }
+      .settings-nav-item { min-height: 44px; border-radius: 13px; }
+      .settings-nav-item:hover, .settings-nav-item.active { border-color: rgba(229,72,85,.22); background: rgba(229,72,85,.10); color: var(--text); box-shadow: inset 2px 0 0 var(--settings-signal); }
+      .settings-nav-item.active .settings-nav-icon { color: var(--settings-signal); }
+      .settings-panel { background: radial-gradient(480px 260px at 100% 0%, rgba(229,72,85,.075), transparent 70%), var(--card); }
+      .settings-panel-head { padding: 30px 36px 20px; border-bottom-color: rgba(229,72,85,.14); }
+      .settings-eyebrow { color: var(--settings-signal); }
+      .settings-panel-head h2 { letter-spacing: -.055em; }
+      .settings-panel-scroll { padding: 26px 36px 42px; }
+      .settings-section:not([hidden]) { animation: settings-section-in .4s var(--ease) both; }
+      .settings-group { border-color: rgba(255,255,255,.075); border-radius: 17px; background: rgba(255,255,255,.018); box-shadow: 0 12px 34px rgba(0,0,0,.10); }
+      .settings-group-title { color: var(--settings-signal); }
+      .settings-control, .settings-action-row { min-height: 68px; transition: background 180ms var(--ease), padding 180ms var(--ease); }
+      .settings-control:hover, .settings-action-row:hover { background: rgba(229,72,85,.055); }
+      .settings-control:hover { padding-left: 20px; }
+      .settings-action-row:hover { padding-left: 20px; }
+      .settings-select-trigger { border-radius: 999px; border-color: rgba(229,72,85,.28); background: rgba(229,72,85,.06); }
+      .settings-select-trigger:hover, .settings-custom-select.open .settings-select-trigger { border-color: rgba(229,72,85,.62); background: rgba(229,72,85,.12); }
+      .settings-account-avatar, .settings-mobile-account-avatar { background: linear-gradient(145deg, #e54855, #8f2535); box-shadow: 0 0 22px rgba(229,72,85,.20); }
+      .settings-session-badge { color: #e7b47c; border-color: rgba(231,180,124,.28); }
+      .settings-mobile-account-card { position: relative; overflow: hidden; border-color: rgba(229,72,85,.20); background: linear-gradient(145deg, rgba(229,72,85,.12), rgba(25,25,32,.88) 62%); }
+      .settings-mobile-account-card::after { position: absolute; top: -100px; right: -80px; width: 230px; height: 230px; border: 1px solid rgba(229,72,85,.18); border-radius: 50%; box-shadow: 0 0 0 22px rgba(229,72,85,.025); content: ""; pointer-events: none; }
+      .settings-mobile-account-top, .settings-mobile-account-credit { position: relative; z-index: 1; }
+      .settings-mobile-credit-balance { color: #f5f1ec; }
+      .settings-mobile-account-card.is-changing .settings-mobile-credit-balance { color: var(--settings-signal); }
+      .settings-logout { color: #ff8a91; }
+      @keyframes settings-section-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+      @media (max-width: 680px) {
+        section.settings-popover { background: #08090b; }
+        .settings-nav { padding: max(14px, env(safe-area-inset-top)) 16px max(16px, env(safe-area-inset-bottom)); }
+        .settings-mobile-head { min-height: 52px; padding-bottom: 12px; }
+        .settings-mobile-title { font-size: 19px; }
+        .settings-mobile-account-card { margin: 6px 0 16px; padding: 19px; border-radius: 22px; }
+        .settings-search { min-height: 42px; margin-bottom: 12px; }
+        .settings-nav-list { gap: 7px; }
+        .settings-nav-item { min-height: 62px; border-radius: 18px; padding: 0 17px; background: rgba(255,255,255,.035); font-size: 14px; }
+        .settings-nav-item:hover, .settings-nav-item.active { padding-left: 17px; background: rgba(229,72,85,.095); }
+        .settings-nav-item::after { margin-left: auto; color: var(--settings-signal); content: "›"; font-size: 23px; line-height: 1; opacity: .72; }
+        .settings-panel-head { padding: max(18px, env(safe-area-inset-top)) 20px 17px; }
+        .settings-panel-scroll { padding: 20px 16px max(32px, env(safe-area-inset-bottom)); }
+        .settings-section-intro { margin-bottom: 17px; font-size: 12px; }
+        .settings-group { border-radius: 19px; }
+        .settings-control, .settings-action-row { min-height: 72px; padding: 14px 16px; }
+        .settings-control:hover, .settings-action-row:hover { padding-left: 16px; }
+        .settings-control strong, .settings-action-row strong { font-size: 14px; }
+        .settings-control small, .settings-action-row small { font-size: 11px; }
+        .settings-custom-select { width: min(47%, 164px) !important; }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .settings-section:not([hidden]) { animation: none !important; }
+      }
     </style>
     <script>
       window.setTimeout(() => {
@@ -3335,7 +3397,7 @@
           <button class="pro-action" id="proAction" type="button" aria-label="Obter Kazer Pro"><span class="pro-badge">PRO</span><span class="pro-copy"><strong>Kazer Pro</strong><small>Obter mais do KAZER</small></span><svg class="icon pro-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"></path></svg></button>
 
           <div class="profile-more" id="profileMore"><button class="profile-more-toggle" id="profileMoreToggle" type="button" aria-expanded="false"><span>Mais opções</span><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg></button><div class="profile-more-options"><div class="profile-integrations-grid"><button class="profile-integration-action" id="githubProfileAction" type="button"><span class="profile-integration-icon github" aria-hidden="true"><svg viewBox="0 0 24 24" role="img"><path d="M12 2.5a9.5 9.5 0 0 0-3 18.51c.48.09.65-.21.65-.46v-1.7c-2.65.58-3.2-1.12-3.2-1.12-.44-1.1-1.06-1.4-1.06-1.4-.87-.6.07-.59.07-.59.96.07 1.47.99 1.47.99.85 1.46 2.22 1.04 2.76.8.09-.62.33-1.04.6-1.28-2.12-.24-4.35-1.06-4.35-4.72 0-1.04.37-1.9.98-2.57-.1-.24-.43-1.22.1-2.54 0 0 .8-.26 2.62.98A9.1 9.1 0 0 1 12 7.08a9 9 0 0 1 2.38.32c1.82-1.24 2.62-.98 2.62-.98.53 1.32.2 2.3.1 2.54.61.67.98 1.53.98 2.57 0 3.67-2.23 4.48-4.36 4.72.34.3.64.88.64 1.77v2.62c0 .25.17.55.65.46A9.5 9.5 0 0 0 12 2.5Z"></path></svg></span><strong>GitHub</strong><small id="githubProfileStatus">Autorizar acesso aos repositórios</small></button><button class="profile-integration-action" id="mcpProfileAction" type="button"><span class="profile-integration-icon" aria-hidden="true">⌁</span><strong>Conectores</strong><small id="mcpProfileStatus">Conectores prontos</small></button></div><button class="profile-more-option" id="webKazerAction" type="button"><span>WebKazer<br><small>Pesquisa na web</small></span><span aria-hidden="true">↗</span></button></div></div>
-          <button class="menu-action" id="settingsAction" type="button"><span>Settings</span><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6 7 7M17 17l1.4 1.4M18.4 5.6 17 7M7 17l-1.4 1.4"></path><circle cx="12" cy="12" r="3.5"></circle></svg></button>
+          <button class="menu-action" id="settingsAction" type="button"><span>Configurações</span><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6 7 7M17 17l1.4 1.4M18.4 5.6 17 7M7 17l-1.4 1.4"></path><circle cx="12" cy="12" r="3.5"></circle></svg></button>
         </div>
       </div>
 
@@ -3354,7 +3416,6 @@
           <label class="settings-search"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-4-4"></path></svg><input id="settingsSearch" type="search" placeholder="Pesquisar configuração" autocomplete="off" /></label>
           <nav class="settings-nav-list" aria-label="Categorias de configurações">
             <button class="settings-nav-item active" type="button" data-settings-section="general"><span class="settings-nav-icon settings-nav-icon-text" aria-hidden="true">◌</span><span class="settings-nav-icon settings-nav-icon-svg" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6 7 7M17 17l1.4 1.4M18.4 5.6 17 7M7 17l-1.4 1.4"></path><circle cx="12" cy="12" r="3.5"></circle></svg></span><span>Geral</span></button>
-            <button class="settings-nav-item" type="button" data-settings-section="notifications"><span class="settings-nav-icon settings-nav-icon-text" aria-hidden="true">◔</span><span class="settings-nav-icon settings-nav-icon-svg" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"></path><path d="M10 21h4"></path></svg></span><span>Notificações</span></button>
             <button class="settings-nav-item" type="button" data-settings-section="data"><span class="settings-nav-icon settings-nav-icon-text" aria-hidden="true">▣</span><span class="settings-nav-icon settings-nav-icon-svg" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="10" rx="2"></rect><path d="M8 11V8a4 4 0 0 1 8 0v3"></path></svg></span><span>Dados e privacidade</span></button>
             <button class="settings-nav-item" type="button" data-settings-section="documents"><span class="settings-nav-icon settings-nav-icon-text" aria-hidden="true">▤</span><span class="settings-nav-icon settings-nav-icon-svg" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h9l3 3v15H6z"></path><path d="M14 3v4h4M9 12h6M9 16h6"></path></svg></span><span>Documentos</span></button>
             <button class="settings-nav-item" type="button" data-settings-section="account"><span class="settings-nav-icon settings-nav-icon-text" aria-hidden="true">◎</span><span class="settings-nav-icon settings-nav-icon-svg" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 20 6v5c0 4.8-3.2 8.5-8 10-4.8-1.5-8-5.2-8-10V6l8-3Z"></path><path d="m8.6 12 2.2 2.2 4.7-4.7"></path></svg></span><span>Conta e segurança</span></button>
@@ -3366,10 +3427,7 @@
             <section class="settings-section" data-settings-panel="general">
               <p class="settings-section-intro">Controle como o Kazer aparece e responde neste dispositivo.</p>
               <div class="settings-group"><div class="settings-group-title">Interface</div><div class="settings-control"><div><strong>Aparência</strong><small>Escolha o tema usado pelo Kazer.</small></div><div class="settings-custom-select" data-custom-select="appearance"><select class="settings-select-native" id="appearanceSelect" tabindex="-1" aria-hidden="true"><option value="dark">Escuro</option><option value="light">Claro</option><option value="system">Sistema</option></select><button class="settings-select-trigger" id="appearanceTrigger" type="button" aria-haspopup="listbox" aria-expanded="false"><span data-select-label>Escuro</span><svg class="settings-select-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg></button><div class="settings-select-menu" data-select-menu role="listbox" aria-label="Aparência"><button class="settings-select-option" type="button" data-select-value="dark" role="option" aria-selected="false"><span>Escuro</span><span class="settings-option-check" aria-hidden="true">✓</span></button><button class="settings-select-option" type="button" data-select-value="light" role="option" aria-selected="false"><span>Claro</span><span class="settings-option-check" aria-hidden="true">✓</span></button><button class="settings-select-option" type="button" data-select-value="system" role="option" aria-selected="false"><span>Sistema</span><span class="settings-option-check" aria-hidden="true">✓</span></button></div></div></div><div class="settings-control"><div><strong>Idioma</strong><small>Idioma dos controles e mensagens da interface.</small></div><div class="settings-custom-select" data-custom-select="language"><select class="settings-select-native" id="languageSelect" tabindex="-1" aria-hidden="true"><option value="pt-BR">Português (Brasil)</option><option value="en-US">English</option></select><button class="settings-select-trigger" id="languageTrigger" type="button" aria-haspopup="listbox" aria-expanded="false"><span data-select-label>Português (Brasil)</span><svg class="settings-select-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg></button><div class="settings-select-menu" data-select-menu role="listbox" aria-label="Idioma"><button class="settings-select-option" type="button" data-select-value="pt-BR" role="option" aria-selected="false"><span>Português (Brasil)</span><span class="settings-option-check" aria-hidden="true">✓</span></button><button class="settings-select-option" type="button" data-select-value="en-US" role="option" aria-selected="false"><span>English</span><span class="settings-option-check" aria-hidden="true">✓</span></button></div></div></div></div>
-            </section>
-            <section class="settings-section" data-settings-panel="notifications" hidden>
-              <p class="settings-section-intro">Escolha quais avisos locais o Kazer pode exibir neste dispositivo.</p>
-              <div class="settings-group"><div class="settings-group-title">Avisos</div><div class="settings-control"><div><strong>Avisos do Kazer</strong><small>Permite mensagens de confirmação e orientação dentro da interface.</small></div><button class="switch on" id="notificationsSwitch" type="button" aria-label="Alternar avisos" aria-pressed="true"></button></div><div class="settings-control"><div><strong>Mostrar instalação</strong><small>Exibe o aviso para instalar o Kazer quando disponível.</small></div><button class="switch on" id="installSwitch" type="button" aria-label="Alternar aviso de instalação" aria-pressed="true"></button></div></div>
+              <div class="settings-group settings-device-group"><div class="settings-group-title">Neste dispositivo</div><div class="settings-control"><div><strong>Avisos do Kazer</strong><small>Permite mensagens de confirmação e orientação dentro da interface.</small></div><button class="switch on" id="notificationsSwitch" type="button" aria-label="Alternar avisos" aria-pressed="true"></button></div><div class="settings-control"><div><strong>Mostrar instalação</strong><small>Exibe o aviso para instalar o Kazer quando disponível.</small></div><button class="switch on" id="installSwitch" type="button" aria-label="Alternar aviso de instalação" aria-pressed="true"></button></div></div>
             </section>
             <section class="settings-section" data-settings-panel="data" hidden>
               <p class="settings-section-intro">Gerencie as preferências salvas neste navegador.</p>
@@ -4142,7 +4200,7 @@
           profileMoreToggle?.setAttribute("aria-expanded", "false");
         };
 
-        const settingsLabels = { general: "Geral", notifications: "Notificações", data: "Dados e privacidade", documents: "Documentos", account: "Conta e segurança" };
+        const settingsLabels = { general: "Geral", data: "Dados e privacidade", documents: "Documentos", account: "Conta e segurança" };
         const isMobileSettingsViewport = () => window.matchMedia?.("(max-width: 680px)").matches ?? window.innerWidth <= 680;
 
         const setSwitch = (element, value) => {
@@ -5679,4 +5737,5 @@
     <script src="/interface/kazer-workspace.js"></script>
   </body>
 </html>
+
 
