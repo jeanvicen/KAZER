@@ -1,6 +1,6 @@
 # KAZER — Aviso de direitos autorais e propriedade intelectual
 
-**Versão:** 1.0 · **Data:** 31 de agosto de 2026  
+**Versão:** 1.0 · **Data:** 22 de setembro de 2026  
 **Titular declarado:** Jean V. / `@jeanvicen` · identidade pública `0neajx` · KLYPZA  
 **Canal:** klipzastudio@gmail.com
 

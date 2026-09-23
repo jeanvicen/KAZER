@@ -1,6 +1,6 @@
 # KAZER — Aviso de privacidade
 
-**Versão informativa:** 1.0 · **Última atualização:** 31 de agosto de 2026  
+**Versão informativa:** 1.0 · **Última atualização:** 22 de setembro de 2026  
 **Titular declarado:** Jean V. / `@jeanvicen` · identidade pública `0neajx` · KLYPZA  
 **Canal para solicitações:** klipzastudio@gmail.com
 
