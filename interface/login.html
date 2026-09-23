@@ -752,6 +752,96 @@
     @media (prefers-reduced-motion: reduce) {
       .return-screen *, .return-screen::before, .return-screen::after { animation: none !important; transition: none !important; }
     }
+
+
+    /* Transição de sucesso — o KAZER abre o espaço, sem efeito genérico */
+    .submit-btn.loading .btn-text { opacity: 0; }
+    .submit-btn.loading .spinner {
+      display: block;
+      width: 38px;
+      height: 2px;
+      margin: -1px 0 0 -19px;
+      border: 0;
+      border-radius: 999px;
+      background: linear-gradient(90deg, transparent, #e54855, #f28c6b, transparent);
+      animation: submit-scan .9s var(--ease) infinite;
+    }
+    @keyframes submit-scan { 0% { transform: scaleX(.28); opacity: .35; } 50% { transform: scaleX(1); opacity: 1; } 100% { transform: scaleX(.28); opacity: .35; } }
+
+    .access-transition {
+      position: fixed;
+      z-index: 10001;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      overflow: hidden;
+      background: #070709;
+      color: var(--text-primary);
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+      transition: opacity .5s var(--ease), visibility .5s;
+    }
+    .access-transition.active { opacity: 1; visibility: visible; pointer-events: auto; }
+    .access-transition::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      opacity: .3;
+      background-image: linear-gradient(rgba(255,255,255,.022) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.022) 1px, transparent 1px);
+      background-size: 48px 48px;
+      mask-image: linear-gradient(to bottom, black, transparent 84%);
+    }
+    .access-transition::after {
+      content: "";
+      position: absolute;
+      width: min(82vw, 720px);
+      aspect-ratio: 1;
+      border: 1px solid rgba(229,72,85,.12);
+      border-radius: 50%;
+      box-shadow: 0 0 0 34px rgba(229,72,85,.018), 0 0 110px rgba(229,72,85,.08);
+      transform: scale(.72);
+      opacity: 0;
+    }
+    .access-transition.active::after { animation: success-field-expand 1.05s var(--ease) both; }
+    .transition-stage { position: relative; z-index: 1; width: min(72vw, 330px); aspect-ratio: 1; display: grid; place-items: center; }
+    .transition-ring { position: absolute; border-radius: 50%; border: 1px solid rgba(229,72,85,.38); opacity: 0; }
+    .transition-ring.one { inset: 8%; }
+    .transition-ring.two { inset: 22%; border-color: rgba(245,240,235,.15); }
+    .access-transition.active .transition-ring.one { animation: success-ring-in 1.05s var(--ease) both, success-ring-rotate 2.4s 0.2s linear infinite; }
+    .access-transition.active .transition-ring.two { animation: success-ring-in .82s .08s var(--ease) both, success-ring-rotate 3.2s .28s linear infinite reverse; }
+    .transition-ring.one::after { content: ""; position: absolute; top: -2px; left: 50%; width: 5px; height: 5px; border-radius: 50%; background: #e54855; box-shadow: 0 0 20px rgba(229,72,85,.9); }
+    .transition-core { position: relative; z-index: 2; display: grid; place-items: center; width: 108px; height: 108px; border-radius: 28%; opacity: 0; transform: scale(.65); }
+    .transition-core::before { content: ""; position: absolute; inset: -18px; border: 1px solid rgba(229,72,85,.28); border-radius: 50%; box-shadow: 0 0 42px rgba(229,72,85,.14); }
+    .transition-core img { width: 100%; height: 100%; border-radius: 24%; object-fit: cover; box-shadow: 0 20px 70px rgba(0,0,0,.66), 0 0 0 1px rgba(229,72,85,.22); }
+    .access-transition.active .transition-core { animation: success-core-in .72s .18s var(--ease) both; }
+    .transition-beam { position: absolute; z-index: 3; top: 50%; left: -20%; width: 140%; height: 1px; transform: scaleX(0); transform-origin: center; background: linear-gradient(90deg, transparent, rgba(229,72,85,.0) 20%, #e54855 50%, rgba(242,140,107,.0) 80%, transparent); box-shadow: 0 0 18px rgba(229,72,85,.58); opacity: 0; }
+    .access-transition.active .transition-beam { animation: success-beam .64s .42s var(--ease) both; }
+    .transition-copy { position: absolute; z-index: 4; top: calc(50% + 190px); width: 100%; text-align: center; opacity: 0; transform: translateY(10px); }
+    .access-transition.active .transition-copy { animation: success-copy-in .55s .55s var(--ease) both; }
+    .transition-state { display: block; margin-bottom: 9px; color: rgba(229,72,85,.9); font-size: 10px; font-weight: 700; letter-spacing: .24em; text-transform: uppercase; }
+    .transition-title { display: block; color: var(--text-primary); font-size: clamp(20px, 4vw, 27px); font-weight: 600; letter-spacing: -.04em; }
+    .access-transition.signup .transition-ring.one { border-color: rgba(242,140,107,.48); }
+    .access-transition.signup .transition-core::before { border-color: rgba(242,140,107,.34); }
+    .access-transition.signup .transition-beam { background: linear-gradient(90deg, transparent, rgba(242,140,107,0) 20%, #f28c6b 50%, rgba(229,72,85,0) 80%, transparent); }
+    @keyframes success-field-expand { 0% { opacity: 0; transform: scale(.72); } 35% { opacity: 1; } 100% { opacity: 0; transform: scale(1.16); } }
+    @keyframes success-ring-in { 0% { opacity: 0; transform: scale(.55); } 65% { opacity: 1; } 100% { opacity: .85; transform: scale(1); } }
+    @keyframes success-ring-rotate { to { transform: rotate(360deg); } }
+    @keyframes success-core-in { 0% { opacity: 0; transform: scale(.65); } 70% { opacity: 1; transform: scale(1.06); } 100% { opacity: 1; transform: scale(1); } }
+    @keyframes success-beam { 0% { opacity: 0; transform: scaleX(0); } 20% { opacity: 1; } 100% { opacity: 0; transform: scaleX(1); } }
+    @keyframes success-copy-in { to { opacity: 1; transform: translateY(0); } }
+
+    @media (max-width: 760px) {
+      .transition-stage { width: min(76vw, 310px); }
+      .transition-core { width: 88px; height: 88px; }
+      .transition-copy { top: calc(50% + 164px); }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .submit-btn.loading .spinner { animation: none !important; opacity: 1; }
+      .access-transition *, .access-transition::before, .access-transition::after { animation: none !important; transition: none !important; }
+      .access-transition.active .transition-ring, .access-transition.active .transition-core, .access-transition.active .transition-copy { opacity: 1; transform: none; }
+    }
   </style>
 </head>
 <body>
@@ -774,6 +864,23 @@
       <p class="return-copy">Notamos que o KAZER já foi usado neste dispositivo. Quer continuar para o seu espaço?</p>
       <button class="return-primary" id="returnContinue" type="button">Continuar para meu espaço</button>
       <button class="return-secondary" id="returnOther" type="button">Criar um novo espaço</button>
+    </div>
+  </div>
+
+
+
+  <div class="access-transition" id="accessTransition" role="status" aria-live="polite" aria-hidden="true">
+    <div class="transition-stage">
+      <span class="transition-ring one"></span>
+      <span class="transition-ring two"></span>
+      <span class="transition-beam"></span>
+      <div class="transition-core">
+        <img src="../download/assets/kazer-mark.svg?v=20260922" alt="" aria-hidden="true" />
+      </div>
+      <div class="transition-copy">
+        <span class="transition-state" id="transitionState">ACESSO CONFIRMADO</span>
+        <strong class="transition-title" id="transitionTitle">Abrindo seu espaço...</strong>
+      </div>
     </div>
   </div>
 
@@ -891,6 +998,9 @@
       const returnScreen = document.getElementById('returnScreen');
       const returnContinue = document.getElementById('returnContinue');
       const returnOther = document.getElementById('returnOther');
+      const accessTransition = document.getElementById('accessTransition');
+      const transitionState = document.getElementById('transitionState');
+      const transitionTitle = document.getElementById('transitionTitle');
       const introKey = 'kazer-login-intro-seen-v1';
       let introTimer = null;
       const finishIntro = () => {
@@ -984,6 +1094,16 @@
         }
       }
 
+      function showAccessTransition(mode) {
+        if (!accessTransition) return;
+        const isSignup = mode === 'signup';
+        accessTransition.classList.toggle('signup', isSignup);
+        accessTransition.setAttribute('aria-hidden', 'false');
+        accessTransition.classList.add('active');
+        if (transitionState) transitionState.textContent = isSignup ? 'ESPAÇO CRIADO' : 'ACESSO CONFIRMADO';
+        if (transitionTitle) transitionTitle.textContent = isSignup ? 'Seu espaço está pronto.' : 'Abrindo seu espaço...';
+      }
+
       // 4. EVENT LISTENERS DE NAVEGAÇÃO
       openOverlayBtn?.addEventListener('click', openOverlay);
       document.addEventListener('keydown', (event) => {
@@ -1074,8 +1194,9 @@
           const { data, error } = await kazerDB.auth.signInWithPassword({ email, password });
           if (error) throw error;
 
-          document.querySelector('#loginBtn .btn-text').textContent = 'Sucesso!';
-          setTimeout(() => window.location.href = '/chat', 800);
+          document.querySelector('#loginBtn .btn-text').textContent = 'Acesso confirmado';
+          showAccessTransition('login');
+          setTimeout(() => window.location.href = '/chat', 1150);
 
         } catch (error) {
           let msg = 'Falha ao fazer login.';
@@ -1124,8 +1245,9 @@
             } catch (_) {}
           }
 
-          document.querySelector('#signupBtn .btn-text').textContent = 'Conta criada!';
-          setTimeout(() => window.location.href = '/chat', 1000);
+          document.querySelector('#signupBtn .btn-text').textContent = 'Espaço criado';
+          showAccessTransition('signup');
+          setTimeout(() => window.location.href = '/chat', 1250);
 
         } catch (error) {
           let msg = 'Não foi possível criar a conta.';
@@ -1147,6 +1269,7 @@
   </script>
 </body>
 </html>
+
 
 
 
