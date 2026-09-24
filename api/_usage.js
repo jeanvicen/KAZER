@@ -28,6 +28,7 @@ async function callUsageRpc(request, name, args = {}) {
     error.status = response.status;
     error.code = [
       "credits_limit_reached",
+      "usage_limit_reached",
       "attachment_limit_reached",
       "not_authenticated",
       "invalid_credit_amount",

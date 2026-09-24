@@ -160,7 +160,7 @@ module.exports = async function handler(request, response) {
   let usage;
   try {
     usage = await callUsageRpc(request, "consume_kazer_usage", {
-      p_credit_amount: creditCost,
+      p_message_count: 1,
       p_attachment_count: 0,
     });
   } catch (initialError) {
@@ -178,10 +178,10 @@ module.exports = async function handler(request, response) {
     }
     if (!error) {
       // Compatibilidade temporária com ambientes que ainda não aplicaram a migração 014.
-    } else if (error.code === "credits_limit_reached") {
+    } else if (error.code === "usage_limit_reached") {
       return sendJson(response, 402, {
-        error: "Você está aguardando a próxima recarga diária de tokens.",
-        usage: { credits_limit_reached: true, waiting_for_daily_tokens: true },
+        error: "Seu uso mensal chegou a 100%. A pesquisa será liberada no primeiro dia do próximo mês.",
+        usage: { usage_limit_reached: true, credits_limit_reached: true },
       });
     } else {
       console.error("WebKazer usage reservation failed", error?.message || "unknown");
@@ -229,4 +229,3 @@ module.exports = async function handler(request, response) {
 
   return sendJson(response, 200, { query, mode, summary: redactSensitiveText(parseGeminiText(data)).slice(0, 4000) || "As fontes foram encontradas. Abra uma delas para consultar os detalhes.", sources, searchQueries: [query], usage, credit_cost: creditCost });
 };
-

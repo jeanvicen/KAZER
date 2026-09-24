@@ -4698,11 +4698,12 @@
           if (settingsMobileUpgrade) settingsMobileUpgrade.hidden = isProPlan;
           if (proAction) proAction.hidden = isProPlan;
           updateUsageDisplay(next, animate);
-          if (creditResetValue) creditResetValue.textContent = formatResetTime(next.next_credit_reset_at);
-          if (settingsMobileCreditNext) settingsMobileCreditNext.textContent = `Próxima atualização: ${formatResetTime(next.next_credit_reset_at)}`;
-          if (attachmentResetValue) attachmentResetValue.textContent = formatResetTime(next.attachment_reset_at);
-          if (attachmentLimitBanner) attachmentLimitBanner.hidden = next.attachment_limit_reached !== true;
-          if (creditLimitModal) creditLimitModal.hidden = next.credits_limit_reached !== true;
+          const nextReset = next.next_reset_at || next.monthly_reset_at || next.next_credit_reset_at;
+          if (creditResetValue) creditResetValue.textContent = formatResetTime(nextReset);
+          if (settingsMobileCreditNext) settingsMobileCreditNext.textContent = `Próxima atualização: ${formatResetTime(nextReset)}`;
+          if (attachmentResetValue) attachmentResetValue.textContent = formatResetTime(nextReset);
+          if (attachmentLimitBanner) attachmentLimitBanner.hidden = next.usage_limit_reached !== true && next.attachment_limit_reached !== true;
+          if (creditLimitModal) creditLimitModal.hidden = next.usage_limit_reached !== true && next.credits_limit_reached !== true;
         };
 
         const loadUsage = async (animate = true) => {
@@ -6956,7 +6957,6 @@
     <script src="/interface/kazer-workspace.js"></script>
   </body>
 </html>
-
 
 
 

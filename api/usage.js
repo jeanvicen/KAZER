@@ -45,4 +45,3 @@ module.exports = async function handler(request, response) {
     return sendJson(response, 502, { error: "Não foi possível consultar o uso da conta." });
   }
 };
-

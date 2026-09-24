@@ -458,7 +458,7 @@ module.exports = async function handler(request, response) {
   let usage;
   try {
     usage = await callUsageRpc(request, "consume_kazer_usage", {
-      p_credit_amount: creditCost,
+      p_message_count: 1,
       p_attachment_count: prepared.fileNames.length,
     });
   } catch (initialError) {
@@ -475,16 +475,11 @@ module.exports = async function handler(request, response) {
       }
     }
     if (!error) {
-      // Compatibilidade temporária com projetos que ainda não aplicaram a migração 010.
-    } else if (error.code === "credits_limit_reached") {
+      // Compatibilidade temporária com ambientes que ainda não aplicaram a migração mensal.
+    } else if (error.code === "usage_limit_reached") {
       return sendJson(response, 402, {
-        error: "Você está aguardando a próxima recarga diária de tokens.",
-        usage: { credits_limit_reached: true, waiting_for_daily_tokens: true },
-      });
-    } else if (error.code === "attachment_limit_reached") {
-      return sendJson(response, 409, {
-        error: "Você atingiu o limite de anexos do plano Free.",
-        usage: { attachment_limit_reached: true },
+        error: "Seu uso mensal chegou a 100%. As mensagens e os anexos serão liberados no primeiro dia do próximo mês.",
+        usage: { usage_limit_reached: true, credits_limit_reached: true },
       });
     } else {
       console.error("Usage reservation failed", error?.message || "unknown");
