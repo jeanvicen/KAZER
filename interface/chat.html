@@ -4006,6 +4006,22 @@
         .app.desktop-sidebar-enabled .attachment-sheet { transition: none !important; }
         .app.desktop-sidebar-enabled .attachment-sheet.visible { transform: translate(-50%, 0); }
       }
+      @media (min-width: 1080px) {
+        .app.desktop-sidebar-enabled #settingsMobileAccountCard { display: flex; flex-direction: column; gap: 12px; margin: 13px 0 16px; padding: 13px 12px; border: 1px solid color-mix(in srgb, var(--settings-signal) 24%, var(--line-soft)); border-radius: 16px; background: linear-gradient(145deg, color-mix(in srgb, var(--settings-signal) 11%, var(--card)), color-mix(in srgb, var(--page-soft) 86%, var(--card)) 72%); box-shadow: 0 12px 28px rgba(0,0,0,.14); }
+        .app.desktop-sidebar-enabled #settingsMobileAccountCard::after { top: -94px; right: -91px; width: 185px; height: 185px; opacity: .7; }
+        .app.desktop-sidebar-enabled .settings-mobile-account-top { display: grid; grid-template-columns: 36px minmax(0,1fr); align-items: center; gap: 9px 10px; }
+        .app.desktop-sidebar-enabled .settings-mobile-account-avatar { width: 36px; height: 36px; font-size: 13px; }
+        .app.desktop-sidebar-enabled .settings-mobile-account-identity strong { font-size: 12px; }
+        .app.desktop-sidebar-enabled .settings-mobile-account-identity small { margin-top: 2px; font-size: 9px; }
+        .app.desktop-sidebar-enabled .settings-mobile-account-plan { grid-column: 1 / -1; display: flex; align-items: center; justify-content: space-between; gap: 8px; padding-top: 8px; border-top: 1px solid var(--line-soft); }
+        .app.desktop-sidebar-enabled .settings-mobile-account-plan-label { font-size: 8px; }
+        .app.desktop-sidebar-enabled .settings-mobile-account-plan-value { padding: 4px 8px; border: 1px solid rgba(255,255,255,.08); border-radius: 999px; background: color-mix(in srgb, var(--card) 72%, transparent); font-size: 9px; }
+        .app.desktop-sidebar-enabled .settings-mobile-account-credit { display: grid; gap: 8px; margin: 0; padding: 10px 0 0; border: 0; border-top: 1px solid var(--line-soft); background: transparent; }
+        .app.desktop-sidebar-enabled .settings-usage-heading .settings-mobile-credit-label { font-size: 8px; letter-spacing: .14em; }
+        .app.desktop-sidebar-enabled .settings-usage-heading .settings-mobile-credit-balance { font-size: 23px; }
+        .app.desktop-sidebar-enabled .settings-mobile-credit-next { max-width: none; font-size: 9px; line-height: 1.4; text-align: left; }
+        .app.desktop-sidebar-enabled .settings-mobile-upgrade { width: 100%; min-height: 36px; margin-top: 2px; padding: 0 10px; border-radius: 11px; font-size: 10px; }
+      }
     </style>
     <script>
       window.setTimeout(() => {
@@ -6922,6 +6938,7 @@
     <script src="/interface/kazer-workspace.js"></script>
   </body>
 </html>
+
 
 
 
