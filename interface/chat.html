@@ -3908,6 +3908,77 @@
         .thinking-mark { opacity: 1 !important; transform: none !important; }
         .thinking-core, .thinking-dots span { opacity: .72; }
       }
+      .desktop-sidebar-toggle { display: none; }
+      @media (min-width: 1080px) {
+        .app.desktop-sidebar-enabled { --desktop-sidebar-width: 300px; }
+        .app.desktop-sidebar-enabled.desktop-sidebar-collapsed { --desktop-sidebar-width: 76px; }
+        .app.desktop-sidebar-enabled #historyScreen { position: fixed; z-index: 16; inset: 0 auto 0 0; display: flex; flex-direction: column; width: var(--desktop-sidebar-width); height: 100dvh; margin: 0; overflow: hidden; border-right: 1px solid rgba(255,255,255,.075); background: linear-gradient(180deg, color-mix(in srgb, var(--page-soft) 98%, transparent), var(--page) 78%); box-shadow: 12px 0 38px rgba(0,0,0,.12); transition: width 220ms var(--ease); }
+        .app.desktop-sidebar-enabled #historyScreen::before { opacity: .28; background-size: 58px 58px; mask-image: linear-gradient(to bottom, rgba(0,0,0,.4), transparent 72%); }
+        .app.desktop-sidebar-enabled .history-topbar { display: grid; grid-template-columns: minmax(0,1fr) 36px; grid-template-areas: "brand collapse" "search search"; align-items: center; gap: 13px 8px; width: 100%; height: auto; min-height: 0; margin: 0; padding: 18px 14px 15px; border: 0; background: transparent; backdrop-filter: none; -webkit-backdrop-filter: none; }
+        .app.desktop-sidebar-enabled .history-topbar::after { display: block; right: 14px; bottom: 0; left: 14px; background: linear-gradient(90deg, transparent, rgba(255,255,255,.08), transparent); }
+        .app.desktop-sidebar-enabled .history-brand { grid-area: brand; min-width: 0; width: 100%; gap: 10px; justify-content: flex-start; }
+        .app.desktop-sidebar-enabled .history-brand-mark { width: 36px; height: 36px; border-radius: 12px; }
+        .app.desktop-sidebar-enabled .history-brand-name { font-size: 13px; letter-spacing: .22em; }
+        .app.desktop-sidebar-enabled .desktop-sidebar-toggle { grid-area: collapse; display: grid; place-items: center; width: 36px; height: 36px; border: 1px solid rgba(255,255,255,.085); border-radius: 11px; background: rgba(255,255,255,.025); color: var(--text-dim); cursor: pointer; transition: border-color 160ms var(--ease), background 160ms var(--ease), color 160ms var(--ease); }
+        .app.desktop-sidebar-enabled .desktop-sidebar-toggle:hover { border-color: rgba(231,188,105,.28); background: rgba(231,188,105,.055); color: var(--text); }
+        .app.desktop-sidebar-enabled .desktop-sidebar-toggle .icon { width: 17px; height: 17px; }
+        .app.desktop-sidebar-enabled .history-topbar .history-search-field { grid-area: search; display: flex; width: 100%; min-height: 42px; margin: 0; padding: 0 12px; border: 1px solid rgba(255,255,255,.075); border-radius: 12px; background: color-mix(in srgb, var(--card) 84%, transparent); box-shadow: none; }
+        .app.desktop-sidebar-enabled .history-search-field input { font-size: 12px; }
+        .app.desktop-sidebar-enabled .history-content { width: 100%; height: auto; min-height: 0; flex: 1; margin: 0; padding: 17px 13px 84px; overflow-x: hidden; overflow-y: auto; }
+        .app.desktop-sidebar-enabled .history-intro { align-items: center; gap: 8px; margin: 0 0 14px; }
+        .app.desktop-sidebar-enabled .history-eyebrow { margin-bottom: 5px; font-size: 8px; letter-spacing: .16em; }
+        .app.desktop-sidebar-enabled .history-intro h1 { font-size: 21px; letter-spacing: -.045em; }
+        .app.desktop-sidebar-enabled .history-intro p { display: none; }
+        .app.desktop-sidebar-enabled .history-count { gap: 4px; margin: 0; padding: 6px 8px; border-radius: 9px; }
+        .app.desktop-sidebar-enabled .history-count strong { font-size: 12px; }
+        .app.desktop-sidebar-enabled .history-count span { font-size: 8px; }
+        .app.desktop-sidebar-enabled .history-list { border: 0; }
+        .app.desktop-sidebar-enabled .history-group-label { gap: 8px; margin: 18px 0 7px; font-size: 8px; letter-spacing: .14em; }
+        .app.desktop-sidebar-enabled .history-group-label::before { width: 12px; }
+        .app.desktop-sidebar-enabled .history-item { min-height: 0; margin: 0 0 4px; padding: 0; border: 1px solid transparent; border-radius: 11px; background: transparent; box-shadow: none; }
+        .app.desktop-sidebar-enabled .history-item:hover, .app.desktop-sidebar-enabled .history-item.is-selected { border-color: rgba(231,188,105,.13); background: color-mix(in srgb, var(--card) 78%, transparent); }
+        .app.desktop-sidebar-enabled .history-item-open { grid-template-columns: 30px minmax(0,1fr) auto; gap: 9px; min-height: 64px; padding: 8px 8px; border-radius: 10px; }
+        .app.desktop-sidebar-enabled .history-item-symbol { width: 30px; height: 30px; border-radius: 9px; }
+        .app.desktop-sidebar-enabled .history-item-symbol .icon { width: 16px; height: 16px; }
+        .app.desktop-sidebar-enabled .history-item-copy { gap: 4px; }
+        .app.desktop-sidebar-enabled .history-item-copy strong { font-size: 12px; }
+        .app.desktop-sidebar-enabled .history-item-copy small { display: -webkit-box; font-size: 10px; line-height: 1.4; -webkit-line-clamp: 2; }
+        .app.desktop-sidebar-enabled .history-item-trailing { gap: 4px; }
+        .app.desktop-sidebar-enabled .history-item-time { font-size: 8px; }
+        .app.desktop-sidebar-enabled .history-item-arrow { width: 20px; height: 20px; font-size: 15px; }
+        .app.desktop-sidebar-enabled .history-item-action { min-height: 30px; margin-right: 5px; padding: 0 8px; font-size: 10px; }
+        .app.desktop-sidebar-enabled .history-empty { min-height: 180px; margin-top: 6px; padding: 26px 14px; border-radius: 16px; }
+        .app.desktop-sidebar-enabled .history-empty-mark { width: 42px; height: 42px; margin-bottom: 12px; border-radius: 13px; }
+        .app.desktop-sidebar-enabled .history-empty strong { font-size: 13px; }
+        .app.desktop-sidebar-enabled .history-empty p { font-size: 10px; }
+        .app.desktop-sidebar-enabled .history-new-chat { right: 13px; bottom: 13px; left: 13px; display: flex; justify-content: flex-start; gap: 9px; width: auto; height: 46px; padding: 0 13px; border: 1px solid rgba(255,255,255,.16); border-radius: 12px; background: linear-gradient(135deg, #f5f1e9, #d6d3cd); color: #17171b; box-shadow: 0 8px 24px rgba(0,0,0,.22); }
+        .app.desktop-sidebar-enabled .history-new-chat .icon { width: 19px; height: 19px; }
+        .app.desktop-sidebar-enabled .history-new-chat-label { display: inline; font-size: 12px; font-weight: 650; }
+        .app.desktop-sidebar-enabled .history-new-chat:hover { border-color: rgba(231,188,105,.55); background: linear-gradient(135deg, #fff8e8, #e4d5b7); box-shadow: 0 10px 26px rgba(0,0,0,.26); transform: translateY(-1px); }
+        .app.desktop-sidebar-enabled .chat-history-back { display: none !important; }
+        .app.desktop-sidebar-enabled .topbar { right: 0; left: var(--desktop-sidebar-width); width: auto; padding-right: 24px; padding-left: 24px; }
+        .app.desktop-sidebar-enabled .credit-indicator { left: 22px; }
+        .app.desktop-sidebar-enabled .conversation-area { width: calc(100% - var(--desktop-sidebar-width)); height: 100dvh; margin-left: var(--desktop-sidebar-width); }
+        .app.desktop-sidebar-enabled .message-list { width: min(960px, calc(100% - 120px)); }
+        .app.desktop-sidebar-enabled .composer-dock { left: var(--desktop-sidebar-width); padding-right: 28px; padding-left: 28px; }
+        .app.desktop-sidebar-enabled .composer { width: min(900px, calc(100% - 80px)); }
+        .app.desktop-sidebar-enabled:not(.in-conversation) .composer { width: min(900px, calc(100% - 120px)); }
+        .app.desktop-sidebar-enabled .workspace-toggle { right: 16px; left: auto; }
+        .app.desktop-sidebar-enabled .workspace-toggle:hover, .app.desktop-sidebar-enabled .workspace-toggle[aria-expanded="true"] { transform: translateY(-50%) scale(1.04); }
+        .app.desktop-sidebar-enabled .workspace-panel { right: 12px; left: auto; width: min(390px, calc(100vw - var(--desktop-sidebar-width) - 24px)); transform: translateX(calc(100% + 30px)); }
+        .app.desktop-sidebar-enabled .workspace-panel.visible { transform: translateX(0); }
+        .app.desktop-sidebar-enabled.history-active .workspace-toggle { display: inline-flex !important; }
+        .app.desktop-sidebar-enabled.history-active .profile-popover { right: 16px; left: auto; }
+        .app.desktop-sidebar-enabled .install-banner { left: calc(var(--desktop-sidebar-width) + 18px); }
+        .app.desktop-sidebar-enabled.desktop-sidebar-collapsed #historyScreen { border-right-color: rgba(255,255,255,.06); }
+        .app.desktop-sidebar-enabled.desktop-sidebar-collapsed .history-topbar { grid-template-columns: minmax(0,1fr) 32px; gap: 0; padding: 16px 8px 14px; }
+        .app.desktop-sidebar-enabled.desktop-sidebar-collapsed .history-brand { justify-content: center; }
+        .app.desktop-sidebar-enabled.desktop-sidebar-collapsed .history-brand-mark { width: 29px; height: 29px; }
+        .app.desktop-sidebar-enabled.desktop-sidebar-collapsed .history-brand-name, .app.desktop-sidebar-enabled.desktop-sidebar-collapsed .history-search-field, .app.desktop-sidebar-enabled.desktop-sidebar-collapsed .history-content, .app.desktop-sidebar-enabled.desktop-sidebar-collapsed .history-new-chat-label { display: none !important; }
+        .app.desktop-sidebar-enabled.desktop-sidebar-collapsed .desktop-sidebar-toggle { width: 32px; height: 32px; }
+        .app.desktop-sidebar-enabled.desktop-sidebar-collapsed .desktop-sidebar-toggle .icon { transform: rotate(180deg); }
+        .app.desktop-sidebar-enabled.desktop-sidebar-collapsed .history-new-chat { right: 14px; left: 14px; justify-content: center; width: auto; height: 46px; padding: 0; }
+      }
     </style>
     <script>
       window.setTimeout(() => {
@@ -3950,6 +4021,7 @@
       <section class="history-screen" id="historyScreen" aria-label="Histórico de chats" aria-hidden="true" hidden>
         <header class="history-topbar">
           <button class="history-brand" id="historyBrand" type="button" aria-label="Abrir configurações" title="Configurações"><img class="history-brand-mark" src="../download/assets/kazer-mark.svg?v=20260922" alt="" /><span class="history-brand-name">KAZER</span></button>
+          <button class="desktop-sidebar-toggle" id="desktopSidebarToggle" type="button" aria-label="Recolher barra lateral" aria-expanded="true" title="Recolher barra lateral"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m14 5-7 7 7 7"></path></svg></button>
           <label class="history-search-field" id="historySearchField"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-4-4"></path></svg><input id="historySearchInput" type="search" placeholder="Buscar nas conversas..." autocomplete="off" /></label>
         </header>
         <div class="history-content">
@@ -4399,6 +4471,7 @@
         const historyCountValue = document.getElementById("historyCountValue");
         const historyCountLabel = document.getElementById("historyCountLabel");
         const historyNewChat = document.getElementById("historyNewChat");
+        const desktopSidebarToggle = document.getElementById("desktopSidebarToggle");
         const kazerHistoryButton = document.getElementById("kazerHistoryButton");
         const kazerMenu = document.getElementById("kazerMenu");
         const kazerMenuBackdrop = document.getElementById("kazerMenuBackdrop");
@@ -5093,6 +5166,24 @@
           historyItems.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
           renderChatHistory();
         };
+        const desktopLayoutQuery = window.matchMedia("(min-width: 1080px)");
+        const isDesktopLayout = () => desktopLayoutQuery.matches;
+        const syncDesktopSidebar = () => {
+          const desktop = isDesktopLayout();
+          app.classList.toggle("desktop-sidebar-enabled", desktop);
+          const historyVisible = desktop || viewMode === "history";
+          if (historyScreen) {
+            historyScreen.hidden = !historyVisible;
+            historyScreen.setAttribute("aria-hidden", String(!historyVisible));
+          }
+        };
+        const refreshHistorySurface = () => {
+          if (isDesktopLayout() || viewMode === "history") loadChatHistory();
+        };
+        desktopLayoutQuery.addEventListener?.("change", () => {
+          syncDesktopSidebar();
+          if (isDesktopLayout()) loadChatHistory();
+        });
 
         const titleCase = (value) => String(value || "").replace(/\b\w/g, (letter) => letter.toUpperCase());
 
@@ -5118,14 +5209,14 @@
           items.unshift({ id, title: createChatTitle(prompt, files), titleGenerated: false, excerpt: "Conversa com o KAZER", searchText: String(prompt || ""), messages: [{ role: "user", content: String(prompt || "") }], createdAt: new Date().toISOString(), kind: "chat" });
           saveChatHistory(items);
           activeChatHistoryId = id;
-          if (viewMode === "history") renderChatHistory();
+          refreshHistorySurface();
           return id;
         };
 
         const generateChatTitle = async (chatId, messages, signal) => {
           const useFallbackTitle = () => {
             const items = readChatHistory(); const item = items.find((entry) => entry.id === chatId);
-            if (item && !item.titleGenerated) { if (!item.title || /^Gerando título…?$/.test(item.title.trim())) item.title = "Nova conversa"; item.titleGenerated = true; saveChatHistory(items); if (viewMode === "history") renderChatHistory(); }
+            if (item && !item.titleGenerated) { if (!item.title || /^Gerando título…?$/.test(item.title.trim())) item.title = "Nova conversa"; item.titleGenerated = true; saveChatHistory(items); refreshHistorySurface(); }
           };
           try {
             const response = await fetchWithAuth("/api/chat", { method: "POST", body: JSON.stringify({ purpose: "title", messages }), signal });
@@ -5138,7 +5229,7 @@
             if (!item || item.titleGenerated) return;
             item.title = title; item.titleGenerated = true;
             saveChatHistory(items);
-            if (viewMode === "history") renderChatHistory();
+            refreshHistorySurface();
           } catch (error) {
             if (error?.name === "AbortError") return;
             useFallbackTitle();
@@ -5150,6 +5241,7 @@
           if (!item) return;
           item.searchText = ((item.searchText || "") + " " + String(content || "")).trim().slice(0, 12000);
           saveChatHistory(items);
+          refreshHistorySurface();
         };
 
         const saveChatMessages = (chatId, messages) => {
@@ -5157,6 +5249,7 @@
           if (!item) return;
           item.messages = messages.filter((message) => message && ["user", "assistant"].includes(message.role) && typeof message.content === "string").slice(-40);
           saveChatHistory(items);
+          refreshHistorySurface();
         };
 
         const openChatFromHistory = (id) => {
@@ -5207,10 +5300,7 @@
           app.classList.toggle("history-active", isHistory);
           app.classList.toggle("new-chat-active", !isHistory);
           app.classList.toggle("kazer-active", viewMode === "kazer");
-          if (historyScreen) {
-            historyScreen.hidden = !isHistory;
-            historyScreen.setAttribute("aria-hidden", String(!isHistory));
-          }
+          syncDesktopSidebar();
           if (newChatHeader) {
             newChatHeader.hidden = isHistory;
             newChatHeader.setAttribute("aria-hidden", String(isHistory));
@@ -6425,6 +6515,13 @@
         });
         window.addEventListener("popstate", () => { const view = new URLSearchParams(window.location.search).get("view"); setView(view === "history" ? "history" : view === "chat" ? "new-chat" : "kazer"); });
 
+        desktopSidebarToggle?.addEventListener("click", () => {
+          const collapsed = app.classList.toggle("desktop-sidebar-collapsed");
+          const label = collapsed ? "Expandir barra lateral" : "Recolher barra lateral";
+          desktopSidebarToggle.setAttribute("aria-expanded", String(!collapsed));
+          desktopSidebarToggle.setAttribute("aria-label", label);
+          desktopSidebarToggle.title = label;
+        });
         historyBrand?.addEventListener("click", () => openSettings());
         settingsAction.addEventListener("click", () => openSettings());
         profileMoreToggle.addEventListener("click", (event) => {
@@ -6791,13 +6888,14 @@
         updateSend();
         startAppSplash();
         setView(viewMode);
-        loadAccount().then(() => { updateGreeting(); if (viewMode === "history") loadChatHistory(); });
+        loadAccount().then(() => { updateGreeting(); if (viewMode === "history" || isDesktopLayout()) loadChatHistory(); });
       })();
     </script>
     <script src="/interface/connector-icons.js"></script>
     <script src="/interface/kazer-workspace.js"></script>
   </body>
 </html>
+
 
 
 
