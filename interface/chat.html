@@ -1093,6 +1093,28 @@
       .web-research-summary strong { color: var(--text); font-size: 12px; }
       .web-research-summary span { color: var(--text-soft); font-size: 11px; line-height: 1.55; white-space: pre-wrap; }
 
+      .research-progress-card { display: grid; gap: 11px; width: min(560px, 100%); padding: 13px 14px; border: 1px solid rgba(197,58,63,.20); border-radius: 15px; background: linear-gradient(145deg, rgba(197,58,63,.065), color-mix(in srgb, var(--card) 94%, transparent)); box-shadow: 0 10px 28px rgba(0,0,0,.11), inset 0 1px 0 rgba(255,255,255,.025); }
+      .research-progress-head { display: flex; align-items: flex-start; gap: 10px; }
+      .research-progress-icon { display: grid; place-items: center; width: 34px; height: 34px; flex: 0 0 34px; border: 1px solid rgba(197,58,63,.20); border-radius: 11px; background: rgba(197,58,63,.09); color: #df4a51; }
+      .research-progress-icon svg { width: 18px; height: 18px; }
+      .research-progress-copy { display: grid; gap: 3px; min-width: 0; flex: 1; }
+      .research-progress-title { color: var(--text); font-size: 13px; font-weight: 650; letter-spacing: -.01em; }
+      .research-progress-description { margin: 0; color: var(--text-dim); font-size: 11px; line-height: 1.45; overflow-wrap: anywhere; }
+      .research-progress-spinner { width: 15px; height: 15px; flex: 0 0 15px; margin: 2px 2px 0 0; border: 1.6px solid rgba(197,58,63,.22); border-top-color: #d94a51; border-radius: 50%; animation: research-progress-spin 850ms linear infinite; }
+      @keyframes research-progress-spin { to { transform: rotate(360deg); } }
+      .research-source-list { display: grid; gap: 6px; max-height: 240px; overflow-y: auto; }
+      .research-source-item { display: grid; gap: 3px; min-width: 0; padding: 9px 10px; border: 1px solid rgba(255,255,255,.055); border-radius: 10px; background: rgba(255,255,255,.018); color: inherit; text-decoration: none; transition: border-color 160ms var(--ease), background 160ms var(--ease); }
+      .research-source-item:hover { border-color: rgba(197,58,63,.25); background: rgba(197,58,63,.045); }
+      .research-source-item strong { color: var(--text-soft); font-size: 11px; font-weight: 560; line-height: 1.35; }
+      .research-source-item span { color: var(--text-dim); font-size: 9.5px; line-height: 1.4; overflow-wrap: anywhere; }
+      .research-source-more { border-top: 1px solid rgba(255,255,255,.055); padding-top: 8px; }
+      .research-source-more > summary { color: var(--text-dim); cursor: pointer; font-size: 10px; }
+      .research-source-more .research-source-list { margin-top: 7px; }
+      .research-progress-note { margin: 0; padding-top: 8px; border-top: 1px solid rgba(255,255,255,.055); color: var(--text-dim); font-size: 9px; line-height: 1.45; }
+      .research-progress-cost { color: var(--text-soft); font-weight: 560; }
+      .research-progress-card.is-error { border-color: rgba(197,58,63,.32); }
+      @media (prefers-reduced-motion: reduce) { .research-progress-spinner { animation: none; } .research-source-item { transition: none; } }
+
       .web-empty {
         margin: 14px 0 0;
         color: var(--text-dim);
@@ -5413,6 +5435,153 @@
           }
         };
 
+        const isExplicitWebResearchRequest = (value) => {
+          const text = String(value || "").trim();
+          if (!text) return false;
+          if (/\b(?:não|nao|nunca|sem)\s+(?:(?:(?:quero|preciso|posso|devo|precisa|deve|precisar)(?:\s+que)?|é\s+necessário\s+que)\s+)?(?:você\s+)?(?:pesquise|pesquisar|busque|procure|investigue)\b|\b(?:não|nao)\s+(?:é|seria)\s+(?:necessário|preciso)\s+que\s+(?:você\s+)?(?:pesquise|pesquisar|busque|procure|investigue)\b/i.test(text)) return false;
+          const directResearchVerb = /\b(?:pesquise|pesquisar|investigue|investigar)\b/i.test(text);
+          const explicitResearchPhrase = /\b(?:faça|realize|conduza)\s+(?:uma\s+)?pesquisa\b|\bpesquisa\s+(?:profunda|detalhada|atualizada|na\s+(?:web|internet)|sobre)\b/i.test(text);
+          const explicitWebLookup = /\b(?:busque|procure)\s+(?:na\s+(?:web|internet)|online|(?:fontes|informa[cç][oõ]es|dados|artigos|notícias|estudos|resultados)\b)/i.test(text);
+          const asksHowTo = /^(?:como|o que significa|defina|me ensine)\b/i.test(text) && !/\b(?:pesquise|investigue|busque|procure)\b/i.test(text);
+          const explanatoryRequest = /^explique\b/i.test(text) && !/\b(?:pesquise|investigue|busque|procure)\b/i.test(text);
+          return !asksHowTo && !explanatoryRequest && (directResearchVerb || explicitResearchPhrase || explicitWebLookup);
+        };
+
+        const createWebResearchProgress = (query) => {
+          const row = document.createElement("article");
+          row.className = "message-row assistant research-progress-row";
+          const card = document.createElement("section");
+          card.className = "research-progress-card is-searching";
+          card.setAttribute("role", "status");
+          card.setAttribute("aria-live", "polite");
+          const head = document.createElement("div");
+          head.className = "research-progress-head";
+          const icon = document.createElement("span");
+          icon.className = "research-progress-icon";
+          icon.setAttribute("aria-hidden", "true");
+          const globe = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+          globe.setAttribute("viewBox", "0 0 24 24");
+          globe.setAttribute("fill", "none");
+          globe.setAttribute("stroke", "currentColor");
+          globe.setAttribute("stroke-width", "1.6");
+          globe.setAttribute("stroke-linecap", "round");
+          globe.setAttribute("stroke-linejoin", "round");
+          const globeRing = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+          globeRing.setAttribute("cx", "12"); globeRing.setAttribute("cy", "12"); globeRing.setAttribute("r", "9");
+          const globeLines = document.createElementNS("http://www.w3.org/2000/svg", "path");
+          globeLines.setAttribute("d", "M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18");
+          globe.append(globeRing, globeLines);
+          icon.appendChild(globe);
+          const copy = document.createElement("div");
+          copy.className = "research-progress-copy";
+          const title = document.createElement("strong");
+          title.className = "research-progress-title";
+          title.textContent = "Pesquisando na web";
+          const description = document.createElement("p");
+          description.className = "research-progress-description";
+          description.textContent = `Buscando resultados públicos para “${query}”.`;
+          copy.append(title, description);
+          const spinner = document.createElement("span");
+          spinner.className = "research-progress-spinner";
+          spinner.setAttribute("aria-hidden", "true");
+          head.append(icon, copy, spinner);
+          const sourceList = document.createElement("div");
+          sourceList.className = "research-source-list";
+          sourceList.hidden = true;
+          const note = document.createElement("p");
+          note.className = "research-progress-note";
+          note.hidden = true;
+          const cost = document.createElement("small");
+          cost.className = "research-progress-note research-progress-cost";
+          cost.hidden = true;
+          card.append(head, sourceList, note, cost);
+          row.appendChild(card);
+
+          const makeSourceLink = (source) => {
+            let url;
+            try { url = new URL(String(source?.uri || "")); } catch { return null; }
+            if (url.protocol !== "http:" && url.protocol !== "https:") return null;
+            const link = document.createElement("a");
+            link.className = "research-source-item";
+            link.href = url.href;
+            link.target = "_blank";
+            link.rel = "noopener noreferrer";
+            const sourceTitle = document.createElement("strong");
+            sourceTitle.textContent = String(source?.title || url.hostname).slice(0, 180);
+            const sourceMeta = document.createElement("span");
+            const snippet = String(source?.snippet || "").replace(/\s+/g, " ").trim().slice(0, 150);
+            sourceMeta.textContent = url.hostname.replace(/^www\./i, "") + (snippet ? ` · ${snippet}` : "");
+            link.append(sourceTitle, sourceMeta);
+            return link;
+          };
+
+          const addSources = (target, sources) => {
+            sources.forEach((source) => {
+              const link = makeSourceLink(source);
+              if (link) target.appendChild(link);
+            });
+          };
+
+          return {
+            row,
+            showResults(result) {
+              const sources = Array.isArray(result?.sources) ? result.sources : [];
+              card.classList.remove("is-searching");
+              spinner.hidden = true;
+              sourceList.replaceChildren();
+              const visibleSources = sources.slice(0, 3);
+              addSources(sourceList, visibleSources);
+              if (sources.length > 3) {
+                const more = document.createElement("details");
+                more.className = "research-source-more";
+                const summary = document.createElement("summary");
+                summary.textContent = `Ver mais ${sources.length - 3} resultados`;
+                const remaining = document.createElement("div");
+                remaining.className = "research-source-list";
+                addSources(remaining, sources.slice(3));
+                more.append(summary, remaining);
+                sourceList.appendChild(more);
+              }
+              sourceList.hidden = sourceList.childElementCount === 0;
+              title.textContent = sources.length ? `${sources.length} resultados encontrados` : "Nenhum resultado encontrado";
+              description.textContent = result?.summaryUnavailable
+                ? "Encontrei resultados, mas não consegui gerar o resumo. Os links reais estão acima."
+                : sources.length
+                  ? "O resumo da pesquisa aparece na mensagem abaixo."
+                  : "Nenhuma fonte pública foi retornada; não vou apresentar dados atuais como verificados.";
+              note.textContent = sources.length
+                ? "Resultados reais da busca: títulos e trechos. As páginas completas não foram abertas automaticamente."
+                : "A pesquisa não retornou fontes para confirmar informações atuais.";
+              note.hidden = false;
+              const creditCost = Number(result?.credit_cost);
+              if (Number.isFinite(creditCost) && creditCost > 0) {
+                cost.textContent = `Esta pesquisa usou ${creditCost} tokens.`;
+                cost.hidden = false;
+              }
+            },
+            showError(message) {
+              card.classList.remove("is-searching");
+              card.classList.add("is-error");
+              spinner.hidden = true;
+              title.textContent = "Não consegui pesquisar agora";
+              description.textContent = `${String(message || "A consulta não retornou resultados.").slice(0, 220)} Não vou apresentar isso como pesquisa verificada.`;
+              sourceList.hidden = true;
+              note.hidden = true;
+              cost.hidden = true;
+            },
+            showStopped() {
+              card.classList.remove("is-searching");
+              card.classList.add("is-error");
+              spinner.hidden = true;
+              title.textContent = "Pesquisa interrompida";
+              description.textContent = "A busca foi cancelada antes de retornar resultados; não há fontes verificadas para mostrar.";
+              sourceList.hidden = true;
+              note.hidden = true;
+              cost.hidden = true;
+            }
+          };
+        };
+
         const resizeInput = () => {
           messageInput.style.height = "auto";
           const minimumHeight = app.classList.contains("in-conversation") ? 52 : 44;
@@ -6479,11 +6648,12 @@
           if (!text && files.length === 0) return;
 
           const prompt = text || "Analise os arquivos anexados e explique os pontos principais.";
+          const useWebResearch = files.length === 0 && isExplicitWebResearchRequest(prompt);
           const chatId = rememberChat(prompt, files);
-          const taskContext = window.kazerWorkspace?.startTask?.({ prompt, attachmentCount: files.length }) || null;
+          const taskContext = useWebResearch ? null : (window.kazerWorkspace?.startTask?.({ prompt, attachmentCount: files.length }) || null);
           window.kazerActiveTaskContext = taskContext;
-          const mcpConnectorIds = taskContext?.mcpConnectorIds || [];
-          const githubRepo = taskContext?.repo || null;
+          const mcpConnectorIds = useWebResearch ? [] : (taskContext?.mcpConnectorIds || []);
+          const githubRepo = useWebResearch ? null : (taskContext?.repo || null);
           const attachmentLabel = files.length ? "\n\nAnexos enviados: " + files.map((file) => file.name).join(", ") : "";
           const historyText = prompt + attachmentLabel;
           const displayText = text;
@@ -6505,7 +6675,8 @@
           selectedFiles = [];
           renderAttachments();
           resizeInput();
-          const thinking = createThinking();
+          const researchProgress = useWebResearch ? createWebResearchProgress(prompt) : null;
+          const thinking = researchProgress?.row || createThinking();
           append(thinking);
           setBusy(true);
           const controller = new AbortController();
@@ -6534,16 +6705,22 @@
               return;
             }
             setMessageAttachmentStatus(userRow, "uploading");
-            const result = await fetchWithAuth("/api/chat", {
-              method: "POST",
-              body: JSON.stringify({ messages: conversationMessages, attachments, mcpConnectorIds, githubRepo }),
-              signal: controller.signal,
-            });
+            const result = useWebResearch
+              ? await fetchWithAuth("/api/web-search", {
+                  method: "POST",
+                  body: JSON.stringify({ query: prompt, mode: "web" }),
+                  signal: controller.signal,
+                })
+              : await fetchWithAuth("/api/chat", {
+                  method: "POST",
+                  body: JSON.stringify({ messages: conversationMessages, attachments, mcpConnectorIds, githubRepo }),
+                  signal: controller.signal,
+                });
             const data = await result.json().catch(() => ({}));
             if (!result.ok) {
               if (result.status === 402) { await loadUsage(false); showCreditLimit(); }
               if (result.status === 409) { await loadUsage(false); showAttachmentLimit(); }
-              throw new Error(data.error || "Não foi possível obter uma resposta.");
+              throw new Error(data.error || (useWebResearch ? "Não foi possível consultar a pesquisa na web." : "Não foi possível obter uma resposta."));
             }
             if (files.length) {
               setMessageAttachmentStatus(userRow, "sent");
@@ -6555,9 +6732,15 @@
               restoreAttachmentsAfterFailedSend();
               return;
             }
-            const answer = data.message?.content;
+            const researchSummary = typeof data.summary === "string" ? data.summary.trim() : "";
+            if (useWebResearch) researchProgress?.showResults({ ...data, summaryUnavailable: Boolean(data.summaryUnavailable) || !researchSummary });
+            const answer = useWebResearch
+              ? (researchSummary || (Array.isArray(data.sources) && data.sources.length
+                ? "As fontes foram encontradas, mas o resumo automático não foi retornado. Consulte os títulos e trechos reais no painel acima."
+                : "A pesquisa não retornou fontes públicas verificáveis."))
+              : data.message?.content;
             if (typeof answer !== "string" || !answer.trim()) throw new Error("A resposta recebida estava vazia.");
-            if (thinking.isConnected) thinking.remove();
+            if (thinking.isConnected && !researchProgress) thinking.remove();
             assistantRow = createMessage("assistant", "", { writing: true });
             append(assistantRow);
             await revealAssistantMessage(assistantRow, answer.trim(), controller.signal);
@@ -6565,27 +6748,29 @@
             saveChatMessages(chatId, conversationMessages);
             updateChatSearchText(chatId, answer.trim());
             if (conversationMessages.length === 2) generateChatTitle(chatId, conversationMessages.slice(), controller.signal);
-            window.kazerWorkspace?.finishTask?.(taskContext, answer.trim(), data.credit_cost);
+            if (taskContext) window.kazerWorkspace?.finishTask?.(taskContext, answer.trim(), data.credit_cost);
           } catch (error) {
             if (error.name === "AbortError" || activeRequestController !== controller) {
+              if (error.name === "AbortError" && activeRequestController === controller) researchProgress?.showStopped();
               if (messageAttachmentFiles.get(chatId)?.get(messageIndex)?.state !== "sent") setMessageAttachmentStatus(userRow, "interrupted");
               if (assistantRow?.isConnected) assistantRow.remove();
               restoreAttachmentsAfterFailedSend();
               return;
             }
             if (messageAttachmentFiles.get(chatId)?.get(messageIndex)?.state !== "sent") setMessageAttachmentStatus(userRow, "failed");
-            if (thinking.isConnected) thinking.remove();
+            if (researchProgress) researchProgress.showError(error.message || "Não foi possível conectar à pesquisa agora.");
+            else if (thinking.isConnected) thinking.remove();
             if (assistantRow?.isConnected) assistantRow.remove();
             // A mensagem que falhou continua sendo contexto válido e pode ser
             // reenviada sem obrigar a pessoa a redigitar tudo.
             saveChatMessages(chatId, conversationMessages);
             restoreAttachmentsAfterFailedSend();
-            window.kazerWorkspace?.failTask?.(taskContext, error.message || "Não foi possível conectar ao chat agora.");
-            append(createMessage("assistant", error.message || "Não foi possível conectar ao chat agora."));
+            if (taskContext) window.kazerWorkspace?.failTask?.(taskContext, error.message || "Não foi possível conectar ao chat agora.");
+            if (!researchProgress) append(createMessage("assistant", error.message || "Não foi possível conectar ao chat agora."));
           } finally {
             if (activeRequestController === controller) {
               activeRequestController = null;
-              if (thinking.isConnected) thinking.remove();
+              if (thinking.isConnected && !researchProgress) thinking.remove();
               setBusy(false);
               window.kazerActiveTaskContext = null;
               messageInput.focus();
@@ -6597,10 +6782,21 @@
           if (!busy) return;
           if (activeRequestController) activeRequestController.abort();
           activeRequestController = null;
+          const activeResearch = messageList.querySelector(".research-progress-card.is-searching");
+          if (activeResearch) {
+            activeResearch.classList.remove("is-searching");
+            activeResearch.classList.add("is-error");
+            const spinner = activeResearch.querySelector(".research-progress-spinner");
+            if (spinner) spinner.hidden = true;
+            const title = activeResearch.querySelector(".research-progress-title");
+            if (title) title.textContent = "Pesquisa interrompida";
+            const description = activeResearch.querySelector(".research-progress-description");
+            if (description) description.textContent = "A busca foi cancelada antes de retornar resultados; não há fontes verificadas para mostrar.";
+          }
           const thinking = messageList.querySelector(".thinking-row")?.closest(".message-row");
           if (thinking) thinking.remove();
           const stopped = "Resposta interrompida. Podemos continuar quando quiser.";
-          window.kazerWorkspace?.stopTask?.(window.kazerActiveTaskContext);
+          if (window.kazerActiveTaskContext) window.kazerWorkspace?.stopTask?.(window.kazerActiveTaskContext);
           conversationMessages.push({ role: "assistant", content: stopped });
           if (activeChatHistoryId) saveChatMessages(activeChatHistoryId, conversationMessages);
           append(createMessage("assistant", stopped));
