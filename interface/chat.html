@@ -487,8 +487,7 @@
         opacity: .9;
       }
 
-      .assistant-marker svg,
-      .thinking-symbol svg {
+      .assistant-marker svg {
         width: 16px;
         height: 16px;
         overflow: visible;
@@ -507,12 +506,6 @@
       .thinking-row { display: inline-flex; align-items: center; gap: 10px; color: var(--text-soft); font-size: clamp(14px, 3.8vw, 19px); line-height: 1.2; animation: enter-up 300ms var(--ease) both; }
 
       .thinking-symbol { width: 23px; height: 23px; margin-top: 0; color: var(--text-soft); }
-      .thinking-symbol svg { width: 21px; height: 21px; animation: assistant-symbol-thinking 1.15s var(--ease) infinite; }
-
-      @keyframes assistant-symbol-thinking {
-        0%, 100% { opacity: .42; transform: rotate(0deg) scale(.82); }
-        50% { opacity: 1; transform: rotate(180deg) scale(1.06); }
-      }
 
       .thinking-label { min-width: 84px; color: transparent; background: linear-gradient(90deg, var(--text-dim), rgba(200,200,212,0.9), var(--text-dim)); background-size: 210% 100%; background-clip: text; -webkit-background-clip: text; animation: text-shimmer 1.5s linear infinite; }
 
@@ -3875,40 +3868,24 @@
       .message-expand-chevron { display: inline-block; font-size: 15px; line-height: 1; transform: translateY(-1px); transition: transform 180ms var(--ease); }
       .message-expand-toggle[aria-expanded="true"] .message-expand-chevron { transform: rotate(180deg); }
 
-      /* Identidade KAZER no estado de pensamento: átomos em órbita e aparição do símbolo oficial */
+      /* Pensamento KAZER: atrator digital vermelho, leve e contido ao estado thinking */
       .assistant-marker img.assistant-mark-image { display: block; width: 100%; height: 100%; object-fit: contain; filter: none; }
       .message-expand-toggle { font-size: 13px; }
       .thinking-row { gap: 13px; min-height: 54px; }
-      .thinking-symbol { position: relative; display: inline-grid; place-items: center; width: 54px; height: 54px; flex: 0 0 54px; margin: 0; color: var(--text-soft); }
-      .thinking-orbit { position: absolute; top: 50%; left: 50%; width: 48px; height: 20px; margin: -10px 0 0 -24px; border: 1px solid rgba(197,58,63,.3); border-radius: 50%; }
-      .thinking-orbit::after { position: absolute; top: 1px; left: 50%; width: 5px; height: 5px; border-radius: 50%; background: #e7bc69; box-shadow: 0 0 8px rgba(231,188,105,.42); content: ""; transform: translate(-50%,-50%); }
-      .thinking-orbit-a { border-top-color: rgba(197,58,63,.96); border-bottom-color: rgba(197,58,63,.18); transform: rotate(0deg); animation: kazer-atom-spin-a 3.15s linear infinite, kazer-atom-phase 4s ease-in-out infinite; }
-      .thinking-orbit-b { border-top-color: rgba(231,188,105,.88); border-bottom-color: rgba(231,188,105,.18); transform: rotate(60deg); animation: kazer-atom-spin-b 4.05s linear infinite reverse, kazer-atom-phase 4s ease-in-out infinite; }
-      .thinking-orbit-b::after { background: #c53a3f; box-shadow: 0 0 8px rgba(197,58,63,.42); }
-      .thinking-orbit-c { border-top-color: rgba(255,255,255,.68); border-right-color: rgba(197,58,63,.7); transform: rotate(120deg); animation: kazer-atom-spin-c 3.7s linear infinite, kazer-atom-phase 4s ease-in-out infinite; }
-      .thinking-core { position: absolute; z-index: 1; width: 5px; height: 5px; border-radius: 50%; background: #c53a3f; box-shadow: 0 0 10px rgba(197,58,63,.58); animation: kazer-core-breathe 1.5s ease-in-out infinite; }
-      .thinking-mark { position: absolute; z-index: 2; display: block; width: 21px; height: 21px; object-fit: contain; opacity: 0; animation: kazer-mark-flash 4s cubic-bezier(.22,1,.36,1) infinite; }
+      .thinking-symbol { position: relative; display: inline-grid; place-items: center; width: 54px; height: 54px; flex: 0 0 54px; margin: 0; overflow: visible; color: var(--text-soft); }
+      .thinking-attractor-canvas { display: block; width: 100%; height: 100%; overflow: visible; }
       .thinking-label { display: inline-flex; align-items: center; gap: 4px; min-width: 0; color: var(--text-soft); background: none; font-size: 14.5px; font-weight: 570; letter-spacing: .014em; animation: none; }
       .thinking-dots { display: inline-flex; align-items: center; gap: 3px; margin-left: 1px; }
-      .thinking-dots span { display: block; width: 3.5px; height: 3.5px; border-radius: 50%; background: #e7bc69; opacity: .22; animation: kazer-thinking-dot 1.15s ease-in-out infinite; }
+      .thinking-dots span { display: block; width: 3.5px; height: 3.5px; border-radius: 50%; background: #e43a43; box-shadow: 0 0 5px rgba(228,58,67,.32); opacity: .22; animation: kazer-thinking-dot 1.15s ease-in-out infinite; }
       .thinking-dots span:nth-child(2) { animation-delay: .16s; }
       .thinking-dots span:nth-child(3) { animation-delay: .32s; }
-      @keyframes kazer-atom-spin-a { to { transform: rotate(360deg); } }
-      @keyframes kazer-atom-spin-b { to { transform: rotate(420deg); } }
-      @keyframes kazer-atom-spin-c { to { transform: rotate(480deg); } }
-      @keyframes kazer-atom-phase { 0%, 16% { opacity: .9; } 23% { opacity: .68; } 29%, 41% { opacity: .06; } 49% { opacity: .74; } 100% { opacity: .9; } }
-      @keyframes kazer-mark-flash { 0%, 23% { opacity: 0; transform: scale(.72); } 29%, 41% { opacity: 1; transform: scale(1); } 49%, 100% { opacity: 0; transform: scale(.82); } }
-      @keyframes kazer-core-breathe { 0%, 100% { opacity: .58; transform: scale(.82); } 50% { opacity: 1; transform: scale(1.28); } }
       @keyframes kazer-thinking-dot { 0%, 72%, 100% { opacity: .22; transform: translateY(0); } 34% { opacity: .95; transform: translateY(-2px); } }
       @media (max-width: 520px) {
         .thinking-symbol { width: 50px; height: 50px; flex-basis: 50px; }
         .thinking-label { font-size: 14px; }
       }
       @media (prefers-reduced-motion: reduce) {
-        .thinking-orbit, .thinking-core, .thinking-mark, .thinking-dots span { animation: none !important; }
-        .thinking-orbit { opacity: .34 !important; }
-        .thinking-mark { opacity: 1 !important; transform: none !important; }
-        .thinking-core, .thinking-dots span { opacity: .72; }
+        .thinking-dots span { animation: none !important; opacity: .72; }
       }
       .desktop-sidebar-toggle { display: none; }
       @media (min-width: 1080px) {
@@ -6220,6 +6197,168 @@
           renderAssistantContent(content, text, { writing: false });
         };
 
+        let thinkingAttractorPointsCache = null;
+        const getThinkingAttractorPoints = () => {
+          if (thinkingAttractorPointsCache) return thinkingAttractorPointsCache;
+          const a = 0.95, b = 0.7, c = 0.6, d = 3.5, e = 0.25, f = 0.1, dt = 0.008;
+          const derivative = (x, y, z) => [
+            (z - b) * x - d * y,
+            d * x + (z - b) * y,
+            c + a * z - (z * z * z) / 3 - (x * x + y * y) * (1 + e * z) + f * z * x * x * x
+          ];
+          const step = (x, y, z) => {
+            const k1 = derivative(x, y, z);
+            const k2 = derivative(x + k1[0] * dt / 2, y + k1[1] * dt / 2, z + k1[2] * dt / 2);
+            const k3 = derivative(x + k2[0] * dt / 2, y + k2[1] * dt / 2, z + k2[2] * dt / 2);
+            const k4 = derivative(x + k3[0] * dt, y + k3[1] * dt, z + k3[2] * dt);
+            return [
+              x + (k1[0] + 2 * k2[0] + 2 * k3[0] + k4[0]) * dt / 6,
+              y + (k1[1] + 2 * k2[1] + 2 * k3[1] + k4[1]) * dt / 6,
+              z + (k1[2] + 2 * k2[2] + 2 * k3[2] + k4[2]) * dt / 6
+            ];
+          };
+          let x = 0.1, y = 0, z = 0;
+          for (let index = 0; index < 8000; index += 1) [x, y, z] = step(x, y, z);
+          const rawPoints = [];
+          for (let index = 0; index < 12000; index += 1) {
+            [x, y, z] = step(x, y, z);
+            if (index % 5 === 0) rawPoints.push([x, y, z]);
+          }
+          const center = rawPoints.reduce((sum, point) => [sum[0] + point[0], sum[1] + point[1], sum[2] + point[2]], [0, 0, 0]).map((value) => value / rawPoints.length);
+          const maxRadius = rawPoints.reduce((maximum, point) => Math.max(maximum, Math.hypot(point[0] - center[0], point[1] - center[1], point[2] - center[2])), 0) || 1;
+          thinkingAttractorPointsCache = rawPoints.map((point) => [(point[0] - center[0]) / maxRadius, (point[1] - center[1]) / maxRadius, (point[2] - center[2]) / maxRadius]);
+          return thinkingAttractorPointsCache;
+        };
+
+        const startThinkingAttractor = (canvas) => {
+          if (!canvas.isConnected) return;
+          const context = canvas.getContext("2d", { alpha: true });
+          if (!context) return;
+          const bounds = canvas.getBoundingClientRect();
+          const width = Math.max(1, bounds.width || 54);
+          const height = Math.max(1, bounds.height || 54);
+          const pixelRatio = Math.min(window.devicePixelRatio || 1, 1.75);
+          canvas.width = Math.round(width * pixelRatio);
+          canvas.height = Math.round(height * pixelRatio);
+          context.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
+          const points = getThinkingAttractorPoints();
+          const projected = new Float32Array(points.length * 2);
+          const reducedMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches === true;
+          const startedAt = performance.now();
+          const matrixGlyphs = [
+            [1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1],
+            [1, 0, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1],
+            [1, 1, 1, 0, 1, 0, 1, 1, 1, 0, 0, 1],
+            [1, 1, 0, 1, 0, 1, 1, 1, 1, 0, 1, 1],
+            [1, 0, 1, 0, 1, 0, 1, 1, 1, 1, 0, 1],
+            [1, 1, 1, 1, 0, 0, 1, 0, 1, 1, 1, 1],
+            [1, 1, 1, 1, 0, 1, 1, 0, 1, 1, 1, 1],
+            [1, 0, 1, 1, 1, 0, 1, 0, 1, 1, 1, 1]
+          ];
+          const draw = (now) => {
+            if (!canvas.isConnected) return;
+            const time = reducedMotion ? 0 : (now - startedAt) / 1000;
+            context.clearRect(0, 0, width, height);
+            const centerX = width / 2, centerY = height / 2;
+            const unit = Math.min(width, height) * 0.70;
+            const angleY = time * 0.34, angleX = 0.34 + Math.sin(time * 0.21) * 0.22, angleZ = Math.sin(time * 0.15) * 0.12;
+            const cosY = Math.cos(angleY), sinY = Math.sin(angleY), cosX = Math.cos(angleX), sinX = Math.sin(angleX), cosZ = Math.cos(angleZ), sinZ = Math.sin(angleZ);
+            for (let index = 0; index < points.length; index += 1) {
+              const point = points[index];
+              const x1 = point[0] * cosY + point[2] * sinY;
+              const z1 = -point[0] * sinY + point[2] * cosY;
+              const y2 = point[1] * cosX - z1 * sinX;
+              const z2 = point[1] * sinX + z1 * cosX;
+              const x3 = x1 * cosZ - y2 * sinZ;
+              const y3 = x1 * sinZ + y2 * cosZ;
+              const perspective = 1 / (1.9 - z2 * 0.24);
+              projected[index * 2] = centerX + x3 * unit * perspective;
+              projected[index * 2 + 1] = centerY + y3 * unit * perspective;
+            }
+
+            context.save();
+            context.globalCompositeOperation = "lighter";
+            context.beginPath();
+            context.moveTo(projected[0], projected[1]);
+            for (let index = 1; index < points.length; index += 1) context.lineTo(projected[index * 2], projected[index * 2 + 1]);
+            context.strokeStyle = "rgba(151, 16, 25, .28)";
+            context.lineWidth = 2.8;
+            context.shadowColor = "rgba(207, 31, 42, .56)";
+            context.shadowBlur = 5;
+            context.stroke();
+            context.shadowBlur = 0;
+            context.strokeStyle = "rgba(224, 43, 53, .68)";
+            context.lineWidth = 0.95;
+            context.stroke();
+            context.strokeStyle = "rgba(255, 68, 76, .58)";
+            context.lineWidth = 0.42;
+            context.stroke();
+
+            if (!reducedMotion) {
+              const trailCount = 5;
+              for (let trail = 0; trail < trailCount; trail += 1) {
+                const head = Math.floor((time * (32 + trail * 4) + trail * points.length / trailCount) % points.length);
+                context.beginPath();
+                context.moveTo(projected[head * 2], projected[head * 2 + 1]);
+                for (let stepIndex = 1; stepIndex <= 84; stepIndex += 1) {
+                  const pointIndex = (head + stepIndex) % points.length;
+                  context.lineTo(projected[pointIndex * 2], projected[pointIndex * 2 + 1]);
+                }
+                context.strokeStyle = trail % 2 ? "rgba(255, 54, 64, .88)" : "rgba(205, 26, 37, .82)";
+                context.lineWidth = trail % 3 === 0 ? 1.35 : 0.85;
+                context.shadowColor = "rgba(238, 39, 49, .9)";
+                context.shadowBlur = 4;
+                context.stroke();
+              }
+              for (let glyph = 0; glyph < matrixGlyphs.length; glyph += 1) {
+                const pointIndex = Math.floor((time * (35 + glyph * 2) + glyph * points.length / matrixGlyphs.length) % points.length);
+                const before = (pointIndex + points.length - 4) % points.length;
+                const after = (pointIndex + 4) % points.length;
+                const angle = Math.atan2(projected[after * 2 + 1] - projected[before * 2 + 1], projected[after * 2] - projected[before * 2]);
+                context.save();
+                context.translate(projected[pointIndex * 2], projected[pointIndex * 2 + 1]);
+                context.rotate(angle);
+                context.globalAlpha = 0.5 + (0.5 + 0.5 * Math.sin(time * 2.1 + glyph * 1.7)) * 0.42;
+                context.fillStyle = "rgba(255, 67, 75, .95)";
+                context.shadowColor = "rgba(238, 39, 49, .9)";
+                context.shadowBlur = 2;
+                const bits = matrixGlyphs[glyph];
+                for (let bit = 0; bit < bits.length; bit += 1) {
+                  if (!bits[bit]) continue;
+                  const column = bit % 3, row = Math.floor(bit / 3);
+                  context.fillRect((column - 1) * 0.9, (row - 1.5) * 0.9, 0.62, 0.62);
+                }
+                context.restore();
+              }
+              context.shadowBlur = 3;
+              context.shadowColor = "rgba(245, 45, 55, .82)";
+              for (let spark = 0; spark < 22; spark += 1) {
+                const pointIndex = Math.floor((time * (56 + spark * 2) + spark * points.length / 22) % points.length);
+                const pulse = 0.22 + (0.5 + 0.5 * Math.sin(time * 2.7 + spark * 1.9)) * 0.6;
+                const size = spark % 5 === 0 ? 1.5 : 0.9;
+                context.fillStyle = `rgba(255, 48, 58, ${pulse.toFixed(3)})`;
+                context.fillRect(projected[pointIndex * 2] - size / 2, projected[pointIndex * 2 + 1] - size / 2, size, size);
+              }
+            }
+            context.restore();
+
+            context.save();
+            context.globalCompositeOperation = "source-over";
+            context.strokeStyle = "rgba(183, 31, 40, .42)";
+            context.lineWidth = 0.7;
+            const inset = 3.5, corner = 5.5;
+            context.beginPath();
+            context.moveTo(inset + corner, inset); context.lineTo(inset, inset); context.lineTo(inset, inset + corner);
+            context.moveTo(width - inset - corner, inset); context.lineTo(width - inset, inset); context.lineTo(width - inset, inset + corner);
+            context.moveTo(inset, height - inset - corner); context.lineTo(inset, height - inset); context.lineTo(inset + corner, height - inset);
+            context.moveTo(width - inset, height - inset - corner); context.lineTo(width - inset, height - inset); context.lineTo(width - inset - corner, height - inset);
+            context.stroke();
+            context.restore();
+            if (!reducedMotion) window.requestAnimationFrame(draw);
+          };
+          window.requestAnimationFrame(draw);
+        };
+
         const createThinking = () => {
           const row = document.createElement("article");
           row.className = "message-row assistant";
@@ -6230,20 +6369,10 @@
           const symbol = document.createElement("span");
           symbol.className = "thinking-symbol";
           symbol.setAttribute("aria-hidden", "true");
-          const orbitOne = document.createElement("span");
-          orbitOne.className = "thinking-orbit thinking-orbit-a";
-          const orbitTwo = document.createElement("span");
-          orbitTwo.className = "thinking-orbit thinking-orbit-b";
-          const orbitThree = document.createElement("span");
-          orbitThree.className = "thinking-orbit thinking-orbit-c";
-          const core = document.createElement("span");
-          core.className = "thinking-core";
-          const mark = document.createElement("img");
-          mark.className = "thinking-mark";
-          mark.src = assistantMarkAsset;
-          mark.alt = "";
-          mark.decoding = "async";
-          symbol.append(orbitOne, orbitTwo, orbitThree, core, mark);
+          const canvas = document.createElement("canvas");
+          canvas.className = "thinking-attractor-canvas";
+          symbol.appendChild(canvas);
+          window.requestAnimationFrame(() => startThinkingAttractor(canvas));
           const label = document.createElement("span");
           label.className = "thinking-label";
           const copy = document.createElement("span");
@@ -6957,6 +7086,7 @@
     <script src="/interface/kazer-workspace.js"></script>
   </body>
 </html>
+
 
 
 
