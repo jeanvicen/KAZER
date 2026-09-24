@@ -1083,6 +1083,16 @@
         text-decoration: underline;
       }
 
+      .web-source-details { overflow: hidden; border: 1px solid var(--line-soft); border-radius: 10px; background: rgba(255,255,255,.018); }
+      .web-source-details > summary { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px; color: var(--text-soft); cursor: pointer; list-style: none; font-size: 11px; font-weight: 600; }
+      .web-source-details > summary::-webkit-details-marker { display: none; }
+      .web-source-details > summary::after { content: "⌄"; color: var(--purple); font-size: 16px; line-height: 1; transition: transform 180ms ease; }
+      .web-source-details[open] > summary::after { transform: rotate(180deg); }
+      .web-source-list { display: grid; gap: 6px; padding: 0 6px 6px; }
+      .web-research-summary { display: grid; gap: 6px; padding: 12px; border: 1px solid rgba(231,188,105,.16); border-radius: 10px; background: linear-gradient(145deg, rgba(231,188,105,.07), rgba(255,255,255,.018)); }
+      .web-research-summary strong { color: var(--text); font-size: 12px; }
+      .web-research-summary span { color: var(--text-soft); font-size: 11px; line-height: 1.55; white-space: pre-wrap; }
+
       .web-empty {
         margin: 14px 0 0;
         color: var(--text-dim);
@@ -5363,17 +5373,17 @@
         const renderWebResults = (query, result) => {
           const cleanQuery = escapeHtml(query);
           const summary = escapeHtml(result?.summary || "A pesquisa retornou fontes, mas não foi possível gerar um resumo.");
-          const sourceCards = (result?.sources || []).map((source, index) => '<div class="web-source"><strong>' + (index + 1) + '. ' + escapeHtml(source.title || "Fonte") + '</strong><span>Fonte encontrada na pesquisa do WebKazer.</span><a href="' + escapeHtml(source.uri) + '" target="_blank" rel="noopener noreferrer">Abrir fonte ↗</a></div>').join('');
+          const sourceCards = (result?.sources || []).map((source, index) => '<div class="web-source"><strong>' + (index + 1) + '. ' + escapeHtml(source.title || "Fonte") + '</strong><span>' + escapeHtml(source.snippet || "Fonte encontrada na pesquisa do KAZER.") + '</span><a href="' + escapeHtml(source.uri) + '" target="_blank" rel="noopener noreferrer">Abrir fonte ↗</a></div>').join('');
           const encoded = encodeURIComponent(query);
           const quickLinks = [['Web', 'https://www.google.com/search?q='], ['Imagens', 'https://www.google.com/search?tbm=isch&q='], ['Vídeos', 'https://www.youtube.com/results?search_query='], ['Notícias', 'https://news.google.com/search?q=']].map(([label, base]) => '<a class="web-source" href="' + base + encoded + '" target="_blank" rel="noopener noreferrer"><strong>' + label + '</strong><span>Abrir resultados externos para “' + cleanQuery + '” ↗</span></a>').join('');
           const usageNote = Number(result?.credit_cost) > 0 ? '<small>Esta pesquisa usou ' + Number(result.credit_cost) + ' tokens.</small>' : '';
-          webSources.innerHTML = '<div class="web-source"><strong>Resumo da pesquisa</strong><span>' + summary + '</span>' + usageNote + '<a href="#" data-use-web="' + cleanQuery + '">Enviar para o KAZER →</a></div>' + sourceCards + quickLinks;
+          webSources.innerHTML = '<details class="web-source-details"><summary>Fontes encontradas (' + (result?.sources || []).length + ')</summary><div class="web-source-list">' + sourceCards + '</div></details><div class="web-research-summary"><strong>Resumo da pesquisa</strong><span>' + summary + '</span>' + usageNote + '<a href="#" data-use-web="' + cleanQuery + '">Enviar para o KAZER →</a></div>' + quickLinks;
           webEmpty.hidden = true;
           const contextLink = webSources.querySelector("[data-use-web]");
           contextLink?.addEventListener("click", (event) => {
             event.preventDefault();
-            const sourceText = (result?.sources || []).slice(0, 8).map((source) => `${source.title}: ${source.uri}`).join("\\n");
-            messageInput.value = `Analise esta pesquisa do WebKazer sobre “${query}” e use os dados abaixo como contexto:\\n\\n${result?.summary || ""}\\n\\nFontes:\\n${sourceText}`.slice(0, 8000);
+            const sourceText = (result?.sources || []).slice(0, 8).map((source) => `${source.title}: ${source.uri}`).join("\n");
+            messageInput.value = `Analise esta pesquisa do WebKazer sobre “${query}” e use os dados abaixo como contexto:\n\n${result?.summary || ""}\n\nFontes:\n${sourceText}`.slice(0, 8000);
             resizeInput();
             updateSend();
             webPopover.classList.remove("visible");
@@ -5383,7 +5393,7 @@
 
         const searchWebKazer = async (query) => {
           webEmpty.hidden = true;
-          webSources.innerHTML = '<div class="web-loading">Consultando fontes atuais…</div>';
+          webSources.innerHTML = '<div class="web-loading">Pesquisando fontes atuais e preparando o resumo…</div>';
           const startedAt = Date.now();
           try {
             const response = await fetchWithAuth("/api/web-search", { method: "POST", body: JSON.stringify({ query, mode: webMode }) });

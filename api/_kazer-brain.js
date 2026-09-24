@@ -16,12 +16,12 @@ function uniqueModels(values) {
   return values.map((value) => String(value || "").trim()).filter((value, index, list) => value && list.indexOf(value) === index);
 }
 
-function providerConfig(hasImages) {
+function providerConfig(hasImages, modelOverride = "") {
   const hfToken = String(process.env.HF_TOKEN || "").trim();
   if (hfToken) {
-    const primary = hasImages
+    const primary = modelOverride || (hasImages
       ? (process.env.KAZER_VISION_MODEL || DEFAULT_VISION_MODEL)
-      : (process.env.KAZER_TEXT_MODEL || DEFAULT_TEXT_MODEL);
+      : (process.env.KAZER_TEXT_MODEL || DEFAULT_TEXT_MODEL));
     const fallback = hasImages
       ? (process.env.KAZER_VISION_FALLBACK_MODEL || "Qwen/Qwen3.8-27B")
       : (process.env.KAZER_TEXT_FALLBACK_MODEL || "microsoft/Phi-4-mini-instruct");
@@ -61,8 +61,8 @@ function getReasoningEffort() {
   return new Set(["none", "low", "medium", "high", "xhigh"]).has(value) ? value : "medium";
 }
 
-async function callKazerBrain({ messages, hasImages, tools = [], timeoutMs = 30_000, maxAttempts = 2 }) {
-  const config = providerConfig(hasImages);
+async function callKazerBrain({ messages, hasImages, tools = [], timeoutMs = 30_000, maxAttempts = 2, modelOverride = "" }) {
+  const config = providerConfig(hasImages, modelOverride);
   if (!config) return { failure: { status: 0, error: "brain_not_configured" } };
   let lastFailure = null;
 

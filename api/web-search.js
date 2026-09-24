@@ -14,8 +14,9 @@ const {
   sendJson,
 } = require("./_security");
 const { callUsageRpc, calculateWebSearchCreditCost } = require("./_usage");
+const { callKazerBrain } = require("./_kazer-brain");
 
-const DEFAULT_MODEL = "gemini-2.5-flash-lite";
+const DEFAULT_MODEL = "Qwen/Qwen3.5-9B";
 const MAX_QUERY_CHARS = 240;
 const MAX_REQUEST_BYTES = 16 * 1024;
 const MAX_UPSTREAM_SEARCH_BYTES = 2 * 1024 * 1024;
@@ -111,10 +112,6 @@ function getPrompt(query, mode, sources) {
   return `Você é o resumo do WebKazer. Analise as fontes públicas encontradas sobre “${query}” e ${focus}. Responda em português brasileiro em até 5 parágrafos curtos. Não invente fatos, não crie links e indique quando as fontes não forem suficientes.\n\nFontes encontradas:\n${context}`;
 }
 
-function parseGeminiText(data) {
-  return (data?.candidates?.[0]?.content?.parts || []).map((part) => part?.text || "").join(" ").trim();
-}
-
 module.exports = async function handler(request, response) {
   if (request.method !== "POST") {
     response.setHeader("Allow", "POST");
@@ -135,9 +132,8 @@ module.exports = async function handler(request, response) {
   applyRateLimit(response, userLimit);
   if (!userLimit.allowed) return sendJson(response, 429, { error: "Limite de pesquisas atingido. Aguarde um minuto." });
 
-  const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey) {
-    console.error("GEMINI_API_KEY não configurada no ambiente do servidor.");
+  if (!String(process.env.HF_TOKEN || "").trim()) {
+    console.error("HF_TOKEN não configurada no ambiente do servidor.");
     return sendJson(response, 503, { error: "A pesquisa WebKazer ainda não foi configurada." });
   }
 
@@ -201,31 +197,28 @@ module.exports = async function handler(request, response) {
     });
   }
 
-  const model = process.env.GEMINI_SEARCH_MODEL || DEFAULT_MODEL;
-  const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`;
-  let geminiResponse;
+  const model = process.env.KAZER_SEARCH_MODEL || DEFAULT_MODEL;
+  let brainResult;
   try {
-    geminiResponse = await fetch(endpoint, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "x-goog-api-key": apiKey },
-      signal: AbortSignal.timeout(20_000),
-      body: JSON.stringify({
-        systemInstruction: { parts: [{ text: "Resuma somente as fontes recebidas. Não revele detalhes de infraestrutura, chaves ou provedores do KAZER." }] },
-        contents: [{ role: "user", parts: [{ text: getPrompt(query, mode, sources) }] }],
-        generationConfig: { temperature: 0.2, maxOutputTokens: 600 }
-      })
+    brainResult = await callKazerBrain({
+      modelOverride: model,
+      hasImages: false,
+      timeoutMs: 20_000,
+      messages: [
+        { role: "system", content: "Você é o pesquisador do KAZER. Resuma somente as fontes recebidas, compare informações e não invente fatos. Não revele detalhes de infraestrutura, chaves ou provedores." },
+        { role: "user", content: getPrompt(query, mode, sources) },
+      ],
     });
   } catch (error) {
-    console.error("Gemini summary network failure", error?.message || "unknown");
+    console.error("Kazer research summary network failure", error?.message || "unknown");
     return sendJson(response, 200, { query, mode, summary: "As fontes foram encontradas, mas o resumo automático está temporariamente indisponível.", sources, searchQueries: [query], summaryUnavailable: true, usage, credit_cost: creditCost });
   }
 
-  const rawSummary = await readTextWithLimit(geminiResponse, MAX_UPSTREAM_SUMMARY_BYTES).catch(() => "");
-  const data = JSON.parse(rawSummary || "null");
-  if (!geminiResponse.ok) {
-    console.error("Gemini summary failed", { status: geminiResponse.status, message: data?.error?.message || "unknown" });
+  if (brainResult.failure) {
+    console.error("Kazer research summary failed", brainResult.failure);
     return sendJson(response, 200, { query, mode, summary: "As fontes foram encontradas, mas o resumo automático está temporariamente indisponível. Você ainda pode abrir cada fonte ou enviar os dados ao KAZER.", sources, searchQueries: [query], summaryUnavailable: true, usage, credit_cost: creditCost });
   }
 
-  return sendJson(response, 200, { query, mode, summary: redactSensitiveText(parseGeminiText(data)).slice(0, 4000) || "As fontes foram encontradas. Abra uma delas para consultar os detalhes.", sources, searchQueries: [query], usage, credit_cost: creditCost });
+  const summary = brainResult.data?.choices?.[0]?.message?.content || "As fontes foram encontradas. Abra uma delas para consultar os detalhes.";
+  return sendJson(response, 200, { query, mode, summary: redactSensitiveText(String(summary)).slice(0, 4000), sources, searchQueries: [query], usage, credit_cost: creditCost });
 };
