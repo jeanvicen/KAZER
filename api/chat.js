@@ -17,14 +17,11 @@ const { callUsageRpc, calculateChatCreditCost } = require("./_usage");
 const { callMcpTool, flattenTools, getConnectedMcpCount, loadMcpRuntime } = require("./_mcp-runtime");
 const { decodeToken, getConnection, githubFetch, repoForClient } = require("./_github");
 const { supabaseRequest } = require("./_kazer-data");
+const { KAZER_BRAIN_VERSION, callKazerBrain } = require("./_kazer-brain");
 
-const DEFAULT_TEXT_MODEL = "openai/gpt-oss-120b";
-const DEFAULT_TEXT_FALLBACK_MODEL = "qwen/qwen3.6-27b";
 const MAX_REQUEST_BYTES = 7 * 1024 * 1024;
 const MAX_TOTAL_ATTACHMENT_BYTES = 4 * 1024 * 1024;
 const MAX_OUTPUT_CHARS = 16000;
-const DEFAULT_VISION_MODEL = "qwen/qwen3.8-27b";
-const DEFAULT_VISION_FALLBACK_MODEL = "qwen/qwen3.6-27b";
 const MAX_GROQ_ATTEMPTS_PER_MODEL = 2;
 const RETRYABLE_GROQ_STATUSES = new Set([429, 500, 502, 503, 504]);
 const MAX_MESSAGES = 24;
@@ -333,74 +330,20 @@ function wait(milliseconds) {
   return new Promise((resolve) => setTimeout(resolve, milliseconds));
 }
 
-async function callGroq({ apiKey, models, messages, hasImages, tools = [], timeoutMs = 30_000, maxAttempts = MAX_GROQ_ATTEMPTS_PER_MODEL }) {
-  let lastFailure = null;
-
-  for (const model of models) {
-    for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
-      let retryAfterHeader = null;
-      try {
-        const requestBody = {
-          model,
-          messages: [{ role: "system", content: SYSTEM_PROMPT }, ...messages],
-          temperature: hasImages ? 0.7 : 0.6,
-          max_completion_tokens: 2200,
-        };
-        if (tools.length) requestBody.tools = tools;
-
-        // GPT OSS aceita níveis como medium; os modelos Qwen exigem none/default.
-        if (!model.startsWith("qwen/")) {
-          requestBody.reasoning_effort = process.env.GROQ_REASONING_EFFORT || "medium";
-        }
-
-        const groqResponse = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${apiKey}`,
-          },
-          body: JSON.stringify(requestBody),
-          signal: AbortSignal.timeout(timeoutMs),
-        });
-        retryAfterHeader = groqResponse.headers.get("retry-after");
-
-        const rawData = await readTextWithLimit(groqResponse, 2 * 1024 * 1024);
-        const data = JSON.parse(rawData || "null");
-        const choice = data?.choices?.[0];
-        const hasUsableResult = Boolean(choice?.message)
-          && (tools.length
-            ? Array.isArray(choice.message.tool_calls) || typeof choice.message.content === "string"
-            : typeof choice.message.content === "string" && choice.message.content.trim().length > 0);
-        if (groqResponse.ok && hasUsableResult) return { data, model };
-
-        lastFailure = {
-          status: groqResponse.status,
-          model,
-          error: groqResponse.ok ? "empty_model_response" : (data?.error?.message || "unknown"),
-        };
-
-        if (!groqResponse.ok && !RETRYABLE_GROQ_STATUSES.has(groqResponse.status)) break;
-      } catch (error) {
-        lastFailure = { status: 0, model, error: error?.message || "network_error" };
-      }
-
-      if (attempt < maxAttempts - 1) {
-        const retryAfter = Number.parseFloat(lastFailure?.status === 429 ? retryAfterHeader : "NaN");
-        const backoff = Number.isFinite(retryAfter)
-          ? Math.min(4000, Math.max(250, retryAfter * 1000))
-          : Math.min(3000, 350 * 2 ** attempt);
-        await wait(backoff + Math.floor(Math.random() * 180));
-      }
-    }
-  }
-
-  return { failure: lastFailure };
+async function callGroq({ messages, hasImages, tools = [], timeoutMs = 30_000, maxAttempts = MAX_GROQ_ATTEMPTS_PER_MODEL }) {
+  return callKazerBrain({
+    messages: [{ role: "system", content: SYSTEM_PROMPT }, ...messages],
+    hasImages,
+    tools,
+    timeoutMs,
+    maxAttempts,
+  });
 }
 
-async function callGroqWithMcp({ apiKey, models, messages, hasImages, mcpServers }) {
+async function callGroqWithMcp({ messages, hasImages, mcpServers }) {
   const { tools, byName } = flattenTools(mcpServers || []);
   let currentMessages = [...messages];
-  let result = await callGroq({ apiKey, models, messages: currentMessages, hasImages, tools });
+  let result = await callGroq({ messages: currentMessages, hasImages, tools });
   if (result.failure || !tools.length) return { ...result, mcpToolsUsed: 0 };
 
   let toolsUsed = 0;
@@ -428,7 +371,7 @@ async function callGroqWithMcp({ apiKey, models, messages, hasImages, mcpServers
       }
       currentMessages.push({ role: "tool", tool_call_id: toolCall.id, content: toolContent });
     }
-    result = await callGroq({ apiKey, models, messages: currentMessages, hasImages: false, tools });
+    result = await callGroq({ messages: currentMessages, hasImages: false, tools });
     if (result.failure) break;
   }
   return { ...result, mcpToolsUsed: toolsUsed };
@@ -464,9 +407,8 @@ module.exports = async function handler(request, response) {
     return sendJson(response, 429, { error: "Limite de mensagens atingido. Aguarde um minuto." });
   }
 
-  const apiKey = process.env.GROQ_API_KEY;
-  if (!apiKey) {
-    console.error("GROQ_API_KEY não configurada no ambiente do servidor.");
+  if (!process.env.HF_TOKEN && !process.env.GROQ_API_KEY) {
+    console.error("Nenhum provedor do cérebro KAZER está configurado no ambiente do servidor.");
     return sendJson(response, 500, { error: "O serviço de chat ainda não foi configurado." });
   }
 
@@ -488,7 +430,7 @@ module.exports = async function handler(request, response) {
     const titleMessages = parseTitleMessages(body?.messages);
     if (!titleMessages) return sendJson(response, 400, { error: "Conversa inválida para gerar título." });
     const titlePrompt = [{ role: "user", content: "Crie um título curto para esta conversa. Responda SOMENTE com o título, em português, com no máximo 6 palavras, sem aspas, sem ponto final e sem explicações. O título deve representar o objetivo principal do usuário, não copiar literalmente a primeira mensagem.\n\nConversa:\n" + titleMessages.map((item) => `${item.role === "user" ? "Usuário" : "KAZER"}: ${item.content}`).join("\n").slice(0, 6000) }];
-    const result = await callGroq({ apiKey, models: [process.env.GROQ_MODEL || DEFAULT_TEXT_MODEL, process.env.GROQ_FALLBACK_MODEL || DEFAULT_TEXT_FALLBACK_MODEL].filter((value, index, values) => values.indexOf(value) === index), messages: titlePrompt, hasImages: false, timeoutMs: 12_000 });
+    const result = await callGroq({ messages: titlePrompt, hasImages: false, timeoutMs: 12_000 });
     if (result.failure) return sendJson(response, 502, { error: "Não foi possível gerar o título agora." });
     const title = cleanModelContent(result.data?.choices?.[0]?.message?.content).replace(/[\r\n]+/g, " ").replace(/^['"“”]+|['"“”]+$/g, "").trim().slice(0, 72);
     if (!title) return sendJson(response, 502, { error: "O título gerado estava vazio." });
@@ -552,12 +494,6 @@ module.exports = async function handler(request, response) {
 
   const mcpServers = await loadMcpRuntime(user.id, body?.mcpConnectorIds);
   const hasImages = prepared.imageParts.length > 0;
-  const models = hasImages
-    ? [
-        process.env.GROQ_VISION_MODEL || DEFAULT_VISION_MODEL,
-        process.env.GROQ_VISION_FALLBACK_MODEL || DEFAULT_VISION_FALLBACK_MODEL,
-      ].filter((value, index, values) => values.indexOf(value) === index)
-    : [process.env.GROQ_MODEL || DEFAULT_TEXT_MODEL, process.env.GROQ_FALLBACK_MODEL || DEFAULT_TEXT_FALLBACK_MODEL].filter((value, index, values) => values.indexOf(value) === index);
   const fileInstruction = prepared.fileContext
     ? `\n\nUse os anexos abaixo como contexto para responder:\n\n${prepared.fileContext}`
     : "";
@@ -576,7 +512,7 @@ module.exports = async function handler(request, response) {
     { role: "user", content: latestContent },
   ];
 
-  const result = await callGroqWithMcp({ apiKey, models, messages: apiMessages, hasImages, mcpServers });
+  const result = await callGroqWithMcp({ messages: apiMessages, hasImages, mcpServers });
   if (result.failure) {
     console.error("Groq request failed", result.failure);
     return sendJson(response, 502, { error: "O KAZER não conseguiu concluir a resposta agora. Tente novamente." });
@@ -590,6 +526,7 @@ module.exports = async function handler(request, response) {
     }
 
   return sendJson(response, 200, {
+    brain: KAZER_BRAIN_VERSION,
     message: { role: "assistant", content: content.trim() },
     attachments: prepared.fileNames,
     usage,
@@ -600,4 +537,3 @@ module.exports = async function handler(request, response) {
     repository_context: repositoryContext?.fullName || null,
   });
 };
-

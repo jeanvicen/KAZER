@@ -27,6 +27,8 @@ assert(chatApi.includes("hasExpectedFileSignature"), "A API não valida assinatu
 assert(chatApi.includes("attachment_signature_invalid"), "A API não rejeita assinatura de anexo inválida");
 assert(chatApi.includes("MAX_TOTAL_ATTACHMENT_BYTES"), "A API não limita o tamanho total dos anexos");
 assert(chatApi.includes("MAX_IMAGES"), "A API não limita a quantidade de imagens");
+assert(chatApi.includes("_kazer-brain") && chatApi.includes("KAZER_BRAIN_VERSION"), "O chat não está conectado ao cérebro KAZER");
+assert(chatApi.includes('brain: KAZER_BRAIN_VERSION'), "A resposta não identifica a versão pública kazer.v1");
 assert(chatUi.includes("selectedFiles = files;"), "O frontend não preserva anexos depois de uma falha");
 assert(chatUi.includes("A mensagem que falhou continua sendo contexto válido"), "O frontend ainda remove o contexto quando a resposta falha");
 assert(!chatUi.includes("conversationMessages.pop();"), "O frontend ainda descarta a mensagem que falhou");
