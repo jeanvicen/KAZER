@@ -4021,6 +4021,22 @@
         .app.desktop-sidebar-enabled .settings-usage-heading .settings-mobile-credit-balance { font-size: 23px; }
         .app.desktop-sidebar-enabled .settings-mobile-credit-next { max-width: none; font-size: 9px; line-height: 1.4; text-align: left; }
         .app.desktop-sidebar-enabled .settings-mobile-upgrade { width: 100%; min-height: 36px; margin-top: 2px; padding: 0 10px; border-radius: 11px; font-size: 10px; }
+        .app.desktop-sidebar-enabled section.settings-popover { width: min(1060px, calc(100vw - 64px)); height: min(760px, calc(100dvh - 56px)); grid-template-columns: 300px minmax(0,1fr); }
+        .app.desktop-sidebar-enabled section.settings-popover .settings-nav { min-width: 0; padding: 24px 16px 20px; }
+        .app.desktop-sidebar-enabled #settingsMobileAccountCard { gap: 14px; margin: 14px 0 18px; padding: 16px; border-radius: 19px; background: radial-gradient(180px 120px at 100% 0%, rgba(229,72,85,.16), transparent 78%), linear-gradient(150deg, rgba(229,72,85,.11), rgba(25,25,32,.92) 66%); box-shadow: 0 16px 36px rgba(0,0,0,.18), inset 0 1px 0 rgba(255,255,255,.045); }
+        .app.desktop-sidebar-enabled .settings-mobile-account-top { grid-template-columns: 40px minmax(0,1fr) auto; gap: 10px; }
+        .app.desktop-sidebar-enabled .settings-mobile-account-avatar { width: 40px; height: 40px; font-size: 14px; }
+        .app.desktop-sidebar-enabled .settings-mobile-account-identity strong { font-size: 13px; }
+        .app.desktop-sidebar-enabled .settings-mobile-account-identity small { font-size: 9.5px; }
+        .app.desktop-sidebar-enabled .settings-mobile-account-plan { grid-column: auto; display: grid; justify-items: end; gap: 4px; padding: 0; border: 0; }
+        .app.desktop-sidebar-enabled .settings-mobile-account-plan-value { padding: 4px 9px; color: #f6e7b4; border-color: rgba(245,220,120,.30); background: rgba(245,220,120,.09); }
+        .app.desktop-sidebar-enabled .settings-mobile-account-credit { gap: 9px; margin-top: 1px; padding: 13px 0 0; border-top-color: rgba(255,255,255,.10); }
+        .app.desktop-sidebar-enabled .settings-usage-heading .settings-mobile-credit-label { font-size: 8.5px; letter-spacing: .16em; }
+        .app.desktop-sidebar-enabled .settings-usage-heading .settings-mobile-credit-balance { color: #fff7de; font-size: 27px; font-weight: 720; }
+        .app.desktop-sidebar-enabled .settings-usage-meter { height: 8px; background: rgba(255,255,255,.11); }
+        .app.desktop-sidebar-enabled .settings-usage-meter span { box-shadow: 0 0 18px rgba(229,72,85,.48); }
+        .app.desktop-sidebar-enabled .settings-mobile-credit-next { font-size: 9.5px; }
+        .app.desktop-sidebar-enabled .settings-mobile-upgrade { min-height: 38px; margin-top: 3px; border-radius: 12px; font-size: 10.5px; font-weight: 720; letter-spacing: .01em; }
       }
     </style>
     <script>
@@ -6938,6 +6954,7 @@
     <script src="/interface/kazer-workspace.js"></script>
   </body>
 </html>
+
 
 
 
