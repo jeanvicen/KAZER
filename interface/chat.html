@@ -187,6 +187,7 @@
       .credit-indicator.is-consuming {
         animation: credit-consume-pulse 620ms cubic-bezier(.22, 1, .36, 1);
       }
+      .credit-indicator-label { color: var(--text-dim); font-size: 8px; font-weight: 800; letter-spacing: .14em; line-height: 1; text-transform: uppercase; }
       .credit-indicator-value {
         min-width: 3ch;
         font-size: 15px;
@@ -210,6 +211,7 @@
         100% { opacity: 1; transform: translateY(0) scale(1); }
       }
       @media (max-width: 560px) { .credit-indicator { left: 14px; min-height: 36px; padding: 0 10px; } .credit-indicator-value { font-size: 15px; } }
+      .app.in-conversation .credit-indicator { display: none !important; }
 
       .conversation-title { color: transparent; background: var(--metal-gradient); background-size: 230% 100%; background-clip: text; -webkit-background-clip: text; font-size: 17px; font-weight: 440; letter-spacing: -.022em; opacity: 0; transform: translateY(-5px); transition: opacity 240ms var(--ease), transform 240ms var(--ease); animation: metal-word-shine 4.4s linear infinite; }
 
@@ -4101,7 +4103,7 @@
 
       <header class="topbar" aria-label="Barra de conversa">
         <a class="chat-history-back" id="chatHistoryBack" href="?view=history" aria-label="Abrir histórico de chats" title="Histórico de chats" onclick="event.preventDefault(); const app=document.getElementById('app'), history=document.getElementById('historyScreen'), header=document.getElementById('newChatHeader'); app?.classList.add('history-active'); app?.classList.remove('new-chat-active','kazer-active'); if (history) { history.hidden=false; history.setAttribute('aria-hidden','false'); } if (header) { header.hidden=true; header.setAttribute('aria-hidden','true'); } window.history.pushState({view:'history'}, '', '?view=history');"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4.5 12a7.5 7.5 0 1 0 2.2-5.3"></path><path d="M4.5 5.3v4.2h4.2"></path><path d="M12 8.2v4.2l2.8 1.7"></path></svg></a>
-        <div class="credit-indicator" id="creditIndicator" aria-label="Uso do ciclo" hidden><span class="credit-indicator-value" id="creditBalanceValue">0</span></div>
+        <div class="credit-indicator" id="creditIndicator" aria-label="Uso do ciclo" hidden><span class="credit-indicator-label" aria-hidden="true">USO</span><span class="credit-indicator-value" id="creditBalanceValue">0</span></div>
       </header>
 
       <div class="profile-popover" id="profilePopover" role="dialog" aria-label="Perfil">
@@ -6954,6 +6956,7 @@
     <script src="/interface/kazer-workspace.js"></script>
   </body>
 </html>
+
 
 
 
