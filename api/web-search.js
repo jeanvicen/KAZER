@@ -16,7 +16,7 @@ const {
 const { callUsageRpc, calculateWebSearchCreditCost } = require("./_usage");
 const { callKazerBrain } = require("./_kazer-brain");
 
-const DEFAULT_MODEL = "Qwen/Qwen3.5-9B";
+const DEFAULT_MODEL = "Qwen/Qwen3-8B";
 const MAX_QUERY_CHARS = 240;
 const MAX_REQUEST_BYTES = 16 * 1024;
 const MAX_UPSTREAM_SEARCH_BYTES = 2 * 1024 * 1024;

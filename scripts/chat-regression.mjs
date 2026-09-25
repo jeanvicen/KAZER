@@ -26,6 +26,7 @@ try {
 }
 assert(chatApi.includes("hasExpectedFileSignature"), "A API não valida assinatura dos anexos");
 assert(webApi.includes("callKazerBrain") && webApi.includes("KAZER_SEARCH_MODEL"), "A pesquisa não usa o cérebro Qwen configurado");
+assert(webApi.includes("Qwen/Qwen3-8B"), "A pesquisa não possui modelo Qwen compatível padrão");
 assert(chatUi.includes("web-source-details") && chatUi.includes("Fontes encontradas"), "A pesquisa não mostra fontes em painel recolhível");
 assert(chatApi.includes("attachment_signature_invalid"), "A API não rejeita assinatura de anexo inválida");
 assert(chatApi.includes("MAX_TOTAL_ATTACHMENT_BYTES"), "A API não limita o tamanho total dos anexos");
