@@ -11,7 +11,7 @@ const {
   supabaseBaseUrl,
 } = require("./_security");
 
-const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1xanVub3B6eWNkZXp6am1saGlwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc4Mzg3NDksImV4cCI6MjEwMzQxNDc0OX0.Y_o2_QQhZzuCjvHdEfxaR5VrAxo7NFenPaDmdHN3bwM";
+const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY || "sb_publishable_1z--HkCLItfs9qqHdf8WHA_WwhPVfnS";
 
 module.exports = async function handler(request, response) {
   if (request.method !== "GET") {

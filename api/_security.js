@@ -10,7 +10,7 @@ const DEFAULT_AUTH_TIMEOUT_MS = 5000;
 // A anon key é pública por definição e também é usada pelo frontend. O servidor
 // continua exigindo o token Bearer do usuário; nunca usa service_role como fallback.
 const DEFAULT_SUPABASE_URL = "https://mqjunopzycdezzjmlhip.supabase.co";
-const DEFAULT_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1xanVub3B6eWNkZXp6am1saGlwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc4Mzg3NDksImV4cCI6MjEwMzQxNDc0OX0.Y_o2_QQhZzuCjvHdEfxaR5VrAxo7NFenPaDmdHN3bwM";
+const DEFAULT_SUPABASE_ANON_KEY = "sb_publishable_1z--HkCLItfs9qqHdf8WHA_WwhPVfnS";
 
 function configuredSupabaseUrl() {
   const value = String(process.env.SUPABASE_URL || DEFAULT_SUPABASE_URL).trim();
