@@ -106,9 +106,38 @@ async function fetchPublicSearch(query, mode) {
   throw lastError || new Error("public_search_empty");
 }
 
+function extractPageText(html) {
+  return decodeHtml(String(html || "")
+    .replace(/<script[\s\S]*?<\/script>/gi, " ")
+    .replace(/<style[\s\S]*?<\/style>/gi, " ")
+    .replace(/<noscript[\s\S]*?<\/noscript>/gi, " ")
+    .replace(/<svg[\s\S]*?<\/svg>/gi, " ")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/\s+/g, " ")).slice(0, 2400);
+}
+
+async function enrichSources(sources) {
+  const selected = sources.slice(0, 5);
+  const enriched = await Promise.all(selected.map(async (source) => {
+    try {
+      const page = await fetch(source.uri, {
+        headers: { "User-Agent": "Mozilla/5.0 (compatible; KazerResearch/1.0)" },
+        signal: AbortSignal.timeout(6_000),
+      });
+      const contentType = String(page.headers.get("content-type") || "").toLowerCase();
+      if (!page.ok || (contentType && !contentType.includes("text/html"))) return source;
+      const pageText = extractPageText(await readTextWithLimit(page, 700 * 1024));
+      return pageText.length >= 120 ? { ...source, pageText } : source;
+    } catch {
+      return source;
+    }
+  }));
+  return enriched.concat(sources.slice(selected.length));
+}
+
 function getPrompt(query, mode, sources) {
   const focus = { all: "organize as informações mais importantes", web: "priorize páginas gerais", images: "priorize referências relacionadas a imagens", videos: "priorize referências relacionadas a vídeos", news: "priorize informações recentes" }[mode] || "organize as informações mais importantes";
-  const context = sources.map((source, index) => `[${index + 1}] ${source.title}\n${source.snippet}\nURL: ${source.uri}`).join("\n\n");
+  const context = sources.map((source, index) => `[${index + 1}] ${source.title}\n${source.pageText || source.snippet}\nURL: ${source.uri}`).join("\n\n");
   return `Você é o resumo do WebKazer. Analise as fontes públicas encontradas sobre “${query}” e ${focus}. Responda em português brasileiro em até 5 parágrafos curtos. Não invente fatos, não crie links e indique quando as fontes não forem suficientes.\n\nFontes encontradas:\n${context}`;
 }
 
@@ -197,6 +226,7 @@ module.exports = async function handler(request, response) {
     });
   }
 
+  sources = await enrichSources(sources);
   const model = process.env.KAZER_SEARCH_MODEL || DEFAULT_MODEL;
   let brainResult;
   try {
@@ -216,7 +246,8 @@ module.exports = async function handler(request, response) {
 
   if (brainResult.failure) {
     console.error("Kazer research summary failed", brainResult.failure);
-    return sendJson(response, 200, { query, mode, summary: "As fontes foram encontradas, mas o resumo automático está temporariamente indisponível. Você ainda pode abrir cada fonte ou enviar os dados ao KAZER.", sources, searchQueries: [query], summaryUnavailable: true, usage, credit_cost: creditCost });
+    const fallbackSummary = sources.slice(0, 5).map((source, index) => `${index + 1}. ${source.title}: ${source.pageText || source.snippet || "Consulte a fonte para ver os detalhes."}`).join("\n\n");
+    return sendJson(response, 200, { query, mode, summary: `Encontrei estas informações nas páginas pesquisadas:\n\n${fallbackSummary}`.slice(0, 4000), sources, searchQueries: [query], summaryUnavailable: true, usage, credit_cost: creditCost });
   }
 
   const summary = brainResult.data?.choices?.[0]?.message?.content || "As fontes foram encontradas. Abra uma delas para consultar os detalhes.";
