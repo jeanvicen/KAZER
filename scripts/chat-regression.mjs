@@ -27,7 +27,7 @@ try {
 assert(chatApi.includes("hasExpectedFileSignature"), "A API não valida assinatura dos anexos");
 assert(webApi.includes("callKazerBrain") && webApi.includes("KAZER_SEARCH_MODEL"), "A pesquisa não usa o cérebro Qwen configurado");
 assert(webApi.includes("Qwen/Qwen3-8B"), "A pesquisa não possui modelo Qwen compatível padrão");
-assert(webApi.includes("enrichSources") && webApi.includes("fetch(source.uri"), "A pesquisa não lê o conteúdo das páginas encontradas");
+assert(webApi.includes("enrichSources") && webApi.includes("fetchPublicPage") && webApi.includes("requestPinnedUrl"), "A pesquisa não lê páginas com destinos e redirects validados");
 assert(webApi.includes("Encontrei estas informações nas páginas pesquisadas"), "A pesquisa não possui fallback informativo");
 assert(chatUi.includes("web-source-details") && chatUi.includes("Fontes encontradas"), "A pesquisa não mostra fontes em painel recolhível");
 assert(chatApi.includes("attachment_signature_invalid"), "A API não rejeita assinatura de anexo inválida");

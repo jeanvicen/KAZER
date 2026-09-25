@@ -4359,6 +4359,7 @@
     </main>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="/interface/web-search-intent.js"></script>
     <script>
       (() => {
         const app = document.getElementById("app");
@@ -5435,16 +5436,21 @@
           }
         };
 
-        const isExplicitWebResearchRequest = (value) => {
-          const text = String(value || "").trim();
-          if (!text) return false;
-          if (/\b(?:não|nao|nunca|sem)\s+(?:(?:(?:quero|preciso|posso|devo|precisa|deve|precisar)(?:\s+que)?|é\s+necessário\s+que)\s+)?(?:você\s+)?(?:pesquise|pesquisar|busque|procure|investigue)\b|\b(?:não|nao)\s+(?:é|seria)\s+(?:necessário|preciso)\s+que\s+(?:você\s+)?(?:pesquise|pesquisar|busque|procure|investigue)\b/i.test(text)) return false;
-          const directResearchVerb = /\b(?:pesquise|pesquisar|investigue|investigar)\b/i.test(text);
-          const explicitResearchPhrase = /\b(?:faça|realize|conduza)\s+(?:uma\s+)?pesquisa\b|\bpesquisa\s+(?:profunda|detalhada|atualizada|na\s+(?:web|internet)|sobre)\b/i.test(text);
-          const explicitWebLookup = /\b(?:busque|procure)\s+(?:na\s+(?:web|internet)|online|(?:fontes|informa[cç][oõ]es|dados|artigos|notícias|estudos|resultados)\b)/i.test(text);
-          const asksHowTo = /^(?:como|o que significa|defina|me ensine)\b/i.test(text) && !/\b(?:pesquise|investigue|busque|procure)\b/i.test(text);
-          const explanatoryRequest = /^explique\b/i.test(text) && !/\b(?:pesquise|investigue|busque|procure)\b/i.test(text);
-          return !asksHowTo && !explanatoryRequest && (directResearchVerb || explicitResearchPhrase || explicitWebLookup);
+        const getPreviousUserPrompt = () => {
+          const previous = [...conversationMessages].reverse().find((message) => message?.role === "user");
+          const content = String(previous?.content || "");
+          return /\n\nAnexos enviados:/i.test(content) ? "" : content.trim();
+        };
+
+        const getWebResearchRequest = (value, previousUserPrompt = "") => {
+          const intent = window.KazerSearchIntent;
+          if (!intent) return null;
+          if (intent.isSearchOptOut(value)) return null;
+          const followUp = intent.isResearchFollowUp(value, previousUserPrompt);
+          if (!intent.isWebResearchRequest(value) && !followUp) return null;
+          const query = intent.buildResearchQuery(value, previousUserPrompt);
+          const question = followUp ? `${previousUserPrompt}\nContinuação da pergunta: ${value}` : value;
+          return { query, question, followUp };
         };
 
         const createWebResearchProgress = (query) => {
@@ -5549,8 +5555,12 @@
                 : sources.length
                   ? "O resumo da pesquisa aparece na mensagem abaixo."
                   : "Nenhuma fonte pública foi retornada; não vou apresentar dados atuais como verificados.";
+              const pagesRead = sources.filter((source) => source?.pageRead === true).length;
+              const snippetOnly = Math.max(0, sources.length - pagesRead);
               note.textContent = sources.length
-                ? "Resultados reais da busca: títulos e trechos. As páginas completas não foram abertas automaticamente."
+                ? pagesRead
+                  ? `Fontes reais: o conteúdo de ${pagesRead} página(s) foi consultado; ${snippetOnly} resultado(s) usam apenas título e trecho da busca.`
+                  : "Fontes reais encontradas; o resumo usa títulos e trechos, pois nenhuma página pôde ser consultada."
                 : "A pesquisa não retornou fontes para confirmar informações atuais.";
               note.hidden = false;
               const creditCost = Number(result?.credit_cost);
@@ -6648,7 +6658,9 @@
           if (!text && files.length === 0) return;
 
           const prompt = text || "Analise os arquivos anexados e explique os pontos principais.";
-          const useWebResearch = files.length === 0 && isExplicitWebResearchRequest(prompt);
+          const previousUserPrompt = getPreviousUserPrompt();
+          const webResearchRequest = files.length === 0 ? getWebResearchRequest(prompt, previousUserPrompt) : null;
+          const useWebResearch = Boolean(webResearchRequest);
           const chatId = rememberChat(prompt, files);
           const taskContext = useWebResearch ? null : (window.kazerWorkspace?.startTask?.({ prompt, attachmentCount: files.length }) || null);
           window.kazerActiveTaskContext = taskContext;
@@ -6708,7 +6720,7 @@
             const result = useWebResearch
               ? await fetchWithAuth("/api/web-search", {
                   method: "POST",
-                  body: JSON.stringify({ query: prompt, mode: "web" }),
+                  body: JSON.stringify({ query: webResearchRequest.query, question: webResearchRequest.question, billingQuery: prompt, mode: "web" }),
                   signal: controller.signal,
                 })
               : await fetchWithAuth("/api/chat", {

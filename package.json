@@ -6,7 +6,8 @@
   "scripts": {
     "security:check": "node scripts/security-check.mjs",
     "chat:regression": "node scripts/chat-regression.mjs",
-    "check": "npm run security:check && npm run chat:regression",
+    "web-search:regression": "node scripts/web-search-regression.mjs",
+    "check": "npm run security:check && npm run chat:regression && npm run web-search:regression",
     "integration:test": "node scripts/mcp-smoke.mjs && node scripts/api-smoke.mjs && node scripts/github-oauth-smoke.mjs && node scripts/production-config-smoke.mjs",
     "security:audit": "npm audit --omit=dev"
   },
