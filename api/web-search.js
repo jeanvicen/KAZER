@@ -18,6 +18,7 @@ const {
 const { callUsageRpc, calculateWebSearchCreditCost } = require("./_usage");
 const { callKazerBrain } = require("./_kazer-brain");
 const {
+  getSearchQueryVariants,
   isPublicAddress,
   isSafePublicHostname,
   normalizeSearchQuery,
@@ -54,24 +55,21 @@ async function fetchSearchProvider(provider) {
 }
 
 async function fetchPublicSearch(query, mode) {
-  const suffix = { images: " images", videos: " videos", news: " notícias" }[mode] || "";
-  const encodedQuery = encodeURIComponent(`${query}${suffix}`.trim());
-  const providers = [
-    { url: `https://www.bing.com/search?q=${encodedQuery}`, parse: parseBingResults },
-    { url: `https://html.duckduckgo.com/html/?q=${encodedQuery}`, parse: parseDuckResults },
-  ];
+  const searchQueries = getSearchQueryVariants(query, mode);
+  const providers = searchQueries.flatMap((searchQuery) => {
+    const encodedQuery = encodeURIComponent(searchQuery);
+    return [
+      { url: `https://www.bing.com/search?q=${encodedQuery}`, parse: parseBingResults },
+      { url: `https://html.duckduckgo.com/html/?q=${encodedQuery}`, parse: parseDuckResults },
+    ];
+  });
   const settled = await Promise.allSettled(providers.map(fetchSearchProvider));
   const successful = settled.filter((result) => result.status === "fulfilled");
   if (!successful.length) {
     const failure = settled.find((result) => result.status === "rejected");
-    throw failure?.reason || new Error("public_search_empty");
+    throw failure?.reason || new Error("public_search_unavailable");
   }
-  const ranked = rankAndDedupeResults(query, successful.flatMap((result) => result.value), MAX_RESULTS);
-  if (!ranked.length) {
-    const failure = settled.find((result) => result.status === "rejected");
-    throw failure?.reason || new Error("public_search_empty");
-  }
-  return ranked;
+  return rankAndDedupeResults(query, successful.flatMap((result) => result.value), MAX_RESULTS);
 }
 
 function decodeHtml(value) {

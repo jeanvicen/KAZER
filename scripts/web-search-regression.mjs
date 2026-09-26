@@ -19,6 +19,8 @@ const positive = [
   "O restaurante está aberto agora?",
   "Quais são as notícias de hoje sobre tecnologia?",
   "Pesquise a história da internet",
+  "Procure hotéis de Ivaiporã",
+  "Quero achar hotéis em Ivaiporã",
 ];
 for (const question of positive) assert.equal(intent.isWebResearchRequest(question), true, `Deveria pesquisar: ${question}`);
 
@@ -29,6 +31,8 @@ const negative = [
   "Me ensine a converter dólar para real.",
   "A história do futebol brasileiro",
   "Qual é a capital da França?",
+  "Por que tentar achar",
+  "Por que tentar achar hotéis de Ivaiporã?",
   "Quanto é 2 + 2?",
   "Não precisa pesquisar, só explique o conceito de inflação.",
   "Sem pesquisar na internet, me explique como funciona o dólar.",
@@ -70,6 +74,17 @@ const ranked = utils.rankAndDedupeResults("dólar hoje cotação", [
 assert.equal(ranked.length, 2, "Variantes com parâmetros de rastreamento devem ser deduplicadas");
 assert.match(ranked[0].title, /Cotação do dólar hoje/);
 assert.match(ranked[0].snippet, /mais detalhes/, "A duplicata deve contribuir com o melhor trecho disponível");
+const localContext = utils.getLocalSearchContext("hotéis de Ivaiporã");
+assert.deepEqual(localContext.locationTokens, ["ivaipora"], "A localidade da busca por hotéis deve ser obrigatória");
+const localQueries = utils.getSearchQueryVariants("Procure hotéis de Ivaiporã", "web");
+assert.equal(localQueries.length, 2, "Buscas locais devem incluir uma consulta focada na cidade");
+assert.match(localQueries[1], /"Ivaiporã"/);
+const localResults = utils.rankAndDedupeResults("hotéis de Ivaiporã", [
+  { title: "Revenue management para hotéis", uri: "https://example.org/adr", snippet: "ADR e estratégias de precificação hoteleira." },
+  { title: "Hotéis e pousadas em Ivaiporã", uri: "https://example.net/hoteis-ivaipora", snippet: "Opções de hospedagem em Ivaiporã." },
+]);
+assert.equal(localResults.length, 1, "Resultados sem a cidade não podem aparecer em uma busca local");
+assert.match(localResults[0].title, /Ivaiporã/);
 assert.equal(utils.isPublicAddress("8.8.8.8"), true);
 assert.equal(utils.isPublicAddress("192.0.2.10"), false);
 assert.equal(utils.isPublicAddress("127.0.0.1"), false);
@@ -92,6 +107,7 @@ assert.match(chat, /<script src="\/interface\/web-search-intent\.js"><\/script>/
 assert.match(chat, /files\.length === 0 \? getWebResearchRequest\(prompt, previousUserPrompt\)/, "A pesquisa automática deve respeitar anexos e contexto");
 assert.match(chat, /billingQuery: prompt/);
 assert.match(chat, /source\?\.pageRead === true/);
+assert.match(api, /getSearchQueryVariants\(query, mode\)/, "Consultas locais devem ganhar uma variante focada");
 assert.match(api, /Promise\.allSettled\(providers\.map\(fetchSearchProvider\)\)/, "Bing e DuckDuckGo devem ser consultados em paralelo");
 assert.match(api, /MAX_PAGE_REDIRECTS = 3/);
 assert.match(api, /requestPinnedUrl/);

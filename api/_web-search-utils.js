@@ -3,6 +3,14 @@ const { isIP } = require("node:net");
 const SEARCH_STOP_WORDS = new Set((
   "a ao aos as o os de da das do dos em no nos na nas por para com sem sobre e ou um uma uns umas que qual quais quem quando onde como quanto quantos quantas me meu minha seus suas seu sua voce vc pode poderia gostaria quero queria preciso pesquisar pesquisa busque buscar procura procurar encontre encontrar hoje agora atualmente atual recente recentes mais melhor melhores isso aquilo esta estao eh the a an and are as at be by for from how in into is it of on or that this to with what when where which who why will today current latest"
 ).split(/\s+/));
+const LOCATION_MODIFIERS = new Set("aberto aberta abertos abertas fechado fechada fechados fechadas agora hoje amanha ontem perto nearby open closed available melhor melhores barato baratos barata baratas economico economica atual atualizada atualizados recente recentes mim aqui downtown centro cidade bairro luxo luxury praia montanha campo business family casal".split(/\s+/));
+const LOCAL_SEARCH_GROUPS = [
+  { key: "hotel", terms: ["hotel", "hoteis", "hotels", "pousada", "pousadas", "hospedagem", "hospedagens", "alojamento", "alojamentos", "motel", "motels", "resort", "resorts"], searchTerm: "hotel", searchHint: "pousada hospedagem reservas", synonyms: ["hotel", "pousada", "hospedagem", "alojamento", "motel", "resort", "lodging", "accommodation", "inn"] },
+  { key: "restaurant", terms: ["restaurante", "restaurantes", "restaurant", "restaurants", "lanchonete", "lanchonetes", "pizzaria", "pizzarias", "cafeteria", "cafeterias"], searchTerm: "restaurante", searchHint: "endereco cardapio", synonyms: ["restaurante", "lanchonete", "pizzaria", "cafeteria", "restaurant", "eatery"] },
+  { key: "pharmacy", terms: ["farmacia", "farmacias", "pharmacy", "pharmacies", "drogaria", "drogarias"], searchTerm: "farmacia", searchHint: "endereco telefone", synonyms: ["farmacia", "drogaria", "pharmacy"] },
+  { key: "healthcare", terms: ["hospital", "hospitais", "clinica", "clinicas", "medico", "medicos", "dentista", "dentistas"], searchTerm: "clinica", searchHint: "endereco telefone", synonyms: ["hospital", "clinica", "medico", "dentista"] },
+  { key: "retail", terms: ["loja", "lojas", "mercado", "mercados", "supermercado", "supermercados", "store", "stores"], searchTerm: "loja", searchHint: "endereco telefone", synonyms: ["loja", "mercado", "supermercado", "store", "shop"] },
+];
 
 function cleanText(value) {
   return String(value || "")
@@ -212,13 +220,86 @@ function canonicalSearchUrl(value) {
   }
 }
 
+function foldSearchText(value) {
+  return cleanText(value).normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+}
+
+function normalizeSearchToken(value) {
+  const token = String(value || "");
+  const equivalents = {
+    hoteis: "hotel", hotels: "hotel", motels: "motel", resorts: "resort",
+    pousadas: "pousada", hospedagens: "hospedagem", alojamentos: "alojamento",
+    restaurantes: "restaurante", restaurants: "restaurant", lanchonetes: "lanchonete",
+    pizzarias: "pizzaria", cafeterias: "cafeteria", farmacias: "farmacia",
+    pharmacies: "pharmacy", drogarias: "drogaria", clinicas: "clinica",
+    hospitais: "hospital", medicos: "medico", dentistas: "dentista",
+    mercados: "mercado", supermercados: "supermercado", lojas: "loja", stores: "store",
+  };
+  return equivalents[token] || token;
+}
+
 function searchTokens(value) {
-  return cleanText(value)
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase()
+  return foldSearchText(value)
     .split(/[^a-z0-9]+/)
-    .filter((token) => token.length > 2 && !SEARCH_STOP_WORDS.has(token));
+    .filter((token) => token.length > 2 && !SEARCH_STOP_WORDS.has(token))
+    .map(normalizeSearchToken);
+}
+
+function getLocalSearchContext(query) {
+  const original = cleanText(query);
+  const folded = foldSearchText(original);
+  const category = LOCAL_SEARCH_GROUPS.find((group) => group.terms.some((term) => new RegExp(`\\b${term}\\b`).test(folded)));
+  if (!category) return null;
+
+  const separators = [...original.matchAll(/\b(?:perto\s+de|em|no|na|de|do|da|para|in|near)\s+/giu)];
+  let locationText = "";
+  if (separators.length) {
+    const separator = separators[separators.length - 1];
+    locationText = original.slice(separator.index + separator[0].length);
+    locationText = locationText.split(/[?!.;,]/, 1)[0]
+      .replace(/\b(?:abertos?|abertas?|fechados?|fechadas?|open|closed|available|agora|hoje|amanha|ontem|perto|near)\b.*$/iu, "")
+      .trim();
+    if (/^(?:de|do|da|para)\s/i.test(separator[0]) && !/^\p{Lu}/u.test(locationText)) locationText = "";
+  }
+
+  const categoryTokens = new Set(category.terms.flatMap((term) => searchTokens(term)));
+  const queryTokens = [...new Set(searchTokens(original))];
+  const locationTokens = (searchTokens(locationText).length
+    ? searchTokens(locationText)
+    : queryTokens.filter((token) => !categoryTokens.has(token) && !LOCATION_MODIFIERS.has(token)))
+    .filter((token) => !LOCATION_MODIFIERS.has(token))
+    .slice(0, 3);
+  return { ...category, locationText: locationText || locationTokens.join(" "), locationTokens };
+}
+
+function getSearchQueryVariants(query, mode = "all") {
+  const base = buildSearchQuery(query, mode);
+  const local = getLocalSearchContext(normalizeSearchQuery(query));
+  if (!local?.locationText || !local.locationTokens.length) return [base];
+  const suffix = { images: " imagens", videos: " vídeos", news: " notícias" }[mode] || "";
+  const focused = `${local.searchTerm} "${local.locationText}" ${local.searchHint}${suffix}`.trim();
+  return [...new Set([base, focused].map((value) => value.trim()).filter(Boolean))].slice(0, 2);
+}
+
+function hasLocalCategoryMatch(context, sourceTokens) {
+  return context.synonyms.some((synonym) => {
+    const tokens = searchTokens(synonym);
+    return tokens.length > 0 && tokens.every((token) => sourceTokens.has(token));
+  });
+}
+
+function isRelevantResult(query, source) {
+  const sourceTokens = new Set(searchTokens(`${source.title} ${source.snippet} ${source.uri}`));
+  const local = getLocalSearchContext(query);
+  if (local) {
+    const hasLocation = !local.locationTokens.length || local.locationTokens.every((token) => sourceTokens.has(token));
+    return hasLocation && hasLocalCategoryMatch(local, sourceTokens);
+  }
+  const queryTokens = [...new Set(searchTokens(query))];
+  if (!queryTokens.length) return true;
+  const matched = queryTokens.filter((token) => sourceTokens.has(token)).length;
+  if (queryTokens.length === 1) return matched === 1;
+  return matched >= Math.min(2, queryTokens.length) && matched / queryTokens.length >= 0.3;
 }
 
 function relevanceScore(query, source) {
@@ -236,8 +317,8 @@ function relevanceScore(query, source) {
     if (snippetMatch) score += 1.25;
   }
   score += (matched / queryTokens.length) * 5;
-  const phrase = cleanText(query).toLowerCase();
-  if (phrase.length > 9 && cleanText(source.title).toLowerCase().includes(phrase)) score += 6;
+  const phrase = foldSearchText(query);
+  if (phrase.length > 9 && foldSearchText(source.title).includes(phrase)) score += 6;
   try {
     const host = new URL(source.uri).hostname.toLowerCase();
     if (host.endsWith(".gov.br") || host.endsWith(".gov") || host.endsWith(".edu.br") || host.endsWith(".edu")) score += 1.5;
@@ -263,6 +344,7 @@ function rankAndDedupeResults(query, values, maximum = 8) {
     }
   }
   return [...deduplicated.values()]
+    .filter((source) => isRelevantResult(query, source))
     .map((source) => ({ ...source, score: relevanceScore(query, source) }))
     .sort((left, right) => right.score - left.score || left.order - right.order)
     .slice(0, maximum)
@@ -273,6 +355,8 @@ module.exports = {
   buildSearchQuery,
   canonicalSearchUrl,
   decodeBingRedirect,
+  getLocalSearchContext,
+  getSearchQueryVariants,
   isPublicAddress,
   isSafePublicHostname,
   normalizeSearchQuery,

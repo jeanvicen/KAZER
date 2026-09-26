@@ -23,9 +23,11 @@
     const text = normalize(value);
     if (!text || isSearchOptOut(text)) return false;
 
-    const explicitSearch = /\b(?:pesquise|pesquisar|pesquisa(?:r)?\s+(?:sobre|na|no|por)|busque|buscar|busca\s+(?:na|no|por)|procure|procurar|investigue|investigar|encontre|encontrar|ache|achar)\b/.test(text)
-      || /\b(?:na|no|pela|pelo)\s+(?:web|internet|google)\b|\bgoogle\s+(?:search|maps?)\b|\bonline\b/.test(text)
-      || /\b(?:fontes|links|artigos|noticias|estudos|resultados)\s+(?:atuais|recentes|confiaveis|oficiais)\b/.test(text);
+    const searchAction = "(?:pesquise|pesquisar|busque|buscar|busca|procure|procurar|procura|investigue|investigar|investiga|encontre|encontrar|ache|achar|acha|localize|localizar)";
+    const explicitSearch = new RegExp(`^(?:por favor[,;:]?\\s*)?(?:(?:voce|vc|eu)\\s+)?(?:(?:pode|poderia|consegue|quero|preciso|gostaria|tente|tenta)\\s+)?(?:(?:me\\s+)?${searchAction})\\b`).test(text)
+      || /^(?:por favor[,;:]?\s*)?(?:me ajuda(?:r)?\s+(?:a\s+)?|ajude(?:-me)?\s+a\s+)(?:pesquisar|buscar|procurar|investigar|encontrar|achar)\b/.test(text)
+      || /\b(?:faca|realize|conduza)\s+(?:uma\s+)?(?:pesquisa|busca)\b/.test(text)
+      || /\b(?:pesquisa|busca)\s+(?:sobre|na|no|por)\s+(?:web|internet|google|fontes|informacoes|dados|artigos|noticias|estudos)\b/.test(text);
     if (explicitSearch) return true;
 
     const explanatory = /^(?:como\s+(?:funciona|fazer|se faz)|o que\s+(?:significa|e)|defina|explique|me ensine|por que)\b/.test(text);
