@@ -65,7 +65,7 @@ A interface pode funcionar como site responsivo e como PWA instalável. O fluxo 
 
 O fluxo principal segue quatro etapas. Primeiro, a pessoa cria uma conta ou entra pelo Supabase Auth. Depois, a tela `interface/chat.html` recupera a sessão, carrega o perfil e as preferências e consulta o uso disponível. Ao enviar uma mensagem, o navegador envia apenas o histórico permitido e os anexos selecionados para `POST /api/chat`, sempre com autenticação. A API valida origem, sessão, tamanho, conteúdo, anexos, moderação e limites de uso antes de chamar o provedor de IA. Por fim, a resposta é sanitizada e renderizada na interface.
 
-O WebKazer é um fluxo separado. A pessoa abre **Perfil → Mais opções → WebKazer**, escolhe o modo de pesquisa e envia uma consulta para `POST /api/web-search`. A API consulta fontes públicas permitidas, limita a resposta, pede um resumo ao serviço configurado e devolve fontes e resumo para a interface. O usuário pode abrir as fontes ou enviar o resultado como contexto ao chat.
+O WebKazer usa o Research Orchestrator. A pessoa abre **Perfil → Mais opções → WebKazer**, escolhe o modo de pesquisa e envia uma consulta para `POST /api/research`. O Brain também pode chamar `research_web` no chat quando a pergunta exige pesquisa. O orquestrador faz buscas de descoberta, abre fontes com Browser Agent/Chromium quando disponível, extrai evidências, aplica limites de segurança e devolve fontes reais e resumo. Consulte [docs/RESEARCH-ARCHITECTURE.md](docs/RESEARCH-ARCHITECTURE.md) para o fluxo, deploy e limitações.
 
 ```mermaid
 flowchart LR
@@ -74,7 +74,7 @@ flowchart LR
     A --> C[interface/chat.html]
     C --> S[GET /api/usage]
     C --> H[POST /api/chat]
-    C --> W[POST /api/web-search]
+    C --> W[POST /api/research]
     H --> V[Validação e autenticação server-side]
     V --> R[RPC de uso no Supabase]
     R --> G[Provedor de IA do servidor]
@@ -93,7 +93,7 @@ flowchart LR
 | Chat | Conversa com histórico da página, respostas em Markdown simples e geração progressiva visual. | `interface/chat.html` e `api/chat.js`. |
 | Imagens | Envio de JPEG, PNG, WebP e GIF para análise visual, dentro dos limites da conta. | `interface/chat.html` e `api/chat.js`. |
 | Arquivos | Leitura limitada de PDF, DOCX e arquivos de texto/código compatíveis. | `api/chat.js`, `pdf-parse` e `mammoth`. |
-| WebKazer | Pesquisa em web, imagens, vídeos e notícias, com fontes e resumo. | `interface/chat.html` e `api/web-search.js`. |
+| Research Orchestrator | Pesquisa multietapas, Browser Agent, evidências e citações. | `api/research.js`, `api/_research-orchestrator.js` e `api/_research-browser.js`. |
 | Preferências | Tema, idioma, avisos e aviso de instalação, com fallback local e sincronização no perfil. | `user_settings` e `localStorage`. |
 | Retenção | Avisos de inatividade e job diário de retenção, com exclusão desligada por padrão. | `api/retention.js`, `vercel.json` e migrações Supabase. |
 | PWA | Instalação na tela inicial, manifesto, service worker e cache restrito do app shell. | `download/manifest.webmanifest`, `download/sw.js` e `vercel.json`. |
@@ -237,7 +237,7 @@ Todas as APIs privadas devem ser chamadas com `Authorization: Bearer <access_tok
 | `/api/github-status` | `GET` | Nenhuma | Status e identidade pública da conexão. |
 | `/api/github-repos` | `GET` | `page`, `per_page`, `search` opcionais. | Lista segura e paginada dos repositórios. |
 | `/api/github-disconnect` | `DELETE` | Nenhuma | Revoga o vínculo local da conta. |
-| `/api/web-search` | `POST` | `{ query, mode }` | `summary`, `sources`, `searchQueries`; modos `all`, `web`, `images`, `videos`, `news`. |
+| `/api/research` | `POST` | `{ query, mode }` | `summary`, `sources`, `evidence`, `searchQueries`, `visitedUrls`; pesquisa normal e profunda. |
 | `/api/usage` | `GET` | Nenhuma | Saldo, resets, limite e contagem de anexos do usuário autenticado. |
 | `/api/retention` | `GET` | Header de cron | Job administrativo protegido por `CRON_SECRET`; não é rota de usuário. |
 

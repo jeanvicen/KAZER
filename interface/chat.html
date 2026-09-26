@@ -5419,7 +5419,7 @@
           webSources.innerHTML = '<div class="web-loading">Pesquisando fontes atuais e preparando o resumo…</div>';
           const startedAt = Date.now();
           try {
-            const response = await fetchWithAuth("/api/web-search", { method: "POST", body: JSON.stringify({ query, mode: webMode }) });
+            const response = await fetchWithAuth("/api/research", { method: "POST", body: JSON.stringify({ query, mode: webMode }) });
             const result = await response.json().catch(() => null);
             const remaining = Math.max(0, 650 - (Date.now() - startedAt));
             await new Promise((resolve) => window.setTimeout(resolve, remaining));
@@ -6718,7 +6718,7 @@
             }
             setMessageAttachmentStatus(userRow, "uploading");
             const result = useWebResearch
-              ? await fetchWithAuth("/api/web-search", {
+              ? await fetchWithAuth("/api/research", {
                   method: "POST",
                   body: JSON.stringify({ query: webResearchRequest.query, question: webResearchRequest.question, billingQuery: prompt, mode: "web" }),
                   signal: controller.signal,

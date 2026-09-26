@@ -7,15 +7,15 @@
     "security:check": "node scripts/security-check.mjs",
     "chat:regression": "node scripts/chat-regression.mjs",
     "web-search:regression": "node scripts/web-search-regression.mjs",
-    "check": "npm run security:check && npm run chat:regression && npm run web-search:regression",
+    "research:regression": "node scripts/research-regression.mjs",
+    "check": "npm run security:check && npm run chat:regression && npm run web-search:regression && npm run research:regression",
     "integration:test": "node scripts/mcp-smoke.mjs && node scripts/api-smoke.mjs && node scripts/github-oauth-smoke.mjs && node scripts/production-config-smoke.mjs",
     "security:audit": "npm audit --omit=dev"
   },
-  "engines": {
-    "node": ">=20"
-  },
+  "engines": { "node": ">=20" },
   "dependencies": {
     "mammoth": "^1.8.0",
-    "pdf-parse": "^1.1.1"
+    "pdf-parse": "^1.1.1",
+    "playwright-core": "^1.55.0"
   }
 }

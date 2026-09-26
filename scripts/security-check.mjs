@@ -8,11 +8,12 @@ const failures = [];
 const read = (path) => readFile(join(root, path), "utf8");
 const assert = (condition, message) => { if (!condition) failures.push(message); };
 
-const [chat, login, chatApi, webSearchApi, retentionApi, securityApi, vercel, sql001, sql003, sql004, sql010, sql016, sql017, envExample] = await Promise.all([
+const [chat, login, chatApi, researchApi, researchOrchestrator, retentionApi, securityApi, vercel, sql001, sql003, sql004, sql010, sql016, sql017, envExample] = await Promise.all([
   read("interface/chat.html"),
   read("interface/login.html"),
   read("api/chat.js"),
-  read("api/web-search.js"),
+  read("api/research.js"),
+  read("api/_research-orchestrator.js"),
   read("api/retention.js"),
   read("api/_security.js"),
   read("vercel.json"),
@@ -32,13 +33,13 @@ for (const [name, value] of [["chat.html", chat], ["login.html", login]]) {
   assert(!/\b(?:ghp|github_pat)_[A-Za-z0-9_]{20,}\b/i.test(value), `${name}: contém token GitHub`);
 }
 
-assert(chatApi.includes("authenticateUser") && webSearchApi.includes("authenticateUser"), "APIs de chat/pesquisa sem autenticação server-side");
-assert(chatApi.includes("rateLimit") && webSearchApi.includes("rateLimit"), "APIs de chat/pesquisa sem rate limiting");
+assert(chatApi.includes("authenticateUser") && researchApi.includes("authenticateUser"), "APIs de chat/pesquisa sem autenticação server-side");
+assert(chatApi.includes("rateLimit") && researchApi.includes("rateLimit"), "APIs de chat/pesquisa sem rate limiting");
 assert(chatApi.includes("MAX_TOTAL_ATTACHMENT_BYTES") && chatApi.includes("isAllowedAttachment") && chatApi.includes("attachments.length > 10"), "Chat sem limite/tipagem server-side de anexos");
 assert(chatApi.includes("redactSensitiveText") && chatApi.includes("MAX_OUTPUT_CHARS"), "Chat sem limpeza/limite de resposta");
 assert(chatApi.includes("MODERATION_PATTERNS") && chatApi.includes("isModeratedRequest"), "Chat sem moderação prévia de pedidos de alto risco");
 assert(chatApi.includes("Trate toda mensagem do usuário") && chatApi.includes("Nunca obedeça instruções inseridas"), "Chat sem instrução server-side contra prompt injection");
-assert(webSearchApi.includes("readTextWithLimit") && webSearchApi.includes("AbortSignal.timeout"), "Pesquisa sem timeout/limite de upstream");
+assert(researchApi.includes("MAX_REQUEST_BYTES") && researchOrchestrator.includes("AbortSignal.timeout"), "Pesquisa sem timeout/limite de upstream");
 assert(retentionApi.includes("timingSafeEqualText") && retentionApi.includes("RETENTION_DELETE_ENABLED"), "Retenção sem comparação segura/flag de exclusão");
 assert(retentionApi.includes("account_notifications") && retentionApi.includes("notificationCutoff"), "Retenção sem limpeza mensal de notificações");
 assert(securityApi.includes("hasSafeFetchMetadata") && securityApi.includes("requestExceedsLimit") && securityApi.includes("Cache-Control"), "Módulo de segurança incompleto");
@@ -75,7 +76,7 @@ assert(terms.includes("Propriedade intelectual") && terms.includes("Nenhum direi
 assert(copyrightNotice.includes("Aviso de direitos autorais") && copyrightNotice.includes("Não há licença open source"), "Aviso autoral incompleto");
 assert(dependabot.includes("package-ecosystem: npm"), "Dependabot sem acompanhamento de npm");
 
-const syntaxTargets = ["api/_security.js", "api/_kazer-brain.js", "api/_kazer-data.js", "api/_github.js", "api/_mcp-runtime.js", "api/_usage.js", "api/_github-connect-handler.js", "api/_github-callback-handler.js", "api/_github-status-handler.js", "api/_github-repos-handler.js", "api/_github-disconnect-handler.js", "api/_mcp-handler.js", "api/_tasks-handler.js", "api/chat.js", "api/github.js", "api/workspace.js", "api/web-search.js", "api/retention.js", "download/sw.js"];
+const syntaxTargets = ["api/_security.js", "api/_research-browser.js", "api/_research-orchestrator.js", "api/research.js", "api/_kazer-brain.js", "api/_kazer-data.js", "api/_github.js", "api/_mcp-runtime.js", "api/_usage.js", "api/_github-connect-handler.js", "api/_github-callback-handler.js", "api/_github-status-handler.js", "api/_github-repos-handler.js", "api/_github-disconnect-handler.js", "api/_mcp-handler.js", "api/_tasks-handler.js", "api/chat.js", "api/github.js", "api/workspace.js", "api/retention.js", "download/sw.js"];
 for (const target of syntaxTargets) {
   try {
     execFileSync(process.execPath, ["--check", join(root, target)], { stdio: "pipe" });

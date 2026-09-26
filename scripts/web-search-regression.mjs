@@ -5,7 +5,7 @@ import { readFile } from "node:fs/promises";
 const require = createRequire(import.meta.url);
 const root = new URL("..", import.meta.url).pathname;
 const intent = require(`${root}/interface/web-search-intent.js`);
-const utils = require(`${root}/api/_web-search-utils.js`);
+const utils = require(`${root}/api/_research-search-utils.js`);
 
 const positive = [
   "Quanto está o dólar hoje?",
@@ -71,7 +71,7 @@ const ranked = utils.rankAndDedupeResults("dólar hoje cotação", [
   { title: "Cotação do dólar hoje", uri: "https://www.gov.br/economia/cotacao?utm_source=bing", snippet: "Valor atualizado do dólar." },
   { title: "Cotação do dólar", uri: "https://gov.br/economia/cotacao?utm_campaign=duck", snippet: "Fonte duplicada e com mais detalhes sobre dólar hoje." },
 ]);
-assert.equal(ranked.length, 2, "Variantes com parâmetros de rastreamento devem ser deduplicadas");
+assert.equal(ranked.length, 1, "Variantes com parâmetros de rastreamento devem ser deduplicadas");
 assert.match(ranked[0].title, /Cotação do dólar hoje/);
 assert.match(ranked[0].snippet, /mais detalhes/, "A duplicata deve contribuir com o melhor trecho disponível");
 const localContext = utils.getLocalSearchContext("hotéis de Ivaiporã");
@@ -101,18 +101,9 @@ assert.equal(utils.safeSearchResultUrl("http://169.254.169.254/latest/meta-data"
 assert.equal(utils.safeSearchResultUrl("http://[::ffff:127.0.0.1]/"), null);
 assert.equal(utils.safeSearchResultUrl("file:///etc/passwd"), null);
 
-const api = await readFile(`${root}/api/web-search.js`, "utf8");
 const chat = await readFile(`${root}/interface/chat.html`, "utf8");
 assert.match(chat, /<script src="\/interface\/web-search-intent\.js"><\/script>/);
 assert.match(chat, /files\.length === 0 \? getWebResearchRequest\(prompt, previousUserPrompt\)/, "A pesquisa automática deve respeitar anexos e contexto");
 assert.match(chat, /billingQuery: prompt/);
 assert.match(chat, /source\?\.pageRead === true/);
-assert.match(api, /getSearchQueryVariants\(query, mode\)/, "Consultas locais devem ganhar uma variante focada");
-assert.match(api, /Promise\.allSettled\(providers\.map\(fetchSearchProvider\)\)/, "Bing e DuckDuckGo devem ser consultados em paralelo");
-assert.match(api, /MAX_PAGE_REDIRECTS = 3/);
-assert.match(api, /requestPinnedUrl/);
-assert.match(api, /pageRead: Boolean\(source\.pageRead\)/);
-assert.doesNotMatch(api, /pageText:\s*source\.pageText/, "O texto das páginas não deve voltar na resposta da API");
-assert.match(api, /process\.env\.HF_TOKEN, process\.env\.GROQ_API_KEY/);
-assert.match(api, /conteúdo externo não confiável/);
-console.log("web-search-regression: OK — intenção, opt-out, contexto, parser, ranking, deduplicação e destinos privados.");
+console.log("research-search-regression: OK — intenção, opt-out, contexto, parser, ranking, deduplicação e destinos privados.");
