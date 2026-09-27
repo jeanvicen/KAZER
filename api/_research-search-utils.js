@@ -199,6 +199,23 @@ function parseDuckResults(html, maximum = 8) {
   return results;
 }
 
+function parseBingRssResults(xml, maximum = 8) {
+  const source = String(xml || "");
+  const items = source.match(/<item\b[\s\S]*?<\/item>/gi) || [];
+  const results = [];
+  for (const item of items) {
+    const titleMatch = item.match(/<title\b[^>]*>([\s\S]*?)<\/title>/i);
+    const linkMatch = item.match(/<link\b[^>]*>([\s\S]*?)<\/link>/i);
+    const descriptionMatch = item.match(/<description\b[^>]*>([\s\S]*?)<\/description>/i);
+    const title = cleanText(titleMatch?.[1] || "").slice(0, 180);
+    const uri = safeSearchResultUrl(cleanText(linkMatch?.[1] || ""));
+    if (!title || !uri) continue;
+    results.push({ title, uri: uri.slice(0, 2000), snippet: cleanText(descriptionMatch?.[1] || "").slice(0, 500) });
+    if (results.length >= maximum) break;
+  }
+  return results;
+}
+
 function canonicalSearchUrl(value) {
   const uri = safeSearchResultUrl(value);
   if (!uri) return "";
@@ -361,6 +378,7 @@ module.exports = {
   isSafePublicHostname,
   normalizeSearchQuery,
   parseBingResults,
+  parseBingRssResults,
   parseDuckResults,
   rankAndDedupeResults,
   safeSearchResultUrl,

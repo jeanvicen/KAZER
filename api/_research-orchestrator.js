@@ -1,4 +1,4 @@
-const { getSearchQueryVariants, normalizeSearchQuery, parseBingResults, parseDuckResults, rankAndDedupeResults, safeSearchResultUrl } = require("./_research-search-utils");
+const { getSearchQueryVariants, normalizeSearchQuery, parseBingResults, parseBingRssResults, parseDuckResults, rankAndDedupeResults, safeSearchResultUrl } = require("./_research-search-utils");
 const { ResearchBrowser, cleanText } = require("./_research-browser");
 
 const DEFAULT_BUDGETS = { normal: { searches: 3, pages: 8, actions: 12 }, deep: { searches: 6, pages: 15, actions: 25 } };
@@ -16,6 +16,7 @@ async function searchWeb(query, mode = "web") {
   const encoded = encodeURIComponent(query);
   const providers = [
     { url: `https://www.bing.com/search?q=${encoded}`, parser: parseBingResults },
+    { url: `https://www.bing.com/search?format=rss&q=${encoded}`, parser: parseBingRssResults },
     { url: `https://html.duckduckgo.com/html/?q=${encoded}`, parser: parseDuckResults },
   ];
   const results = await Promise.allSettled(providers.map(async (provider) => provider.parser(await fetchText(provider.url), 8)));
