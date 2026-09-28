@@ -16,6 +16,7 @@ await assert.rejects(() => browser.assertSafeUrl("file:///etc/passwd"));
 assert.equal(orchestrator.researchToolDefinition.function.name, "research_web");
 assert.equal(orchestrator.DEFAULT_BUDGETS.normal.actions, 16);
 assert.equal(orchestrator.DEFAULT_BUDGETS.deep.pages, 18);
+assert.equal(orchestrator.deepQueries("GTA 6", 12).length, 12);
 const api = await readFile(new URL("../api/research.js", import.meta.url), "utf8");
 assert.match(api, /authenticateUser/);
 assert.match(api, /runResearch/);

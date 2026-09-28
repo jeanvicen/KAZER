@@ -35,7 +35,7 @@ async function searchWeb(query, mode = "web") {
     { url: `https://www.bing.com/search?format=rss&q=${encoded}`, parser: parseBingRssResults },
     { url: `https://html.duckduckgo.com/html/?q=${encoded}`, parser: parseDuckResults },
   ];
-  const results = await Promise.allSettled(providers.map(async (provider) => provider.parser(await fetchText(provider.url), 8)));
+  const results = await Promise.allSettled(providers.map(async (provider) => provider.parser(await fetchText(provider.url), 12)));
   const values = results.flatMap((item) => item.status === "fulfilled" ? item.value : []);
   return rankAndDedupeResults(query, values, 8);
 }
@@ -102,7 +102,7 @@ async function runResearch({ question, mode = "normal", deep = false, maxSearche
     const batches = await Promise.allSettled(variants.map((query) => searchWeb(query, "web")));
     const rawSources = batches.flatMap((item) => item.status === "fulfilled" ? item.value : []);
     batches.forEach((item) => { if (item.status === "rejected") state.errors.push(String(item.reason?.message || "search_failed").slice(0, 240)); });
-    const sourcePool = rankAndDedupeResults(normalized, rawSources, isDeep ? 100 : 12);
+    const sourcePool = rankAndDedupeResults(normalized, rawSources, isDeep ? 120 : 12);
     state.candidateCount = sourcePool.length;
     const selected = sourcePool.slice(0, limits.pages);
     state.visitedUrls = selected.map((source) => source.uri);
