@@ -26,7 +26,8 @@ module.exports = async function handler(request, response) {
   if (!body || Array.isArray(body)) return sendJson(response, 400, { error: "JSON inválido." });
   if (Buffer.byteLength(JSON.stringify(body), "utf8") > MAX_REQUEST_BYTES) return sendJson(response, 413, { error: "A pesquisa excede o limite permitido." });
   const question = String(body.question || body.query || "").replace(/[\u0000-\u001f\u007f]/g, " ").replace(/\s+/g, " ").trim().slice(0, MAX_QUESTION_CHARS);
-  const deep = body.depth === "deep" || body.mode === "deep";
+  // Pesquisa explícita é sempre profunda; só uma chamada interna pode pedir o modo normal.
+  const deep = body.depth !== "normal" && body.mode !== "normal";
   if (question.length < 2) return sendJson(response, 400, { error: "Digite uma pergunta válida." });
   let result;
   try { result = await runResearch({ question, deep }); } catch (error) { console.error("Research orchestrator failed", error?.message || "unknown"); return sendJson(response, 502, { error: "Não foi possível concluir a pesquisa agora." }); }

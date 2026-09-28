@@ -5531,6 +5531,10 @@
           return {
             row,
             showResults(result) {
+              // A pesquisa acontece em segundo plano; o usuário recebe apenas a resposta final.
+              if (row.isConnected) row.remove();
+              return;
+              /*
               const sources = Array.isArray(result?.sources) ? result.sources : [];
               card.classList.remove("is-searching");
               spinner.hidden = true;
@@ -5568,6 +5572,7 @@
                 cost.textContent = `Esta pesquisa usou ${creditCost} tokens.`;
                 cost.hidden = false;
               }
+              */
             },
             showError(message) {
               card.classList.remove("is-searching");
@@ -6746,10 +6751,14 @@
             }
             const researchSummary = typeof data.summary === "string" ? data.summary.trim() : "";
             if (useWebResearch) researchProgress?.showResults({ ...data, summaryUnavailable: Boolean(data.summaryUnavailable) || !researchSummary });
+            const researchSources = Array.isArray(data.sources) ? data.sources.slice(0, 8) : [];
+            const sourceFooter = researchSources.length
+              ? "\n\n**Fontes consultadas:**\n" + researchSources.map((source, index) => `[${index + 1}] ${source.title || "Fonte"} — ${source.uri}`).join("\n")
+              : "";
             const answer = useWebResearch
-              ? (researchSummary || (Array.isArray(data.sources) && data.sources.length
-                ? "As fontes foram encontradas, mas o resumo automático não foi retornado. Consulte os títulos e trechos reais no painel acima."
-                : "A pesquisa não retornou fontes públicas verificáveis."))
+              ? ((researchSummary || (researchSources.length
+                ? "Encontrei fontes, mas não consegui gerar a síntese automática."
+                : "A pesquisa não retornou fontes públicas verificáveis.")) + sourceFooter)
               : data.message?.content;
             if (typeof answer !== "string" || !answer.trim()) throw new Error("A resposta recebida estava vazia.");
             if (thinking.isConnected && !researchProgress) thinking.remove();
@@ -7304,8 +7313,6 @@
     <script src="/interface/kazer-workspace.js"></script>
   </body>
 </html>
-
-
 
 
 
