@@ -1,0 +1,34 @@
+{
+  "expo": {
+    "name": "KAZER",
+    "slug": "kazer",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "scheme": "kazer",
+    "userInterfaceStyle": "dark",
+    "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#090b10"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.kazer.app"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/icon.png",
+        "backgroundColor": "#090b10"
+      },
+      "package": "com.kazer.app"
+    },
+    "web": {
+      "bundler": "metro"
+    },
+    "extra": {
+      "kazerUrl": "https://kazer.vercel.app/chat"
+    }
+  }
+}

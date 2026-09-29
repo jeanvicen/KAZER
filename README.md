@@ -345,3 +345,18 @@ Para ativar a integração, habilite a Google Drive API no [Google Cloud Console
 
 Execute a migration `database/supabase/009_google_drive_connections.sql` no Supabase. A tabela guarda somente tokens cifrados no servidor e não concede leitura de tokens ao cliente. O sistema de narração usa eventos SSE produzidos durante a operação; cada fala é gerada dinamicamente com base na etapa real da ação, e não por frases fixas pré-programadas.
 
+
+## Aplicativo móvel Expo / EAS
+
+O app nativo está em [`mobile/`](mobile/). Ele usa Expo + WebView para abrir a versão publicada do KAZER em `https://kazer.vercel.app/chat`, preservando o fluxo web atual sem transformar a aplicação Vercel em um projeto Expo.
+
+Para o **Build from GitHub / EAS**, use:
+
+| Campo | Valor |
+|---|---|
+| **Base directory** | `mobile` |
+| **Git ref** | `main` |
+| **EAS build profile** | `preview` para APK de teste ou `production` para publicação |
+| **EAS submit profile** | `production` |
+
+O erro `failed to read /kazerv1/package.json` ocorre quando o diretório base aponta para `/kazerv1`, que não existe neste repositório. Não use esse caminho. O `package.json` correto do app Expo é `mobile/package.json`, e o `eas.json` correto é `mobile/eas.json`. Consulte [`mobile/README.md`](mobile/README.md) para os comandos completos.
