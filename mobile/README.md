@@ -30,6 +30,18 @@ Para o primeiro build, selecione somente **Android**. A opção **All** também 
 
 O aviso **You don't have any build credentials stored in EAS for this app** não é erro de JSON. Ele significa que a conta Expo/EAS ainda não tem uma chave de assinatura cadastrada para `com.kazer.app`. No primeiro build Android, o EAS deve criar uma keystore remota quando a conta estiver autenticada; se a tela não oferecer essa criação, abra o projeto no EAS e use **Credentials → Android → Generate new keystore**. Credenciais não devem ser colocadas no GitHub.
 
+### Vincular o projeto EAS uma única vez
+
+O erro **The `extra.eas.projectId` field is missing from your app config** significa que o projeto Expo ainda não foi vinculado à conta EAS. No computador em que a conta Expo está conectada, execute:
+
+```bash
+cd mobile
+npx eas-cli@latest login
+npx eas-cli@latest init
+```
+
+Escolha **Create a new project** (ou selecione o projeto KAZER já existente). O comando grava automaticamente `extra.eas.projectId` no `app.json`. Faça commit/push dessa alteração e execute o Build from GitHub novamente. O `projectId` é específico da conta e não deve ser inventado nem substituído por `com.kazer.app`.
+
 ## Comandos EAS
 
 ```bash
