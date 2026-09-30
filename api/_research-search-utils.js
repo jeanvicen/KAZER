@@ -316,7 +316,9 @@ function isRelevantResult(query, source) {
   if (!queryTokens.length) return true;
   const matched = queryTokens.filter((token) => sourceTokens.has(token)).length;
   if (queryTokens.length === 1) return matched === 1;
-  return matched >= Math.min(2, queryTokens.length) && matched / queryTokens.length >= 0.3;
+  // Buscadores já fazem a primeira etapa de relevância. Para perguntas naturais,
+  // exigir dois tokens derruba consultas válidas como "o que é inteligência artificial".
+  return matched >= 1 && matched / queryTokens.length >= 0.25;
 }
 
 function relevanceScore(query, source) {

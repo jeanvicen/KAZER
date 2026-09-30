@@ -74,6 +74,10 @@ const ranked = utils.rankAndDedupeResults("dólar hoje cotação", [
 assert.equal(ranked.length, 1, "Variantes com parâmetros de rastreamento devem ser deduplicadas");
 assert.match(ranked[0].title, /Cotação do dólar hoje/);
 assert.match(ranked[0].snippet, /mais detalhes/, "A duplicata deve contribuir com o melhor trecho disponível");
+const naturalQuestion = utils.rankAndDedupeResults("o que é inteligência artificial", [
+  { title: "O que é inteligência artificial (IA)?", uri: "https://www.ibm.com/br-pt/think/topics/artificial-intelligence", snippet: "Inteligência artificial é uma tecnologia que simula capacidades humanas." },
+]);
+assert.equal(naturalQuestion.length, 1, "Perguntas naturais não podem ser descartadas pelo ranking");
 const localContext = utils.getLocalSearchContext("hotéis de Ivaiporã");
 assert.deepEqual(localContext.locationTokens, ["ivaipora"], "A localidade da busca por hotéis deve ser obrigatória");
 const localQueries = utils.getSearchQueryVariants("Procure hotéis de Ivaiporã", "web");

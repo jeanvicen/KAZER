@@ -55,7 +55,7 @@ As regras completas estão em [`LICENSE.md`](LICENSE.md), [`docs/TERMOS-DE-USO.m
 
 ## Visão geral
 
-O KAZER é uma aplicação estática hospedada na Vercel, com páginas HTML/CSS/JavaScript no diretório `interface/`, funções serverless Node.js no diretório `api/` e autenticação, preferências, avisos, uso e retenção de conta apoiados pelo Supabase. O processamento de chat usa um provedor de modelos configurado no servidor; a pesquisa do WebKazer utiliza provedores públicos de busca e um serviço de resumo configurado no servidor.
+O KAZER é uma aplicação estática hospedada na Vercel, com páginas HTML/CSS/JavaScript no diretório `interface/`, funções serverless Node.js no diretório `api/` e autenticação, preferências, avisos, uso e retenção de conta apoiados pelo Supabase. O processamento de chat usa um cérebro server-side com fallback de modelos; a pesquisa do WebKazer consulta múltiplos provedores públicos, lê fontes em segundo plano e usa o mesmo cérebro para sintetizar evidências.
 
 A interface pode funcionar como site responsivo e como PWA instalável. O fluxo de conta usa Supabase Auth, a sessão é mantida no navegador e as rotas privadas exigem o bearer token da sessão. A conversa exibida é mantida em memória no navegador durante a sessão da página; o botão **Nova conversa** limpa o histórico visual local daquele fluxo.
 
@@ -65,7 +65,7 @@ A interface pode funcionar como site responsivo e como PWA instalável. O fluxo 
 
 O fluxo principal segue quatro etapas. Primeiro, a pessoa cria uma conta ou entra pelo Supabase Auth. Depois, a tela `interface/chat.html` recupera a sessão, carrega o perfil e as preferências e consulta o uso disponível. Ao enviar uma mensagem, o navegador envia apenas o histórico permitido e os anexos selecionados para `POST /api/chat`, sempre com autenticação. A API valida origem, sessão, tamanho, conteúdo, anexos, moderação e limites de uso antes de chamar o provedor de IA. Por fim, a resposta é sanitizada e renderizada na interface.
 
-O WebKazer usa o Research Orchestrator. A pessoa abre **Perfil → Mais opções → WebKazer**, escolhe o modo de pesquisa e envia uma consulta para `POST /api/research`. O Brain também pode chamar `research_web` no chat quando a pergunta exige pesquisa. O orquestrador faz buscas de descoberta, abre fontes com Browser Agent/Chromium quando disponível, extrai evidências, aplica limites de segurança e devolve fontes reais e resumo. Consulte [docs/RESEARCH-ARCHITECTURE.md](docs/RESEARCH-ARCHITECTURE.md) para o fluxo, deploy e limitações.
+O WebKazer usa o Research Orchestrator. A pessoa abre **Perfil → Mais opções → WebKazer**, escolhe o modo de pesquisa e envia uma consulta para `POST /api/research`. O Brain também pode chamar `research_web` no chat quando a pergunta exige pesquisa. O modo profundo gera até 12 consultas facetadas em paralelo, reúne até 120 candidatos, seleciona fontes relevantes, abre páginas com Browser Agent/Chromium quando disponível, usa fallback HTTP, extrai evidências, aplica limites de segurança e devolve somente uma síntese final com citações. Consulte [docs/RESEARCH-ARCHITECTURE.md](docs/RESEARCH-ARCHITECTURE.md) para o fluxo, deploy e limitações.
 
 ```mermaid
 flowchart LR
@@ -160,13 +160,11 @@ Não faça commit de `.env`. O `.gitignore` já ignora arquivos de ambiente, `no
 
 | Variável | Onde usar | Obrigatória | Finalidade |
 |---|---|---:|---|
-| `GROQ_API_KEY` | Servidor | Sim para chat | Chave privada do provedor de chat/visão configurado. |
+| `GROQ_API_KEY` | Servidor | Fallback | Chave privada do provedor de fallback de chat/visão. |
 | `GROQ_MODEL` | Servidor | Não | Modelo de texto; há um padrão no código. |
 | `GROQ_VISION_MODEL` | Servidor | Não | Modelo principal para imagens. |
 | `GROQ_VISION_FALLBACK_MODEL` | Servidor | Não | Modelo de fallback para imagens. |
-| `GROQ_REASONING_EFFORT` | Servidor | Não | Nível de raciocínio aceito pelo modelo de texto. |
-| `GEMINI_API_KEY` | Servidor | Sim para resumo WebKazer | Chave privada do serviço de resumo. |
-| `GEMINI_SEARCH_MODEL` | Servidor | Não | Modelo usado para resumir pesquisa. |
+| `GROQ_REASONING_EFFORT` | Servidor | Não | Nível de raciocínio aceito pelo modelo de fallback. |
 | `SUPABASE_URL` | Servidor | Sim | URL do projeto Supabase. |
 | `SUPABASE_ANON_KEY` | Servidor/configuração pública | Sim | Chave pública de baixo privilégio; RLS continua obrigatório. |
 | `SUPABASE_SERVICE_ROLE_KEY` | Servidor privado | Sim para MCPs, tarefas e GitHub | Chave administrativa; nunca exponha ao navegador. `SUPABASE_KEY` pode ser usada apenas como fallback privado no ambiente controlado. |
@@ -177,6 +175,10 @@ Não faça commit de `.env`. O `.gitignore` já ignora arquivos de ambiente, `no
 | `CRON_SECRET` | Servidor privado | Só para retenção | Segredo para autorizar chamadas ao job `/api/retention`. |
 | `PUBLIC_APP_ORIGINS` | Servidor | Recomendado | Lista separada por vírgulas das origens HTTPS autorizadas, sem barra final. |
 | `RETENTION_DELETE_ENABLED` | Servidor | Sim | Mantenha `false`; somente um procedimento revisado pode habilitar exclusões permanentes. |
+
+### Cérebro Hugging Face
+
+Quando `HF_TOKEN` está preenchido na Vercel, o KAZER usa o endpoint OpenAI-compatible do Hugging Face antes do fallback. O padrão atual é `Qwen/Qwen3-30B-A3B-Instruct-2507`, com `Qwen/Qwen3-4B-Instruct-2507` como fallback de disponibilidade. `KAZER_SEARCH_MODEL` controla o modelo usado especificamente para sintetizar fontes da pesquisa. O token é sempre privado e nunca deve ser colocado no navegador, README ou logs. Se `HF_TOKEN` não estiver disponível, o sistema continua pelo fallback configurado em `GROQ_API_KEY`.
 
 As variáveis devem ser cadastradas na Vercel por ambiente, sem colar segredos em logs ou comandos compartilhados. Em produção, confirme que `PUBLIC_APP_ORIGINS` corresponde exatamente ao domínio HTTPS utilizado.
 

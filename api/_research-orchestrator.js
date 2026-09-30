@@ -28,16 +28,38 @@ async function fetchText(url, timeoutMs = 8_000) {
   return body;
 }
 
+async function fetchSearchProvider(url) {
+  let lastError;
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    try { return await fetchText(url, 8_000); }
+    catch (error) { lastError = error; if (attempt === 0) await new Promise((resolve) => setTimeout(resolve, 220)); }
+  }
+  throw lastError || new Error("search_provider_failed");
+}
+
 async function searchWeb(query, mode = "web") {
   const encoded = encodeURIComponent(query);
   const providers = [
     { url: `https://www.bing.com/search?q=${encoded}`, parser: parseBingResults },
     { url: `https://www.bing.com/search?format=rss&q=${encoded}`, parser: parseBingRssResults },
     { url: `https://html.duckduckgo.com/html/?q=${encoded}`, parser: parseDuckResults },
+    { url: `https://news.google.com/rss/search?q=${encoded}&hl=pt-BR&gl=BR&ceid=BR:pt-419`, parser: parseBingRssResults },
   ];
-  const results = await Promise.allSettled(providers.map(async (provider) => provider.parser(await fetchText(provider.url), 12)));
-  const values = results.flatMap((item) => item.status === "fulfilled" ? item.value : []);
-  return rankAndDedupeResults(query, values, 8);
+  const results = await Promise.allSettled(providers.map(async (provider) => provider.parser(await fetchSearchProvider(provider.url), 12)));
+  let values = results.flatMap((item) => item.status === "fulfilled" ? item.value : []);
+  let ranked = rankAndDedupeResults(query, values, mode === "deep" ? 12 : 8);
+  if (!ranked.length) {
+    const fallbackProviders = [
+      { url: `https://html.duckduckgo.com/html/?q=${encoded}&kl=br-pt`, parser: parseDuckResults },
+      { url: `https://www.bing.com/search?format=rss&setlang=pt-br&cc=br&q=${encoded}`, parser: parseBingRssResults },
+    ];
+    const fallbacks = await Promise.allSettled(fallbackProviders.map(async (provider) => provider.parser(await fetchSearchProvider(provider.url), 12)));
+    values = [...values, ...fallbacks.flatMap((item) => item.status === "fulfilled" ? item.value : [])];
+    ranked = rankAndDedupeResults(query, values, mode === "deep" ? 12 : 8);
+  }
+  // Último recurso: o resultado veio do buscador, mas o ranking conservador não
+  // encontrou tokens literais por causa de idioma, acentos ou snippets curtos.
+  return ranked.length ? ranked : rankAndDedupeResults("", values, mode === "deep" ? 12 : 8);
 }
 
 function deepQueries(query, limit) {
@@ -99,7 +121,7 @@ async function runResearch({ question, mode = "normal", deep = false, maxSearche
     const variants = isDeep ? deepQueries(normalized, limits.searches) : getSearchQueryVariants(normalized, "web").slice(0, limits.searches);
     state.queries = variants;
     variants.forEach((query) => state.actions.push({ type: "search", query, at: new Date().toISOString() }));
-    const batches = await Promise.allSettled(variants.map((query) => searchWeb(query, "web")));
+    const batches = await Promise.allSettled(variants.map((query) => searchWeb(query, isDeep ? "deep" : "web")));
     const rawSources = batches.flatMap((item) => item.status === "fulfilled" ? item.value : []);
     batches.forEach((item) => { if (item.status === "rejected") state.errors.push(String(item.reason?.message || "search_failed").slice(0, 240)); });
     const sourcePool = rankAndDedupeResults(normalized, rawSources, isDeep ? 120 : 12);
@@ -134,6 +156,6 @@ async function runResearch({ question, mode = "normal", deep = false, maxSearche
   return { ...state, sources: state.sources || state.evidence.map(publicSource), evidence: state.evidence.slice(0, limits.pages) };
 }
 
-const researchToolDefinition = { type: "function", function: { name: "research_web", description: "Pesquisa profundamente na Internet: cria várias consultas, coleta até 100 candidatos, abre páginas públicas, cruza evidências e retorna apenas dados para uma síntese final. Use para fatos atuais, pesquisa explícita, comparação ou quando fontes externas forem necessárias; o processo deve permanecer invisível ao usuário.", parameters: { type: "object", properties: { question: { type: "string", description: "Pergunta ou objetivo da pesquisa" }, depth: { type: "string", enum: ["normal", "deep"] } }, required: ["question"] } } };
+const researchToolDefinition = { type: "function", function: { name: "research_web", description: "Pesquisa profundamente na Internet: cria várias consultas, coleta até 120 candidatos, abre páginas públicas, cruza evidências e retorna apenas dados para uma síntese final. Use para fatos atuais, pesquisa explícita, comparação ou quando fontes externas forem necessárias; o processo deve permanecer invisível ao usuário.", parameters: { type: "object", properties: { question: { type: "string", description: "Pergunta ou objetivo da pesquisa" }, depth: { type: "string", enum: ["normal", "deep"] } }, required: ["question"] } } };
 
 module.exports = { DEFAULT_BUDGETS, researchToolDefinition, runResearch, searchWeb, deepQueries };

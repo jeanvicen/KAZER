@@ -4,8 +4,8 @@
  */
 const { readTextWithLimit } = require("./_security");
 
-const KAZER_BRAIN_VERSION = "kazer.v1";
-const DEFAULT_TEXT_MODEL = "Qwen/Qwen3-8B";
+const KAZER_BRAIN_VERSION = "kazer.v1.1";
+const DEFAULT_TEXT_MODEL = "Qwen/Qwen3-30B-A3B-Instruct-2507";
 const DEFAULT_VISION_MODEL = "google/gemma-3-4b-it";
 const DEFAULT_HF_ENDPOINT = "https://router.huggingface.co/v1/chat/completions";
 const DEFAULT_GROQ_TEXT_MODEL = "openai/gpt-oss-120b";
@@ -24,7 +24,7 @@ function providerConfig(hasImages, modelOverride = "") {
       : (process.env.KAZER_TEXT_MODEL || DEFAULT_TEXT_MODEL));
     const fallback = hasImages
       ? (process.env.KAZER_VISION_FALLBACK_MODEL || "Qwen/Qwen3.8-27B")
-      : (process.env.KAZER_TEXT_FALLBACK_MODEL || "microsoft/Phi-4-mini-instruct");
+      : (process.env.KAZER_TEXT_FALLBACK_MODEL || "Qwen/Qwen3-4B-Instruct-2507");
     return {
       kind: "huggingface",
       token: hfToken,
@@ -72,8 +72,8 @@ async function callKazerBrain({ messages, hasImages, tools = [], timeoutMs = 30_
         const requestBody = {
           model,
           messages,
-          temperature: hasImages ? 0.7 : 0.6,
-          ...(config.kind === "groq" ? { max_completion_tokens: 2200 } : { max_tokens: 2200 }),
+          temperature: hasImages ? 0.65 : 0.35,
+          ...(config.kind === "groq" ? { max_completion_tokens: 4000 } : { max_tokens: 4000 }),
         };
         if (tools.length) requestBody.tools = tools;
         if (config.kind === "groq" && !model.startsWith("qwen/")) requestBody.reasoning_effort = getReasoningEffort();
