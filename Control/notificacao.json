@@ -1,6 +1,6 @@
 {
-  "ativo": true,
-  "versao": 3,
-  "titulo": "computer Kazer",
-  "mensagem": "KAZER agora tem seu próprio computador"
+  "ativo": false,
+  "versao": 2,
+  "titulo": "computer kazer",
+  "mensagem": "KAZER agora tem um computador na nuvem "
 }
