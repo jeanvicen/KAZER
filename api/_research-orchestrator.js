@@ -126,6 +126,9 @@ async function runResearch({ question, mode = "normal", deep = false, maxSearche
     batches.forEach((item) => { if (item.status === "rejected") state.errors.push(String(item.reason?.message || "search_failed").slice(0, 240)); });
     const sourcePool = rankAndDedupeResults(normalized, rawSources, isDeep ? 120 : 12);
     state.candidateCount = sourcePool.length;
+    // A descoberta já é uma fonte útil. Não esconda os resultados só porque
+    // uma página bloqueou o crawler ou excedeu o timeout serverless.
+    state.sources = sourcePool.map((source) => ({ title: source.title, uri: source.uri, snippet: source.snippet, pageRead: false, browserUsed: false }));
     const selected = sourcePool.slice(0, limits.pages);
     state.visitedUrls = selected.map((source) => source.uri);
 
@@ -145,6 +148,9 @@ async function runResearch({ question, mode = "normal", deep = false, maxSearche
         state.actions.push({ type: "http_fallback", url: source.uri, at: accessedAt });
         if (page?.pageRead || page?.text) state.evidence.push(evidenceFromSource(source, page, normalized, accessedAt, false));
       });
+    }
+    if (!state.evidence.length && sourcePool.length) {
+      selected.forEach((source) => state.evidence.push(evidenceFromSource(source, { title: source.title, text: source.snippet, pageRead: false, headings: [] }, normalized, new Date().toISOString(), false)));
     }
     if (!state.evidence.length) state.stopReason = "no_evidence";
     else if (state.candidateCount >= 100) state.stopReason = "deep_source_pool_complete";

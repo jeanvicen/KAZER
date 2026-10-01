@@ -16,8 +16,23 @@ function uniqueModels(values) {
   return values.map((value) => String(value || "").trim()).filter((value, index, list) => value && list.indexOf(value) === index);
 }
 
-function providerConfig(hasImages, modelOverride = "") {
+function providerConfig(hasImages, modelOverride = "", preferredProvider = "") {
   const hfToken = String(process.env.HF_TOKEN || "").trim();
+  const groqKey = String(process.env.GROQ_API_KEY || "").trim();
+  if (preferredProvider === "groq" && groqKey) {
+    const primary = hasImages
+      ? (process.env.GROQ_VISION_MODEL || DEFAULT_GROQ_VISION_MODEL)
+      : (modelOverride || process.env.GROQ_MODEL || DEFAULT_GROQ_TEXT_MODEL);
+    const fallback = hasImages
+      ? (process.env.GROQ_VISION_FALLBACK_MODEL || "qwen/qwen3.6-27b")
+      : (process.env.GROQ_FALLBACK_MODEL || "qwen/qwen3.6-27b");
+    return {
+      kind: "groq",
+      token: groqKey,
+      endpoint: "https://api.groq.com/openai/v1/chat/completions",
+      models: uniqueModels([primary, fallback]),
+    };
+  }
   if (hfToken) {
     const primary = modelOverride || (hasImages
       ? (process.env.KAZER_VISION_MODEL || DEFAULT_VISION_MODEL)
@@ -33,7 +48,6 @@ function providerConfig(hasImages, modelOverride = "") {
     };
   }
 
-  const groqKey = String(process.env.GROQ_API_KEY || "").trim();
   if (groqKey) {
     const primary = hasImages
       ? (process.env.GROQ_VISION_MODEL || DEFAULT_GROQ_VISION_MODEL)
@@ -61,8 +75,8 @@ function getReasoningEffort() {
   return new Set(["none", "low", "medium", "high", "xhigh"]).has(value) ? value : "medium";
 }
 
-async function callKazerBrain({ messages, hasImages, tools = [], timeoutMs = 30_000, maxAttempts = 2, modelOverride = "" }) {
-  const config = providerConfig(hasImages, modelOverride);
+async function callKazerBrain({ messages, hasImages, tools = [], timeoutMs = 30_000, maxAttempts = 2, modelOverride = "", preferredProvider = "" }) {
+  const config = providerConfig(hasImages, modelOverride, preferredProvider);
   if (!config) return { failure: { status: 0, error: "brain_not_configured" } };
   let lastFailure = null;
 
