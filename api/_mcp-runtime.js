@@ -1,4 +1,5 @@
 const { connectorSecretPayload, supabaseRequest } = require("./_kazer-data");
+const { readTextWithLimit } = require("./_security");
 
 const dns = require("node:dns").promises;
 const net = require("node:net");
@@ -7,6 +8,7 @@ const MAX_SERVERS = 8;
 const MAX_TOOLS_PER_SERVER = 24;
 const MAX_TOTAL_TOOLS = 48;
 const MAX_TOOL_RESULT_CHARS = 12000;
+const MAX_RPC_RESPONSE_BYTES = 1_000_000;
 
 function safeText(value, maximum = 1200) {
   return String(value || "").replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g, " ").trim().slice(0, maximum);
@@ -17,7 +19,7 @@ function jsonRpcBody(id, method, params) {
 }
 
 async function readRpcResponse(response) {
-  const text = await response.text();
+  const text = await readTextWithLimit(response, MAX_RPC_RESPONSE_BYTES);
   if (!text) return null;
   const contentType = String(response.headers.get("content-type") || "").toLowerCase();
   if (contentType.includes("application/json")) {
@@ -177,4 +179,4 @@ async function callMcpTool(entry, argumentsValue) {
   return JSON.stringify(result || {}).slice(0, MAX_TOOL_RESULT_CHARS);
 }
 
-module.exports = { callMcpTool, flattenTools, getConnectedMcpCount, loadMcpRuntime };
+module.exports = { MAX_RPC_RESPONSE_BYTES, callMcpTool, flattenTools, getConnectedMcpCount, loadMcpRuntime, readRpcResponse };
