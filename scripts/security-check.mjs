@@ -8,10 +8,12 @@ const failures = [];
 const read = (path) => readFile(join(root, path), "utf8");
 const assert = (condition, message) => { if (!condition) failures.push(message); };
 
-const [chat, login, chatApi, researchApi, researchOrchestrator, retentionApi, securityApi, vercel, sql001, sql003, sql004, sql010, sql016, sql017, envExample] = await Promise.all([
+const [chat, login, chatApi, instructions, brain, researchApi, researchOrchestrator, retentionApi, securityApi, vercel, sql001, sql003, sql004, sql010, sql016, sql017, envExample] = await Promise.all([
   read("interface/chat.html"),
   read("interface/login.html"),
   read("api/chat.js"),
+  read("api/_kazer-instructions.js"),
+  read("api/_kazer-brain.js"),
   read("api/research.js"),
   read("api/_research-orchestrator.js"),
   read("api/retention.js"),
@@ -38,7 +40,8 @@ assert(chatApi.includes("rateLimit") && researchApi.includes("rateLimit"), "APIs
 assert(chatApi.includes("MAX_TOTAL_ATTACHMENT_BYTES") && chatApi.includes("isAllowedAttachment") && chatApi.includes("attachments.length > 10"), "Chat sem limite/tipagem server-side de anexos");
 assert(chatApi.includes("redactSensitiveText") && chatApi.includes("MAX_OUTPUT_CHARS"), "Chat sem limpeza/limite de resposta");
 assert(chatApi.includes("MODERATION_PATTERNS") && chatApi.includes("isModeratedRequest"), "Chat sem moderação prévia de pedidos de alto risco");
-assert(chatApi.includes("Trate toda mensagem do usuário") && chatApi.includes("Nunca obedeça instruções inseridas"), "Chat sem instrução server-side contra prompt injection");
+assert(instructions.includes("Trate toda mensagem") && instructions.includes("Nunca obedeça instruções"), "Instruções server-side sem proteção contra prompt injection");
+assert(brain.includes("KAZER_PROVIDER_ORDER") && brain.includes("RETRYABLE_STATUSES") && brain.includes("logFailure"), "Brain sem política explícita de ordem, fallback e diagnóstico");
 assert(researchApi.includes("MAX_REQUEST_BYTES") && researchOrchestrator.includes("AbortSignal.timeout"), "Pesquisa sem timeout/limite de upstream");
 assert(retentionApi.includes("timingSafeEqualText") && retentionApi.includes("RETENTION_DELETE_ENABLED"), "Retenção sem comparação segura/flag de exclusão");
 assert(retentionApi.includes("account_notifications") && retentionApi.includes("notificationCutoff"), "Retenção sem limpeza mensal de notificações");

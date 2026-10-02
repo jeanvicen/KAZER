@@ -1,124 +1,84 @@
 /*
  * KAZER — cérebro interno kazer.v1.
  * O nome do provedor e dos modelos nunca é enviado ao cliente.
+ * A política é determinística: preferência explícita > ordem configurada > Groq > Hugging Face.
  */
 const { readTextWithLimit } = require("./_security");
-
-const KAZER_BRAIN_VERSION = "kazer.v1.1";
-const DEFAULT_TEXT_MODEL = "Qwen/Qwen3-30B-A3B-Instruct-2507";
-const DEFAULT_VISION_MODEL = "google/gemma-3-4b-it";
-const DEFAULT_HF_ENDPOINT = "https://router.huggingface.co/v1/chat/completions";
-const DEFAULT_GROQ_TEXT_MODEL = "openai/gpt-oss-120b";
-const DEFAULT_GROQ_VISION_MODEL = "qwen/qwen3.8-27b";
+const KAZER_BRAIN_VERSION = "kazer.v1.2";
+const DEFAULTS = {
+  groq: { text: "openai/gpt-oss-120b", vision: "qwen/qwen3.8-27b", fallback: "qwen/qwen3.6-27b" },
+  huggingface: { text: "Qwen/Qwen3-30B-A3B-Instruct-2507", vision: "google/gemma-3-4b-it", fallback: "Qwen/Qwen3-4B-Instruct-2507" },
+};
+const ENDPOINTS = { groq: "https://api.groq.com/openai/v1/chat/completions", huggingface: "https://router.huggingface.co/v1/chat/completions" };
 const RETRYABLE_STATUSES = new Set([408, 409, 429, 500, 502, 503, 504]);
-
-function uniqueModels(values) {
-  return values.map((value) => String(value || "").trim()).filter((value, index, list) => value && list.indexOf(value) === index);
-}
-
-function providerConfig(hasImages, modelOverride = "", preferredProvider = "") {
-  const hfToken = String(process.env.HF_TOKEN || "").trim();
-  const groqKey = String(process.env.GROQ_API_KEY || "").trim();
-  if (preferredProvider === "groq" && groqKey) {
-    const primary = hasImages
-      ? (process.env.GROQ_VISION_MODEL || DEFAULT_GROQ_VISION_MODEL)
-      : (modelOverride || process.env.GROQ_MODEL || DEFAULT_GROQ_TEXT_MODEL);
-    const fallback = hasImages
-      ? (process.env.GROQ_VISION_FALLBACK_MODEL || "qwen/qwen3.6-27b")
-      : (process.env.GROQ_FALLBACK_MODEL || "qwen/qwen3.6-27b");
-    return {
-      kind: "groq",
-      token: groqKey,
-      endpoint: "https://api.groq.com/openai/v1/chat/completions",
-      models: uniqueModels([primary, fallback]),
-    };
-  }
-  if (hfToken) {
-    const primary = modelOverride || (hasImages
-      ? (process.env.KAZER_VISION_MODEL || DEFAULT_VISION_MODEL)
-      : (process.env.KAZER_TEXT_MODEL || DEFAULT_TEXT_MODEL));
-    const fallback = hasImages
-      ? (process.env.KAZER_VISION_FALLBACK_MODEL || "Qwen/Qwen3.8-27B")
-      : (process.env.KAZER_TEXT_FALLBACK_MODEL || "Qwen/Qwen3-4B-Instruct-2507");
-    return {
-      kind: "huggingface",
-      token: hfToken,
-      endpoint: String(process.env.HF_CHAT_ENDPOINT || DEFAULT_HF_ENDPOINT).trim(),
-      models: uniqueModels([primary, fallback]),
-    };
-  }
-
-  if (groqKey) {
-    const primary = hasImages
-      ? (process.env.GROQ_VISION_MODEL || DEFAULT_GROQ_VISION_MODEL)
-      : (process.env.GROQ_MODEL || DEFAULT_GROQ_TEXT_MODEL);
-    const fallback = hasImages
-      ? (process.env.GROQ_VISION_FALLBACK_MODEL || "qwen/qwen3.6-27b")
-      : (process.env.GROQ_FALLBACK_MODEL || "qwen/qwen3.6-27b");
-    return {
-      kind: "groq",
-      token: groqKey,
-      endpoint: "https://api.groq.com/openai/v1/chat/completions",
-      models: uniqueModels([primary, fallback]),
-    };
-  }
-
-  return null;
-}
-
-function providerLabel(kind) {
-  return kind === "huggingface" ? "hf" : "legacy";
-}
-
+const PROVIDER_ORDER = ["groq", "huggingface"];
+function clean(value) { return String(value || "").trim(); }
+function uniqueModels(values) { return values.map(clean).filter((value, index, list) => value && list.indexOf(value) === index); }
+function isConfigured(provider) { return provider === "groq" ? Boolean(clean(process.env.GROQ_API_KEY)) : Boolean(clean(process.env.HF_TOKEN)); }
+function providerToken(provider) { return provider === "groq" ? clean(process.env.GROQ_API_KEY) : clean(process.env.HF_TOKEN); }
+function providerLabel(provider) { return provider === "huggingface" ? "hf" : "legacy"; }
 function getReasoningEffort() {
-  const value = String(process.env.KAZER_REASONING_EFFORT || process.env.GROQ_REASONING_EFFORT || "medium").toLowerCase();
+  const value = clean(process.env.KAZER_REASONING_EFFORT || process.env.GROQ_REASONING_EFFORT || "medium").toLowerCase();
   return new Set(["none", "low", "medium", "high", "xhigh"]).has(value) ? value : "medium";
 }
-
-async function callKazerBrain({ messages, hasImages, tools = [], timeoutMs = 30_000, maxAttempts = 2, modelOverride = "", preferredProvider = "" }) {
-  const config = providerConfig(hasImages, modelOverride, preferredProvider);
-  if (!config) return { failure: { status: 0, error: "brain_not_configured" } };
+function configuredProviderOrder(preferredProvider = "") {
+  const configured = clean(process.env.KAZER_PROVIDER_ORDER || "").toLowerCase().split(",").map((item) => item.trim()).filter((item) => PROVIDER_ORDER.includes(item));
+  const order = configured.length ? configured : PROVIDER_ORDER;
+  const preferred = clean(preferredProvider).toLowerCase();
+  return [...new Set([preferred, ...order])].filter((provider) => PROVIDER_ORDER.includes(provider) && isConfigured(provider));
+}
+function modelList(provider, hasImages, modelOverride = "", taskType = "conversation") {
+  const prefix = provider === "groq" ? "GROQ" : "KAZER";
+  const kind = hasImages ? "VISION" : "TEXT";
+  const defaults = DEFAULTS[provider];
+  const legacyTextModel = provider === "groq" && !hasImages ? process.env.GROQ_MODEL : "";
+  const taskModel = !hasImages && taskType === "coding" ? process.env[`${prefix}_CODE_MODEL`] : "";
+  const primary = modelOverride || clean(taskModel || process.env[`${prefix}_${kind}_MODEL`] || legacyTextModel || (hasImages ? defaults.vision : defaults.text));
+  const legacyFallback = provider === "groq" && !hasImages ? process.env.GROQ_FALLBACK_MODEL : "";
+  const fallback = clean(process.env[`${prefix}_${kind}_FALLBACK_MODEL`] || legacyFallback || defaults.fallback);
+  return uniqueModels([primary, fallback]);
+}
+function providerConfig(hasImages, modelOverride = "", preferredProvider = "", taskType = "conversation") {
+  const provider = configuredProviderOrder(preferredProvider)[0];
+  if (!provider) return null;
+  return { kind: provider, token: providerToken(provider), endpoint: clean(process.env[provider === "groq" ? "GROQ_CHAT_ENDPOINT" : "HF_CHAT_ENDPOINT"]) || ENDPOINTS[provider], models: modelList(provider, hasImages, modelOverride, taskType), providerOrder: configuredProviderOrder(preferredProvider), taskType };
+}
+function buildProviderAttempts({ hasImages, modelOverride, preferredProvider, taskType }) {
+  return configuredProviderOrder(preferredProvider).flatMap((provider) => {
+    const config = { kind: provider, token: providerToken(provider), endpoint: clean(process.env[provider === "groq" ? "GROQ_CHAT_ENDPOINT" : "HF_CHAT_ENDPOINT"]) || ENDPOINTS[provider], models: modelList(provider, hasImages, provider === preferredProvider ? modelOverride : "", taskType), taskType };
+    return config.models.map((model) => ({ ...config, model }));
+  });
+}
+function logFailure(attempt, failure, startedAt) {
+  console.warn("KAZER brain attempt failed", { provider: providerLabel(attempt.kind), model: attempt.model, task_type: attempt.taskType, status: failure.status || 0, reason: failure.reason || "upstream_failure", duration_ms: Date.now() - startedAt });
+}
+async function callKazerBrain({ messages, hasImages, tools = [], timeoutMs = 30_000, maxAttempts = 2, modelOverride = "", preferredProvider = "", taskType = "conversation" }) {
+  const attempts = buildProviderAttempts({ hasImages, modelOverride, preferredProvider, taskType });
+  if (!attempts.length) return { failure: { status: 0, error: "brain_not_configured", reason: "no_provider_configured" } };
   let lastFailure = null;
-
-  for (const model of config.models) {
-    for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
+  for (const attempt of attempts) {
+    for (let retry = 0; retry < maxAttempts; retry += 1) {
+      const startedAt = Date.now();
       try {
-        const requestBody = {
-          model,
-          messages,
-          temperature: hasImages ? 0.65 : 0.35,
-          ...(config.kind === "groq" ? { max_completion_tokens: 4000 } : { max_tokens: 4000 }),
-        };
+        const requestBody = { model: attempt.model, messages, temperature: hasImages ? 0.65 : 0.35, ...(attempt.kind === "groq" ? { max_completion_tokens: 4000 } : { max_tokens: 4000 }) };
         if (tools.length) requestBody.tools = tools;
-        if (config.kind === "groq" && !model.startsWith("qwen/")) requestBody.reasoning_effort = getReasoningEffort();
-
-        const upstream = await fetch(config.endpoint, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Accept: "application/json",
-            Authorization: `Bearer ${config.token}`,
-          },
-          body: JSON.stringify(requestBody),
-          signal: AbortSignal.timeout(timeoutMs),
-        });
+        if (attempt.kind === "groq" && !attempt.model.startsWith("qwen/")) requestBody.reasoning_effort = getReasoningEffort();
+        const upstream = await fetch(attempt.endpoint, { method: "POST", headers: { "Content-Type": "application/json", Accept: "application/json", Authorization: `Bearer ${attempt.token}` }, body: JSON.stringify(requestBody), signal: AbortSignal.timeout(timeoutMs) });
         const raw = await readTextWithLimit(upstream, 2 * 1024 * 1024);
         const data = JSON.parse(raw || "null");
-        const choice = data?.choices?.[0];
-        const usable = Boolean(choice?.message) && (tools.length
-          ? Array.isArray(choice.message.tool_calls) || typeof choice.message.content === "string"
-          : typeof choice.message.content === "string" && choice.message.content.trim());
-        if (upstream.ok && usable) return { data, model, provider: providerLabel(config.kind), brain_version: KAZER_BRAIN_VERSION };
-        lastFailure = { status: upstream.status, error: data?.error?.message || "empty_brain_response", provider: providerLabel(config.kind) };
-        if (!RETRYABLE_STATUSES.has(upstream.status)) break;
+        const message = data?.choices?.[0]?.message;
+        const usable = Boolean(message) && (tools.length ? Array.isArray(message.tool_calls) || typeof message.content === "string" : typeof message.content === "string" && message.content.trim());
+        if (upstream.ok && usable) return { data, model: attempt.model, provider: providerLabel(attempt.kind), brain_version: KAZER_BRAIN_VERSION, task_type: taskType };
+        lastFailure = { status: upstream.status, error: data?.error?.message || "empty_brain_response", reason: upstream.ok ? "invalid_response" : "provider_error", provider: providerLabel(attempt.kind) };
+        logFailure(attempt, lastFailure, startedAt);
+        if (!RETRYABLE_STATUSES.has(upstream.status) && upstream.status !== 0) break;
       } catch (error) {
-        lastFailure = { status: 0, error: error?.message || "brain_network_error", provider: providerLabel(config.kind) };
+        lastFailure = { status: 0, error: error?.name === "TimeoutError" ? "brain_timeout" : "brain_network_error", reason: error?.name === "TimeoutError" ? "timeout" : "network_error", provider: providerLabel(attempt.kind) };
+        logFailure(attempt, lastFailure, startedAt);
       }
-      if (attempt < maxAttempts - 1) await new Promise((resolve) => setTimeout(resolve, 300 * (attempt + 1)));
+      if (retry < maxAttempts - 1) await new Promise((resolve) => setTimeout(resolve, 300 * (retry + 1)));
     }
   }
-
-  return { failure: lastFailure || { status: 0, error: "brain_unavailable" } };
+  return { failure: lastFailure || { status: 0, error: "brain_unavailable", reason: "all_attempts_failed" } };
 }
-
-module.exports = { KAZER_BRAIN_VERSION, callKazerBrain, providerConfig };
+module.exports = { KAZER_BRAIN_VERSION, callKazerBrain, providerConfig, configuredProviderOrder };
