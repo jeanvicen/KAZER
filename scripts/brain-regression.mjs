@@ -9,8 +9,18 @@ assert.equal(classifyTask("Altere somente o botão"), "conversation");
 assert.equal(classifyTask("Não altere o fundo. Só altere o botão."), "conversation");
 assert.equal(classifyTask("Faça X e depois Y na ordem correta"), "conversation");
 assert.equal(classifyTask("Refatore esta função JavaScript"), "coding");
+assert.equal(classifyTask("Build me a login system with Supabase and make sure the user session survives refresh."), "coding");
+assert.equal(classifyTask("Why is this function crashing?"), "coding");
+assert.equal(classifyTask("Analyze this repository and tell me what is wrong.", { hasRepository: true }), "analysis");
+assert.equal(classifyTask("Create a dashboard with authentication."), "coding");
+assert.equal(classifyTask("Find the bug and fix it."), "coding");
 assert.equal(classifyTask("Monte um diagrama do fluxo"), "visual");
 assert.equal(classifyTask("Analise o PDF anexado", { hasFiles: true }), "analysis");
+const engineeringPlan = planTask("Build me a login system with Supabase and make sure the user session survives refresh.");
+assert.equal(engineeringPlan.taskType, "coding");
+assert.equal(engineeringPlan.needsValidation, true);
+assert.equal(engineeringPlan.multiStep, true);
+assert.equal(engineeringPlan.complexity, "complex");
 const plan = planTask("Pesquise este bug, corrija o código e depois valide os testes; não altere o restante.", { hasRepository: true });
 assert.equal(plan.taskType, "coding");
 assert.equal(plan.complexity, "complex");
@@ -47,4 +57,38 @@ try {
   for (const key of Object.keys(process.env)) if (!(key in original)) delete process.env[key];
   Object.assign(process.env, original);
 }
-console.log("brain-regression: OK — intenção atual, contexto relevante, prompt modular e roteamento previsível verificados.");
+
+const providerKeys = ["GROQ_API_KEY", "HF_TOKEN", "KAZER_PROVIDER_ORDER", "GROQ_CHAT_ENDPOINT", "HF_CHAT_ENDPOINT"];
+const savedProviderEnv = Object.fromEntries(providerKeys.map((key) => [key, process.env[key]]));
+const savedFetch = globalThis.fetch;
+const attemptedModels = [];
+try {
+  process.env.GROQ_API_KEY = "test-groq-token";
+  process.env.HF_TOKEN = "test-hf-token";
+  process.env.GROQ_CHAT_ENDPOINT = "https://groq.example/chat";
+  process.env.HF_CHAT_ENDPOINT = "https://hf.example/chat";
+  delete process.env.KAZER_PROVIDER_ORDER;
+  globalThis.fetch = async (_url, init = {}) => {
+    const model = JSON.parse(init.body).model;
+    attemptedModels.push(model);
+    const message = model.startsWith("Qwen/Qwen3-30B")
+      ? { role: "assistant", content: "Fallback validado.", tool_calls: [] }
+      : { role: "assistant", content: "", tool_calls: [] };
+    return { ok: true, status: 200, text: async () => JSON.stringify({ choices: [{ message }] }) };
+  };
+  const recovered = await brain.callKazerBrain({
+    messages: [{ role: "user", content: "Busque fontes para esta resposta." }],
+    tools: [{ type: "function", function: { name: "research_web", parameters: { type: "object" } } }],
+    maxAttempts: 1,
+  });
+  assert.equal(recovered.provider, "hf");
+  assert.equal(recovered.data.choices[0].message.content, "Fallback validado.");
+  assert.equal(attemptedModels.length, 3, "respostas vazias com tool_calls=[] devem acionar fallback de modelo e provedor");
+} finally {
+  globalThis.fetch = savedFetch;
+  for (const [key, value] of Object.entries(savedProviderEnv)) {
+    if (value === undefined) delete process.env[key];
+    else process.env[key] = value;
+  }
+}
+console.log("brain-regression: OK — intenção, plano, contexto, roteamento e recuperação de resposta vazia verificados.");

@@ -67,7 +67,9 @@ async function callKazerBrain({ messages, hasImages, tools = [], timeoutMs = 30_
         const raw = await readTextWithLimit(upstream, 2 * 1024 * 1024);
         const data = JSON.parse(raw || "null");
         const message = data?.choices?.[0]?.message;
-        const usable = Boolean(message) && (tools.length ? Array.isArray(message.tool_calls) || typeof message.content === "string" : typeof message.content === "string" && message.content.trim());
+        const usable = Boolean(message) && (tools.length
+          ? (Array.isArray(message.tool_calls) && message.tool_calls.length > 0) || (typeof message.content === "string" && message.content.trim())
+          : typeof message.content === "string" && message.content.trim());
         if (upstream.ok && usable) return { data, model: attempt.model, provider: providerLabel(attempt.kind), brain_version: KAZER_BRAIN_VERSION, task_type: taskType };
         lastFailure = { status: upstream.status, error: data?.error?.message || "empty_brain_response", reason: upstream.ok ? "invalid_response" : "provider_error", provider: providerLabel(attempt.kind) };
         logFailure(attempt, lastFailure, startedAt, capabilities);

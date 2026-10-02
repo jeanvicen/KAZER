@@ -6,6 +6,12 @@ process.env.GITHUB_CLIENT_ID = "test-github-client";
 process.env.PUBLIC_APP_ORIGINS = "https://kazer.example";
 const require = createRequire(import.meta.url);
 
+function mockFetchResponse(value, status = 200) {
+  // These tests mock fetch; emulate only the response methods used by the handlers.
+  const body = JSON.stringify(value);
+  return { status, ok: status >= 200 && status < 300, json: async () => JSON.parse(body), text: async () => body };
+}
+
 function responseOf() {
   return {
     headers: {},
@@ -20,13 +26,13 @@ function responseOf() {
 const originalFetch = globalThis.fetch;
 globalThis.fetch = async (input, init = {}) => {
   const url = String(input);
-  if (url.includes("/auth/v1/user")) return new Response(JSON.stringify({ id: "user-1" }), { status: 200 });
+  if (url.includes("/auth/v1/user")) return mockFetchResponse({ id: "user-1" });
   if (url.includes("/rest/v1/kazer_mcp_connectors")) {
-    if (init.method === "POST") return new Response(JSON.stringify([{ id: "mcp-1", user_id: "user-1", name: "Context7", type: "remote", base_url: "https://mcp.example/mcp", command: null, description: null, status: "connected", secret_payload: null }]), { status: 201 });
-    return new Response(JSON.stringify([]), { status: 200 });
+    if (init.method === "POST") return mockFetchResponse([{ id: "mcp-1", user_id: "user-1", name: "Context7", type: "remote", base_url: "https://mcp.example/mcp", command: null, description: null, status: "connected", secret_payload: null }], 201);
+    return mockFetchResponse([]);
   }
   if (url.includes("/rest/v1/kazer_tasks")) {
-    return new Response(JSON.stringify([{ id: "task-1", user_id: "user-1", prompt: "Criar uma tela", title: "Criar uma tela", task_type: "chat", repo_url: null, selected_agent: null, selected_model: null, mcp_connector_ids: [], status: "processing", progress: 15, logs: [], result: null, error: null, credit_cost: 10, created_at: new Date().toISOString(), updated_at: new Date().toISOString(), completed_at: null }]), { status: 201 });
+    return mockFetchResponse([{ id: "task-1", user_id: "user-1", prompt: "Criar uma tela", title: "Criar uma tela", task_type: "chat", repo_url: null, selected_agent: null, selected_model: null, mcp_connector_ids: [], status: "processing", progress: 15, logs: [], result: null, error: null, credit_cost: 10, created_at: new Date().toISOString(), updated_at: new Date().toISOString(), completed_at: null }], 201);
   }
   throw new Error(`unexpected fetch ${url}`);
 };

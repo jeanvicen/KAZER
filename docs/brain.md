@@ -18,9 +18,13 @@ Uma preferência explícita, como a síntese do WebKazer via Groq, vem antes da 
 
 Cada provider possui um modelo principal e fallback por tipo de entrada. A classificação distingue conversa, análise, código e visão para permitir configuração específica sem tornar o roteador dependente de dezenas de regras.
 
+## Entendimento de tarefa
+
+A classificação combina intenção de ação e artefatos técnicos, além dos sinais diretos de código. Pedidos de autenticação, sessão, APIs, sistemas e correção de falhas entram no fluxo de engenharia mesmo sem palavras como “código”; perguntas de diagnóstico de repositório sem pedido de alteração permanecem análise. Sinais explícitos de implementação têm precedência sobre termos visuais ambíguos, como “dashboard”. Conjunções que pedem garantir, validar ou preservar um requisito adicional elevam o plano para múltiplas etapas.
+
 ## Fallback e retry
 
-O Brain tenta novamente erros transitórios (timeout, rate limit e falhas 5xx). Depois dos retries, avança para o próximo modelo e provider. Resposta vazia ou inválida também é falha. Downgrade não é silencioso: o log interno registra provider, modelo, tipo de tarefa, motivo e duração, sem tokens ou credenciais.
+O Brain tenta novamente erros transitórios (timeout, rate limit e falhas 5xx). Depois dos retries, avança para o próximo modelo e provider. Resposta vazia ou inválida também é falha, inclusive quando o provider envia `tool_calls: []` sem conteúdo. Downgrade não é silencioso: o log interno registra provider, modelo, tipo de tarefa, motivo e duração, sem tokens ou credenciais.
 
 ## Diagnóstico
 

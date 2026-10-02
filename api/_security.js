@@ -107,19 +107,22 @@ async function authenticateUser(request) {
   try {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), DEFAULT_AUTH_TIMEOUT_MS);
-    const result = await fetch(`${baseUrl}/auth/v1/user`, {
-      method: "GET",
-      headers: {
-        Accept: "application/json",
-        apikey: anonKey,
-        Authorization: `Bearer ${token}`,
-      },
-      signal: controller.signal,
-    });
-    clearTimeout(timeout);
-    if (!result.ok) return null;
-    const user = await result.json().catch(() => null);
-    return user?.id ? { id: String(user.id) } : null;
+    try {
+      const result = await fetch(`${baseUrl}/auth/v1/user`, {
+        method: "GET",
+        headers: {
+          Accept: "application/json",
+          apikey: anonKey,
+          Authorization: `Bearer ${token}`,
+        },
+        signal: controller.signal,
+      });
+      if (!result.ok) return null;
+      const user = await result.json().catch(() => null);
+      return user?.id ? { id: String(user.id) } : null;
+    } finally {
+      clearTimeout(timeout);
+    }
   } catch {
     return null;
   }

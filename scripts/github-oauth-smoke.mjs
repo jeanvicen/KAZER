@@ -17,6 +17,12 @@ const workspaceSource = await fs.readFile(new URL("../interface/kazer-workspace.
 assert.match(workspaceSource, /api\("\/api\/github-connect"\)/, "frontend deve iniciar OAuth pelo endpoint autenticado");
 assert.doesNotMatch(workspaceSource, /github-authorize\?access_token=/, "token Supabase não pode aparecer na URL OAuth");
 
+function mockFetchResponse(value, status = 200) {
+  // These tests mock fetch; emulate only the response methods used by the handlers.
+  const body = JSON.stringify(value);
+  return { status, ok: status >= 200 && status < 300, json: async () => JSON.parse(body), text: async () => body };
+}
+
 function responseOf() {
   return {
     headers: {}, statusCode: 200, body: "",
@@ -29,10 +35,10 @@ function responseOf() {
 const originalFetch = globalThis.fetch;
 globalThis.fetch = async (input) => {
   const url = String(input);
-  if (url === "https://github.com/login/oauth/access_token") return new Response(JSON.stringify({ access_token: "token", scope: "repo" }), { status: 200 });
-  if (url === "https://api.github.com/user") return new Response(JSON.stringify({ id: 7, login: "mobile-user", name: "Mobile User", avatar_url: "https://avatars.example/user.png" }), { status: 200 });
-  if (url === "https://api.github.com/user/emails") return new Response(JSON.stringify([{ email: "mobile@example.com", primary: true }]), { status: 200 });
-  if (url.includes("/rest/v1/kazer_github_connections")) return new Response(JSON.stringify([]), { status: 200 });
+  if (url === "https://github.com/login/oauth/access_token") return mockFetchResponse({ access_token: "token", scope: "repo" });
+  if (url === "https://api.github.com/user") return mockFetchResponse({ id: 7, login: "mobile-user", name: "Mobile User", avatar_url: "https://avatars.example/user.png" });
+  if (url === "https://api.github.com/user/emails") return mockFetchResponse([{ email: "mobile@example.com", primary: true }]);
+  if (url.includes("/rest/v1/kazer_github_connections")) return mockFetchResponse([]);
   throw new Error(`unexpected fetch: ${url}`);
 };
 

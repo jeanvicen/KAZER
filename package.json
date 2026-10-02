@@ -5,11 +5,12 @@
   "description": "Kazer static interface with a secure routed AI chat function",
   "scripts": {
     "security:check": "node scripts/security-check.mjs",
+    "security:regression": "node scripts/security-regression.mjs",
     "chat:regression": "node scripts/chat-regression.mjs",
     "web-search:regression": "node scripts/web-search-regression.mjs",
     "research:regression": "node scripts/research-regression.mjs",
     "brain:regression": "node scripts/brain-regression.mjs",
-    "check": "npm run security:check && npm run chat:regression && npm run web-search:regression && npm run research:regression && npm run brain:regression",
+    "check": "npm run security:check && npm run security:regression && npm run chat:regression && npm run web-search:regression && npm run research:regression && npm run brain:regression",
     "integration:test": "node scripts/mcp-smoke.mjs && node scripts/api-smoke.mjs && node scripts/github-oauth-smoke.mjs && node scripts/production-config-smoke.mjs",
     "security:audit": "npm audit --omit=dev"
   },
