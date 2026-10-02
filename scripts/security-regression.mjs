@@ -1,13 +1,30 @@
 import assert from "node:assert/strict";
 import { createRequire } from "node:module";
 const require = createRequire(import.meta.url);
-const { authenticateUser } = require("../api/_security.js");
+const { authenticateUser, redactSensitiveText } = require("../api/_security.js");
 
 const originalEnv = { SUPABASE_URL: process.env.SUPABASE_URL, SUPABASE_ANON_KEY: process.env.SUPABASE_ANON_KEY, SUPABASE_KEY: process.env.SUPABASE_KEY };
 const originalFetch = globalThis.fetch;
 const originalSetTimeout = globalThis.setTimeout;
 const originalClearTimeout = globalThis.clearTimeout;
 const request = { headers: { authorization: "Bearer test-user-session-token-123456" } };
+const secretSamples = [
+  "sk" + "-proj-1234567890abcdefghijklmnopqrstuv",
+  "sk" + "-ant-api03-1234567890abcdefghijklmnopqrstuv",
+  "ghp" + "_1234567890abcdefghijklmnopqrstuv",
+  "gho" + "_1234567890abcdefghijklmnopqrstuv",
+  "ghu" + "_1234567890abcdefghijklmnopqrstuv",
+  "ghs" + "_1234567890abcdefghijklmnopqrstuv",
+  "ghr" + "_1234567890abcdefghijklmnopqrstuv",
+  "AKIAABCDEFGHIJKLMNOP",
+  "xoxb" + "-1234567890-token",
+  "sb_secret" + "_1234567890abcdefghijklmnopqrstuv",
+];
+for (const secret of secretSamples) {
+  assert.ok(!redactSensitiveText(secret).includes(secret), `sensitive token pattern was not redacted: ${secret.slice(0, 8)}`);
+}
+const publicSupabaseKey = "sb_publishable_1234567890abcdefghijklmnop";
+assert.ok(redactSensitiveText(publicSupabaseKey).includes(publicSupabaseKey), "the public Supabase key should not be treated as a secret");
 const timeoutId = { testTimeout: true };
 let timeoutCallback;
 let clearedTimeouts = 0;

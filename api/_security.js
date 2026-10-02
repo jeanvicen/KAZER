@@ -173,8 +173,12 @@ function redactSensitiveText(value) {
   return String(value || "")
     .replace(/-----BEGIN [A-Z0-9 ]*PRIVATE KEY-----[\s\S]*?-----END [A-Z0-9 ]*PRIVATE KEY-----/gi, "[segredo removido]")
     .replace(/\b(?:sk|gsk)_[A-Za-z0-9_-]{16,}\b/gi, "[chave removida]")
-    .replace(/\bAIza[A-Za-z0-9_-]{20,}\b/g, "[chave removida]")
-    .replace(/\b(?:ghp|github_pat)_[A-Za-z0-9_]{20,}\b/g, "[token removido]")
+    .replace(/\bsk-[A-Za-z0-9_-]{16,}\b/gi, "[chave removida]")
+    .replace(/\bAIza[A-Za-z0-9_-]{20,}\b/gi, "[chave removida]")
+    .replace(/\bAKIA[0-9A-Z]{16}\b/g, "[chave removida]")
+    .replace(/\bxox[baprs]-[A-Za-z0-9-]{10,}\b/gi, "[token removido]")
+    .replace(/\bsb_secret_[A-Za-z0-9_-]{16,}\b/gi, "[chave removida]")
+    .replace(/\b(?:gh[pousr]|github_pat)_[A-Za-z0-9_]{20,}\b/gi, "[token removido]")
     .replace(/\bBearer\s+[A-Za-z0-9._~+/=-]{20,}\b/gi, "Bearer [token removido]")
     .replace(/\beyJ[A-Za-z0-9_-]{20,}\.[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\b/g, "[token removido]");
 }
