@@ -55,7 +55,7 @@ As regras completas estão em [`LICENSE.md`](LICENSE.md), [`docs/TERMOS-DE-USO.m
 
 ## Visão geral
 
-O KAZER é uma aplicação estática hospedada na Vercel, com páginas HTML/CSS/JavaScript no diretório `interface/`, funções serverless Node.js no diretório `api/` e autenticação, preferências, avisos, uso e retenção de conta apoiados pelo Supabase. O processamento de chat usa um cérebro server-side com fallback de modelos; a pesquisa do WebKazer consulta múltiplos provedores públicos, lê fontes em segundo plano e usa o mesmo cérebro para sintetizar evidências.
+O KAZER é uma aplicação estática hospedada na Vercel, com páginas HTML/CSS/JavaScript no diretório `interface/`, funções serverless Node.js no diretório `api/` e autenticação, preferências, avisos, uso e retenção de conta apoiados pelo Supabase. O processamento de chat usa um Brain server-side com classificação simples de tarefa, instruções modulares, roteamento previsível e fallback explícito de modelos/providers; a pesquisa do WebKazer consulta múltiplos provedores públicos, lê fontes em segundo plano e usa o mesmo Brain para sintetizar evidências.
 
 A interface pode funcionar como site responsivo e como PWA instalável. O fluxo de conta usa Supabase Auth, a sessão é mantida no navegador e as rotas privadas exigem o bearer token da sessão. A conversa exibida é mantida em memória no navegador durante a sessão da página; o botão **Nova conversa** limpa o histórico visual local daquele fluxo.
 
@@ -63,7 +63,7 @@ A interface pode funcionar como site responsivo e como PWA instalável. O fluxo 
 
 ## Como o KAZER funciona
 
-O fluxo principal segue quatro etapas. Primeiro, a pessoa cria uma conta ou entra pelo Supabase Auth. Depois, a tela `interface/chat.html` recupera a sessão, carrega o perfil e as preferências e consulta o uso disponível. Ao enviar uma mensagem, o navegador envia apenas o histórico permitido e os anexos selecionados para `POST /api/chat`, sempre com autenticação. A API valida origem, sessão, tamanho, conteúdo, anexos, moderação e limites de uso antes de chamar o provedor de IA. Por fim, a resposta é sanitizada e renderizada na interface.
+O fluxo principal segue quatro etapas. Primeiro, a pessoa cria uma conta ou entra pelo Supabase Auth. Depois, a tela `interface/chat.html` recupera a sessão, carrega o perfil e as preferências e consulta o uso disponível. Ao enviar uma mensagem, o navegador envia apenas o histórico permitido e os anexos selecionados para `POST /api/chat`, sempre com autenticação. A API valida origem, sessão, tamanho, conteúdo, anexos, moderação e limites de uso; seleciona contexto relacionado e histórico recente; monta apenas os módulos de instrução necessários; e chama o Brain. Por fim, a resposta é sanitizada e renderizada na interface.
 
 O WebKazer usa o Research Orchestrator. A pessoa abre **Perfil → Mais opções → WebKazer**, escolhe o modo de pesquisa e envia uma consulta para `POST /api/research`. O Brain também pode chamar `research_web` no chat quando a pergunta exige pesquisa. O modo profundo gera até 12 consultas facetadas em paralelo, reúne até 120 candidatos, seleciona fontes relevantes, abre páginas com Browser Agent/Chromium quando disponível, usa fallback HTTP, extrai evidências, aplica limites de segurança e devolve somente uma síntese final com citações. Consulte [docs/RESEARCH-ARCHITECTURE.md](docs/RESEARCH-ARCHITECTURE.md) para o fluxo, deploy e limitações.
 
@@ -120,12 +120,12 @@ A aplicação é deliberadamente dividida entre um cliente estático e funções
 | Caminho | Conteúdo |
 |---|---|
 | `interface/` | Telas públicas de login, chat e central de documentos. |
-| `api/` | Handlers serverless: chat, busca, uso, retenção, MCPs, tarefas, GitHub e módulos de segurança. |
+| `api/` | Handlers serverless: chat, busca, uso, retenção, MCPs, tarefas, GitHub, Brain, contexto e segurança. |
 | `database/supabase/` | Migrações SQL incrementais e instruções do banco. |
 | `download/` | Manifesto, service worker, ícones, logos e materiais de distribuição PWA/Android/iOS. |
 | `scripts/` | Verificações automatizadas de segurança e sintaxe. |
 | `.github/` | CODEOWNERS, configuração do Dependabot e regras de propriedade do código. |
-| `docs/` | Termos, aviso autoral, política operacional de publicação e documentos de governança. |
+| `docs/` | Arquitetura, Brain, configuração, testes, termos, aviso autoral e governança. |
 | `vercel.json` | Rewrites, headers de segurança e cron de retenção. |
 | `.env.example` | Nomes e valores de exemplo das variáveis; nunca contém credenciais reais. |
 | `package.json` | Dependências Node, versão mínima e scripts de auditoria. |
@@ -160,11 +160,13 @@ Não faça commit de `.env`. O `.gitignore` já ignora arquivos de ambiente, `no
 
 | Variável | Onde usar | Obrigatória | Finalidade |
 |---|---|---:|---|
-| `GROQ_API_KEY` | Servidor | Fallback | Chave privada do provedor de fallback de chat/visão. |
+| `GROQ_API_KEY` | Servidor | Não | Habilita o provider Groq para chat/visão. |
+| `HF_TOKEN` | Servidor | Não | Habilita o provider Hugging Face. |
+| `KAZER_PROVIDER_ORDER` | Servidor | Não | Ordem determinística, por exemplo `groq,huggingface`; não é escolhida apenas pela existência de token. |
 | `GROQ_MODEL` | Servidor | Não | Modelo de texto; há um padrão no código. |
 | `GROQ_VISION_MODEL` | Servidor | Não | Modelo principal para imagens. |
 | `GROQ_VISION_FALLBACK_MODEL` | Servidor | Não | Modelo de fallback para imagens. |
-| `GROQ_REASONING_EFFORT` | Servidor | Não | Nível de raciocínio aceito pelo modelo de fallback. |
+| `GROQ_REASONING_EFFORT` | Servidor | Não | Nível de raciocínio aceito pelo provider Groq. |
 | `SUPABASE_URL` | Servidor | Sim | URL do projeto Supabase. |
 | `SUPABASE_ANON_KEY` | Servidor/configuração pública | Sim | Chave pública de baixo privilégio; RLS continua obrigatório. |
 | `SUPABASE_SERVICE_ROLE_KEY` | Servidor privado | Sim para MCPs, tarefas e GitHub | Chave administrativa; nunca exponha ao navegador. `SUPABASE_KEY` pode ser usada apenas como fallback privado no ambiente controlado. |
@@ -176,9 +178,9 @@ Não faça commit de `.env`. O `.gitignore` já ignora arquivos de ambiente, `no
 | `PUBLIC_APP_ORIGINS` | Servidor | Recomendado | Lista separada por vírgulas das origens HTTPS autorizadas, sem barra final. |
 | `RETENTION_DELETE_ENABLED` | Servidor | Sim | Mantenha `false`; somente um procedimento revisado pode habilitar exclusões permanentes. |
 
-### Cérebro Hugging Face
+### Brain e providers
 
-Quando `HF_TOKEN` está preenchido na Vercel, o KAZER usa o endpoint OpenAI-compatible do Hugging Face antes do fallback. O padrão atual é `Qwen/Qwen3-30B-A3B-Instruct-2507`, com `Qwen/Qwen3-4B-Instruct-2507` como fallback de disponibilidade. `KAZER_SEARCH_MODEL` controla o modelo usado especificamente para sintetizar fontes da pesquisa. O token é sempre privado e nunca deve ser colocado no navegador, README ou logs. Se `HF_TOKEN` não estiver disponível, o sistema continua pelo fallback configurado em `GROQ_API_KEY`.
+O padrão é `groq,huggingface`: se ambos estiverem configurados, Groq é tentado primeiro; se somente Hugging Face estiver configurado, ele é usado sem downgrade adicional. A ordem pode ser alterada por `KAZER_PROVIDER_ORDER`, e uma preferência explícita de uma operação (como a síntese de pesquisa) tem prioridade. Cada provider possui modelo principal e fallback por texto/visão. Timeout, rate limit, erro do provider, modelo indisponível ou resposta inválida podem avançar a fila; o motivo é registrado internamente sem secrets. Consulte [`docs/brain.md`](docs/brain.md) e [`docs/configuration.md`](docs/configuration.md).
 
 As variáveis devem ser cadastradas na Vercel por ambiente, sem colar segredos em logs ou comandos compartilhados. Em produção, confirme que `PUBLIC_APP_ORIGINS` corresponde exatamente ao domínio HTTPS utilizado.
 
@@ -298,11 +300,11 @@ Antes de cada push ou publicação, execute:
 
 ```bash
 npm ci --ignore-scripts
-npm run security:check
+npm run check
 npm run security:audit -- --audit-level=high
 ```
 
-O Dependabot em `.github/dependabot.yml` acompanha as dependências npm. Os mesmos comandos podem ser configurados em GitHub Actions, Vercel ou outro CI autorizado para cada push e pull request. Falhas devem ser tratadas antes do deploy; `npm audit` sem vulnerabilidades é apenas um retrato do momento, não uma certificação de segurança.
+`npm run check` inclui segurança, regressões de chat/pesquisa e os testes do Brain para intenção atual, histórico e roteamento. O Dependabot em `.github/dependabot.yml` acompanha as dependências npm. Os mesmos comandos podem ser configurados em GitHub Actions, Vercel ou outro CI autorizado para cada push e pull request. Falhas devem ser tratadas antes do deploy; `npm audit` sem vulnerabilidades é apenas um retrato do momento, não uma certificação de segurança.
 
 ## Documentos e autoria
 
@@ -313,6 +315,10 @@ O Dependabot em `.github/dependabot.yml` acompanha as dependências npm. Os mesm
 | [`docs/AVISO-DE-DIREITOS-AUTORAIS.md`](docs/AVISO-DE-DIREITOS-AUTORAIS.md) | Aviso de autoria, ativos protegidos, política de solicitação e preservação de evidências. |
 | [`CONTRIBUTING.md`](CONTRIBUTING.md) | Fluxo de contribuições somente com autorização e regras de titularidade. |
 | [`SECURITY.md`](SECURITY.md) | Matriz técnica de segurança, limites, pendências operacionais e validação. |
+| [`docs/architecture.md`](docs/architecture.md) | Fluxo end-to-end e responsabilidades das camadas. |
+| [`docs/brain.md`](docs/brain.md) | Roteamento, modelos, retry, fallback e diagnóstico do Brain. |
+| [`docs/configuration.md`](docs/configuration.md) | Variáveis centralizadas de providers e modelos. |
+| [`docs/testing.md`](docs/testing.md) | Suíte local, regressões e limites dos testes operacionais. |
 | [`interface/documentos/documento.html`](interface/documentos/documento.html) | Central pública informativa para usuários do produto. |
 
 Atualize o ano, o titular legal, o e-mail, o endereço de notificação e a jurisdição nos documentos antes de usá-los como instrumento definitivo. Mantenha tags e releases assinadas, preserve o histórico Git, arquive screenshots datados e registre a origem de bibliotecas e imagens de terceiros.
