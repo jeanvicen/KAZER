@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { createRequire } from "node:module";
 const require = createRequire(import.meta.url);
-const { classifyTask, selectConversationMessages } = require("../api/_kazer-context.js");
+const { classifyTask, planTask, selectConversationMessages, validateToolRequest } = require("../api/_kazer-context.js");
 const { buildSystemInstructions } = require("../api/_kazer-instructions.js");
 const brain = require("../api/_kazer-brain.js");
 
@@ -11,6 +11,16 @@ assert.equal(classifyTask("Faça X e depois Y na ordem correta"), "conversation"
 assert.equal(classifyTask("Refatore esta função JavaScript"), "coding");
 assert.equal(classifyTask("Monte um diagrama do fluxo"), "visual");
 assert.equal(classifyTask("Analise o PDF anexado", { hasFiles: true }), "analysis");
+const plan = planTask("Pesquise este bug, corrija o código e depois valide os testes; não altere o restante.", { hasRepository: true });
+assert.equal(plan.taskType, "coding");
+assert.equal(plan.complexity, "complex");
+assert.equal(plan.needsResearch, true);
+assert.equal(plan.needsValidation, true);
+assert.equal(plan.multiStep, true);
+assert.ok(plan.constraints.some((item) => /não altere/i.test(item)));
+assert.deepEqual(validateToolRequest("research_web", { question: "  pesquise fontes atuais  ", depth: "deep" }), { ok: true, args: { question: "pesquise fontes atuais", depth: "deep" } });
+assert.equal(validateToolRequest("research_web", { question: "" }).ok, false);
+assert.equal(validateToolRequest("mcp_tool", []).ok, false);
 
 const history = Array.from({ length: 30 }, (_, index) => ({ role: index % 2 ? "assistant" : "user", content: `mensagem ${index}` }));
 history.push({ role: "user", content: "Não altere o restante; altere somente o botão." });

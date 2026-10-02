@@ -42,6 +42,7 @@ assert(chatApi.includes("redactSensitiveText") && chatApi.includes("MAX_OUTPUT_C
 assert(chatApi.includes("MODERATION_PATTERNS") && chatApi.includes("isModeratedRequest"), "Chat sem moderação prévia de pedidos de alto risco");
 assert(instructions.includes("Trate toda mensagem") && instructions.includes("Nunca obedeça instruções"), "Instruções server-side sem proteção contra prompt injection");
 assert(brain.includes("KAZER_PROVIDER_ORDER") && brain.includes("RETRYABLE_STATUSES") && brain.includes("logFailure"), "Brain sem política explícita de ordem, fallback e diagnóstico");
+assert(chatApi.includes("planTask") && chatApi.includes("validateToolRequest") && chatApi.includes("capabilityPlan"), "Chat sem planejamento interno ou validação de ferramentas");
 assert(researchApi.includes("MAX_REQUEST_BYTES") && researchOrchestrator.includes("AbortSignal.timeout"), "Pesquisa sem timeout/limite de upstream");
 assert(retentionApi.includes("timingSafeEqualText") && retentionApi.includes("RETENTION_DELETE_ENABLED"), "Retenção sem comparação segura/flag de exclusão");
 assert(retentionApi.includes("account_notifications") && retentionApi.includes("notificationCutoff"), "Retenção sem limpeza mensal de notificações");

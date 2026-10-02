@@ -49,10 +49,10 @@ function buildProviderAttempts({ hasImages, modelOverride, preferredProvider, ta
     return config.models.map((model) => ({ ...config, model }));
   });
 }
-function logFailure(attempt, failure, startedAt) {
-  console.warn("KAZER brain attempt failed", { provider: providerLabel(attempt.kind), model: attempt.model, task_type: attempt.taskType, status: failure.status || 0, reason: failure.reason || "upstream_failure", duration_ms: Date.now() - startedAt });
+function logFailure(attempt, failure, startedAt, capabilities = []) {
+  console.warn("KAZER brain attempt failed", { provider: providerLabel(attempt.kind), model: attempt.model, task_type: attempt.taskType, capabilities: capabilities.slice(0, 8), status: failure.status || 0, reason: failure.reason || "upstream_failure", duration_ms: Date.now() - startedAt });
 }
-async function callKazerBrain({ messages, hasImages, tools = [], timeoutMs = 30_000, maxAttempts = 2, modelOverride = "", preferredProvider = "", taskType = "conversation" }) {
+async function callKazerBrain({ messages, hasImages, tools = [], timeoutMs = 30_000, maxAttempts = 2, modelOverride = "", preferredProvider = "", taskType = "conversation", capabilities = [] }) {
   const attempts = buildProviderAttempts({ hasImages, modelOverride, preferredProvider, taskType });
   if (!attempts.length) return { failure: { status: 0, error: "brain_not_configured", reason: "no_provider_configured" } };
   let lastFailure = null;
@@ -70,11 +70,11 @@ async function callKazerBrain({ messages, hasImages, tools = [], timeoutMs = 30_
         const usable = Boolean(message) && (tools.length ? Array.isArray(message.tool_calls) || typeof message.content === "string" : typeof message.content === "string" && message.content.trim());
         if (upstream.ok && usable) return { data, model: attempt.model, provider: providerLabel(attempt.kind), brain_version: KAZER_BRAIN_VERSION, task_type: taskType };
         lastFailure = { status: upstream.status, error: data?.error?.message || "empty_brain_response", reason: upstream.ok ? "invalid_response" : "provider_error", provider: providerLabel(attempt.kind) };
-        logFailure(attempt, lastFailure, startedAt);
+        logFailure(attempt, lastFailure, startedAt, capabilities);
         if (!RETRYABLE_STATUSES.has(upstream.status) && upstream.status !== 0) break;
       } catch (error) {
         lastFailure = { status: 0, error: error?.name === "TimeoutError" ? "brain_timeout" : "brain_network_error", reason: error?.name === "TimeoutError" ? "timeout" : "network_error", provider: providerLabel(attempt.kind) };
-        logFailure(attempt, lastFailure, startedAt);
+        logFailure(attempt, lastFailure, startedAt, capabilities);
       }
       if (retry < maxAttempts - 1) await new Promise((resolve) => setTimeout(resolve, 300 * (retry + 1)));
     }

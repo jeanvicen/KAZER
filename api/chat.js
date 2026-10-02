@@ -35,7 +35,7 @@ const MAX_IMAGES = 3;
 const MAX_EXTRACTED_FILE_CHARS = 18000;
 
 const { buildSystemInstructions } = require("./_kazer-instructions");
-const { classifyTask, selectConversationMessages } = require("./_kazer-context");
+const { classifyTask, planTask, selectConversationMessages, validateToolRequest } = require("./_kazer-context");
 const VISUAL_REQUEST_PATTERN = /\b(?:imagem|visual|desenho|desenhar|ilustra[cç][aã]o|logo|[ií]cone|[ií]cones|layout|interface|tela|prot[oó]tipo|mockup|wireframe|diagrama|fluxograma|gr[aá]fico|chart|dashboard|slide|cart[aã]o|banner|poster|p[oó]ster|infogr[aá]fico|planta|mapa|composi[cç][aã]o|design|image|drawing|illustration|icon|icons|screen|prototype|mockup|wireframe|diagram|flowchart|chart|dashboard|slide|card|banner|poster|infographic|visual(?:ly)?|look like)\b/i;
 
 const MODERATION_PATTERNS = [
@@ -302,7 +302,7 @@ function wait(milliseconds) {
   return new Promise((resolve) => setTimeout(resolve, milliseconds));
 }
 
-async function callGroq({ messages, hasImages, tools = [], timeoutMs = 30_000, maxAttempts = MAX_GROQ_ATTEMPTS_PER_MODEL, runtimeContext = "", taskType = "conversation", hasFiles = false, hasRepository = false }) {
+async function callGroq({ messages, hasImages, tools = [], timeoutMs = 30_000, maxAttempts = MAX_GROQ_ATTEMPTS_PER_MODEL, runtimeContext = "", taskType = "conversation", hasFiles = false, hasRepository = false, capabilities = [] }) {
   const latest = messages.at(-1)?.content;
   const inferredTask = taskType === "conversation" ? classifyTask(typeof latest === "string" ? latest : "", { hasImages, hasFiles, hasTools: tools.length > 0 }) : taskType;
   const systemContent = buildSystemInstructions({ taskType: inferredTask, hasImages, hasFiles, hasTools: tools.length > 0, hasRepository, runtimeContext });
@@ -313,14 +313,15 @@ async function callGroq({ messages, hasImages, tools = [], timeoutMs = 30_000, m
     timeoutMs,
     maxAttempts,
     taskType: inferredTask,
+    capabilities,
   });
 }
 
-async function callGroqWithMcp({ messages, hasImages, mcpServers, runtimeContext = "", hasFiles = false, hasRepository = false, taskType = "conversation" }) {
+async function callGroqWithMcp({ messages, hasImages, mcpServers, runtimeContext = "", hasFiles = false, hasRepository = false, taskType = "conversation", capabilityPlan = null }) {
   const { tools: mcpTools, byName } = flattenTools(mcpServers || []);
-  const tools = [researchToolDefinition, ...mcpTools];
+  const tools = [...(capabilityPlan?.needsResearch ? [researchToolDefinition] : []), ...mcpTools];
   let currentMessages = [...messages];
-  let result = await callGroq({ messages: currentMessages, hasImages, tools, runtimeContext, hasFiles, hasRepository, taskType });
+  let result = await callGroq({ messages: currentMessages, hasImages, tools, runtimeContext, hasFiles, hasRepository, taskType, capabilities: capabilityPlan?.capabilities || [] });
   if (result.failure || !tools.length) return { ...result, mcpToolsUsed: 0, researchUsed: 0 };
 
   let toolsUsed = 0;
@@ -339,7 +340,10 @@ async function callGroqWithMcp({ messages, hasImages, mcpServers, runtimeContext
       const entry = byName.get(name);
       let toolContent = "Ferramenta indisponível.";
       try {
-        const args = JSON.parse(toolCall.function.arguments || "{}");
+        const parsedArgs = JSON.parse(toolCall.function.arguments || "{}");
+        const validation = validateToolRequest(name, parsedArgs);
+        if (!validation.ok) throw new Error(validation.error);
+        const args = validation.args;
         if (name === researchToolDefinition.function.name) {
           const research = await runResearch({ question: args.question, deep: args.depth !== "normal" });
           toolContent = JSON.stringify({ question: research.question, queries: research.queries, sources: research.sources, evidence: research.evidence, visitedUrls: research.visitedUrls, browserAvailable: research.browserAvailable, errors: research.errors, stopReason: research.stopReason }).slice(0, 42_000);
@@ -353,7 +357,7 @@ async function callGroqWithMcp({ messages, hasImages, mcpServers, runtimeContext
       }
       currentMessages.push({ role: "tool", tool_call_id: toolCall.id, content: toolContent });
     }
-    result = await callGroq({ messages: currentMessages, hasImages: false, tools, runtimeContext, hasFiles, hasRepository, taskType });
+    result = await callGroq({ messages: currentMessages, hasImages: false, tools, runtimeContext, hasFiles, hasRepository, taskType, capabilities: capabilityPlan?.capabilities || [] });
     if (result.failure) break;
   }
   return { ...result, mcpToolsUsed: toolsUsed, researchUsed };
@@ -436,7 +440,8 @@ module.exports = async function handler(request, response) {
 
   const lastMessage = messages[messages.length - 1];
   const requestedMcpCount = await getConnectedMcpCount(user.id, body?.mcpConnectorIds);
-  const taskType = classifyTask(lastMessage.content, { hasImages: prepared.imageParts.length > 0, hasFiles: prepared.fileNames.length > 0, hasTools: requestedMcpCount > 0 });
+  const capabilityPlan = planTask(lastMessage.content, { hasImages: prepared.imageParts.length > 0, hasFiles: prepared.fileNames.length > 0, hasTools: requestedMcpCount > 0, hasRepository: Boolean(repositoryContext) });
+  const { taskType } = capabilityPlan;
   const creditCost = calculateChatCreditCost(messages, prepared.fileNames.length, requestedMcpCount);
   let usage;
   try {
@@ -511,7 +516,7 @@ module.exports = async function handler(request, response) {
     }
   }
 
-  const result = await callGroqWithMcp({ messages: apiMessages, hasImages, mcpServers, runtimeContext, hasFiles: prepared.fileNames.length > 0, hasRepository: Boolean(repositoryContext), taskType });
+  const result = await callGroqWithMcp({ messages: apiMessages, hasImages, mcpServers, runtimeContext, hasFiles: prepared.fileNames.length > 0, hasRepository: Boolean(repositoryContext), taskType, capabilityPlan });
   if (result.failure) {
     console.error("Groq request failed", result.failure);
     return sendJson(response, 502, { error: "O KAZER não conseguiu concluir a resposta agora. Tente novamente." });
