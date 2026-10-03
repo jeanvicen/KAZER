@@ -4225,6 +4225,9 @@
         .history-exit-action:active { transform: scale(.96); }
         .history-topbar .history-search-field { display: none; position: fixed; z-index: 55; right: calc(clamp(54px,14vw,64px) + max(22px, env(safe-area-inset-right)) + clamp(10px,3vw,16px)); bottom: max(18px, calc(env(safe-area-inset-bottom) + 10px)); left: max(22px, env(safe-area-inset-left)); width: auto; min-height: clamp(54px,14vw,64px); margin: 0; padding: 0 19px; border: 1px solid rgba(255,255,255,.075); border-radius: 999px; background: #141417; box-shadow: 0 8px 24px rgba(0,0,0,.24); }
         .history-screen.is-search-open .history-topbar .history-search-field { display: flex; }
+        .history-screen .history-search-field:focus-within { border-color: rgba(255,255,255,.19); box-shadow: 0 8px 24px rgba(0,0,0,.24), 0 0 0 2px rgba(255,255,255,.055); }
+        .history-screen .history-search-field input:focus, .history-screen .history-search-field input:focus-visible { outline: none; outline-offset: 0; box-shadow: none; }
+        :root[data-theme="light"] .history-screen .history-search-field:focus-within { border-color: rgba(0,0,0,.2); box-shadow: 0 8px 24px rgba(0,0,0,.12), 0 0 0 2px rgba(0,0,0,.045); }
         .history-screen.is-search-open .history-future-slot { display: none; }
         .history-screen.is-search-open .history-content { padding-bottom: calc(92px + env(safe-area-inset-bottom)); }
         .history-topbar .history-search-field .icon { width: 22px; height: 22px; color: #a8a8b1; }
