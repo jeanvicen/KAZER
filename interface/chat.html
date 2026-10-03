@@ -5421,11 +5421,15 @@
           const version = Number(globalNotice?.versao);
           hideGlobalNotice();
           if (!currentUser || !kazerSupabase || !version) return;
-          try { await kazerSupabase.from("notificacoes_vistas").upsert({ user_id: currentUser.id, versao_vista: version, atualizado_em: new Date().toISOString() }, { onConflict: "user_id" }); globalNoticeSeenVersion = version; } catch {}
+          globalNoticeSeenVersion = Math.max(Number(globalNoticeSeenVersion || 0), version);
+          try { await kazerSupabase.from("notificacoes_vistas").upsert({ user_id: currentUser.id, versao_vista: version, atualizado_em: new Date().toISOString() }, { onConflict: "user_id" }); } catch {}
         };
         const showGlobalNotice = (shouldMarkSeen = false) => {
           if (!globalNotice || !globalNoticeModal || !globalNoticeBackdrop) return;
+          const noticeVersion = String(globalNotice.versao);
+          if (!globalNoticeModal.hidden && globalNoticeModal.dataset.noticeVersion === noticeVersion) return;
           globalNoticeTitle.textContent = String(globalNotice.titulo).trim(); globalNoticeMessage.textContent = String(globalNotice.mensagem).trim();
+          globalNoticeModal.dataset.noticeVersion = noticeVersion;
           globalNoticeModal.hidden = false; globalNoticeBackdrop.hidden = false; globalNoticeModal.setAttribute("aria-hidden", "false");
           requestAnimationFrame(() => { globalNoticeModal.classList.add("visible"); globalNoticeBackdrop.classList.add("visible"); globalNoticeConfirm?.focus(); });
           globalNoticeModal.dataset.markSeen = shouldMarkSeen ? "true" : "false";
@@ -5436,13 +5440,14 @@
             const response = await fetch(globalNoticeUrl + "?t=" + Date.now(), { cache: "no-store", signal: AbortSignal.timeout(3500) });
             if (!response.ok) return;
             const data = await response.json();
-            if (!validGlobalNotice(data)) { globalNotice = null; globalNoticeLoaded = true; renderChatHistory(); return; }
+            if (!validGlobalNotice(data)) { globalNotice = null; globalNoticeLoaded = true; hideGlobalNotice(); renderChatHistory(); return; }
             globalNotice = { ativo: true, versao: Number(data.versao), titulo: String(data.titulo).trim(), mensagem: String(data.mensagem).trim() }; globalNoticeLoaded = true;
-            const seenResult = await Promise.race([kazerSupabase.from("notificacoes_vistas").select("versao_vista").eq("user_id", currentUser.id).maybeSingle(), new Promise((resolve) => window.setTimeout(() => resolve({ data: null, error: { message: "timeout" } }), 2500))]);
-            globalNoticeSeenVersion = Number(seenResult.data?.versao_vista || 0);
+            const seenQuery = Promise.resolve(kazerSupabase.from("notificacoes_vistas").select("versao_vista").eq("user_id", currentUser.id).maybeSingle()).catch((error) => ({ data: null, error }));
+            const seenResult = await Promise.race([seenQuery, new Promise((resolve) => window.setTimeout(() => resolve({ data: null, error: { message: "timeout" } }), 2500))]);
+            if (!seenResult?.error) globalNoticeSeenVersion = Number(seenResult.data?.versao_vista || 0);
             renderChatHistory();
-            if (settingsState.notifications !== false && !seenResult.error && globalNoticeSeenVersion < globalNotice.versao) showGlobalNotice(true);
-          } catch { globalNotice = null; globalNoticeLoaded = true; renderChatHistory(); }
+            if (settingsState.notifications !== false && Number(globalNoticeSeenVersion || 0) < globalNotice.versao) showGlobalNotice(true);
+          } catch { globalNotice = null; globalNoticeLoaded = true; hideGlobalNotice(); renderChatHistory(); }
         };
         globalNoticeClose?.addEventListener("click", markGlobalNoticeSeen);
         globalNoticeConfirm?.addEventListener("click", markGlobalNoticeSeen);
