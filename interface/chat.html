@@ -4201,6 +4201,49 @@
         .composer-box, .history-item, .history-new-chat, .plan-card-pro, .plan-card-pro-badge, .plan-card-pro button, .history-global-notice, .app-splash, .app-splash * { transition-duration: .01ms !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; }
       }
 
+
+      /* Mobile history navigation: account identity, existing history, and real actions only. */
+      .history-mobile-account { display: none; }
+      .history-mobile-dock { display: contents; }
+      .history-mobile-action { display: none; }
+      @media (max-width: 680px) {
+        .history-screen { display: flex; flex-direction: column; }
+        .history-topbar { display: grid; grid-template-columns: minmax(0,1fr); align-content: start; gap: 11px; width: 100%; height: auto; min-height: calc(68px + env(safe-area-inset-top)); margin: 0; padding: max(10px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) 12px max(16px, env(safe-area-inset-left)); border-bottom: 1px solid var(--line-soft); background: color-mix(in srgb, var(--page) 93%, transparent); backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px); }
+        .history-topbar::after { display: none; }
+        .history-brand, .desktop-sidebar-toggle { display: none !important; }
+        .history-mobile-account { display: flex; align-items: center; gap: 12px; min-width: 0; min-height: 48px; }
+        .history-mobile-account > img { display: block; width: 40px; height: 40px; flex: 0 0 auto; border: 1px solid color-mix(in srgb, var(--purple) 30%, var(--line)); border-radius: 13px; object-fit: cover; box-shadow: 0 7px 18px rgba(0,0,0,.18); }
+        .history-mobile-account-copy { display: grid; min-width: 0; gap: 3px; }
+        .history-mobile-account-copy strong, .history-mobile-account-copy small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .history-mobile-account-copy strong { color: var(--text); font-size: 14px; font-weight: 650; letter-spacing: -.025em; }
+        .history-mobile-account-copy small { color: var(--text-dim); font-size: 11px; }
+        .history-topbar .history-search-field { display: none; width: 100%; min-height: 46px; margin: 0; padding: 0 13px; border-radius: 13px; }
+        .history-screen.is-search-open .history-topbar .history-search-field { display: flex; }
+        .history-content { width: 100%; height: auto; min-height: 0; flex: 1 1 auto; margin: 0; padding: 22px max(18px, env(safe-area-inset-right)) 14px max(18px, env(safe-area-inset-left)); overflow-x: hidden; overflow-y: auto; }
+        .history-intro { align-items: center; margin: 0 0 20px; }
+        .history-intro h1 { font-size: clamp(29px, 8vw, 36px); }
+        .history-intro p { max-width: 250px; font-size: 11px; }
+        .history-mobile-dock { position: relative; z-index: 5; display: grid; grid-template-columns: minmax(0,.9fr) minmax(0,.9fr) minmax(0,1.3fr); align-items: stretch; gap: 8px; width: 100%; margin: 0; padding: 10px max(14px, env(safe-area-inset-right)) max(10px, env(safe-area-inset-bottom)) max(14px, env(safe-area-inset-left)); border-top: 1px solid var(--line-soft); background: color-mix(in srgb, var(--page) 94%, var(--card)); backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px); }
+        .history-mobile-action, .history-new-chat { position: static; display: inline-flex; align-items: center; justify-content: center; gap: 7px; width: auto; min-width: 0; min-height: 52px; height: 52px; margin: 0; padding: 0 8px; border: 1px solid var(--line); border-radius: 14px; background: color-mix(in srgb, var(--card) 74%, transparent); color: var(--text); box-shadow: none; text-decoration: none; cursor: pointer; font: inherit; font-size: 10px; font-weight: 620; line-height: 1.15; white-space: nowrap; }
+        .history-mobile-action .icon, .history-new-chat .icon { width: 18px; height: 18px; flex: 0 0 auto; }
+        .history-mobile-action:hover { border-color: color-mix(in srgb, var(--purple) 35%, var(--line)); background: color-mix(in srgb, var(--purple) 7%, var(--card)); }
+        .history-new-chat { border-color: color-mix(in srgb, var(--purple) 35%, var(--line)); background: #c53a3f; color: #fff; box-shadow: 0 7px 18px rgba(123,28,35,.2); }
+        .history-new-chat:hover { border-color: color-mix(in srgb, var(--purple) 48%, var(--line)); background: #ad3038; box-shadow: 0 9px 22px rgba(123,28,35,.24); transform: translateY(-1px); }
+        .history-new-chat-label { font-size: 10.5px; font-weight: 680; }
+        :root[data-theme="light"] .history-mobile-dock { background: color-mix(in srgb, var(--page) 94%, var(--card)); }
+        :root[data-theme="light"] .history-mobile-action { background: rgba(255,253,250,.92); }
+        :root[data-theme="light"] .history-new-chat { border-color: rgba(169,46,53,.25); background: #a92e35; color: #fff; }
+      }
+      @media (max-width: 360px) {
+        .history-mobile-dock { grid-template-columns: minmax(0,1fr) minmax(0,1fr) minmax(0,1.2fr); gap: 6px; padding-right: max(10px, env(safe-area-inset-right)); padding-left: max(10px, env(safe-area-inset-left)); }
+        .history-mobile-action, .history-new-chat { gap: 5px; padding-right: 5px; padding-left: 5px; font-size: 9px; }
+        .history-new-chat-label { font-size: 9.5px; }
+      }
+      @media (max-width: 680px) and (prefers-reduced-motion: reduce) {
+        .history-mobile-action, .history-new-chat { transition: none !important; }
+        .history-new-chat:hover { transform: none; }
+      }
+
     </style>
     <script>
       window.setTimeout(() => {
@@ -4244,7 +4287,8 @@
         <header class="history-topbar">
           <button class="history-brand" id="historyBrand" type="button" aria-label="Abrir configurações" title="Configurações"><img class="history-brand-mark" src="../download/assets/kazer-mark.svg?v=20260922" alt="" /><span class="history-brand-name">KAZER</span></button>
           <button class="desktop-sidebar-toggle" id="desktopSidebarToggle" type="button" aria-label="Recolher barra lateral" aria-expanded="true" title="Recolher barra lateral"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m14 5-7 7 7 7"></path></svg></button>
-          <label class="history-search-field" id="historySearchField"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-4-4"></path></svg><input id="historySearchInput" type="search" placeholder="Buscar nas conversas..." autocomplete="off" /></label>
+          <div class="history-mobile-account" aria-label="Conta conectada"><img src="../download/assets/kazer-mark.svg?v=20260922" alt="" /><span class="history-mobile-account-copy"><strong id="historyAccountName">Conta KAZER</strong><small id="historyAccountEmail">Conta conectada</small></span></div>
+          <label class="history-search-field" id="historySearchField"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-4-4"></path></svg><input id="historySearchInput" type="search" aria-label="Buscar nas conversas" placeholder="Buscar nas conversas..." autocomplete="off" /></label>
         </header>
         <div class="history-content">
           <div class="history-intro">
@@ -4254,7 +4298,11 @@
           <div class="history-list" id="historyList" aria-live="polite"></div>
           <div class="history-empty" id="historyEmpty" hidden><span class="history-empty-mark" aria-hidden="true"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 6.5A2.5 2.5 0 0 1 7.5 4h9A2.5 2.5 0 0 1 19 6.5v6a2.5 2.5 0 0 1-2.5 2.5H13l-3.2 3.2c-.63.63-1.8.18-1.8-.72V15H7.5A2.5 2.5 0 0 1 5 12.5z"></path><path d="M8.5 8.5h7M8.5 11.5h4"></path></svg></span><strong id="historyEmptyTitle">Seu arquivo começa aqui</strong><p id="historyEmptyMessage">Quando você iniciar uma conversa com o KAZER, ela vai aparecer aqui para você retomar quando quiser.</p></div>
         </div>
-        <a class="history-new-chat" id="historyNewChat" href="?view=chat" aria-label="Começar novo chat"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11.5a7.4 7.4 0 0 1-7.6 7.5 8.2 8.2 0 0 1-3.1-.6L5 20l1.4-3.7a7.2 7.2 0 0 1-1.5-4.5A7.4 7.4 0 0 1 12.4 4 7.4 7.4 0 0 1 20 11.5Z"></path><path d="M12 8.7v5.6M9.2 11.5h5.6"></path><span class="history-new-chat-label">Nova conversa</span></a>
+        <nav class="history-mobile-dock" aria-label="Ações do histórico">
+          <button class="history-mobile-action" id="historySettingsAction" type="button" aria-label="Configurações" title="Configurações"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6 7 7M17 17l1.4 1.4M18.4 5.6 17 7M7 17l-1.4 1.4"></path><circle cx="12" cy="12" r="3.5"></circle></svg><span>Ajustes</span></button>
+          <button class="history-mobile-action" id="historySearchAction" type="button" aria-label="Buscar conversas" aria-controls="historySearchInput" aria-expanded="false" title="Buscar conversas"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-4-4"></path></svg><span>Buscar</span></button>
+          <a class="history-new-chat" id="historyNewChat" href="?view=chat" aria-label="Começar novo chat"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11.5a7.4 7.4 0 0 1-7.6 7.5 8.2 8.2 0 0 1-3.1-.6L5 20l1.4-3.7a7.2 7.2 0 0 1-1.5-4.5A7.4 7.4 0 0 1 12.4 4 7.4 7.4 0 0 1 20 11.5Z"></path><path d="M12 8.7v5.6M9.2 11.5h5.6"></path></svg><span class="history-new-chat-label">Novo chat</span></a>
+        </nav>
       </section>
 
       <header class="new-chat-header" id="newChatHeader" aria-label="Novo chat" aria-hidden="true" hidden>
@@ -4687,6 +4735,10 @@
         const historySearchField = document.getElementById("historySearchField");
         const historySearchInput = document.getElementById("historySearchInput");
         const historyBrand = document.getElementById("historyBrand");
+        const historyAccountName = document.getElementById("historyAccountName");
+        const historyAccountEmail = document.getElementById("historyAccountEmail");
+        const historySettingsAction = document.getElementById("historySettingsAction");
+        const historySearchAction = document.getElementById("historySearchAction");
         const historyList = document.getElementById("historyList");
         const historyEmpty = document.getElementById("historyEmpty");
         const historyEmptyTitle = document.getElementById("historyEmptyTitle");
@@ -4766,8 +4818,8 @@
           const displayName = profile?.display_name || user?.user_metadata?.display_name || user?.email?.split("@")[0] || "Kazer";
           const email = user?.email || "Conta conectada";
           const initial = displayName.trim().charAt(0).toUpperCase() || "K";
-          [profileDisplayName, settingsAccountName, settingsMobileAccountName].forEach((element) => { if (element) element.textContent = displayName; });
-          [profileEmail, settingsAccountEmail, settingsMobileAccountEmail].forEach((element) => { if (element) element.textContent = email; });
+          [profileDisplayName, settingsAccountName, settingsMobileAccountName, historyAccountName].forEach((element) => { if (element) element.textContent = displayName; });
+          [profileEmail, settingsAccountEmail, settingsMobileAccountEmail, historyAccountEmail].forEach((element) => { if (element) element.textContent = email; });
           [settingsAccountAvatar, settingsMobileAccountAvatar].forEach((element) => { if (element) element.textContent = initial; });
           updateGreeting();
         };
@@ -7014,6 +7066,24 @@
 
 
         historySearchInput?.addEventListener("input", renderChatHistory);
+        historySearchAction?.addEventListener("click", () => {
+          const isOpen = !historyScreen?.classList.contains("is-search-open");
+          historyScreen?.classList.toggle("is-search-open", isOpen);
+          historySearchAction.setAttribute("aria-expanded", String(isOpen));
+          if (isOpen) {
+            window.setTimeout(() => historySearchInput?.focus(), 0);
+          } else {
+            if (historySearchInput?.value) { historySearchInput.value = ""; renderChatHistory(); }
+            historySearchAction.focus();
+          }
+        });
+        historySearchInput?.addEventListener("keydown", (event) => {
+          if (event.key !== "Escape" || !historyScreen?.classList.contains("is-search-open")) return;
+          historyScreen.classList.remove("is-search-open");
+          historySearchAction?.setAttribute("aria-expanded", "false");
+          if (historySearchInput.value) { historySearchInput.value = ""; renderChatHistory(); }
+          historySearchAction?.focus();
+        });
         kazerHistoryButton?.addEventListener("click", () => setView("kazer", { push: true }));
         let activeDirectUser = null;
         const closeKazerMenu = () => { kazerMenu?.classList.remove("visible"); kazerMenuBackdrop?.classList.remove("visible"); };
@@ -7093,6 +7163,7 @@
           desktopSidebarToggle.title = label;
         });
         historyBrand?.addEventListener("click", () => openSettings());
+        historySettingsAction?.addEventListener("click", () => openSettings());
         settingsAction.addEventListener("click", () => openSettings());
         profileMoreToggle.addEventListener("click", (event) => {
           event.stopPropagation();
