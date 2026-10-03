@@ -4209,11 +4209,13 @@
       @media (max-width: 680px) {
         .history-screen { display: flex; flex-direction: column; background: #030304; }
         .history-screen::before { display: none; }
-        .history-topbar { display: grid; grid-template-columns: minmax(0,1fr) 60px; grid-template-areas: "account exit" "search search"; align-items: center; gap: 0 14px; width: 100%; height: auto; min-height: calc(86px + env(safe-area-inset-top)); margin: 0; padding: max(14px, env(safe-area-inset-top)) max(22px, env(safe-area-inset-right)) 14px max(22px, env(safe-area-inset-left)); border: 0; background: transparent; backdrop-filter: none; -webkit-backdrop-filter: none; }
+        .history-topbar { display: grid; grid-template-columns: minmax(0,1fr) 60px; grid-template-areas: "account exit"; align-items: center; gap: 0 14px; width: 100%; height: auto; min-height: calc(86px + env(safe-area-inset-top)); margin: 0; padding: max(14px, env(safe-area-inset-top)) max(22px, env(safe-area-inset-right)) 14px max(22px, env(safe-area-inset-left)); border: 0; background: transparent; backdrop-filter: none; -webkit-backdrop-filter: none; }
         .history-topbar::after { display: none; }
         .history-brand, .desktop-sidebar-toggle { display: none !important; }
         .history-mobile-account { grid-area: account; display: flex; align-items: center; gap: 14px; min-width: 0; min-height: 60px; }
-        .history-mobile-account > img { display: block; width: 56px; height: 56px; flex: 0 0 auto; padding: 8px; border: 1px solid rgba(255,255,255,.08); border-radius: 50%; background: #101013; object-fit: contain; }
+        .history-mobile-avatar { position: relative; display: grid; place-items: center; width: 56px; height: 56px; flex: 0 0 56px; overflow: hidden; border: 1px solid rgba(255,255,255,.09); border-radius: 50%; background: #17171b; color: #f3f0ea; }
+        .history-mobile-avatar img { display: block; width: 100%; height: 100%; border-radius: inherit; object-fit: cover; }
+        .history-avatar-fallback { display: grid; place-items: center; width: 100%; height: 100%; font-size: 20px; font-weight: 620; line-height: 1; }
         .history-mobile-account-copy { display: grid; min-width: 0; gap: 4px; }
         .history-mobile-account-copy strong, .history-mobile-account-copy small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .history-mobile-account-copy strong { color: #f4f4f5; font-size: clamp(18px, 5vw, 21px); font-weight: 620; letter-spacing: -.035em; line-height: 1.15; }
@@ -4221,8 +4223,11 @@
         .history-exit-action { grid-area: exit; display: grid; place-items: center; width: 60px; height: 60px; border: 1px solid rgba(255,255,255,.055); border-radius: 50%; background: #17171b; color: #f3f0ea; cursor: pointer; touch-action: manipulation; transition: background 160ms var(--ease), transform 160ms var(--ease); }
         .history-exit-action .icon { width: 26px; height: 26px; }
         .history-exit-action:active { transform: scale(.96); }
-        .history-topbar .history-search-field { grid-area: search; display: none; width: 100%; min-height: 48px; margin: 14px 0 0; padding: 0 15px; border-radius: 999px; background: #111115; border-color: rgba(255,255,255,.12); box-shadow: none; }
+        .history-topbar .history-search-field { display: none; position: fixed; z-index: 55; right: calc(clamp(54px,14vw,64px) + max(22px, env(safe-area-inset-right)) + clamp(10px,3vw,16px)); bottom: max(18px, calc(env(safe-area-inset-bottom) + 10px)); left: max(22px, env(safe-area-inset-left)); width: auto; min-height: clamp(54px,14vw,64px); margin: 0; padding: 0 19px; border: 1px solid rgba(255,255,255,.075); border-radius: 999px; background: #141417; box-shadow: 0 8px 24px rgba(0,0,0,.24); }
         .history-screen.is-search-open .history-topbar .history-search-field { display: flex; }
+        .history-screen.is-search-open .history-future-slot { display: none; }
+        .history-screen.is-search-open .history-content { padding-bottom: calc(92px + env(safe-area-inset-bottom)); }
+        .history-topbar .history-search-field .icon { width: 22px; height: 22px; color: #a8a8b1; }
         .history-topbar .history-search-field input { font-size: 16px; }
         .history-future-slot { display: block; flex: 0 0 clamp(82px, 20vh, 188px); width: 100%; pointer-events: none; }
         .history-content { width: 100%; height: auto; min-height: 0; flex: 1 1 auto; margin: 0; padding: 0 max(22px, env(safe-area-inset-right)) 14px max(22px, env(safe-area-inset-left)); overflow-x: hidden; overflow-y: auto; overscroll-behavior: contain; }
@@ -4239,7 +4244,15 @@
         .history-empty { min-height: 190px; margin: 0; padding: 34px 16px; border: 0; border-top: 1px solid rgba(255,255,255,.075); border-radius: 0; background: transparent; }
         .history-mobile-dock { position: relative; z-index: 5; display: grid; grid-template-columns: clamp(54px,14vw,64px) clamp(54px,14vw,64px) minmax(0,1fr); align-items: center; gap: clamp(10px,3vw,16px); width: 100%; margin: 0; padding: 12px max(22px, env(safe-area-inset-right)) max(18px, calc(env(safe-area-inset-bottom) + 10px)) max(22px, env(safe-area-inset-left)); border: 0; background: transparent; }
         .history-mobile-action, .history-new-chat { position: static; display: grid; place-items: center; width: 100%; min-width: 44px; min-height: clamp(54px,14vw,64px); height: clamp(54px,14vw,64px); margin: 0; padding: 0; border: 1px solid rgba(255,255,255,.035); border-radius: 50%; background: #17171b; color: #f3f0ea; box-shadow: none; text-decoration: none; cursor: pointer; font: inherit; }
+        .history-mobile-action { aspect-ratio: 1; border-radius: 50%; box-shadow: 0 4px 15px rgba(0,0,0,.18); transition: background 160ms var(--ease), border-color 160ms var(--ease), transform 160ms var(--ease); }
+        .history-mobile-action:active { transform: scale(.96); }
         .history-mobile-action .icon { width: 25px; height: 25px; }
+        .history-search-close-icon { display: none; }
+        .history-screen.is-search-open #historySearchAction .history-search-open-icon { display: none; }
+        .history-screen.is-search-open #historySearchAction .history-search-close-icon { display: block; }
+        .history-screen.is-search-open .history-mobile-dock { position: fixed; z-index: 60; right: max(22px, env(safe-area-inset-right)); bottom: max(18px, calc(env(safe-area-inset-bottom) + 10px)); left: auto; display: grid; grid-template-columns: clamp(54px,14vw,64px); width: clamp(54px,14vw,64px); height: clamp(54px,14vw,64px); margin: 0; padding: 0; }
+        .history-screen.is-search-open #historySettingsAction, .history-screen.is-search-open #historyNewChat { display: none !important; }
+        .history-screen.is-search-open #historySearchAction { width: 100%; height: 100%; min-height: 0; border-radius: 50%; background: #25252b; box-shadow: 0 8px 24px rgba(0,0,0,.24); }
         .history-mobile-action-label { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
         .history-mobile-action:hover { border-color: rgba(255,255,255,.12); background: #222227; }
         .history-new-chat { display: flex; justify-content: center; gap: 10px; border-color: rgba(197,58,63,.35); border-radius: 999px; background: #c53a3f; color: #fff; font-size: clamp(15px,4vw,18px); font-weight: 620; white-space: nowrap; box-shadow: 0 8px 24px rgba(123,28,35,.22); }
@@ -4248,7 +4261,7 @@
         .history-new-chat:hover { border-color: rgba(197,58,63,.52); background: #ad3038; box-shadow: 0 10px 25px rgba(123,28,35,.25); transform: translateY(-1px); }
         .history-mobile-action:focus-visible, .history-exit-action:focus-visible, .history-new-chat:focus-visible { outline: 2px solid var(--accent-readable); outline-offset: 4px; }
         :root[data-theme="light"] .history-screen { background: #f3f0ea; }
-        :root[data-theme="light"] .history-mobile-action, :root[data-theme="light"] .history-exit-action { border-color: rgba(0,0,0,.08); background: #e7e2da; color: #17171b; }
+        :root[data-theme="light"] .history-mobile-action, :root[data-theme="light"] .history-exit-action, :root[data-theme="light"] .history-mobile-avatar { border-color: rgba(0,0,0,.08); background: #e7e2da; color: #17171b; }
         :root[data-theme="light"] .history-mobile-account-copy strong, :root[data-theme="light"] .history-item-copy strong { color: #17171b; }
         :root[data-theme="light"] .history-mobile-account-copy small, :root[data-theme="light"] .history-intro h1 { color: #62616a; }
         :root[data-theme="light"] .history-item { border-bottom-color: rgba(0,0,0,.09); }
@@ -4257,16 +4270,17 @@
       @media (max-height: 680px) and (max-width: 680px) {
         .history-topbar { min-height: calc(76px + env(safe-area-inset-top)); padding-top: max(10px, env(safe-area-inset-top)); }
         .history-mobile-account { min-height: 54px; }
-        .history-mobile-account > img, .history-exit-action { width: 52px; height: 52px; }
+        .history-mobile-avatar, .history-exit-action { width: 52px; height: 52px; flex-basis: 52px; }
         .history-future-slot { flex-basis: clamp(38px, 10vh, 70px); }
         .history-mobile-dock { padding-top: 8px; }
       }
       @media (max-width: 360px) {
         .history-topbar { grid-template-columns: minmax(0,1fr) 54px; padding-right: max(16px, env(safe-area-inset-right)); padding-left: max(16px, env(safe-area-inset-left)); }
         .history-mobile-account { gap: 10px; }
-        .history-mobile-account > img, .history-exit-action { width: 52px; height: 52px; }
+        .history-mobile-avatar, .history-exit-action { width: 52px; height: 52px; flex-basis: 52px; }
         .history-content { padding-right: max(16px, env(safe-area-inset-right)); padding-left: max(16px, env(safe-area-inset-left)); }
         .history-mobile-dock { grid-template-columns: 52px 52px minmax(0,1fr); gap: 10px; padding-right: max(16px, env(safe-area-inset-right)); padding-left: max(16px, env(safe-area-inset-left)); }
+        .history-mobile-action { width: 52px; min-width: 52px; min-height: 52px; height: 52px; }
         .history-new-chat { gap: 7px; font-size: 15px; }
       }
       @media (max-width: 680px) and (prefers-reduced-motion: reduce) {
@@ -4317,9 +4331,9 @@
         <header class="history-topbar">
           <button class="history-brand" id="historyBrand" type="button" aria-label="Abrir configurações" title="Configurações"><img class="history-brand-mark" src="../download/assets/kazer-mark.svg?v=20260922" alt="" /><span class="history-brand-name">KAZER</span></button>
           <button class="desktop-sidebar-toggle" id="desktopSidebarToggle" type="button" aria-label="Recolher barra lateral" aria-expanded="true" title="Recolher barra lateral"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m14 5-7 7 7 7"></path></svg></button>
-          <div class="history-mobile-account" role="group" aria-label="Conta KAZER"><img src="../download/assets/kazer-mark.svg?v=20260922" alt="" /><span class="history-mobile-account-copy"><strong id="historyAccountName">Conta KAZER</strong><small id="historyAccountBrand">KAZER</small></span></div>
+          <div class="history-mobile-account" role="group" aria-label="Conta KAZER"><span class="history-mobile-avatar"><span class="history-avatar-fallback" id="historyAvatarFallback" aria-hidden="true">K</span><img id="historyAccountAvatar" alt="" hidden referrerpolicy="no-referrer" /></span><span class="history-mobile-account-copy"><strong id="historyAccountName">Conta KAZER</strong><small id="historyAccountBrand">KAZER</small></span></div>
           <button class="history-exit-action" id="historyExitAction" type="button" aria-label="Voltar para o chat" title="Voltar para o chat"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12h15"></path><path d="m13 5 7 7-7 7"></path></svg></button>
-          <label class="history-search-field" id="historySearchField"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-4-4"></path></svg><input id="historySearchInput" type="search" aria-label="Buscar nas conversas" placeholder="Buscar nas conversas..." autocomplete="off" /></label>
+          <label class="history-search-field" id="historySearchField"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-4-4"></path></svg><input id="historySearchInput" type="search" aria-label="Buscar nas conversas" placeholder="Buscar" autocomplete="off" /></label>
         </header>
         <div class="history-future-slot" aria-hidden="true"><!-- Espaço reservado para navegação futura; permanece vazio até existir um recurso real. --></div>
         <div class="history-content">
@@ -4332,7 +4346,7 @@
         </div>
         <nav class="history-mobile-dock" aria-label="Ações do histórico">
           <button class="history-mobile-action" id="historySettingsAction" type="button" aria-label="Configurações" title="Configurações"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6 7 7M17 17l1.4 1.4M18.4 5.6 17 7M7 17l-1.4 1.4"></path><circle cx="12" cy="12" r="3.5"></circle></svg><span class="history-mobile-action-label">Configurações</span></button>
-          <button class="history-mobile-action" id="historySearchAction" type="button" aria-label="Buscar conversas" aria-controls="historySearchInput" aria-expanded="false" title="Buscar conversas"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-4-4"></path></svg><span class="history-mobile-action-label">Buscar conversas</span></button>
+          <button class="history-mobile-action" id="historySearchAction" type="button" aria-label="Buscar conversas" aria-controls="historySearchInput" aria-expanded="false" title="Buscar conversas"><svg class="icon history-search-open-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-4-4"></path></svg><svg class="icon history-search-close-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"></path></svg><span class="history-mobile-action-label">Buscar conversas</span></button>
           <a class="history-new-chat" id="historyNewChat" href="?view=chat" aria-label="Começar novo chat"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11.5a7.4 7.4 0 0 1-7.6 7.5 8.2 8.2 0 0 1-3.1-.6L5 20l1.4-3.7a7.2 7.2 0 0 1-1.5-4.5A7.4 7.4 0 0 1 12.4 4 7.4 7.4 0 0 1 20 11.5Z"></path><path d="M12 8.7v5.6M9.2 11.5h5.6"></path></svg><span class="history-new-chat-label">Novo Chat</span></a>
         </nav>
       </section>
@@ -4768,6 +4782,8 @@
         const historySearchInput = document.getElementById("historySearchInput");
         const historyBrand = document.getElementById("historyBrand");
         const historyAccountName = document.getElementById("historyAccountName");
+        const historyAccountAvatar = document.getElementById("historyAccountAvatar");
+        const historyAvatarFallback = document.getElementById("historyAvatarFallback");
         const historyExitAction = document.getElementById("historyExitAction");
         const historySettingsAction = document.getElementById("historySettingsAction");
         const historySearchAction = document.getElementById("historySearchAction");
@@ -4851,9 +4867,31 @@
           const displayName = profile?.display_name || user?.user_metadata?.display_name || user?.email?.split("@")[0] || "Kazer";
           const email = user?.email || "Conta conectada";
           const initial = displayName.trim().charAt(0).toUpperCase() || "K";
+          const googleIdentity = (user?.identities || []).find((identity) => identity?.provider === "google")?.identity_data || {};
+          const googlePhoto = [googleIdentity.picture, googleIdentity.avatar_url, user?.user_metadata?.picture, user?.user_metadata?.avatar_url, user?.user_metadata?.avatarUrl]
+            .map((candidate) => {
+              if (typeof candidate !== "string") return "";
+              try {
+                const photo = new URL(candidate);
+                const isGoogleImageHost = photo.hostname === "googleusercontent.com" || photo.hostname.endsWith(".googleusercontent.com");
+                return photo.protocol === "https:" && isGoogleImageHost ? photo.href : "";
+              } catch { return ""; }
+            }).find(Boolean) || "";
           [profileDisplayName, settingsAccountName, settingsMobileAccountName, historyAccountName].forEach((element) => { if (element) element.textContent = displayName; });
           [profileEmail, settingsAccountEmail, settingsMobileAccountEmail].forEach((element) => { if (element) element.textContent = email; });
-          [settingsAccountAvatar, settingsMobileAccountAvatar].forEach((element) => { if (element) element.textContent = initial; });
+          [settingsAccountAvatar, settingsMobileAccountAvatar, historyAvatarFallback].forEach((element) => { if (element) element.textContent = initial; });
+          if (historyAccountAvatar) {
+            historyAccountAvatar.onerror = () => { historyAccountAvatar.hidden = true; if (historyAvatarFallback) historyAvatarFallback.hidden = false; };
+            if (googlePhoto) {
+              historyAccountAvatar.src = googlePhoto;
+              historyAccountAvatar.hidden = false;
+              if (historyAvatarFallback) historyAvatarFallback.hidden = true;
+            } else {
+              historyAccountAvatar.removeAttribute("src");
+              historyAccountAvatar.hidden = true;
+              if (historyAvatarFallback) historyAvatarFallback.hidden = false;
+            }
+          }
           updateGreeting();
         };
 
@@ -7100,11 +7138,19 @@
         };
 
 
+        const setHistorySearchOpen = (isOpen) => {
+          historyScreen?.classList.toggle("is-search-open", isOpen);
+          const label = isOpen ? "Fechar busca" : "Buscar conversas";
+          historySearchAction?.setAttribute("aria-expanded", String(isOpen));
+          historySearchAction?.setAttribute("aria-label", label);
+          if (historySearchAction) historySearchAction.title = label;
+          const actionText = historySearchAction?.querySelector(".history-mobile-action-label");
+          if (actionText) actionText.textContent = label;
+        };
         historySearchInput?.addEventListener("input", renderChatHistory);
         historySearchAction?.addEventListener("click", () => {
           const isOpen = !historyScreen?.classList.contains("is-search-open");
-          historyScreen?.classList.toggle("is-search-open", isOpen);
-          historySearchAction.setAttribute("aria-expanded", String(isOpen));
+          setHistorySearchOpen(isOpen);
           if (isOpen) {
             window.setTimeout(() => historySearchInput?.focus(), 0);
           } else {
@@ -7114,8 +7160,7 @@
         });
         historySearchInput?.addEventListener("keydown", (event) => {
           if (event.key !== "Escape" || !historyScreen?.classList.contains("is-search-open")) return;
-          historyScreen.classList.remove("is-search-open");
-          historySearchAction?.setAttribute("aria-expanded", "false");
+          setHistorySearchOpen(false);
           if (historySearchInput.value) { historySearchInput.value = ""; renderChatHistory(); }
           historySearchAction?.focus();
         });
