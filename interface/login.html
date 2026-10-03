@@ -215,9 +215,11 @@
     }
     .close-button:hover { border-color: rgba(240,122,128,.24); background: rgba(197,58,63,.10); color: var(--text-primary); }
     .close-button:active { transform: scale(.96); }
-    .auth-forms { display: grid; grid-template: 1fr / minmax(0,1fr); }
+    .auth-forms { position: relative; display: grid; grid-template: 1fr / minmax(0,1fr); transition: height var(--duration-slow) var(--ease-standard); }
     .form-section {
       grid-area: 1 / 1;
+      position: absolute;
+      inset: 0;
       min-width: 0;
       opacity: 0;
       visibility: hidden;
@@ -226,7 +228,7 @@
       transition: opacity var(--duration-fast) var(--ease-standard), transform var(--duration-fast) var(--ease-standard), visibility 0s;
     }
     .form-section.active { position: relative; z-index: 1; opacity: 1; visibility: visible; pointer-events: auto; transform: translateY(0); transition: opacity var(--duration-normal) var(--ease-standard), transform var(--duration-normal) var(--ease-standard), visibility 0s; }
-    .form-section.hidden { position: relative; z-index: 0; }
+    .form-section.hidden { z-index: 0; }
     .form-section h1 { margin: 0; color: var(--text-primary); font-size: clamp(25px, 3vw, 30px); font-weight: 620; letter-spacing: -.055em; line-height: 1.15; }
     .switch-text { margin: 9px 0 27px; color: var(--text-secondary); font-size: 13px; line-height: 1.6; }
     .switch-link { display: inline-flex; align-items: center; min-height: 36px; margin: -6px 0; padding: 0 2px; border: 0; background: transparent; color: var(--text-primary); font: inherit; font-weight: 650; text-decoration: underline; text-decoration-color: rgba(240,122,128,.62); text-underline-offset: 4px; cursor: pointer; transition: color var(--duration-fast) ease, text-decoration-color var(--duration-fast) ease; }
@@ -821,6 +823,25 @@
         } catch (_) {}
       });
 
+    })();
+  </script>
+  <script>
+    (() => {
+      const authForms = document.querySelector('.auth-forms');
+      if (!authForms) return;
+      let resetTimer = 0;
+      authForms.addEventListener('click', (event) => {
+        if (!event.target.closest?.('#goToSignup, #goToLogin')) return;
+        window.clearTimeout(resetTimer);
+        authForms.style.height = `${Math.ceil(authForms.getBoundingClientRect().height)}px`;
+        window.setTimeout(() => {
+          const activeForm = authForms.querySelector('.form-section.active');
+          if (!activeForm) return;
+          authForms.style.height = `${Math.ceil(activeForm.scrollHeight)}px`;
+          const reducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+          resetTimer = window.setTimeout(() => { authForms.style.height = 'auto'; }, reducedMotion ? 30 : 460);
+        }, 165);
+      }, { capture: true });
     })();
   </script>
   <script>
