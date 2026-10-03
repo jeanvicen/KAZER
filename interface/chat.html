@@ -4202,45 +4202,75 @@
       }
 
 
-      /* Mobile history navigation: account identity, existing history, and real actions only. */
-      .history-mobile-account { display: none; }
+      /* Mobile archive: visual hierarchy inspired by the reference, with only real KAZER actions. */
+      .history-mobile-account, .history-exit-action, .history-future-slot { display: none; }
       .history-mobile-dock { display: contents; }
       .history-mobile-action { display: none; }
       @media (max-width: 680px) {
-        .history-screen { display: flex; flex-direction: column; }
-        .history-topbar { display: grid; grid-template-columns: minmax(0,1fr); align-content: start; gap: 11px; width: 100%; height: auto; min-height: calc(68px + env(safe-area-inset-top)); margin: 0; padding: max(10px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) 12px max(16px, env(safe-area-inset-left)); border-bottom: 1px solid var(--line-soft); background: color-mix(in srgb, var(--page) 93%, transparent); backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px); }
+        .history-screen { display: flex; flex-direction: column; background: #030304; }
+        .history-screen::before { display: none; }
+        .history-topbar { display: grid; grid-template-columns: minmax(0,1fr) 60px; grid-template-areas: "account exit" "search search"; align-items: center; gap: 0 14px; width: 100%; height: auto; min-height: calc(86px + env(safe-area-inset-top)); margin: 0; padding: max(14px, env(safe-area-inset-top)) max(22px, env(safe-area-inset-right)) 14px max(22px, env(safe-area-inset-left)); border: 0; background: transparent; backdrop-filter: none; -webkit-backdrop-filter: none; }
         .history-topbar::after { display: none; }
         .history-brand, .desktop-sidebar-toggle { display: none !important; }
-        .history-mobile-account { display: flex; align-items: center; gap: 12px; min-width: 0; min-height: 48px; }
-        .history-mobile-account > img { display: block; width: 40px; height: 40px; flex: 0 0 auto; border: 1px solid color-mix(in srgb, var(--purple) 30%, var(--line)); border-radius: 13px; object-fit: cover; box-shadow: 0 7px 18px rgba(0,0,0,.18); }
-        .history-mobile-account-copy { display: grid; min-width: 0; gap: 3px; }
+        .history-mobile-account { grid-area: account; display: flex; align-items: center; gap: 14px; min-width: 0; min-height: 60px; }
+        .history-mobile-account > img { display: block; width: 56px; height: 56px; flex: 0 0 auto; padding: 8px; border: 1px solid rgba(255,255,255,.08); border-radius: 50%; background: #101013; object-fit: contain; }
+        .history-mobile-account-copy { display: grid; min-width: 0; gap: 4px; }
         .history-mobile-account-copy strong, .history-mobile-account-copy small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        .history-mobile-account-copy strong { color: var(--text); font-size: 14px; font-weight: 650; letter-spacing: -.025em; }
-        .history-mobile-account-copy small { color: var(--text-dim); font-size: 11px; }
-        .history-topbar .history-search-field { display: none; width: 100%; min-height: 46px; margin: 0; padding: 0 13px; border-radius: 13px; }
+        .history-mobile-account-copy strong { color: #f4f4f5; font-size: clamp(18px, 5vw, 21px); font-weight: 620; letter-spacing: -.035em; line-height: 1.15; }
+        .history-mobile-account-copy small { color: #a1a1aa; font-size: 14px; font-weight: 430; letter-spacing: .01em; }
+        .history-exit-action { grid-area: exit; display: grid; place-items: center; width: 60px; height: 60px; border: 1px solid rgba(255,255,255,.055); border-radius: 50%; background: #17171b; color: #f3f0ea; cursor: pointer; touch-action: manipulation; transition: background 160ms var(--ease), transform 160ms var(--ease); }
+        .history-exit-action .icon { width: 26px; height: 26px; }
+        .history-exit-action:active { transform: scale(.96); }
+        .history-topbar .history-search-field { grid-area: search; display: none; width: 100%; min-height: 48px; margin: 14px 0 0; padding: 0 15px; border-radius: 999px; background: #111115; border-color: rgba(255,255,255,.12); box-shadow: none; }
         .history-screen.is-search-open .history-topbar .history-search-field { display: flex; }
-        .history-content { width: 100%; height: auto; min-height: 0; flex: 1 1 auto; margin: 0; padding: 22px max(18px, env(safe-area-inset-right)) 14px max(18px, env(safe-area-inset-left)); overflow-x: hidden; overflow-y: auto; }
-        .history-intro { align-items: center; margin: 0 0 20px; }
-        .history-intro h1 { font-size: clamp(29px, 8vw, 36px); }
-        .history-intro p { max-width: 250px; font-size: 11px; }
-        .history-mobile-dock { position: relative; z-index: 5; display: grid; grid-template-columns: minmax(0,.9fr) minmax(0,.9fr) minmax(0,1.3fr); align-items: stretch; gap: 8px; width: 100%; margin: 0; padding: 10px max(14px, env(safe-area-inset-right)) max(10px, env(safe-area-inset-bottom)) max(14px, env(safe-area-inset-left)); border-top: 1px solid var(--line-soft); background: color-mix(in srgb, var(--page) 94%, var(--card)); backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px); }
-        .history-mobile-action, .history-new-chat { position: static; display: inline-flex; align-items: center; justify-content: center; gap: 7px; width: auto; min-width: 0; min-height: 52px; height: 52px; margin: 0; padding: 0 8px; border: 1px solid var(--line); border-radius: 14px; background: color-mix(in srgb, var(--card) 74%, transparent); color: var(--text); box-shadow: none; text-decoration: none; cursor: pointer; font: inherit; font-size: 10px; font-weight: 620; line-height: 1.15; white-space: nowrap; }
-        .history-mobile-action .icon, .history-new-chat .icon { width: 18px; height: 18px; flex: 0 0 auto; }
-        .history-mobile-action:hover { border-color: color-mix(in srgb, var(--purple) 35%, var(--line)); background: color-mix(in srgb, var(--purple) 7%, var(--card)); }
-        .history-new-chat { border-color: color-mix(in srgb, var(--purple) 35%, var(--line)); background: #c53a3f; color: #fff; box-shadow: 0 7px 18px rgba(123,28,35,.2); }
-        .history-new-chat:hover { border-color: color-mix(in srgb, var(--purple) 48%, var(--line)); background: #ad3038; box-shadow: 0 9px 22px rgba(123,28,35,.24); transform: translateY(-1px); }
-        .history-new-chat-label { font-size: 10.5px; font-weight: 680; }
-        :root[data-theme="light"] .history-mobile-dock { background: color-mix(in srgb, var(--page) 94%, var(--card)); }
-        :root[data-theme="light"] .history-mobile-action { background: rgba(255,253,250,.92); }
+        .history-topbar .history-search-field input { font-size: 16px; }
+        .history-future-slot { display: block; flex: 0 0 clamp(82px, 20vh, 188px); width: 100%; pointer-events: none; }
+        .history-content { width: 100%; height: auto; min-height: 0; flex: 1 1 auto; margin: 0; padding: 0 max(22px, env(safe-area-inset-right)) 14px max(22px, env(safe-area-inset-left)); overflow-x: hidden; overflow-y: auto; overscroll-behavior: contain; }
+        .history-intro { align-items: center; margin: 0 0 10px; }
+        .history-eyebrow, .history-intro p, .history-count, .history-group-label { display: none; }
+        .history-intro h1 { color: #a1a1aa; font-size: 19px; font-weight: 520; letter-spacing: -.015em; line-height: 1.25; }
+        .history-list { border: 0; }
+        .history-item { grid-template-columns: minmax(0,1fr) auto; min-height: 58px; margin: 0; padding: 0; border: 0; border-bottom: 1px solid rgba(255,255,255,.075); border-radius: 0; background: transparent; box-shadow: none; }
+        .history-item:hover, .history-item.is-selected { border-color: rgba(255,255,255,.075); background: rgba(255,255,255,.025); }
+        .history-item-open { grid-template-columns: minmax(0,1fr); min-height: 58px; gap: 0; padding: 8px 0; border-radius: 0; }
+        .history-item-symbol, .history-item-copy small, .history-item-trailing { display: none; }
+        .history-item-copy strong { color: #f0f0f3; font-size: 17px; font-weight: 450; letter-spacing: -.018em; line-height: 1.35; }
+        .history-item-action { min-height: 44px; margin-right: 4px; border-radius: 999px; }
+        .history-empty { min-height: 190px; margin: 0; padding: 34px 16px; border: 0; border-top: 1px solid rgba(255,255,255,.075); border-radius: 0; background: transparent; }
+        .history-mobile-dock { position: relative; z-index: 5; display: grid; grid-template-columns: clamp(54px,14vw,64px) clamp(54px,14vw,64px) minmax(0,1fr); align-items: center; gap: clamp(10px,3vw,16px); width: 100%; margin: 0; padding: 12px max(22px, env(safe-area-inset-right)) max(18px, calc(env(safe-area-inset-bottom) + 10px)) max(22px, env(safe-area-inset-left)); border: 0; background: transparent; }
+        .history-mobile-action, .history-new-chat { position: static; display: grid; place-items: center; width: 100%; min-width: 44px; min-height: clamp(54px,14vw,64px); height: clamp(54px,14vw,64px); margin: 0; padding: 0; border: 1px solid rgba(255,255,255,.035); border-radius: 50%; background: #17171b; color: #f3f0ea; box-shadow: none; text-decoration: none; cursor: pointer; font: inherit; }
+        .history-mobile-action .icon { width: 25px; height: 25px; }
+        .history-mobile-action-label { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+        .history-mobile-action:hover { border-color: rgba(255,255,255,.12); background: #222227; }
+        .history-new-chat { display: flex; justify-content: center; gap: 10px; border-color: rgba(197,58,63,.35); border-radius: 999px; background: #c53a3f; color: #fff; font-size: clamp(15px,4vw,18px); font-weight: 620; white-space: nowrap; box-shadow: 0 8px 24px rgba(123,28,35,.22); }
+        .history-new-chat .icon { width: 24px; height: 24px; flex: 0 0 auto; }
+        .history-new-chat-label { font-size: inherit; font-weight: inherit; }
+        .history-new-chat:hover { border-color: rgba(197,58,63,.52); background: #ad3038; box-shadow: 0 10px 25px rgba(123,28,35,.25); transform: translateY(-1px); }
+        .history-mobile-action:focus-visible, .history-exit-action:focus-visible, .history-new-chat:focus-visible { outline: 2px solid var(--accent-readable); outline-offset: 4px; }
+        :root[data-theme="light"] .history-screen { background: #f3f0ea; }
+        :root[data-theme="light"] .history-mobile-action, :root[data-theme="light"] .history-exit-action { border-color: rgba(0,0,0,.08); background: #e7e2da; color: #17171b; }
+        :root[data-theme="light"] .history-mobile-account-copy strong, :root[data-theme="light"] .history-item-copy strong { color: #17171b; }
+        :root[data-theme="light"] .history-mobile-account-copy small, :root[data-theme="light"] .history-intro h1 { color: #62616a; }
+        :root[data-theme="light"] .history-item { border-bottom-color: rgba(0,0,0,.09); }
         :root[data-theme="light"] .history-new-chat { border-color: rgba(169,46,53,.25); background: #a92e35; color: #fff; }
       }
+      @media (max-height: 680px) and (max-width: 680px) {
+        .history-topbar { min-height: calc(76px + env(safe-area-inset-top)); padding-top: max(10px, env(safe-area-inset-top)); }
+        .history-mobile-account { min-height: 54px; }
+        .history-mobile-account > img, .history-exit-action { width: 52px; height: 52px; }
+        .history-future-slot { flex-basis: clamp(38px, 10vh, 70px); }
+        .history-mobile-dock { padding-top: 8px; }
+      }
       @media (max-width: 360px) {
-        .history-mobile-dock { grid-template-columns: minmax(0,1fr) minmax(0,1fr) minmax(0,1.2fr); gap: 6px; padding-right: max(10px, env(safe-area-inset-right)); padding-left: max(10px, env(safe-area-inset-left)); }
-        .history-mobile-action, .history-new-chat { gap: 5px; padding-right: 5px; padding-left: 5px; font-size: 9px; }
-        .history-new-chat-label { font-size: 9.5px; }
+        .history-topbar { grid-template-columns: minmax(0,1fr) 54px; padding-right: max(16px, env(safe-area-inset-right)); padding-left: max(16px, env(safe-area-inset-left)); }
+        .history-mobile-account { gap: 10px; }
+        .history-mobile-account > img, .history-exit-action { width: 52px; height: 52px; }
+        .history-content { padding-right: max(16px, env(safe-area-inset-right)); padding-left: max(16px, env(safe-area-inset-left)); }
+        .history-mobile-dock { grid-template-columns: 52px 52px minmax(0,1fr); gap: 10px; padding-right: max(16px, env(safe-area-inset-right)); padding-left: max(16px, env(safe-area-inset-left)); }
+        .history-new-chat { gap: 7px; font-size: 15px; }
       }
       @media (max-width: 680px) and (prefers-reduced-motion: reduce) {
-        .history-mobile-action, .history-new-chat { transition: none !important; }
+        .history-mobile-action, .history-exit-action, .history-new-chat { transition: none !important; }
         .history-new-chat:hover { transform: none; }
       }
 
@@ -4287,21 +4317,23 @@
         <header class="history-topbar">
           <button class="history-brand" id="historyBrand" type="button" aria-label="Abrir configurações" title="Configurações"><img class="history-brand-mark" src="../download/assets/kazer-mark.svg?v=20260922" alt="" /><span class="history-brand-name">KAZER</span></button>
           <button class="desktop-sidebar-toggle" id="desktopSidebarToggle" type="button" aria-label="Recolher barra lateral" aria-expanded="true" title="Recolher barra lateral"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m14 5-7 7 7 7"></path></svg></button>
-          <div class="history-mobile-account" aria-label="Conta conectada"><img src="../download/assets/kazer-mark.svg?v=20260922" alt="" /><span class="history-mobile-account-copy"><strong id="historyAccountName">Conta KAZER</strong><small id="historyAccountEmail">Conta conectada</small></span></div>
+          <div class="history-mobile-account" role="group" aria-label="Conta KAZER"><img src="../download/assets/kazer-mark.svg?v=20260922" alt="" /><span class="history-mobile-account-copy"><strong id="historyAccountName">Conta KAZER</strong><small id="historyAccountBrand">KAZER</small></span></div>
+          <button class="history-exit-action" id="historyExitAction" type="button" aria-label="Voltar para o chat" title="Voltar para o chat"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12h15"></path><path d="m13 5 7 7-7 7"></path></svg></button>
           <label class="history-search-field" id="historySearchField"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-4-4"></path></svg><input id="historySearchInput" type="search" aria-label="Buscar nas conversas" placeholder="Buscar nas conversas..." autocomplete="off" /></label>
         </header>
+        <div class="history-future-slot" aria-hidden="true"><!-- Espaço reservado para navegação futura; permanece vazio até existir um recurso real. --></div>
         <div class="history-content">
           <div class="history-intro">
-            <div class="history-intro-copy"><span class="history-eyebrow">SEU ARQUIVO KAZER</span><h1>Histórico</h1><p>Suas conversas, prontas para continuar.</p></div>
+            <div class="history-intro-copy"><span class="history-eyebrow">SEU ARQUIVO KAZER</span><h1>Conversas</h1><p>Suas conversas, prontas para continuar.</p></div>
             <div class="history-count" aria-label="Quantidade de conversas"><strong id="historyCountValue">0</strong><span id="historyCountLabel">conversas</span></div>
           </div>
           <div class="history-list" id="historyList" aria-live="polite"></div>
           <div class="history-empty" id="historyEmpty" hidden><span class="history-empty-mark" aria-hidden="true"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 6.5A2.5 2.5 0 0 1 7.5 4h9A2.5 2.5 0 0 1 19 6.5v6a2.5 2.5 0 0 1-2.5 2.5H13l-3.2 3.2c-.63.63-1.8.18-1.8-.72V15H7.5A2.5 2.5 0 0 1 5 12.5z"></path><path d="M8.5 8.5h7M8.5 11.5h4"></path></svg></span><strong id="historyEmptyTitle">Seu arquivo começa aqui</strong><p id="historyEmptyMessage">Quando você iniciar uma conversa com o KAZER, ela vai aparecer aqui para você retomar quando quiser.</p></div>
         </div>
         <nav class="history-mobile-dock" aria-label="Ações do histórico">
-          <button class="history-mobile-action" id="historySettingsAction" type="button" aria-label="Configurações" title="Configurações"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6 7 7M17 17l1.4 1.4M18.4 5.6 17 7M7 17l-1.4 1.4"></path><circle cx="12" cy="12" r="3.5"></circle></svg><span>Ajustes</span></button>
-          <button class="history-mobile-action" id="historySearchAction" type="button" aria-label="Buscar conversas" aria-controls="historySearchInput" aria-expanded="false" title="Buscar conversas"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-4-4"></path></svg><span>Buscar</span></button>
-          <a class="history-new-chat" id="historyNewChat" href="?view=chat" aria-label="Começar novo chat"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11.5a7.4 7.4 0 0 1-7.6 7.5 8.2 8.2 0 0 1-3.1-.6L5 20l1.4-3.7a7.2 7.2 0 0 1-1.5-4.5A7.4 7.4 0 0 1 12.4 4 7.4 7.4 0 0 1 20 11.5Z"></path><path d="M12 8.7v5.6M9.2 11.5h5.6"></path></svg><span class="history-new-chat-label">Novo chat</span></a>
+          <button class="history-mobile-action" id="historySettingsAction" type="button" aria-label="Configurações" title="Configurações"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6 7 7M17 17l1.4 1.4M18.4 5.6 17 7M7 17l-1.4 1.4"></path><circle cx="12" cy="12" r="3.5"></circle></svg><span class="history-mobile-action-label">Configurações</span></button>
+          <button class="history-mobile-action" id="historySearchAction" type="button" aria-label="Buscar conversas" aria-controls="historySearchInput" aria-expanded="false" title="Buscar conversas"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-4-4"></path></svg><span class="history-mobile-action-label">Buscar conversas</span></button>
+          <a class="history-new-chat" id="historyNewChat" href="?view=chat" aria-label="Começar novo chat"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11.5a7.4 7.4 0 0 1-7.6 7.5 8.2 8.2 0 0 1-3.1-.6L5 20l1.4-3.7a7.2 7.2 0 0 1-1.5-4.5A7.4 7.4 0 0 1 12.4 4 7.4 7.4 0 0 1 20 11.5Z"></path><path d="M12 8.7v5.6M9.2 11.5h5.6"></path></svg><span class="history-new-chat-label">Novo Chat</span></a>
         </nav>
       </section>
 
@@ -4311,7 +4343,7 @@
       </header>
 
       <header class="topbar" aria-label="Barra de conversa">
-        <a class="chat-history-back" id="chatHistoryBack" href="?view=history" aria-label="Abrir histórico de chats" title="Histórico de chats" onclick="event.preventDefault(); const app=document.getElementById('app'), history=document.getElementById('historyScreen'), header=document.getElementById('newChatHeader'); app?.classList.add('history-active'); app?.classList.remove('new-chat-active','kazer-active'); if (history) { history.hidden=false; history.setAttribute('aria-hidden','false'); } if (header) { header.hidden=true; header.setAttribute('aria-hidden','true'); } window.history.pushState({view:'history'}, '', '?view=history');"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4.5 12a7.5 7.5 0 1 0 2.2-5.3"></path><path d="M4.5 5.3v4.2h4.2"></path><path d="M12 8.2v4.2l2.8 1.7"></path></svg></a>
+        <a class="chat-history-back" id="chatHistoryBack" href="?view=history" aria-label="Abrir histórico de chats" title="Histórico de chats"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4.5 12a7.5 7.5 0 1 0 2.2-5.3"></path><path d="M4.5 5.3v4.2h4.2"></path><path d="M12 8.2v4.2l2.8 1.7"></path></svg></a>
         <div class="credit-indicator" id="creditIndicator" aria-label="Uso do ciclo"><span class="credit-indicator-label" aria-hidden="true">USO</span><span class="credit-indicator-value" id="creditBalanceValue">—%</span></div>
       </header>
 
@@ -4736,7 +4768,7 @@
         const historySearchInput = document.getElementById("historySearchInput");
         const historyBrand = document.getElementById("historyBrand");
         const historyAccountName = document.getElementById("historyAccountName");
-        const historyAccountEmail = document.getElementById("historyAccountEmail");
+        const historyExitAction = document.getElementById("historyExitAction");
         const historySettingsAction = document.getElementById("historySettingsAction");
         const historySearchAction = document.getElementById("historySearchAction");
         const historyList = document.getElementById("historyList");
@@ -4780,6 +4812,7 @@
         let toastTimer = null;
         let conversationMessages = [];
         let viewMode = new URLSearchParams(window.location.search).get("view") === "history" ? "history" : "kazer";
+        let historyReturnView = "kazer";
         let historyItems = [];
         let activeChatHistoryId = null;
         let globalNotice = null;
@@ -4819,7 +4852,7 @@
           const email = user?.email || "Conta conectada";
           const initial = displayName.trim().charAt(0).toUpperCase() || "K";
           [profileDisplayName, settingsAccountName, settingsMobileAccountName, historyAccountName].forEach((element) => { if (element) element.textContent = displayName; });
-          [profileEmail, settingsAccountEmail, settingsMobileAccountEmail, historyAccountEmail].forEach((element) => { if (element) element.textContent = email; });
+          [profileEmail, settingsAccountEmail, settingsMobileAccountEmail].forEach((element) => { if (element) element.textContent = email; });
           [settingsAccountAvatar, settingsMobileAccountAvatar].forEach((element) => { if (element) element.textContent = initial; });
           updateGreeting();
         };
@@ -5571,7 +5604,9 @@
         };
 
         const setView = (nextView, { push = false } = {}) => {
-          viewMode = nextView === "history" ? "history" : nextView === "new-chat" ? "new-chat" : "kazer";
+          const requestedView = nextView === "history" ? "history" : nextView === "new-chat" ? "new-chat" : "kazer";
+          if (requestedView === "history" && viewMode !== "history") historyReturnView = viewMode;
+          viewMode = requestedView;
           const isHistory = viewMode === "history";
           app.classList.toggle("history-active", isHistory);
           app.classList.toggle("new-chat-active", !isHistory);
@@ -7164,6 +7199,13 @@
         });
         historyBrand?.addEventListener("click", () => openSettings());
         historySettingsAction?.addEventListener("click", () => openSettings());
+        historyExitAction?.addEventListener("click", () => {
+          const nextView = historyReturnView === "new-chat" ? "new-chat" : "kazer";
+          setView(nextView);
+          const url = new URL(window.location.href);
+          url.searchParams.set("view", nextView === "new-chat" ? "chat" : "kazer");
+          window.history.replaceState({ view: nextView }, "", url);
+        });
         settingsAction.addEventListener("click", () => openSettings());
         profileMoreToggle.addEventListener("click", (event) => {
           event.stopPropagation();
