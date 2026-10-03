@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <meta name="theme-color" content="#08090C" />
+  <meta name="theme-color" content="#0a0a0a" />
   <meta name="description" content="Acesse seu espaço pessoal no KAZER." />
   <title>KAZER | Seu espaço pessoal</title>
   <link rel="icon" href="../download/assets/kazer-mark.svg?v=20260922" type="image/svg+xml" />
@@ -15,529 +15,457 @@
   <style>
     :root {
       color-scheme: dark;
-      --page: #08090c;
-      --page-raised: #0e0f13;
-      --surface: #131419;
-      --surface-raised: #1a1b21;
-      --text-primary: #f3f1ed;
-      --text-secondary: #b8b4bc;
-      --text-muted: #95919a;
-      --accent: #c53a3f;
-      --accent-hover: #ce3f46;
-      --accent-soft: rgba(197, 58, 63, .14);
-      --focus: #f07a80;
-      --danger: #ff9299;
-      --success: #86d9b0;
-      --border: rgba(243, 241, 237, .12);
-      --border-soft: rgba(243, 241, 237, .075);
-      --ease-enter: cubic-bezier(.2, .8, .2, 1);
-      --ease-standard: cubic-bezier(.22, 1, .36, 1);
-      --ease-exit: cubic-bezier(.4, 0, 1, 1);
-      --duration-fast: 140ms;
-      --duration-normal: 220ms;
-      --duration-slow: 420ms;
-      --radius-control: 14px;
-      --radius-card: 26px;
-      --ambient-x: 0px;
-      --ambient-y: 0px;
-      --magnet-x: 0px;
-      --magnet-y: 0px;
-      --font-ui: 'Inter', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      /* Compatibility aliases for the existing presentational auth handlers. */
-      --bg-page: var(--page);
-      --border-focus: var(--focus);
-      --ease: var(--ease-standard);
+      --bg: #0a0a0a;
+      --bg-elevated: #111111;
+      --bg-input: #161616;
+      --border: rgba(255, 255, 255, 0.10);
+      --border-strong: rgba(255, 255, 255, 0.18);
+      --text: #fafafa;
+      --text-secondary: #a3a3a3;
+      --text-muted: #737373;
+      --white: #ffffff;
+      --focus: #ffffff;
+      --danger: #f87171;
+      --success: #86efac;
+      --radius: 12px;
+      --radius-lg: 16px;
+      --font: 'Inter', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      --ease: cubic-bezier(0.22, 1, 0.36, 1);
+      --duration: 220ms;
     }
 
     *, *::before, *::after { box-sizing: border-box; }
-    html { min-width: 320px; min-height: 100%; background: var(--page); scroll-behavior: smooth; }
-    body {
-      position: relative;
-      isolation: isolate;
+    html {
       min-width: 320px;
+      min-height: 100%;
+      background: var(--bg);
+      -webkit-text-size-adjust: 100%;
+    }
+    body {
+      margin: 0;
       min-height: 100vh;
       min-height: 100dvh;
-      margin: 0;
-      overflow-x: hidden;
-      background:
-        radial-gradient(900px 680px at 13% 12%, rgba(197, 58, 63, .095), transparent 62%),
-        radial-gradient(780px 560px at 100% 100%, rgba(197, 58, 63, .055), transparent 65%),
-        linear-gradient(145deg, #08090c 0%, #0b0c10 54%, #08090c 100%);
-      color: var(--text-primary);
-      font-family: var(--font-ui);
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font);
       -webkit-font-smoothing: antialiased;
       text-rendering: optimizeLegibility;
+      overflow-x: hidden;
     }
     button, input { font: inherit; }
-    button { touch-action: manipulation; }
-    button, a { -webkit-tap-highlight-color: transparent; }
-    :where(button, a, input):focus-visible { outline: 2px solid var(--focus); outline-offset: 3px; }
-    ::selection { background: rgba(197, 58, 63, .34); color: var(--text-primary); }
-
-    .auth-atmosphere { position: fixed; z-index: -1; inset: 0; overflow: hidden; pointer-events: none; }
-    .auth-atmosphere::before {
-      position: absolute;
-      top: 13%; left: 26%;
-      width: min(560px, 56vw); aspect-ratio: 1;
-      border-radius: 50%;
-      background: radial-gradient(circle, rgba(197, 58, 63, .19), rgba(197, 58, 63, .065) 36%, transparent 72%);
-      filter: blur(58px);
-      opacity: .54;
-      transform: translate3d(var(--ambient-x), var(--ambient-y), 0);
-      transition: transform 650ms var(--ease-standard);
-      will-change: transform;
-      content: "";
+    button { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+    a { -webkit-tap-highlight-color: transparent; }
+    :where(button, a, input):focus-visible {
+      outline: 2px solid var(--white);
+      outline-offset: 3px;
     }
-    .auth-atmosphere::after {
-      position: absolute; inset: 0;
-      background: linear-gradient(118deg, transparent 8%, rgba(255,255,255,.012) 48%, transparent 84%);
-      opacity: .48;
-      content: "";
-    }
+    ::selection { background: rgba(255,255,255,0.2); color: var(--white); }
 
-    .overlay {
-      position: relative;
-      z-index: 1;
+    /* ===== SCREENS ===== */
+    .return-screen,
+    .intro-screen,
+    .access-transition {
+      position: fixed;
+      inset: 0;
       display: grid;
-      grid-template-columns: minmax(0, 1fr) minmax(400px, 450px);
-      align-items: center;
-      gap: clamp(42px, 7.2vw, 112px);
-      width: min(1380px, 100%);
+      place-items: center;
+      background: var(--bg);
+      color: var(--text);
+      z-index: 50;
+    }
+    .return-screen { z-index: 60; padding: max(24px, env(safe-area-inset-top)) max(20px, env(safe-area-inset-right)) max(24px, env(safe-area-inset-bottom)) max(20px, env(safe-area-inset-left)); opacity: 0; visibility: hidden; transition: opacity 0.4s var(--ease), visibility 0.4s; }
+    .return-screen[hidden] { display: none; }
+    .return-screen:not([hidden]) { opacity: 1; visibility: visible; }
+    .return-screen.is-done { opacity: 0; visibility: hidden; pointer-events: none; }
+    .return-content { display: grid; justify-items: center; width: min(100%, 360px); text-align: center; }
+    .return-kicker { margin-bottom: 20px; color: var(--text-muted); font-size: 11px; font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase; }
+    .return-logo { width: 56px; height: 56px; margin-bottom: 20px; object-fit: contain; filter: grayscale(1) brightness(1.4); }
+    .return-title { margin: 0; font-size: clamp(24px, 5vw, 30px); font-weight: 600; letter-spacing: -0.04em; line-height: 1.2; }
+    .return-copy { max-width: 300px; margin: 12px 0 28px; color: var(--text-secondary); font-size: 14px; line-height: 1.6; }
+    .return-primary, .return-secondary {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: min(100%, 300px); min-height: 48px; margin-bottom: 10px;
+      border-radius: 999px; font-size: 14px; font-weight: 600; cursor: pointer;
+      transition: background var(--duration) ease, color var(--duration) ease, border-color var(--duration) ease, transform 0.15s ease;
+    }
+    .return-primary { border: none; background: var(--white); color: #0a0a0a; }
+    .return-primary:hover { background: #e5e5e5; }
+    .return-primary:active { transform: scale(0.98); }
+    .return-secondary { border: 1px solid var(--border-strong); background: transparent; color: var(--text); }
+    .return-secondary:hover { border-color: var(--white); background: rgba(255,255,255,0.04); }
+    .return-secondary:active { transform: scale(0.98); }
+
+    .intro-screen { z-index: 70; transition: opacity 0.6s var(--ease), visibility 0.6s; }
+    .intro-screen.is-done { opacity: 0; visibility: hidden; pointer-events: none; }
+    .intro-content { display: grid; justify-items: center; text-align: center; padding: 24px; }
+    .intro-kicker { margin-bottom: 18px; color: var(--text-muted); font-size: 11px; font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase; }
+    .intro-mark { width: 64px; height: 64px; margin-bottom: 22px; object-fit: contain; filter: grayscale(1) brightness(1.4); }
+    .intro-title { margin: 0; font-size: clamp(26px, 6vw, 34px); font-weight: 600; letter-spacing: -0.045em; line-height: 1.15; }
+    .intro-copy { max-width: 280px; margin: 12px 0 0; color: var(--text-secondary); font-size: 15px; line-height: 1.55; }
+
+    .access-transition {
+      z-index: 80; opacity: 0; visibility: hidden; pointer-events: none;
+      transition: opacity 0.4s var(--ease), visibility 0.4s;
+    }
+    .access-transition.active { opacity: 1; visibility: visible; }
+    .transition-stage { display: grid; justify-items: center; text-align: center; }
+    .transition-core { width: 56px; height: 56px; margin-bottom: 24px; }
+    .transition-core img { width: 100%; height: 100%; object-fit: contain; filter: grayscale(1) brightness(1.4); }
+    .transition-state { display: block; margin-bottom: 8px; color: var(--text-muted); font-size: 11px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; }
+    .transition-title { font-size: 18px; font-weight: 600; letter-spacing: -0.02em; }
+
+    /* ===== MAIN LAYOUT ===== */
+    .overlay {
       min-height: 100vh;
       min-height: 100dvh;
-      margin-inline: auto;
-      padding: clamp(32px, 5.5vw, 84px);
-      opacity: 1;
-      visibility: visible;
-      transition: opacity var(--duration-normal) var(--ease-standard), visibility var(--duration-normal);
-    }
-    .overlay:not(.active) { grid-template-columns: minmax(0, 660px); justify-content: center; }
-    .overlay:not(.active) .container { display: none; }
-    .overlay:not(.active) .brand-panel { max-width: 660px; }
-    .overlay:not(.active) .main-trigger-btn { display: inline-flex; }
-    .overlay.active .main-trigger-btn { visibility: hidden; opacity: 0; pointer-events: none; }
-
-    .brand-panel {
-      display: grid;
-      align-content: center;
-      justify-items: start;
-      max-width: 620px;
-      min-width: 0;
-      animation: brand-enter 640ms var(--ease-enter) both;
-    }
-    .login-brand { display: flex; align-items: center; gap: 15px; margin-bottom: clamp(38px, 6vh, 66px); }
-    .login-brand img {
-      display: block;
-      width: 58px; height: 58px;
-      flex: 0 0 auto;
-      object-fit: contain;
-      /* Official mark: no recoloring, filtering, masking, or distortion. */
-      animation: mark-enter 620ms var(--ease-enter) both;
-    }
-    .login-brand-copy { display: grid; gap: 5px; }
-    .login-brand-kicker, .auth-eyebrow {
-      color: var(--focus);
-      font-size: 10px;
-      font-weight: 700;
-      letter-spacing: .18em;
-      line-height: 1.4;
-      text-transform: uppercase;
-    }
-    .login-brand strong { color: var(--text-primary); font-size: 15px; font-weight: 700; letter-spacing: .27em; }
-    .brand-headline {
-      max-width: 590px;
-      margin: 0;
-      color: var(--text-primary);
-      font-size: clamp(40px, 5vw, 68px);
-      font-weight: 600;
-      letter-spacing: -.065em;
-      line-height: .99;
-      text-wrap: balance;
-    }
-    .brand-copy { max-width: 410px; margin: 24px 0 0; color: var(--text-secondary); font-size: 16px; line-height: 1.7; }
-    .brand-signature { display: flex; align-items: center; gap: 10px; margin-top: 38px; color: var(--text-muted); font-size: 11px; letter-spacing: .07em; }
-    .brand-signature-mark { width: 6px; height: 6px; flex: 0 0 auto; border-radius: 50%; background: var(--accent); box-shadow: 0 0 14px rgba(240, 122, 128, .42); }
-
-    .main-trigger-btn {
-      display: none;
+      display: flex;
+      flex-direction: column;
       align-items: center;
       justify-content: center;
-      gap: 10px;
-      min-width: 190px;
-      min-height: 50px;
-      margin-top: 36px;
-      padding: 0 20px;
-      border: 1px solid rgba(240, 122, 128, .28);
-      border-radius: 999px;
-      background: rgba(243, 241, 237, .96);
-      color: #151519;
-      font-size: 14px;
-      font-weight: 650;
-      cursor: pointer;
-      box-shadow: 0 10px 24px rgba(0,0,0,.24);
-      transform: translate3d(var(--magnet-x), var(--magnet-y), 0);
-      transition: background var(--duration-fast) ease, box-shadow var(--duration-normal) ease, border-color var(--duration-normal) ease, transform var(--duration-normal) var(--ease-standard);
+      padding: max(24px, env(safe-area-inset-top)) 20px max(32px, env(safe-area-inset-bottom));
     }
-    .main-trigger-btn:hover { border-color: rgba(240,122,128,.58); background: #fff; box-shadow: 0 14px 30px rgba(0,0,0,.3), 0 0 0 3px rgba(240,122,128,.08); }
-    .main-trigger-btn:active { transform: translate3d(var(--magnet-x), var(--magnet-y), 0) scale(.985); }
-    .main-trigger-btn span { font-size: 17px; line-height: 1; }
 
-    .container {
-      position: relative;
+    .brand-top {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 40px;
+    }
+    .brand-top img {
+      width: 36px;
+      height: 36px;
+      object-fit: contain;
+      filter: grayscale(1) brightness(1.5);
+    }
+    .brand-top span {
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: 0.22em;
+      color: var(--text);
+    }
+
+    .card {
       width: 100%;
-      min-width: 0;
-      padding: 34px 34px 30px;
-      overflow: hidden;
+      max-width: 400px;
+      background: var(--bg-elevated);
       border: 1px solid var(--border);
-      border-radius: var(--radius-card);
-      background: linear-gradient(155deg, rgba(22,23,29,.97), rgba(16,17,22,.97));
-      box-shadow: 0 30px 84px rgba(0,0,0,.42), 0 10px 28px rgba(0,0,0,.2), inset 0 1px 0 rgba(255,255,255,.055);
-      animation: card-enter 520ms var(--ease-enter) 90ms both;
+      border-radius: var(--radius-lg);
+      padding: 32px 28px 28px;
     }
-    .container::before {
-      position: absolute; top: 0; left: 34px; right: 34px; height: 1px;
-      background: linear-gradient(90deg, transparent, rgba(240,122,128,.72), transparent);
-      opacity: .76;
-      content: "";
+
+    .auth-forms {
+      position: relative;
+      display: grid;
+      grid-template: 1fr / minmax(0, 1fr);
     }
-    .auth-header { display: flex; align-items: center; justify-content: space-between; gap: 14px; margin: 0 50px 30px 0; color: var(--text-muted); font-size: 11px; letter-spacing: .04em; }
-    .auth-header strong { color: var(--text-primary); font-size: 12px; font-weight: 700; letter-spacing: .18em; }
-    .auth-header span { display: inline-flex; align-items: center; gap: 8px; }
-    .auth-header span::before { width: 6px; height: 6px; flex: 0 0 auto; border-radius: 50%; background: var(--accent); box-shadow: 0 0 10px rgba(197,58,63,.4); content: ""; }
-    .close-button {
-      position: absolute; top: 18px; right: 18px;
-      display: grid; place-items: center;
-      width: 44px; height: 44px;
-      border: 1px solid transparent; border-radius: 12px;
-      background: transparent; color: var(--text-muted);
-      font-size: 19px; line-height: 1; cursor: pointer;
-      transition: color var(--duration-fast) ease, background var(--duration-fast) ease, border-color var(--duration-fast) ease, transform var(--duration-fast) var(--ease-standard);
-    }
-    .close-button:hover { border-color: rgba(240,122,128,.24); background: rgba(197,58,63,.10); color: var(--text-primary); }
-    .close-button:active { transform: scale(.96); }
-    .auth-forms { position: relative; display: grid; grid-template: 1fr / minmax(0,1fr); transition: height var(--duration-slow) var(--ease-standard); }
     .form-section {
       grid-area: 1 / 1;
-      position: absolute;
-      inset: 0;
       min-width: 0;
       opacity: 0;
       visibility: hidden;
       pointer-events: none;
-      transform: translateY(8px);
-      transition: opacity var(--duration-fast) var(--ease-standard), transform var(--duration-fast) var(--ease-standard), visibility 0s;
+      transform: translateY(6px);
+      transition: opacity var(--duration) var(--ease), transform var(--duration) var(--ease), visibility 0s;
     }
-    .form-section.active { position: relative; z-index: 1; opacity: 1; visibility: visible; pointer-events: auto; transform: translateY(0); transition: opacity var(--duration-normal) var(--ease-standard), transform var(--duration-normal) var(--ease-standard), visibility 0s; }
+    .form-section.active {
+      position: relative;
+      z-index: 1;
+      opacity: 1;
+      visibility: visible;
+      pointer-events: auto;
+      transform: translateY(0);
+      transition: opacity 0.28s var(--ease), transform 0.28s var(--ease), visibility 0s;
+    }
     .form-section.hidden { z-index: 0; }
-    .form-section h1 { margin: 0; color: var(--text-primary); font-size: clamp(25px, 3vw, 30px); font-weight: 620; letter-spacing: -.055em; line-height: 1.15; }
-    .switch-text { margin: 9px 0 27px; color: var(--text-secondary); font-size: 13px; line-height: 1.6; }
-    .switch-link { display: inline-flex; align-items: center; min-height: 44px; margin: -10px 0; padding: 0 2px; border: 0; background: transparent; color: var(--text-primary); font: inherit; font-weight: 650; text-decoration: underline; text-decoration-color: rgba(240,122,128,.62); text-underline-offset: 4px; cursor: pointer; transition: color var(--duration-fast) ease, text-decoration-color var(--duration-fast) ease; }
-    .switch-link:hover { color: var(--focus); text-decoration-color: currentColor; }
-    .input-group { margin: 0 0 16px; }
-    .input-group label { display: block; margin: 0 0 8px; color: var(--text-secondary); font-size: 13px; font-weight: 550; line-height: 1.35; transition: color var(--duration-fast) ease; }
-    .input-group:focus-within label { color: var(--text-primary); }
-    .input-wrapper { position: relative; display: flex; align-items: center; min-width: 0; }
-    .input-wrapper svg.icon-left { position: absolute; z-index: 1; left: 15px; width: 18px; height: 18px; color: var(--text-muted); pointer-events: none; transition: color var(--duration-fast) ease; }
-    .input-wrapper:focus-within svg.icon-left { color: var(--focus); }
-    .input-wrapper::after { position: absolute; right: 14px; bottom: 0; left: 14px; height: 1px; background: linear-gradient(90deg, var(--accent), var(--focus), transparent); opacity: 0; transform: scaleX(.22); transform-origin: left center; transition: transform var(--duration-normal) var(--ease-standard), opacity var(--duration-fast) ease; pointer-events: none; content: ""; }
-    .input-wrapper:focus-within::after { opacity: .9; transform: scaleX(1); }
-    .input-wrapper input {
+
+    .form-section h1 {
+      margin: 0 0 6px;
+      font-size: 22px;
+      font-weight: 600;
+      letter-spacing: -0.035em;
+      line-height: 1.25;
+      color: var(--text);
+    }
+    .switch-text {
+      margin: 0 0 28px;
+      color: var(--text-secondary);
+      font-size: 14px;
+      line-height: 1.5;
+    }
+    .switch-link {
+      display: inline;
+      padding: 0;
+      border: 0;
+      background: none;
+      color: var(--text);
+      font: inherit;
+      font-weight: 600;
+      text-decoration: underline;
+      text-underline-offset: 3px;
+      text-decoration-color: rgba(255,255,255,0.35);
+      cursor: pointer;
+      transition: text-decoration-color var(--duration) ease;
+    }
+    .switch-link:hover { text-decoration-color: var(--white); }
+
+    .input-group { margin: 0 0 18px; }
+    .input-group label {
       display: block;
-      width: 100%; min-width: 0; min-height: 52px;
-      padding: 0 16px 0 46px;
-      border: 1px solid var(--border-soft); border-radius: var(--radius-control);
+      margin: 0 0 8px;
+      color: var(--text-secondary);
+      font-size: 13px;
+      font-weight: 500;
+    }
+    .input-wrapper {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+    .input-wrapper input {
+      width: 100%;
+      min-height: 50px;
+      padding: 0 16px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--bg-input);
+      color: var(--text);
+      font-size: 16px;
+      line-height: 1.3;
       outline: none;
-      background: rgba(7,8,11,.66); color: var(--text-primary);
-      font-family: var(--font-ui); font-size: 16px; line-height: 1.3;
-      transition: border-color var(--duration-fast) ease, background var(--duration-fast) ease, box-shadow var(--duration-normal) ease;
+      transition: border-color var(--duration) ease, background var(--duration) ease;
     }
-    .input-wrapper input::placeholder { color: #a7a2aa; opacity: 1; }
-    .input-wrapper:focus-within input { border-color: rgba(240,122,128,.74); background: rgba(7,8,11,.88); box-shadow: 0 0 0 3px rgba(240,122,128,.12); }
-    #loginPassword, #signupPassword { padding-right: 62px; }
+    .input-wrapper input::placeholder { color: var(--text-muted); opacity: 1; }
+    .input-wrapper input:focus {
+      border-color: var(--white);
+      background: #1a1a1a;
+    }
+    #loginPassword, #signupPassword { padding-right: 52px; }
+
     .toggle-password {
-      position: absolute; z-index: 2; top: 50%; right: 5px;
-      display: grid; place-items: center;
-      width: 44px; height: 44px;
-      border: 0; border-radius: 11px;
-      background: transparent; color: var(--text-secondary);
-      cursor: pointer; transform: translateY(-50%);
-      transition: color var(--duration-fast) ease, background var(--duration-fast) ease, transform var(--duration-fast) ease;
+      position: absolute;
+      right: 4px;
+      top: 50%;
+      transform: translateY(-50%);
+      display: grid;
+      place-items: center;
+      width: 42px;
+      height: 42px;
+      border: 0;
+      border-radius: 10px;
+      background: transparent;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: color var(--duration) ease, background var(--duration) ease;
     }
-    .toggle-password:hover { background: rgba(255,255,255,.055); color: var(--text-primary); }
-    .toggle-password:active { transform: translateY(-50%) scale(.96); }
+    .toggle-password:hover { color: var(--text); background: rgba(255,255,255,0.06); }
     .toggle-password svg { width: 18px; height: 18px; }
-    .password-hint { display: block; margin: 8px 2px 0; color: var(--text-secondary); font-size: 12px; line-height: 1.5; }
-    .error-message { min-height: 22px; margin: 5px 0 9px; color: var(--danger); font-size: 13px; line-height: 1.45; opacity: 0; transform: translateY(-3px); transition: opacity var(--duration-fast) ease, transform var(--duration-fast) var(--ease-standard); }
-    .error-message.visible { opacity: 1; transform: translateY(0); }
-    .container.shake { animation: error-nudge 220ms var(--ease-standard); }
-    .submit-btn {
-      position: relative; display: flex; align-items: center; justify-content: center; gap: 10px;
-      width: 100%; min-height: 54px; margin-top: 2px; padding: 0 18px;
-      overflow: hidden; border: 1px solid rgba(255,255,255,.12); border-radius: var(--radius-control);
-      background: linear-gradient(110deg, #c53a3f, #a92e35); color: #fff;
-      font-size: 15px; font-weight: 700; letter-spacing: .005em;
-      box-shadow: 0 10px 24px rgba(105,26,31,.26), inset 0 1px 0 rgba(255,255,255,.15);
-      cursor: pointer; transform: translate3d(var(--magnet-x), var(--magnet-y), 0);
-      transition: background var(--duration-fast) ease, box-shadow var(--duration-normal) ease, border-color var(--duration-fast) ease, transform var(--duration-fast) var(--ease-standard), opacity var(--duration-fast) ease;
+
+    .password-hint {
+      display: block;
+      margin: 8px 0 0;
+      color: var(--text-muted);
+      font-size: 12px;
+      line-height: 1.45;
     }
-    .submit-btn::before { position: absolute; inset: 0; background: linear-gradient(110deg, transparent 15%, rgba(255,255,255,.13) 48%, transparent 77%); opacity: 0; transform: translateX(-42%); transition: opacity var(--duration-fast) ease, transform 420ms var(--ease-standard); pointer-events: none; content: ""; }
-    .submit-btn:hover:not(:disabled) { background: linear-gradient(110deg, #ce3f46, #b3353b); box-shadow: 0 13px 28px rgba(105,26,31,.34), 0 0 0 3px rgba(240,122,128,.12), inset 0 1px 0 rgba(255,255,255,.18); }
-    .submit-btn:hover:not(:disabled)::before { opacity: 1; transform: translateX(42%); }
-    .submit-btn:active:not(:disabled) { transform: translate3d(var(--magnet-x), var(--magnet-y), 0) scale(.987); }
-    .submit-btn:disabled { opacity: .56; cursor: progress; box-shadow: none; }
-    .submit-btn .btn-text, .submit-btn .btn-arrow { position: relative; z-index: 1; transition: opacity var(--duration-fast) ease; }
-    .submit-btn .btn-arrow { font-size: 17px; line-height: 1; }
-    .spinner { display: none; position: absolute; z-index: 2; left: 50%; top: 50%; width: 46px; height: 2px; margin: -1px 0 0 -23px; border: 0; border-radius: 99px; background: linear-gradient(90deg, transparent, rgba(255,255,255,.32), #fff, rgba(255,255,255,.32), transparent); transform: scaleX(.34); transform-origin: center; animation: button-progress 900ms var(--ease-standard) infinite; }
-    .submit-btn.loading .btn-text, .submit-btn.loading .btn-arrow { opacity: 0; }
+
+    .error-message {
+      min-height: 20px;
+      margin: 6px 0 4px;
+      color: var(--danger);
+      font-size: 13px;
+      line-height: 1.4;
+      opacity: 0;
+      transform: translateY(-2px);
+      transition: opacity 0.18s ease, transform 0.18s ease;
+    }
+    .error-message.visible { opacity: 1; transform: translateY(0); }
+
+    .submit-btn {
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      min-height: 52px;
+      margin-top: 8px;
+      border: none;
+      border-radius: var(--radius);
+      background: var(--white);
+      color: #0a0a0a;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background var(--duration) ease, transform 0.15s ease, opacity var(--duration) ease;
+    }
+    .submit-btn:hover:not(:disabled) { background: #e8e8e8; }
+    .submit-btn:active:not(:disabled) { transform: scale(0.985); }
+    .submit-btn:disabled { opacity: 0.55; cursor: progress; }
+    .submit-btn .btn-text { transition: opacity 0.15s ease; }
+    .submit-btn.loading .btn-text { opacity: 0; }
+    .spinner {
+      display: none;
+      position: absolute;
+      width: 20px;
+      height: 20px;
+      border: 2px solid rgba(0,0,0,0.15);
+      border-top-color: #0a0a0a;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
     .submit-btn.loading .spinner { display: block; }
 
-    .return-screen, .intro-screen, .access-transition {
-      position: fixed; inset: 0; display: grid; place-items: center; overflow: hidden;
-      background: radial-gradient(680px 500px at 50% 34%, rgba(197,58,63,.105), transparent 70%), #08090c;
-      color: var(--text-primary);
-    }
-    .return-screen { z-index: 9998; padding: max(24px, env(safe-area-inset-top)) max(20px, env(safe-area-inset-right)) max(24px, env(safe-area-inset-bottom)) max(20px, env(safe-area-inset-left)); opacity: 0; visibility: hidden; transition: opacity var(--duration-slow) var(--ease-standard), visibility var(--duration-slow); }
-    .return-screen[hidden] { display: none; }
-    .return-screen:not([hidden]) { opacity: 1; visibility: visible; }
-    .return-screen.is-done { opacity: 0; visibility: hidden; pointer-events: none; }
-    .return-content { display: grid; justify-items: center; width: min(100%, 420px); text-align: center; animation: stage-enter 420ms var(--ease-enter) both; }
-    .return-kicker { margin-bottom: 22px; color: var(--focus); font-size: 10px; font-weight: 700; letter-spacing: .19em; text-transform: uppercase; }
-    .return-logo { width: 68px; height: 68px; margin-bottom: 24px; object-fit: contain; }
-    .return-title { margin: 0; font-size: clamp(26px, 5vw, 34px); font-weight: 620; letter-spacing: -.055em; line-height: 1.12; }
-    .return-copy { max-width: 330px; margin: 13px 0 26px; color: var(--text-secondary); font-size: 14px; line-height: 1.65; }
-    .return-primary, .return-secondary { display: inline-flex; align-items: center; justify-content: center; width: min(100%, 320px); min-height: 50px; padding: 0 18px; border-radius: var(--radius-control); font-size: 14px; font-weight: 650; cursor: pointer; transition: background var(--duration-fast) ease, border-color var(--duration-fast) ease, box-shadow var(--duration-normal) ease, transform var(--duration-fast) var(--ease-standard); }
-    .return-primary { border: 1px solid rgba(255,255,255,.14); background: var(--accent); color: #fff; box-shadow: 0 10px 26px rgba(105,26,31,.24); }
-    .return-primary:hover { background: var(--accent-hover); box-shadow: 0 13px 28px rgba(105,26,31,.32), 0 0 0 3px rgba(240,122,128,.1); }
-    .return-secondary { margin-top: 9px; border: 1px solid var(--border-soft); background: rgba(255,255,255,.025); color: var(--text-secondary); }
-    .return-secondary:hover { border-color: var(--border); background: rgba(255,255,255,.055); color: var(--text-primary); }
-    .return-primary:active, .return-secondary:active { transform: scale(.988); }
+    @keyframes spin { to { transform: rotate(360deg); } }
 
-    .intro-screen { z-index: 10000; padding: 24px; opacity: 1; visibility: visible; transition: opacity var(--duration-slow) var(--ease-standard), visibility var(--duration-slow); }
-    .intro-screen.is-done { opacity: 0; visibility: hidden; pointer-events: none; }
-    .intro-screen::before { position: absolute; top: 50%; left: 50%; width: min(330px, 70vw); aspect-ratio: 1; border-radius: 50%; background: radial-gradient(circle, rgba(197,58,63,.12), transparent 68%); transform: translate(-50%,-50%); content: ""; }
-    .intro-content { position: relative; z-index: 1; display: grid; justify-items: center; gap: 15px; text-align: center; animation: stage-enter 500ms var(--ease-enter) both; }
-    .intro-mark { width: 78px; height: 78px; object-fit: contain; animation: mark-enter 520ms var(--ease-enter) both; }
-    .intro-kicker { color: var(--focus); font-size: 10px; font-weight: 700; letter-spacing: .22em; text-transform: uppercase; }
-    .intro-title { margin: 0; font-size: clamp(22px, 4vw, 29px); font-weight: 600; letter-spacing: -.04em; }
-    .intro-copy { max-width: 270px; margin: 0; color: var(--text-secondary); font-size: 13px; line-height: 1.55; }
-
-    .access-transition { z-index: 10001; background: rgba(6,7,10,.97); opacity: 0; visibility: hidden; pointer-events: none; transition: opacity var(--duration-slow) var(--ease-standard), visibility var(--duration-slow); }
-    .access-transition.active { opacity: 1; visibility: visible; pointer-events: auto; }
-    .access-transition::before { position: absolute; width: min(440px, 90vw); aspect-ratio: 1; border-radius: 50%; background: radial-gradient(circle, rgba(197,58,63,.16), rgba(197,58,63,.04) 45%, transparent 72%); opacity: 0; transform: scale(.86); content: ""; }
-    .access-transition.active::before { animation: success-light 950ms var(--ease-standard) both; }
-    .transition-stage { position: relative; z-index: 1; display: grid; place-items: center; width: min(280px, 72vw); aspect-ratio: 1; }
-    .transition-ring { position: absolute; border: 1px solid rgba(240,122,128,.2); border-radius: 50%; opacity: 0; }
-    .transition-ring.one { inset: 14%; }
-    .transition-ring.two { inset: 28%; border-color: rgba(243,241,237,.14); }
-    .access-transition.active .transition-ring.one { animation: ring-enter 680ms var(--ease-enter) both, ring-turn 4.2s 180ms linear infinite; }
-    .access-transition.active .transition-ring.two { animation: ring-enter 620ms 80ms var(--ease-enter) both, ring-turn 5s 200ms linear infinite reverse; }
-    .transition-ring.one::after { position: absolute; top: -2px; left: 50%; width: 4px; height: 4px; border-radius: 50%; background: var(--focus); box-shadow: 0 0 14px rgba(240,122,128,.5); content: ""; }
-    .transition-core { position: relative; z-index: 2; width: 66px; height: 66px; opacity: 0; transform: scale(.92); }
-    .transition-core::before { position: absolute; inset: -12px; border: 1px solid rgba(240,122,128,.18); border-radius: 50%; content: ""; }
-    .transition-core img { display: block; width: 100%; height: 100%; object-fit: contain; }
-    .access-transition.active .transition-core { animation: mark-enter 520ms 110ms var(--ease-enter) both; }
-    .transition-beam { position: absolute; z-index: 3; top: 50%; left: 4%; width: 92%; height: 1px; opacity: 0; background: linear-gradient(90deg, transparent, rgba(240,122,128,.86), rgba(255,255,255,.72), rgba(240,122,128,.5), transparent); transform: scaleX(0); transform-origin: center; }
-    .access-transition.active .transition-beam { animation: beam-pass 620ms 340ms var(--ease-standard) both; }
-    .transition-copy { position: absolute; top: calc(50% + 88px); width: 100%; text-align: center; opacity: 0; transform: translateY(7px); }
-    .access-transition.active .transition-copy { animation: copy-enter 350ms 390ms var(--ease-enter) both; }
-    .transition-state { display: block; margin-bottom: 9px; color: var(--focus); font-size: 10px; font-weight: 700; letter-spacing: .2em; text-transform: uppercase; }
-    .transition-title { display: block; color: var(--text-primary); font-size: clamp(20px, 4vw, 26px); font-weight: 600; letter-spacing: -.04em; }
-    .access-transition.signup .transition-ring.one { border-color: rgba(240,122,128,.32); }
-
-    body.intro-active .overlay { visibility: visible; }
-    body.intro-active .brand-panel, body.intro-active .container { animation-play-state: paused; }
-    body.return-active .overlay { visibility: visible; }
-    body[data-focus-field] .auth-header span { color: var(--text-primary); }
-
-    @keyframes brand-enter { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-    @keyframes card-enter { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
-    @keyframes stage-enter { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
-    @keyframes mark-enter { from { opacity: 0; transform: scale(.94); filter: blur(2px); } to { opacity: 1; transform: scale(1); filter: blur(0); } }
-    @keyframes error-nudge { 0%,100% { transform: translateX(0); } 35% { transform: translateX(-3px); } 70% { transform: translateX(3px); } }
-    @keyframes button-progress { 0%,100% { opacity: .5; transform: scaleX(.34); } 50% { opacity: 1; transform: scaleX(1); } }
-    @keyframes success-light { 0% { opacity: 0; transform: scale(.86); } 34% { opacity: 1; } 100% { opacity: .72; transform: scale(1.04); } }
-    @keyframes ring-enter { from { opacity: 0; transform: scale(.84); } to { opacity: .84; transform: scale(1); } }
-    @keyframes ring-turn { to { transform: rotate(360deg); } }
-    @keyframes beam-pass { 0% { opacity: 0; transform: scaleX(0); } 18% { opacity: 1; } 100% { opacity: 0; transform: scaleX(1); } }
-    @keyframes copy-enter { to { opacity: 1; transform: translateY(0); } }
-
-    @media (max-width: 920px) {
-      .overlay { grid-template-columns: minmax(0,1fr) minmax(380px, 440px); gap: 32px; padding: 40px 32px; }
-      .brand-headline { font-size: clamp(36px, 5vw, 52px); }
-      .container { padding: 30px 28px 26px; }
-    }
-    @media (max-width: 760px) {
-      body { min-height: 100dvh; overflow-y: auto; }
-      .auth-atmosphere::before { top: -12%; left: 50%; width: min(430px, 110vw); opacity: .38; transform: translate3d(calc(-50% + var(--ambient-x)), calc(var(--ambient-y)), 0); }
-      .overlay, .overlay:not(.active) {
-        grid-template-columns: minmax(0,1fr);
-        align-content: start;
-        justify-items: stretch;
-        gap: 22px;
-        width: 100%; min-height: 100vh; min-height: 100dvh;
-        padding: max(20px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(24px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
-        overflow-y: auto; overscroll-behavior-y: contain;
+    /* Desktop refinements */
+    @media (min-width: 768px) {
+      .overlay { padding: 48px 24px; }
+      .brand-top { margin-bottom: 48px; }
+      .brand-top img { width: 40px; height: 40px; }
+      .brand-top span { font-size: 16px; letter-spacing: 0.24em; }
+      .card {
+        max-width: 420px;
+        padding: 40px 40px 36px;
+        border-radius: 20px;
       }
-      .brand-panel, .overlay:not(.active) .brand-panel { justify-self: center; width: min(100%, 460px); max-width: 460px; }
-      .login-brand { gap: 11px; margin-bottom: 20px; }
-      .login-brand img { width: 48px; height: 48px; }
-      .login-brand-kicker { font-size: 9px; }
-      .login-brand strong { font-size: 13px; }
-      .brand-headline { max-width: 460px; font-size: clamp(30px, 8vw, 42px); line-height: 1.02; }
-      .brand-copy { max-width: 430px; margin-top: 10px; font-size: 14px; line-height: 1.55; }
-      .brand-signature { display: none; }
-      .main-trigger-btn { min-height: 48px; margin-top: 17px; }
-      .overlay.active .main-trigger-btn { display: none; }
-      .container { justify-self: center; width: min(100%, 460px); min-height: 0; max-height: none; padding: 26px 22px 24px; overflow: visible; border-radius: 22px; }
-      .auth-header { margin: 0 48px 22px 0; }
-      .close-button { top: 12px; right: 12px; }
-      .form-section h1 { font-size: 25px; }
-      .switch-text { margin: 8px 0 21px; }
-      .input-group { margin-bottom: 14px; }
-      .input-wrapper input { min-height: 52px; font-size: 16px; }
+      .form-section h1 { font-size: 24px; }
+      .input-wrapper input { min-height: 52px; }
       .submit-btn { min-height: 54px; }
     }
+
+    @media (min-width: 1100px) {
+      .card {
+        box-shadow: 0 0 0 1px var(--border), 0 24px 64px rgba(0,0,0,0.45);
+      }
+    }
+
+    /* Small phones */
     @media (max-width: 380px) {
-      .overlay, .overlay:not(.active) { gap: 17px; padding-right: max(12px, env(safe-area-inset-right)); padding-left: max(12px, env(safe-area-inset-left)); }
-      .brand-copy { max-width: 310px; font-size: 13px; }
-      .container { padding: 24px 18px 20px; border-radius: 19px; }
-      .auth-header { margin-bottom: 19px; }
-      .input-wrapper input { padding-left: 43px; }
-      .input-wrapper svg.icon-left { left: 13px; }
-      #loginPassword, #signupPassword { padding-right: 58px; }
-      .password-hint { font-size: 12px; }
+      .card { padding: 28px 20px 24px; }
+      .brand-top { margin-bottom: 32px; }
     }
-    @media (max-height: 700px) and (max-width: 760px) {
-      .overlay, .overlay:not(.active) { gap: 12px; padding-top: max(12px, env(safe-area-inset-top)); }
-      .login-brand { margin-bottom: 12px; }
-      .brand-copy { display: none; }
-      .container { padding-top: 22px; }
-      .auth-header { margin-bottom: 16px; }
-      .switch-text { margin-bottom: 15px; }
-      .input-group { margin-bottom: 11px; }
+
+    /* Short screens */
+    @media (max-height: 640px) {
+      .brand-top { margin-bottom: 24px; }
+      .card { padding-top: 24px; padding-bottom: 22px; }
+      .switch-text { margin-bottom: 20px; }
+      .input-group { margin-bottom: 14px; }
     }
-    @media (max-height: 520px) and (max-width: 760px) {
-      .brand-panel { display: none; }
-      .overlay, .overlay:not(.active) { align-content: start; }
-      .container { margin-block: auto; }
-    }
-    @media (hover: hover) and (pointer: fine) {
-      .container { transition: border-color var(--duration-normal) ease, box-shadow var(--duration-normal) ease; }
-      .container:hover { border-color: rgba(243,241,237,.16); box-shadow: 0 32px 86px rgba(0,0,0,.44), 0 11px 30px rgba(0,0,0,.22), inset 0 1px 0 rgba(255,255,255,.06); }
-    }
+
     @media (prefers-reduced-motion: reduce) {
-      html { scroll-behavior: auto; }
-      *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
-      .auth-atmosphere::before { transform: none !important; }
-      .main-trigger-btn, .submit-btn { transform: none !important; }
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
     }
   </style>
 </head>
-<body class="modal-open">
-  <div class="auth-atmosphere" aria-hidden="true"></div>
-
+<body>
+  <!-- Return screen (returning user) -->
   <div class="return-screen" id="returnScreen" role="dialog" aria-modal="true" aria-labelledby="returnTitle" hidden>
     <div class="return-content">
-      <span class="return-kicker">KAZER · ESPAÇO PESSOAL</span>
+      <span class="return-kicker">KAZER</span>
       <img class="return-logo" src="../download/assets/kazer-mark.svg?v=20260922" alt="Símbolo do KAZER" />
       <h1 class="return-title" id="returnTitle">Bom ter você de volta.</h1>
-      <p class="return-copy">Seu espaço já está preparado neste dispositivo. Quer continuar?</p>
-      <button class="return-primary" id="returnContinue" type="button">Continuar para meu espaço</button>
+      <p class="return-copy">Seu espaço já está preparado neste dispositivo.</p>
+      <button class="return-primary" id="returnContinue" type="button">Continuar</button>
       <button class="return-secondary" id="returnOther" type="button">Criar outro espaço</button>
     </div>
   </div>
 
+  <!-- Access transition -->
   <div class="access-transition" id="accessTransition" role="status" aria-live="polite" aria-hidden="true">
     <div class="transition-stage">
-      <span class="transition-ring one" aria-hidden="true"></span>
-      <span class="transition-ring two" aria-hidden="true"></span>
-      <span class="transition-beam" aria-hidden="true"></span>
-      <div class="transition-core"><img src="../download/assets/kazer-mark.svg?v=20260922" alt="" aria-hidden="true" /></div>
-      <div class="transition-copy"><span class="transition-state" id="transitionState">ACESSO CONFIRMADO</span><strong class="transition-title" id="transitionTitle">Abrindo seu espaço...</strong></div>
+      <div class="transition-core">
+        <img src="../download/assets/kazer-mark.svg?v=20260922" alt="" aria-hidden="true" />
+      </div>
+      <div>
+        <span class="transition-state" id="transitionState">ACESSO CONFIRMADO</span>
+        <strong class="transition-title" id="transitionTitle">Abrindo seu espaço...</strong>
+      </div>
     </div>
   </div>
 
+  <!-- Intro (first visit) -->
   <div class="intro-screen" id="introScreen" role="dialog" aria-label="Abertura do KAZER">
     <div class="intro-content">
-      <span class="intro-kicker">KAZER · ESPAÇO PESSOAL</span>
+      <span class="intro-kicker">KAZER</span>
       <img class="intro-mark" src="../download/assets/kazer-mark.svg?v=20260922" alt="" aria-hidden="true" />
       <h1 class="intro-title">Seu espaço começa aqui.</h1>
       <p class="intro-copy">Uma IA pessoal para conversar, organizar e construir.</p>
     </div>
   </div>
 
-  <main class="overlay active" id="overlay">
-    <section class="brand-panel" aria-label="Apresentação do KAZER">
-      <div class="login-brand" aria-label="KAZER">
-        <img src="../download/assets/kazer-mark.svg?v=20260922" alt="Símbolo do KAZER" />
-        <div class="login-brand-copy"><span class="login-brand-kicker">KAZER · ESPAÇO PESSOAL</span><strong>KAZER</strong></div>
-      </div>
-      <h1 class="brand-headline">Seu espaço<br class="desktop-break" /> começa aqui.</h1>
-      <p class="brand-copy">Uma IA pessoal para conversar, organizar e construir — no seu ritmo.</p>
-      <div class="brand-signature"><span class="brand-signature-mark" aria-hidden="true"></span><span>Seu contexto, sempre à mão.</span></div>
-      <button class="main-trigger-btn" id="openOverlayBtn" type="button">Entrar no KAZER <span aria-hidden="true">↗</span></button>
-    </section>
+  <!-- Main auth -->
+  <main class="overlay" id="overlay">
+    <div class="brand-top" aria-label="KAZER">
+      <img src="../download/assets/kazer-mark.svg?v=20260922" alt="" />
+      <span>KAZER</span>
+    </div>
 
-    <section class="container" id="authContainer" aria-label="Acesso ao KAZER">
-      <div class="auth-header"><strong>KAZER</strong><span>Seu espaço pessoal</span></div>
-      <button class="close-button" id="closeOverlayBtn" type="button" aria-label="Fechar formulário">×</button>
-
+    <section class="card" id="authContainer" aria-label="Acesso ao KAZER">
       <div class="auth-forms">
+        <!-- LOGIN -->
         <section class="form-section active" id="loginForm" aria-labelledby="loginHeading">
-          <span class="auth-eyebrow">ACESSO SEGURO</span>
-          <h1 id="loginHeading">Bem-vindo de volta</h1>
-          <p class="switch-text">Ainda não tem um espaço? <button class="switch-link" id="goToSignup" type="button">Criar seu espaço</button></p>
+          <h1 id="loginHeading">Entrar</h1>
+          <p class="switch-text">Ainda não tem conta? <button class="switch-link" id="goToSignup" type="button">Criar espaço</button></p>
           <form id="formLogin">
             <div class="input-group">
               <label for="loginEmail">E-mail</label>
               <div class="input-wrapper">
                 <input type="email" id="loginEmail" name="email" placeholder="seu@email.com" required autocomplete="email" aria-describedby="loginError" />
-                <svg class="icon-left" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
               </div>
             </div>
             <div class="input-group">
               <label for="loginPassword">Senha</label>
               <div class="input-wrapper">
                 <input type="password" id="loginPassword" name="password" placeholder="Sua senha" required autocomplete="current-password" aria-describedby="loginError" />
-                <svg class="icon-left" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
-                <button type="button" class="toggle-password" data-target="loginPassword" aria-label="Mostrar senha" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
+                <button type="button" class="toggle-password" data-target="loginPassword" aria-label="Mostrar senha" aria-pressed="false">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                </button>
               </div>
               <div class="error-message" id="loginError" role="alert" aria-live="polite"></div>
             </div>
-            <button type="submit" class="submit-btn" id="loginBtn"><span class="btn-text">Entrar no KAZER</span><span class="btn-arrow" aria-hidden="true">→</span><span class="spinner" aria-hidden="true"></span></button>
+            <button type="submit" class="submit-btn" id="loginBtn">
+              <span class="btn-text">Entrar</span>
+              <span class="spinner" aria-hidden="true"></span>
+            </button>
           </form>
         </section>
 
+        <!-- SIGNUP -->
         <section class="form-section hidden" id="signupForm" aria-labelledby="signupHeading">
-          <span class="auth-eyebrow">SEU ESPAÇO, DO SEU JEITO</span>
-          <h1 id="signupHeading">Criar seu espaço</h1>
-          <p class="switch-text">Já tem um espaço? <button class="switch-link" id="goToLogin" type="button">Fazer login</button></p>
+          <h1 id="signupHeading">Criar espaço</h1>
+          <p class="switch-text">Já tem conta? <button class="switch-link" id="goToLogin" type="button">Entrar</button></p>
           <form id="formSignup">
             <div class="input-group">
-              <label for="signupName">Como podemos te chamar?</label>
+              <label for="signupName">Nome</label>
               <div class="input-wrapper">
-                <input type="text" id="signupName" name="name" placeholder="Seu nome" required maxlength="80" autocomplete="name" />
-                <svg class="icon-left" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                <input type="text" id="signupName" name="name" placeholder="Como podemos te chamar?" required maxlength="80" autocomplete="name" />
               </div>
             </div>
             <div class="input-group">
               <label for="signupEmail">E-mail</label>
               <div class="input-wrapper">
                 <input type="email" id="signupEmail" name="email" placeholder="seu@email.com" required autocomplete="email" aria-describedby="signupError" />
-                <svg class="icon-left" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
               </div>
             </div>
             <div class="input-group">
               <label for="signupPassword">Senha</label>
               <div class="input-wrapper">
-                <input type="password" id="signupPassword" name="password" placeholder="Crie uma senha" required minlength="10" autocomplete="new-password" aria-describedby="signupPasswordHint signupError" />
-                <svg class="icon-left" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
-                <button type="button" class="toggle-password" data-target="signupPassword" aria-label="Mostrar senha" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
+                <input type="password" id="signupPassword" name="password" placeholder="Crie uma senha forte" required autocomplete="new-password" aria-describedby="signupError" />
+                <button type="button" class="toggle-password" data-target="signupPassword" aria-label="Mostrar senha" aria-pressed="false">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                </button>
               </div>
-              <small class="password-hint" id="signupPasswordHint">Mínimo de 10 caracteres, uma maiúscula e um caractere especial.</small>
+              <span class="password-hint">Mín. 10 caracteres, 1 maiúscula e 1 caractere especial</span>
               <div class="error-message" id="signupError" role="alert" aria-live="polite"></div>
             </div>
-            <button type="submit" class="submit-btn" id="signupBtn"><span class="btn-text">Criar meu espaço</span><span class="btn-arrow" aria-hidden="true">→</span><span class="spinner" aria-hidden="true"></span></button>
+            <button type="submit" class="submit-btn" id="signupBtn">
+              <span class="btn-text">Criar meu espaço</span>
+              <span class="spinner" aria-hidden="true"></span>
+            </button>
           </form>
         </section>
       </div>
@@ -549,7 +477,7 @@
     (() => {
       "use strict";
 
-      // A abertura é uma experiência visual local. Não altera autenticação nem Supabase.
+      // Intro / return screens (local visual only)
       const introScreen = document.getElementById('introScreen');
       const returnScreen = document.getElementById('returnScreen');
       const returnContinue = document.getElementById('returnContinue');
@@ -559,6 +487,7 @@
       const transitionTitle = document.getElementById('transitionTitle');
       const introKey = 'kazer-login-intro-seen-v1';
       let introTimer = null;
+
       const finishIntro = () => {
         if (!introScreen || introScreen.classList.contains('is-done')) return;
         window.clearTimeout(introTimer);
@@ -567,8 +496,9 @@
         window.setTimeout(() => {
           introScreen.remove();
           document.body.classList.remove('intro-active');
-        }, 700);
+        }, 600);
       };
+
       let hasSeenIntro = false;
       try { hasSeenIntro = window.localStorage.getItem(introKey) === '1'; } catch (_) {}
       if (hasSeenIntro) {
@@ -579,56 +509,25 @@
       } else if (introScreen) {
         document.body.classList.add('intro-active');
         const reducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
-        introTimer = window.setTimeout(finishIntro, reducedMotion ? 80 : 720);
+        introTimer = window.setTimeout(finishIntro, reducedMotion ? 60 : 700);
       }
 
-      // 1. CONFIGURAÇÃO DO SUPABASE (Nome 'kazerDB' para evitar 100% de conflitos)
+      // Supabase
       const SUPABASE_URL = "https://mqjunopzycdezzjmlhip.supabase.co";
       const SUPABASE_ANON_KEY = "sb_publishable_1z--HkCLItfs9qqHdf8WHA_WwhPVfnS";
-      
       const kazerDB = window.supabase?.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-      // 2. ELEMENTOS DO DOM
-      const overlay = document.getElementById('overlay');
-      const openOverlayBtn = document.getElementById('openOverlayBtn');
-      const container = document.getElementById('authContainer');
       const loginForm = document.getElementById('loginForm');
       const signupForm = document.getElementById('signupForm');
-
-      if (!overlay || !container) return; // Segurança
+      const container = document.getElementById('authContainer');
 
       document.body.dataset.authMode = signupForm?.classList.contains('active') ? 'signup' : 'login';
-      document.querySelectorAll('.input-wrapper input').forEach((input) => {
-        input.addEventListener('focus', () => { document.body.dataset.focusField = input.id; });
-        input.addEventListener('blur', () => {
-          window.setTimeout(() => {
-            if (!document.querySelector('.input-wrapper input:focus')) delete document.body.dataset.focusField;
-          }, 0);
-        });
-      });
-
-      // 3. FUNÇÕES DE UI
-      function openOverlay(options = {}) {
-        overlay.classList.add('active');
-        document.body.classList.add('modal-open');
-        clearErrors();
-        const focusId = options.focusId || 'loginEmail';
-        if (focusId) window.setTimeout(() => document.getElementById(focusId)?.focus(), 220);
-      }
-
-      function closeOverlay() {
-        overlay.classList.remove('active');
-        document.body.classList.remove('modal-open');
-        clearErrors();
-        openOverlayBtn?.focus();
-      }
 
       function clearErrors() {
         document.querySelectorAll('.error-message').forEach(el => {
           el.textContent = '';
           el.classList.remove('visible');
         });
-        container.classList.remove('shake');
       }
 
       function showError(elementId, message) {
@@ -636,9 +535,6 @@
         if (el) {
           el.textContent = message;
           el.classList.add('visible');
-          container.classList.remove('shake');
-          void container.offsetWidth; // Força reflow para reiniciar animação
-          container.classList.add('shake');
         }
       }
 
@@ -653,23 +549,11 @@
       function showAccessTransition(mode) {
         if (!accessTransition) return;
         const isSignup = mode === 'signup';
-        accessTransition.classList.toggle('signup', isSignup);
         accessTransition.setAttribute('aria-hidden', 'false');
         accessTransition.classList.add('active');
         if (transitionState) transitionState.textContent = isSignup ? 'ESPAÇO CRIADO' : 'ACESSO CONFIRMADO';
         if (transitionTitle) transitionTitle.textContent = isSignup ? 'Preparando seu KAZER...' : 'Abrindo seu espaço...';
       }
-
-      // 4. EVENT LISTENERS DE NAVEGAÇÃO
-      openOverlayBtn?.addEventListener('click', openOverlay);
-      document.addEventListener('keydown', (event) => {
-        if (event.key === 'Escape' && overlay.classList.contains('active')) closeOverlay();
-      });
-      document.getElementById('closeOverlayBtn')?.addEventListener('click', closeOverlay);
-
-      overlay.addEventListener('click', (e) => {
-        if (e.target === overlay) closeOverlay();
-      });
 
       function leaveReturnScreen(destination = 'login') {
         if (!returnScreen || returnScreen.hasAttribute('hidden')) return;
@@ -685,59 +569,57 @@
             loginForm.classList.add('hidden');
             signupForm.classList.remove('hidden');
             signupForm.classList.add('active');
-            openOverlay({ focusId: 'signupName' });
+            window.setTimeout(() => document.getElementById('signupName')?.focus(), 100);
           } else {
             document.body.dataset.authMode = 'login';
-            openOverlay({ focusId: 'loginEmail' });
+            window.setTimeout(() => document.getElementById('loginEmail')?.focus(), 100);
           }
-        }, 540);
+        }, 400);
       }
 
       returnContinue?.addEventListener('click', () => leaveReturnScreen('login'));
       returnOther?.addEventListener('click', () => leaveReturnScreen('signup'));
 
+      // Switch forms
       document.getElementById('goToSignup')?.addEventListener('click', () => {
         document.body.dataset.authMode = 'signup';
         loginForm.classList.remove('active');
         loginForm.classList.add('hidden');
-        setTimeout(() => {
-          signupForm.classList.remove('hidden');
-          signupForm.classList.add('active');
-          clearErrors();
-        }, 150);
+        signupForm.classList.remove('hidden');
+        signupForm.classList.add('active');
+        clearErrors();
+        window.setTimeout(() => document.getElementById('signupName')?.focus(), 80);
       });
 
       document.getElementById('goToLogin')?.addEventListener('click', () => {
         document.body.dataset.authMode = 'login';
         signupForm.classList.remove('active');
         signupForm.classList.add('hidden');
-        setTimeout(() => {
-          loginForm.classList.remove('hidden');
-          loginForm.classList.add('active');
-          clearErrors();
-        }, 150);
+        loginForm.classList.remove('hidden');
+        loginForm.classList.add('active');
+        clearErrors();
+        window.setTimeout(() => document.getElementById('loginEmail')?.focus(), 80);
       });
 
-      // Toggle Mostrar/Ocultar Senha
+      // Password toggle
       document.querySelectorAll('.toggle-password').forEach(btn => {
         btn.addEventListener('click', () => {
-          const inputId = btn.getAttribute('data-target');
-          const input = document.getElementById(inputId);
-          if (input) {
-            const isPassword = input.type === 'password';
-            input.type = isPassword ? 'text' : 'password';
-            btn.setAttribute('aria-label', isPassword ? 'Ocultar senha' : 'Mostrar senha');
-            btn.setAttribute('aria-pressed', isPassword ? 'true' : 'false');
-            btn.style.color = isPassword ? 'var(--accent)' : 'var(--text-secondary)';
-          }
+          const targetId = btn.getAttribute('data-target');
+          const input = document.getElementById(targetId);
+          if (!input) return;
+          const isPassword = input.type === 'password';
+          input.type = isPassword ? 'text' : 'password';
+          btn.setAttribute('aria-pressed', isPassword ? 'true' : 'false');
+          btn.setAttribute('aria-label', isPassword ? 'Ocultar senha' : 'Mostrar senha');
+          btn.style.color = isPassword ? 'var(--text)' : 'var(--text-muted)';
         });
       });
 
-      // 5. LÓGICA DE LOGIN
+      // Login
       document.getElementById('formLogin')?.addEventListener('submit', async (e) => {
         e.preventDefault();
         clearErrors();
-        
+
         const email = document.getElementById('loginEmail').value.trim();
         const password = document.getElementById('loginPassword').value;
 
@@ -755,7 +637,6 @@
           document.querySelector('#loginBtn .btn-text').textContent = 'Acesso confirmado';
           showAccessTransition('login');
           setTimeout(() => window.location.href = '/chat', 1150);
-
         } catch (error) {
           let msg = 'Falha ao fazer login.';
           if (error.message.includes('Invalid login credentials')) msg = 'E-mail ou senha incorretos.';
@@ -765,20 +646,18 @@
         }
       });
 
-      // 6. LÓGICA DE CADASTRO (SIGNUP)
+      // Signup
       document.getElementById('formSignup')?.addEventListener('submit', async (e) => {
         e.preventDefault();
         clearErrors();
-        
+
         const name = document.getElementById('signupName').value.trim();
         const email = document.getElementById('signupEmail').value.trim();
         const password = document.getElementById('signupPassword').value;
 
-        // Validação de senha forte
         const passwordRegex = /^(?=.*[A-Z])(?=.*[^A-Za-z0-9]).{10,}$/;
         if (!passwordRegex.test(password)) {
           showError('signupError', 'Senha: mín. 10 caracteres, 1 maiúscula e 1 especial.');
-          setLoading('signupBtn', false);
           return;
         }
 
@@ -796,7 +675,6 @@
 
           if (error) throw error;
 
-          // Atualizar perfil (ignora erro se a tabela não existir)
           if (data.user) {
             try {
               await kazerDB.from('profiles').update({ display_name: name }).eq('id', data.user.id);
@@ -806,7 +684,6 @@
           document.querySelector('#signupBtn .btn-text').textContent = 'Espaço criado';
           showAccessTransition('signup');
           setTimeout(() => window.location.href = '/chat', 1250);
-
         } catch (error) {
           let msg = 'Não foi possível criar a conta.';
           if (error.message.includes('User already registered')) msg = 'E-mail já cadastrado. Tente fazer login.';
@@ -815,99 +692,14 @@
         }
       });
 
-      // 7. VERIFICAÇÃO DE SESSÃO AO CARREGAR
+      // Session check
       window.addEventListener('load', async () => {
         try {
           const { data: { session } } = await kazerDB.auth.getSession();
           if (session) window.location.href = '/chat';
         } catch (_) {}
       });
-
     })();
   </script>
-  <script>
-    (() => {
-      const authForms = document.querySelector('.auth-forms');
-      if (!authForms) return;
-      let resetTimer = 0;
-      authForms.addEventListener('click', (event) => {
-        if (!event.target.closest?.('#goToSignup, #goToLogin')) return;
-        window.clearTimeout(resetTimer);
-        authForms.style.height = `${Math.ceil(authForms.getBoundingClientRect().height)}px`;
-        window.setTimeout(() => {
-          const activeForm = authForms.querySelector('.form-section.active');
-          if (!activeForm) return;
-          authForms.style.height = `${Math.ceil(activeForm.scrollHeight)}px`;
-          const reducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
-          resetTimer = window.setTimeout(() => { authForms.style.height = 'auto'; }, reducedMotion ? 30 : 460);
-        }, 165);
-      }, { capture: true });
-    })();
-  </script>
-  <script>
-    (() => {
-      const reducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)');
-      const finePointer = window.matchMedia?.('(hover: hover) and (pointer: fine)');
-      if (!finePointer?.matches || reducedMotion?.matches) return;
-
-      const root = document.documentElement;
-      let ambientFrame = 0;
-      let nextAmbient = { x: 0, y: 0 };
-      window.addEventListener('pointermove', (event) => {
-        if (event.pointerType !== 'mouse') return;
-        nextAmbient = {
-          x: Math.round((event.clientX / Math.max(window.innerWidth, 1) - .5) * 18),
-          y: Math.round((event.clientY / Math.max(window.innerHeight, 1) - .5) * 14)
-        };
-        if (ambientFrame) return;
-        ambientFrame = window.requestAnimationFrame(() => {
-          root.style.setProperty('--ambient-x', `${nextAmbient.x}px`);
-          root.style.setProperty('--ambient-y', `${nextAmbient.y}px`);
-          ambientFrame = 0;
-        });
-      }, { passive: true });
-
-      const magneticButtons = document.querySelectorAll('.submit-btn, .main-trigger-btn');
-      magneticButtons.forEach((button) => {
-        let bounds = null;
-        let frame = 0;
-        let next = { x: 0, y: 0 };
-        const measure = () => { bounds = button.getBoundingClientRect(); };
-        button.addEventListener('pointerenter', measure, { passive: true });
-        button.addEventListener('pointermove', (event) => {
-          if (event.pointerType !== 'mouse' || button.disabled) return;
-          if (!bounds) measure();
-          next = {
-            x: Math.max(-2.5, Math.min(2.5, (event.clientX - bounds.left - bounds.width / 2) * .035)),
-            y: Math.max(-2, Math.min(2, (event.clientY - bounds.top - bounds.height / 2) * .035))
-          };
-          if (frame) return;
-          frame = window.requestAnimationFrame(() => {
-            button.style.setProperty('--magnet-x', `${next.x.toFixed(1)}px`);
-            button.style.setProperty('--magnet-y', `${next.y.toFixed(1)}px`);
-            frame = 0;
-          });
-        }, { passive: true });
-        button.addEventListener('pointerleave', () => {
-          bounds = null;
-          button.style.setProperty('--magnet-x', '0px');
-          button.style.setProperty('--magnet-y', '0px');
-        }, { passive: true });
-        window.addEventListener('resize', () => { bounds = null; }, { passive: true });
-      });
-    })();
-  </script>
-  <script>
-    (() => {
-      const overlay = document.getElementById('overlay');
-      const brandPanel = document.querySelector('.brand-panel');
-      if (!overlay || !brandPanel) return;
-      brandPanel.addEventListener('click', (event) => {
-        if (!overlay.classList.contains('active') || event.target.closest('button, a, input')) return;
-        overlay.dispatchEvent(new MouseEvent('click', { bubbles: true }));
-      });
-    })();
-  </script>
-
 </body>
 </html>
