@@ -3617,11 +3617,11 @@
       .history-list { display: grid; gap: 0; border: 0; }
       .history-group-label { display: flex; align-items: center; gap: 10px; margin: 24px 0 9px; color: var(--text-dim); font-size: 9px; font-weight: 800; letter-spacing: .18em; text-transform: uppercase; }
       .history-group-label:first-child { margin-top: 0; }
-      .history-group-label::before { width: 18px; height: 1px; background: linear-gradient(90deg, var(--purple), transparent); content: ""; }
+      .history-group-label::before { width: 18px; height: 1px; background: linear-gradient(90deg, rgba(255,255,255,.2), transparent); content: ""; }
       .history-item { grid-template-columns: minmax(0,1fr) auto; min-height: 82px; margin: 0 0 8px; padding: 0; overflow: hidden; border: 1px solid rgba(255,255,255,.065); border-radius: 16px; background: linear-gradient(110deg, rgba(255,255,255,.025), rgba(255,255,255,.01)); box-shadow: 0 8px 20px rgba(0,0,0,.07); }
-      .history-item:hover, .history-item.is-selected { border-color: rgba(229,72,85,.24); background: linear-gradient(110deg, rgba(229,72,85,.055), rgba(255,255,255,.018)); }
+      .history-item:hover, .history-item.is-selected { border-color: rgba(255,255,255,.12); background: linear-gradient(110deg, rgba(255,255,255,.04), rgba(255,255,255,.015)); }
       .history-item-open { display: grid; grid-template-columns: 42px minmax(0,1fr) auto; align-items: center; gap: 13px; width: 100%; min-height: 80px; padding: 12px 16px; }
-      .history-item-symbol { display: grid; place-items: center; width: 40px; height: 40px; border: 1px solid rgba(229,72,85,.18); border-radius: 13px; background: rgba(229,72,85,.065); color: var(--text-soft); }
+      .history-item-symbol { display: grid; place-items: center; width: 40px; height: 40px; border: 1px solid rgba(255,255,255,.09); border-radius: 13px; background: rgba(255,255,255,.035); color: var(--text-soft); }
       .history-item-symbol .icon { width: 19px; height: 19px; }
       .history-item-copy { display: grid; gap: 5px; }
       .history-item-copy strong { font-size: 13px; font-weight: 650; letter-spacing: -.02em; }
@@ -3629,11 +3629,11 @@
       .history-item-trailing { display: inline-flex; align-items: center; gap: 9px; }
       .history-item-time { color: var(--text-dim); font-size: 9px; }
       .history-item-arrow { display: grid; place-items: center; width: 25px; height: 25px; border: 1px solid rgba(255,255,255,.065); border-radius: 50%; color: var(--text-dim); font-size: 18px; line-height: 1; transition: color 170ms ease, border-color 170ms ease, transform 170ms ease; }
-      .history-item:hover .history-item-arrow { border-color: rgba(229,72,85,.28); color: #e7bc69; transform: translateX(2px); }
+      .history-item:hover .history-item-arrow { border-color: rgba(231,188,105,.24); color: #d8c8a5; transform: translateX(2px); }
       .history-item-action { align-self: center; margin-right: 12px; }
       @media (hover:hover) and (pointer:fine) { .history-item:hover .history-item-action { display: inline-flex; } }
-      .history-empty { min-height: 270px; align-content: center; margin-top: 5px; padding: 45px 22px; border: 1px dashed rgba(255,255,255,.11); border-radius: 22px; background: linear-gradient(145deg, rgba(229,72,85,.045), rgba(255,255,255,.012)); }
-      .history-empty-mark { width: 58px; height: 58px; border-color: rgba(229,72,85,.24); border-radius: 18px; background: rgba(229,72,85,.07); color: #e7bc69; box-shadow: 0 0 35px rgba(229,72,85,.09); }
+      .history-empty { min-height: 270px; align-content: center; margin-top: 5px; padding: 45px 22px; border: 1px dashed rgba(255,255,255,.11); border-radius: 22px; background: linear-gradient(145deg, rgba(255,255,255,.025), rgba(255,255,255,.008)); }
+      .history-empty-mark { width: 58px; height: 58px; border-color: rgba(255,255,255,.10); border-radius: 18px; background: rgba(255,255,255,.035); color: #d8d2c6; box-shadow: none; }
       .history-empty strong { font-size: 15px; font-weight: 650; }
       .history-empty p { max-width: 350px; font-size: 11px; }
       .history-new-chat { right: clamp(20px, 5vw, 54px); bottom: max(24px, env(safe-area-inset-bottom)); width: auto; height: 52px; gap: 10px; padding: 0 18px; border-radius: 999px; border-color: rgba(255,255,255,.42); background: linear-gradient(110deg, #f3f0ea, #d9d7d3); box-shadow: 0 15px 36px rgba(0,0,0,.34), 0 0 0 6px color-mix(in srgb, var(--page) 70%, transparent); color: #151519; text-decoration: none; }
@@ -4114,15 +4114,17 @@
       .settings-nav { background: color-mix(in srgb, var(--page-soft) 88%, var(--card)); border-color: var(--line-soft); }
       .settings-mobile-account-plan-value { color: var(--text); border-color: var(--line); background: color-mix(in srgb, var(--card) 86%, transparent); }
       .settings-mobile-upgrade, .profile-popover .menu-action.primary, .connector-custom-actions button:last-child { background: #c53a3f; color: #fff; }
-      .history-screen { background: radial-gradient(ellipse at 78% -16%, rgba(197,58,63,.075), transparent 48%), var(--page); }
+      .history-screen { background: radial-gradient(ellipse at 78% -16%, rgba(197,58,63,.03), transparent 48%), var(--page); }
       .history-topbar { border-bottom-color: var(--line-soft); }
       .history-item { border-color: var(--line-soft); background: color-mix(in srgb, var(--card) 78%, transparent); }
-      .history-item:hover, .history-item.is-selected { border-color: color-mix(in srgb, var(--accent-readable) 36%, var(--line)); background: color-mix(in srgb, var(--accent) 5%, var(--card)); }
-      .history-item-symbol { border-color: color-mix(in srgb, var(--accent) 24%, var(--line)); background: color-mix(in srgb, var(--accent) 8%, var(--card)); }
-      .history-item-arrow, .history-item:hover .history-item-arrow { color: var(--accent-readable); }
-      .history-item-open:focus-visible, .history-item-action:focus-visible { outline: 2px solid var(--accent-readable); outline-offset: -2px; }
-      .history-new-chat { min-height: 52px; border-color: rgba(255,255,255,.2); background: #c53a3f; color: #fff; box-shadow: 0 12px 28px rgba(95,24,30,.28); }
-      .history-new-chat:hover { filter: brightness(1.08); }
+      .history-item:hover, .history-item.is-selected { border-color: rgba(255,255,255,.12); background: color-mix(in srgb, var(--card) 86%, white 14%); }
+      .history-item-symbol { border-color: color-mix(in srgb, var(--line) 82%, white 18%); background: color-mix(in srgb, var(--card) 92%, white 8%); }
+      .history-item-arrow, .history-item:hover .history-item-arrow { color: #aaa8a4; }
+      .history-item:hover .history-item-arrow { color: #d8c8a5; }
+      .history-item-arrow .icon { width: 14px; height: 14px; }
+      .history-item-open:focus-visible, .history-item-action:focus-visible { outline: 2px solid #d8d2c6; outline-offset: -2px; }
+      .history-new-chat { min-height: 52px; border-color: rgba(164,71,77,.3); background: #a4474d; color: #fff; box-shadow: 0 8px 20px rgba(0,0,0,.2); }
+      .history-new-chat:hover { border-color: rgba(164,71,77,.4); background: #913b41; box-shadow: 0 10px 22px rgba(0,0,0,.22); filter: none; }
       .history-global-notice { border-color: color-mix(in srgb, var(--warning) 35%, var(--line)); background: color-mix(in srgb, var(--warning) 8%, var(--card)); }
       .history-global-notice-mark, .history-global-notice-arrow { color: var(--warning); }
       .global-notice-kicker, .plans-head-copy > span, .plans-brand-copy > span { color: var(--accent-readable); }
@@ -4160,9 +4162,9 @@
       :root[data-theme="light"] .composer-box { border-color: rgba(32,29,32,.16); background: linear-gradient(145deg, #fffdfa, #ece8e1); box-shadow: 0 18px 40px rgba(32,29,32,.12), inset 0 1px 0 rgba(255,255,255,.8); }
       :root[data-theme="light"] .composer-box:focus-within { border-color: #a92e35; box-shadow: 0 16px 40px rgba(32,29,32,.14), 0 0 0 3px rgba(169,46,53,.16); }
       :root[data-theme="light"] .message-row.user .message-bubble { border-color: rgba(169,46,53,.18); background: #fffdfa; }
-      :root[data-theme="light"] .history-screen { background: radial-gradient(ellipse at 78% -16%, rgba(169,46,53,.07), transparent 48%), var(--page); }
+      :root[data-theme="light"] .history-screen { background: radial-gradient(ellipse at 78% -16%, rgba(169,46,53,.025), transparent 48%), var(--page); }
       :root[data-theme="light"] .history-item { background: rgba(255,253,250,.84); box-shadow: 0 8px 20px rgba(32,29,32,.045); }
-      :root[data-theme="light"] .history-new-chat { border-color: rgba(169,46,53,.2); background: #a92e35; color: #fff; }
+      :root[data-theme="light"] .history-new-chat { border-color: rgba(160,68,73,.22); background: #a04449; color: #fff; }
       :root[data-theme="light"] .profile-popover, :root[data-theme="light"] .web-popover, :root[data-theme="light"] .settings-popover, :root[data-theme="light"] .connectors-screen, :root[data-theme="light"] .plans-screen, :root[data-theme="light"] .workspace-panel, :root[data-theme="light"] .attachment-sheet { background-color: #fffdfa; box-shadow: 0 26px 70px rgba(32,29,32,.18); }
       :root[data-theme="light"] .settings-nav { background: #ece8e1; }
       :root[data-theme="light"] .plan-card-pro { background: radial-gradient(circle at 12% -8%, rgba(169,46,53,.12), transparent 58%), #fffdfa; }
@@ -4192,9 +4194,9 @@
       @media (min-width: 1080px) {
         .app.desktop-sidebar-enabled #historyScreen { border-right-color: var(--line); background: linear-gradient(180deg, var(--page-soft), var(--page) 78%); }
         .app.desktop-sidebar-enabled .topbar { background: linear-gradient(to bottom, color-mix(in srgb, var(--page) 98%, transparent), color-mix(in srgb, var(--page) 78%, transparent) 72%, transparent); }
-        .app.desktop-sidebar-enabled .history-new-chat { border-color: rgba(255,255,255,.18); background: #c53a3f; color: #fff; }
-        :root[data-theme="light"] .app.desktop-sidebar-enabled .history-new-chat { border-color: rgba(169,46,53,.2); background: #a92e35; color: #fff; }
-        .app.desktop-sidebar-enabled .history-item:hover, .app.desktop-sidebar-enabled .history-item.is-selected { border-color: color-mix(in srgb, var(--accent-readable) 32%, var(--line)); background: color-mix(in srgb, var(--accent) 5%, var(--card)); }
+        .app.desktop-sidebar-enabled .history-new-chat { border-color: rgba(164,71,77,.3); background: #a4474d; color: #fff; box-shadow: 0 8px 20px rgba(0,0,0,.18); }
+        :root[data-theme="light"] .app.desktop-sidebar-enabled .history-new-chat { border-color: rgba(160,68,73,.22); background: #a04449; color: #fff; }
+        .app.desktop-sidebar-enabled .history-item:hover, .app.desktop-sidebar-enabled .history-item.is-selected { border-color: rgba(255,255,255,.12); background: color-mix(in srgb, var(--card) 88%, white 12%); }
         .app.desktop-sidebar-enabled .desktop-sidebar-toggle { min-width: 40px; min-height: 40px; }
       }
       @media (prefers-reduced-motion: reduce) {
@@ -4221,7 +4223,7 @@
         .history-mobile-account-copy strong { color: #f4f4f5; font-size: clamp(18px, 5vw, 21px); font-weight: 620; letter-spacing: -.035em; line-height: 1.15; }
         .history-mobile-account-copy small { color: #a1a1aa; font-size: 14px; font-weight: 430; letter-spacing: .01em; }
         .history-exit-action { grid-area: exit; display: grid; place-items: center; width: 60px; height: 60px; border: 1px solid rgba(255,255,255,.055); border-radius: 50%; background: #17171b; color: #f3f0ea; cursor: pointer; touch-action: manipulation; transition: background 160ms var(--ease), transform 160ms var(--ease); }
-        .history-exit-action .icon { width: 26px; height: 26px; }
+        .history-exit-action .icon { width: 24px; height: 24px; }
         .history-exit-action:active { transform: scale(.96); }
         .history-topbar .history-search-field { display: none; position: fixed; z-index: 55; right: calc(clamp(54px,14vw,64px) + max(22px, env(safe-area-inset-right)) + clamp(10px,3vw,16px)); bottom: max(18px, calc(env(safe-area-inset-bottom) + 10px)); left: max(22px, env(safe-area-inset-left)); width: auto; min-height: clamp(54px,14vw,64px); margin: 0; padding: 0 19px; border: 1px solid rgba(255,255,255,.075); border-radius: 999px; background: #141417; box-shadow: 0 8px 24px rgba(0,0,0,.24); }
         .history-screen.is-search-open .history-topbar .history-search-field { display: flex; }
@@ -4249,7 +4251,7 @@
         .history-mobile-action, .history-new-chat { position: static; display: grid; place-items: center; width: 100%; min-width: 44px; min-height: clamp(54px,14vw,64px); height: clamp(54px,14vw,64px); margin: 0; padding: 0; border: 1px solid rgba(255,255,255,.035); border-radius: 50%; background: #17171b; color: #f3f0ea; box-shadow: none; text-decoration: none; cursor: pointer; font: inherit; }
         .history-mobile-action { aspect-ratio: 1; border-radius: 50%; box-shadow: 0 4px 15px rgba(0,0,0,.18); transition: background 160ms var(--ease), border-color 160ms var(--ease), transform 160ms var(--ease); }
         .history-mobile-action:active { transform: scale(.96); }
-        .history-mobile-action .icon { width: 25px; height: 25px; }
+        .history-mobile-action .icon { width: 24px; height: 24px; }
         .history-search-close-icon { display: none; }
         .history-screen.is-search-open #historySearchAction .history-search-open-icon { display: none; }
         .history-screen.is-search-open #historySearchAction .history-search-close-icon { display: block; }
@@ -4258,17 +4260,17 @@
         .history-screen.is-search-open #historySearchAction { width: 100%; height: 100%; min-height: 0; border-radius: 50%; background: #25252b; box-shadow: 0 8px 24px rgba(0,0,0,.24); }
         .history-mobile-action-label { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
         .history-mobile-action:hover { border-color: rgba(255,255,255,.12); background: #222227; }
-        .history-new-chat { display: flex; justify-content: center; gap: 10px; border-color: rgba(197,58,63,.35); border-radius: 999px; background: #c53a3f; color: #fff; font-size: clamp(15px,4vw,18px); font-weight: 620; white-space: nowrap; box-shadow: 0 8px 24px rgba(123,28,35,.22); }
+        .history-new-chat { display: flex; justify-content: center; gap: 10px; border-color: rgba(164,71,77,.28); border-radius: 999px; background: #a4474d; color: #fff; font-size: clamp(15px,4vw,18px); font-weight: 620; white-space: nowrap; box-shadow: 0 6px 18px rgba(0,0,0,.2); }
         .history-new-chat .icon { width: 24px; height: 24px; flex: 0 0 auto; }
         .history-new-chat-label { font-size: inherit; font-weight: inherit; }
-        .history-new-chat:hover { border-color: rgba(197,58,63,.52); background: #ad3038; box-shadow: 0 10px 25px rgba(123,28,35,.25); transform: translateY(-1px); }
-        .history-mobile-action:focus-visible, .history-exit-action:focus-visible, .history-new-chat:focus-visible { outline: 2px solid var(--accent-readable); outline-offset: 4px; }
+        .history-new-chat:hover { border-color: rgba(164,71,77,.42); background: #913b41; box-shadow: 0 8px 20px rgba(0,0,0,.22); transform: translateY(-1px); }
+        .history-mobile-action:focus-visible, .history-exit-action:focus-visible, .history-new-chat:focus-visible { outline: 2px solid #d8d2c6; outline-offset: 4px; }
         :root[data-theme="light"] .history-screen { background: #f3f0ea; }
         :root[data-theme="light"] .history-mobile-action, :root[data-theme="light"] .history-exit-action, :root[data-theme="light"] .history-mobile-avatar { border-color: rgba(0,0,0,.08); background: #e7e2da; color: #17171b; }
         :root[data-theme="light"] .history-mobile-account-copy strong, :root[data-theme="light"] .history-item-copy strong { color: #17171b; }
         :root[data-theme="light"] .history-mobile-account-copy small, :root[data-theme="light"] .history-intro h1 { color: #62616a; }
         :root[data-theme="light"] .history-item { border-bottom-color: rgba(0,0,0,.09); }
-        :root[data-theme="light"] .history-new-chat { border-color: rgba(169,46,53,.25); background: #a92e35; color: #fff; }
+        :root[data-theme="light"] .history-new-chat { border-color: rgba(160,68,73,.22); background: #a04449; color: #fff; }
       }
       @media (max-height: 680px) and (max-width: 680px) {
         .history-topbar { min-height: calc(76px + env(safe-area-inset-top)); padding-top: max(10px, env(safe-area-inset-top)); }
@@ -4290,6 +4292,24 @@
         .history-mobile-action, .history-exit-action, .history-new-chat { transition: none !important; }
         .history-new-chat:hover { transform: none; }
       }
+
+      /* One coherent, restrained outline-icon system for the chat history. */
+      .history-screen svg.icon { stroke-width: 1.8; }
+      .history-screen .history-search-field:focus-within { border-color: rgba(255,255,255,.19); box-shadow: 0 8px 24px rgba(0,0,0,.2), 0 0 0 2px rgba(255,255,255,.055); }
+      .history-screen .history-search-field input:focus, .history-screen .history-search-field input:focus-visible { outline: none; outline-offset: 0; box-shadow: none; }
+      :root[data-theme="light"] .history-screen .history-search-field:focus-within { border-color: rgba(0,0,0,.2); box-shadow: 0 8px 24px rgba(0,0,0,.12), 0 0 0 2px rgba(0,0,0,.045); }
+      .history-screen .history-global-notice-mark .icon { width: 18px; height: 18px; }
+      .history-screen .history-global-notice-arrow { display: grid; place-items: center; width: 24px; height: 24px; margin-left: auto; font-size: 0; }
+      .history-screen .history-global-notice-arrow .icon { width: 16px; height: 16px; }
+      .history-screen .history-item-arrow .icon { width: 14px; height: 14px; }
+      .history-screen .history-empty-mark .icon { width: 24px; height: 24px; }
+      :root[data-theme="light"] .history-screen .history-item:hover, :root[data-theme="light"] .history-screen .history-item.is-selected { border-color: rgba(32,29,32,.12); background: rgba(32,29,32,.025); }
+      :root[data-theme="light"] .history-screen .history-item-symbol { border-color: rgba(32,29,32,.09); background: rgba(32,29,32,.035); color: #5b5960; }
+      :root[data-theme="light"] .history-screen .history-empty { border-color: rgba(32,29,32,.13); background: linear-gradient(145deg, rgba(32,29,32,.02), rgba(32,29,32,.008)); }
+      :root[data-theme="light"] .history-screen .history-empty-mark { border-color: rgba(32,29,32,.1); background: rgba(32,29,32,.04); color: #5b5960; }
+      :root[data-theme="light"] .history-screen .history-item-arrow { border-color: rgba(32,29,32,.1); color: #68666a; }
+      :root[data-theme="light"] .history-screen .history-item:hover .history-item-arrow { border-color: rgba(32,29,32,.16); color: #806a48; }
+      :root[data-theme="light"] .history-screen .history-mobile-action:focus-visible, :root[data-theme="light"] .history-screen .history-exit-action:focus-visible, :root[data-theme="light"] .history-screen .history-new-chat:focus-visible { outline-color: #77644a; }
 
     </style>
     <script>
@@ -4345,12 +4365,12 @@
             <div class="history-count" aria-label="Quantidade de conversas"><strong id="historyCountValue">0</strong><span id="historyCountLabel">conversas</span></div>
           </div>
           <div class="history-list" id="historyList" aria-live="polite"></div>
-          <div class="history-empty" id="historyEmpty" hidden><span class="history-empty-mark" aria-hidden="true"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 6.5A2.5 2.5 0 0 1 7.5 4h9A2.5 2.5 0 0 1 19 6.5v6a2.5 2.5 0 0 1-2.5 2.5H13l-3.2 3.2c-.63.63-1.8.18-1.8-.72V15H7.5A2.5 2.5 0 0 1 5 12.5z"></path><path d="M8.5 8.5h7M8.5 11.5h4"></path></svg></span><strong id="historyEmptyTitle">Seu arquivo começa aqui</strong><p id="historyEmptyMessage">Quando você iniciar uma conversa com o KAZER, ela vai aparecer aqui para você retomar quando quiser.</p></div>
+          <div class="history-empty" id="historyEmpty" hidden><span class="history-empty-mark" aria-hidden="true"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11.5a8 8 0 0 1-8 8 8.4 8.4 0 0 1-3.4-.7L4 21l1.3-3.8A8 8 0 1 1 20 11.5Z"></path><path d="M8.5 10.7h7M8.5 14h4"></path></svg></span><strong id="historyEmptyTitle">Seu arquivo começa aqui</strong><p id="historyEmptyMessage">Quando você iniciar uma conversa com o KAZER, ela vai aparecer aqui para você retomar quando quiser.</p></div>
         </div>
         <nav class="history-mobile-dock" aria-label="Ações do histórico">
-          <button class="history-mobile-action" id="historySettingsAction" type="button" aria-label="Configurações" title="Configurações"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6 7 7M17 17l1.4 1.4M18.4 5.6 17 7M7 17l-1.4 1.4"></path><circle cx="12" cy="12" r="3.5"></circle></svg><span class="history-mobile-action-label">Configurações</span></button>
+          <button class="history-mobile-action" id="historySettingsAction" type="button" aria-label="Configurações" title="Configurações"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12.22 2h-.44a2 2 0 0 0-2 1.72l-.04.27a2 2 0 0 1-1.1 1.5l-.24.14a2 2 0 0 1-1.88 0l-.22-.1a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.22.13a2 2 0 0 1 1 1.73v.26a2 2 0 0 1-1 1.73l-.22.13a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.22-.1a2 2 0 0 1 1.88 0l.24.14a2 2 0 0 1 1.1 1.5l.04.27A2 2 0 0 0 11.78 22h.44a2 2 0 0 0 2-1.72l.04-.27a2 2 0 0 1 1.1-1.5l.24-.14a2 2 0 0 1 1.88 0l.22.1a2 2 0 0 0 2.73-.73l.22-.38a2 2 0 0 0-.73-2.73l-.22-.13a2 2 0 0 1-1-1.73v-.26a2 2 0 0 1 1-1.73l.22-.13a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.22.1a2 2 0 0 1-1.88 0l-.24-.14a2 2 0 0 1-1.1-1.5l-.04-.27A2 2 0 0 0 12.22 2Z"></path><circle cx="12" cy="12" r="3"></circle></svg><span class="history-mobile-action-label">Configurações</span></button>
           <button class="history-mobile-action" id="historySearchAction" type="button" aria-label="Buscar conversas" aria-controls="historySearchInput" aria-expanded="false" title="Buscar conversas"><svg class="icon history-search-open-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-4-4"></path></svg><svg class="icon history-search-close-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"></path></svg><span class="history-mobile-action-label">Buscar conversas</span></button>
-          <a class="history-new-chat" id="historyNewChat" href="?view=chat" aria-label="Começar novo chat"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11.5a7.4 7.4 0 0 1-7.6 7.5 8.2 8.2 0 0 1-3.1-.6L5 20l1.4-3.7a7.2 7.2 0 0 1-1.5-4.5A7.4 7.4 0 0 1 12.4 4 7.4 7.4 0 0 1 20 11.5Z"></path><path d="M12 8.7v5.6M9.2 11.5h5.6"></path></svg><span class="history-new-chat-label">Novo Chat</span></a>
+          <a class="history-new-chat" id="historyNewChat" href="?view=chat" aria-label="Começar novo chat"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11.5a7.5 7.5 0 0 1-7.5 7.5 7.8 7.8 0 0 1-3.2-.7L5 20l1.2-3.8A7.5 7.5 0 1 1 20 11.5Z"></path><path d="M12 8.8v5.4M9.3 11.5h5.4"></path></svg><span class="history-new-chat-label">Novo Chat</span></a>
         </nav>
       </section>
 
@@ -5388,7 +5408,7 @@
           return sameDay ? new Intl.DateTimeFormat("pt-BR", { hour: "2-digit", minute: "2-digit" }).format(date) : new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "short" }).format(date).replace(" de ", " ");
         };
 
-        const historyIcon = (kind) => kind === "task" ? '<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 4 4L19 6"></path><path d="M12 21a9 9 0 1 0-9-9"></path></svg>' : '<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11.5a7.4 7.4 0 0 1-7.6 7.5 8.2 8.2 0 0 1-3.1-.6L5 20l1.4-3.7a7.2 7.2 0 0 1-1.5-4.5A7.4 7.4 0 0 1 12.4 4 7.4 7.4 0 0 1 20 11.5Z"></path><path d="M8.5 11.5h7"></path></svg>';
+        const historyIcon = (kind) => kind === "task" ? '<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="m8.5 12.2 2.3 2.3 4.7-5"></path></svg>' : '<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11.5a8 8 0 0 1-8 8 8.4 8.4 0 0 1-3.4-.7L4 21l1.3-3.8A8 8 0 1 1 20 11.5Z"></path><path d="M8.5 11.5h7"></path></svg>';
 
         const globalNoticeUrl = "https://raw.githubusercontent.com/jeanvicen/KAZER/main/Control/notificacao.json";
         const validGlobalNotice = (value) => value && value.ativo === true && Number.isInteger(Number(value.versao)) && Number(value.versao) >= 1 && String(value.titulo || "").trim() && String(value.mensagem || "").trim();
@@ -5442,14 +5462,14 @@
             return diff === 0 ? "Hoje" : diff === 1 ? "Ontem" : "Mais antigas";
           };
           let previousGroup = "";
-          const noticeItem = globalNotice ? '<button class="history-global-notice" type="button" data-global-notice="true"><span class="history-global-notice-mark" aria-hidden="true">✦</span><span class="history-global-notice-copy"><strong>' + escapeHtml(globalNotice.titulo) + '</strong><small>Novidade do KAZER · Toque para ler</small></span><span class="history-global-notice-arrow" aria-hidden="true">›</span></button>' : '';
+          const noticeItem = globalNotice ? '<button class="history-global-notice" type="button" data-global-notice="true"><span class="history-global-notice-mark" aria-hidden="true"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"></path><path d="M10 21h4"></path></svg></span><span class="history-global-notice-copy"><strong>' + escapeHtml(globalNotice.titulo) + '</strong><small>Novidade do KAZER · Toque para ler</small></span><span class="history-global-notice-arrow" aria-hidden="true"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"></path></svg></span></button>' : '';
           historyList.innerHTML = noticeItem + filtered.map((item) => {
             const group = groupLabel(item.createdAt); const heading = group !== previousGroup ? '<div class="history-group-label" role="heading" aria-level="3">' + group + '</div>' : '';
             previousGroup = group;
             const latestMessage = Array.isArray(item.messages) ? [...item.messages].reverse().find((message) => message && typeof message.content === "string" && message.content.trim()) : null;
             const rawPreview = String(latestMessage?.content || item.excerpt || "Conversa com o KAZER");
             const preview = rawPreview.replace(/```[\s\S]*?```/g, "Trecho de código").replace(/!\[[^\]]*\]\([^)]*\)/g, "Imagem compartilhada").replace(/\[([^\]]+)\]\([^)]*\)/g, "$1").replace(/`([^`]+)`/g, "$1").replace(/\s+/g, " ").trim().slice(0, 150);
-            return heading + '<div class="history-item" data-history-row="' + escapeHtml(item.id) + '"><button class="history-item-open" type="button" data-history-id="' + escapeHtml(item.id) + '"><span class="history-item-symbol" aria-hidden="true">' + historyIcon(item.kind) + '</span><span class="history-item-copy"><strong>' + escapeHtml(item.title) + '</strong><small>' + escapeHtml(preview || "Conversa com o KAZER") + '</small></span><span class="history-item-trailing"><time class="history-item-time" datetime="' + escapeHtml(item.createdAt) + '">' + escapeHtml(historyDateLabel(item.createdAt)) + '</time><span class="history-item-arrow" aria-hidden="true">›</span></span></button><button class="history-item-action" type="button" data-history-delete="' + escapeHtml(item.id) + '">Apagar</button></div>';
+            return heading + '<div class="history-item" data-history-row="' + escapeHtml(item.id) + '"><button class="history-item-open" type="button" data-history-id="' + escapeHtml(item.id) + '"><span class="history-item-symbol" aria-hidden="true">' + historyIcon(item.kind) + '</span><span class="history-item-copy"><strong>' + escapeHtml(item.title) + '</strong><small>' + escapeHtml(preview || "Conversa com o KAZER") + '</small></span><span class="history-item-trailing"><time class="history-item-time" datetime="' + escapeHtml(item.createdAt) + '">' + escapeHtml(historyDateLabel(item.createdAt)) + '</time><span class="history-item-arrow" aria-hidden="true"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"></path></svg></span></span></button><button class="history-item-action" type="button" data-history-delete="' + escapeHtml(item.id) + '">Apagar</button></div>';
           }).join("");
           historyList.querySelectorAll("[data-global-notice]").forEach((button) => button.addEventListener("click", () => showGlobalNotice(false)));
           historyList.querySelectorAll("[data-history-id]").forEach((button) => button.addEventListener("click", (event) => {
