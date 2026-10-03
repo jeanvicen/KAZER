@@ -899,6 +899,7 @@
     .input-wrapper { min-height: 54px; border-radius: 13px; background: #0d0d11; }
     .input-wrapper input { min-height: 52px; padding-top: 0; padding-bottom: 0; border: 1px solid rgba(255,255,255,.12); border-radius: 13px; background: #0d0d11; color: #f3f0ea; font-size: 16px; }
     #loginPassword, #signupPassword { padding-right: 64px; }
+    .password-hint { display: block; margin-top: 8px; color: #b8b4bc; font-size: 12px; line-height: 1.4; }
     .input-wrapper input::placeholder { color: #a09ba4; }
     .input-wrapper input:focus { border-color: #f07a80; box-shadow: 0 0 0 3px rgba(240,122,128,.18); }
     .input-wrapper svg.icon-left { color: #9a96a0; }
@@ -1069,12 +1070,13 @@
           <div class="input-group">
             <label for="signupPassword">Senha</label>
             <div class="input-wrapper">
-              <input type="password" id="signupPassword" placeholder="Mín. 10 chars, 1 maiúscula, 1 especial" required minlength="10" autocomplete="new-password" />
+              <input type="password" id="signupPassword" placeholder="10+ caracteres" required minlength="10" autocomplete="new-password" aria-describedby="signupPasswordHint" />
               <svg class="icon-left" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
               <button type="button" class="toggle-password" data-target="signupPassword" aria-label="Mostrar senha">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
               </button>
             </div>
+            <small class="password-hint" id="signupPasswordHint">Inclua também uma letra maiúscula e um caractere especial.</small>
           </div>
 
           <div class="error-message" id="signupError" role="alert" aria-live="polite"></div>
