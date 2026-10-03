@@ -4311,6 +4311,47 @@
       :root[data-theme="light"] .history-screen .history-item:hover .history-item-arrow { border-color: rgba(32,29,32,.16); color: #806a48; }
       :root[data-theme="light"] .history-screen .history-mobile-action:focus-visible, :root[data-theme="light"] .history-screen .history-exit-action:focus-visible, :root[data-theme="light"] .history-screen .history-new-chat:focus-visible { outline-color: #77644a; }
 
+      .history-mobile-account { padding: 0; border: 0; border-radius: 14px; background: transparent; color: inherit; font: inherit; text-align: left; cursor: pointer; touch-action: manipulation; }
+      .history-mobile-account:hover { background: rgba(255,255,255,.035); }
+      .history-mobile-account:focus-visible { outline: 2px solid #d8d2c6; outline-offset: 4px; }
+      :root[data-theme="light"] .history-mobile-account:hover { background: rgba(0,0,0,.035); }
+      :root[data-theme="light"] .history-mobile-account:focus-visible { outline-color: #77644a; }
+
+      .account-screen { position: fixed; z-index: 125; inset: 0; display: flex; flex-direction: column; min-height: 100dvh; overflow-x: hidden; overflow-y: auto; overscroll-behavior: contain; padding: max(16px, env(safe-area-inset-top)) max(22px, env(safe-area-inset-right)) max(20px, env(safe-area-inset-bottom)) max(22px, env(safe-area-inset-left)); background: var(--page); color: var(--text); opacity: 0; pointer-events: none; transform: translateY(8px); transition: opacity 180ms var(--ease), transform 220ms var(--ease); }
+      .account-screen[hidden] { display: none !important; }
+      .account-screen.visible { opacity: 1; pointer-events: auto; transform: translateY(0); }
+      .account-screen-header { display: grid; grid-template-columns: 56px minmax(0,1fr) 56px; align-items: center; width: min(100%, 520px); min-height: 56px; margin: 0 auto; }
+      .account-screen-header h1 { margin: 0; color: var(--text); font-size: 21px; font-weight: 620; letter-spacing: -.025em; text-align: center; }
+      .account-screen-back { display: grid; place-items: center; width: 56px; min-width: 44px; height: 56px; min-height: 44px; padding: 0; border: 1px solid var(--line-soft); border-radius: 50%; background: var(--card-2); color: var(--text); cursor: pointer; transition: background 150ms var(--ease), transform 150ms var(--ease); }
+      .account-screen-back .icon { width: 24px; height: 24px; }
+      .account-screen-back:hover { background: color-mix(in srgb, var(--card-2) 82%, var(--text) 18%); }
+      .account-screen-back:active { transform: scale(.96); }
+      .account-screen-header-spacer { width: 56px; height: 56px; }
+      .account-screen-body { display: grid; gap: 28px; width: min(100%, 420px); margin: clamp(54px, 8vh, 82px) auto 0; padding-bottom: 28px; }
+      .account-screen-avatar { position: relative; display: grid; place-items: center; width: 132px; height: 132px; margin: 0 auto 8px; overflow: hidden; border: 1px solid var(--line); border-radius: 50%; background: var(--card-2); color: var(--text); box-shadow: 0 14px 36px rgba(0,0,0,.18); }
+      .account-screen-avatar > span { display: grid; place-items: center; width: 100%; height: 100%; font-size: 42px; font-weight: 620; }
+      .account-screen-avatar > span[hidden] { display: none; }
+      .account-screen-avatar img { position: absolute; inset: 0; display: block; width: 100%; height: 100%; border-radius: inherit; object-fit: cover; }
+      .account-screen-avatar img[hidden] { display: none; }
+      .account-name-card, .account-email-card, .account-logout { border: 1px solid var(--line-soft); background: var(--card-2); }
+      .account-name-card { display: grid; grid-template-rows: minmax(70px,1fr) 1px minmax(70px,1fr); min-height: 165px; padding: 0 28px; overflow: hidden; border-radius: 25px; }
+      .account-name-card.is-single { grid-template-rows: minmax(80px,1fr); min-height: 82px; }
+      .account-name-row { display: flex; align-items: center; min-width: 0; overflow: hidden; color: var(--text); font-size: 23px; font-weight: 450; letter-spacing: -.02em; text-overflow: ellipsis; white-space: nowrap; }
+      .account-name-row[hidden], .account-name-divider[hidden] { display: none; }
+      .account-name-divider { display: block; width: 100%; height: 1px; background: var(--line-soft); }
+      .account-email-card { display: flex; align-items: center; justify-content: space-between; gap: 18px; min-height: 82px; padding: 0 28px; overflow: hidden; border-radius: 23px; }
+      .account-email-label { flex: 0 0 auto; color: var(--text); font-size: 21px; font-weight: 450; letter-spacing: -.02em; }
+      .account-email-value { min-width: 0; overflow: hidden; color: var(--text-dim); font-size: 17px; text-align: right; text-overflow: ellipsis; white-space: nowrap; }
+      .account-logout { display: flex; align-items: center; justify-content: flex-start; gap: 16px; width: 100%; min-height: 82px; padding: 0 30px; border-radius: 999px; color: var(--accent-readable, var(--danger)); font: inherit; font-size: 21px; font-weight: 500; text-align: left; cursor: pointer; transition: background 150ms var(--ease), border-color 150ms var(--ease), transform 150ms var(--ease); }
+      .account-logout .icon { width: 25px; height: 25px; flex: 0 0 auto; }
+      .account-logout:hover { border-color: color-mix(in srgb, var(--accent-readable, var(--danger)) 28%, var(--line)); background: color-mix(in srgb, var(--card-2) 94%, var(--accent-readable, var(--danger)) 6%); }
+      .account-logout:active { transform: scale(.99); }
+      .account-screen-back:focus-visible, .account-logout:focus-visible { outline: 2px solid var(--accent-readable, var(--text)); outline-offset: 4px; }
+      :root[data-theme="light"] .account-logout { color: #a92e35; }
+      @media (max-width: 360px) { .account-screen { padding-right: max(16px, env(safe-area-inset-right)); padding-left: max(16px, env(safe-area-inset-left)); } .account-screen-body { gap: 22px; } .account-email-card { gap: 10px; padding-right: 20px; padding-left: 20px; } .account-email-label { font-size: 19px; } .account-email-value { font-size: 14px; } }
+      @media (max-height: 680px) and (max-width: 680px) { .account-screen-body { gap: 18px; margin-top: clamp(22px, 4vh, 34px); } .account-screen-avatar { width: 96px; height: 96px; margin-bottom: 2px; } .account-screen-avatar > span { font-size: 34px; } .account-name-card { min-height: 132px; grid-template-rows: minmax(58px,1fr) 1px minmax(58px,1fr); } .account-name-row { font-size: 20px; } .account-email-card, .account-logout { min-height: 66px; } }
+      @media (prefers-reduced-motion: reduce) { .account-screen, .account-screen-back, .account-logout { transition: none !important; transform: none !important; } }
+
     </style>
     <script>
       window.setTimeout(() => {
@@ -4354,7 +4395,7 @@
         <header class="history-topbar">
           <button class="history-brand" id="historyBrand" type="button" aria-label="Abrir configurações" title="Configurações"><img class="history-brand-mark" src="../download/assets/kazer-mark.svg?v=20260922" alt="" /><span class="history-brand-name">KAZER</span></button>
           <button class="desktop-sidebar-toggle" id="desktopSidebarToggle" type="button" aria-label="Recolher barra lateral" aria-expanded="true" title="Recolher barra lateral"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m14 5-7 7 7 7"></path></svg></button>
-          <div class="history-mobile-account" role="group" aria-label="Conta KAZER"><span class="history-mobile-avatar"><span class="history-avatar-fallback" id="historyAvatarFallback" aria-hidden="true">K</span><img id="historyAccountAvatar" alt="" hidden referrerpolicy="no-referrer" /></span><span class="history-mobile-account-copy"><strong id="historyAccountName">Conta KAZER</strong><small id="historyAccountBrand">KAZER</small></span></div>
+          <button class="history-mobile-account" id="historyAccountAction" type="button" aria-label="Abrir informações da conta" title="Abrir conta"><span class="history-mobile-avatar"><span class="history-avatar-fallback" id="historyAvatarFallback" aria-hidden="true">K</span><img id="historyAccountAvatar" alt="" hidden referrerpolicy="no-referrer" /></span><span class="history-mobile-account-copy"><strong id="historyAccountName">Conta KAZER</strong><small id="historyAccountBrand">KAZER</small></span></button>
           <button class="history-exit-action" id="historyExitAction" type="button" aria-label="Voltar para o chat" title="Voltar para o chat"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12h15"></path><path d="m13 5 7 7-7 7"></path></svg></button>
           <label class="history-search-field" id="historySearchField"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-4-4"></path></svg><input id="historySearchInput" type="search" aria-label="Buscar nas conversas" placeholder="Buscar" autocomplete="off" /></label>
         </header>
@@ -4372,6 +4413,20 @@
           <button class="history-mobile-action" id="historySearchAction" type="button" aria-label="Buscar conversas" aria-controls="historySearchInput" aria-expanded="false" title="Buscar conversas"><svg class="icon history-search-open-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-4-4"></path></svg><svg class="icon history-search-close-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"></path></svg><span class="history-mobile-action-label">Buscar conversas</span></button>
           <a class="history-new-chat" id="historyNewChat" href="?view=chat" aria-label="Começar novo chat"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11.5a7.5 7.5 0 0 1-7.5 7.5 7.8 7.8 0 0 1-3.2-.7L5 20l1.2-3.8A7.5 7.5 0 1 1 20 11.5Z"></path><path d="M12 8.8v5.4M9.3 11.5h5.4"></path></svg><span class="history-new-chat-label">Novo Chat</span></a>
         </nav>
+      </section>
+
+      <section class="account-screen" id="accountScreen" role="dialog" aria-modal="true" aria-label="Conta" aria-hidden="true" hidden>
+        <header class="account-screen-header">
+          <button class="account-screen-back" id="accountScreenBack" type="button" aria-label="Voltar ao histórico" title="Voltar ao histórico"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m14 18-6-6 6-6"></path></svg></button>
+          <h1>Conta</h1>
+          <span class="account-screen-header-spacer" aria-hidden="true"></span>
+        </header>
+        <div class="account-screen-body">
+          <div class="account-screen-avatar" role="img" aria-label="Foto de perfil"><span id="accountScreenAvatarFallback" aria-hidden="true">K</span><img id="accountScreenAvatar" alt="" hidden referrerpolicy="no-referrer" /></div>
+          <div class="account-name-card" id="accountNameCard" aria-label="Nome da conta"><div class="account-name-row" id="accountScreenFirstName">Kazer</div><span class="account-name-divider" id="accountScreenNameDivider" aria-hidden="true" hidden></span><div class="account-name-row" id="accountScreenLastName" hidden></div></div>
+          <div class="account-email-card"><span class="account-email-label">E-mail</span><span class="account-email-value" id="accountScreenEmail">Conta conectada</span></div>
+          <button class="account-logout" id="accountLogoutAction" type="button"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 17l5-5-5-5M15 12H3"></path><path d="M21 19V5a2 2 0 0 0-2-2h-5"></path></svg><span>Sair</span></button>
+        </div>
       </section>
 
       <header class="new-chat-header" id="newChatHeader" aria-label="Novo chat" aria-hidden="true" hidden>
@@ -4804,9 +4859,20 @@
         const historySearchField = document.getElementById("historySearchField");
         const historySearchInput = document.getElementById("historySearchInput");
         const historyBrand = document.getElementById("historyBrand");
+        const historyAccountAction = document.getElementById("historyAccountAction");
         const historyAccountName = document.getElementById("historyAccountName");
         const historyAccountAvatar = document.getElementById("historyAccountAvatar");
         const historyAvatarFallback = document.getElementById("historyAvatarFallback");
+        const accountScreen = document.getElementById("accountScreen");
+        const accountScreenBack = document.getElementById("accountScreenBack");
+        const accountScreenAvatar = document.getElementById("accountScreenAvatar");
+        const accountScreenAvatarFallback = document.getElementById("accountScreenAvatarFallback");
+        const accountNameCard = document.getElementById("accountNameCard");
+        const accountScreenFirstName = document.getElementById("accountScreenFirstName");
+        const accountScreenLastName = document.getElementById("accountScreenLastName");
+        const accountScreenNameDivider = document.getElementById("accountScreenNameDivider");
+        const accountScreenEmail = document.getElementById("accountScreenEmail");
+        const accountLogoutAction = document.getElementById("accountLogoutAction");
         const historyExitAction = document.getElementById("historyExitAction");
         const historySettingsAction = document.getElementById("historySettingsAction");
         const historySearchAction = document.getElementById("historySearchAction");
@@ -4890,6 +4956,13 @@
           const displayName = profile?.display_name || user?.user_metadata?.display_name || user?.email?.split("@")[0] || "Kazer";
           const email = user?.email || "Conta conectada";
           const initial = displayName.trim().charAt(0).toUpperCase() || "K";
+          const nameParts = displayName.trim().split(/\s+/).filter(Boolean);
+          const firstName = nameParts.shift() || "Kazer";
+          const lastName = nameParts.join(" ");
+          if (accountScreenFirstName) accountScreenFirstName.textContent = firstName;
+          if (accountScreenLastName) { accountScreenLastName.textContent = lastName; accountScreenLastName.hidden = !lastName; }
+          if (accountScreenNameDivider) accountScreenNameDivider.hidden = !lastName;
+          accountNameCard?.classList.toggle("is-single", !lastName);
           const googleIdentity = (user?.identities || []).find((identity) => identity?.provider === "google")?.identity_data || {};
           const googlePhoto = [googleIdentity.picture, googleIdentity.avatar_url, user?.user_metadata?.picture, user?.user_metadata?.avatar_url, user?.user_metadata?.avatarUrl]
             .map((candidate) => {
@@ -4901,20 +4974,23 @@
               } catch { return ""; }
             }).find(Boolean) || "";
           [profileDisplayName, settingsAccountName, settingsMobileAccountName, historyAccountName].forEach((element) => { if (element) element.textContent = displayName; });
-          [profileEmail, settingsAccountEmail, settingsMobileAccountEmail].forEach((element) => { if (element) element.textContent = email; });
-          [settingsAccountAvatar, settingsMobileAccountAvatar, historyAvatarFallback].forEach((element) => { if (element) element.textContent = initial; });
-          if (historyAccountAvatar) {
-            historyAccountAvatar.onerror = () => { historyAccountAvatar.hidden = true; if (historyAvatarFallback) historyAvatarFallback.hidden = false; };
+          [profileEmail, settingsAccountEmail, settingsMobileAccountEmail, accountScreenEmail].forEach((element) => { if (element) element.textContent = email; });
+          [settingsAccountAvatar, settingsMobileAccountAvatar, historyAvatarFallback, accountScreenAvatarFallback].forEach((element) => { if (element) element.textContent = initial; });
+          const applyGooglePhoto = (image, fallback) => {
+            if (!image) return;
+            image.onerror = () => { image.hidden = true; if (fallback) fallback.hidden = false; };
             if (googlePhoto) {
-              historyAccountAvatar.src = googlePhoto;
-              historyAccountAvatar.hidden = false;
-              if (historyAvatarFallback) historyAvatarFallback.hidden = true;
+              image.src = googlePhoto;
+              image.hidden = false;
+              if (fallback) fallback.hidden = true;
             } else {
-              historyAccountAvatar.removeAttribute("src");
-              historyAccountAvatar.hidden = true;
-              if (historyAvatarFallback) historyAvatarFallback.hidden = false;
+              image.removeAttribute("src");
+              image.hidden = true;
+              if (fallback) fallback.hidden = false;
             }
-          }
+          };
+          applyGooglePhoto(historyAccountAvatar, historyAvatarFallback);
+          applyGooglePhoto(accountScreenAvatar, accountScreenAvatarFallback);
           updateGreeting();
         };
 
@@ -5363,6 +5439,41 @@
             settingsBackdrop.hidden = true;
           }, 230);
         };
+
+        let accountScreenCloseTimer = 0;
+        let accountScreenReturnFocus = null;
+        const openAccountScreen = () => {
+          if (!accountScreen || (!accountScreen.hidden && accountScreen.classList.contains("visible"))) return;
+          window.clearTimeout(accountScreenCloseTimer);
+          if (accountScreen.hidden) accountScreenReturnFocus = document.activeElement;
+          closeMenus();
+          hideInstallBanner(false);
+          toast.classList.remove("visible");
+          window.clearTimeout(toastTimer);
+          accountScreen.hidden = false;
+          accountScreen.setAttribute("aria-hidden", "false");
+          requestAnimationFrame(() => { accountScreen.classList.add("visible"); accountScreenBack?.focus({ preventScroll: true }); });
+        };
+        const closeAccountScreen = (restoreFocus = true) => {
+          if (!accountScreen || accountScreen.hidden) return;
+          window.clearTimeout(accountScreenCloseTimer);
+          accountScreen.classList.remove("visible");
+          accountScreen.setAttribute("aria-hidden", "true");
+          accountScreenCloseTimer = window.setTimeout(() => {
+            accountScreen.hidden = true;
+            if (restoreFocus) {
+              const focusTarget = accountScreenReturnFocus?.isConnected ? accountScreenReturnFocus : historyAccountAction;
+              focusTarget?.focus({ preventScroll: true });
+            }
+            accountScreenReturnFocus = null;
+          }, 230);
+        };
+        accountScreenBack?.addEventListener("click", () => closeAccountScreen());
+        accountScreen?.addEventListener("keydown", (event) => {
+          if (event.key !== "Escape") return;
+          event.preventDefault();
+          closeAccountScreen();
+        });
 
         const openWeb = () => {
           closeMenus();
@@ -7271,6 +7382,7 @@
           desktopSidebarToggle.title = label;
         });
         historyBrand?.addEventListener("click", () => openSettings());
+        historyAccountAction?.addEventListener("click", openAccountScreen);
         historySettingsAction?.addEventListener("click", () => openSettings());
         historyExitAction?.addEventListener("click", () => {
           const nextView = historyReturnView === "new-chat" ? "new-chat" : "kazer";
@@ -7340,6 +7452,7 @@
           if (query) searchWebKazer(query);
         });
         const logout = async () => {
+          closeAccountScreen(false);
           closeSettingsModal();
           closeMenus();
           try { await kazerSupabase?.auth.signOut(); } catch (error) { console.warn("Kazer logout failed", error); }
@@ -7350,6 +7463,7 @@
         };
 
         settingsLogoutAction.addEventListener("click", logout);
+        accountLogoutAction?.addEventListener("click", logout);
         document.addEventListener("click", (event) => {
           if (!event.target.closest(".profile-popover") && !event.target.closest("#historyBrand") && !event.target.closest(".settings-popover") && !event.target.closest(".web-popover") && !event.target.closest(".attachment-sheet") && !event.target.closest("#attachButton")) closeMenus();
         });
