@@ -2,7 +2,7 @@
 <html lang="pt-BR">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <meta name="theme-color" content="#070707" />
     <title>KAZER</title>
     <meta name="description" content="Kazer: converse, organize e crie em um espaço inteligente." />
@@ -4049,6 +4049,158 @@
         .app.desktop-sidebar-enabled .settings-mobile-credit-next { font-size: 9.5px; }
         .app.desktop-sidebar-enabled .settings-mobile-upgrade { min-height: 38px; margin-top: 3px; border-radius: 12px; font-size: 10.5px; font-weight: 720; letter-spacing: .01em; }
       }
+
+      /* Nocturnal Signal — camada exclusivamente visual; IDs e bindings originais intactos. */
+      :root {
+        color-scheme: dark;
+        --page: #07070a; --page-soft: #0d0d11; --card: #111115; --card-2: #191920;
+        --line: rgba(255,255,255,.11); --line-soft: rgba(255,255,255,.065);
+        --text: #f3f0ea; --text-soft: #c7c2c9; --text-dim: #a29da6;
+        --accent: #c53a3f; --accent-ink: #fff; --accent-readable: #f07a80;
+        --purple: #f07a80; --warning: #e7bc69;
+        --metal-gradient: linear-gradient(110deg, #f3f0ea 0%, #f3f0ea 55%, #f07a80 100%);
+      }
+      :root[data-theme="light"] {
+        color-scheme: light;
+        --page: #f3f0ea; --page-soft: #ece8e1; --card: #fffdfa; --card-2: #ffffff;
+        --line: rgba(32,29,32,.15); --line-soft: rgba(32,29,32,.085);
+        --text: #201d20; --text-soft: #514d52; --text-dim: #6a6569;
+        --accent: #a92e35; --accent-ink: #fff; --accent-readable: #a92e35;
+        --purple: #a92e35; --warning: #845514;
+        --metal-gradient: linear-gradient(110deg, #201d20 0%, #201d20 58%, #a92e35 100%);
+      }
+      html, body, .app { background-color: var(--page); }
+      body { color: var(--text); }
+      .app { background: radial-gradient(ellipse at 50% 42%, rgba(197,58,63,.035), transparent 43%), var(--page); }
+      .topbar { background: linear-gradient(to bottom, color-mix(in srgb, var(--page) 96%, transparent), color-mix(in srgb, var(--page) 74%, transparent) 70%, transparent); }
+      .credit-indicator { border-color: var(--line); background: color-mix(in srgb, var(--card) 92%, transparent); box-shadow: 0 5px 18px rgba(0,0,0,.16); }
+      .profile-button { border-color: var(--line); background: color-mix(in srgb, var(--card) 93%, transparent); }
+      .profile-button:hover { border-color: color-mix(in srgb, var(--accent-readable) 48%, transparent); }
+      .conversation-area { scrollbar-color: color-mix(in srgb, var(--accent-readable) 30%, transparent) transparent; }
+      .empty-state { background: radial-gradient(ellipse at 50% 45%, rgba(197,58,63,.045), transparent 40%); }
+      .empty-state::before { opacity: .55; }
+      .empty-word { letter-spacing: -.075em; font-weight: 520; }
+      .new-chat-greeting-time { color: var(--accent-readable); }
+      .message-list { min-width: 0; }
+      .message-row, .message-bubble, .assistant-content { min-width: 0; }
+      .message-row.user .message-bubble { border-color: color-mix(in srgb, var(--accent) 16%, var(--line)); background: color-mix(in srgb, var(--card-2) 96%, var(--accent) 4%); }
+      .message-row.assistant .message-bubble { color: var(--text); }
+      .assistant-content a { color: var(--accent-readable); text-underline-offset: 3px; }
+      .assistant-content p, .assistant-content li { overflow-wrap: anywhere; }
+      .assistant-content code { border-color: color-mix(in srgb, var(--accent) 22%, var(--line)); background: color-mix(in srgb, var(--accent) 8%, var(--card)); color: var(--accent-readable); }
+      .code-block-label::before { background: var(--accent-readable); box-shadow: 0 0 10px color-mix(in srgb, var(--accent-readable) 70%, transparent); }
+      .code-copy-button:hover:not(:disabled) { border-color: color-mix(in srgb, var(--accent-readable) 54%, transparent); background: color-mix(in srgb, var(--accent) 18%, var(--card)); }
+      .composer-box { border-color: var(--line); border-radius: 22px; background: linear-gradient(145deg, color-mix(in srgb, var(--card) 94%, #fff 6%), var(--page-soft)); box-shadow: 0 18px 48px rgba(0,0,0,.20), inset 0 1px 0 rgba(255,255,255,.045); }
+      .composer-box:focus-within { border-color: color-mix(in srgb, var(--accent-readable) 62%, var(--line)); box-shadow: 0 18px 48px rgba(0,0,0,.22), 0 0 0 3px color-mix(in srgb, var(--accent-readable) 20%, transparent), inset 0 1px 0 rgba(255,255,255,.045); }
+      .message-input { font-size: 16px; }
+      .app:not(.in-conversation) .message-input { font-size: 16px; }
+      .attach-button, .send-button { min-width: 44px; min-height: 44px; width: 44px; height: 44px; }
+      .app:not(.in-conversation) .send-button { min-width: 44px; min-height: 44px; width: 44px; height: 44px; }
+      .app:not(.in-conversation) .attach-button { width: 44px; height: 44px; }
+      .send-button { background: #c53a3f; color: #fff; box-shadow: 0 6px 18px rgba(153,36,43,.22); }
+      #sendButton.has-text:not(:disabled) { background: #c53a3f; }
+      .attach-button:hover { border-color: color-mix(in srgb, var(--accent-readable) 42%, var(--line)); background: color-mix(in srgb, var(--accent) 8%, var(--card)); }
+      .composer-box:focus-within { outline: 2px solid transparent; }
+      .message-input:focus-visible { outline: none; }
+      .chat-history-back { border-color: color-mix(in srgb, var(--accent-readable) 25%, var(--line)); color: var(--accent-readable); }
+      .profile-popover, .settings-popover, .web-popover, .connectors-screen, .connector-custom-modal, .plans-screen, .global-notice-modal, .workspace-panel, .attachment-sheet {
+        border-color: var(--line); background-color: color-mix(in srgb, var(--page) 97%, var(--card) 3%);
+        box-shadow: 0 28px 88px rgba(0,0,0,.42);
+      }
+      .menu-action:hover, .settings-nav-item:hover { background: color-mix(in srgb, var(--accent) 7%, var(--card)); }
+      .settings-nav-item.active, .workspace-tab.active { border-color: color-mix(in srgb, var(--accent) 22%, var(--line)); background: color-mix(in srgb, var(--accent) 10%, var(--card)); }
+      .settings-nav-item.active .settings-nav-icon, .settings-nav-icon, .workspace-eyebrow, .settings-nav-item-coming .settings-nav-icon { color: var(--accent-readable); }
+      .settings-popover, section.settings-popover { border-color: var(--line); }
+      .settings-nav { background: color-mix(in srgb, var(--page-soft) 88%, var(--card)); border-color: var(--line-soft); }
+      .settings-mobile-account-plan-value { color: var(--text); border-color: var(--line); background: color-mix(in srgb, var(--card) 86%, transparent); }
+      .settings-mobile-upgrade, .profile-popover .menu-action.primary, .connector-custom-actions button:last-child { background: #c53a3f; color: #fff; }
+      .history-screen { background: radial-gradient(ellipse at 78% -16%, rgba(197,58,63,.075), transparent 48%), var(--page); }
+      .history-topbar { border-bottom-color: var(--line-soft); }
+      .history-item { border-color: var(--line-soft); background: color-mix(in srgb, var(--card) 78%, transparent); }
+      .history-item:hover, .history-item.is-selected { border-color: color-mix(in srgb, var(--accent-readable) 36%, var(--line)); background: color-mix(in srgb, var(--accent) 5%, var(--card)); }
+      .history-item-symbol { border-color: color-mix(in srgb, var(--accent) 24%, var(--line)); background: color-mix(in srgb, var(--accent) 8%, var(--card)); }
+      .history-item-arrow, .history-item:hover .history-item-arrow { color: var(--accent-readable); }
+      .history-item-open:focus-visible, .history-item-action:focus-visible { outline: 2px solid var(--accent-readable); outline-offset: -2px; }
+      .history-new-chat { min-height: 52px; border-color: rgba(255,255,255,.2); background: #c53a3f; color: #fff; box-shadow: 0 12px 28px rgba(95,24,30,.28); }
+      .history-new-chat:hover { filter: brightness(1.08); }
+      .history-global-notice { border-color: color-mix(in srgb, var(--warning) 35%, var(--line)); background: color-mix(in srgb, var(--warning) 8%, var(--card)); }
+      .history-global-notice-mark, .history-global-notice-arrow { color: var(--warning); }
+      .global-notice-kicker, .plans-head-copy > span, .plans-brand-copy > span { color: var(--accent-readable); }
+      .global-notice-confirm { min-height: 48px; background: #c53a3f; color: #fff; }
+      .plans-screen { border-color: color-mix(in srgb, var(--accent) 24%, var(--line)); }
+      .plan-card-pro { border-color: color-mix(in srgb, var(--accent) 40%, var(--line)); background: radial-gradient(circle at 12% -8%, rgba(197,58,63,.16), transparent 58%), color-mix(in srgb, var(--card) 92%, var(--page)); box-shadow: 0 14px 40px rgba(75,16,22,.14), inset 0 1px 0 rgba(255,255,255,.045); }
+      .plan-card-pro-badge { color: var(--accent-readable); background: none; animation: none; }
+      .plan-card-pro-price { color: var(--text); }
+      .plan-card-pro-list li::before { color: var(--accent-readable); }
+      .plan-card-pro button { min-height: 48px; background: #c53a3f; color: #fff; animation: none; }
+      .plan-card-pro button:hover { filter: brightness(1.08); }
+      .plans-brand-mark { border-color: color-mix(in srgb, var(--accent) 30%, var(--line)); }
+      .plans-brand-orbit { border-color: color-mix(in srgb, var(--accent) 25%, transparent); }
+      .plans-brand-orbit i { background: #c53a3f; box-shadow: 0 0 16px rgba(197,58,63,.65); }
+      .attachment-sheet { border-color: color-mix(in srgb, var(--accent) 22%, var(--line)); }
+      .attachment-sheet-handle { background: color-mix(in srgb, var(--accent-readable) 48%, var(--line)); }
+      .attachment-sheet-title-copy > span { color: var(--accent-readable); }
+      .attachment-sheet-close:hover, .attachment-grid-action:hover { border-color: color-mix(in srgb, var(--accent-readable) 42%, var(--line)); background: color-mix(in srgb, var(--accent) 8%, var(--card)); }
+      .attachment-grid-action, .attachment-grid-action .attachment-sheet-icon { border-color: var(--line); }
+      .attachment-grid-action .attachment-sheet-icon { background: color-mix(in srgb, var(--accent) 7%, var(--card)); color: var(--accent-readable); }
+      .attachment-grid-action .attachment-sheet-icon .icon { color: var(--accent-readable); }
+      .connector-single-action { border-color: color-mix(in srgb, var(--accent) 24%, var(--line)); }
+      .connector-single-icon { background: color-mix(in srgb, var(--accent) 12%, var(--card)); color: var(--accent-readable); }
+      .message-attachment-card, .attachment-chip { border-color: color-mix(in srgb, var(--accent) 17%, var(--line)); }
+      .message-attachment-media { color: var(--accent-readable); }
+      .message-attachment-open:focus-visible, .message-expand-toggle:focus-visible { outline-color: var(--accent-readable); }
+      .workspace-progress span { background: var(--accent); }
+      .workspace-repo:hover, .workspace-repo.selected { border-color: color-mix(in srgb, var(--accent-readable) 42%, var(--line)); }
+      .install-banner { border-color: var(--line); }
+      button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-visible, a:focus-visible, [tabindex]:focus-visible {
+        outline: 2px solid var(--accent-readable); outline-offset: 3px;
+      }
+      .message-input:focus-visible { outline: none; }
+      :root[data-theme="light"] .topbar { background: linear-gradient(to bottom, rgba(243,240,234,.98), rgba(243,240,234,.86) 70%, transparent); }
+      :root[data-theme="light"] .composer-box { border-color: rgba(32,29,32,.16); background: linear-gradient(145deg, #fffdfa, #ece8e1); box-shadow: 0 18px 40px rgba(32,29,32,.12), inset 0 1px 0 rgba(255,255,255,.8); }
+      :root[data-theme="light"] .composer-box:focus-within { border-color: #a92e35; box-shadow: 0 16px 40px rgba(32,29,32,.14), 0 0 0 3px rgba(169,46,53,.16); }
+      :root[data-theme="light"] .message-row.user .message-bubble { border-color: rgba(169,46,53,.18); background: #fffdfa; }
+      :root[data-theme="light"] .history-screen { background: radial-gradient(ellipse at 78% -16%, rgba(169,46,53,.07), transparent 48%), var(--page); }
+      :root[data-theme="light"] .history-item { background: rgba(255,253,250,.84); box-shadow: 0 8px 20px rgba(32,29,32,.045); }
+      :root[data-theme="light"] .history-new-chat { border-color: rgba(169,46,53,.2); background: #a92e35; color: #fff; }
+      :root[data-theme="light"] .profile-popover, :root[data-theme="light"] .web-popover, :root[data-theme="light"] .settings-popover, :root[data-theme="light"] .connectors-screen, :root[data-theme="light"] .plans-screen, :root[data-theme="light"] .workspace-panel, :root[data-theme="light"] .attachment-sheet { background-color: #fffdfa; box-shadow: 0 26px 70px rgba(32,29,32,.18); }
+      :root[data-theme="light"] .settings-nav { background: #ece8e1; }
+      :root[data-theme="light"] .plan-card-pro { background: radial-gradient(circle at 12% -8%, rgba(169,46,53,.12), transparent 58%), #fffdfa; }
+      :root[data-theme="light"] .plan-card-pro button, :root[data-theme="light"] .global-notice-confirm, :root[data-theme="light"] .settings-mobile-upgrade { background: #a92e35; color: #fff; }
+      :root[data-theme="light"] .attachment-grid-action { background: #fffdfa; }
+      @media (max-width: 680px) {
+        .topbar { padding-right: max(12px, env(safe-area-inset-right)); padding-left: max(12px, env(safe-area-inset-left)); }
+        .profile-button, .icon-button, .settings-close, .workspace-close, .attachment-sheet-close, .global-notice-close, .desktop-sidebar-toggle, .history-new-chat, .history-item-action, .chat-history-back { min-width: 44px; min-height: 44px; }
+        .profile-button { width: 44px; height: 44px; }
+        .history-item-open { min-height: 68px; }
+        .settings-nav-item { min-height: 44px; }
+        .settings-close { width: 44px; height: 44px; }
+        .workspace-close { width: 44px; height: 44px; }
+        .attachment-sheet-close { width: 44px; height: 44px; flex-basis: 44px; }
+        .global-notice-close { width: 44px; height: 44px; }
+        .history-new-chat { min-width: 52px; min-height: 52px; }
+        .composer-box { border-radius: 20px; }
+        .composer-dock { padding-right: max(12px, env(safe-area-inset-right)); padding-left: max(12px, env(safe-area-inset-left)); }
+      }
+      @media (max-width: 380px) {
+        .message-list { width: calc(100% - 28px); }
+        .composer { width: calc(100% - 8px); }
+        .composer-dock { padding-right: max(10px, env(safe-area-inset-right)); padding-left: max(10px, env(safe-area-inset-left)); }
+        .history-topbar { gap: 9px; }
+        .history-search-field { min-width: 0; }
+      }
+      @media (min-width: 1080px) {
+        .app.desktop-sidebar-enabled #historyScreen { border-right-color: var(--line); background: linear-gradient(180deg, var(--page-soft), var(--page) 78%); }
+        .app.desktop-sidebar-enabled .topbar { background: linear-gradient(to bottom, color-mix(in srgb, var(--page) 98%, transparent), color-mix(in srgb, var(--page) 78%, transparent) 72%, transparent); }
+        .app.desktop-sidebar-enabled .history-new-chat { border-color: rgba(255,255,255,.18); background: #c53a3f; color: #fff; }
+        :root[data-theme="light"] .app.desktop-sidebar-enabled .history-new-chat { border-color: rgba(169,46,53,.2); background: #a92e35; color: #fff; }
+        .app.desktop-sidebar-enabled .history-item:hover, .app.desktop-sidebar-enabled .history-item.is-selected { border-color: color-mix(in srgb, var(--accent-readable) 32%, var(--line)); background: color-mix(in srgb, var(--accent) 5%, var(--card)); }
+        .app.desktop-sidebar-enabled .desktop-sidebar-toggle { min-width: 40px; min-height: 40px; }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .composer-box, .history-item, .history-new-chat, .plan-card-pro, .plan-card-pro-badge, .plan-card-pro button, .history-global-notice, .app-splash, .app-splash * { transition-duration: .01ms !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; }
+      }
+
     </style>
     <script>
       window.setTimeout(() => {

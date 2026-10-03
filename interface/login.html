@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>Kazer | Acesso Seguro</title>
   <link rel="icon" href="../download/assets/kazer-mark.svg?v=20260922" type="image/svg+xml" />
   <link rel="alternate icon" href="../download/assets/kazer-symbol.png?v=20260922" type="image/png" />
@@ -842,6 +842,105 @@
       .access-transition *, .access-transition::before, .access-transition::after { animation: none !important; transition: none !important; }
       .access-transition.active .transition-ring, .access-transition.active .transition-core, .access-transition.active .transition-copy { opacity: 1; transform: none; }
     }
+
+    /* Nocturnal Signal — refinamento visual sem alterar fluxos ou handlers. */
+    :root {
+      --bg-page: #07070a;
+      --bg-overlay: rgba(3, 3, 5, .78);
+      --bg-card: #111115;
+      --bg-input: #0d0d11;
+      --border: rgba(255,255,255,.12);
+      --border-focus: #f07a80;
+      --text-primary: #f3f0ea;
+      --text-secondary: #b8b4bc;
+      --accent: #c53a3f;
+      --danger: #f07474;
+      --radius-sm: 11px;
+      --radius-md: 20px;
+    }
+    html { min-width: 320px; min-height: 100%; background: var(--bg-page); }
+    body {
+      width: 100%; height: 100vh; min-height: 100svh; min-height: 100dvh;
+      overflow: hidden;
+      background: radial-gradient(ellipse at 50% 4%, rgba(197,58,63,.09), transparent 48%), var(--bg-page);
+    }
+    .login-brand { top: max(24px, env(safe-area-inset-top)); }
+    .login-brand img, .return-logo, .intro-mark { box-shadow: 0 18px 48px rgba(0,0,0,.46), 0 0 0 1px rgba(197,58,63,.18), 0 0 40px rgba(197,58,63,.10); }
+    .main-trigger-btn {
+      min-height: 52px; padding: 0 27px; border: 1px solid rgba(243,240,234,.22);
+      border-radius: 14px; background: #f3f0ea; color: #171316;
+      box-shadow: 0 12px 32px rgba(0,0,0,.3), 0 0 0 1px rgba(255,255,255,.025);
+      font-size: 14px; font-weight: 680;
+    }
+    .main-trigger-btn:hover { border-color: rgba(240,122,128,.66); background: #fff; box-shadow: 0 16px 38px rgba(0,0,0,.36), 0 0 0 4px rgba(197,58,63,.13); }
+    .overlay {
+      align-items: center; overflow-x: hidden; overflow-y: auto; overscroll-behavior: contain;
+      padding: max(18px, env(safe-area-inset-top)) max(18px, env(safe-area-inset-right)) max(18px, env(safe-area-inset-bottom)) max(18px, env(safe-area-inset-left));
+      background: rgba(3,3,5,.78); backdrop-filter: blur(12px) saturate(112%); -webkit-backdrop-filter: blur(12px) saturate(112%);
+    }
+    .container {
+      width: min(100%, 448px); max-height: calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 36px);
+      overflow-x: hidden; overflow-y: auto; overscroll-behavior: contain;
+      padding: 34px clamp(22px, 6vw, 36px) 30px; border: 1px solid rgba(255,255,255,.11);
+      border-radius: 22px; background: linear-gradient(145deg, rgba(25,25,32,.98), rgba(17,17,21,.99) 62%);
+      box-shadow: 0 28px 90px rgba(0,0,0,.58), inset 0 1px 0 rgba(255,255,255,.045);
+      scrollbar-width: thin; scrollbar-color: rgba(240,122,128,.32) transparent;
+    }
+    .container::before { height: 1px; background: linear-gradient(90deg, transparent, rgba(240,122,128,.58), transparent); }
+    .auth-header { margin-bottom: 26px; color: #b8b4bc; }
+    .auth-header strong { color: var(--text-primary); }
+    .auth-header span::before { background: #69d2a1; box-shadow: 0 0 10px rgba(105,210,161,.45); }
+    h1 { color: var(--text-primary); font-size: clamp(24px, 6vw, 29px); letter-spacing: -.045em; }
+    .switch-text { color: var(--text-secondary); font-size: 14px; line-height: 1.55; }
+    .switch-text span, .switch-link { color: #f07a80; }
+    .switch-link:hover, .switch-link:focus-visible { color: #ffadb1; }
+    .input-group { margin-bottom: 16px; }
+    .input-group label { color: #d1cdd2; font-size: 13px; }
+    .input-wrapper { min-height: 54px; border-radius: 13px; background: #0d0d11; }
+    .input-wrapper input { min-height: 52px; padding-top: 0; padding-bottom: 0; border: 1px solid rgba(255,255,255,.12); border-radius: 13px; background: #0d0d11; color: #f3f0ea; font-size: 16px; }
+    .input-wrapper input::placeholder { color: #a09ba4; }
+    .input-wrapper input:focus { border-color: #f07a80; box-shadow: 0 0 0 3px rgba(240,122,128,.18); }
+    .input-wrapper svg.icon-left { color: #9a96a0; }
+    .input-wrapper:focus-within::after { background: linear-gradient(90deg, #c53a3f, #f07a80, transparent); }
+    .toggle-password { min-width: 44px; min-height: 44px; color: #b8b4bc; }
+    .close-button { top: 12px; right: 12px; width: 44px; height: 44px; border-radius: 12px; color: #b8b4bc; }
+    .close-button:hover { border-color: rgba(240,122,128,.34); background: rgba(197,58,63,.12); color: #fff; }
+    .submit-btn { min-height: 52px; border: 1px solid rgba(255,255,255,.10); border-radius: 13px; background: #c53a3f; color: #fff; box-shadow: 0 10px 24px rgba(105,26,31,.28); font-size: 15px; font-weight: 700; }
+    .submit-btn:hover:not(:disabled) { background: #d4484e; box-shadow: 0 12px 30px rgba(105,26,31,.36), 0 0 0 3px rgba(240,122,128,.14); }
+    .error-message { color: #ff9ba0; }
+    .return-screen, .access-transition, .intro-screen { background: radial-gradient(ellipse at 50% 44%, rgba(197,58,63,.10), transparent 42%), #07070a; }
+    .return-kicker, .intro-kicker, .transition-state { color: #f07a80; }
+    .return-primary { min-height: 52px; background: #c53a3f; color: #fff; }
+    .return-primary:hover, .return-primary:focus-visible { background: #d4484e; box-shadow: 0 14px 32px rgba(0,0,0,.38), 0 0 0 4px rgba(240,122,128,.18); }
+    .return-secondary { min-height: 50px; }
+    .presence-ring-main { border-color: rgba(197,58,63,.28); box-shadow: 0 0 48px rgba(197,58,63,.07), inset 0 0 48px rgba(197,58,63,.02); }
+    .presence-ring-inner { box-shadow: 0 0 32px rgba(197,58,63,.07); }
+    .presence-sweep { background: conic-gradient(from 220deg, transparent 0 67%, rgba(197,58,63,0) 72%, rgba(240,122,128,.75) 77%, rgba(240,122,128,.18) 80%, transparent 86% 100%); }
+    .presence-core { background: #c53a3f; box-shadow: 0 0 0 5px rgba(197,58,63,.10), 0 0 24px rgba(197,58,63,.52); }
+    .presence-connector { background: linear-gradient(90deg, rgba(240,122,128,.72), rgba(197,58,63,0)); }
+    .input-wrapper::after { background: linear-gradient(90deg, #c53a3f, #f07a80, transparent); }
+    button:focus-visible, a:focus-visible, input:focus-visible { outline: 2px solid #f07a80; outline-offset: 3px; }
+    .input-wrapper input:focus-visible { outline: none; }
+    @media (max-width: 520px) {
+      .login-brand { top: max(16px, env(safe-area-inset-top)); gap: 8px; }
+      .login-brand img { width: 58px; height: 58px; }
+      .overlay { align-items: flex-start; padding: max(12px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) max(12px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left)); }
+      .container { width: 100%; max-height: calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 24px); margin: auto 0; padding: 30px 22px 24px; border-radius: 19px; }
+      .auth-header { margin: 0 42px 22px 0; }
+      .switch-text { margin-bottom: 21px; }
+      .input-group { margin-bottom: 13px; }
+      .intro-content { gap: 16px; }
+    }
+    @media (max-height: 680px) {
+      .overlay { align-items: flex-start; }
+      .container { margin: 0 auto; }
+      .login-brand { top: max(10px, env(safe-area-inset-top)); }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .login-brand img, .container, .main-trigger-btn, .presence-field, .presence-field *, .intro-screen *, .return-screen *, .access-transition *, .input-wrapper::after, .submit-btn, .switch-link { animation: none !important; transition-duration: .01ms !important; }
+      .overlay.active .container { transform: none; }
+    }
+
   </style>
 </head>
 <body>

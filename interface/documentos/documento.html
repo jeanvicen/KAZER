@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <meta name="theme-color" content="#090a0e" />
   <link rel="icon" href="../../download/assets/kazer-mark.svg?v=20260922" type="image/svg+xml" />
   <link rel="alternate icon" href="../../download/assets/kazer-symbol.png?v=20260922" type="image/png" />
@@ -392,6 +392,49 @@
       .hero::before, .hero > .shell, .reveal-enabled .document-section { animation: none !important; transition: none !important; }
       .reveal-enabled .document-section { opacity: 1; transform: none; }
     }
+
+    /* Tokens Nocturnal Signal alinhados ao app, preservando navegação e conteúdo legal. */
+    :root {
+      color-scheme: dark;
+      --page: #07070a; --page-deep: #050508;
+      --surface: rgba(17,17,21,.92); --surface-solid: #111115; --surface-raised: #191920;
+      --line: rgba(255,255,255,.12); --line-soft: rgba(255,255,255,.075);
+      --text: #f3f0ea; --text-soft: #c7c2c9; --text-muted: #a29da6; --text-faint: #96919a;
+      --accent: #f07a80; --accent-strong: #f07a80; --accent-soft: rgba(197,58,63,.13);
+      --green: #69d2a1;
+    }
+    :root[data-theme="light"] {
+      color-scheme: light;
+      --page: #f3f0ea; --page-deep: #ece8e1;
+      --surface: rgba(255,253,250,.94); --surface-solid: #fffdfa; --surface-raised: #fff;
+      --line: rgba(32,29,32,.15); --line-soft: rgba(32,29,32,.085);
+      --text: #201d20; --text-soft: #514d52; --text-muted: #625d62; --text-faint: #6a6569;
+      --accent: #a92e35; --accent-strong: #a92e35; --accent-soft: rgba(169,46,53,.10);
+      --green: #287a50;
+    }
+    body { background: radial-gradient(900px 520px at 74% -12%, color-mix(in srgb, var(--accent) 7%, transparent), transparent 65%), var(--page); }
+    .topbar { background: color-mix(in srgb, var(--page) 91%, transparent); }
+    .brand-mark { border-color: color-mix(in srgb, var(--accent) 28%, var(--line)); box-shadow: inset 0 1px 0 rgba(255,255,255,.14), 0 8px 22px rgba(0,0,0,.20); }
+    .creator-link { animation: none; border-color: color-mix(in srgb, var(--accent) 30%, transparent); color: var(--accent) !important; background: color-mix(in srgb, var(--accent-soft) 85%, transparent); background-clip: border-box; text-shadow: none; }
+    .creator-link:hover { border-color: color-mix(in srgb, var(--accent) 55%, transparent); filter: none; }
+    .hero::before { border-color: color-mix(in srgb, var(--accent) 20%, transparent); box-shadow: 0 0 0 28px color-mix(in srgb, var(--accent) 2%, transparent), 0 0 90px color-mix(in srgb, var(--accent) 7%, transparent); }
+    .hero-meta { border-top-color: color-mix(in srgb, var(--accent) 45%, transparent); }
+    .quick-list a:hover, .quick-list a.active { border-color: color-mix(in srgb, var(--accent) 38%, transparent); background: var(--accent-soft); }
+    .notice { border-color: color-mix(in srgb, var(--accent) 29%, transparent); background: linear-gradient(135deg, color-mix(in srgb, var(--accent) 10%, transparent), color-mix(in srgb, var(--accent) 3%, transparent)); }
+    .notice-icon { color: var(--accent); background: var(--accent-soft); }
+    .principle:hover { border-color: color-mix(in srgb, var(--accent) 35%, transparent); background: linear-gradient(145deg, color-mix(in srgb, var(--accent) 8%, transparent), color-mix(in srgb, var(--text) 2.5%, transparent)); }
+    .principle-mark { border-color: color-mix(in srgb, var(--accent) 30%, transparent); color: var(--accent); }
+    .contact-panel { border-color: color-mix(in srgb, var(--accent) 30%, transparent); background: linear-gradient(135deg, color-mix(in srgb, var(--accent) 10%, transparent), color-mix(in srgb, var(--surface-solid) 82%, transparent) 60%); }
+    .contact-panel::after { border-color: color-mix(in srgb, var(--accent) 20%, transparent); }
+    .email-link, .footer-copy a:hover { color: var(--accent); }
+    :focus-visible { outline-color: var(--accent); }
+    @media (max-width: 700px) {
+      .topbar-inner { padding-right: max(15px, env(safe-area-inset-right)); padding-left: max(15px, env(safe-area-inset-left)); }
+      .quick-list, .sidebar-nav { padding-bottom: 4px; }
+      .quick-list a, .sidebar-nav a { min-height: 44px; }
+      .creator-link, .back-link { min-height: 44px; }
+    }
+
   </style>
 </head>
 <body>
