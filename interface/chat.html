@@ -4521,7 +4521,70 @@
         :root[data-theme="light"] .settings-popover button:focus-visible,
         :root[data-theme="light"] .settings-popover input:focus-visible,
         :root[data-theme="light"] .settings-popover a:focus-visible { outline-color: #444951; }
+
+        /* Compact, neutral mobile settings hierarchy. */
+        .settings-mobile-head { grid-template-columns: 44px minmax(0, 1fr) 44px; gap: 8px; min-height: 58px; margin-bottom: 12px; }
+        .settings-search-toggle { display: grid; place-items: center; width: 44px; min-width: 44px; height: 44px; min-height: 44px; padding: 0; border: 1px solid rgba(255,255,255,.085); border-radius: 14px; background: rgba(255,255,255,.035); color: var(--text-soft); cursor: pointer; }
+        .settings-search-toggle .icon { width: 19px; height: 19px; }
+        .settings-search-toggle:hover,
+        .settings-search-toggle[aria-expanded="true"] { border-color: rgba(255,255,255,.17); background: rgba(255,255,255,.075); color: var(--text); }
+        .settings-mobile-account-top { min-height: 70px; gap: 11px; margin-bottom: 10px; padding: 10px 13px; border-radius: 16px; }
+        .settings-mobile-account-avatar { width: 42px; height: 42px; flex: 0 0 42px; font-size: 14px; }
+        .settings-mobile-account-identity strong { font-size: 14px; }
+        .settings-mobile-account-identity small { max-width: 60vw; margin-top: 3px; font-size: 10px; }
+        .settings-mobile-account-chevron { width: 17px; height: 17px; }
+        .settings-mobile-subscription-block { display: grid; gap: 6px; margin: 0 0 18px; }
+        .settings-mobile-section-label { padding: 0 2px; color: var(--text-dim); font-size: 10px; font-weight: 650; letter-spacing: .08em; }
+        .settings-mobile-subscription-card { gap: 0; margin: 0; padding: 12px; border-radius: 16px; background: linear-gradient(145deg, rgba(255,255,255,.045), rgba(255,255,255,.012)), var(--card); box-shadow: 0 8px 22px rgba(0,0,0,.10); }
+        .settings-mobile-subscription-head { align-items: center; gap: 12px; }
+        .settings-mobile-subscription-copy { gap: 3px; }
+        .settings-mobile-subscription-copy > strong { font-size: 15px; letter-spacing: -.025em; }
+        .settings-mobile-subscription-copy > small { max-width: 230px; font-size: 10px; line-height: 1.4; }
+        .settings-mobile-upgrade { min-width: 82px; min-height: 44px; margin: 0; padding: 0 13px; border-color: rgba(255,255,255,.18); border-radius: 12px; background: #d9dde2; color: #191b1f; font-size: 11px; font-weight: 680; box-shadow: none; animation: none; }
+        .settings-mobile-upgrade:hover { border-color: rgba(255,255,255,.3); background: #eef0f2; filter: none; transform: translateY(-1px); }
+        .settings-search { display: none; }
+        #settingsPopover.is-search-open .settings-search { display: flex; min-height: 46px; margin: 0 0 18px; animation: settings-search-in 160ms var(--ease) both; }
+        .settings-section-intro { margin: 0 2px 8px; color: var(--text-soft); font-size: 13px; font-weight: 620; letter-spacing: -.01em; }
+        [data-settings-panel="general"] > .settings-group > .settings-group-title { display: none; }
+        .settings-group { margin-bottom: 12px; border-radius: 16px; background: color-mix(in srgb, var(--card-2) 62%, var(--card)); }
+        .settings-control,
+        .settings-action-row { min-height: 60px; gap: 10px; padding: 8px 12px; }
+        .settings-control:hover,
+        .settings-action-row:hover { padding-left: 12px; }
+        .settings-control strong,
+        .settings-action-row strong { font-size: 12px; }
+        .settings-control small,
+        .settings-action-row small { font-size: 9.5px; }
+        .settings-control .settings-custom-select { width: min(47%, 158px) !important; min-width: 104px; }
+        .settings-select-trigger { min-height: 44px; padding: 8px 9px; font-size: 10px; }
+        .settings-group .switch { min-width: 48px; min-height: 44px; }
+        .settings-usage-toggle { width: 100%; min-height: 58px; border-top: 0; background: transparent; color: inherit; font: inherit; text-align: left; cursor: pointer; }
+        .settings-usage-toggle-copy { min-width: 0; flex: 1; }
+        .settings-usage-toggle-copy strong { font-size: 12px; font-weight: 560; }
+        .settings-usage-toggle-chevron { width: 18px; height: 18px; color: var(--text-dim); transition: transform 180ms var(--ease), color 180ms var(--ease); }
+        .settings-usage-toggle.is-open .settings-usage-toggle-chevron { color: var(--text-soft); transform: rotate(90deg); }
+        .settings-usage-toggle.is-changing { background: rgba(255,255,255,.055); }
+        .settings-usage-details { display: grid; gap: 9px; padding: 12px 13px 14px; border-top: 1px solid rgba(255,255,255,.065); animation: settings-usage-expand 180ms var(--ease) both; }
+        .settings-usage-details[hidden] { display: none !important; }
+        .settings-usage-plan { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+        .settings-usage-plan .settings-mobile-account-plan-value { padding: 4px 8px; font-size: 10px; }
+        .settings-usage-heading .settings-mobile-credit-balance { font-size: 22px; }
+        .settings-usage-meter { height: 5px; background: rgba(255,255,255,.10); }
+        .settings-usage-meter span { background: linear-gradient(90deg, #777d86, #e2e5e9); box-shadow: none; }
+        .settings-mobile-credit-next { font-size: 10px; }
+        :root[data-theme="light"] .settings-search-toggle { border-color: rgba(0,0,0,.11); background: rgba(0,0,0,.025); }
+        :root[data-theme="light"] .settings-search-toggle:hover,
+        :root[data-theme="light"] .settings-search-toggle[aria-expanded="true"] { border-color: rgba(0,0,0,.18); background: rgba(0,0,0,.055); }
+        :root[data-theme="light"] .settings-mobile-subscription-card { background: linear-gradient(145deg, rgba(0,0,0,.025), rgba(255,255,255,.75)), var(--card); }
+        :root[data-theme="light"] .settings-mobile-upgrade { border-color: #3c4149; background: #3c4149; color: #fff; }
+        :root[data-theme="light"] .settings-mobile-upgrade:hover { border-color: #272b31; background: #272b31; }
+        :root[data-theme="light"] .settings-usage-toggle.is-changing { background: rgba(0,0,0,.045); }
+        :root[data-theme="light"] .settings-usage-details { border-top-color: rgba(0,0,0,.075); }
+        :root[data-theme="light"] .settings-usage-meter { background: rgba(0,0,0,.09); }
+        .settings-usage-meter span { background: linear-gradient(90deg, #777d86, #e2e5e9); box-shadow: none; }
       }
+      @keyframes settings-search-in { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
+      @keyframes settings-usage-expand { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
       @keyframes settings-mobile-section-in { from { opacity: 0; transform: translateY(7px); } to { opacity: 1; transform: translateY(0); } }
 
       /* Settings desktop — mantém as duas colunas com uma hierarquia neutra */
@@ -4622,6 +4685,10 @@
         section.settings-popover,
         .settings-mobile-account-top,
         .settings-mobile-upgrade,
+        .settings-usage-toggle-chevron,
+        .settings-usage-details,
+        .settings-search,
+        .settings-search-toggle,
         .settings-select-trigger,
         .settings-group .switch,
         .settings-group .switch::before,
@@ -4733,19 +4800,18 @@
       <div class="settings-backdrop" id="settingsBackdrop" hidden></div>
       <section class="settings-popover" id="settingsPopover" role="dialog" aria-modal="true" aria-label="Configurações" aria-hidden="true" hidden>
         <aside class="settings-nav">
-          <div class="settings-mobile-head"><span class="settings-mobile-title" role="heading" aria-level="1">Configurações</span><button class="icon-button settings-close" id="closeSettings" type="button" aria-label="Fechar configurações"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"></path></svg></button></div>
+          <div class="settings-mobile-head"><button class="settings-search-toggle" id="settingsSearchToggle" type="button" aria-label="Buscar configurações" aria-expanded="false" aria-controls="settingsSearch"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-4-4"></path></svg></button><span class="settings-mobile-title" role="heading" aria-level="1">Configurações</span><button class="icon-button settings-close" id="closeSettings" type="button" aria-label="Fechar configurações"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"></path></svg></button></div>
           <div class="settings-mobile-account-card" id="settingsMobileAccountCard">
             <button class="settings-mobile-account-top" id="settingsAccountOpen" type="button" aria-label="Abrir perfil da conta">
               <span class="settings-mobile-account-avatar" id="settingsMobileAccountAvatar"><span id="settingsMobileAvatarFallback" aria-hidden="true">K</span><img id="settingsMobileAccountPhoto" alt="" hidden referrerpolicy="no-referrer" /></span>
               <span class="settings-mobile-account-identity"><strong id="settingsMobileAccountName">Kazer</strong><small id="settingsMobileAccountEmail">Conta conectada</small></span>
               <svg class="settings-mobile-account-chevron icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"></path></svg>
             </button>
-            <div class="settings-mobile-subscription-card">
-              <div class="settings-mobile-subscription-head"><div class="settings-mobile-subscription-copy"><span class="settings-mobile-subscription-kicker">ASSINATURA</span><strong>KAZER Pro</strong><small>Compare os planos e confira os recursos disponíveis.</small></div><div class="settings-mobile-account-plan"><span class="settings-mobile-account-plan-label">SEU PLANO</span><strong class="settings-mobile-account-plan-value" id="settingsMobilePlan">Free</strong></div></div>
-              <div class="settings-mobile-account-credit"><div class="settings-usage-heading"><span class="settings-mobile-credit-label">USO DO CICLO</span><strong class="settings-mobile-credit-balance" id="settingsMobileCreditBalance" aria-label="Porcentagem de uso">—%</strong></div><div class="settings-usage-meter" role="progressbar" aria-label="Uso do ciclo" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span id="settingsUsageBar"></span></div><span class="settings-mobile-credit-next" id="settingsMobileCreditNext">Próxima atualização: —</span><button class="settings-mobile-upgrade" id="settingsMobileUpgrade" type="button" aria-label="Conhecer KAZER Pro e comparar planos">Ver planos</button></div>
-            </div>
+            <div class="settings-mobile-subscription-block"><span class="settings-mobile-section-label">Assinatura</span><div class="settings-mobile-subscription-card">
+              <div class="settings-mobile-subscription-head"><div class="settings-mobile-subscription-copy"><strong>KAZER Pro</strong><small>Compare os planos e conheça os recursos disponíveis.</small></div><button class="settings-mobile-upgrade" id="settingsMobileUpgrade" type="button" aria-label="Conhecer KAZER Pro e comparar planos">Conhecer</button></div>
+            </div></div>
           </div>
-          <label class="settings-search"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-4-4"></path></svg><input id="settingsSearch" type="search" placeholder="Pesquisar configuração" autocomplete="off" /></label>
+          <label class="settings-search"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-4-4"></path></svg><input id="settingsSearch" type="search" aria-label="Pesquisar configurações" placeholder="Pesquisar configuração" autocomplete="off" /></label>
           <nav class="settings-nav-list" aria-label="Categorias de configurações">
             <button class="settings-nav-item active" type="button" data-settings-section="general"><span class="settings-nav-icon settings-nav-icon-text" aria-hidden="true">◌</span><span class="settings-nav-icon settings-nav-icon-svg" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6 7 7M17 17l1.4 1.4M18.4 5.6 17 7M7 17l-1.4 1.4"></path><circle cx="12" cy="12" r="3.5"></circle></svg></span><span>Geral</span></button>
             <button class="settings-nav-item" type="button" data-settings-section="data"><span class="settings-nav-icon settings-nav-icon-text" aria-hidden="true">▣</span><span class="settings-nav-icon settings-nav-icon-svg" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="10" rx="2"></rect><path d="M8 11V8a4 4 0 0 1 8 0v3"></path></svg></span><span>Dados e privacidade</span></button>
@@ -4757,9 +4823,16 @@
           <header class="settings-panel-head"><button class="settings-mobile-back" id="settingsPanelBack" type="button" aria-label="Voltar para Configurações"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"></path></svg><span>Voltar</span></button><div><span class="settings-eyebrow">PREFERÊNCIAS DO KAZER</span><h2 id="settingsPanelTitle">Geral</h2></div><button class="icon-button settings-panel-close" id="closeSettingsDesktop" type="button" aria-label="Fechar configurações"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"></path></svg></button></header>
           <div class="settings-panel-scroll">
             <section class="settings-section" data-settings-panel="general">
-              <p class="settings-section-intro">Controle como o Kazer aparece e responde neste dispositivo.</p>
-              <div class="settings-group"><div class="settings-group-title" role="heading" aria-level="2">Geral</div><div class="settings-control"><span class="settings-row-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.2 15.3A8.2 8.2 0 0 1 8.7 3.8 8.5 8.5 0 1 0 20.2 15.3Z"></path></svg></span><div><strong>Aparência</strong><small>Escolha o tema usado pelo Kazer.</small></div><div class="settings-custom-select" data-custom-select="appearance"><select class="settings-select-native" id="appearanceSelect" tabindex="-1" aria-hidden="true"><option value="dark">Escuro</option><option value="light">Claro</option><option value="system">Sistema</option></select><button class="settings-select-trigger" id="appearanceTrigger" type="button" aria-haspopup="listbox" aria-expanded="false"><span data-select-label>Escuro</span><svg class="settings-select-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg></button><div class="settings-select-menu" data-select-menu role="listbox" aria-label="Aparência"><button class="settings-select-option" type="button" data-select-value="dark" role="option" aria-selected="false"><span>Escuro</span><span class="settings-option-check" aria-hidden="true">✓</span></button><button class="settings-select-option" type="button" data-select-value="light" role="option" aria-selected="false"><span>Claro</span><span class="settings-option-check" aria-hidden="true">✓</span></button><button class="settings-select-option" type="button" data-select-value="system" role="option" aria-selected="false"><span>Sistema</span><span class="settings-option-check" aria-hidden="true">✓</span></button></div></div></div><div class="settings-control"><div><strong>Idioma</strong><small>Idioma dos controles e mensagens da interface.</small></div><div class="settings-custom-select" data-custom-select="language"><select class="settings-select-native" id="languageSelect" tabindex="-1" aria-hidden="true"><option value="pt-BR">Português (Brasil)</option><option value="en-US">English</option></select><button class="settings-select-trigger" id="languageTrigger" type="button" aria-haspopup="listbox" aria-expanded="false"><span data-select-label>Português (Brasil)</span><svg class="settings-select-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg></button><div class="settings-select-menu" data-select-menu role="listbox" aria-label="Idioma"><button class="settings-select-option" type="button" data-select-value="pt-BR" role="option" aria-selected="false"><span>Português (Brasil)</span><span class="settings-option-check" aria-hidden="true">✓</span></button><button class="settings-select-option" type="button" data-select-value="en-US" role="option" aria-selected="false"><span>English</span><span class="settings-option-check" aria-hidden="true">✓</span></button></div></div></div></div>
-              <div class="settings-group settings-device-group"><div class="settings-group-title" role="heading" aria-level="2">Neste dispositivo</div><div class="settings-control"><div><strong>Avisos do Kazer</strong><small>Permite mensagens de confirmação e orientação dentro da interface.</small></div><button class="switch on" id="notificationsSwitch" type="button" aria-label="Alternar avisos" aria-pressed="true"></button></div><div class="settings-control"><div><strong>Mostrar instalação</strong><small>Exibe o aviso para instalar o Kazer quando disponível.</small></div><button class="switch on" id="installSwitch" type="button" aria-label="Alternar aviso de instalação" aria-pressed="true"></button></div></div>
+              <p class="settings-section-intro">Geral</p>
+              <div class="settings-group">
+                <div class="settings-group-title" role="heading" aria-level="2">Geral</div>
+                <button class="settings-control settings-usage-toggle" id="settingsUsageToggle" type="button" aria-expanded="false" aria-controls="settingsUsageDetails"><span class="settings-row-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19V5M4 19h17"></path><path d="m7 15 4-4 3 2 5-6"></path></svg></span><span class="settings-usage-toggle-copy"><strong>Uso do plano</strong></span><svg class="settings-usage-toggle-chevron icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"></path></svg></button>
+                <div class="settings-usage-details" id="settingsUsageDetails" hidden><div class="settings-usage-plan"><span class="settings-mobile-account-plan-label">SEU PLANO</span><strong class="settings-mobile-account-plan-value" id="settingsMobilePlan">Free</strong></div><div class="settings-usage-heading"><span class="settings-mobile-credit-label">USO DO CICLO</span><strong class="settings-mobile-credit-balance" id="settingsMobileCreditBalance" aria-label="Porcentagem de uso">—%</strong></div><div class="settings-usage-meter" role="progressbar" aria-label="Uso do ciclo" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span id="settingsUsageBar"></span></div><span class="settings-mobile-credit-next" id="settingsMobileCreditNext">Próxima atualização: —</span></div>
+                <div class="settings-control"><span class="settings-row-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.2 15.3A8.2 8.2 0 0 1 8.7 3.8 8.5 8.5 0 1 0 20.2 15.3Z"></path></svg></span><div><strong>Aparência</strong><small>Escolha o tema usado pelo KAZER.</small></div><div class="settings-custom-select" data-custom-select="appearance"><select class="settings-select-native" id="appearanceSelect" tabindex="-1" aria-hidden="true"><option value="dark">Escuro</option><option value="light">Claro</option><option value="system">Sistema</option></select><button class="settings-select-trigger" id="appearanceTrigger" type="button" aria-haspopup="listbox" aria-expanded="false"><span data-select-label>Escuro</span><svg class="settings-select-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg></button><div class="settings-select-menu" data-select-menu role="listbox" aria-label="Aparência"><button class="settings-select-option" type="button" data-select-value="dark" role="option" aria-selected="false"><span>Escuro</span><span class="settings-option-check" aria-hidden="true">✓</span></button><button class="settings-select-option" type="button" data-select-value="light" role="option" aria-selected="false"><span>Claro</span><span class="settings-option-check" aria-hidden="true">✓</span></button><button class="settings-select-option" type="button" data-select-value="system" role="option" aria-selected="false"><span>Sistema</span><span class="settings-option-check" aria-hidden="true">✓</span></button></div></div></div>
+                <div class="settings-control"><span class="settings-row-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"></path><path d="M10 21h4"></path></svg></span><div><strong>Notificações</strong><small>Permite avisos e confirmações dentro do KAZER.</small></div><button class="switch on" id="notificationsSwitch" type="button" aria-label="Alternar notificações" aria-pressed="true"></button></div>
+                <div class="settings-control"><span class="settings-row-icon settings-language-icon" aria-hidden="true">Aa</span><div><strong>Idioma</strong><small>Idioma dos controles e mensagens.</small></div><div class="settings-custom-select" data-custom-select="language"><select class="settings-select-native" id="languageSelect" tabindex="-1" aria-hidden="true"><option value="pt-BR">Português (Brasil)</option><option value="en-US">English</option></select><button class="settings-select-trigger" id="languageTrigger" type="button" aria-haspopup="listbox" aria-expanded="false"><span data-select-label>Português (Brasil)</span><svg class="settings-select-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg></button><div class="settings-select-menu" data-select-menu role="listbox" aria-label="Idioma"><button class="settings-select-option" type="button" data-select-value="pt-BR" role="option" aria-selected="false"><span>Português (Brasil)</span><span class="settings-option-check" aria-hidden="true">✓</span></button><button class="settings-select-option" type="button" data-select-value="en-US" role="option" aria-selected="false"><span>English</span><span class="settings-option-check" aria-hidden="true">✓</span></button></div></div></div>
+              </div>
+              <div class="settings-group settings-device-group"><div class="settings-group-title" role="heading" aria-level="2">Neste dispositivo</div><div class="settings-control"><div><strong>Mostrar instalação</strong><small>Exibe o aviso para instalar o KAZER quando disponível.</small></div><button class="switch on" id="installSwitch" type="button" aria-label="Alternar aviso de instalação" aria-pressed="true"></button></div></div>
             </section>
             <section class="settings-section" data-settings-panel="data" hidden>
               <p class="settings-section-intro">Gerencie as preferências salvas neste navegador.</p>
@@ -5068,6 +5141,7 @@
         const closeSettings = document.getElementById("closeSettings");
         const closeSettingsDesktop = document.getElementById("closeSettingsDesktop");
         const settingsSearch = document.getElementById("settingsSearch");
+        const settingsSearchToggle = document.getElementById("settingsSearchToggle");
         const settingsPanelTitle = document.getElementById("settingsPanelTitle");
         const settingsNavItems = document.querySelectorAll("[data-settings-section]");
         const settingsPanels = document.querySelectorAll("[data-settings-panel]");
@@ -5105,6 +5179,8 @@
         const plansProAction = document.getElementById("plansProAction");
         const settingsMobileCreditBalance = document.getElementById("settingsMobileCreditBalance");
         const settingsUsageBar = document.getElementById("settingsUsageBar");
+        const settingsUsageToggle = document.getElementById("settingsUsageToggle");
+        const settingsUsageDetails = document.getElementById("settingsUsageDetails");
         const webSearchForm = document.getElementById("webSearchForm");
         const webQuery = document.getElementById("webQuery");
         const webSources = document.getElementById("webSources");
@@ -5311,11 +5387,11 @@
             settingsUsageBar.style.width = `${percent === null ? 0 : percent}%`;
             settingsUsageBar.parentElement?.setAttribute("aria-valuenow", String(percent === null ? 0 : percent));
           }
-          if (settingsMobileAccountCard && animate && percent !== null) {
-            settingsMobileAccountCard.classList.remove("is-changing");
-            void settingsMobileAccountCard.offsetWidth;
-            settingsMobileAccountCard.classList.add("is-changing");
-            window.setTimeout(() => settingsMobileAccountCard.classList.remove("is-changing"), 560);
+          if (settingsUsageToggle && animate && percent !== null) {
+            settingsUsageToggle.classList.remove("is-changing");
+            void settingsUsageToggle.offsetWidth;
+            settingsUsageToggle.classList.add("is-changing");
+            window.setTimeout(() => settingsUsageToggle.classList.remove("is-changing"), 560);
           }
         };
 
@@ -5336,7 +5412,7 @@
             void creditIndicator?.offsetWidth;
             creditIndicator?.classList.add("is-consuming");
           }
-          settingsMobileAccountCard?.classList.add("is-changing");
+          settingsUsageToggle?.classList.add("is-changing");
           const start = performance.now();
           const duration = isConsuming ? 620 : 420;
           const step = (now) => {
@@ -5350,7 +5426,7 @@
               window.setTimeout(() => {
                 creditIndicator?.classList.remove("is-changing");
                 creditIndicator?.classList.remove("is-consuming");
-                settingsMobileAccountCard?.classList.remove("is-changing");
+                settingsUsageToggle?.classList.remove("is-changing");
               }, isConsuming ? 120 : 180);
             }
           };
@@ -5743,7 +5819,8 @@
             settingsBackdrop.classList.add("visible");
             settingsPopover.classList.add("visible");
           });
-          settingsPopover.classList.remove("mobile-section-open");
+          settingsPopover.classList.remove("mobile-section-open", "is-search-open");
+          settingsSearchToggle?.setAttribute("aria-expanded", "false");
           settingsPopover.scrollTop = 0;
           settingsSearch.value = "";
           settingsNavItems.forEach((item) => { item.hidden = false; });
@@ -7833,6 +7910,20 @@
           });
         });
         settingsSearch.addEventListener("input", applySettingsSearch);
+        settingsSearchToggle?.addEventListener("click", () => {
+          const isOpening = !settingsPopover.classList.contains("is-search-open");
+          settingsPopover.classList.toggle("is-search-open", isOpening);
+          settingsSearchToggle.setAttribute("aria-expanded", String(isOpening));
+          if (isOpening) window.setTimeout(() => settingsSearch.focus(), 0);
+          else { settingsSearch.value = ""; applySettingsSearch(); settingsSearchToggle.focus(); }
+        });
+        settingsUsageToggle?.addEventListener("click", () => {
+          if (!settingsUsageDetails) return;
+          const expanded = settingsUsageToggle.getAttribute("aria-expanded") === "true";
+          settingsUsageDetails.hidden = expanded;
+          settingsUsageToggle.setAttribute("aria-expanded", String(!expanded));
+          settingsUsageToggle.classList.toggle("is-open", !expanded);
+        });
         appearanceSelect.addEventListener("change", () => {
           settingsState.appearance = appearanceSelect.value;
           persistSettings();
