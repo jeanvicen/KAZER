@@ -4697,7 +4697,140 @@
         .plan-card-pro button { scroll-behavior: auto !important; transition: none !important; animation: none !important; }
         .settings-section:not([hidden]) { animation: none !important; }
       }
-    </style>
+    
+      /* KAZER interface refinement: calm charcoal surfaces and a restrained metallic accent. */
+      :root { --usage-gold: #cbb47d; --usage-gold-soft: rgba(203,180,125,.17); }
+      section.settings-popover { border-color: rgba(255,255,255,.09) !important; background: linear-gradient(148deg, #17181b, #101114 74%) !important; box-shadow: 0 30px 90px rgba(0,0,0,.58) !important; }
+      .settings-backdrop.visible { background: rgba(4,5,7,.72); backdrop-filter: blur(8px); }
+      .settings-nav-item.active { border-color: rgba(255,255,255,.09); background: rgba(255,255,255,.055); color: var(--text); box-shadow: inset 2px 0 0 var(--usage-gold); }
+      .settings-control:focus-visible, .settings-action-row:focus-visible, .settings-nav-item:focus-visible, .settings-select-trigger:focus-visible, .settings-mobile-upgrade:focus-visible { outline: 2px solid var(--usage-gold); outline-offset: 2px; }
+      .settings-usage-toggle { min-height: 58px; transition: background 160ms ease, color 160ms ease; }
+      .settings-usage-toggle:hover { background: rgba(255,255,255,.035); }
+      .settings-usage-toggle .settings-row-icon { color: var(--usage-gold); }
+      .settings-usage-toggle .settings-usage-toggle-chevron { color: var(--text-dim); transition: transform 180ms ease, color 180ms ease; }
+      .settings-usage-toggle:hover .settings-usage-toggle-chevron { color: var(--text); transform: translateX(2px); }
+      .settings-select-trigger:hover, .settings-custom-select.open .settings-select-trigger { border-color: rgba(203,180,125,.32) !important; background: rgba(203,180,125,.045) !important; }
+      .settings-select-option:hover, .settings-select-option:focus-visible { border-color: rgba(203,180,125,.20) !important; background: rgba(203,180,125,.07) !important; }
+      .settings-logout { border-top-color: rgba(255,255,255,.07) !important; color: var(--text-soft) !important; }
+      .settings-logout:hover { background: rgba(255,255,255,.04) !important; }
+      .settings-select-trigger { min-height: 44px; }
+      .settings-mobile-subscription-card { border-color: rgba(203,180,125,.17) !important; background: linear-gradient(130deg, rgba(203,180,125,.055), rgba(255,255,255,.025)) !important; }
+      .settings-mobile-upgrade { min-width: 76px; min-height: 44px; border-color: rgba(203,180,125,.24) !important; background: rgba(203,180,125,.08) !important; color: #e4d7b7 !important; }
+      .settings-mobile-upgrade:hover { background: rgba(203,180,125,.14) !important; }
+      .usage-screen { position: fixed; z-index: 111; inset: 0; display: flex; flex-direction: column; overflow: hidden; background: var(--page, #0b0c0e); color: var(--text, #f5f5f6); opacity: 0; transform: translateY(10px); transition: opacity 180ms ease, transform 180ms ease; }
+      .usage-screen[hidden] { display: none !important; }
+      .usage-screen.visible { opacity: 1; transform: none; }
+      .usage-screen-head { display: grid; grid-template-columns: minmax(88px,1fr) minmax(0,2fr) minmax(88px,1fr); align-items: center; flex: 0 0 auto; min-height: 68px; padding: max(8px,env(safe-area-inset-top)) max(20px,env(safe-area-inset-right)) 8px max(20px,env(safe-area-inset-left)); border-bottom: 1px solid rgba(255,255,255,.065); background: color-mix(in srgb, var(--page) 94%, transparent); }
+      .usage-screen-head h1 { margin: 0; color: var(--text); font-size: 16px; font-weight: 620; letter-spacing: -.035em; text-align: center; }
+      .usage-back { display: inline-flex; align-items: center; justify-self: start; gap: 5px; min-width: 88px; min-height: 44px; padding: 0 8px; border: 0; border-radius: 12px; background: transparent; color: var(--text-soft); font: inherit; font-size: 13px; cursor: pointer; }
+      .usage-back:hover { background: rgba(255,255,255,.05); color: var(--text); }
+      .usage-back .icon { width: 19px; height: 19px; }
+      .usage-head-spacer { min-width: 88px; }
+      .usage-screen-scroll { min-height: 0; flex: 1 1 auto; overflow-y: auto; overscroll-behavior: contain; padding: 42px 22px max(30px,env(safe-area-inset-bottom)); }
+      .usage-screen-inner { width: min(680px,100%); margin: 0 auto; }
+      .usage-intro { margin: 3px 0 24px; }
+      .usage-eyebrow, .usage-card-kicker { color: var(--usage-gold); font-size: 9px; font-weight: 700; letter-spacing: .17em; }
+      .usage-intro h2 { margin: 10px 0 8px; color: var(--text); font-size: clamp(25px,5.4vw,35px); font-weight: 590; letter-spacing: -.055em; line-height: 1.1; }
+      .usage-intro p { max-width: 480px; margin: 0; color: var(--text-dim); font-size: 13px; line-height: 1.6; }
+      .usage-data-card { padding: clamp(19px,4vw,26px); border: 1px solid rgba(255,255,255,.085); border-radius: 20px; background: linear-gradient(145deg, rgba(255,255,255,.045), rgba(255,255,255,.018)); box-shadow: 0 18px 46px rgba(0,0,0,.16), inset 0 1px 0 rgba(255,255,255,.035); }
+      .usage-card-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; padding-bottom: 19px; border-bottom: 1px solid rgba(255,255,255,.065); }
+      .usage-card-top > div { display: grid; gap: 7px; }
+      .usage-card-top > div strong { color: var(--text); font-size: 16px; font-weight: 620; }
+      .usage-refresh { display: inline-flex; align-items: center; justify-content: center; gap: 7px; min-width: 44px; min-height: 44px; padding: 0 11px; border: 1px solid rgba(255,255,255,.09); border-radius: 12px; background: rgba(255,255,255,.025); color: var(--text-soft); font: inherit; font-size: 11px; cursor: pointer; }
+      .usage-refresh:hover:not(:disabled) { border-color: rgba(203,180,125,.38); background: rgba(203,180,125,.08); color: var(--text); }
+      .usage-refresh:disabled { opacity: .65; cursor: wait; }
+      .usage-refresh .icon { width: 16px; height: 16px; }
+      .usage-refresh[aria-busy="true"] .icon { animation: usage-rotate .8s linear infinite; }
+      @keyframes usage-rotate { to { transform: rotate(360deg); } }
+      .usage-data-card h3 { margin: 20px 0 17px; color: var(--text-soft); font-size: 13px; font-weight: 560; }
+      .usage-percent-line { display: flex; align-items: baseline; gap: 10px; }
+      .usage-percent-line strong { color: var(--text); font-size: clamp(34px,8vw,48px); font-weight: 610; letter-spacing: -.06em; font-variant-numeric: tabular-nums; }
+      .usage-percent-line span, .usage-count-line > span { color: var(--text-dim); font-size: 12px; }
+      .usage-meter { height: 8px; margin: 13px 0 20px; overflow: hidden; border-radius: 999px; background: rgba(255,255,255,.085); }
+      .usage-meter[hidden] { display: none !important; }
+      .usage-meter > span { display: block; width: 0; height: 100%; border-radius: inherit; background: linear-gradient(90deg,#8f805e,var(--usage-gold)); transition: width 420ms cubic-bezier(.2,.75,.25,1); }
+      .usage-count-line, .usage-reset-line { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 44px; border-top: 1px solid rgba(255,255,255,.065); }
+      .usage-count-line strong { color: var(--text); font-size: 13px; font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; }
+      .usage-reset-line { margin-top: 2px; }
+      .usage-reset-line > span { color: var(--text-dim); font-size: 12px; }
+      .usage-reset-line strong { color: var(--text-soft); font-size: 12px; font-weight: 560; text-align: right; }
+      .usage-data-note { margin: 12px 0 0; color: var(--text-dim); font-size: 10px; line-height: 1.5; }
+      .usage-feedback { margin: 0; padding: 18px 0 5px; color: var(--text-dim); font-size: 12px; line-height: 1.6; }
+      .usage-pro-card { display: grid; gap: 10px; margin-top: 16px; padding: clamp(19px,4vw,24px); border: 1px solid rgba(203,180,125,.18); border-radius: 20px; background: linear-gradient(140deg, rgba(203,180,125,.075), rgba(255,255,255,.018) 72%); }
+      .usage-pro-label { color: var(--usage-gold); font-size: 9px; font-weight: 720; letter-spacing: .16em; }
+      .usage-pro-card h2 { margin: 0; color: var(--text); font-size: 19px; font-weight: 590; letter-spacing: -.035em; }
+      .usage-pro-card p { max-width: 520px; margin: 0; color: var(--text-dim); font-size: 12px; line-height: 1.6; }
+      .usage-pro-card button { display: inline-flex; align-items: center; justify-content: space-between; gap: 18px; width: fit-content; min-width: 176px; min-height: 46px; margin-top: 4px; padding: 0 15px; border: 1px solid rgba(203,180,125,.27); border-radius: 12px; background: rgba(203,180,125,.095); color: #eadbb9; font: inherit; font-size: 12px; font-weight: 610; cursor: pointer; }
+      .usage-pro-card button:hover { background: rgba(203,180,125,.15); border-color: rgba(203,180,125,.42); }
+      .usage-screen button:focus-visible, .plans-screen button:focus-visible { outline: 2px solid var(--usage-gold); outline-offset: 3px; }
+      :root[data-theme="light"] { --usage-gold: #80642d; --usage-gold-soft: rgba(128,100,45,.11); }
+      :root[data-theme="light"] .usage-screen-head { border-bottom-color: rgba(0,0,0,.09); background: color-mix(in srgb,var(--page) 94%,transparent); }
+      :root[data-theme="light"] .usage-data-card { border-color: rgba(0,0,0,.10); background: linear-gradient(145deg,#fff,#f8f7f4); box-shadow: 0 18px 46px rgba(32,29,32,.08); }
+      :root[data-theme="light"] .usage-card-top, :root[data-theme="light"] .usage-count-line, :root[data-theme="light"] .usage-reset-line { border-color: rgba(0,0,0,.08); }
+      :root[data-theme="light"] .usage-refresh { border-color: rgba(0,0,0,.11); background: rgba(0,0,0,.025); }
+      :root[data-theme="light"] .usage-meter { background: rgba(0,0,0,.09); }
+      :root[data-theme="light"] .usage-pro-card { border-color: rgba(128,100,45,.22); background: linear-gradient(140deg,rgba(128,100,45,.08),#fff 75%); }
+      :root[data-theme="light"] .usage-pro-label, :root[data-theme="light"] .usage-eyebrow, :root[data-theme="light"] .usage-card-kicker { color: #745923; }
+      :root[data-theme="light"] .usage-pro-card button { border-color: rgba(112,86,38,.28); background: rgba(128,100,45,.09); color: #493918; }
+      :root[data-theme="light"] .settings-mobile-upgrade { border-color: rgba(112,86,38,.28) !important; background: rgba(128,100,45,.09) !important; color: #493918 !important; }
+      :root[data-theme="light"] .plan-card-pro { background: linear-gradient(145deg,#fff,#f8f7f4) !important; }
+      :root[data-theme="light"] .plan-card-pro-badge, :root[data-theme="light"] .plan-card-pro .plan-card-pro-tagline, :root[data-theme="light"] .plan-card-pro-list li > span:first-child { color: #80642d !important; }
+      :root[data-theme="light"] .plan-card-pro button { color: #493918 !important; background: rgba(128,100,45,.09) !important; border-color: rgba(112,86,38,.26) !important; }
+      .plans-backdrop { z-index: 113; }
+      .plans-screen { z-index: 114; }
+      .plans-brand-banner { border-color: rgba(203,180,125,.14) !important; background: linear-gradient(115deg,rgba(203,180,125,.07),rgba(255,255,255,.02)) !important; }
+      .plans-mobile-choice.active { border-color: rgba(203,180,125,.32) !important; background: rgba(203,180,125,.075) !important; box-shadow: inset 0 0 0 1px rgba(203,180,125,.04) !important; }
+      .plan-card-current, .plan-card-pro { border-color: rgba(255,255,255,.085) !important; background: linear-gradient(145deg,rgba(255,255,255,.04),rgba(255,255,255,.015)) !important; box-shadow: none !important; }
+      .plan-card-pro { border-color: rgba(203,180,125,.2) !important; }
+      .plan-card-pro-badge, .plan-card-pro .plan-card-pro-tagline { color: #d9c99f !important; animation: none !important; background: none !important; }
+      .plan-card-pro-list li { display: grid; grid-template-columns: 18px minmax(0,1fr); align-items: start; gap: 4px; }
+      .plan-card-pro-list li::before { display: none; }
+      .plan-card-pro-list li > span:first-child { color: var(--usage-gold); }
+      .plan-benefit-status { display: block; margin-top: 3px; color: var(--text-dim); font-size: 10px; line-height: 1.4; }
+      .plan-card-pro button { min-height: 46px; background: rgba(203,180,125,.11) !important; border: 1px solid rgba(203,180,125,.24) !important; color: #eadbb9 !important; animation: none !important; }
+      .plan-card-pro-note { color: var(--text-dim) !important; }
+      .message-row.user .message-bubble { border-color: rgba(203,180,125,.13); }
+      .assistant-marker { color: #bdb7aa; }
+      .assistant-marker svg { filter: none !important; animation: none !important; }
+      .assistant-content code { border-color: rgba(255,255,255,.11) !important; background: rgba(255,255,255,.055) !important; color: #e5dfd1 !important; }
+      .code-block { border-color: rgba(255,255,255,.12) !important; box-shadow: 0 8px 24px rgba(0,0,0,.2),inset 0 1px 0 rgba(255,255,255,.025); }
+      .code-block-head { background: linear-gradient(90deg,rgba(255,255,255,.035),rgba(255,255,255,.012)) !important; }
+      .code-block-label { color: var(--text-soft) !important; }
+      .code-block-label::before { background: var(--usage-gold) !important; box-shadow: none !important; }
+      .code-copy-button:hover { border-color: rgba(203,180,125,.33) !important; background: rgba(203,180,125,.08) !important; color: #f1e5ca !important; }
+      .thinking-symbol { color: #c6b889 !important; }
+      .thinking-dots span { background: var(--usage-gold) !important; box-shadow: none !important; }
+      .research-progress-card { border-color: rgba(255,255,255,.10) !important; background: linear-gradient(145deg,rgba(255,255,255,.035),color-mix(in srgb,var(--card) 94%,transparent)) !important; }
+      .research-progress-icon { border-color: rgba(203,180,125,.18) !important; background: rgba(203,180,125,.07) !important; color: var(--usage-gold) !important; }
+      .research-progress-spinner { border-color: rgba(203,180,125,.2) !important; border-top-color: var(--usage-gold) !important; }
+      .research-progress-card.is-error { border-color: rgba(220,190,144,.25) !important; }
+      .research-source-item:hover { border-color: rgba(203,180,125,.24) !important; background: rgba(255,255,255,.035) !important; }
+      .web-source-details > summary::after { color: var(--usage-gold) !important; }
+      .message-attachment-status[data-state="failed"], .message-attachment-status[data-state="interrupted"] { color: #c9c5ba !important; }
+      .message-attachment-status[data-state="failed"] .attachment-status-indicator, .message-attachment-status[data-state="interrupted"] .attachment-status-indicator { color: var(--usage-gold) !important; }
+      .send-button {  background: #d7d5cf !important; color: #151617 !important; box-shadow: none !important; }
+      .send-button:hover:not(:disabled) { background: #f0eee7 !important; }
+      .send-button:focus-visible, .attach-button:focus-visible, .profile-button:focus-visible { outline-color: var(--usage-gold) !important; }
+      @media (max-width: 680px) {
+        .usage-screen-head { grid-template-columns: 74px minmax(0,1fr) 74px; min-height: calc(58px + env(safe-area-inset-top)); padding-right: max(12px,env(safe-area-inset-right)); padding-left: max(12px,env(safe-area-inset-left)); }
+        .usage-screen-head h1 { font-size: 15px; }
+        .usage-back { min-width: 64px; padding-left: 4px; font-size: 12px; }
+        .usage-head-spacer { min-width: 64px; }
+        .usage-screen-scroll { padding: 29px 17px max(25px,env(safe-area-inset-bottom)); }
+        .usage-data-card, .usage-pro-card { border-radius: 17px; }
+        .usage-refresh { padding: 0 9px; }
+      }
+      @media (max-width: 370px) {
+        .usage-screen-scroll { padding-right: 13px; padding-left: 13px; }
+        .usage-reset-line { align-items: flex-start; flex-direction: column; justify-content: center; gap: 3px; padding: 8px 0; }
+        .usage-reset-line strong { text-align: left; }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .usage-screen, .usage-meter > span, .usage-refresh[aria-busy="true"] .icon { transition: none !important; animation: none !important; }
+        .settings-usage-toggle, .settings-usage-toggle .settings-usage-toggle-chevron { transition: none !important; }
+      }
+
+</style>
     <script>
       window.setTimeout(() => {
         const fallbackApp = document.getElementById("app");
@@ -4790,7 +4923,7 @@
           <div><strong id="profileDisplayName">Kazer</strong><small id="profileEmail">Conta conectada</small></div>
         </div>
         <div class="menu-actions">
-          <button class="pro-action" id="proAction" type="button" aria-label="Obter Kazer Pro"><span class="pro-badge">PRO</span><span class="pro-copy"><strong>Kazer Pro</strong><small>R$ 59,90/mês · em breve</small></span><svg class="icon pro-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"></path></svg></button>
+          <button class="pro-action" id="proAction" type="button" aria-label="Obter Kazer Pro"><span class="pro-badge">PRO</span><span class="pro-copy"><strong>Kazer Pro</strong><small>Recursos em planejamento</small></span><svg class="icon pro-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"></path></svg></button>
 
           <div class="profile-more" id="profileMore"><button class="profile-more-toggle" id="profileMoreToggle" type="button" aria-expanded="false"><span>Mais opções</span><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg></button><div class="profile-more-options"><div class="profile-integrations-grid"><button class="profile-integration-action" id="githubProfileAction" type="button"><span class="profile-integration-icon github" aria-hidden="true"><svg viewBox="0 0 24 24" role="img"><path d="M12 2.5a9.5 9.5 0 0 0-3 18.51c.48.09.65-.21.65-.46v-1.7c-2.65.58-3.2-1.12-3.2-1.12-.44-1.1-1.06-1.4-1.06-1.4-.87-.6.07-.59.07-.59.96.07 1.47.99 1.47.99.85 1.46 2.22 1.04 2.76.8.09-.62.33-1.04.6-1.28-2.12-.24-4.35-1.06-4.35-4.72 0-1.04.37-1.9.98-2.57-.1-.24-.43-1.22.1-2.54 0 0 .8-.26 2.62.98A9.1 9.1 0 0 1 12 7.08a9 9 0 0 1 2.38.32c1.82-1.24 2.62-.98 2.62-.98.53 1.32.2 2.3.1 2.54.61.67.98 1.53.98 2.57 0 3.67-2.23 4.48-4.36 4.72.34.3.64.88.64 1.77v2.62c0 .25.17.55.65.46A9.5 9.5 0 0 0 12 2.5Z"></path></svg></span><strong>GitHub</strong><small id="githubProfileStatus">Autorizar acesso aos repositórios</small></button><button class="profile-integration-action" id="mcpProfileAction" type="button"><span class="profile-integration-icon" aria-hidden="true">⌁</span><strong>Conectores</strong><small id="mcpProfileStatus">Conectores prontos</small></button></div><button class="profile-more-option" id="webKazerAction" type="button"><span>WebKazer<br><small>Pesquisa na web</small></span><span aria-hidden="true">↗</span></button></div></div>
           <button class="menu-action settings-menu-icon" id="settingsAction" type="button" aria-label="Configurações" title="Configurações"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6 7 7M17 17l1.4 1.4M18.4 5.6 17 7M7 17l-1.4 1.4"></path><circle cx="12" cy="12" r="3.5"></circle></svg></button>
@@ -4826,8 +4959,7 @@
               <p class="settings-section-intro">Geral</p>
               <div class="settings-group">
                 <div class="settings-group-title" role="heading" aria-level="2">Geral</div>
-                <button class="settings-control settings-usage-toggle" id="settingsUsageToggle" type="button" aria-expanded="false" aria-controls="settingsUsageDetails"><span class="settings-row-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19V5M4 19h17"></path><path d="m7 15 4-4 3 2 5-6"></path></svg></span><span class="settings-usage-toggle-copy"><strong>Uso do plano</strong></span><svg class="settings-usage-toggle-chevron icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"></path></svg></button>
-                <div class="settings-usage-details" id="settingsUsageDetails" hidden><div class="settings-usage-plan"><span class="settings-mobile-account-plan-label">SEU PLANO</span><strong class="settings-mobile-account-plan-value" id="settingsMobilePlan">Free</strong></div><div class="settings-usage-heading"><span class="settings-mobile-credit-label">USO DO CICLO</span><strong class="settings-mobile-credit-balance" id="settingsMobileCreditBalance" aria-label="Porcentagem de uso">—%</strong></div><div class="settings-usage-meter" role="progressbar" aria-label="Uso do ciclo" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span id="settingsUsageBar"></span></div><span class="settings-mobile-credit-next" id="settingsMobileCreditNext">Próxima atualização: —</span></div>
+                <button class="settings-control settings-usage-toggle" id="settingsUsageToggle" type="button" aria-haspopup="dialog" aria-label="Abrir detalhes de uso do plano"><span class="settings-row-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19V5M4 19h17"></path><path d="m7 15 4-4 3 2 5-6"></path></svg></span><span class="settings-usage-toggle-copy"><strong>Uso do plano</strong></span><svg class="settings-usage-toggle-chevron icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"></path></svg></button>
                 <div class="settings-control"><span class="settings-row-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.2 15.3A8.2 8.2 0 0 1 8.7 3.8 8.5 8.5 0 1 0 20.2 15.3Z"></path></svg></span><div><strong>Aparência</strong><small>Escolha o tema usado pelo KAZER.</small></div><div class="settings-custom-select" data-custom-select="appearance"><select class="settings-select-native" id="appearanceSelect" tabindex="-1" aria-hidden="true"><option value="dark">Escuro</option><option value="light">Claro</option><option value="system">Sistema</option></select><button class="settings-select-trigger" id="appearanceTrigger" type="button" aria-haspopup="listbox" aria-expanded="false"><span data-select-label>Escuro</span><svg class="settings-select-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg></button><div class="settings-select-menu" data-select-menu role="listbox" aria-label="Aparência"><button class="settings-select-option" type="button" data-select-value="dark" role="option" aria-selected="false"><span>Escuro</span><span class="settings-option-check" aria-hidden="true">✓</span></button><button class="settings-select-option" type="button" data-select-value="light" role="option" aria-selected="false"><span>Claro</span><span class="settings-option-check" aria-hidden="true">✓</span></button><button class="settings-select-option" type="button" data-select-value="system" role="option" aria-selected="false"><span>Sistema</span><span class="settings-option-check" aria-hidden="true">✓</span></button></div></div></div>
                 <div class="settings-control"><span class="settings-row-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"></path><path d="M10 21h4"></path></svg></span><div><strong>Notificações</strong><small>Permite avisos e confirmações dentro do KAZER.</small></div><button class="switch on" id="notificationsSwitch" type="button" aria-label="Alternar notificações" aria-pressed="true"></button></div>
                 <div class="settings-control"><span class="settings-row-icon settings-language-icon" aria-hidden="true">Aa</span><div><strong>Idioma</strong><small>Idioma dos controles e mensagens.</small></div><div class="settings-custom-select" data-custom-select="language"><select class="settings-select-native" id="languageSelect" tabindex="-1" aria-hidden="true"><option value="pt-BR">Português (Brasil)</option><option value="en-US">English</option></select><button class="settings-select-trigger" id="languageTrigger" type="button" aria-haspopup="listbox" aria-expanded="false"><span data-select-label>Português (Brasil)</span><svg class="settings-select-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg></button><div class="settings-select-menu" data-select-menu role="listbox" aria-label="Idioma"><button class="settings-select-option" type="button" data-select-value="pt-BR" role="option" aria-selected="false"><span>Português (Brasil)</span><span class="settings-option-check" aria-hidden="true">✓</span></button><button class="settings-select-option" type="button" data-select-value="en-US" role="option" aria-selected="false"><span>English</span><span class="settings-option-check" aria-hidden="true">✓</span></button></div></div></div>
@@ -4905,55 +5037,81 @@
         </div>
       </section>
 
+      <section class="usage-screen" id="usageScreen" role="dialog" aria-modal="true" aria-labelledby="usageScreenTitle" aria-hidden="true" hidden>
+        <header class="usage-screen-head">
+          <button class="usage-back" id="usageBack" type="button" aria-label="Voltar para Configurações"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"></path></svg><span>Voltar</span></button>
+          <h1 id="usageScreenTitle">Plano Grátis</h1>
+          <span class="usage-head-spacer" aria-hidden="true"></span>
+        </header>
+        <main class="usage-screen-scroll" id="usageScreenContent">
+          <div class="usage-screen-inner">
+            <div class="usage-intro"><span class="usage-eyebrow">VISÃO DA CONTA</span><h2>Seu uso, sem surpresas.</h2><p>Confira os dados de consumo e a próxima atualização informados pela sua conta.</p></div>
+            <section class="usage-data-card" aria-labelledby="usageDataHeading">
+              <div class="usage-card-top"><div><span class="usage-card-kicker">PLANO ATUAL</span><strong id="usagePlanName">Plano Grátis</strong></div><button class="usage-refresh" id="usageRefresh" type="button" aria-label="Atualizar dados de uso"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 7v5h-5M4 17v-5h5"></path><path d="M5.5 9A7 7 0 0 1 18 6.5L20 12M4 12l2 5.5A7 7 0 0 0 18.5 15"></path></svg><span>Atualizar</span></button></div>
+              <h3 id="usageDataHeading">Consumo do plano</h3>
+              <div class="usage-facts" id="usageFacts" hidden>
+                <div class="usage-percent-line" id="usagePercentLine" hidden><strong id="usagePercentValue">—%</strong><span>do limite reportado</span></div>
+                <div class="usage-meter" id="usageMeter" role="progressbar" aria-label="Consumo informado pela conta" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" hidden><span id="usageMeterFill"></span></div>
+                <div class="usage-count-line" id="usageCountLine" hidden><span id="usageCountLabel">Uso registrado</span><strong><span id="usageUsedValue">—</span><span aria-hidden="true"> / </span><span id="usageLimitValue">—</span></strong></div>
+                <div class="usage-reset-line"><span>Próxima atualização</span><strong id="usageResetValue">Não informada</strong></div>
+                <p class="usage-data-note">Informações carregadas do estado de uso autenticado da conta.</p>
+              </div>
+              <p class="usage-feedback" id="usageFeedback" role="status" aria-live="polite">Carregando informações reais de uso…</p>
+            </section>
+            <section class="usage-pro-card" aria-labelledby="usageProTitle">
+              <span class="usage-pro-label">KAZER PRO · PLANEJADO</span><h2 id="usageProTitle">Mais espaço para ideias maiores.</h2><p>Os recursos Pro ainda estão em preparação. Consulte a comparação para ver o que está planejado — sem promessa de compra ou ativação.</p><button id="usageComparePlans" type="button">Comparar planos <span aria-hidden="true">→</span></button>
+            </section>
+          </div>
+        </main>
+      </section>
+
       <div class="plans-backdrop" id="plansBackdrop" hidden></div>
       <section class="plans-screen" id="plansScreen" role="dialog" aria-modal="true" aria-label="Planos do Kazer" aria-hidden="true" hidden>
         <header class="plans-head">
           <button class="icon-button" id="plansBack" type="button" aria-label="Fechar"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"></path></svg></button>
-          <div class="plans-head-copy"><span>LOJA KAZER</span><h2>Escolha seu plano</h2><small>Uma experiência no seu ritmo.</small></div>
+          <div class="plans-head-copy"><span>LOJA KAZER</span><h2>Compare planos</h2><small>Free ativo · KAZER Pro em planejamento.</small></div>
           <span class="connectors-head-spacer" aria-hidden="true"></span>
         </header>
         <div class="plans-brand-banner">
           <span class="plans-brand-mark"><img src="../download/assets/kazer-mark.svg?v=20260922" alt="Símbolo KAZER" /></span>
-          <div class="plans-brand-copy"><span>MAIS POSSIBILIDADES, NO SEU RITMO</span><h3>Mais espaço para suas ideias.</h3><p>Do essencial ao Pro: escolha como quer conversar, criar e explorar com o KAZER.</p></div>
+          <div class="plans-brand-copy"><span>PLANOS KAZER</span><h3>Mais espaço para suas ideias.</h3><p>O Free está ativo. Os recursos KAZER Pro continuam em planejamento.</p></div>
           <span class="plans-brand-orbit" aria-hidden="true"><i></i></span>
         </div>
         <div class="plans-body" data-mobile-plan="free">
-          <div class="plans-section-heading"><span>PLANOS DISPONÍVEIS</span><small>Compare benefícios e escolha seu ritmo.</small></div>
+          <div class="plans-section-heading"><span>PLANOS E RECURSOS</span><small>Compare o que está ativo e o que ainda está em planejamento.</small></div>
           <div class="plans-mobile-switch" id="plansMobileSwitch" role="tablist" aria-label="Escolha um plano para comparar">
             <button class="plans-mobile-choice active" type="button" role="tab" aria-selected="true" aria-controls="planFreeCard" data-mobile-plan-choice="free"><span>Free</span><small>Seu plano atual</small></button>
-            <button class="plans-mobile-choice" type="button" role="tab" aria-selected="false" aria-controls="planProCard" data-mobile-plan-choice="pro"><span>Kazer Pro</span><small>R$ 59,90/mês</small></button>
+            <button class="plans-mobile-choice" type="button" role="tab" aria-selected="false" aria-controls="planProCard" data-mobile-plan-choice="pro"><span>Kazer Pro</span><small>Em planejamento</small></button>
           </div>
           <article class="plan-card plan-card-current" id="planFreeCard" aria-label="Plano Free atual">
             <div class="plan-card-topline"><span class="plan-card-label">FREE</span><span class="plan-current-pill">SEU PLANO ATUAL</span></div>
             <strong class="plan-card-name">Essencial</strong>
             <div class="plan-card-free-price"><strong>Grátis</strong><span>para começar</span></div>
-            <p class="plan-card-desc">Converse, crie e explore o KAZER com o uso essencial.</p>
+            <p class="plan-card-desc">Acesso ao chat e aos recursos disponíveis na sua conta.</p>
             <div class="plan-card-divider"></div>
             <ul class="plan-card-compare-list">
-              <li><span class="plan-feature-check">✓</span><span>Recursos essenciais do KAZER</span></li>
-              <li><span class="plan-feature-check">✓</span><span>Uso acompanhado por ciclo</span></li>
-              <li><span class="plan-feature-check">✓</span><span>Chat e memória disponíveis</span></li>
-              <li><span class="plan-feature-muted">—</span><span>Limite padrão de conectores e anexos</span></li>
+              <li><span class="plan-feature-check">✓</span><span>Chat com o KAZER</span></li>
+              <li><span class="plan-feature-check">✓</span><span>Pesquisa WebKazer</span></li>
+              <li><span class="plan-feature-check">✓</span><span>Envio de anexos na conversa</span></li>
+              <li><span class="plan-feature-check">✓</span><span>Uso da conta consultável em detalhes</span></li>
             </ul>
-            <div class="plan-card-cycle"><span class="plan-cycle-label">SEU CICLO</span><strong>0% <i>→</i> 100%</strong><small>Ciclo mensal planejado; o status será exibido aqui.</small></div>
             <div class="plan-card-current-foot"><span class="plan-current-dot"></span>Você está neste plano</div>
           </article>
 
           <article class="plan-card plan-card-pro" id="planProCard" aria-label="Plano Kazer Pro">
             <div class="plan-card-topline"><span class="plan-card-pro-badge">KAZER PRO</span><span class="plan-pro-pill">MAIS PODER</span></div>
-            <p class="plan-card-pro-tagline">Mais contexto. Mais inteligência. Mais KAZER.</p>
-            <div class="plan-card-pro-price"><span class="plan-card-pro-currency">R$</span><span class="plan-card-pro-value">59,90</span><span class="plan-card-pro-period">/mês</span></div>
-            <p class="plan-card-desc">Para quem quer levar ideias mais longe, todos os dias.</p>
+            <p class="plan-card-pro-tagline">Mais recursos para fluxos de trabalho exigentes.</p>
+            <p class="plan-card-desc">Os benefícios abaixo estão em planejamento e ainda não estão ativos.</p>
             <div class="plan-card-divider"></div>
             <ul class="plan-card-compare-list plan-card-pro-list">
-              <li><span class="plan-feature-pro">✦</span><span><strong>+35% de uso por dia</strong></span></li>
-              <li><span class="plan-feature-pro">✦</span><span>Mais inteligência e domínio de contexto</span></li>
-              <li><span class="plan-feature-pro">✦</span><span>Mais memória e aprendizagem contínua</span></li>
-              <li><span class="plan-feature-pro">✦</span><span>Mais usos de conectores e anexos</span></li>
-              <li><span class="plan-feature-pro">✦</span><span>Prioridade em novos recursos</span></li>
+              <li><span class="plan-feature-pro">◷</span><span><strong>Limites de uso ampliados</strong><small class="plan-benefit-status">Planejado · valores e período ainda não definidos</small></span></li>
+              <li><span class="plan-feature-pro">◷</span><span><strong>Modelos e inteligência avançados</strong><small class="plan-benefit-status">Planejado · catálogo ainda não disponível</small></span></li>
+              <li><span class="plan-feature-pro">◷</span><span><strong>Mais contexto para conversas longas</strong><small class="plan-benefit-status">Planejado · capacidade ainda não definida</small></span></li>
+              <li><span class="plan-feature-pro">◷</span><span><strong>Maior capacidade para anexos e conectores</strong><small class="plan-benefit-status">Planejado · limites ainda não definidos</small></span></li>
+              <li><span class="plan-feature-pro">◷</span><span><strong>Suporte prioritário</strong><small class="plan-benefit-status">Em avaliação · nenhum canal prioritário está ativo</small></span></li>
             </ul>
-            <button type="button" id="plansProAction">Conhecer KAZER Pro <span aria-hidden="true">↗</span></button>
-            <p class="plan-card-pro-note">Pagamento ainda não disponível. Estamos preparando o lançamento.</p>
+            <button type="button" id="plansProAction">Ver detalhes do KAZER Pro <span aria-hidden="true">↗</span></button>
+            <p class="plan-card-pro-note">KAZER Pro ainda não está disponível para contratação. Não há preço, teste grátis ou checkout ativo.</p>
           </article>
         </div>
       </section>
@@ -5170,17 +5328,29 @@
         const settingsMobileAvatarFallback = document.getElementById("settingsMobileAvatarFallback");
         const settingsMobileAccountPhoto = document.getElementById("settingsMobileAccountPhoto");
         const settingsAccountOpen = document.getElementById("settingsAccountOpen");
-        const settingsMobilePlan = document.getElementById("settingsMobilePlan");
         const settingsMobileUpgrade = document.getElementById("settingsMobileUpgrade");
-        const settingsMobileCreditNext = document.getElementById("settingsMobileCreditNext");
+        const usageScreen = document.getElementById("usageScreen");
+        const usageBack = document.getElementById("usageBack");
+        const usagePlanTitle = document.getElementById("usageScreenTitle");
+        const usagePlanName = document.getElementById("usagePlanName");
+        const usageFacts = document.getElementById("usageFacts");
+        const usageFeedback = document.getElementById("usageFeedback");
+        const usagePercentLine = document.getElementById("usagePercentLine");
+        const usagePercentValue = document.getElementById("usagePercentValue");
+        const usageMeter = document.getElementById("usageMeter");
+        const usageMeterFill = document.getElementById("usageMeterFill");
+        const usageCountLine = document.getElementById("usageCountLine");
+        const usageCountLabel = document.getElementById("usageCountLabel");
+        const usageUsedValue = document.getElementById("usageUsedValue");
+        const usageLimitValue = document.getElementById("usageLimitValue");
+        const usageResetValue = document.getElementById("usageResetValue");
+        const usageRefresh = document.getElementById("usageRefresh");
+        const usageComparePlans = document.getElementById("usageComparePlans");
         const plansBackdrop = document.getElementById("plansBackdrop");
         const plansScreen = document.getElementById("plansScreen");
         const plansBack = document.getElementById("plansBack");
         const plansProAction = document.getElementById("plansProAction");
-        const settingsMobileCreditBalance = document.getElementById("settingsMobileCreditBalance");
-        const settingsUsageBar = document.getElementById("settingsUsageBar");
         const settingsUsageToggle = document.getElementById("settingsUsageToggle");
-        const settingsUsageDetails = document.getElementById("settingsUsageDetails");
         const webSearchForm = document.getElementById("webSearchForm");
         const webQuery = document.getElementById("webQuery");
         const webSources = document.getElementById("webSources");
@@ -5362,31 +5532,33 @@
           return new Intl.DateTimeFormat("pt-BR", { dateStyle: "short", timeStyle: "short", timeZone: "UTC" }).format(date) + " UTC";
         };
 
+        const readUsageNumber = (value) => {
+          if (typeof value === "number" && Number.isFinite(value)) return value;
+          if (typeof value === "string" && value.trim() !== "" && Number.isFinite(Number(value))) return Number(value);
+          return NaN;
+        };
+
         const getUsagePercent = (next) => {
           if (!next || typeof next !== "object") return null;
           const direct = [next.usage_percent, next.usage_percentage, next.percent_used, next.percentage_used]
-            .map(Number).find((value) => Number.isFinite(value));
+            .map(readUsageNumber).find((value) => Number.isFinite(value));
           if (Number.isFinite(direct)) return Math.max(0, Math.min(100, Math.round(direct)));
           const remaining = [next.usage_remaining_percent, next.remaining_percent]
-            .map(Number).find((value) => Number.isFinite(value));
+            .map(readUsageNumber).find((value) => Number.isFinite(value));
           if (Number.isFinite(remaining)) return Math.max(0, Math.min(100, Math.round(100 - remaining)));
           const used = [next.credits_used, next.used_credits, next.usage_used]
-            .map(Number).find((value) => Number.isFinite(value));
+            .map(readUsageNumber).find((value) => Number.isFinite(value));
           const limit = [next.credits_limit, next.usage_limit, next.monthly_credits_limit]
-            .map(Number).find((value) => Number.isFinite(value) && value > 0);
+            .map(readUsageNumber).find((value) => Number.isFinite(value) && value > 0);
           if (Number.isFinite(used) && Number.isFinite(limit)) return Math.max(0, Math.min(100, Math.round((used / limit) * 100)));
           return null;
         };
 
         const updateUsageDisplay = (next, animate = true) => {
           const percent = getUsagePercent(next);
-          const targets = [creditBalanceValue, settingsMobileCreditBalance, newChatCreditBalance].filter(Boolean);
+          const targets = [creditBalanceValue, newChatCreditBalance].filter(Boolean);
           const label = percent === null ? "—%" : `${percent}%`;
           targets.forEach((element) => { element.textContent = label; element.dataset.value = percent === null ? "" : String(percent); });
-          if (settingsUsageBar) {
-            settingsUsageBar.style.width = `${percent === null ? 0 : percent}%`;
-            settingsUsageBar.parentElement?.setAttribute("aria-valuenow", String(percent === null ? 0 : percent));
-          }
           if (settingsUsageToggle && animate && percent !== null) {
             settingsUsageToggle.classList.remove("is-changing");
             void settingsUsageToggle.offsetWidth;
@@ -5396,7 +5568,7 @@
         };
 
         const animateCreditBalance = (target, animate = true) => {
-          const targets = [creditBalanceValue, settingsMobileCreditBalance, newChatCreditBalance].filter(Boolean);
+          const targets = [creditBalanceValue, newChatCreditBalance].filter(Boolean);
           if (!targets.length) return;
           const next = Math.max(0, Number(target) || 0);
           const previous = Number(targets[0].dataset.value ?? next);
@@ -5433,20 +5605,112 @@
           requestAnimationFrame(step);
         };
 
+        const renderUsageScreen = (next, loading = false) => {
+          if (!usageScreen) return;
+          const planSource = next?.plan ?? usageState?.plan;
+          const plan = String(planSource ?? "").trim().toLowerCase().replace(/[-\s]+/g, "_");
+          const isProPlan = plan === "pro" || plan === "kazer_pro";
+          const planLabel = isProPlan ? "KAZER Pro" : plan === "free" ? "Plano Grátis" : String(planSource || "Plano não informado").trim();
+          if (usagePlanTitle) usagePlanTitle.textContent = planLabel;
+          if (usagePlanName) usagePlanName.textContent = planLabel;
+          if (loading) {
+            usageFacts.hidden = true;
+            usageFeedback.hidden = false;
+            usageFeedback.textContent = "Carregando informações reais de uso…";
+            return;
+          }
+          if (!next || typeof next !== "object") {
+            usageFacts.hidden = true;
+            usageFeedback.hidden = false;
+            usageFeedback.textContent = "Não foi possível carregar o uso agora. Os dados de consumo e atualização estão indisponíveis.";
+            return;
+          }
+          const percent = getUsagePercent(next);
+          const usedFields = [next.usage_used, next.credits_used, next.used_credits, next.monthly_event_count, next.monthly_message_count, next.monthly_attachment_count];
+          const limitFields = [next.usage_limit, next.credits_limit, next.monthly_credits_limit, next.daily_limit, next.credit_limit];
+          const used = usedFields.map(readUsageNumber).find((value) => Number.isFinite(value) && value >= 0);
+          const limit = limitFields.map(readUsageNumber).find((value) => Number.isFinite(value) && value > 0);
+          const showCount = Number.isFinite(used) && Number.isFinite(limit);
+          const reset = next.next_reset_at || next.next_credit_reset_at || next.monthly_reset_at;
+          const resetDate = reset ? new Date(reset) : null;
+          const hasReset = Boolean(resetDate && Number.isFinite(resetDate.getTime()));
+          const formattedReset = hasReset ? formatResetTime(reset) : "Não informada pela conta";
+          const hasFacts = percent !== null || showCount || hasReset;
+          usageFacts.hidden = !hasFacts;
+          usageFeedback.hidden = hasFacts;
+          if (usagePercentLine) usagePercentLine.hidden = percent === null;
+          if (usagePercentValue && percent !== null) usagePercentValue.textContent = `${percent}%`;
+          if (usageMeter) {
+            usageMeter.hidden = percent === null;
+            if (percent !== null) {
+              usageMeter.setAttribute("aria-valuenow", String(percent));
+              usageMeterFill.style.width = `${percent}%`;
+            }
+          }
+          if (usageCountLine) usageCountLine.hidden = !showCount;
+          if (showCount) {
+            const hasTokenFields = [next.credits_used, next.used_credits, next.credits_limit, next.credit_limit].some((value) => Number.isFinite(readUsageNumber(value)));
+            const hasEventFields = [next.monthly_event_count, next.monthly_message_count, next.monthly_attachment_count].some((value) => Number.isFinite(readUsageNumber(value)));
+            usageCountLabel.textContent = hasTokenFields ? "Tokens utilizados" : hasEventFields ? "Registros contabilizados" : "Uso reportado";
+            usageUsedValue.textContent = new Intl.NumberFormat("pt-BR").format(used);
+            usageLimitValue.textContent = new Intl.NumberFormat("pt-BR").format(limit);
+          }
+          if (usageResetValue) usageResetValue.textContent = formattedReset;
+          if (!hasFacts) {
+            usageFeedback.textContent = "A conta não retornou dados de consumo ou de atualização para exibir.";
+          }
+        };
+
+        const openUsageScreen = async () => {
+          closeCustomSelects();
+          closeAttachmentSheet();
+          profilePopover.classList.remove("visible");
+          webPopover.classList.remove("visible");
+          profileMore?.classList.remove("open");
+          profileMoreToggle?.setAttribute("aria-expanded", "false");
+          usageScreen.hidden = false;
+          usageScreen.setAttribute("aria-hidden", "false");
+          settingsPopover.setAttribute("aria-hidden", "true");
+          renderUsageScreen(null, true);
+          requestAnimationFrame(() => usageScreen.classList.add("visible"));
+          usageBack?.focus({ preventScroll: true });
+          const latest = await loadUsage(false);
+          renderUsageScreen(latest, false);
+        };
+
+        const closeUsageScreen = () => {
+          usageScreen?.classList.remove("visible");
+          usageScreen?.setAttribute("aria-hidden", "true");
+          window.setTimeout(() => {
+            if (usageScreen) usageScreen.hidden = true;
+            if (settingsPopover && !settingsPopover.hidden) settingsPopover.setAttribute("aria-hidden", "false");
+            settingsUsageToggle?.focus({ preventScroll: true });
+          }, 180);
+        };
+        usageScreen?.addEventListener("keydown", (event) => {
+          if (event.key === "Escape") { event.preventDefault(); closeUsageScreen(); return; }
+          if (event.key !== "Tab" || plansScreen?.classList.contains("visible")) return;
+          const controls = [...usageScreen.querySelectorAll('button:not(:disabled):not([hidden])')].filter((element) => element.getClientRects().length);
+          if (!controls.length) return;
+          const first = controls[0];
+          const last = controls[controls.length - 1];
+          if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
+          else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
+        });
+
         const applyUsageState = (next, animate = true) => {
           if (!next || typeof next !== "object") return;
           usageState = next;
           if (creditIndicator) creditIndicator.hidden = false;
           const normalizedPlan = String(next.plan || "free").trim().toLowerCase().replace(/[-\s]+/g, "_");
           const isProPlan = normalizedPlan === "pro" || normalizedPlan === "kazer_pro";
-          if (settingsMobilePlan) settingsMobilePlan.textContent = isProPlan ? "Kazer Pro" : "Free";
           if (settingsMobileUpgrade) settingsMobileUpgrade.hidden = isProPlan;
           if (proAction) proAction.hidden = isProPlan;
           updateUsageDisplay(next, animate);
-          const nextReset = next.next_reset_at || next.monthly_reset_at || next.next_credit_reset_at;
+          renderUsageScreen(next, false);
+          const nextReset = next.next_reset_at || next.next_credit_reset_at || next.monthly_reset_at;
           if (creditResetValue) creditResetValue.textContent = formatResetTime(nextReset);
-          if (settingsMobileCreditNext) settingsMobileCreditNext.textContent = `Próxima atualização: ${formatResetTime(nextReset)}`;
-          if (attachmentResetValue) attachmentResetValue.textContent = formatResetTime(nextReset);
+          if (attachmentResetValue) attachmentResetValue.textContent = formatResetTime(next.attachment_reset_at || nextReset);
           if (attachmentLimitBanner) attachmentLimitBanner.hidden = next.usage_limit_reached !== true && next.attachment_limit_reached !== true;
           if (creditLimitModal) creditLimitModal.hidden = next.usage_limit_reached !== true && next.credits_limit_reached !== true;
         };
@@ -7304,40 +7568,40 @@
             }
 
             context.save();
-            context.globalCompositeOperation = "lighter";
+            context.globalCompositeOperation = "source-over";
             context.beginPath();
             context.moveTo(projected[0], projected[1]);
             for (let index = 1; index < points.length; index += 1) context.lineTo(projected[index * 2], projected[index * 2 + 1]);
-            context.strokeStyle = "rgba(151, 16, 25, .28)";
-            context.lineWidth = 2.8;
-            context.shadowColor = "rgba(207, 31, 42, .56)";
-            context.shadowBlur = 5;
+            context.strokeStyle = "rgba(132, 117, 82, .18)";
+            context.lineWidth = 1.7;
+            context.shadowColor = "rgba(203, 180, 125, .15)";
+            context.shadowBlur = 2;
             context.stroke();
             context.shadowBlur = 0;
-            context.strokeStyle = "rgba(224, 43, 53, .68)";
+            context.strokeStyle = "rgba(203, 180, 125, .54)";
             context.lineWidth = 0.95;
             context.stroke();
-            context.strokeStyle = "rgba(255, 68, 76, .58)";
+            context.strokeStyle = "rgba(239, 225, 191, .34)";
             context.lineWidth = 0.42;
             context.stroke();
 
             if (!reducedMotion) {
-              const trailCount = 5;
+              const trailCount = 2;
               for (let trail = 0; trail < trailCount; trail += 1) {
                 const head = Math.floor((time * (32 + trail * 4) + trail * points.length / trailCount) % points.length);
                 context.beginPath();
                 context.moveTo(projected[head * 2], projected[head * 2 + 1]);
-                for (let stepIndex = 1; stepIndex <= 84; stepIndex += 1) {
+                for (let stepIndex = 1; stepIndex <= 36; stepIndex += 1) {
                   const pointIndex = (head + stepIndex) % points.length;
                   context.lineTo(projected[pointIndex * 2], projected[pointIndex * 2 + 1]);
                 }
-                context.strokeStyle = trail % 2 ? "rgba(255, 54, 64, .88)" : "rgba(205, 26, 37, .82)";
+                context.strokeStyle = trail % 2 ? "rgba(226, 210, 169, .64)" : "rgba(168, 151, 111, .52)";
                 context.lineWidth = trail % 3 === 0 ? 1.35 : 0.85;
-                context.shadowColor = "rgba(238, 39, 49, .9)";
-                context.shadowBlur = 4;
+                context.shadowColor = "rgba(203, 180, 125, .38)";
+                context.shadowBlur = 1.5;
                 context.stroke();
               }
-              for (let glyph = 0; glyph < matrixGlyphs.length; glyph += 1) {
+              for (let glyph = 0; glyph < matrixGlyphs.length; glyph += 2) {
                 const pointIndex = Math.floor((time * (35 + glyph * 2) + glyph * points.length / matrixGlyphs.length) % points.length);
                 const before = (pointIndex + points.length - 4) % points.length;
                 const after = (pointIndex + 4) % points.length;
@@ -7345,9 +7609,9 @@
                 context.save();
                 context.translate(projected[pointIndex * 2], projected[pointIndex * 2 + 1]);
                 context.rotate(angle);
-                context.globalAlpha = 0.5 + (0.5 + 0.5 * Math.sin(time * 2.1 + glyph * 1.7)) * 0.42;
-                context.fillStyle = "rgba(255, 67, 75, .95)";
-                context.shadowColor = "rgba(238, 39, 49, .9)";
+                context.globalAlpha = 0.24 + (0.5 + 0.5 * Math.sin(time * 2.1 + glyph * 1.7)) * 0.22;
+                context.fillStyle = "rgba(232, 218, 181, .68)";
+                context.shadowColor = "rgba(203, 180, 125, .38)";
                 context.shadowBlur = 2;
                 const bits = matrixGlyphs[glyph];
                 for (let bit = 0; bit < bits.length; bit += 1) {
@@ -7358,12 +7622,12 @@
                 context.restore();
               }
               context.shadowBlur = 3;
-              context.shadowColor = "rgba(245, 45, 55, .82)";
-              for (let spark = 0; spark < 22; spark += 1) {
-                const pointIndex = Math.floor((time * (56 + spark * 2) + spark * points.length / 22) % points.length);
+              context.shadowColor = "rgba(203, 180, 125, .30)";
+              for (let spark = 0; spark < 8; spark += 1) {
+                const pointIndex = Math.floor((time * (56 + spark * 2) + spark * points.length / 8) % points.length);
                 const pulse = 0.22 + (0.5 + 0.5 * Math.sin(time * 2.7 + spark * 1.9)) * 0.6;
                 const size = spark % 5 === 0 ? 1.5 : 0.9;
-                context.fillStyle = `rgba(255, 48, 58, ${pulse.toFixed(3)})`;
+                context.fillStyle = `rgba(224, 207, 161, ${(pulse * 0.48).toFixed(3)})`;
                 context.fillRect(projected[pointIndex * 2] - size / 2, projected[pointIndex * 2 + 1] - size / 2, size, size);
               }
             }
@@ -7371,7 +7635,7 @@
 
             context.save();
             context.globalCompositeOperation = "source-over";
-            context.strokeStyle = "rgba(183, 31, 40, .42)";
+            context.strokeStyle = "rgba(203, 180, 125, .24)";
             context.lineWidth = 0.7;
             const inset = 3.5, corner = 5.5;
             context.beginPath();
@@ -7816,8 +8080,12 @@
           profileMoreToggle.setAttribute("aria-expanded", String(isOpen));
         });
         webKazerAction.addEventListener("click", () => openWeb());
-        const openPro = () => { closeMenus(); showToast("Kazer Pro: página de compra em breve"); };
-        const openPlansScreen = ({ keepSettingsOpen = false } = {}) => {
+        const openPro = () => { closeMenus(); showToast("KAZER Pro ainda está em planejamento; nenhuma contratação está disponível."); };
+        let plansReturnFocus = null;
+        const openPlansScreen = ({ keepSettingsOpen = false, returnFocus = null } = {}) => {
+          plansReturnFocus = returnFocus;
+          if (returnFocus === usageComparePlans) usageScreen?.setAttribute("aria-hidden", "true");
+          if (returnFocus === settingsMobileUpgrade) settingsPopover.setAttribute("aria-hidden", "true");
           if (keepSettingsOpen) {
             closeCustomSelects();
             closeAttachmentSheet();
@@ -7833,19 +8101,46 @@
             plansBackdrop.classList.add("visible");
             plansScreen.classList.add("visible");
           });
+          plansBack?.focus({ preventScroll: true });
         };
         const closePlansScreen = () => {
           plansBackdrop.classList.remove("visible");
           plansScreen.classList.remove("visible");
+          plansScreen.setAttribute("aria-hidden", "true");
           window.setTimeout(() => {
             plansBackdrop.hidden = true;
             plansScreen.hidden = true;
-            settingsMobileUpgrade?.focus({ preventScroll: true });
+            if (plansReturnFocus === usageComparePlans && usageScreen && !usageScreen.hidden) usageScreen.setAttribute("aria-hidden", "false");
+            if (plansReturnFocus === settingsMobileUpgrade && settingsPopover && !settingsPopover.hidden) settingsPopover.setAttribute("aria-hidden", "false");
+            (plansReturnFocus || settingsMobileUpgrade)?.focus({ preventScroll: true });
+            plansReturnFocus = null;
           }, 220);
         };
-        settingsMobileUpgrade?.addEventListener("click", () => openPlansScreen({ keepSettingsOpen: true }));
+        settingsMobileUpgrade?.addEventListener("click", () => openPlansScreen({ keepSettingsOpen: true, returnFocus: settingsMobileUpgrade }));
+        usageComparePlans?.addEventListener("click", () => openPlansScreen({ keepSettingsOpen: true, returnFocus: usageComparePlans }));
+        usageRefresh?.addEventListener("click", async () => {
+          usageRefresh.disabled = true;
+          usageRefresh.setAttribute("aria-busy", "true");
+          renderUsageScreen(null, true);
+          const latest = await loadUsage(false);
+          renderUsageScreen(latest, false);
+          usageRefresh.disabled = false;
+          usageRefresh.removeAttribute("aria-busy");
+        });
+        usageBack?.addEventListener("click", closeUsageScreen);
+        settingsUsageToggle?.addEventListener("click", openUsageScreen);
         plansBack?.addEventListener("click", closePlansScreen);
         plansBackdrop?.addEventListener("click", closePlansScreen);
+        plansScreen?.addEventListener("keydown", (event) => {
+          if (event.key === "Escape") { event.preventDefault(); closePlansScreen(); return; }
+          if (event.key !== "Tab") return;
+          const controls = [...plansScreen.querySelectorAll('button:not(:disabled):not([hidden])')].filter((element) => element.getClientRects().length);
+          if (!controls.length) return;
+          const first = controls[0];
+          const last = controls[controls.length - 1];
+          if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
+          else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
+        });
         const plansMobileSwitch = document.getElementById("plansMobileSwitch");
         plansMobileSwitch?.addEventListener("click", (event) => {
           const button = event.target.closest("[data-mobile-plan-choice]");
@@ -7859,7 +8154,7 @@
             tab.setAttribute("aria-selected", String(active));
           });
         });
-        plansProAction?.addEventListener("click", () => showToast("Kazer Pro: pagamentos em desenvolvimento"));
+        plansProAction?.addEventListener("click", () => showToast("KAZER Pro ainda está em planejamento; nenhuma contratação está disponível."));
         proAction.addEventListener("click", openPro);
         creditProButton?.addEventListener("click", openPro);
         attachmentProButton?.addEventListener("click", openPro);
@@ -7891,7 +8186,7 @@
         settingsLogoutAction.addEventListener("click", logout);
         accountLogoutAction?.addEventListener("click", logout);
         document.addEventListener("click", (event) => {
-          if (!event.target.closest(".profile-popover") && !event.target.closest("#historyBrand") && !event.target.closest("#historySettingsAction") && !event.target.closest(".settings-popover") && !event.target.closest(".web-popover") && !event.target.closest(".attachment-sheet") && !event.target.closest("#attachButton") && !event.target.closest("#accountScreen") && !event.target.closest(".plans-screen") && !event.target.closest("#plansBackdrop")) closeMenus();
+          if (!event.target.closest(".profile-popover") && !event.target.closest("#historyBrand") && !event.target.closest("#historySettingsAction") && !event.target.closest(".settings-popover") && !event.target.closest(".web-popover") && !event.target.closest(".attachment-sheet") && !event.target.closest("#attachButton") && !event.target.closest("#accountScreen") && !event.target.closest(".usage-screen") && !event.target.closest(".plans-screen") && !event.target.closest("#plansBackdrop")) closeMenus();
         });
 
         closeSettings.addEventListener("click", closeSettingsModal);
@@ -7916,13 +8211,6 @@
           settingsSearchToggle.setAttribute("aria-expanded", String(isOpening));
           if (isOpening) window.setTimeout(() => settingsSearch.focus(), 0);
           else { settingsSearch.value = ""; applySettingsSearch(); settingsSearchToggle.focus(); }
-        });
-        settingsUsageToggle?.addEventListener("click", () => {
-          if (!settingsUsageDetails) return;
-          const expanded = settingsUsageToggle.getAttribute("aria-expanded") === "true";
-          settingsUsageDetails.hidden = expanded;
-          settingsUsageToggle.setAttribute("aria-expanded", String(!expanded));
-          settingsUsageToggle.classList.toggle("is-open", !expanded);
         });
         appearanceSelect.addEventListener("change", () => {
           settingsState.appearance = appearanceSelect.value;
