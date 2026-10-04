@@ -44,6 +44,7 @@ assert(chatUi.includes("Only explicit visual") && chatUi.includes("if (!VISUAL_L
 assert(chatUi.includes("querySelectorAll(\"style\")") && chatUi.includes("sanitizeVisualStyle(node.textContent)"), "Estilos SVG ricos ainda são removidos durante a sanitização");
 assert(instructionsApi.includes("CONTINUIDADE DA CONVERSA") && instructionsApi.includes("não responda com uma saudação genérica"), "O Brain não recebeu instrução explícita de continuidade");
 assert(chatUi.includes("selectedFiles = files;"), "O frontend não preserva anexos depois de uma falha");
+assert(chatUi.includes("A pessoa mantém o controle da rolagem") && !chatUi.includes("renderAssistantContent(content, text.slice(0, index), { writing: index < total });\n            scrollBottom();"), "A geração ainda força a tela para baixo");
 assert(chatUi.includes("A mensagem que falhou continua sendo contexto válido"), "O frontend ainda remove o contexto quando a resposta falha");
 assert(!chatUi.includes("conversationMessages.pop();"), "O frontend ainda descarta a mensagem que falhou");
 assert(!/voice|microphone|getUserMedia|SpeechRecognition|voiceButton/i.test(chatUi), "A interface ainda contém referências ao microfone");

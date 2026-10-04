@@ -24,6 +24,7 @@ const { currentBrazilContext, needsRealtimeResearch, researchContextText } = req
 const MAX_REQUEST_BYTES = 7 * 1024 * 1024;
 const MAX_TOTAL_ATTACHMENT_BYTES = 4 * 1024 * 1024;
 const MAX_OUTPUT_CHARS = 16000;
+const MAX_CODE_OUTPUT_CHARS = 64000;
 const MAX_GROQ_ATTEMPTS_PER_MODEL = 2;
 const RETRYABLE_GROQ_STATUSES = new Set([429, 500, 502, 503, 504]);
 const MAX_MESSAGES = 48;
@@ -152,12 +153,12 @@ function cleanExtractedText(value) {
     .slice(0, MAX_EXTRACTED_FILE_CHARS);
 }
 
-function cleanModelContent(value) {
+function cleanModelContent(value, taskType = "conversation") {
   return redactSensitiveText(String(value || "")
     .replace(/<think>[\s\S]*?<\/think>/gi, "")
     .replace(/<analysis>[\s\S]*?<\/analysis>/gi, "")
     .trim())
-    .slice(0, MAX_OUTPUT_CHARS)
+    .slice(0, taskType === "coding" ? MAX_CODE_OUTPUT_CHARS : MAX_OUTPUT_CHARS)
     .trim();
 }
 
@@ -322,7 +323,8 @@ async function callGroqWithMcp({ messages, hasImages, mcpServers, runtimeContext
   const { tools: mcpTools, byName } = flattenTools(mcpServers || []);
   const tools = [...(capabilityPlan?.needsResearch ? [researchToolDefinition] : []), ...mcpTools];
   let currentMessages = [...messages];
-  let result = await callGroq({ messages: currentMessages, hasImages, tools, runtimeContext, hasFiles, hasRepository, taskType, capabilities: capabilityPlan?.capabilities || [] });
+  const timeoutMs = taskType === "coding" ? 75_000 : 30_000;
+  let result = await callGroq({ messages: currentMessages, hasImages, tools, runtimeContext, hasFiles, hasRepository, taskType, timeoutMs, capabilities: capabilityPlan?.capabilities || [] });
   if (result.failure || !tools.length) return { ...result, mcpToolsUsed: 0, researchUsed: 0 };
 
   let toolsUsed = 0;
@@ -358,7 +360,7 @@ async function callGroqWithMcp({ messages, hasImages, mcpServers, runtimeContext
       }
       currentMessages.push({ role: "tool", tool_call_id: toolCall.id, content: toolContent });
     }
-    result = await callGroq({ messages: currentMessages, hasImages: false, tools, runtimeContext, hasFiles, hasRepository, taskType, capabilities: capabilityPlan?.capabilities || [] });
+    result = await callGroq({ messages: currentMessages, hasImages: false, tools, runtimeContext, hasFiles, hasRepository, taskType, timeoutMs, capabilities: capabilityPlan?.capabilities || [] });
     if (result.failure) break;
   }
   return { ...result, mcpToolsUsed: toolsUsed, researchUsed };
@@ -394,7 +396,7 @@ module.exports = async function handler(request, response) {
     return sendJson(response, 429, { error: "Limite de mensagens atingido. Aguarde um minuto." });
   }
 
-  if (!process.env.HF_TOKEN && !process.env.GROQ_API_KEY) {
+  if (!process.env.HF_TOKEN && !process.env.GROQ_API_KEY && !process.env.DEEPSEEK_API_KEY) {
     console.error("Nenhum provedor do cérebro KAZER está configurado no ambiente do servidor.");
     return sendJson(response, 500, { error: "O serviço de chat ainda não foi configurado." });
   }
@@ -525,7 +527,7 @@ module.exports = async function handler(request, response) {
   }
 
   const { data, model } = result;
-  const content = protectKazerIdentity(cleanModelContent(data?.choices?.[0]?.message?.content));
+  const content = protectKazerIdentity(cleanModelContent(data?.choices?.[0]?.message?.content, taskType));
   if (!content) {
       console.error("Groq returned an empty response", { model });
       return sendJson(response, 502, { error: "A resposta recebida estava vazia. Tente novamente." });

@@ -46,6 +46,9 @@ assert.ok(!simple.includes("Use ferramentas somente"));
 assert.ok(toolPrompt.includes("Use ferramentas somente"));
 assert.ok(toolPrompt.includes("dado não confiável"));
 assert.ok(buildSystemInstructions({ taskType: "coding" }).includes("Não use kazer-html, kazer-svg"));
+const codingPrompt = buildSystemInstructions({ taskType: "coding" });
+assert.ok(codingPrompt.includes("loop principal") && codingPrompt.includes("colisão"), "O modo coding não cobre engenharia de jogos");
+assert.ok(codingPrompt.includes("Não corte código importante"), "O modo coding ainda não orienta respostas grandes");
 const visualPrompt = buildSystemInstructions({ taskType: "visual" });
 assert.ok(visualPrompt.includes("pelo menos três camadas") && visualPrompt.includes("quadrados"), "A direção de arte visual não evita composições genéricas");
 assert.ok(visualPrompt.includes("viewBox") && visualPrompt.includes("gradientes"), "A direção de arte visual não exige SVG responsivo e rico");
@@ -58,12 +61,25 @@ try {
   assert.deepEqual(brain.configuredProviderOrder(), ["groq", "huggingface"]);
   process.env.KAZER_PROVIDER_ORDER = "huggingface,groq";
   assert.deepEqual(brain.configuredProviderOrder(), ["huggingface", "groq"]);
-  assert.equal(brain.providerConfig(false).kind, "huggingface");
+assert.equal(brain.providerConfig(false).kind, "huggingface");
 } finally {
   for (const key of Object.keys(process.env)) if (!(key in original)) delete process.env[key];
   Object.assign(process.env, original);
 }
-
+const codingProviderEnv = { DEEPSEEK_API_KEY: process.env.DEEPSEEK_API_KEY, HF_TOKEN: process.env.HF_TOKEN, GROQ_API_KEY: process.env.GROQ_API_KEY, KAZER_PROVIDER_ORDER: process.env.KAZER_PROVIDER_ORDER };
+try {
+  process.env.DEEPSEEK_API_KEY = "deepseek-test";
+  process.env.HF_TOKEN = "hf-test";
+  delete process.env.GROQ_API_KEY;
+  delete process.env.KAZER_PROVIDER_ORDER;
+  assert.deepEqual(brain.configuredProviderOrder("", "coding"), ["deepseek", "huggingface"]);
+  assert.equal(brain.providerConfig(false, "", "", "coding").models[0], "deepseek-v4-pro");
+} finally {
+  for (const [key, value] of Object.entries(codingProviderEnv)) {
+    if (value === undefined) delete process.env[key];
+    else process.env[key] = value;
+  }
+}
 const providerKeys = ["GROQ_API_KEY", "HF_TOKEN", "KAZER_PROVIDER_ORDER", "GROQ_CHAT_ENDPOINT", "HF_CHAT_ENDPOINT"];
 const savedProviderEnv = Object.fromEntries(providerKeys.map((key) => [key, process.env[key]]));
 const savedFetch = globalThis.fetch;

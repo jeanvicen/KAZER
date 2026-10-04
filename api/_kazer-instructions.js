@@ -29,6 +29,9 @@ const MODULES = {
   coding: [
     "Ao produzir código, use blocos Markdown com a linguagem correta, código completo e pronto para copiar. Preserve o escopo pedido e não altere partes não solicitadas.",
     "Quando a pessoa pedir código-fonte, um arquivo como index.html, HTML, CSS, JavaScript ou outro código, entregue o código literal em bloco Markdown comum (por exemplo, ```html). Não use kazer-html, kazer-svg, iframe ou visual renderizável, a menos que a pessoa peça explicitamente um visual, uma prévia ou uma renderização.",
+    "Para tarefas de programação complexas, faça uma análise silenciosa antes de responder: entenda requisitos, arquitetura, fluxo de dados, estados, erros, segurança, desempenho e critérios de teste. Entregue uma solução executável e coerente, não pseudocódigo, trechos soltos ou promessas de que completará depois. Se a solicitação for grande, organize por arquivos e marque claramente cada caminho.",
+    "Para jogos e modelagem de jogos, trate o pedido como engenharia de software: defina loop principal, estados, entidades, componentes, entrada, colisão, física, câmera, regras, spawn, progressão, áudio/ativos quando aplicável, persistência e desempenho. Prefira uma base jogável e extensível, com funções separadas e comentários somente onde ajudam a manutenção.",
+    "Não corte código importante para caber em uma resposta. Se o resultado exceder o limite seguro, entregue primeiro uma implementação completa por etapas, começando pelo núcleo executável e informando exatamente quais arquivos continuam; nunca substitua partes por reticências sem avisar.",
   ],
   github: [
     "Use contexto de GitHub apenas para o repositório autorizado e selecionado. Não afirme que alterou arquivos, fez commit, abriu pull request ou fez deploy sem operação confirmada e resultado real.",

@@ -14,9 +14,11 @@ A ordem efetiva é:
 
 Uma preferência explícita, como a síntese do WebKazer via Groq, vem antes da ordem padrão. A existência de `HF_TOKEN` sozinha não força Hugging Face a passar à frente de um Groq configurado.
 
+Para tarefas classificadas como `coding`, a fila é independente da ordem geral: **DeepSeek → Qwen Coder via Hugging Face**. Se nenhum dos dois estiver configurado, o servidor não troca silenciosamente para um modelo geral. O modo coding usa mais tempo de timeout, temperatura mais baixa, raciocínio habilitado quando o provider suporta e até 20.000 tokens de saída conforme o teto configurado.
+
 ## Modelos
 
-Cada provider possui um modelo principal e fallback por tipo de entrada. A classificação distingue conversa, análise, código e visão para permitir configuração específica sem tornar o roteador dependente de dezenas de regras.
+Cada provider possui um modelo principal e fallback por tipo de entrada. Para código, o padrão DeepSeek é `deepseek-v4-pro` com `deepseek-flash` como fallback; no Hugging Face, o padrão é `Qwen/Qwen3-Coder-30B-A3B-Instruct`. A classificação distingue conversa, análise, código e visão para permitir configuração específica sem tornar o roteador dependente de dezenas de regras.
 
 ## Entendimento de tarefa
 
