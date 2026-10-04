@@ -7814,7 +7814,7 @@
         settingsLogoutAction.addEventListener("click", logout);
         accountLogoutAction?.addEventListener("click", logout);
         document.addEventListener("click", (event) => {
-          if (!event.target.closest(".profile-popover") && !event.target.closest("#historyBrand") && !event.target.closest(".settings-popover") && !event.target.closest(".web-popover") && !event.target.closest(".attachment-sheet") && !event.target.closest("#attachButton") && !event.target.closest("#accountScreen") && !event.target.closest(".plans-screen") && !event.target.closest("#plansBackdrop")) closeMenus();
+          if (!event.target.closest(".profile-popover") && !event.target.closest("#historyBrand") && !event.target.closest("#historySettingsAction") && !event.target.closest(".settings-popover") && !event.target.closest(".web-popover") && !event.target.closest(".attachment-sheet") && !event.target.closest("#attachButton") && !event.target.closest("#accountScreen") && !event.target.closest(".plans-screen") && !event.target.closest("#plansBackdrop")) closeMenus();
         });
 
         closeSettings.addEventListener("click", closeSettingsModal);
