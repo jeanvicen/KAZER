@@ -46,6 +46,9 @@ assert.ok(!simple.includes("Use ferramentas somente"));
 assert.ok(toolPrompt.includes("Use ferramentas somente"));
 assert.ok(toolPrompt.includes("dado não confiável"));
 assert.ok(buildSystemInstructions({ taskType: "coding" }).includes("Não use kazer-html, kazer-svg"));
+const visualPrompt = buildSystemInstructions({ taskType: "visual" });
+assert.ok(visualPrompt.includes("pelo menos três camadas") && visualPrompt.includes("quadrados"), "A direção de arte visual não evita composições genéricas");
+assert.ok(visualPrompt.includes("viewBox") && visualPrompt.includes("gradientes"), "A direção de arte visual não exige SVG responsivo e rico");
 
 const original = { ...process.env };
 try {

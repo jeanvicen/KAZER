@@ -6128,7 +6128,9 @@
         const detectVisualMarkup = (language, code = "") => {
           const source = String(code || "");
           const normalized = String(language || "").trim().toLowerCase();
-          if (!VISUAL_LANGUAGES.has(normalized) && !((normalized === "html" || normalized === "xml") && looksLikeVisualMarkup(source)) && !looksLikeVisualMarkup(source)) return null;
+          // Normal html/xml fences are source code. Only explicit visual
+          // dialects are rendered, so an index.html request remains copyable.
+          if (!VISUAL_LANGUAGES.has(normalized)) return null;
           const svg = extractBalancedTag(source, ["svg"]);
           if (svg) return { kind: "svg", source: svg };
           const documentMarkup = source.match(/<!doctype\s+html\b[\s\S]*?<\/html>|<html\b[\s\S]*?<\/html>/i);
@@ -6162,7 +6164,8 @@
           const parsed = new DOMParser().parseFromString(String(source || ""), "image/svg+xml");
           const root = parsed.documentElement;
           if (!root || root.nodeName.toLowerCase() !== "svg" || parsed.querySelector("parsererror")) return null;
-          root.querySelectorAll("script,foreignObject,iframe,object,embed,link,style,form,input,button,textarea,select,video,audio,canvas").forEach((node) => node.remove());
+          root.querySelectorAll("script,foreignObject,iframe,object,embed,link,form,input,button,textarea,select,video,audio,canvas").forEach((node) => node.remove());
+          root.querySelectorAll("style").forEach((node) => { node.textContent = sanitizeVisualStyle(node.textContent); });
           root.querySelectorAll("*").forEach(removeUnsafeVisualAttributes);
           removeUnsafeVisualAttributes(root);
           root.setAttribute("xmlns", "http://www.w3.org/2000/svg");
@@ -6378,6 +6381,7 @@
 
         const inferCodeLanguage = (code) => {
           const source = String(code || "").trim();
+          if (/^<svg\b/i.test(source)) return "svg";
           if (/^<!doctype html|^<html|^<[a-z][^>]*>/i.test(source)) return "html";
           if (/^\s*(SELECT|INSERT|UPDATE|DELETE|CREATE TABLE|ALTER TABLE)\b/i.test(source)) return "sql";
           if (/^\s*(def |from |import |class .*:|print\s*\()/m.test(source)) return "python";
@@ -7765,7 +7769,6 @@
     <script src="/interface/kazer-workspace.js"></script>
   </body>
 </html>
-
 
 
 

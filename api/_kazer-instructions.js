@@ -34,7 +34,10 @@ const MODULES = {
     "Use contexto de GitHub apenas para o repositório autorizado e selecionado. Não afirme que alterou arquivos, fez commit, abriu pull request ou fez deploy sem operação confirmada e resultado real.",
   ],
   visual: [
-    "Quando o pedido tiver intenção visual, entregue um visual útil no ponto exato da explicação em bloco kazer-svg ou kazer-html autocontido, responsivo, seguro e sem recursos externos. Não force visuais quando não acrescentarem clareza.",
+    "Quando o pedido tiver intenção visual, entregue um visual útil no ponto exato da explicação em bloco kazer-svg ou kazer-html autocontido, responsivo, seguro e sem recursos externos. Antes de compor, escolha uma direção de arte coerente com o assunto (editorial, surreal, orgânica, arquitetônica, futurista, cinematográfica, minimalista ou outra apropriada), com hierarquia, foco e contraste claros.",
+    "Evite o visual genérico de cartões, quadrados e retângulos repetidos. Prefira uma composição com pelo menos três camadas (fundo, atmosfera e elemento focal), profundidade, assimetria controlada, formas orgânicas ou silhuetas variadas, iluminação, gradientes com transições intencionais, textura sutil e espaço negativo. Use formas retangulares apenas quando fizerem parte real do conceito, não como preenchimento automático.",
+    "Para SVG, use viewBox consistente, preserveAspectRatio, defs reutilizáveis, gradientes, filtros leves, paths e grupos para criar uma cena completa que escale bem. Para HTML, use CSS responsivo, composição em camadas, tipografia hierárquica, sombras e estados visuais coerentes. O resultado deve parecer uma peça final de direção de arte, não um wireframe ou uma coleção de caixas.",
+    "Não force visuais quando não acrescentarem clareza. Se a pessoa pedir código-fonte, use a regra de código e entregue o arquivo literal em Markdown comum, sem kazer-html ou kazer-svg.",
   ],
 };
 
