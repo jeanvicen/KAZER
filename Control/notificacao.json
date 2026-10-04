@@ -1,6 +1,6 @@
 {
-  "ativo": false,
-  "versao": 2,
-  "titulo": "computer kazer",
-  "mensagem": "KAZER agora tem um computador na nuvem "
+  "ativo": true,
+  "versao": 1,
+  "titulo": "atualizado",
+  "mensagem": "KAZER agora tem mais contextos a mais de 70 conversas, o Modelo criação de visual aumentou em 3k"
 }
