@@ -1,32 +1,23 @@
 /*
  * KAZER — cérebro interno kazer.v1.
  * O nome do provedor e dos modelos nunca é enviado ao cliente.
- * A política é determinística: coding usa DeepSeek > Qwen Coder; as demais tarefas usam a ordem configurada.
+ * A política é determinística: coding usa Qwen Coder via Hugging Face; as demais tarefas usam a ordem configurada.
  */
 const { readTextWithLimit } = require("./_security");
 const KAZER_BRAIN_VERSION = "kazer.v1.2";
 const DEFAULTS = {
-  deepseek: { text: "deepseek-flash", coding: "deepseek-v4-pro", fallback: "deepseek-flash" },
   groq: { text: "openai/gpt-oss-120b", vision: "qwen/qwen3.8-27b", fallback: "qwen/qwen3.6-27b" },
   huggingface: { text: "Qwen/Qwen3-30B-A3B-Instruct-2507", coding: "Qwen/Qwen3-Coder-30B-A3B-Instruct", vision: "google/gemma-3-4b-it", fallback: "Qwen/Qwen3-4B-Instruct-2507" },
 };
-const ENDPOINTS = { deepseek: "https://api.deepseek.com/chat/completions", groq: "https://api.groq.com/openai/v1/chat/completions", huggingface: "https://router.huggingface.co/v1/chat/completions" };
+const ENDPOINTS = { groq: "https://api.groq.com/openai/v1/chat/completions", huggingface: "https://router.huggingface.co/v1/chat/completions" };
 const RETRYABLE_STATUSES = new Set([408, 409, 429, 500, 502, 503, 504]);
-const PROVIDER_ORDER = ["groq", "huggingface", "deepseek"];
-const CODING_PROVIDER_ORDER = ["deepseek", "huggingface"];
+const PROVIDER_ORDER = ["groq", "huggingface"];
+const CODING_PROVIDER_ORDER = ["huggingface"];
 function clean(value) { return String(value || "").trim(); }
 function uniqueModels(values) { return values.map(clean).filter((value, index, list) => value && list.indexOf(value) === index); }
-function isConfigured(provider) {
-  if (provider === "groq") return Boolean(clean(process.env.GROQ_API_KEY));
-  if (provider === "deepseek") return Boolean(clean(process.env.DEEPSEEK_API_KEY));
-  return Boolean(clean(process.env.HF_TOKEN));
-}
-function providerToken(provider) {
-  if (provider === "groq") return clean(process.env.GROQ_API_KEY);
-  if (provider === "deepseek") return clean(process.env.DEEPSEEK_API_KEY);
-  return clean(process.env.HF_TOKEN);
-}
-function providerLabel(provider) { return provider === "huggingface" ? "hf" : provider === "deepseek" ? "deepseek" : "legacy"; }
+function isConfigured(provider) { return provider === "groq" ? Boolean(clean(process.env.GROQ_API_KEY)) : Boolean(clean(process.env.HF_TOKEN)); }
+function providerToken(provider) { return provider === "groq" ? clean(process.env.GROQ_API_KEY) : clean(process.env.HF_TOKEN); }
+function providerLabel(provider) { return provider === "huggingface" ? "hf" : "legacy"; }
 function getReasoningEffort() {
   const value = clean(process.env.KAZER_REASONING_EFFORT || process.env.GROQ_REASONING_EFFORT || "medium").toLowerCase();
   return new Set(["none", "low", "medium", "high", "xhigh"]).has(value) ? value : "medium";
@@ -38,7 +29,7 @@ function configuredProviderOrder(preferredProvider = "", taskType = "conversatio
   return [...new Set([preferred, ...order])].filter((provider) => order.includes(provider) && isConfigured(provider));
 }
 function modelList(provider, hasImages, modelOverride = "", taskType = "conversation") {
-  const prefix = provider === "groq" ? "GROQ" : provider === "deepseek" ? "DEEPSEEK" : "KAZER";
+  const prefix = provider === "groq" ? "GROQ" : "KAZER";
   const kind = hasImages ? "VISION" : "TEXT";
   const defaults = DEFAULTS[provider];
   const legacyTextModel = provider === "groq" && !hasImages ? process.env.GROQ_MODEL : "";
@@ -52,12 +43,12 @@ function modelList(provider, hasImages, modelOverride = "", taskType = "conversa
 function providerConfig(hasImages, modelOverride = "", preferredProvider = "", taskType = "conversation") {
   const provider = configuredProviderOrder(preferredProvider, taskType)[0];
   if (!provider) return null;
-  const endpointEnv = provider === "groq" ? "GROQ_CHAT_ENDPOINT" : provider === "deepseek" ? "DEEPSEEK_CHAT_ENDPOINT" : "HF_CHAT_ENDPOINT";
+  const endpointEnv = provider === "groq" ? "GROQ_CHAT_ENDPOINT" : "HF_CHAT_ENDPOINT";
   return { kind: provider, token: providerToken(provider), endpoint: clean(process.env[endpointEnv]) || ENDPOINTS[provider], models: modelList(provider, hasImages, modelOverride, taskType), providerOrder: configuredProviderOrder(preferredProvider, taskType), taskType };
 }
 function buildProviderAttempts({ hasImages, modelOverride, preferredProvider, taskType }) {
   return configuredProviderOrder(preferredProvider, taskType).flatMap((provider) => {
-    const endpointEnv = provider === "groq" ? "GROQ_CHAT_ENDPOINT" : provider === "deepseek" ? "DEEPSEEK_CHAT_ENDPOINT" : "HF_CHAT_ENDPOINT";
+    const endpointEnv = provider === "groq" ? "GROQ_CHAT_ENDPOINT" : "HF_CHAT_ENDPOINT";
     const config = { kind: provider, token: providerToken(provider), endpoint: clean(process.env[endpointEnv]) || ENDPOINTS[provider], models: modelList(provider, hasImages, provider === preferredProvider ? modelOverride : "", taskType), taskType };
     return config.models.map((model) => ({ ...config, model }));
   });
@@ -77,10 +68,7 @@ async function callKazerBrain({ messages, hasImages, tools = [], timeoutMs = 30_
         const outputTokens = taskType === "coding" ? codeTokens : 4000;
         const requestBody = { model: attempt.model, messages, temperature: hasImages ? 0.65 : taskType === "coding" ? 0.2 : 0.35, ...(attempt.kind === "groq" ? { max_completion_tokens: outputTokens } : { max_tokens: outputTokens }) };
         if (tools.length) requestBody.tools = tools;
-        if (attempt.kind === "deepseek" && taskType === "coding") {
-          requestBody.thinking = { type: "enabled" };
-          requestBody.reasoning_effort = getReasoningEffort();
-        } else if (attempt.kind === "groq" && !attempt.model.startsWith("qwen/")) requestBody.reasoning_effort = getReasoningEffort();
+        if (attempt.kind === "groq" && !attempt.model.startsWith("qwen/")) requestBody.reasoning_effort = getReasoningEffort();
         const upstream = await fetch(attempt.endpoint, { method: "POST", headers: { "Content-Type": "application/json", Accept: "application/json", Authorization: `Bearer ${attempt.token}` }, body: JSON.stringify(requestBody), signal: AbortSignal.timeout(timeoutMs) });
         const raw = await readTextWithLimit(upstream, 2 * 1024 * 1024);
         const data = JSON.parse(raw || "null");

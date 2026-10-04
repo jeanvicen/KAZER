@@ -66,14 +66,13 @@ assert.equal(brain.providerConfig(false).kind, "huggingface");
   for (const key of Object.keys(process.env)) if (!(key in original)) delete process.env[key];
   Object.assign(process.env, original);
 }
-const codingProviderEnv = { DEEPSEEK_API_KEY: process.env.DEEPSEEK_API_KEY, HF_TOKEN: process.env.HF_TOKEN, GROQ_API_KEY: process.env.GROQ_API_KEY, KAZER_PROVIDER_ORDER: process.env.KAZER_PROVIDER_ORDER };
+const codingProviderEnv = { HF_TOKEN: process.env.HF_TOKEN, GROQ_API_KEY: process.env.GROQ_API_KEY, KAZER_PROVIDER_ORDER: process.env.KAZER_PROVIDER_ORDER };
 try {
-  process.env.DEEPSEEK_API_KEY = "deepseek-test";
   process.env.HF_TOKEN = "hf-test";
   delete process.env.GROQ_API_KEY;
   delete process.env.KAZER_PROVIDER_ORDER;
-  assert.deepEqual(brain.configuredProviderOrder("", "coding"), ["deepseek", "huggingface"]);
-  assert.equal(brain.providerConfig(false, "", "", "coding").models[0], "deepseek-v4-pro");
+  assert.deepEqual(brain.configuredProviderOrder("", "coding"), ["huggingface"]);
+  assert.equal(brain.providerConfig(false, "", "", "coding").models[0], "Qwen/Qwen3-Coder-30B-A3B-Instruct");
 } finally {
   for (const [key, value] of Object.entries(codingProviderEnv)) {
     if (value === undefined) delete process.env[key];

@@ -396,7 +396,7 @@ module.exports = async function handler(request, response) {
     return sendJson(response, 429, { error: "Limite de mensagens atingido. Aguarde um minuto." });
   }
 
-  if (!process.env.HF_TOKEN && !process.env.GROQ_API_KEY && !process.env.DEEPSEEK_API_KEY) {
+  if (!process.env.HF_TOKEN && !process.env.GROQ_API_KEY) {
     console.error("Nenhum provedor do cérebro KAZER está configurado no ambiente do servidor.");
     return sendJson(response, 500, { error: "O serviço de chat ainda não foi configurado." });
   }
