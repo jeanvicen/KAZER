@@ -4789,8 +4789,11 @@
       .plan-benefit-status { display: block; margin-top: 3px; color: var(--text-dim); font-size: 10px; line-height: 1.4; }
       .plan-card-pro button { min-height: 46px; background: rgba(203,180,125,.11) !important; border: 1px solid rgba(203,180,125,.24) !important; color: #eadbb9 !important; animation: none !important; }
       .plan-card-pro-note { color: var(--text-dim) !important; }
+      .app:not(.in-conversation) .empty-state { background: radial-gradient(ellipse at 50% 47%, rgba(255,255,255,.035), transparent 40%) !important; }
+      .app:not(.in-conversation) .empty-state::before { background: radial-gradient(ellipse at 50% 41%, rgba(255,255,255,.025), transparent 30%), linear-gradient(180deg,transparent 0 45%,rgba(255,255,255,.009) 45.1%,transparent 45.25%) !important; }
+      .empty-brand-alien-wrap::before { background: radial-gradient(circle,rgba(203,180,125,.10),rgba(203,180,125,.025) 42%,transparent 72%) !important; }
       .message-row.user .message-bubble { border-color: rgba(203,180,125,.13); }
-      .assistant-marker { color: #bdb7aa; }
+      .assistant-marker {  color: #bdb7aa; }
       .assistant-marker svg { filter: none !important; animation: none !important; }
       .assistant-content code { border-color: rgba(255,255,255,.11) !important; background: rgba(255,255,255,.055) !important; color: #e5dfd1 !important; }
       .code-block { border-color: rgba(255,255,255,.12) !important; box-shadow: 0 8px 24px rgba(0,0,0,.2),inset 0 1px 0 rgba(255,255,255,.025); }
