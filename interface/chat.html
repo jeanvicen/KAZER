@@ -5733,7 +5733,7 @@
         const saveChatMessages = (chatId, messages) => {
           const items = readChatHistory(); const item = items.find((entry) => entry.id === chatId);
           if (!item) return;
-          item.messages = messages.filter((message) => message && ["user", "assistant"].includes(message.role) && typeof message.content === "string").slice(-40);
+          item.messages = messages.filter((message) => message && ["user", "assistant"].includes(message.role) && typeof message.content === "string").slice(-72);
           saveChatHistory(items);
           refreshHistorySurface();
         };
@@ -7765,7 +7765,6 @@
     <script src="/interface/kazer-workspace.js"></script>
   </body>
 </html>
-
 
 
 

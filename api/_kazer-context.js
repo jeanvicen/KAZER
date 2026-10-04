@@ -18,19 +18,29 @@ function classifyTask(text, { hasImages = false, hasFiles = false, hasTools = fa
   return "conversation";
 }
 
-function selectConversationMessages(messages, { maxMessages = 18, maxChars = 22000 } = {}) {
+function selectConversationMessages(messages, { maxMessages = 32, maxChars = 30000 } = {}) {
   if (!Array.isArray(messages) || !messages.length) return [];
-  const latest = messages.at(-1);
-  const selected = [latest];
-  let chars = String(latest?.content || "").length;
-  for (let index = messages.length - 2; index >= 0 && selected.length < maxMessages; index -= 1) {
-    const candidate = messages[index];
-    const candidateChars = String(candidate?.content || "").length;
-    if (chars + candidateChars > maxChars) break;
-    selected.unshift(candidate);
+
+  // Preserve the opening user turn as an anchor. Without it, a long chat can
+  // retain only the last short exchange and the model loses what the person
+  // is talking about when they ask a follow-up much later.
+  const latestIndex = messages.length - 1;
+  const firstUserIndex = messages.findIndex((message) => message?.role === "user");
+  const selectedIndexes = new Set([latestIndex]);
+  if (firstUserIndex >= 0) selectedIndexes.add(firstUserIndex);
+
+  let chars = [...selectedIndexes].reduce((total, index) => total + String(messages[index]?.content || "").length, 0);
+  for (let index = latestIndex - 1; index >= 0 && selectedIndexes.size < maxMessages; index -= 1) {
+    if (selectedIndexes.has(index)) continue;
+    const candidateChars = String(messages[index]?.content || "").length;
+    // Skip an oversized candidate and keep looking for older short turns.
+    // Breaking here used to discard all useful context before that message.
+    if (chars + candidateChars > maxChars) continue;
+    selectedIndexes.add(index);
     chars += candidateChars;
   }
-  return selected;
+
+  return [...selectedIndexes].sort((left, right) => left - right).map((index) => messages[index]);
 }
 
 function planTask(text, { hasImages = false, hasFiles = false, hasTools = false, hasRepository = false } = {}) {

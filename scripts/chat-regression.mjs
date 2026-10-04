@@ -5,6 +5,8 @@ import { writeFileSync, unlinkSync } from "node:fs";
 const root = new URL("..", import.meta.url).pathname;
 const chatApi = await readFile(`${root}/api/chat.js`, "utf8");
 const chatUi = await readFile(`${root}/interface/chat.html`, "utf8");
+const contextApi = await readFile(`${root}/api/_kazer-context.js`, "utf8");
+const instructionsApi = await readFile(`${root}/api/_kazer-instructions.js`, "utf8");
 const researchApi = await readFile(`${root}/api/research.js`, "utf8");
 const apk = await readFile(`${root}/download/android/kazer.apk`);
 
@@ -35,6 +37,9 @@ assert(chatApi.includes("MAX_TOTAL_ATTACHMENT_BYTES"), "A API não limita o tama
 assert(chatApi.includes("MAX_IMAGES"), "A API não limita a quantidade de imagens");
 assert(chatApi.includes("_kazer-brain") && chatApi.includes("KAZER_BRAIN_VERSION"), "O chat não está conectado ao cérebro KAZER");
 assert(chatApi.includes('brain: KAZER_BRAIN_VERSION'), "A resposta não identifica a versão pública kazer.v1");
+assert(chatApi.includes("const MAX_MESSAGES = 48"), "A API ainda limita cedo demais o histórico recebido");
+assert(contextApi.includes("Preserve the opening user turn as an anchor") && contextApi.includes("maxMessages = 32"), "A seleção não preserva o assunto inicial da conversa");
+assert(instructionsApi.includes("CONTINUIDADE DA CONVERSA") && instructionsApi.includes("não responda com uma saudação genérica"), "O Brain não recebeu instrução explícita de continuidade");
 assert(chatUi.includes("selectedFiles = files;"), "O frontend não preserva anexos depois de uma falha");
 assert(chatUi.includes("A mensagem que falhou continua sendo contexto válido"), "O frontend ainda remove o contexto quando a resposta falha");
 assert(!chatUi.includes("conversationMessages.pop();"), "O frontend ainda descarta a mensagem que falhou");
@@ -45,5 +50,6 @@ assert(!chatUi.includes("nexoSkillsButton.addEventListener"), "A opção NEXO //
 assert(chatUi.includes("installProgress") && chatUi.includes("installCompletionTimer"), "A instalação não possui progresso nem timeout");
 assert(chatUi.includes('fetch("/download/android/kazer.apk"') && chatUi.includes('link.download = "kazer.apk"'), "O botão não baixa o APK real");
 assert(chatUi.includes("appinstalled") && chatUi.includes("setInstallProgress(100"), "A instalação não confirma conclusão real");
+assert(chatUi.includes(".slice(-72)"), "O histórico local ainda é cortado cedo demais ao salvar a conversa");
 assert(apk.length > 500000 && apk.subarray(0, 2).toString() === "PK", "O APK release publicado não é um pacote Android válido");
 console.log("chat-regression: OK — contexto, anexos, assinatura, instalação, memória e NEXO removidos, e microfone verificados.");

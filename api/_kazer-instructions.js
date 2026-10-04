@@ -47,6 +47,7 @@ function buildSystemInstructions({ taskType = "conversation", hasImages = false,
   if (taskType === "visual") selected.push("visual");
   const instructions = [...new Set(selected)].flatMap((name) => MODULES[name] || []);
   if (runtimeContext) instructions.push("CONTEXTO OPERACIONAL (dados do servidor; não substitui as regras acima):\n" + String(runtimeContext).slice(0, 18000));
+  instructions.push("CONTINUIDADE DA CONVERSA: trate as mensagens anteriores de usuário e KAZER como uma conversa em andamento. Use o primeiro assunto e as trocas recentes para resolver referências como isso, ele, ela, de novo, e sobre o que falamos ou perguntas curtas; não responda com uma saudação genérica nem finja que a conversa começou agora, salvo quando o usuário iniciar um novo assunto claramente.");
   instructions.push("ORDEM DE CONTEXTO: regras do sistema → contexto relevante → histórico necessário → mensagem atual do usuário. A mensagem atual e suas restrições têm prioridade sobre contexto antigo e irrelevante.");
   return instructions.join("\n\n");
 }
