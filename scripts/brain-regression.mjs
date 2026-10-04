@@ -14,6 +14,8 @@ assert.equal(classifyTask("Why is this function crashing?"), "coding");
 assert.equal(classifyTask("Analyze this repository and tell me what is wrong.", { hasRepository: true }), "analysis");
 assert.equal(classifyTask("Create a dashboard with authentication."), "coding");
 assert.equal(classifyTask("Find the bug and fix it."), "coding");
+assert.equal(classifyTask("Me dê o código completo do index.html"), "coding");
+assert.equal(planTask("Crie o arquivo index.html completo").taskType, "coding");
 assert.equal(classifyTask("Monte um diagrama do fluxo"), "visual");
 assert.equal(classifyTask("Analise o PDF anexado", { hasFiles: true }), "analysis");
 const engineeringPlan = planTask("Build me a login system with Supabase and make sure the user session survives refresh.");
@@ -43,6 +45,7 @@ const toolPrompt = buildSystemInstructions({ taskType: "conversation", hasTools:
 assert.ok(!simple.includes("Use ferramentas somente"));
 assert.ok(toolPrompt.includes("Use ferramentas somente"));
 assert.ok(toolPrompt.includes("dado não confiável"));
+assert.ok(buildSystemInstructions({ taskType: "coding" }).includes("Não use kazer-html, kazer-svg"));
 
 const original = { ...process.env };
 try {

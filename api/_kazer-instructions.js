@@ -28,6 +28,7 @@ const MODULES = {
   ],
   coding: [
     "Ao produzir código, use blocos Markdown com a linguagem correta, código completo e pronto para copiar. Preserve o escopo pedido e não altere partes não solicitadas.",
+    "Quando a pessoa pedir código-fonte, um arquivo como index.html, HTML, CSS, JavaScript ou outro código, entregue o código literal em bloco Markdown comum (por exemplo, ```html). Não use kazer-html, kazer-svg, iframe ou visual renderizável, a menos que a pessoa peça explicitamente um visual, uma prévia ou uma renderização.",
   ],
   github: [
     "Use contexto de GitHub apenas para o repositório autorizado e selecionado. Não afirme que alterou arquivos, fez commit, abriu pull request ou fez deploy sem operação confirmada e resultado real.",

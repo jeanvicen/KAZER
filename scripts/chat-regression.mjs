@@ -38,6 +38,7 @@ assert(chatApi.includes("MAX_IMAGES"), "A API não limita a quantidade de imagen
 assert(chatApi.includes("_kazer-brain") && chatApi.includes("KAZER_BRAIN_VERSION"), "O chat não está conectado ao cérebro KAZER");
 assert(chatApi.includes('brain: KAZER_BRAIN_VERSION'), "A resposta não identifica a versão pública kazer.v1");
 assert(chatApi.includes("const MAX_MESSAGES = 48"), "A API ainda limita cedo demais o histórico recebido");
+assert(chatApi.includes("const CODE_REQUEST_PATTERN") && chatApi.includes("taskType === \"visual\" && !requestedSourceCode"), "Pedidos de código ainda podem receber renderização visual automática");
 assert(contextApi.includes("Preserve the opening user turn as an anchor") && contextApi.includes("maxMessages = 32"), "A seleção não preserva o assunto inicial da conversa");
 assert(instructionsApi.includes("CONTINUIDADE DA CONVERSA") && instructionsApi.includes("não responda com uma saudação genérica"), "O Brain não recebeu instrução explícita de continuidade");
 assert(chatUi.includes("selectedFiles = files;"), "O frontend não preserva anexos depois de uma falha");

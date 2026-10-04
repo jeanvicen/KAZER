@@ -37,6 +37,7 @@ const MAX_EXTRACTED_FILE_CHARS = 18000;
 const { buildSystemInstructions } = require("./_kazer-instructions");
 const { classifyTask, planTask, selectConversationMessages, validateToolRequest } = require("./_kazer-context");
 const VISUAL_REQUEST_PATTERN = /\b(?:imagem|visual|desenho|desenhar|ilustra[cç][aã]o|logo|[ií]cone|[ií]cones|layout|interface|tela|prot[oó]tipo|mockup|wireframe|diagrama|fluxograma|gr[aá]fico|chart|dashboard|slide|cart[aã]o|banner|poster|p[oó]ster|infogr[aá]fico|planta|mapa|composi[cç][aã]o|design|image|drawing|illustration|icon|icons|screen|prototype|mockup|wireframe|diagram|flowchart|chart|dashboard|slide|card|banner|poster|infographic|visual(?:ly)?|look like)\b/i;
+const CODE_REQUEST_PATTERN = /\b(?:index\.html?|index\.htm|\.html?|\.css|\.js|\.ts|\.tsx|\.jsx|\.py|\.sql|\.json|\.md)\b|(?:\b(?:c[oó]digo|code|arquivo|file|script|snippet|trecho|fun[cç][aã]o|function|programa|program|implemente|crie|escreva|mostre|me d[eê])\b[\s\S]{0,100}\b(?:html|css|javascript|typescript|python|sql|json|markdown|c[oó]digo|code)\b)/i;
 
 const MODERATION_PATTERNS = [
   /\b(?:como|passo a passo|instru[cç][oõ]es|ensine|fabricar|montar|construir|detonar|envenenar|hackear|invadir|roubar|matar|burlar)\b[\s\S]{0,100}\b(?:bomba|explosivo|arma|veneno|malware|ransomware|senha|cart[aã]o|conta|v[ií]tima|pol[ií]cia|crime)\b/i,
@@ -480,7 +481,8 @@ module.exports = async function handler(request, response) {
   const fileInstruction = prepared.fileContext
     ? `\n\nUse os anexos abaixo como contexto para responder:\n\n${prepared.fileContext}`
     : "";
-  const visualInstruction = VISUAL_REQUEST_PATTERN.test(String(lastMessage.content || ""))
+  const requestedSourceCode = CODE_REQUEST_PATTERN.test(String(lastMessage.content || ""));
+  const visualInstruction = taskType === "visual" && !requestedSourceCode && VISUAL_REQUEST_PATTERN.test(String(lastMessage.content || ""))
     ? "\n\nINSTRUÇÃO DE RENDERIZAÇÃO: este pedido tem intenção visual. Entregue o resultado visual dentro da resposta usando um bloco ```kazer-svg ou ```kazer-html. Não devolva o SVG/HTML como bloco de código comum, não use mermaid e não entregue apenas instruções para o usuário executar. Intercale uma explicação curta com o visual renderizável."
     : "";
   const repositoryInstruction = repositoryContext
