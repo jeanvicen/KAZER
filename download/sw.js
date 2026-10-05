@@ -1,4 +1,4 @@
-const CACHE_NAME = "kazer-shell-v23";
+const CACHE_NAME = "kazer-shell-v24";
 const APP_SHELL = [
   "/chat",
   "/chat.html",
@@ -10,7 +10,9 @@ const APP_SHELL = [
   "/download/assets/kazer-symbol.png",
   "/download/assets/kazer-badge.svg",
   "/download/icons/kazer-192.png",
-  "/download/icons/kazer-512.png"
+  "/download/icons/kazer-512.png",
+  "/download/icons/kazer-gold-192.png?v=20261005",
+  "/download/icons/kazer-gold-512.png?v=20261005"
 ];
 
 self.addEventListener("install", (event) => {
