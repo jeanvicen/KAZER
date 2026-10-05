@@ -1,11 +1,574 @@
-/* Auto-restored chat handler (compressed payload) */
-const zlib = require("zlib");
-const code = zlib.inflateSync(Buffer.from("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", "base64")).toString("utf8");
-module.exports = new Function(
-  "require",
-  "module",
-  "exports",
-  "__dirname",
-  "__filename",
-  code + "\n;return module.exports;"
-)(require, module, exports, __dirname, __filename);
+/*
+ * KAZER — Copyright © 2026 Jean V. / @jeanvicen · 0neajx · KLYPZA.
+ * Código proprietário. Consulte /LICENSE.md antes de reutilizar este arquivo.
+ */
+const {
+  applyRateLimit,
+  authenticateUser,
+  hasSafeFetchMetadata,
+  isSameOrigin,
+  rateLimit,
+  readTextWithLimit,
+  redactSensitiveText,
+  requestExceedsLimit,
+  sendJson,
+} = require("./_security");
+const { callUsageRpc, calculateChatCreditCost } = require("./_usage");
+const { callMcpTool, flattenTools, getConnectedMcpCount, loadMcpRuntime } = require("./_mcp-runtime");
+const { decodeToken, getConnection, githubFetch, repoForClient } = require("./_github");
+const { supabaseRequest } = require("./_kazer-data");
+const { KAZER_BRAIN_VERSION, callKazerBrain } = require("./_kazer-brain");
+const { researchToolDefinition, runResearch } = require("./_research-orchestrator");
+const { currentBrazilContext, needsRealtimeResearch, researchContextText } = require("./_realtime-context");
+
+const MAX_REQUEST_BYTES = 7 * 1024 * 1024;
+const MAX_TOTAL_ATTACHMENT_BYTES = 4 * 1024 * 1024;
+const MAX_OUTPUT_CHARS = 16000;
+const MAX_CODE_OUTPUT_CHARS = 64000;
+const MAX_GROQ_ATTEMPTS_PER_MODEL = 2;
+const RETRYABLE_GROQ_STATUSES = new Set([429, 500, 502, 503, 504]);
+const MAX_MESSAGES = 48;
+const MAX_RECEIVED_MESSAGES = 72;
+const MAX_MESSAGE_CHARS = 8000;
+const MAX_TOTAL_CHARS = 32000;
+const MAX_FILE_BYTES = 4 * 1024 * 1024;
+const MAX_IMAGES = 3;
+const MAX_EXTRACTED_FILE_CHARS = 18000;
+
+const { buildSystemInstructions } = require("./_kazer-instructions");
+const { classifyTask, planTask, selectConversationMessages, validateToolRequest } = require("./_kazer-context");
+const VISUAL_REQUEST_PATTERN = /\b(?:imagem|visual|desenho|desenhar|ilustra[cç][aã]o|logo|[ií]cone|[ií]cones|layout|interface|tela|prot[oó]tipo|mockup|wireframe|diagrama|fluxograma|gr[aá]fico|chart|dashboard|slide|cart[aã]o|banner|poster|p[oó]ster|infogr[aá]fico|planta|mapa|composi[cç][aã]o|design|image|drawing|illustration|icon|icons|screen|prototype|mockup|wireframe|diagram|flowchart|chart|dashboard|slide|card|banner|poster|infographic|visual(?:ly)?|look like)\b/i;
+const CODE_REQUEST_PATTERN = /\b(?:index\.html?|index\.htm|\.html?|\.css|\.js|\.ts|\.tsx|\.jsx|\.py|\.sql|\.json|\.md)\b|(?:\b(?:c[oó]digo|code|arquivo|file|script|snippet|trecho|fun[cç][aã]o|function|programa|program|implemente|crie|escreva|mostre|me d[eê])\b[\s\S]{0,100}\b(?:html|css|javascript|typescript|python|sql|json|markdown|c[oó]digo|code)\b)/i;
+
+const MODERATION_PATTERNS = [
+  /\b(?:como|passo a passo|instru[cç][oõ]es|ensine|fabricar|montar|construir|detonar|envenenar|hackear|invadir|roubar|matar|burlar)\b[\s\S]{0,100}\b(?:bomba|explosivo|arma|veneno|malware|ransomware|senha|cart[aã]o|conta|v[ií]tima|pol[ií]cia|crime)\b/i,
+  /\b(?:fabricar|montar|construir|comprar|detonar)\b[\s\S]{0,60}\b(?:bomba|explosivo|arma)\b/i,
+  /\b(?:filho da puta|vai tomar no cu|puta que pariu|arrombado)\b/i,
+];
+
+function cleanUserContent(value) {
+  return String(value || "")
+    .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g, "")
+    .trim();
+}
+
+function normalizeRepositoryContext(value) {
+  if (!value || typeof value !== "object") return null;
+  const fullName = cleanUserContent(value.fullName).slice(0, 160);
+  if (!/^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/.test(fullName)) return null;
+  let htmlUrl = "";
+  try {
+    const url = new URL(String(value.htmlUrl || ""));
+    if (url.protocol !== "https:" || url.hostname !== "github.com") return null;
+    htmlUrl = `https://github.com/${fullName}`;
+  } catch {
+    return null;
+  }
+  return {
+    fullName,
+    htmlUrl,
+    defaultBranch: cleanUserContent(value.defaultBranch || "main").slice(0, 120),
+    language: cleanUserContent(value.language || "").slice(0, 80) || null,
+  };
+}
+
+async function resolveRepositoryContext(userId, value) {
+  const candidate = normalizeRepositoryContext(value);
+  if (!candidate) return null;
+  const connection = await getConnection(userId).catch(() => null);
+  const token = decodeToken(connection);
+  if (!token) return null;
+  const [owner, name] = candidate.fullName.split("/");
+  try {
+    const repo = await githubFetch(`/repos/${encodeURIComponent(owner)}/${encodeURIComponent(name)}`, token);
+    return normalizeRepositoryContext(repoForClient(repo));
+  } catch {
+    return null;
+  }
+}
+
+function isModeratedRequest(messages) {
+  const latest = messages[messages.length - 1]?.content || "";
+  return MODERATION_PATTERNS.some((pattern) => pattern.test(latest));
+}
+
+function parseMessages(value) {
+  if (!Array.isArray(value) || value.length === 0 || value.length > MAX_RECEIVED_MESSAGES) return null;
+
+  let totalChars = 0;
+  const messages = [];
+  const recentMessages = value.slice(-MAX_MESSAGES);
+
+  for (const item of recentMessages) {
+    if (!item || !["user", "assistant"].includes(item.role) || typeof item.content !== "string") return null;
+
+    const content = cleanUserContent(item.content);
+    if (!content || content.length > MAX_MESSAGE_CHARS) return null;
+    if (item.role === "assistant" && /^(?:O KAZER não conseguiu concluir a resposta agora\. Tente novamente\.|A resposta recebida estava vazia\. Tente novamente\.|Não foi possível conectar ao chat agora\.)$/i.test(content)) continue;
+
+    totalChars += content.length;
+    if (totalChars > MAX_TOTAL_CHARS) return null;
+    messages.push({ role: item.role, content });
+  }
+
+  if (messages[messages.length - 1]?.role !== "user") return null;
+  return messages;
+}
+
+function parseTitleMessages(value) {
+  if (!Array.isArray(value) || value.length === 0 || value.length > MAX_RECEIVED_MESSAGES) return null;
+  let totalChars = 0;
+  const messages = [];
+  for (const item of value.slice(-MAX_MESSAGES)) {
+    if (!item || !["user", "assistant"].includes(item.role) || typeof item.content !== "string") return null;
+    const content = cleanUserContent(item.content);
+    if (!content || content.length > MAX_MESSAGE_CHARS) return null;
+    totalChars += content.length;
+    if (totalChars > MAX_TOTAL_CHARS) return null;
+    messages.push({ role: item.role, content });
+  }
+  return messages;
+}
+
+function parseDataUrl(dataUrl) {
+  if (typeof dataUrl !== "string") return null;
+  const match = dataUrl.match(/^data:([^;,]+);base64,([a-zA-Z0-9+/=\s]+)$/);
+  if (!match) return null;
+
+  const mimeType = match[1].toLowerCase();
+  const base64 = match[2].replace(/\s/g, "");
+  const buffer = Buffer.from(base64, "base64");
+  if (!buffer.length || buffer.length > MAX_FILE_BYTES) return null;
+
+  return { mimeType, buffer, dataUrl };
+}
+
+function cleanExtractedText(value) {
+  return String(value || "")
+    .replace(/\u0000/g, "")
+    .replace(/\r\n/g, "\n")
+    .replace(/[ \t]+\n/g, "\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim()
+    .slice(0, MAX_EXTRACTED_FILE_CHARS);
+}
+
+function extractModelText(value, depth = 0, seen = new Set()) {
+  const valueType = typeof value;
+  if (["string", "number", "boolean", "bigint", "symbol"].includes(valueType)) return String(value || "");
+  if (valueType !== "object" || value === null) return "";
+  if (depth >= 8 || seen.has(value)) return "";
+
+  seen.add(value);
+  try {
+    if (Array.isArray(value)) {
+      return value.map((part) => extractModelText(part, depth + 1, seen)).join("");
+    }
+
+    const keys = value.type === "text"
+      ? ["text", "content", "output_text", "parts"]
+      : ["output_text", "content", "parts", "text"];
+    for (const key of keys) {
+      if (!Object.prototype.hasOwnProperty.call(value, key)) continue;
+      const text = extractModelText(value[key], depth + 1, seen);
+      if (text) return text;
+    }
+    return "";
+  } finally {
+    seen.delete(value);
+  }
+}
+
+function cleanModelContent(value, taskType = "conversation") {
+  return redactSensitiveText(extractModelText(value)
+    .replace(/<think>[\s\S]*?<\/think>/gi, "")
+    .replace(/<analysis>[\s\S]*?<\/analysis>/gi, "")
+    .trim())
+    .slice(0, taskType === "coding" ? MAX_CODE_OUTPUT_CHARS : MAX_OUTPUT_CHARS)
+    .trim();
+}
+
+function protectKazerIdentity(value) {
+  const blockedProviders = /\b(?:openai|chatgpt|gpt(?:-[a-z0-9.]+)?|groq|qwen|llama|anthropic|claude|gemini|google ai|mistral)\b/i;
+  const internalDisclosure = /\b(?:api|modelo de linguagem|provedor|fornecedor|infraestrutura|treinad[oa]|conhecimento vai até|data de corte|base de conhecimento|serviço por trás|desenvolvid[oa] por)\b/i;
+  const fallback = "Sou o KAZER, seu assistente. Posso ajudar com dúvidas, explicações, textos, ideias e tarefas práticas.";
+  const protectText = (text) => String(text || "")
+    .split(/(?<=[.!?])\s+|\n(?=\S)/)
+    .map((sentence) => {
+      const trimmed = sentence.trim();
+      if (!trimmed) return sentence;
+      if (blockedProviders.test(trimmed)) return fallback;
+      if (internalDisclosure.test(trimmed) && /\b(?:sou|fui|uso|utilizo|funciono|funciona|integrad[oa]|por trás|desenvolvid[oa])\b/i.test(trimmed)) return fallback;
+      return sentence;
+    })
+    .join(" ")
+    .replace(/[ \t]{2,}/g, " ");
+
+  const source = String(value || "");
+  const fencedPattern = /(```[\s\S]*?```|~~~[\s\S]*?~~~)/g;
+  let cursor = 0;
+  let match;
+  let result = "";
+  while ((match = fencedPattern.exec(source))) {
+    result += protectText(source.slice(cursor, match.index));
+    result += match[0];
+    cursor = match.index + match[0].length;
+  }
+  result += protectText(source.slice(cursor));
+  return result.replace(/\n{3,}/g, "\n\n").trim();
+}
+
+function cleanFileName(value) {
+  return String(value || "")
+    .replace(/[\u0000-\u001f\u007f/\\]/g, "_")
+    .trim()
+    .slice(0, 120) || "anexo";
+}
+
+function isTextFile(attachment, parsed) {
+  if (parsed.mimeType.startsWith("text/")) return true;
+  const name = String(attachment.name || "").toLowerCase();
+  return /\.(txt|md|csv|json|xml|html|htm|js|ts|tsx|jsx|css|py|java|sql|yaml|yml|log)$/i.test(name);
+}
+
+function isAllowedAttachment(attachment, parsed) {
+  if (parsed.mimeType.startsWith("image/")) return true;
+  if (isTextFile(attachment, parsed)) return true;
+  if (parsed.mimeType === "application/pdf" || parsed.mimeType === "application/vnd.openxmlformats-officedocument.wordprocessingml.document") return true;
+  return /\.(pdf|docx)$/i.test(String(attachment.name || ""));
+}
+function hasExpectedFileSignature(mimeType, buffer) {
+  if (!Buffer.isBuffer(buffer) || buffer.length < 4) return false;
+  if (mimeType === "image/jpeg") return buffer[0] === 0xff && buffer[1] === 0xd8 && buffer[2] === 0xff;
+  if (mimeType === "image/png") return buffer.subarray(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]));
+  if (mimeType === "image/gif") return buffer.subarray(0, 4).toString("ascii") === "GIF8";
+  if (mimeType === "image/webp") return buffer.subarray(0, 4).toString("ascii") === "RIFF" && buffer.subarray(8, 12).toString("ascii") === "WEBP";
+  if (mimeType === "application/pdf") return buffer.subarray(0, 5).toString("ascii") === "%PDF-";
+  if (mimeType === "application/vnd.openxmlformats-officedocument.wordprocessingml.document") return buffer.subarray(0, 4).equals(Buffer.from([0x50, 0x4b, 0x03, 0x04]));
+  return true;
+}
+
+async function extractFileText(attachment, parsed) {
+  if (isTextFile(attachment, parsed)) {
+    return cleanExtractedText(parsed.buffer.toString("utf8"));
+  }
+
+  if (parsed.mimeType === "application/pdf" || String(attachment.name || "").toLowerCase().endsWith(".pdf")) {
+    const pdfParse = require("pdf-parse");
+    const result = await pdfParse(parsed.buffer);
+    return cleanExtractedText(result.text);
+  }
+
+  if (
+    parsed.mimeType === "application/vnd.openxmlformats-officedocument.wordprocessingml.document" ||
+    String(attachment.name || "").toLowerCase().endsWith(".docx")
+  ) {
+    const mammoth = require("mammoth");
+    const result = await mammoth.extractRawText({ buffer: parsed.buffer });
+    return cleanExtractedText(result.value);
+  }
+
+  return "";
+}
+
+async function prepareAttachments(attachments) {
+  if (attachments == null) return { imageParts: [], fileContext: "", fileNames: [] };
+  if (!Array.isArray(attachments) || attachments.length > 10) throw new Error("attachments_invalid");
+
+  const imageParts = [];
+  const fileSections = [];
+  const fileNames = [];
+  let totalAttachmentBytes = 0;
+
+  for (const attachment of attachments) {
+    if (!attachment || typeof attachment.name !== "string" || typeof attachment.data !== "string") {
+      throw new Error("attachment_invalid");
+    }
+
+    const safeAttachment = { ...attachment, name: cleanFileName(attachment.name) };
+    const parsed = parseDataUrl(safeAttachment.data);
+    if (!parsed || !isAllowedAttachment(safeAttachment, parsed)) throw new Error("attachment_type_invalid");
+    if (!isTextFile(safeAttachment, parsed) && !hasExpectedFileSignature(parsed.mimeType, parsed.buffer)) throw new Error("attachment_signature_invalid");
+    totalAttachmentBytes += parsed.buffer.length;
+    if (totalAttachmentBytes > MAX_TOTAL_ATTACHMENT_BYTES) throw new Error("attachments_too_large");
+    fileNames.push(safeAttachment.name);
+
+    if (parsed.mimeType.startsWith("image/")) {
+      if (imageParts.length >= MAX_IMAGES) throw new Error("too_many_images");
+      if (!["image/jpeg", "image/png", "image/webp", "image/gif"].includes(parsed.mimeType)) {
+        throw new Error("image_type_invalid");
+      }
+      imageParts.push({
+        type: "image_url",
+        image_url: { url: parsed.dataUrl },
+      });
+      continue;
+    }
+
+    let extractedText = "";
+    try {
+      extractedText = await extractFileText(safeAttachment, parsed);
+    } catch (error) {
+      console.error("File extraction failed", { error: error?.message || "unknown" });
+    }
+
+    if (extractedText) {
+      fileSections.push(`Arquivo: ${safeAttachment.name}\nConteúdo extraído:\n${extractedText}`);
+    } else {
+      fileSections.push(`Arquivo: ${safeAttachment.name}\nNão foi possível extrair texto deste formato no servidor.`);
+    }
+  }
+
+  return {
+    imageParts,
+    fileContext: fileSections.join("\n\n---\n\n"),
+    fileNames,
+  };
+}
+
+function wait(milliseconds) {
+  return new Promise((resolve) => setTimeout(resolve, milliseconds));
+}
+
+async function callGroq({ messages, hasImages, tools = [], timeoutMs = 30_000, maxAttempts = MAX_GROQ_ATTEMPTS_PER_MODEL, runtimeContext = "", taskType = "conversation", hasFiles = false, hasRepository = false, capabilities = [] }) {
+  const latest = messages.at(-1)?.content;
+  const inferredTask = taskType === "conversation" ? classifyTask(typeof latest === "string" ? latest : "", { hasImages, hasFiles, hasTools: tools.length > 0 }) : taskType;
+  const systemContent = buildSystemInstructions({ taskType: inferredTask, hasImages, hasFiles, hasTools: tools.length > 0, hasRepository, runtimeContext });
+  return callKazerBrain({
+    messages: [{ role: "system", content: systemContent }, ...messages],
+    hasImages,
+    tools,
+    timeoutMs,
+    maxAttempts,
+    taskType: inferredTask,
+    capabilities,
+  });
+}
+
+async function callGroqWithMcp({ messages, hasImages, mcpServers, runtimeContext = "", hasFiles = false, hasRepository = false, taskType = "conversation", capabilityPlan = null }) {
+  const { tools: mcpTools, byName } = flattenTools(mcpServers || []);
+  const tools = [...(capabilityPlan?.needsResearch ? [researchToolDefinition] : []), ...mcpTools];
+  let currentMessages = [...messages];
+  const timeoutMs = taskType === "coding" ? 75_000 : 30_000;
+  let result = await callGroq({ messages: currentMessages, hasImages, tools, runtimeContext, hasFiles, hasRepository, taskType, timeoutMs, capabilities: capabilityPlan?.capabilities || [] });
+  if (result.failure || !tools.length) return { ...result, mcpToolsUsed: 0, researchUsed: 0 };
+
+  let toolsUsed = 0;
+  let researchUsed = 0;
+  for (let round = 0; round < 5; round += 1) {
+    const assistantMessage = result.data?.choices?.[0]?.message;
+    const toolCalls = Array.isArray(assistantMessage?.tool_calls) ? assistantMessage.tool_calls.slice(0, 6) : [];
+    if (!toolCalls.length) break;
+    currentMessages.push({
+      role: "assistant",
+      content: assistantMessage.content || "",
+      tool_calls: toolCalls,
+    });
+    for (const toolCall of toolCalls) {
+      const name = toolCall?.function?.name;
+      const entry = byName.get(name);
+      let toolContent = "Ferramenta indisponível.";
+      try {
+        const parsedArgs = JSON.parse(toolCall.function.arguments || "{}");
+        const validation = validateToolRequest(name, parsedArgs);
+        if (!validation.ok) throw new Error(validation.error);
+        const args = validation.args;
+        if (name === researchToolDefinition.function.name) {
+          const research = await runResearch({ question: args.question, deep: args.depth !== "normal" });
+          toolContent = JSON.stringify({ question: research.question, queries: research.queries, sources: research.sources, evidence: research.evidence, visitedUrls: research.visitedUrls, browserAvailable: research.browserAvailable, errors: research.errors, stopReason: research.stopReason }).slice(0, 42_000);
+          researchUsed += 1;
+        } else if (entry) {
+          toolContent = await callMcpTool(entry, args);
+          toolsUsed += 1;
+        }
+      } catch (error) {
+        toolContent = `Falha ao consultar a ferramenta: ${String(error?.message || "erro").slice(0, 300)}`;
+      }
+      currentMessages.push({ role: "tool", tool_call_id: toolCall.id, content: toolContent });
+    }
+    result = await callGroq({ messages: currentMessages, hasImages: false, tools, runtimeContext, hasFiles, hasRepository, taskType, timeoutMs, capabilities: capabilityPlan?.capabilities || [] });
+    if (result.failure) break;
+  }
+  return { ...result, mcpToolsUsed: toolsUsed, researchUsed };
+}
+
+module.exports = async function handler(request, response) {
+  if (request.method !== "POST") {
+    response.setHeader("Allow", "POST");
+    return sendJson(response, 405, { error: "Método não permitido." });
+  }
+
+  if (!isSameOrigin(request) || !hasSafeFetchMetadata(request)) {
+    return sendJson(response, 403, { error: "Origem não autorizada." });
+  }
+  if (requestExceedsLimit(request, MAX_REQUEST_BYTES)) {
+    return sendJson(response, 413, { error: "O conteúdo enviado excede o limite permitido." });
+  }
+
+  const preAuthLimit = rateLimit(request, "chat-ip", { limit: 8, windowMs: 60_000 });
+  preAuthLimit.limit = 8;
+  applyRateLimit(response, preAuthLimit);
+  if (!preAuthLimit.allowed) {
+    return sendJson(response, 429, { error: "Muitas tentativas. Aguarde um momento e tente novamente." });
+  }
+
+  const user = await authenticateUser(request);
+  if (!user) return sendJson(response, 401, { error: "Sessão inválida ou expirada." });
+
+  const userLimit = rateLimit(request, "chat-user", { limit: 12, windowMs: 60_000, identity: user.id });
+  userLimit.limit = 12;
+  applyRateLimit(response, userLimit);
+  if (!userLimit.allowed) {
+    return sendJson(response, 429, { error: "Limite de mensagens atingido. Aguarde um minuto." });
+  }
+
+  if (!process.env.HF_TOKEN && !process.env.GROQ_API_KEY) {
+    console.error("Nenhum provedor do cérebro KAZER está configurado no ambiente do servidor.");
+    return sendJson(response, 500, { error: "O serviço de chat ainda não foi configurado." });
+  }
+
+  let body = request.body;
+  if (typeof body === "string") {
+    try {
+      body = JSON.parse(body);
+    } catch {
+      return sendJson(response, 400, { error: "JSON inválido." });
+    }
+  }
+
+  if (Buffer.byteLength(JSON.stringify(body || {}), "utf8") > MAX_REQUEST_BYTES) {
+    return sendJson(response, 413, { error: "O conteúdo enviado excede o limite permitido." });
+  }
+
+  const messages = parseMessages(body?.messages);
+  if (body?.purpose === "title") {
+    const titleMessages = parseTitleMessages(body?.messages);
+    if (!titleMessages) return sendJson(response, 400, { error: "Conversa inválida para gerar título." });
+    const titlePrompt = [{ role: "user", content: "Crie um título curto para esta conversa. Responda SOMENTE com o título, em português, com no máximo 6 palavras, sem aspas, sem ponto final e sem explicações. O título deve representar o objetivo principal do usuário, não copiar literalmente a primeira mensagem.\n\nConversa:\n" + titleMessages.map((item) => `${item.role === "user" ? "Usuário" : "KAZER"}: ${item.content}`).join("\n").slice(0, 6000) }];
+    const result = await callGroq({ messages: titlePrompt, hasImages: false, timeoutMs: 12_000 });
+    if (result.failure) return sendJson(response, 502, { error: "Não foi possível gerar o título agora." });
+    const title = cleanModelContent(result.data?.choices?.[0]?.message?.content).replace(/[\r\n]+/g, " ").replace(/^['"“”]+|['"“”]+$/g, "").trim().slice(0, 72);
+    if (!title) return sendJson(response, 502, { error: "O título gerado estava vazio." });
+    return sendJson(response, 200, { title });
+  }
+  if (!messages) {
+    return sendJson(response, 400, { error: "Histórico de conversa inválido." });
+  }
+  const repositoryContext = await resolveRepositoryContext(user.id, body?.githubRepo);
+  if (isModeratedRequest(messages)) {
+    return sendJson(response, 422, { error: "Não posso processar esse conteúdo. Reformule o pedido de forma segura e respeitosa." });
+  }
+
+  let prepared;
+  try {
+    prepared = await prepareAttachments(body?.attachments);
+  } catch (error) {
+    const status = ["too_many_images", "image_type_invalid", "attachment_type_invalid", "attachment_signature_invalid", "attachments_invalid", "attachment_invalid"].includes(error.message) ? 400 : error.message === "attachments_too_large" ? 413 : 422;
+    return sendJson(response, status, { error: "Um ou mais anexos não puderam ser processados." });
+  }
+
+  const lastMessage = messages[messages.length - 1];
+  const requestedMcpCount = await getConnectedMcpCount(user.id, body?.mcpConnectorIds);
+  const capabilityPlan = planTask(lastMessage.content, { hasImages: prepared.imageParts.length > 0, hasFiles: prepared.fileNames.length > 0, hasTools: requestedMcpCount > 0, hasRepository: Boolean(repositoryContext) });
+  const { taskType } = capabilityPlan;
+  const creditCost = calculateChatCreditCost(messages, prepared.fileNames.length, requestedMcpCount);
+  let usage;
+  try {
+    usage = await callUsageRpc(request, "consume_kazer_usage", {
+      p_message_count: 1,
+      p_attachment_count: prepared.fileNames.length,
+    });
+  } catch (initialError) {
+    let error = initialError;
+    if (initialError.status === 404 || (initialError.status === 400 && initialError.code === "usage_rpc_failed")) {
+      try {
+        usage = await callUsageRpc(request, "consume_chat_usage", {
+          p_credit_amount: creditCost,
+          p_attachment_count: prepared.fileNames.length,
+        });
+        error = null;
+      } catch (fallbackError) {
+        error = fallbackError;
+      }
+    }
+    if (!error) {
+      // Compatibilidade temporária com ambientes que ainda não aplicaram a migração mensal.
+    } else if (error.code === "usage_limit_reached") {
+      return sendJson(response, 402, {
+        error: "Seu uso mensal chegou a 100%. As mensagens e os anexos serão liberados no primeiro dia do próximo mês.",
+        usage: { usage_limit_reached: true, credits_limit_reached: true },
+      });
+    } else {
+      console.error("Usage reservation failed", error?.message || "unknown");
+      return sendJson(response, 503, { error: "Não foi possível validar os limites da conta agora." });
+    }
+  }
+
+  const mcpServers = await loadMcpRuntime(user.id, body?.mcpConnectorIds);
+  const hasImages = prepared.imageParts.length > 0;
+  const fileInstruction = prepared.fileContext
+    ? `\n\nUse os anexos abaixo como contexto para responder:\n\n${prepared.fileContext}`
+    : "";
+  const requestedSourceCode = CODE_REQUEST_PATTERN.test(String(lastMessage.content || ""));
+  const visualInstruction = taskType === "visual" && !requestedSourceCode && VISUAL_REQUEST_PATTERN.test(String(lastMessage.content || ""))
+    ? "\n\nINSTRUÇÃO DE RENDERIZAÇÃO: este pedido tem intenção visual. Entregue o resultado visual dentro da resposta usando um bloco ```kazer-svg ou ```kazer-html. Não devolva o SVG/HTML como bloco de código comum, não use mermaid e não entregue apenas instruções para o usuário executar. Intercale uma explicação curta com o visual renderizável. Para kazer-svg: viewBox + preserveAspectRatio; defs com gradientes multi-stop (linear/radial), filtros leves (blur, drop-shadow, lighting, turbulence controlado); camadas fundo/atmosfera/foco; iluminação (key/fill/rim), sombras suaves, micro-detalhe e formas orgânicas — qualidade de estúdio, ainda 100% vetorial e sem recursos externos."
+    : "";
+  const repositoryInstruction = repositoryContext
+    ? `\n\nCONTEXTO DE REPOSITÓRIO AUTORIZADO: a pessoa selecionou ${repositoryContext.fullName} (${repositoryContext.htmlUrl}), branch padrão ${repositoryContext.defaultBranch}${repositoryContext.language ? ` e linguagem principal ${repositoryContext.language}` : ""}. Use esse contexto para responder sobre o trabalho pedido; não invente acesso a arquivos ou ações concluídas.`
+    : "";
+  const latestText = `${lastMessage.content}${repositoryInstruction}${visualInstruction}${fileInstruction}`.slice(0, MAX_TOTAL_CHARS);
+  const latestContent = hasImages
+    ? [{ type: "text", text: latestText }, ...prepared.imageParts]
+    : latestText;
+  const selectedHistory = selectConversationMessages(messages);
+  const apiMessages = [
+    ...selectedHistory.slice(0, -1),
+    { role: "user", content: latestContent },
+  ];
+
+  const realtimeRequested = !hasImages && needsRealtimeResearch(lastMessage.content);
+  let runtimeContext = currentBrazilContext();
+  let forcedResearchUsed = 0;
+  if (realtimeRequested) {
+    try {
+      const realtimeResearch = await runResearch({
+        question: lastMessage.content,
+        deep: true,
+        maxSearches: 6,
+        maxPages: 6,
+        maxActions: 24,
+      });
+      runtimeContext += `\n\n${researchContextText(realtimeResearch, redactSensitiveText)}\n\nA pesquisa atual já foi executada no servidor. Não faça uma segunda pesquisa para esta mesma pergunta, a menos que as evidências estejam vazias.`;
+      forcedResearchUsed = 1;
+    } catch (error) {
+      runtimeContext += "\n\nPESQUISA ATUAL OBRIGATÓRIA: a tentativa de consulta falhou. Não invente fatos recentes; informe que não foi possível verificar agora.";
+      console.error("Realtime research preflight failed", error?.message || "unknown");
+    }
+  }
+
+  const result = await callGroqWithMcp({ messages: apiMessages, hasImages, mcpServers, runtimeContext, hasFiles: prepared.fileNames.length > 0, hasRepository: Boolean(repositoryContext), taskType, capabilityPlan });
+  if (result.failure) {
+    console.error("Groq request failed", result.failure);
+    return sendJson(response, 502, { error: "O KAZER não conseguiu concluir a resposta agora. Tente novamente." });
+  }
+
+  const { data, model } = result;
+  const content = protectKazerIdentity(cleanModelContent(data?.choices?.[0]?.message?.content, taskType));
+  if (!content) {
+      console.error("Groq returned an empty response", { model });
+      return sendJson(response, 502, { error: "A resposta recebida estava vazia. Tente novamente." });
+    }
+
+  return sendJson(response, 200, {
+    brain: KAZER_BRAIN_VERSION,
+    message: { role: "assistant", content: content.trim() },
+    attachments: prepared.fileNames,
+    usage,
+    credit_cost: creditCost,
+    mcp_connector_count: requestedMcpCount,
+    mcp_servers_available: mcpServers.length,
+    mcp_tools_used: result.mcpToolsUsed || 0,
+    research_used: (result.researchUsed || 0) + forcedResearchUsed,
+    repository_context: repositoryContext?.fullName || null,
+  });
+};

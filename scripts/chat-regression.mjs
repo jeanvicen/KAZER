@@ -16,8 +16,16 @@ const assert = (condition, message) => {
 };
 
 const compressedPayload = chatApi.match(/Buffer\.from\("([A-Za-z0-9+/=]+)", "base64"\)/);
-assert(compressedPayload, "O payload comprimido do chat não pôde ser localizado");
-const readableChatApi = inflateSync(Buffer.from(compressedPayload[1], "base64")).toString("utf8");
+const readableChatApi = compressedPayload
+  ? inflateSync(Buffer.from(compressedPayload[1], "base64")).toString("utf8")
+  : chatApi;
+assert(!chatApi.includes("new Function("), "A rota de chat não deve executar um bundle dinâmico opaco");
+assert(readableChatApi.includes('require("./_security")') && readableChatApi.includes('require("./_kazer-brain")'), "Os imports centrais do chat devem permanecer estáticos para o bundler da Vercel");
+const localModuleRefs = [...readableChatApi.matchAll(/require\(["'](\.\/[^"']+)["']\)/g)].map(([, modulePath]) => modulePath);
+assert(localModuleRefs.length >= 8, "Os imports locais do handler não foram detectados");
+for (const modulePath of localModuleRefs) {
+  await readFile(`${root}/api/${modulePath.slice(2)}.js`, "utf8");
+}
 const normalizerSource = readableChatApi.match(/function extractModelText[\s\S]*?(?=\nfunction protectKazerIdentity)/);
 assert(normalizerSource, "O normalizador de conteúdo do provider não pôde ser localizado");
 const cleanModelContent = new Function(
