@@ -4848,7 +4848,7 @@
 
 </style>
     <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300..800&family=Geist+Mono:wght@400;500;600&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="/interface/kazer-premium.css?v=20261005" />
+    <link rel="stylesheet" href="/interface/kazer-premium.css?v=20261005b" />
     <script>
       window.setTimeout(() => {
         const fallbackApp = document.getElementById("app");
@@ -7558,7 +7558,7 @@
             const content = document.createElement("div");
             content.className = "assistant-content";
             renderAssistantContent(content, text, options);
-            response.append(createAssistantSymbol("assistant-marker"), content);
+            response.append(content);
             row.appendChild(response);
           } else {
             const content = document.createElement("div");
@@ -7771,29 +7771,37 @@
           const row = document.createElement("article");
           row.className = "message-row assistant";
           const thinking = document.createElement("div");
-          thinking.className = "thinking-row";
+          thinking.className = "thinking-row kz-thinking";
           thinking.setAttribute("role", "status");
           thinking.setAttribute("aria-live", "polite");
-          const symbol = document.createElement("span");
-          symbol.className = "thinking-symbol";
-          symbol.setAttribute("aria-hidden", "true");
-          const canvas = document.createElement("canvas");
-          canvas.className = "thinking-attractor-canvas";
-          symbol.appendChild(canvas);
-          window.requestAnimationFrame(() => startThinkingAttractor(canvas));
+          const orb = document.createElement("span");
+          orb.className = "thinking-symbol kz-orb";
+          orb.setAttribute("aria-hidden", "true");
+          ["kz-orb-halo", "kz-orb-ring", "kz-orb-core", "kz-orb-spark"].forEach((name) => {
+            const part = document.createElement("span");
+            part.className = name;
+            orb.appendChild(part);
+          });
           const label = document.createElement("span");
           label.className = "thinking-label";
           const copy = document.createElement("span");
-          copy.textContent = "KAZER está pensando";
-          const dots = document.createElement("span");
-          dots.className = "thinking-dots";
-          dots.setAttribute("aria-hidden", "true");
-          for (let index = 0; index < 3; index += 1) {
-            dots.appendChild(document.createElement("span"));
-          }
-          label.append(copy, dots);
-          thinking.append(symbol, label);
+          copy.className = "kz-thinking-text";
+          const phrases = ["Pensando", "Entendendo o pedido", "Organizando as ideias", "Preparando a resposta"];
+          copy.textContent = phrases[0];
+          label.appendChild(copy);
+          thinking.append(orb, label);
           row.appendChild(thinking);
+          let step = 0;
+          const timer = window.setInterval(() => {
+            if (!row.isConnected) { window.clearInterval(timer); return; }
+            step = Math.min(step + 1, phrases.length - 1);
+            copy.classList.add("is-out");
+            window.setTimeout(() => {
+              copy.textContent = phrases[step];
+              copy.classList.remove("is-out");
+            }, 220);
+            if (step === phrases.length - 1) window.clearInterval(timer);
+          }, 2200);
           return row;
         };
 

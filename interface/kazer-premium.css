@@ -1118,3 +1118,80 @@ section.settings-popover,
   .settings-group .switch.on::before { border-color: var(--kz-gold-line); background: var(--kz-gold-grad) !important; background-size: 160% 100% !important; }
   .settings-group .switch.on::after { background: #fff !important; box-shadow: 0 1px 4px rgba(0,0,0,.35); }
 }
+
+/* ───────────────────────── 15. Pensando — orbe dourado + respostas sem marca ───────────────────────── */
+.assistant-response { display: block !important; }
+.assistant-marker { display: none !important; }
+
+.thinking-row.kz-thinking {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 12px !important;
+  min-height: 36px !important;
+  padding: 7px 16px 7px 8px;
+  border: 1px solid var(--kz-line);
+  border-radius: 999px;
+  background: linear-gradient(180deg, var(--kz-surface-2), var(--kz-surface));
+  box-shadow: 0 10px 30px rgba(0, 0, 0, .25), inset 0 1px 0 rgba(255, 255, 255, .04);
+  animation: kz-think-in .45s var(--kz-spring, cubic-bezier(.2, .9, .3, 1.2)) both !important;
+}
+.kz-orb {
+  position: relative !important;
+  display: block !important;
+  width: 22px !important;
+  height: 22px !important;
+  flex: 0 0 22px !important;
+  margin: 0 !important;
+}
+.kz-orb > span { position: absolute; inset: 0; border-radius: 50%; }
+.kz-orb-halo {
+  inset: -7px !important;
+  background: radial-gradient(circle, rgba(214, 178, 94, .35), transparent 65%);
+  animation: kz-orb-breathe 2.4s ease-in-out infinite;
+}
+.kz-orb-ring {
+  background: conic-gradient(from 0deg, transparent 0 18%, #f6e3a8 32%, #d6b25e 46%, transparent 62% 100%);
+  -webkit-mask: radial-gradient(circle, transparent 7.5px, #000 8px);
+  mask: radial-gradient(circle, transparent 7.5px, #000 8px);
+  animation: kz-orb-spin 1.15s linear infinite;
+}
+.kz-orb-core {
+  inset: 6px !important;
+  background: radial-gradient(circle at 35% 30%, #fff6d6, #e6c477 40%, #9c7631 100%);
+  box-shadow: 0 0 10px rgba(230, 196, 119, .6);
+  animation: kz-orb-pulse 1.6s ease-in-out infinite;
+}
+.kz-orb-spark {
+  inset: auto !important;
+  top: -1px; left: 50%;
+  width: 3px; height: 3px;
+  margin-left: -1.5px;
+  background: #fff3cf;
+  box-shadow: 0 0 6px #f6e3a8;
+  transform-origin: 1.5px 12px;
+  animation: kz-orb-spin 2.6s linear infinite reverse;
+}
+.kz-thinking .thinking-label {
+  min-width: 0 !important;
+  font-size: 14px !important;
+  letter-spacing: .005em !important;
+}
+.kz-thinking-text {
+  display: inline-block;
+  transition: opacity .22s ease, transform .22s ease, filter .22s ease;
+}
+.kz-thinking-text.is-out { opacity: 0; transform: translateY(-4px); filter: blur(2px); }
+
+@keyframes kz-orb-spin { to { transform: rotate(360deg); } }
+@keyframes kz-orb-pulse { 0%, 100% { transform: scale(.86); } 50% { transform: scale(1.06); } }
+@keyframes kz-orb-breathe { 0%, 100% { opacity: .45; transform: scale(.85); } 50% { opacity: 1; transform: scale(1.1); } }
+@keyframes kz-think-in { from { opacity: 0; transform: translateY(6px) scale(.96); } to { opacity: 1; transform: none; } }
+
+:root[data-theme="light"] .thinking-row.kz-thinking { background: #fff; border-color: rgba(0, 0, 0, .08); box-shadow: 0 8px 24px rgba(0, 0, 0, .07); }
+
+@media (prefers-reduced-motion: reduce) {
+  .kz-orb > span, .thinking-row.kz-thinking { animation: none !important; }
+  .kz-thinking-text { transition: none; }
+}
+.kz-orb::before, .kz-orb::after, .thinking-row.kz-thinking::before, .thinking-row.kz-thinking::after { display: none !important; }
+.kz-orb-spark { top: 0 !important; left: 9.5px !important; margin: 0 !important; transform-origin: 1.5px 11px !important; }
