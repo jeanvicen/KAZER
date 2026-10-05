@@ -29,7 +29,8 @@ const MAX_GROQ_ATTEMPTS_PER_MODEL = 2;
 const RETRYABLE_GROQ_STATUSES = new Set([429, 500, 502, 503, 504]);
 const MAX_MESSAGES = 48;
 const MAX_RECEIVED_MESSAGES = 72;
-const MAX_MESSAGE_CHARS = 8000;
+const MAX_USER_MESSAGE_CHARS = 8000;
+const MAX_ASSISTANT_MESSAGE_CHARS = MAX_CODE_OUTPUT_CHARS;
 const MAX_TOTAL_CHARS = 32000;
 const MAX_FILE_BYTES = 4 * 1024 * 1024;
 const MAX_IMAGES = 3;
@@ -95,39 +96,43 @@ function isModeratedRequest(messages) {
 function parseMessages(value) {
   if (!Array.isArray(value) || value.length === 0 || value.length > MAX_RECEIVED_MESSAGES) return null;
 
-  let totalChars = 0;
   const messages = [];
-  const recentMessages = value.slice(-MAX_MESSAGES);
-
-  for (const item of recentMessages) {
-    if (!item || !["user", "assistant"].includes(item.role) || typeof item.content !== "string") return null;
+  for (const item of value) {
+    if (!item || typeof item !== "object" || Array.isArray(item) || !["user", "assistant"].includes(item.role) || typeof item.content !== "string") return null;
 
     const content = cleanUserContent(item.content);
-    if (!content || content.length > MAX_MESSAGE_CHARS) return null;
+    const maxChars = item.role === "user" ? MAX_USER_MESSAGE_CHARS : MAX_ASSISTANT_MESSAGE_CHARS;
+    if (!content || content.length > maxChars) return null;
     if (item.role === "assistant" && /^(?:O KAZER não conseguiu concluir a resposta agora\. Tente novamente\.|A resposta recebida estava vazia\. Tente novamente\.|Não foi possível conectar ao chat agora\.)$/i.test(content)) continue;
 
-    totalChars += content.length;
-    if (totalChars > MAX_TOTAL_CHARS) return null;
     messages.push({ role: item.role, content });
   }
 
-  if (messages[messages.length - 1]?.role !== "user") return null;
-  return messages;
+  const recentMessages = messages.slice(-MAX_MESSAGES);
+  if (recentMessages[recentMessages.length - 1]?.role !== "user") return null;
+  return recentMessages;
 }
 
 function parseTitleMessages(value) {
   if (!Array.isArray(value) || value.length === 0 || value.length > MAX_RECEIVED_MESSAGES) return null;
-  let totalChars = 0;
+
   const messages = [];
-  for (const item of value.slice(-MAX_MESSAGES)) {
-    if (!item || !["user", "assistant"].includes(item.role) || typeof item.content !== "string") return null;
+  for (const item of value) {
+    if (!item || typeof item !== "object" || Array.isArray(item) || !["user", "assistant"].includes(item.role) || typeof item.content !== "string") return null;
     const content = cleanUserContent(item.content);
-    if (!content || content.length > MAX_MESSAGE_CHARS) return null;
-    totalChars += content.length;
-    if (totalChars > MAX_TOTAL_CHARS) return null;
+    const maxChars = item.role === "user" ? MAX_USER_MESSAGE_CHARS : MAX_ASSISTANT_MESSAGE_CHARS;
+    if (!content || content.length > maxChars) return null;
     messages.push({ role: item.role, content });
   }
-  return messages;
+  return messages.slice(-MAX_MESSAGES);
+}
+
+function isLatestPromptTooLarge(value) {
+  if (!Array.isArray(value) || value.length === 0) return false;
+  const latest = value[value.length - 1];
+  return Boolean(latest && typeof latest === "object" && latest.role === "user"
+    && typeof latest.content === "string"
+    && cleanUserContent(latest.content).length > MAX_USER_MESSAGE_CHARS);
 }
 
 function parseDataUrl(dataUrl) {
@@ -452,6 +457,9 @@ module.exports = async function handler(request, response) {
     return sendJson(response, 200, { title });
   }
   if (!messages) {
+    if (isLatestPromptTooLarge(body?.messages)) {
+      return sendJson(response, 400, { error: `Sua mensagem excede o limite de ${MAX_USER_MESSAGE_CHARS.toLocaleString("pt-BR")} caracteres.` });
+    }
     return sendJson(response, 400, { error: "Histórico de conversa inválido." });
   }
   const repositoryContext = await resolveRepositoryContext(user.id, body?.githubRepo);
