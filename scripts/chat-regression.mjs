@@ -1,6 +1,7 @@
 import { readFile } from "node:fs/promises";
 import { execFileSync } from "node:child_process";
 import { writeFileSync, unlinkSync } from "node:fs";
+import { inflateSync } from "node:zlib";
 
 const root = new URL("..", import.meta.url).pathname;
 const chatApi = await readFile(`${root}/api/chat.js`, "utf8");
@@ -13,6 +14,32 @@ const apk = await readFile(`${root}/download/android/kazer.apk`);
 const assert = (condition, message) => {
   if (!condition) throw new Error(message);
 };
+
+const compressedPayload = chatApi.match(/Buffer\.from\("([A-Za-z0-9+/=]+)", "base64"\)/);
+assert(compressedPayload, "O payload comprimido do chat não pôde ser localizado");
+const readableChatApi = inflateSync(Buffer.from(compressedPayload[1], "base64")).toString("utf8");
+const normalizerSource = readableChatApi.match(/function extractModelText[\s\S]*?(?=\nfunction protectKazerIdentity)/);
+assert(normalizerSource, "O normalizador de conteúdo do provider não pôde ser localizado");
+const cleanModelContent = new Function(
+  "redactSensitiveText",
+  "MAX_OUTPUT_CHARS",
+  "MAX_CODE_OUTPUT_CHARS",
+  `${normalizerSource[0]}\nreturn cleanModelContent;`,
+)((text) => text, 16000, 64000);
+const normalizerCases = [
+  cleanModelContent("  plain string\n"),
+  cleanModelContent([{ type: "text", text: "array " }, { type: "text", text: "blocks" }]),
+  cleanModelContent({ content: { parts: [{ text: "nested object" }] } }),
+  cleanModelContent({ role: "assistant", metadata: { id: "not user-facing text" } }),
+];
+assert(normalizerCases[0] === "plain string", "O normalizador alterou o comportamento de texto simples");
+assert(normalizerCases[1] === "array blocks", "O normalizador não extraiu blocos de texto");
+assert(normalizerCases[2] === "nested object", "O normalizador não extraiu texto aninhado");
+assert(normalizerCases[3] === "", "O normalizador expôs um objeto sem texto reconhecido");
+assert(!normalizerCases.includes("[object Object]"), "O normalizador produziu [object Object]");
+const cyclicContent = {};
+cyclicContent.parts = [cyclicContent];
+assert(cleanModelContent(cyclicContent) === "", "O normalizador não protegeu a recursão cíclica");
 
 execFileSync(process.execPath, ["--check", `${root}/api/chat.js`]);
 const inlineScripts = [...chatUi.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/gi)]
@@ -56,4 +83,4 @@ assert(chatUi.includes('fetch("/download/android/kazer.apk"') && chatUi.includes
 assert(chatUi.includes("appinstalled") && chatUi.includes("setInstallProgress(100"), "A instalação não confirma conclusão real");
 assert(chatUi.includes(".slice(-72)"), "O histórico local ainda é cortado cedo demais ao salvar a conversa");
 assert(apk.length > 500000 && apk.subarray(0, 2).toString() === "PK", "O APK release publicado não é um pacote Android válido");
-console.log("chat-regression: OK — contexto, anexos, assinatura, instalação, memória e NEXO removidos, e microfone verificados.");
+console.log("chat-regression: OK — normalização de conteúdo do provider, contexto, anexos, assinatura, instalação, memória e NEXO removidos, e microfone verificados.");
