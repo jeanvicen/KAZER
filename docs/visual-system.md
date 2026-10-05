@@ -20,6 +20,14 @@ A distinção evita que um pedido de `index.html` seja transformado em uma prév
 
 SVGs devem usar um sistema de coordenadas consistente. O atributo `viewBox` define a posição e as dimensões do viewport em unidades do usuário e, junto com `preserveAspectRatio`, permite que a composição se adapte ao espaço disponível ([MDN — viewBox](https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/viewBox)). Gradientes lineares, radiais, cônicos, repetidos e camadas múltiplas podem criar profundidade sem imagens externas ([web.dev — Gradients](https://web.dev/learn/css/gradients)).
 
+Para chegar perto de ilustração ou render de estúdio (ainda 100% vetorial):
+
+- Gradientes com vários color-stops para volume e atmosfera
+- Iluminação legível: key light, fill light, rim light; sombras suaves e reflexos discretos
+- Filtros SVG com propósito: `feGaussianBlur`, `feDropShadow`, `feSpecularLighting` / `feDiffuseLighting`, `feTurbulence` + `feComposite` (grain/textura), sem exagero
+- Paths orgânicos, micro-detalhe, transparências e sobreposições em camadas (fundo, midground, foreground)
+- Paleta harmoniosa, contraste e ponto focal claros; proporções e perspectiva corretas
+
 O renderizador mantém estilos SVG sanitizados para preservar gradientes, filtros leves e animações locais, enquanto remove scripts, recursos externos, formulários e elementos que ampliariam a superfície de ataque. O HTML visual é isolado em `iframe` com `sandbox` e CSP sem rede; `srcdoc` é tratado como uma superfície de injeção e não recebe conteúdo externo ([MDN — srcdoc e segurança](https://developer.mozilla.org/en-US/docs/Web/API/HTMLIFrameElement/srcdoc)).
 
 ## Critérios de aceitação

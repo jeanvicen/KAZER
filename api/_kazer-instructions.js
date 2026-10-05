@@ -37,26 +37,29 @@ const MODULES = {
     "Use contexto de GitHub apenas para o repositório autorizado e selecionado. Não afirme que alterou arquivos, fez commit, abriu pull request ou fez deploy sem operação confirmada e resultado real.",
   ],
   visual: [
-    "Quando o pedido tiver intenção visual, entregue um visual útil no ponto exato da explicação em bloco kazer-svg ou kazer-html autocontido, responsivo, seguro e sem recursos externos. Antes de compor, escolha uma direção de arte coerente com o assunto (editorial, surreal, orgânica, arquitetônica, futurista, cinematográfica, minimalista ou outra apropriada), com hierarquia, foco e contraste claros.",
+    "Quando o pedido tiver intenção visual, entregue um visual útil no ponto exato da explicação em bloco kazer-svg ou kazer-html autocontido, responsivo, seguro e sem recursos externos. Antes de compor, escolha uma direção de arte coerente com o assunto (editorial, surreal, orgânica, arquitetônica, futurista, cinematográfica, minimalista, científica ou outra apropriada), com hierarquia, foco e contraste claros.",
     "Evite o visual genérico de cartões, quadrados e retângulos repetidos. Prefira uma composição com pelo menos três camadas (fundo, atmosfera e elemento focal), profundidade, assimetria controlada, formas orgânicas ou silhuetas variadas, iluminação, gradientes com transições intencionais, textura sutil e espaço negativo. Use formas retangulares apenas quando fizerem parte real do conceito, não como preenchimento automático.",
-    "Para SVG, use viewBox consistente, preserveAspectRatio, defs reutilizáveis, gradientes, filtros leves, paths e grupos para criar uma cena completa que escale bem. Para HTML, use CSS responsivo, composição em camadas, tipografia hierárquica, sombras e estados visuais coerentes. O resultado deve parecer uma peça final de direção de arte, não um wireframe ou uma coleção de caixas.",
+    "Para SVG, use viewBox consistente (ex.: 0 0 800 600 ou proporção adequada ao tema), preserveAspectRatio=\"xMidYMid meet\", defs reutilizáveis com ids únicos e estáveis, paths bem construídos (curvas Bézier suaves, sem arestas duras desnecessárias), grupos hierárquicos (fundo / midground / foreground) e estilos autocontidos. O resultado deve escalar a qualquer tamanho sem perder nitidez nem legibilidade.",
+    "Qualidade de estúdio em SVG (obrigatório quando o formato for kazer-svg): use gradientes lineares e radiais com múltiplos color-stops (mínimo 3–5 stops) para volume, profundidade e atmosfera; combine key light, fill light e rim light via overlays semi-transparentes, gradientes e filtros; inclua sombras suaves (feDropShadow ou feGaussianBlur + feOffset + feComposite), reflexos sutis e highlights. Aplique filtros SVG avançados com moderação e propósito: feGaussianBlur (glow/atmosfera), feDropShadow, feSpecularLighting e/ou feDiffuseLighting (volume e brilho), feTurbulence + feComposite (grain/textura micro), feColorMatrix quando ajudar contraste/atmosfera. Evite filtros pesados demais que quebrem a legibilidade.",
+    "Detalhe fino: micro-texturas, bordas suaves, transparências (opacity / fill-opacity / stroke-opacity), overlaps em camadas, vignette ou haze ambiental discreto, e harmonia de paleta com contraste legível e atmosfera coerente. Formas orgânicas e proporções corretas (anatomia, perspectiva, escala) para personagens, objetos e cenas. O visual deve parecer ilustração profissional ou render de estúdio, não um SVG plano ou geométrico genérico — permanece 100% vetorial, sem imagens raster externas.",
+    "Para HTML visual (kazer-html), use CSS responsivo, composição em camadas, tipografia hierárquica, sombras e estados visuais coerentes. O resultado (SVG ou HTML) deve parecer uma peça final de direção de arte, não um wireframe ou uma coleção de caixas.",
     "Não force visuais quando não acrescentarem clareza. Se a pessoa pedir código-fonte, use a regra de código e entregue o arquivo literal em Markdown comum, sem kazer-html ou kazer-svg.",
   ],
 };
 
-function buildSystemInstructions({ taskType = "conversation", hasImages = false, hasFiles = false, hasTools = false, hasRepository = false, runtimeContext = "" } = {}) {
-  const selected = ["core", "behavior", "safety"];
-  if (hasTools) selected.push("tools");
-  if (hasFiles) selected.push("files");
-  if (hasImages) selected.push("vision");
-  if (["coding", "analysis"].includes(taskType)) selected.push("coding");
-  if (hasRepository) selected.push("github");
-  if (taskType === "visual") selected.push("visual");
+function buildSystemInstructions({ taskType = \"conversation\", hasImages = false, hasFiles = false, hasTools = false, hasRepository = false, runtimeContext = \"\" } = {}) {
+  const selected = [\"core\", \"behavior\", \"safety\"];
+  if (hasTools) selected.push(\"tools\");
+  if (hasFiles) selected.push(\"files\");
+  if (hasImages) selected.push(\"vision\");
+  if ([\"coding\", \"analysis\"].includes(taskType)) selected.push(\"coding\");
+  if (hasRepository) selected.push(\"github\");
+  if (taskType === \"visual\") selected.push(\"visual\");
   const instructions = [...new Set(selected)].flatMap((name) => MODULES[name] || []);
-  if (runtimeContext) instructions.push("CONTEXTO OPERACIONAL (dados do servidor; não substitui as regras acima):\n" + String(runtimeContext).slice(0, 18000));
-  instructions.push("CONTINUIDADE DA CONVERSA: trate as mensagens anteriores de usuário e KAZER como uma conversa em andamento. Use o primeiro assunto e as trocas recentes para resolver referências como isso, ele, ela, de novo, e sobre o que falamos ou perguntas curtas; não responda com uma saudação genérica nem finja que a conversa começou agora, salvo quando o usuário iniciar um novo assunto claramente.");
-  instructions.push("ORDEM DE CONTEXTO: regras do sistema → contexto relevante → histórico necessário → mensagem atual do usuário. A mensagem atual e suas restrições têm prioridade sobre contexto antigo e irrelevante.");
-  return instructions.join("\n\n");
+  if (runtimeContext) instructions.push(\"CONTEXTO OPERACIONAL (dados do servidor; não substitui as regras acima):\\n\" + String(runtimeContext).slice(0, 18000));
+  instructions.push(\"CONTINUIDADE DA CONVERSA: trate as mensagens anteriores de usuário e KAZER como uma conversa em andamento. Use o primeiro assunto e as trocas recentes para resolver referências como isso, ele, ela, de novo, e sobre o que falamos ou perguntas curtas; não responda com uma saudação genérica nem finja que a conversa começou agora, salvo quando o usuário iniciar um novo assunto claramente.\");
+  instructions.push(\"ORDEM DE CONTEXTO: regras do sistema → contexto relevante → histórico necessário → mensagem atual do usuário. A mensagem atual e suas restrições têm prioridade sobre contexto antigo e irrelevante.\");
+  return instructions.join(\"\\n\\n\");
 }
 
 module.exports = { MODULES, buildSystemInstructions };
