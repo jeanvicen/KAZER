@@ -36,7 +36,10 @@ assert(normalizerCases[0] === "plain string", "O normalizador alterou o comporta
 assert(normalizerCases[1] === "array blocks", "O normalizador não extraiu blocos de texto");
 assert(normalizerCases[2] === "nested object", "O normalizador não extraiu texto aninhado");
 assert(normalizerCases[3] === "", "O normalizador expôs um objeto sem texto reconhecido");
-assert(!normalizerCases.includes("[object Object]"), "O normalizador produziu [object Object]");
+let callableCoercionAttempted = false;
+const callableContent = Object.assign(() => {}, { toString() { callableCoercionAttempted = true; return "unsafe"; } });
+assert(cleanModelContent(callableContent) === "" && !callableCoercionAttempted, "O normalizador tentou converter um objeto callable em texto");
+assert(!normalizerCases.some((value) => value.includes("[object Object]")), "O normalizador produziu [object Object]");
 const cyclicContent = {};
 cyclicContent.parts = [cyclicContent];
 assert(cleanModelContent(cyclicContent) === "", "O normalizador não protegeu a recursão cíclica");
