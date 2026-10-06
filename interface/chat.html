@@ -4753,8 +4753,12 @@
       .usage-eyebrow i { width: 3px; height: 3px; border-radius: 50%; background: #cbb47d; }
       .usage-intro h2 { margin: 11px 0 7px; color: #f2f0e9; font-size: clamp(24px,6.5vw,29px); font-weight: 520; letter-spacing: -.045em; line-height: 1.13; }
       .usage-intro p { max-width: 380px; margin: 0; color: #a7a6a1; font-size: 13px; line-height: 1.55; }
-      .usage-data-card { position: relative; overflow: hidden; padding: 21px 20px 18px; border: 1px solid rgba(255,255,255,.105); border-radius: 16px; background: #17181a; box-shadow: 0 12px 32px rgba(0,0,0,.17),inset 0 1px 0 rgba(255,255,255,.025); }
-      .usage-data-card::before { position: absolute; top: 0; left: 20px; width: 38px; height: 1px; background: linear-gradient(90deg,transparent,#cbb47d,transparent); content: ""; opacity: .8; }
+      /* Preenchimento decorativo do cartão inteiro; os valores continuam vindo do uso real. */
+      .usage-data-card { position: relative; isolation: isolate; overflow: hidden; padding: 21px 20px 18px; border: 1px solid rgba(255,255,255,.105); border-radius: 16px; background: #17181a; box-shadow: 0 12px 32px rgba(0,0,0,.17),inset 0 1px 0 rgba(255,255,255,.025); }
+      .usage-data-card::before { position: absolute; z-index: 3; top: 0; left: 20px; width: 38px; height: 1px; background: linear-gradient(90deg,transparent,#cbb47d,transparent); content: ""; opacity: .8; pointer-events: none; }
+      .usage-data-card > :not(.usage-card-water) { position: relative; z-index: 2; }
+      .usage-card-water { position: absolute; z-index: 0; inset: 0; overflow: hidden; border-radius: inherit; background: linear-gradient(180deg,rgba(80,220,135,.018),transparent 58%); pointer-events: none; }
+      .usage-card-water[hidden] { display: none !important; }
       .usage-card-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding-bottom: 17px; border-bottom: 1px solid rgba(255,255,255,.075); }
       .usage-card-top > div { display: grid; gap: 5px; min-width: 0; }
       .usage-card-kicker { color: #aaa69c; font-size: 9px; font-weight: 650; letter-spacing: .14em; }
@@ -4766,18 +4770,15 @@
       .usage-refresh[aria-busy="true"] .icon { animation: usage-rotate .9s linear infinite; }
       @keyframes usage-rotate { to { transform: rotate(360deg); } }
       .usage-cycle-label { margin: 18px 0 9px; color: #a7a49c; font-size: 9px; font-weight: 640; letter-spacing: .14em; }
-      .usage-percent-line { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 72px; }
+      .usage-percent-line { display: flex; align-items: center; justify-content: flex-start; gap: 12px; min-height: 72px; }
       .usage-percent-copy { display: flex; min-width: 0; flex-wrap: wrap; align-items: baseline; gap: 4px 9px; }
       .usage-percent-line strong { color: #f3f1eb; font-size: clamp(39px,10vw,48px); font-weight: 510; letter-spacing: -.065em; font-variant-numeric: tabular-nums; line-height: 1; }
       .usage-percent-line span { color: #b0aea8; font-size: 12px; }
-      .usage-water-tile { position: relative; isolation: isolate; display: grid; flex: 0 0 72px; place-items: center; width: 72px; height: 72px; overflow: hidden; pointer-events: none; border: 1px solid rgba(255,255,255,.12); border-radius: 16px; background: rgba(7,20,13,.42); box-shadow: inset 0 1px 0 rgba(255,255,255,.045), 0 5px 14px rgba(0,0,0,.08); }
-      .usage-water-tile[hidden] { display: none !important; }
-      .usage-water-fill { position: absolute; z-index: 0; right: 0; bottom: 0; left: 0; height: 0; overflow: hidden; background: linear-gradient(180deg,rgba(79,225,142,.31),rgba(41,174,99,.24)); transition: height 420ms cubic-bezier(.2,.75,.25,1); }
-      .usage-water-fill::before { position: absolute; top: 0; left: -55%; width: 210%; height: 3px; border-radius: 50%; background: linear-gradient(90deg,transparent,rgba(153,255,190,.52),transparent); content: ""; animation: usage-water-drift 4.8s ease-in-out infinite alternate; }
-      .usage-water-fill::after { position: absolute; inset: 0; background: repeating-linear-gradient(90deg,transparent 0 10px,rgba(157,255,192,.13) 10px 11px),repeating-linear-gradient(0deg,transparent 0 12px,rgba(157,255,192,.06) 12px 13px); content: ""; }
-      .usage-water-code { position: absolute; z-index: 1; bottom: 7px; color: rgba(112,230,154,.34) !important; font: 7px/1.25 ui-monospace,SFMono-Regular,Menlo,monospace !important; letter-spacing: .11em; text-align: center; user-select: none; }
-      .usage-water-value { position: relative; z-index: 2; color: #d5f5df !important; font-size: 14px !important; font-weight: 620; font-variant-numeric: tabular-nums; text-shadow: 0 1px 8px rgba(0,0,0,.48); }
-      @keyframes usage-water-drift { from { transform: translateX(-5%); } to { transform: translateX(5%); } }
+      .usage-card-water-fill { position: absolute; right: 0; bottom: 0; left: 0; height: 0; overflow: visible; background: linear-gradient(180deg,rgba(79,225,142,.3),rgba(41,174,99,.24)); transition: height 620ms cubic-bezier(.2,.75,.25,1); }
+      .usage-card-water-fill::before { position: absolute; top: -8px; left: -30%; width: 160%; height: 16px; border-radius: 50%; background: linear-gradient(90deg,transparent 0%,rgba(153,255,190,.12) 18%,rgba(153,255,190,.42) 50%,rgba(153,255,190,.12) 82%,transparent 100%); content: ""; animation: usage-water-wave 5.8s ease-in-out infinite alternate; will-change: transform; }
+      .usage-card-water-fill::after { position: absolute; inset: 0; background: repeating-linear-gradient(90deg,transparent 0 13px,rgba(157,255,192,.12) 13px 14px),repeating-linear-gradient(0deg,transparent 0 17px,rgba(157,255,192,.07) 17px 18px); content: ""; opacity: .65; }
+      .usage-card-water-fill.is-empty::before { display: none; }
+      @keyframes usage-water-wave { from { transform: translate3d(-2.5%,1px,0) rotate(-.6deg); } to { transform: translate3d(2.5%,-1px,0) rotate(.6deg); } }
       .usage-meter { height: 4px; margin: 14px 0 13px; overflow: hidden; border-radius: 99px; background: rgba(255,255,255,.1); }
       .usage-meter[hidden] { display: none !important; }
       .usage-meter > span { display: block; width: 0; height: 100%; border-radius: inherit; background: #78dba1; transition: width 360ms cubic-bezier(.2,.75,.25,1); }
@@ -4813,13 +4814,11 @@
       :root[data-theme="light"] .usage-refresh { border-color: rgba(0,0,0,.12); color: #56544e; }
       :root[data-theme="light"] .usage-refresh:hover:not(:disabled) { border-color: rgba(128,100,45,.34); background: rgba(128,100,45,.05); color: #39362e; }
       :root[data-theme="light"] .usage-meter { background: rgba(0,0,0,.09); }
-      :root[data-theme="light"] .usage-water-tile { border-color: rgba(24,99,55,.2); background: rgba(39,148,85,.045); box-shadow: inset 0 1px 0 rgba(255,255,255,.68), 0 5px 14px rgba(37,35,28,.04); }
+      :root[data-theme="light"] .usage-card-water { background: linear-gradient(180deg,rgba(50,166,98,.015),transparent 58%); }
       :root[data-theme="light"] .usage-percent-copy > span { color: #66645e; }
-      :root[data-theme="light"] .usage-water-fill { background: linear-gradient(180deg,rgba(50,166,98,.3),rgba(36,137,78,.2)); }
-      :root[data-theme="light"] .usage-water-fill::before { background: linear-gradient(90deg,transparent,rgba(32,118,66,.32),transparent); }
-      :root[data-theme="light"] .usage-water-fill::after { background: repeating-linear-gradient(90deg,transparent 0 10px,rgba(27,117,64,.11) 10px 11px),repeating-linear-gradient(0deg,transparent 0 12px,rgba(27,117,64,.05) 12px 13px); }
-      :root[data-theme="light"] .usage-water-code { color: rgba(33,115,65,.3) !important; }
-      :root[data-theme="light"] .usage-water-value { color: #285e3d !important; text-shadow: 0 1px 8px rgba(255,255,255,.72); }
+      :root[data-theme="light"] .usage-card-water-fill { background: linear-gradient(180deg,rgba(74,170,103,.24),rgba(64,148,88,.2)); }
+      :root[data-theme="light"] .usage-card-water-fill::before { background: linear-gradient(90deg,transparent 0%,rgba(32,118,66,.08) 18%,rgba(32,118,66,.27) 50%,rgba(32,118,66,.08) 82%,transparent 100%); }
+      :root[data-theme="light"] .usage-card-water-fill::after { background: repeating-linear-gradient(90deg,transparent 0 13px,rgba(27,117,64,.1) 13px 14px),repeating-linear-gradient(0deg,transparent 0 17px,rgba(27,117,64,.055) 17px 18px); }
       :root[data-theme="light"] .usage-meter > span { background: #438d60; }
       :root[data-theme="light"] .usage-pro-label { color: #745923; }
       :root[data-theme="light"] .usage-pro-status { border-color: rgba(112,86,38,.24); color: #665731; }
@@ -4879,7 +4878,7 @@
         .usage-reset-line strong { text-align: left; }
       }
       @media (prefers-reduced-motion: reduce) {
-        .usage-screen, .usage-meter > span, .usage-water-fill, .usage-water-fill::before, .usage-refresh[aria-busy="true"] .icon, .usage-pro-card button, .usage-pro-card button span { transition: none !important; animation: none !important; }
+        .usage-screen, .usage-meter > span, .usage-card-water-fill, .usage-card-water-fill::before, .usage-refresh[aria-busy="true"] .icon, .usage-pro-card button, .usage-pro-card button span { transition: none !important; animation: none !important; }
         .settings-usage-toggle, .settings-usage-toggle .settings-usage-toggle-chevron { transition: none !important; }
       }
 
@@ -5176,10 +5175,11 @@
           <div class="usage-screen-inner">
             <div class="usage-intro"><span class="usage-eyebrow">KAZER <i aria-hidden="true"></i> CONTA</span><h2>Consumo, com clareza.</h2><p>Acompanhe o uso e a próxima atualização do seu plano.</p></div>
             <section class="usage-data-card" aria-label="Consumo do plano atual">
+              <div class="usage-card-water" id="usageCardWater" aria-hidden="true" hidden><span class="usage-card-water-fill is-empty" id="usageCardWaterFill"></span></div>
               <div class="usage-card-top"><div><span class="usage-card-kicker">PLANO ATUAL</span><strong id="usagePlanName">Carregando…</strong></div><button class="usage-refresh" id="usageRefresh" type="button" aria-label="Atualizar dados de uso"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 7v5h-5M4 17v-5h5"></path><path d="M5.5 9A7 7 0 0 1 18 6.5L20 12M4 12l2 5.5A7 7 0 0 0 18.5 15"></path></svg><span>Atualizar</span></button></div>
               <div class="usage-facts" id="usageFacts" hidden>
                 <div class="usage-cycle-label">USO NO CICLO MENSAL</div>
-                <div class="usage-percent-line" id="usagePercentLine" hidden><div class="usage-percent-copy"><strong id="usagePercentValue">—%</strong><span>do limite utilizado</span></div><div class="usage-water-tile" id="usageWaterTile" aria-hidden="true" hidden><span class="usage-water-value" id="usageWaterValue">—%</span><span class="usage-water-code">01 10<br>10 01<br>01 10</span><span class="usage-water-fill" id="usageWaterFill"></span></div></div>
+                <div class="usage-percent-line" id="usagePercentLine" hidden><div class="usage-percent-copy"><strong id="usagePercentValue">—%</strong><span>do limite utilizado</span></div></div>
                 <div class="usage-meter" id="usageMeter" role="progressbar" aria-label="Uso do limite mensal informado pela conta" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" hidden><span id="usageMeterFill"></span></div>
                 <div class="usage-count-line" id="usageCountLine" hidden><span id="usageCountLabel">Eventos no ciclo</span><strong><span id="usageUsedValue">—</span><span aria-hidden="true"> / </span><span id="usageLimitValue">—</span></strong></div>
                 <div class="usage-reset-line" id="usageResetLine" hidden><span>Próxima atualização</span><strong id="usageResetValue"></strong></div>
@@ -5474,9 +5474,8 @@
         const usagePercentValue = document.getElementById("usagePercentValue");
         const usageMeter = document.getElementById("usageMeter");
         const usageMeterFill = document.getElementById("usageMeterFill");
-        const usageWaterTile = document.getElementById("usageWaterTile");
-        const usageWaterValue = document.getElementById("usageWaterValue");
-        const usageWaterFill = document.getElementById("usageWaterFill");
+        const usageCardWater = document.getElementById("usageCardWater");
+        const usageCardWaterFill = document.getElementById("usageCardWaterFill");
         const usageCountLine = document.getElementById("usageCountLine");
         const usageCountLabel = document.getElementById("usageCountLabel");
         const usageUsedValue = document.getElementById("usageUsedValue");
@@ -5746,7 +5745,8 @@
 
         const renderUsageScreen = (next, loading = false) => {
           if (!usageScreen) return;
-          if (usageWaterTile) usageWaterTile.hidden = true;
+          if (usageCardWater) usageCardWater.hidden = true;
+          if (usageCardWaterFill) { usageCardWaterFill.style.height = "0%"; usageCardWaterFill.classList.add("is-empty"); }
           if (loading) {
             if (usagePlanName) usagePlanName.textContent = "Carregando…";
             usageFacts.hidden = true;
@@ -5777,9 +5777,11 @@
           usageFeedback.hidden = hasFacts;
           if (usagePercentLine) usagePercentLine.hidden = !showPercent;
           if (usagePercentValue && showPercent) usagePercentValue.textContent = `${Math.round(percent)}%`;
-          if (usageWaterTile) usageWaterTile.hidden = !showPercent;
-          if (usageWaterValue && showPercent) usageWaterValue.textContent = `${Math.round(percent)}%`;
-          if (usageWaterFill) usageWaterFill.style.height = showPercent ? `${percent}%` : "0%";
+          if (usageCardWater) usageCardWater.hidden = !showPercent;
+          if (usageCardWaterFill) {
+            usageCardWaterFill.style.height = showPercent ? `${percent}%` : "0%";
+            usageCardWaterFill.classList.toggle("is-empty", !showPercent || percent <= 0);
+          }
           if (usageMeter) {
             usageMeter.hidden = !showPercent;
             if (showPercent) {
