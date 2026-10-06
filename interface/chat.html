@@ -5358,6 +5358,12 @@
           response = await fetch(url, { ...options, headers: { ...(options.headers || {}), ...await getApiHeaders(true) } });
           return response;
         };
+        // Narrow public bridge: only the authenticated home-suggestions purpose reaches /api/chat.
+        window.kazerFetchHomeSuggestions = (payload = {}, signal) => fetchWithAuth("/api/chat", {
+          method: "POST",
+          body: JSON.stringify({ purpose: "suggestions", localTimeBand: payload?.localTimeBand, recentSuggestions: payload?.recentSuggestions }),
+          signal,
+        });
         let currentUser = null;
         const profilePopover = document.getElementById("profilePopover");
         const settingsPopover = document.getElementById("settingsPopover");
@@ -8858,7 +8864,7 @@
     </script>
     <script src="/interface/connector-icons.js"></script>
     <script src="/interface/kazer-workspace.js"></script>
-    <script src="/interface/kazer-premium.js?v=20261005" defer></script>
+    <script src="/interface/kazer-premium.js?v=20261006-home-suggestions" defer></script>
   </body>
 </html>
 
