@@ -113,6 +113,33 @@ function parseMessages(value) {
   return recentMessages;
 }
 
+function normalizeGeneratedChatTitle(value) {
+  let title = cleanModelContent(value)
+    .replace(/```(?:[a-z0-9_-]+)?/gi, " ")
+    .replace(/`/g, " ")
+    .replace(/[\r\n]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+  title = title
+    .replace(/^(?:claro(?:[,!]\s*)?(?:o\s+)?|aqui(?:\s+est[aá])?(?:[,!]\s*)?)/i, "")
+    .replace(/^(?:o\s+)?(?:t[ií]tulo(?:\s+(?:sugerido|gerado|seria|[eé]))?|title(?:\s+is)?|here(?:'s| is)\s+the\s+title)\s*[:\-]\s*/i, "")
+    .trim();
+  if (/(?:\.{2,}|…+)\s*$/u.test(title)) return null;
+  title = title.replace(/^[\s'"“”‘’«»]+|[\s'"“”‘’«»]+$/g, "").replace(/[.!?,;:]+$/g, "").trim();
+  const words = title.split(/\s+/).filter(Boolean).slice(0, 6);
+  const completeWords = [];
+  for (const word of words) {
+    const candidate = [...completeWords, word].join(" ");
+    if (candidate.length > 48) break;
+    completeWords.push(word);
+  }
+  title = completeWords.join(" ").replace(/[.!?,;:]+$/g, "").trim();
+  const normalized = title.toLocaleLowerCase("pt-BR").normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  if (!title || /^(?:ok|okay|feito|pronto|prontinho|resolvido|sem titulo|nova conversa|conversa inicial|conversa|titulo|ideias|projeto|explicacao|planejamento)$/i.test(normalized)) return null;
+  if (/(?:^|\s)(?:a|ao|aos|as|com|da|das|de|do|dos|e|em|na|nas|no|nos|o|os|para|pela|pelas|pelo|pelos|por|sobre|um|uma|uns|umas)$/i.test(normalized)) return null;
+  return title;
+}
+
 function parseTitleMessages(value) {
   if (!Array.isArray(value) || value.length === 0 || value.length > MAX_RECEIVED_MESSAGES) return null;
 
@@ -452,8 +479,8 @@ module.exports = async function handler(request, response) {
     const titlePrompt = [{ role: "user", content: "Crie um título curto para esta conversa. Responda SOMENTE com o título, em português, com no máximo 6 palavras e 48 caracteres, sem aspas, sem ponto final e sem explicações. O título deve representar o objetivo principal do usuário, não copiar literalmente a primeira mensagem.\n\nConversa:\n" + titleMessages.map((item) => `${item.role === "user" ? "Usuário" : "KAZER"}: ${item.content}`).join("\n").slice(0, 6000) }];
     const result = await callGroq({ messages: titlePrompt, hasImages: false, timeoutMs: 12_000 });
     if (result.failure) return sendJson(response, 502, { error: "Não foi possível gerar o título agora." });
-    const title = cleanModelContent(result.data?.choices?.[0]?.message?.content).replace(/[\r\n]+/g, " ").replace(/^['"“”]+|['"“”]+$/g, "").trim().slice(0, 48);
-    if (!title) return sendJson(response, 502, { error: "O título gerado estava vazio." });
+    const title = normalizeGeneratedChatTitle(result.data?.choices?.[0]?.message?.content);
+    if (!title) return sendJson(response, 502, { error: "O título gerado estava inválido." });
     return sendJson(response, 200, { title });
   }
   if (!messages) {
