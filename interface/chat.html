@@ -6433,7 +6433,7 @@
           if (isDesktopLayout()) loadChatHistory();
         });
 
-        const titleCase = (value) => String(value || "").replace(/\b\w/g, (letter) => letter.toUpperCase());
+        const titleCase = (value) => { const title = String(value || "").trim(); return title ? title.charAt(0).toLocaleUpperCase("pt-BR") + title.slice(1) : ""; };
         const isLowValueChatTitle = (value) => {
           const normalized = String(value || "").toLocaleLowerCase("pt-BR").normalize("NFD").replace(/[\u0300-\u036f]/g, "");
           return /^(?:ok|okay|feito|pronto|prontinho|resolvido|sem titulo|nova conversa|conversa inicial|conversa|titulo|ideias|projeto|explicacao|planejamento)$/i.test(normalized)
@@ -6467,14 +6467,15 @@
           if (/^(oi|olá|ola|e aí|e ai|bom dia|boa tarde|boa noite|hello|hi)[!.?\s]*$/i.test(source)) return "Conversa inicial";
           if (files.length && !source) return "Análise de arquivos";
           let topic = source.replace(/^[\s>*#-]+/, "").replace(/[?!.]+$/, "").trim();
-          const leadingRequest = /^(?:(?:por favor|você pode|voce pode|pode|poderia|me ajuda(?:r)?(?: a)?|me ajude(?: a)?|quero(?: saber)?|gostaria(?: de)?|preciso(?: de)?|faz(?: pra mim)?|faça|crie|me explique|explique|me diga|me fale|como faço para|como posso)\s+)+/i;
-          topic = topic.replace(leadingRequest, "").trim();
-          const ignored = /^(?:a|agora|ao|aos|as|com|da|das|de|do|dos|e|em|essa|esse|isso|esta|este|eu|me|meu|minha|na|nas|no|nos|o|os|para|pela|pelas|pelo|pelos|por|pra|qual|quais|que|sobre|um|uma|uns|umas|voce|você|the|and|for|with|this|that)$/i;
+          const leadingRequest = /^(?:(?:por favor[,!]?|você pode|voce pode|pode|poderia|me ajuda(?:r)?(?: a)?|me ajude(?: a)?|quero(?: saber)?|gostaria(?: de)?|preciso(?: de)?|faz(?: pra mim)?|faça|crie|me explique|explique|me diga|me fale|como faço para|como posso)\s+)+/i;
+          topic = topic.replace(leadingRequest, "").replace(/^(?:adicionar|criar|crie|implementar|implemente|corrigir|corrija|consertar|resolver|desenvolver|fazer|faça|remover|atualizar|mudar|explicar|explique|planejar|organizar)\s+/i, "").replace(/^(?:(?:a|as|o|os|um|uma|uns|umas)\s+)+/i, "").trim();
+          const dangling = /^(?:a|ao|aos|as|com|da|das|de|do|dos|e|em|na|nas|no|nos|o|os|para|pela|pelas|pelo|pelos|por|pra|sobre|um|uma|uns|umas)$/i;
           const words = topic.match(/[\p{L}\p{N}]+(?:[-'][\p{L}\p{N}]+)*/gu) || [];
-          const selected = words.filter((word) => word.length > 2 && !ignored.test(word)).slice(0, 6);
+          const selected = words.slice(0, 6);
+          while (selected.length && dangling.test(selected.at(-1))) selected.pop();
           if (!selected.length) return files.length ? "Análise de arquivos" : "Nova conversa";
-          const title = titleCase(selected.join(" "));
-          return normalizeChatTitle(title, "Nova conversa");
+          const phrase = selected.join(" ");
+          return normalizeChatTitle(titleCase(phrase), "Nova conversa");
         };
         const rememberChat = (prompt, files = []) => {
           if (activeChatHistoryId) return activeChatHistoryId;

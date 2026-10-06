@@ -25,8 +25,7 @@ test("rejects trailing ellipses and returns the user-request-derived fallback", 
   const output = 'Título: “Apenas jog...';
   assert.equal(normalizeGeneratedChatTitle(output), null);
   const fallback = createChatTitle(request);
-  assert.match(fallback, /anexos/i);
-  assert.match(fallback, /hist[oó]rico/i);
+  assert.equal(fallback, "Suporte a anexos no histórico");
   assert.equal(normalizeChatTitle(output, fallback), fallback);
   assert.doesNotMatch(fallback, /\.\.\.|…/);
 });
