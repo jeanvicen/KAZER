@@ -4877,13 +4877,6 @@
         .usage-reset-line { grid-template-columns: minmax(0,1fr); align-content: center; gap: 3px; padding: 7px 0; }
         .usage-reset-line strong { text-align: left; }
       }
-      /* Telefones touch: mantém o nível da água, mas evita movimento contínuo pesado. */
-      @media (max-width: 680px) and (hover: none) and (pointer: coarse) {
-        .usage-card-water-fill { transition-duration: 340ms; }
-        .usage-card-water-fill::before { animation: none; will-change: auto; }
-        .usage-card-water-fill::after { background: repeating-linear-gradient(90deg,transparent 0 18px,rgba(157,255,192,.08) 18px 19px); opacity: .42; }
-        :root[data-theme="light"] .usage-card-water-fill::after { background: repeating-linear-gradient(90deg,transparent 0 18px,rgba(27,117,64,.07) 18px 19px); }
-      }
       @media (prefers-reduced-motion: reduce) {
         .usage-screen, .usage-meter > span, .usage-card-water-fill, .usage-card-water-fill::before, .usage-refresh[aria-busy="true"] .icon, .usage-pro-card button, .usage-pro-card button span { transition: none !important; animation: none !important; }
         .settings-usage-toggle, .settings-usage-toggle .settings-usage-toggle-chevron { transition: none !important; }
