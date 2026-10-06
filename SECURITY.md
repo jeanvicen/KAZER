@@ -12,7 +12,7 @@
 - A CSP configurada em `vercel.json` restringe origens, mas ainda permite `'unsafe-inline'` em scripts e estilos por compatibilidade com blocos inline existentes.
 - As regressões estáticas e o CI avaliam o código versionado atual. O scanner não é uma varredura forense de todo o histórico Git.
 
-A auditoria npm deve ser conferida por execução/commit. Na execução CI de `0b9e9d8`, testes e `npm run check` passaram, mas a etapa de smoke tests falhou antes da auditoria npm; portanto essa execução **não** comprova que a auditoria de dependências passou.
+A auditoria npm deve ser conferida por execução/commit. Na execução CI de `0b9e9d8`, testes e `npm run check` passaram, mas a etapa de smoke tests falhou antes da auditoria npm. Na execução bem-sucedida de `57ff139`, o comando `npm run security:audit -- --audit-level=high` passou no limite definido, mas o relatório mostrou **três ocorrências moderadas** no caminho transitivo `mammoth → argparse → sprintf-js` (DoS por especificador de precisão sem limite; GHSA-hp3w-g68c-fv3c). O comando sugeriu `npm audit fix --force`, que faria downgrade potencialmente incompatível de `mammoth`; não foi aplicado. Avaliar atualização/override compatível com testes de parsing DOCX antes de declarar a dependência limpa. O commit `d51f9ab` altera apenas documentação e não muda o lockfile.
 
 ## Riscos e pendências identificados
 
