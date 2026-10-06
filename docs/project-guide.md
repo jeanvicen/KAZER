@@ -97,7 +97,7 @@ flowchart LR
 | Preferências | Tema, idioma, avisos e aviso de instalação, com fallback local e sincronização no perfil. | `user_settings` e `localStorage`. |
 | Retenção | Avisos de inatividade e job diário de retenção, com exclusão desligada por padrão. | `api/retention.js`, `vercel.json` e migrações Supabase. |
 | PWA | Instalação na tela inicial, manifesto, service worker e cache restrito do app shell. | `download/manifest.webmanifest`, `download/sw.js` e `vercel.json`. |
-| Plugins | Google Drive e gerenciamento de MCPs remotos/locais com variáveis cifradas no backend. | `interface/chat.html`, `interface/kazer-workspace.js`, `api/mcp.js`, `api/_mcp-runtime.js` e migração `010`. |
+| Plugins | Google Drive e gerenciamento de conexões MCP; o runtime executa MCP remoto. Valores `command` de MCP local não foram executados nesta revisão. | `interface/chat.html`, `interface/kazer-workspace.js`, rewrite `/api/mcp` para `api/workspace.js`, `api/_mcp-runtime.js` e migração `010`. |
 | GitHub | OAuth para vincular a conta, listar/buscar repositórios e usar um repositório como contexto do pedido. | `api/github-*.js`, `interface/kazer-workspace.js` e `kazer_github_connections`. |
 | Workspace | Interface/API para registrar tarefas, status/progresso, conectores e repositórios; não há executor geral documentado aqui. Não mostrar custo de tarefa: a coluna `credit_cost` foi removida do schema atual. | `interface/chat.html`, `interface/kazer-workspace.js`, `api/workspace.js`, `api/_tasks-handler.js` e `kazer_tasks`. |
 | Kazer Pro | Chamada visual de oferta; a tela informa que a página de compra está em preparação. | `interface/chat.html`. |
@@ -173,7 +173,7 @@ Não faça commit de `.env`. O `.gitignore` já ignora arquivos de ambiente, `no
 | `GITHUB_CLIENT_ID` | Servidor privado | Sim para conectar GitHub | Client ID do OAuth App do GitHub. |
 | `GITHUB_CLIENT_SECRET` | Servidor privado | Sim para conectar GitHub | Segredo do OAuth App do GitHub. |
 | `GITHUB_OAUTH_STATE_SECRET` | Servidor privado | Recomendado | Segredo longo para assinar o estado do OAuth. |
-| `KAZER_CONNECTOR_ENCRYPTION_KEY` | Servidor privado | Recomendado | Chave longa para cifrar tokens e segredos dos MCPs; se omitida, deriva a chave do service role. |
+| `KAZER_CONNECTOR_ENCRYPTION_KEY` | Servidor privado | Obrigatória em produção | Chave aleatória longa para cifrar tokens/segredos de conectores; o código recusa ausência ou menos de 32 caracteres em `NODE_ENV=production`. Em ambiente não produtivo pode derivar do service role. |
 | `CRON_SECRET` | Servidor privado | Só para retenção | Segredo para autorizar chamadas ao job `/api/retention`. |
 | `PUBLIC_APP_ORIGINS` | Servidor | Recomendado | Lista separada por vírgulas das origens HTTPS autorizadas, sem barra final. |
 | `RETENTION_DELETE_ENABLED` | Servidor | Sim | Mantenha `false`; somente um procedimento revisado pode habilitar exclusões permanentes. |
@@ -247,7 +247,7 @@ A segurança é composta por camadas e não por uma promessa de invulnerabilidad
 | Prompt injection | Mensagens, anexos e resultados web são tratados como dados não confiáveis no prompt server-side. |
 | Moderação | Padrões de pedidos operacionais de violência, invasão, malware, fraude e crimes são bloqueados preventivamente. |
 | Abuso | Chat: 8 req/min por IP e 12 por usuário; pesquisa: 6 req/min por IP e 4 por usuário. Rate limits usam `Map` por processo e não são distribuídos entre instâncias. |
-| Uploads | Allowlist de formatos, máximo de dez itens por janela após a migração `008`, até três imagens e até 4 MB de anexos por envio. |
+| Uploads | Allowlist de formatos, máximo de 10 itens e até três imagens por requisição, até 4 MB no total por envio; limite por conta depende da RPC/schema atual. |
 | Headers | CSP, HSTS, framing negado, MIME nosniff, políticas de origem e ausência de cache em APIs. |
 | Dependências | Script `npm audit --omit=dev` e workflow CI versionado; conferir resultado para cada commit. |
 
@@ -270,7 +270,7 @@ A central pública em `/documentos` reúne o texto informativo de privacidade, t
 | Mensagens | Até 72 itens recebidos, até 48 mensagens selecionadas para contexto e até 32.000 caracteres agregados. |
 | Resposta | Até 16.000 caracteres; respostas de código podem chegar a 64.000 caracteres. |
 | Pesquisa | 6 solicitações/minuto por IP e 4/minuto por usuário no endpoint, além de limites de corpo e pergunta; os buckets são locais ao processo. |
-| MCPs | Presets e servidores personalizados são gerenciados no Perfil ou dentro do botão “+”; MCPs remotos com autenticação por variáveis podem ser descobertos e chamados durante o chat. |
+| MCPs | Presets e conexões personalizadas são gerenciados na interface; MCP remoto pode ser descoberto/chamado no chat. Autorização por ferramenta, validação de esquema e segurança de conteúdo remoto permanecem pendências descritas em `SECURITY.md`; comandos MCP locais não foram executados. |
 | GitHub | OAuth e listagem de repositórios dependem das variáveis privadas do GitHub e da migração `010`. |
 | Consumo de uso | A reserva de chat/pesquisa é feita por RPC server-side; os valores e resets ativos devem ser confirmados no schema do ambiente, não em descrições antigas. |
 | Compra Pro | A chamada existe na interface, mas a compra não está integrada neste estado do projeto. |
@@ -312,7 +312,7 @@ Atualize o ano, o titular legal, o e-mail, o endereço de notificação e a juri
 
 ## Status do projeto
 
-O projeto está em desenvolvimento. O fluxo principal de autenticação, chat, pesquisa, uso, anexos, PWA, retenção, MCPs, GitHub e workspace está implementado no código desta branch. A publicação exige aplicar a migração `010` e configurar as variáveis privadas descritas acima; Kazer Pro continua com a tela comercial em preparação. A matriz detalhada e as pendências operacionais estão em [`SECURITY.md`](../SECURITY.md).
+O projeto está em desenvolvimento. O repositório contém fluxos de autenticação, chat, pesquisa, uso, anexos, PWA, retenção, MCP, GitHub e workspace, mas a presença do código não comprova configuração nem teste em produção. Há divergências entre migrações incrementais e uma instalação limpa; RLS de produção permanece sem teste cross-account. Kazer Pro não possui checkout implementado. Consulte [`SECURITY.md`](../SECURITY.md) e [`database/supabase/README.md`](../database/supabase/README.md) para limites e pendências.
 
 ## Contribuições
 
@@ -334,7 +334,7 @@ Consulte o texto integral em [`LICENSE.md`](../LICENSE.md). A licença não subs
 
 ## Plugin Google Drive
 
-O KAZER agora possui um plugin Google Drive com autorização OAuth 2.0 pelo servidor. A pessoa é redirecionada para a tela oficial do Google; o KAZER não coleta senha. O plugin permite buscar/listar arquivos, ler o conteúdo de um arquivo por ID e criar/upload de arquivos de até 5 MB. Cada ação consome 10 créditos pelo mesmo RPC de uso do chat.
+O repositório contém um handler Google Drive com autorização OAuth 2.0 pelo servidor; a pessoa é redirecionada à tela oficial do Google e o KAZER não coleta a senha. O plugin permite buscar/listar arquivos, ler um arquivo por ID e criar/upload de arquivos dentro do limite implementado no handler. O código reserva uso por RPC (`consume_kazer_usage`, com fallback para schema legado); o custo efetivo depende do schema ativo e não deve ser descrito como 10 créditos fixos. A configuração da conta Google em produção não foi verificada nesta auditoria.
 
 Para ativar a integração, habilite a Google Drive API no [Google Cloud Console](https://console.cloud.google.com/apis/library/drive.googleapis.com), crie um cliente OAuth do tipo **Web application** e cadastre exatamente `https://SEU_DOMINIO/api/google-drive-callback` como URI de redirecionamento. Configure no ambiente do servidor `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_DRIVE_REDIRECT_URI`, `GOOGLE_DRIVE_TOKEN_KEY` e `SUPABASE_SERVICE_ROLE_KEY`. A chave `GOOGLE_DRIVE_TOKEN_KEY` deve ser longa, aleatória e privada; alterá-la invalida os tokens armazenados.
 
