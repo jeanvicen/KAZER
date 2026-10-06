@@ -4882,7 +4882,50 @@
         .history-item-copy .history-item-time { font-size: 14px; }
         .history-item-menu-toggle { width: 34px; height: 34px; }
       }
-</style>
+
+      /* Shortcuts occupy the existing history-screen reserved gap. */
+      .history-shortcut { display: flex; align-items: center; gap: 12px; width: 100%; min-width: 0; min-height: 48px; padding: 4px 10px; border: 1px solid transparent; border-radius: 12px; background: transparent; color: var(--text-soft); font: inherit; text-align: left; cursor: pointer; touch-action: manipulation; transition: background 160ms var(--ease), border-color 160ms var(--ease), color 160ms var(--ease), box-shadow 180ms var(--ease); }
+      .history-shortcut-mark { position: relative; display: grid; place-items: center; width: 34px; height: 34px; flex: 0 0 34px; overflow: hidden; border-radius: 10px; background: rgba(255,255,255,.045); color: var(--text-dim); }
+      .history-shortcut-mark .icon { width: 20px; height: 20px; }
+      .history-shortcut-copy { display: flex; align-items: center; min-width: 0; }
+      .history-shortcut-copy strong { overflow: hidden; color: inherit; font-size: 14px; font-weight: 520; letter-spacing: -.015em; text-overflow: ellipsis; white-space: nowrap; }
+      .history-shortcut-connectors:hover { border-color: rgba(255,255,255,.075); background: rgba(255,255,255,.035); color: var(--text); }
+      .history-shortcut:focus-visible { outline: 2px solid var(--accent-readable); outline-offset: 2px; }
+      .history-shortcut-computer { border-color: rgba(64,224,128,.16); background: linear-gradient(100deg, rgba(20,130,66,.11), rgba(20,130,66,.025)); color: #a7e9b8; animation: history-computer-pulse 4.8s ease-in-out infinite; }
+      .history-shortcut-computer:hover { border-color: rgba(82,239,143,.36); background: linear-gradient(100deg, rgba(20,150,72,.17), rgba(20,130,66,.045)); color: #c0f5cb; }
+      .history-shortcut-computer .history-shortcut-mark { background: rgba(8,37,21,.8); color: #65e993; box-shadow: inset 0 0 0 1px rgba(75,231,133,.18); }
+      .history-shortcut-computer .history-shortcut-mark::after { position: absolute; top: -30%; right: 0; left: 0; height: 28%; background: linear-gradient(180deg, transparent, rgba(96,255,152,.34), transparent); content: ""; pointer-events: none; animation: history-computer-scan 4.2s ease-in-out infinite; }
+      .history-shortcut-computer .history-shortcut-copy strong::after { margin-left: 2px; color: #68ed98; content: "_"; animation: history-computer-cursor 1.25s steps(2, end) infinite; }
+      @keyframes history-computer-pulse { 0%, 100% { box-shadow: 0 0 0 rgba(63,226,125,0); } 50% { box-shadow: 0 0 16px rgba(63,226,125,.075); } }
+      @keyframes history-computer-scan { 0%, 18% { transform: translateY(-130%); opacity: 0; } 32% { opacity: .9; } 62% { transform: translateY(430%); opacity: .45; } 78%, 100% { transform: translateY(430%); opacity: 0; } }
+      @keyframes history-computer-cursor { 0%, 48% { opacity: 1; } 49%, 100% { opacity: 0; } }
+      .history-item-kind { display: flex; align-items: center; gap: 5px; margin-top: 3px; color: var(--text-dim); font-size: 10px; font-weight: 520; line-height: 1.25; }
+      .history-item-kind .icon { width: 12px; height: 12px; flex: 0 0 auto; color: #70cb8a; }
+      @media (min-width: 1080px) {
+        .app.desktop-sidebar-enabled:not(.desktop-sidebar-collapsed) .history-future-slot { display: grid; flex: 0 0 108px; grid-template-columns: minmax(0,1fr); align-content: start; gap: 4px; width: 100%; padding: 5px 13px 2px; pointer-events: auto; }
+        .app.desktop-sidebar-enabled .history-shortcut { min-height: 48px; padding-right: 9px; padding-left: 9px; }
+        .app.desktop-sidebar-enabled .history-shortcut-copy strong { font-size: 12px; }
+        .app.desktop-sidebar-enabled .history-item-kind { font-size: 9px; }
+        .app.desktop-sidebar-enabled .history-item-kind .icon { width: 11px; height: 11px; }
+      }
+      @media (max-width: 680px) {
+        .history-future-slot { display: grid; flex: 0 0 clamp(102px, 20vh, 188px); grid-template-columns: minmax(0,1fr); align-content: start; gap: 4px; width: 100%; padding: 1px max(22px, env(safe-area-inset-right)) 0 max(22px, env(safe-area-inset-left)); pointer-events: auto; }
+        .history-screen.is-search-open .history-future-slot { display: none; }
+        .history-shortcut { min-height: 48px; padding: 2px 10px; border-radius: 11px; }
+        .history-shortcut-copy strong { font-size: 14px; }
+        .history-item-kind { display: flex; margin-top: 3px; font-size: 10px; }
+      }
+      @media (max-height: 680px) and (max-width: 680px) {
+        .history-future-slot { flex-basis: clamp(102px, 10vh, 112px); }
+      }
+      @media (max-width: 360px) {
+        .history-future-slot { padding-right: max(16px, env(safe-area-inset-right)); padding-left: max(16px, env(safe-area-inset-left)); }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .history-shortcut-computer, .history-shortcut-computer .history-shortcut-mark::after, .history-shortcut-computer .history-shortcut-copy strong::after { animation: none !important; }
+        .history-shortcut-computer .history-shortcut-copy strong::after { opacity: 1; }
+      }
+    </style>
     <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300..800&family=Geist+Mono:wght@400;500;600&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="/interface/kazer-premium.css?v=20261005b" />
     <script>
@@ -4931,7 +4974,16 @@
           <button class="history-exit-action" id="historyExitAction" type="button" aria-label="Voltar para o chat" title="Voltar para o chat"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12h15"></path><path d="m13 5 7 7-7 7"></path></svg></button>
           <label class="history-search-field" id="historySearchField"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-4-4"></path></svg><input id="historySearchInput" type="search" aria-label="Buscar nas conversas" placeholder="Buscar" autocomplete="off" /></label>
         </header>
-        <div class="history-future-slot" aria-hidden="true"><!-- Espaço reservado para navegação futura; permanece vazio até existir um recurso real. --></div>
+        <div class="history-future-slot">
+          <button class="history-shortcut history-shortcut-computer" id="historyComputerAction" type="button" aria-label="Computer KAZER">
+            <span class="history-shortcut-mark" aria-hidden="true"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="3" width="17" height="13.5" rx="2.4"></rect><circle cx="9.1" cy="9.1" r=".65" fill="currentColor" stroke="none"></circle><circle cx="14.9" cy="9.1" r=".65" fill="currentColor" stroke="none"></circle><path d="M9.2 19.5h5.6M12 16.7v2.8M7 13.2h10"></path></svg></span>
+            <span class="history-shortcut-copy"><strong>Computer KAZER</strong></span>
+          </button>
+          <button class="history-shortcut history-shortcut-connectors" id="historyConnectorsAction" type="button" aria-label="Conectores">
+            <span class="history-shortcut-mark" aria-hidden="true"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 4v4M16 4v4M6 8h12v3a6 6 0 0 1-6 6v3"></path></svg></span>
+            <span class="history-shortcut-copy"><strong>Conectores</strong></span>
+          </button>
+        </div>
         <div class="history-content">
           <div class="history-intro">
             <div class="history-intro-copy"><span class="history-eyebrow">SEU ARQUIVO KAZER</span><h1>Conversas</h1><p>Suas conversas, prontas para continuar.</p></div>
@@ -6348,7 +6400,8 @@
             const latestMessage = Array.isArray(item.messages) ? [...item.messages].reverse().find((message) => message && typeof message.content === "string" && message.content.trim()) : null;
             const rawPreview = String(latestMessage?.content || item.excerpt || "Conversa com o KAZER");
             const preview = rawPreview.replace(/```[\s\S]*?```/g, "Trecho de código").replace(/!\[[^\]]*\]\([^)]*\)/g, "Imagem compartilhada").replace(/\[([^\]]+)\]\([^)]*\)/g, "$1").replace(/`([^`]+)`/g, "$1").replace(/^\s{0,3}#{1,6}\s+/gm, "").replace(/^\s{0,3}>\s?/gm, "").replace(/^\s*\|?[\s:|-]{3,}\|?\s*$/gm, "").replace(/\|/g, " ").replace(/\*\*|__|~~/g, "").replace(/\s+/g, " ").trim().slice(0, 150);
-            return heading + '<div class="history-item" data-history-row="' + escapeHtml(item.id) + '"><button class="history-item-open" type="button" aria-label="Abrir conversa: ' + escapeHtml(item.title) + '" title="' + escapeHtml(item.title) + '" data-history-id="' + escapeHtml(item.id) + '"><span class="history-item-copy"><strong title="' + escapeHtml(item.title) + '">' + escapeHtml(item.title) + '</strong><time class="history-item-time" datetime="' + escapeHtml(item.createdAt) + '">' + escapeHtml(historyDateLabel(item.createdAt)) + '</time></span></button><div class="history-item-menu-wrap"><button class="history-item-menu-toggle" type="button" aria-label="Mais opções para esta história" aria-haspopup="menu" aria-expanded="false" data-history-menu-toggle="' + escapeHtml(item.id) + '">⋯</button><div class="history-item-menu" role="menu" hidden><button class="history-item-menu-delete" type="button" role="menuitem" data-history-delete="' + escapeHtml(item.id) + '">Apagar história</button></div></div></div>';
+            const kindMeta = item.kind === "computer" ? '<span class="history-item-kind"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="4" width="17" height="12" rx="2"></rect><path d="M8.5 20h7M12 16v4"></path><circle cx="9.5" cy="10" r=".55" fill="currentColor" stroke="none"></circle><circle cx="14.5" cy="10" r=".55" fill="currentColor" stroke="none"></circle></svg><span>Computer</span></span>' : '';
+            return heading + '<div class="history-item" data-history-row="' + escapeHtml(item.id) + '"><button class="history-item-open" type="button" aria-label="Abrir conversa: ' + escapeHtml(item.title) + '" title="' + escapeHtml(item.title) + '" data-history-id="' + escapeHtml(item.id) + '"><span class="history-item-copy"><strong title="' + escapeHtml(item.title) + '">' + escapeHtml(item.title) + '</strong>' + kindMeta + '<time class="history-item-time" datetime="' + escapeHtml(item.createdAt) + '">' + escapeHtml(historyDateLabel(item.createdAt)) + '</time></span></button><div class="history-item-menu-wrap"><button class="history-item-menu-toggle" type="button" aria-label="Mais opções para esta história" aria-haspopup="menu" aria-expanded="false" data-history-menu-toggle="' + escapeHtml(item.id) + '">⋯</button><div class="history-item-menu" role="menu" hidden><button class="history-item-menu-delete" type="button" role="menuitem" data-history-delete="' + escapeHtml(item.id) + '">Apagar história</button></div></div></div>';
           }).join("");
           historyList.querySelectorAll("[data-global-notice]").forEach((button) => button.addEventListener("click", () => showGlobalNotice(false)));
           historyList.querySelectorAll("[data-history-id]").forEach((button) => button.addEventListener("click", (event) => {
@@ -8252,6 +8305,7 @@
           const actionText = historySearchAction?.querySelector(".history-mobile-action-label");
           if (actionText) actionText.textContent = label;
         };
+        document.getElementById("historyComputerAction")?.addEventListener("click", () => showToast("Em desenvolvimento"));
         historySearchInput?.addEventListener("input", renderChatHistory);
         historySearchAction?.addEventListener("click", () => {
           const isOpen = !historyScreen?.classList.contains("is-search-open");
