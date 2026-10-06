@@ -6218,7 +6218,7 @@
             const stored = JSON.parse(localStorage.getItem(historyStorageKey()) || "[]");
             if (!Array.isArray(stored)) return [];
             let changed = false;
-            const items = stored.filter((item) => item && item.id && item.title).map((item) => {
+            let items = stored.filter((item) => item && item.id && item.title).map((item) => {
               if (/^Gerando título…?$/.test(String(item.title).trim())) {
                 changed = true;
                 return { ...item, title: "Nova conversa", titleGenerated: true };
@@ -6226,7 +6226,10 @@
               return item;
             });
             if (changed) {
-              try { localStorage.setItem(historyStorageKey(), JSON.stringify(items.slice(0, 10))); } catch {}
+              try { localStorage.setItem(historyStorageKey(), JSON.stringify(items)); } catch {}
+            }
+            if (currentUser?.id) {
+              items = migrateCorruptedChatTitles(items, currentUser.id).items;
             }
             return items;
           } catch {
@@ -6477,6 +6480,37 @@
           const phrase = selected.join(" ");
           return normalizeChatTitle(titleCase(phrase), "Nova conversa");
         };
+        const migrateCorruptedChatTitles = (items, userId, storage = localStorage) => {
+          if (!userId || !Array.isArray(items)) return { items, changed: false };
+          const historyKey = historyStoragePrefix + userId;
+          const markerKey = historyKey + ":title-migration:v1";
+          try {
+            if (storage.getItem(markerKey) === "done") return { items, changed: false };
+          } catch {
+            return { items, changed: false };
+          }
+
+          let changed = false;
+          const migratedItems = items.map((item) => {
+            if (item?.titleGenerated !== true || !/(?:\.{2,}|…+)\s*$/u.test(String(item.title || "").trim())) return item;
+            const prompt = Array.isArray(item.messages)
+              ? item.messages.find((message) => message?.role === "user" && typeof message.content === "string" && message.content.trim())?.content || ""
+              : "";
+            let title = prompt ? createChatTitle(prompt, []) : "Nova conversa";
+            if (!prompt || !title || title === "Nova conversa" || isLowValueChatTitle(title)) title = "Nova conversa";
+            changed = true;
+            return { ...item, title };
+          });
+
+          try {
+            if (changed) storage.setItem(historyKey, JSON.stringify(migratedItems));
+            storage.setItem(markerKey, "done");
+          } catch {
+            return { items: migratedItems, changed };
+          }
+          return { items: migratedItems, changed };
+        };
+
         const rememberChat = (prompt, files = []) => {
           if (activeChatHistoryId) return activeChatHistoryId;
           const id = window.crypto?.randomUUID?.() || "chat-" + Date.now();
