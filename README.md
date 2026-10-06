@@ -46,6 +46,10 @@ A imagem abaixo é uma captura pública da tela de boas-vindas/login do KAZER. *
 
 > O estado das integrações depende das configurações externas e das migrações aplicadas. Uma rota ou interface no repositório não comprova por si só que serviços externos estão configurados ou testados em produção.
 
+## Como o KAZER funciona
+
+A interface web autentica com Supabase Auth e chama funções Node.js em `api/`. Os handlers conferem a sessão e validam as entradas no servidor antes de acessar o banco, os provedores de IA ou os conectores configurados. A interface PWA e as APIs são partes distintas; configuração de uma integração não é presumida pelo README.
+
 ## Arquitetura em uma visão
 
 ```mermaid
