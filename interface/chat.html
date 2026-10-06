@@ -4897,6 +4897,11 @@
       .history-shortcut-computer .history-shortcut-mark { background: rgba(8,37,21,.8); color: #65e993; box-shadow: inset 0 0 0 1px rgba(75,231,133,.18); }
       .history-shortcut-computer .history-shortcut-mark::after { position: absolute; top: -30%; right: 0; left: 0; height: 28%; background: linear-gradient(180deg, transparent, rgba(96,255,152,.34), transparent); content: ""; pointer-events: none; animation: history-computer-scan 4.2s ease-in-out infinite; }
       .history-shortcut-computer .history-shortcut-copy strong::after { margin-left: 2px; color: #68ed98; content: "_"; animation: history-computer-cursor 1.25s steps(2, end) infinite; }
+      :root[data-theme="light"] .history-shortcut-computer { border-color: rgba(22,101,52,.26); background: linear-gradient(100deg, rgba(220,252,231,.96), rgba(240,253,244,.92)); color: #14532d; }
+      :root[data-theme="light"] .history-shortcut-computer:hover { border-color: rgba(22,101,52,.42); background: linear-gradient(100deg, rgba(220,252,231,1), rgba(220,252,231,.82)); color: #14532d; }
+      :root[data-theme="light"] .history-shortcut-computer .history-shortcut-mark { background: #14532d; color: #bbf7d0; box-shadow: inset 0 0 0 1px rgba(20,83,45,.4), 0 2px 8px rgba(20,83,45,.14); }
+      :root[data-theme="light"] .history-shortcut-computer .history-shortcut-mark::after { background: linear-gradient(180deg, transparent, rgba(134,239,172,.58), transparent); }
+      :root[data-theme="light"] .history-shortcut-computer .history-shortcut-copy strong::after { color: #166534; }
       @keyframes history-computer-pulse { 0%, 100% { box-shadow: 0 0 0 rgba(63,226,125,0); } 50% { box-shadow: 0 0 16px rgba(63,226,125,.075); } }
       @keyframes history-computer-scan { 0%, 18% { transform: translateY(-130%); opacity: 0; } 32% { opacity: .9; } 62% { transform: translateY(430%); opacity: .45; } 78%, 100% { transform: translateY(430%); opacity: 0; } }
       @keyframes history-computer-cursor { 0%, 48% { opacity: 1; } 49%, 100% { opacity: 0; } }
