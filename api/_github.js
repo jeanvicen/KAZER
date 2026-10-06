@@ -21,7 +21,9 @@ function getGitHubConfig(request) {
 }
 
 function stateKey() {
-  return crypto.createHash("sha256").update(String(process.env.GITHUB_OAUTH_STATE_SECRET || process.env.SUPABASE_SERVICE_ROLE_KEY || "kazer-state"), "utf8").digest();
+  const secret = String(process.env.GITHUB_OAUTH_STATE_SECRET || process.env.SUPABASE_SERVICE_ROLE_KEY || "").trim();
+  if (Buffer.byteLength(secret, "utf8") < 32) throw new Error("github_oauth_state_secret_not_configured");
+  return crypto.createHash("sha256").update(secret, "utf8").digest();
 }
 
 function signState(payload) {
@@ -34,7 +36,9 @@ function readState(value) {
   if (!value || typeof value !== "string") return null;
   const [encoded, signature] = value.split(".");
   if (!encoded || !signature) return null;
-  const expected = crypto.createHmac("sha256", stateKey()).update(encoded).digest("base64url");
+  let expected;
+  try { expected = crypto.createHmac("sha256", stateKey()).update(encoded).digest("base64url"); }
+  catch { return null; }
   const actualBuffer = Buffer.from(signature);
   const expectedBuffer = Buffer.from(expected);
   if (actualBuffer.length !== expectedBuffer.length || !crypto.timingSafeEqual(actualBuffer, expectedBuffer)) return null;

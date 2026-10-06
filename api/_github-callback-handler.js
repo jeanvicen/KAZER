@@ -54,8 +54,6 @@ module.exports = async function handler(request, response) {
     if (!tokenResponse.ok || !tokenData?.access_token) throw new Error("github_token_exchange_failed");
 
     const githubUser = await githubFetch("/user", tokenData.access_token);
-    const githubEmails = await githubFetch("/user/emails", tokenData.access_token).catch(() => []);
-    const primaryEmail = Array.isArray(githubEmails) ? githubEmails.find((item) => item.primary)?.email || githubEmails[0]?.email || null : null;
     const row = {
       user_id: payload.userId,
       github_user_id: String(githubUser.id),
@@ -63,7 +61,7 @@ module.exports = async function handler(request, response) {
       display_name: String(githubUser.name || githubUser.login || "").slice(0, 160) || null,
       avatar_url: String(githubUser.avatar_url || "").slice(0, 1000) || null,
       access_token_encrypted: encryptSecret(tokenData.access_token),
-      scope: String(tokenData.scope || "repo,read:user,user:email").slice(0, 500),
+      scope: String(tokenData.scope || "repo,read:user").slice(0, 500),
     };
 
     const updated = await supabaseRequest("kazer_github_connections", {

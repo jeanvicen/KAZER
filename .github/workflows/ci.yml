@@ -31,5 +31,7 @@ jobs:
         run: npm test
       - name: Run repository checks
         run: npm run check
+      - name: Run isolated integration smoke tests
+        run: npm run integration:test
       - name: Audit production dependencies
         run: npm run security:audit -- --audit-level=high

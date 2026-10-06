@@ -14,8 +14,13 @@ module.exports = async function handler(request, response) {
   const { clientId, redirectUri } = getGitHubConfig(request);
   if (!clientId) return sendJson(response, 503, { error: "GitHub OAuth ainda não foi configurado no servidor." });
 
-  const state = signState({ userId: user.id, nonce: crypto.randomBytes(24).toString("base64url"), expiresAt: Date.now() + 10 * 60 * 1000 });
+  let state;
+  try {
+    state = signState({ userId: user.id, nonce: crypto.randomBytes(24).toString("base64url"), expiresAt: Date.now() + 10 * 60 * 1000 });
+  } catch {
+    return sendJson(response, 503, { error: "GitHub OAuth não está configurado com segurança no servidor." });
+  }
   setCookie(response, "kazer_github_oauth", state);
-  const params = new URLSearchParams({ client_id: clientId, redirect_uri: redirectUri, scope: "repo read:user user:email", state });
+  const params = new URLSearchParams({ client_id: clientId, redirect_uri: redirectUri, scope: "repo read:user", state });
   return sendJson(response, 200, { url: `https://github.com/login/oauth/authorize?${params.toString()}` });
 };

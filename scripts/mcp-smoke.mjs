@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { createRequire } from "node:module";
 
 process.env.SUPABASE_SERVICE_ROLE_KEY = "test-only-secret-key";
-process.env.GITHUB_OAUTH_STATE_SECRET = "test-only-oauth-state";
+process.env.GITHUB_OAUTH_STATE_SECRET = "test-only-oauth-state-secret-with-at-least-32-bytes";
 const require = createRequire(import.meta.url);
 const data = require("../api/_kazer-data.js");
 const github = require("../api/_github.js");
