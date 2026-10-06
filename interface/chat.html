@@ -4872,6 +4872,7 @@
       .history-item-copy strong { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
       .history-item-copy .history-item-time { display: block; width: fit-content; color: var(--text-dim); font-size: 12px; line-height: 1.2; }
       .history-item-menu { min-width: 156px; padding: 6px; border-radius: 8px; }
+      .history-item-menu.is-floating { position: fixed; z-index: 200; }
       .history-item-menu-delete { padding: 10px 11px; color: var(--text); font-size: 12px; }
       .history-item-menu-delete:hover { background: rgba(255,255,255,.07); color: var(--text); }
       @media (max-width: 680px) {
@@ -6291,7 +6292,36 @@
         globalNoticeConfirm?.addEventListener("click", markGlobalNoticeSeen);
         globalNoticeBackdrop?.addEventListener("click", markGlobalNoticeSeen);
 
+        const closeHistoryMenus = () => {
+          document.querySelectorAll(".history-item-menu.is-floating").forEach((menu) => {
+            const owner = [...(historyList?.querySelectorAll("[data-history-menu-toggle]") || [])].find((toggle) => toggle.dataset.historyMenuToggle === menu.dataset.historyOwner);
+            owner?.closest(".history-item-menu-wrap")?.appendChild(menu);
+            menu.classList.remove("is-floating");
+            menu.style.left = "";
+            menu.style.top = "";
+            menu.hidden = true;
+          });
+          historyList?.querySelectorAll(".history-item-menu").forEach((menu) => { menu.hidden = true; });
+          historyList?.querySelectorAll("[data-history-menu-toggle]").forEach((toggle) => toggle.setAttribute("aria-expanded", "false"));
+        };
+        const positionHistoryMenu = (menu, toggle) => {
+          menu.hidden = false;
+          const margin = 8;
+          const toggleRect = toggle.getBoundingClientRect();
+          const menuRect = menu.getBoundingClientRect();
+          const left = Math.max(margin, Math.min(toggleRect.right - menuRect.width, window.innerWidth - menuRect.width - margin));
+          const opensAbove = toggleRect.bottom + menuRect.height + margin > window.innerHeight && toggleRect.top - menuRect.height - margin >= margin;
+          const top = opensAbove ? toggleRect.top - menuRect.height - margin : toggleRect.bottom + margin;
+          menu.style.left = `${Math.round(left)}px`;
+          menu.style.top = `${Math.round(Math.max(margin, top))}px`;
+        };
+        document.addEventListener("click", (event) => {
+          if (!event.target.closest("[data-history-menu-toggle], .history-item-menu")) closeHistoryMenus();
+        });
+        window.addEventListener("resize", closeHistoryMenus);
+        window.addEventListener("scroll", closeHistoryMenus, true);
         const renderChatHistory = () => {
+          closeHistoryMenus();
           if (!historyList || !historyEmpty) return;
           const query = String(historySearchInput?.value || "").trim().toLocaleLowerCase();
           const filtered = historyItems.filter((item) => (item.title + " " + (item.excerpt || "") + " " + (item.searchText || "")).toLocaleLowerCase().includes(query));
@@ -6329,14 +6359,14 @@
             const row = button.closest("[data-history-row]");
             const menu = row?.querySelector(".history-item-menu");
             if (!row || !menu) return;
-            historyList.querySelectorAll("[data-history-row]").forEach((otherRow) => {
-              if (otherRow === row) return;
-              otherRow.querySelector(".history-item-menu")?.setAttribute("hidden", "");
-              otherRow.querySelector("[data-history-menu-toggle]")?.setAttribute("aria-expanded", "false");
-            });
             const opening = menu.hidden;
-            menu.hidden = !opening;
-            button.setAttribute("aria-expanded", String(opening));
+            closeHistoryMenus();
+            if (!opening) return;
+            menu.dataset.historyOwner = button.dataset.historyMenuToggle || "";
+            menu.classList.add("is-floating");
+            document.body.appendChild(menu);
+            button.setAttribute("aria-expanded", "true");
+            positionHistoryMenu(menu, button);
           }));
           historyList.querySelectorAll("[data-history-delete]").forEach((button) => button.addEventListener("click", (event) => {
             event.preventDefault();
@@ -6431,7 +6461,14 @@
         const generateChatTitle = async (chatId, messages, signal) => {
           const useFallbackTitle = () => {
             const items = readChatHistory(); const item = items.find((entry) => entry.id === chatId);
-            if (item && !item.titleGenerated) { if (!item.title || /^Gerando título…?$/.test(item.title.trim())) item.title = "Nova conversa"; item.titleGenerated = true; saveChatHistory(items); refreshHistorySurface(); }
+            const firstUserMessage = Array.isArray(messages) ? messages.find((message) => message?.role === "user")?.content : "";
+            if (item && !item.titleGenerated) {
+              const fallback = createChatTitle(String(firstUserMessage || ""), []);
+              item.title = fallback && !/^Conversa inicial$/i.test(fallback) ? fallback : "Nova conversa";
+              item.titleGenerated = true;
+              saveChatHistory(items);
+              refreshHistorySurface();
+            }
           };
           try {
             const response = await fetchWithAuth("/api/chat", { method: "POST", body: JSON.stringify({ purpose: "title", messages }), signal });
