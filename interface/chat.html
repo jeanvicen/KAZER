@@ -2881,6 +2881,12 @@
       .history-item-copy strong { display: block; overflow: hidden; color: var(--text); font-size: 14.5px; font-weight: 570; letter-spacing: -.018em; text-overflow: ellipsis; white-space: nowrap; }
       .history-item-copy small { display: none; }
       .history-item-time { color: color-mix(in srgb, var(--text-dim) 78%, transparent); font-size: 10px; white-space: nowrap; letter-spacing: .01em; font-variant-numeric: tabular-nums; }
+      .history-item-menu-wrap { position: relative; align-self: center; }
+      .history-item-menu-toggle { display: inline-grid; place-items: center; width: 34px; height: 34px; border: 1px solid transparent; border-radius: 10px; background: transparent; color: var(--text-dim); cursor: pointer; font-size: 22px; line-height: 1; letter-spacing: .08em; }
+      .history-item-menu-toggle:hover, .history-item-menu-toggle[aria-expanded="true"] { border-color: rgba(231,188,105,.24); background: rgba(231,188,105,.08); color: var(--text); }
+      .history-item-menu { position: absolute; z-index: 4; top: calc(100% + 5px); right: 0; min-width: 142px; padding: 5px; border: 1px solid rgba(255,255,255,.10); border-radius: 12px; background: var(--card-2); box-shadow: 0 14px 32px rgba(0,0,0,.34); }
+      .history-item-menu-delete { display: block; width: 100%; padding: 9px 10px; border-radius: 8px; background: transparent; color: var(--danger); cursor: pointer; font: inherit; font-size: 11px; text-align: left; }
+      .history-item-menu-delete:hover { background: rgba(240,116,116,.10); }
       .history-item-action { display: none; align-items: center; min-height: 36px; padding: 0 12px; border: 1px solid rgba(232,212,167,.35); border-radius: 9px; background: rgba(232,212,167,.10); color: #ead8ae; font: inherit; font-size: 12px; cursor: pointer; white-space: nowrap; animation: history-action-in 180ms var(--ease) both; }
       .history-item.is-delete-ready .history-item-action,
       .history-item.is-swipe-ready .history-item-action { display: inline-flex; }
@@ -3659,6 +3665,8 @@
         .history-item-copy strong { font-size: 12px; }
         .history-item-copy small { font-size: 9px; -webkit-line-clamp: 2; }
         .history-item-trailing { gap: 5px; }
+        .history-item-menu-toggle { width: 30px; height: 30px; }
+        .history-item-menu { right: 0; }
         .history-item-time { font-size: 8px; }
         .history-item-arrow { width: 21px; height: 21px; font-size: 15px; }
         .history-item-action { margin-right: 8px; padding: 0 9px; font-size: 10px; }
@@ -3959,6 +3967,8 @@
         .app.desktop-sidebar-enabled .history-item-trailing { gap: 4px; }
         .app.desktop-sidebar-enabled .history-item-time { font-size: 8px; }
         .app.desktop-sidebar-enabled .history-item-arrow { width: 20px; height: 20px; font-size: 15px; }
+        .app.desktop-sidebar-enabled .history-item-menu-toggle { width: 28px; height: 28px; }
+        .app.desktop-sidebar-enabled .history-item-menu { right: 0; }
         .app.desktop-sidebar-enabled .history-item-action { min-height: 30px; margin-right: 5px; padding: 0 8px; font-size: 10px; }
         .app.desktop-sidebar-enabled .history-empty { min-height: 180px; margin-top: 6px; padding: 26px 14px; border-radius: 16px; }
         .app.desktop-sidebar-enabled .history-empty-mark { width: 42px; height: 42px; margin-bottom: 12px; border-radius: 13px; }
@@ -5204,7 +5214,7 @@
             <button class="attachment-sheet-action attachment-grid-action" id="photoAction" type="button"><span class="attachment-sheet-icon" aria-hidden="true"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"></rect><circle cx="8.5" cy="9" r="1.4"></circle><path d="m4.5 17 4.7-4.6 3.1 3 5 4.7"></path></svg></span><span class="attachment-sheet-copy"><strong>Fotos</strong></span></button>
             <button class="attachment-sheet-action attachment-grid-action" id="fileAction" type="button"><span class="attachment-sheet-icon" aria-hidden="true"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H6.5A1.5 1.5 0 0 0 5 4.5v15A1.5 1.5 0 0 0 6.5 21h11a1.5 1.5 0 0 0 1.5-1.5V8Z"></path><path d="M14 3v5h5M8.5 13h7M8.5 16.5h7"></path></svg></span><span class="attachment-sheet-copy"><strong>Arquivos</strong></span></button>
           </div>
-          <button class="connector-single-action" id="connectorSingleAction" type="button"><span class="connector-single-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" width="18" height="18"><path d="M9 3v4M15 3v4"></path><path d="M6 7h12v4a6 6 0 0 1-6 6 6 6 0 0 1-6-6Z"></path><path d="M12 17v4"></path></svg></span><strong>Conectores</strong></button>
+
         </div>
       </section>
       <div class="photo-viewer-backdrop" id="photoViewerBackdrop" hidden></div>
@@ -6287,7 +6297,7 @@
             const latestMessage = Array.isArray(item.messages) ? [...item.messages].reverse().find((message) => message && typeof message.content === "string" && message.content.trim()) : null;
             const rawPreview = String(latestMessage?.content || item.excerpt || "Conversa com o KAZER");
             const preview = rawPreview.replace(/```[\s\S]*?```/g, "Trecho de código").replace(/!\[[^\]]*\]\([^)]*\)/g, "Imagem compartilhada").replace(/\[([^\]]+)\]\([^)]*\)/g, "$1").replace(/`([^`]+)`/g, "$1").replace(/^\s{0,3}#{1,6}\s+/gm, "").replace(/^\s{0,3}>\s?/gm, "").replace(/^\s*\|?[\s:|-]{3,}\|?\s*$/gm, "").replace(/\|/g, " ").replace(/\*\*|__|~~/g, "").replace(/\s+/g, " ").trim().slice(0, 150);
-            return heading + '<div class="history-item" data-history-row="' + escapeHtml(item.id) + '"><button class="history-item-open" type="button" data-history-id="' + escapeHtml(item.id) + '"><span class="history-item-symbol" aria-hidden="true">' + historyIcon(item.kind) + '</span><span class="history-item-copy"><strong>' + escapeHtml(item.title) + '</strong><small>' + escapeHtml(preview || "Conversa com o KAZER") + '</small></span><span class="history-item-trailing"><time class="history-item-time" datetime="' + escapeHtml(item.createdAt) + '">' + escapeHtml(historyDateLabel(item.createdAt)) + '</time><span class="history-item-arrow" aria-hidden="true"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"></path></svg></span></span></button><button class="history-item-action" type="button" data-history-delete="' + escapeHtml(item.id) + '">Apagar</button></div>';
+            return heading + '<div class="history-item" data-history-row="' + escapeHtml(item.id) + '"><button class="history-item-open" type="button" data-history-id="' + escapeHtml(item.id) + '"><span class="history-item-symbol" aria-hidden="true">' + historyIcon(item.kind) + '</span><span class="history-item-copy"><strong>' + escapeHtml(item.title) + '</strong><small>' + escapeHtml(preview || "Conversa com o KAZER") + '</small></span><span class="history-item-trailing"><time class="history-item-time" datetime="' + escapeHtml(item.createdAt) + '">' + escapeHtml(historyDateLabel(item.createdAt)) + '</time><span class="history-item-arrow" aria-hidden="true"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"></path></svg></span></span></button><div class="history-item-menu-wrap"><button class="history-item-menu-toggle" type="button" aria-label="Mais opções para esta história" aria-haspopup="menu" aria-expanded="false" data-history-menu-toggle="' + escapeHtml(item.id) + '">⋯</button><div class="history-item-menu" role="menu" hidden><button class="history-item-menu-delete" type="button" role="menuitem" data-history-delete="' + escapeHtml(item.id) + '">Apagar história</button></div></div></div>';
           }).join("");
           historyList.querySelectorAll("[data-global-notice]").forEach((button) => button.addEventListener("click", () => showGlobalNotice(false)));
           historyList.querySelectorAll("[data-history-id]").forEach((button) => button.addEventListener("click", (event) => {
@@ -6298,7 +6308,23 @@
             row.classList.add("is-selected");
             openChatFromHistory(button.dataset.historyId);
           }));
+          historyList.querySelectorAll("[data-history-menu-toggle]").forEach((button) => button.addEventListener("click", (event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            const row = button.closest("[data-history-row]");
+            const menu = row?.querySelector(".history-item-menu");
+            if (!row || !menu) return;
+            historyList.querySelectorAll("[data-history-row]").forEach((otherRow) => {
+              if (otherRow === row) return;
+              otherRow.querySelector(".history-item-menu")?.setAttribute("hidden", "");
+              otherRow.querySelector("[data-history-menu-toggle]")?.setAttribute("aria-expanded", "false");
+            });
+            const opening = menu.hidden;
+            menu.hidden = !opening;
+            button.setAttribute("aria-expanded", String(opening));
+          }));
           historyList.querySelectorAll("[data-history-delete]").forEach((button) => button.addEventListener("click", (event) => {
+            event.preventDefault();
             event.stopPropagation();
             const id = button.dataset.historyDelete;
             const removed = historyItems.find((item) => item.id === id);
@@ -6308,32 +6334,8 @@
             const row = button.closest("[data-history-row]");
             row?.classList.add("is-removing");
             window.setTimeout(renderChatHistory, 190);
-            showToast("Chat excluído", { actionLabel: "Desfazer", onAction: () => { const items = readChatHistory(); items.splice(Math.min(position, items.length), 0, removed); saveChatHistory(items); renderChatHistory(); showToast("Chat restaurado"); } });
+            showToast("História excluída", { actionLabel: "Desfazer", onAction: () => { const items = readChatHistory(); items.splice(Math.min(position, items.length), 0, removed); saveChatHistory(items); renderChatHistory(); showToast("História restaurada"); } });
           }));
-          historyList.querySelectorAll("[data-history-row]").forEach((row) => {
-            let pressTimer = null;
-            let longPress = false;
-            const clearPress = () => { if (pressTimer) window.clearTimeout(pressTimer); pressTimer = null; };
-            row.addEventListener("pointerdown", (event) => {
-              if (event.target.closest("[data-history-delete]")) return;
-              longPress = false;
-              pressTimer = window.setTimeout(() => {
-                longPress = true;
-                historyList.querySelectorAll("[data-history-row]").forEach((item) => item.classList.remove("is-delete-ready"));
-                row.classList.add("is-delete-ready");
-                row.querySelector("[data-history-delete]")?.focus();
-                showToast("Toque em “Apagar chat” para excluir");
-              }, 560);
-            });
-            row.addEventListener("pointerup", clearPress);
-            row.addEventListener("pointercancel", clearPress);
-            row.addEventListener("pointerleave", clearPress);
-            row.addEventListener("click", (event) => { if (longPress) { event.preventDefault(); event.stopPropagation(); longPress = false; } }, true);
-            row.addEventListener("contextmenu", (event) => { event.preventDefault(); row.classList.add("is-delete-ready"); row.querySelector("[data-history-delete]")?.focus(); });
-            let startX = 0; let startY = 0;
-            row.addEventListener("touchstart", (event) => { const touch = event.changedTouches[0]; startX = touch.clientX; startY = touch.clientY; }, { passive: true });
-            row.addEventListener("touchend", (event) => { const touch = event.changedTouches[0]; const dx = touch.clientX - startX; const dy = touch.clientY - startY; if (dx < -52 && Math.abs(dx) > Math.abs(dy) * 1.25) { row.classList.add("is-swipe-ready"); row.querySelector("[data-history-delete]")?.focus(); } else if (dx > 30) row.classList.remove("is-swipe-ready", "is-delete-ready"); }, { passive: true });
-          });
           const empty = filtered.length === 0;
           historyEmpty.hidden = !empty;
           if (query && !historyItems.length) {
@@ -6485,11 +6487,32 @@
           messageInput.focus();
         };
 
-        const updateGreeting = () => {
+        const greetingVariants = [
+          { time: "Bom dia", question: "O que vamos criar hoje?" },
+          { time: "Bom dia", question: "Quer planejar seu dia comigo?" },
+          { time: "Olá", question: "O que vamos fazer juntos?" },
+          { time: "Olá", question: "Quer escrever um texto, explicar um tema ou criar algo novo?" },
+          { time: "Boa tarde", question: "Qual ideia vamos tirar do papel?" },
+          { time: "Boa tarde", question: "Posso ajudar a organizar, planejar ou resolver alguma coisa?" },
+          { time: "Boa noite", question: "Vamos organizar as próximas ideias?" },
+          { time: "Boa noite", question: "Quer planejar seu dia, escrever, aprender ou criar código?" },
+          { time: "Oi", question: "Por onde começamos?" },
+          { time: "Olá", question: "Me diga o que você quer fazer e eu ajudo a começar." }
+        ];
+        let greetingVariantIndex = -1;
+        const updateGreeting = ({ rotate = false } = {}) => {
           const hour = new Date().getHours();
-          const greeting = hour >= 5 && hour < 12 ? "Bom dia" : hour >= 12 && hour < 18 ? "Boa tarde" : "Boa noite";
-          if (greetingTime) greetingTime.textContent = greeting;
+          const period = hour >= 5 && hour < 12 ? "Bom dia" : hour >= 12 && hour < 18 ? "Boa tarde" : "Boa noite";
+          const candidates = greetingVariants.map((variant, index) => ({ ...variant, index })).filter((variant) => variant.time === period || variant.time === "Olá" || variant.time === "Oi");
+          if (rotate || greetingVariantIndex < 0) {
+            const available = candidates.filter((variant) => variant.index !== greetingVariantIndex);
+            greetingVariantIndex = (available[Math.floor(Math.random() * available.length)] || candidates[0]).index;
+          }
+          const variant = greetingVariants[greetingVariantIndex] || greetingVariants[0];
+          if (greetingTime) greetingTime.textContent = variant.time;
           if (greetingName) greetingName.textContent = currentUser?.user_metadata?.display_name || currentUser?.email?.split("@")[0] || "Kazer";
+          const greetingQuestion = document.getElementById("greetingQuestion");
+          if (greetingQuestion) greetingQuestion.textContent = variant.question;
         };
 
         const setView = (nextView, { push = false } = {}) => {
@@ -8627,6 +8650,9 @@
         startAppSplash();
         setView(viewMode);
         loadAccount().then(() => { updateGreeting(); if (viewMode === "history" || isDesktopLayout()) loadChatHistory(); });
+        window.setInterval(() => {
+          if (!document.hidden && !app.classList.contains("in-conversation")) updateGreeting({ rotate: true });
+        }, 120000);
       })();
     </script>
     <script src="/interface/connector-icons.js"></script>
@@ -8634,7 +8660,6 @@
     <script src="/interface/kazer-premium.js?v=20261005" defer></script>
   </body>
 </html>
-
 
 
 
