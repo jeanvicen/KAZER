@@ -53,7 +53,10 @@ test("client validates labels and keeps a 20-item no-repeat fallback cycle", () 
   assert.equal(validItem({ texto: "Frase longa com seis palavras aqui", categoria: "plan" }), null);
   assert.equal(validItem({ texto: "Prompt malicioso", categoria: "<script>" }), null);
 
-  const fallbackSource = client.slice(client.indexOf("const fallbackBatch = () => {"), client.indexOf("const timeBand =", client.indexOf("const fallbackBatch = () => {"));
+  const fallbackStart = client.indexOf("const fallbackBatch = () => {");
+  const fallbackEnd = client.indexOf("const timeBand =", fallbackStart);
+  assert.ok(fallbackStart >= 0 && fallbackEnd > fallbackStart, "fallback batch source must exist");
+  const fallbackSource = client.slice(fallbackStart, fallbackEnd);
   const state = new Function("FALLBACK_BANK", "normalize", `let recentItems = []; let fallbackCursor = 0; ${fallbackSource} return { fallbackBatch, remember(items) { recentItems = [...recentItems, ...items].slice(-20); } };`)(bank, normalize);
   for (let batchIndex = 0; batchIndex < 12; batchIndex += 1) {
     const previous = new Set(state.previous || []);
