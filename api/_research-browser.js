@@ -1,33 +1,19 @@
-const dns = require("node:dns").promises;
 const net = require("node:net");
+const { isPublicAddress, isSafePublicHostname, parsePublicUrl, resolvePublicAddress } = require("./_ssrf");
 
 const MAX_TEXT_CHARS = 18_000;
 const MAX_LINKS = 80;
-const PRIVATE_METADATA_HOSTS = new Set(["metadata.google.internal", "metadata.google.internal.", "169.254.169.254", "168.63.129.16"]);
-
 function isPrivateAddress(value) {
-  const host = String(value || "").toLowerCase().replace(/^\[|\]$/g, "");
-  if (!host || host === "localhost" || host.endsWith(".local") || host.endsWith(".internal") || PRIVATE_METADATA_HOSTS.has(host)) return true;
-  const version = net.isIP(host);
-  if (version === 4) {
-    const p = host.split(".").map(Number);
-    return p[0] === 0 || p[0] === 10 || p[0] === 127 || (p[0] === 169 && p[1] === 254) || (p[0] === 172 && p[1] >= 16 && p[1] <= 31) || (p[0] === 192 && p[1] === 168) || (p[0] === 100 && p[1] >= 64 && p[1] <= 127) || (p[0] === 198 && (p[1] === 18 || p[1] === 19));
-  }
-  if (version === 6) return host === "::" || host === "::1" || host.startsWith("fc") || host.startsWith("fd") || /^fe[89ab]/.test(host) || host.startsWith("::ffff:127.");
-  return false;
+  const host = String(value || "").toLowerCase().replace(/^\[|\]$/g, "").replace(/\.$/, "");
+  return net.isIP(host) ? !isPublicAddress(host) : !isSafePublicHostname(host);
 }
 
 async function assertSafeUrl(value) {
   let url;
-  try { url = new URL(String(value || "")); } catch { throw new Error("unsafe_research_url"); }
-  if (!["https:", "http:"].includes(url.protocol) || url.username || url.password || url.hash) throw new Error("unsafe_research_url");
-  const port = url.port ? Number(url.port) : (url.protocol === "https:" ? 443 : 80);
-  if ((url.protocol === "https:" && port !== 443) || (url.protocol === "http:" && port !== 80)) throw new Error("unsafe_research_port");
-  if (isPrivateAddress(url.hostname)) throw new Error("unsafe_research_destination");
-  if (!net.isIP(url.hostname)) {
-    const addresses = await dns.lookup(url.hostname, { all: true, verbatim: true });
-    if (!addresses.length || addresses.some((entry) => isPrivateAddress(entry.address))) throw new Error("unsafe_research_dns_destination");
-  }
+  try { url = parsePublicUrl(value, { protocols: ["https:", "http:"] }); }
+  catch (error) { throw new Error(error?.message === "unsafe_public_port" ? "unsafe_research_port" : "unsafe_research_url"); }
+  try { await resolvePublicAddress(url.hostname); }
+  catch { throw new Error("unsafe_research_dns_destination"); }
   return url.href;
 }
 

@@ -1,5 +1,6 @@
 const { getSearchQueryVariants, normalizeSearchQuery, parseBingResults, parseBingRssResults, parseDuckResults, rankAndDedupeResults, safeSearchResultUrl } = require("./_research-search-utils");
 const { ResearchBrowser, cleanText } = require("./_research-browser");
+const { requestPublicUrl } = require("./_ssrf");
 
 const DEFAULT_BUDGETS = {
   normal: { searches: 4, pages: 8, actions: 16 },
@@ -91,9 +92,37 @@ function publicSource(evidence) {
   return { title: evidence.sourceTitle || "Fonte", uri: evidence.sourceUrl, snippet: evidence.relevantPassage.slice(0, 500), pageRead: evidence.pageRead, browserUsed: evidence.browserUsed };
 }
 
-async function httpFallback(source, timeoutMs = 5_000) {
+async function fetchResearchPage(value, timeoutMs = 5_000, networkOptions = {}) {
+  let current = safeSearchResultUrl(value);
+  if (!current) throw new Error("unsafe_research_url");
+  const maxRedirects = 3;
+  for (let redirectCount = 0; redirectCount <= maxRedirects; redirectCount += 1) {
+    const response = await requestPublicUrl(current, {
+      protocols: ["https:", "http:"],
+      allowCustomPort: false,
+      maxRedirects: 0,
+      method: "GET",
+      headers: { Accept: "text/html,application/xhtml+xml", "User-Agent": "KAZER-Research/2.0" },
+      signal: networkOptions.signal || AbortSignal.timeout(timeoutMs),
+      timeoutMs,
+      maxBytes: SEARCH_BYTES,
+      resolver: networkOptions.resolver,
+      resolverTimeoutMs: networkOptions.resolverTimeoutMs,
+      requestImplementation: networkOptions.requestImplementation,
+    });
+    if (![301, 302, 303, 307, 308].includes(response.status)) return response;
+    const location = response.headers.get("location");
+    if (!location) return response;
+    if (redirectCount >= maxRedirects) throw new Error("research_redirect_limit");
+    current = safeSearchResultUrl(new URL(location, current).href);
+    if (!current) throw new Error("unsafe_research_redirect");
+  }
+  throw new Error("research_redirect_limit");
+}
+
+async function httpFallback(source, timeoutMs = 5_000, networkOptions = {}) {
   try {
-    const response = await fetch(source.uri, { headers: { Accept: "text/html,application/xhtml+xml", "User-Agent": "KAZER-Research/2.0" }, redirect: "follow", signal: AbortSignal.timeout(timeoutMs) });
+    const response = await fetchResearchPage(source.uri, timeoutMs, networkOptions);
     const html = await response.text();
     const text = cleanText(html.replace(/<!--[\s\S]*?-->/g, " ").replace(/<(script|style|noscript|svg|iframe|template|nav|footer|header)[^>]*>[\s\S]*?<\/\1>/gi, " ").replace(/<[^>]+>/g, " "), 18_000);
     return { title: source.title, text, pageRead: response.ok && text.length >= 120, headings: [] };
@@ -164,4 +193,4 @@ async function runResearch({ question, mode = "normal", deep = false, maxSearche
 
 const researchToolDefinition = { type: "function", function: { name: "research_web", description: "Pesquisa profundamente na Internet: cria várias consultas, coleta até 120 candidatos, abre páginas públicas, cruza evidências e retorna apenas dados para uma síntese final. Use para fatos atuais, pesquisa explícita, comparação ou quando fontes externas forem necessárias; o processo deve permanecer invisível ao usuário.", parameters: { type: "object", properties: { question: { type: "string", description: "Pergunta ou objetivo da pesquisa" }, depth: { type: "string", enum: ["normal", "deep"] } }, required: ["question"] } } };
 
-module.exports = { DEFAULT_BUDGETS, researchToolDefinition, runResearch, searchWeb, deepQueries };
+module.exports = { DEFAULT_BUDGETS, researchToolDefinition, runResearch, searchWeb, deepQueries, fetchResearchPage, httpFallback };

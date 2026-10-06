@@ -1,8 +1,7 @@
 const { connectorSecretPayload, supabaseRequest } = require("./_kazer-data");
 const { readTextWithLimit } = require("./_security");
 
-const dns = require("node:dns").promises;
-const net = require("node:net");
+const { parsePublicUrl, requestPublicUrl } = require("./_ssrf");
 const MCP_PROTOCOL_VERSION = "2025-06-18";
 const MAX_SERVERS = 8;
 const MAX_TOOLS_PER_SERVER = 24;
@@ -51,44 +50,26 @@ function validateToolSchema(schema) {
   return copy;
 }
 
-function isPrivateHost(hostname) {
-  const host = String(hostname || "").toLowerCase().replace(/^\[|\]$/g, "");
-  if (!host || host === "localhost" || host.endsWith(".local") || host.endsWith(".internal")) return true;
-  const version = net.isIP(host);
-  if (version === 4) {
-    const parts = host.split(".").map(Number);
-    return parts[0] === 0 || parts[0] === 10 || parts[0] === 127 || (parts[0] === 169 && parts[1] === 254) || (parts[0] === 172 && parts[1] >= 16 && parts[1] <= 31) || (parts[0] === 192 && parts[1] === 168);
-  }
-  if (version === 6) return host === "::" || host === "::1" || host.startsWith("fc") || host.startsWith("fd") || /^fe[89ab]/.test(host);
-  return false;
-}
-
 function isAllowedRemoteUrl(value) {
   try {
-    const url = new URL(String(value || ""));
-    return url.protocol === "https:" && !url.username && !url.password && !url.hash && !isPrivateHost(url.hostname);
+    parsePublicUrl(value, { protocols: ["https:"], allowCustomPort: true });
+    return true;
   } catch { return false; }
-}
-
-async function assertPublicRemoteHost(value) {
-  const url = new URL(String(value || ""));
-  if (isPrivateHost(url.hostname)) throw new Error("MCP URL não permitida");
-  const addresses = await dns.lookup(url.hostname, { all: true, verbatim: true });
-  if (!addresses.length || addresses.some((entry) => isPrivateHost(entry.address))) {
-    throw new Error("MCP host resolve para endereço privado");
-  }
 }
 
 async function mcpRequest(server, method, params, id) {
   if (!isAllowedRemoteUrl(server?.url)) throw new Error("MCP URL não permitida");
-  await assertPublicRemoteHost(server.url);
   const headers = { ...server.headers };
   if (server.sessionId) headers["Mcp-Session-Id"] = server.sessionId;
-  const response = await fetch(server.url, {
+  const response = await requestPublicUrl(server.url, {
+    protocols: ["https:"],
+    allowCustomPort: true,
+    maxRedirects: 0,
     method: "POST",
     headers,
     body: JSON.stringify(jsonRpcBody(id, method, params)),
-    redirect: "error",
+    maxBytes: MAX_RPC_RESPONSE_BYTES,
+    timeoutMs: 7000,
     signal: AbortSignal.timeout(7000),
   });
   const sessionId = response.headers.get("mcp-session-id");
