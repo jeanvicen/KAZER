@@ -1,5 +1,6 @@
 const net = require("node:net");
-const { isPublicAddress, isSafePublicHostname, parsePublicUrl, resolvePublicAddress } = require("./_ssrf");
+const { isPublicAddress, isSafePublicHostname } = require("./_research-search-utils");
+const { parsePublicUrl, resolvePublicAddress } = require("./_ssrf");
 
 const MAX_TEXT_CHARS = 18_000;
 const MAX_LINKS = 80;
