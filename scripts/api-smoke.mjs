@@ -3,6 +3,7 @@ import { createRequire } from "node:module";
 
 process.env.SUPABASE_SERVICE_ROLE_KEY = "test-only-service-key";
 process.env.GITHUB_CLIENT_ID = "test-github-client";
+process.env.GITHUB_OAUTH_STATE_SECRET = "test-only-oauth-state-secret-with-at-least-32-bytes";
 process.env.PUBLIC_APP_ORIGINS = "https://kazer.example";
 const require = createRequire(import.meta.url);
 
@@ -32,7 +33,7 @@ globalThis.fetch = async (input, init = {}) => {
     return mockFetchResponse([]);
   }
   if (url.includes("/rest/v1/kazer_tasks")) {
-    return mockFetchResponse([{ id: "task-1", user_id: "user-1", prompt: "Criar uma tela", title: "Criar uma tela", task_type: "chat", repo_url: null, selected_agent: null, selected_model: null, mcp_connector_ids: [], status: "processing", progress: 15, logs: [], result: null, error: null, credit_cost: 10, created_at: new Date().toISOString(), updated_at: new Date().toISOString(), completed_at: null }], 201);
+    return mockFetchResponse([{ id: "task-1", user_id: "user-1", prompt: "Criar uma tela", title: "Criar uma tela", task_type: "chat", repo_url: null, selected_agent: null, selected_model: null, mcp_connector_ids: [], status: "processing", progress: 15, logs: [], result: null, error: null, created_at: new Date().toISOString(), updated_at: new Date().toISOString(), completed_at: null }], 201);
   }
   throw new Error(`unexpected fetch ${url}`);
 };
@@ -58,7 +59,7 @@ assert.equal(githubAuthorizeUrl.origin, "https://github.com");
 assert.equal(githubAuthorizeUrl.pathname, "/login/oauth/authorize");
 assert.equal(githubAuthorizeUrl.searchParams.get("client_id"), "test-github-client");
 assert.equal(githubAuthorizeUrl.searchParams.get("redirect_uri"), "https://kazer.example/api/github-callback");
-assert.equal(githubAuthorizeUrl.searchParams.get("scope"), "repo read:user user:email");
+assert.equal(githubAuthorizeUrl.searchParams.get("scope"), "repo read:user");
 assert.ok(githubAuthorizeUrl.searchParams.get("state"));
 
 const directHandler = require("../api/_github-authorize-handler.js");

@@ -8,15 +8,15 @@
 
 ## Visão rápida da versão atual
 
-O KAZER combina uma interface web/PWA com funções serverless e um banco Supabase protegido por RLS. O navegador nunca é a fonte de verdade para autenticação, tokens ou limites: cada operação é validada novamente no servidor.
+A revisão deste guia parte do código versionado no commit `0b9e9d87d587b670d9393b6ce7de2063440efad3`. Ela não comprova deploy, configurações externas, execução das migrações ou isolamento real em produção. O navegador mantém a sessão e parte do histórico; APIs privadas validam a sessão no servidor.
 
-| Área | Estado atual |
+| Área | Estado observado no código |
 |---|---|
-| Continuidade do chat | Mensagens que falham permanecem no histórico e podem ser reenviadas sem perder contexto. |
-| Anexos | JPEG, PNG, WebP, GIF, PDF, DOCX e texto compatível, com allowlist, limites e assinatura binária para formatos estruturados. |
-| Limite de anexos | 10 itens por ciclo diário do plano Free, aplicado no Supabase e reiniciado em 00:00 UTC. |
-| Proteção do código | CODEOWNERS, Dependabot e workflow obrigatório de segurança no GitHub. |
-| Validação local | `npm run check` executa auditoria de segurança e regressões do chat. |
+| Histórico | Até 10 conversas por usuário no `localStorage` deste navegador/dispositivo, com até 72 mensagens por conversa; não há sincronização de histórico entre dispositivos demonstrada. |
+| Anexos | Imagens, PDF, DOCX e tipos de texto/código permitidos passam por validações e limites no backend. |
+| Uso | Há rotas/RPCs para consultar e consumir uso; a compatibilidade depende da versão do schema Supabase aplicado. |
+| Workspace | A API registra e atualiza tarefas/progresso e integrações; isso não comprova um executor geral de tarefas em produção. |
+| Qualidade | O CI em `.github/workflows/ci.yml` inclui suíte unitária, verificações, smoke tests e auditoria npm; consulte o run do commit específico. |
 
 > **Nota de segurança:** um repositório público pode ser clonado. Para impedir acesso ao código, é necessário mantê-lo privado e restringir colaboradores; documentação e avisos autorais não substituem controles de acesso.
 
@@ -55,9 +55,9 @@ As regras completas estão em [`LICENSE.md`](../LICENSE.md), [`TERMOS-DE-USO.md`
 
 ## Visão geral
 
-O KAZER é uma aplicação estática hospedada na Vercel, com páginas HTML/CSS/JavaScript no diretório `interface/`, funções serverless Node.js no diretório `api/` e autenticação, preferências, avisos, uso e retenção de conta apoiados pelo Supabase. O processamento de chat usa um Brain server-side com entendimento de intenção, plano interno de capacidades, instruções modulares, roteamento previsível e fallback explícito de modelos/providers; a pesquisa do WebKazer consulta múltiplos provedores públicos, lê fontes em segundo plano e usa o mesmo Brain para sintetizar evidências.
+O KAZER é uma aplicação estática preparada para Vercel, com páginas HTML/CSS/JavaScript em `interface/`, funções serverless Node.js em `api/` e recursos de autenticação, preferências, avisos, uso e retenção apoiados pelo Supabase. As migrações definem RLS, mas produção não foi inspecionada dinamicamente. O processamento de chat usa um Brain server-side com entendimento de intenção, plano interno de capacidades, instruções modulares, roteamento previsível e fallback explícito de modelos/providers; a pesquisa do WebKazer consulta múltiplos provedores públicos, lê fontes em segundo plano e usa o mesmo Brain para sintetizar evidências.
 
-A interface pode funcionar como site responsivo e como PWA instalável. O fluxo de conta usa Supabase Auth, a sessão é mantida no navegador e as rotas privadas exigem o bearer token da sessão. A conversa exibida é mantida em memória no navegador durante a sessão da página; o botão **Nova conversa** limpa o histórico visual local daquele fluxo.
+A interface pode funcionar como site responsivo e como PWA instalável. O fluxo de conta usa Supabase Auth, a sessão é mantida no navegador e as rotas privadas exigem o bearer token da sessão. O histórico de conversas é salvo no `localStorage` por usuário neste navegador/dispositivo (até 10 conversas e 72 mensagens por conversa no código revisado); não é uma cópia persistente no banco nem sincroniza entre dispositivos. O **Nova conversa** inicia outro registro local.
 
 > **Importante:** respostas geradas por IA podem conter erros, omissões ou interpretações incompletas. O KAZER não substitui orientação médica, jurídica, financeira, profissional, atendimento de emergência ou julgamento humano responsável.
 
@@ -99,7 +99,7 @@ flowchart LR
 | PWA | Instalação na tela inicial, manifesto, service worker e cache restrito do app shell. | `download/manifest.webmanifest`, `download/sw.js` e `vercel.json`. |
 | Plugins | Google Drive e gerenciamento de MCPs remotos/locais com variáveis cifradas no backend. | `interface/chat.html`, `interface/kazer-workspace.js`, `api/mcp.js`, `api/_mcp-runtime.js` e migração `010`. |
 | GitHub | OAuth para vincular a conta, listar/buscar repositórios e usar um repositório como contexto do pedido. | `api/github-*.js`, `interface/kazer-workspace.js` e `kazer_github_connections`. |
-| Workspace | Painel fechado por padrão, aberto pelo raio, com tarefas, progresso, custo e repositórios. | `interface/chat.html`, `interface/kazer-workspace.js`, `api/tasks.js` e `kazer_tasks`. |
+| Workspace | Interface/API para registrar tarefas, status/progresso, conectores e repositórios; não há executor geral documentado aqui. Não mostrar custo de tarefa: a coluna `credit_cost` foi removida do schema atual. | `interface/chat.html`, `interface/kazer-workspace.js`, `api/workspace.js`, `api/_tasks-handler.js` e `kazer_tasks`. |
 | Kazer Pro | Chamada visual de oferta; a tela informa que a página de compra está em preparação. | `interface/chat.html`. |
 
 ## Arquitetura
@@ -111,7 +111,7 @@ A aplicação é deliberadamente dividida entre um cliente estático e funções
 | Navegador | Exibir a interface, manter sessão do Supabase, montar requisições e renderizar respostas. | Nunca armazenar ou enviar chaves privadas; escapar conteúdo antes de inserir no DOM. |
 | `api/` | Autenticar bearer token, validar entrada, aplicar limites, chamar serviços externos e devolver JSON. | Validar novamente tudo no servidor, aplicar timeout, limites de bytes e respostas genéricas. |
 | Supabase Auth | Cadastro, login, renovação e revogação da sessão. | Usar somente o fluxo oficial; não gravar senhas em tabelas próprias. |
-| PostgreSQL/Supabase | Perfis, preferências, avisos, catálogo de planos e uso. | RLS, `FORCE ROW LEVEL SECURITY`, grants mínimos e RPCs com identidade de `auth.uid()`. |
+| PostgreSQL/Supabase | Perfis, preferências, avisos, tarefas, integrações e dados de uso conforme o schema aplicado. | Migrações declaram políticas e RPCs; RLS efetivo em produção e isolamento cross-account ainda precisam de validação. |
 | Vercel | Hospedagem estática, funções serverless, headers e cron diário. | Variáveis secretas privadas, HTTPS, CSP, HSTS e revisão de logs. |
 | Provedores externos | Resposta de IA, visão, busca e resumo, conforme recurso utilizado. | Enviar somente o necessário, usar HTTPS, timeout e limites; não enviar segredos desnecessários. |
 
@@ -186,22 +186,9 @@ As variáveis devem ser cadastradas na Vercel por ambiente, sem colar segredos e
 
 ## Banco Supabase
 
-As migrações são incrementais e devem ser executadas no SQL Editor do projeto Supabase. A ordem é obrigatória porque as migrações posteriores dependem de tabelas e funções criadas anteriormente.
+As migrações versionadas não são uma baseline autossuficiente comprovada para banco vazio. Em particular, `016_security_rls_rpc_cleanup.sql` depende de objetos legados (`plan_catalog`, `user_usage` e RPCs anteriores) ausentes nas migrações anteriores atualmente versionadas. A migração `020_monthly_usage_percentage.sql` introduz a RPC de uso mensal atual; `021_security_function_search_path.sql` endurece `search_path` de funções.
 
-| Ordem | Arquivo | Finalidade resumida |
-|---:|---|---|
-| 1 | `001_auth_accounts.sql` | Perfil, preferências, avisos públicos, trigger de novo usuário, RLS inicial e atividade. |
-| 2 | `002_inactivity_retention.sql` | Índice e suporte à consulta de contas inativas. |
-| 3 | `003_retention_notifications.sql` | Notificações privadas de retenção com RLS. |
-| 4 | `004_security_hardening.sql` | `FORCE RLS`, grants mínimos, constraints e revogação de execução pública. |
-| 5 | `005_usage_limits.sql` | Catálogo de planos, `user_usage`, resets e RPCs iniciais de uso. |
-| 6 | `006_usage_rpc_fix.sql` | Correções das RPCs de consumo e grants autenticados. |
-| 7 | `007_credits_150_messages_5h.sql` | Créditos Free, janela de cinco horas e consumo de chat. |
-| 8 | `008_attachment_limit_10_items.sql` | Limite Free de dez itens de anexo por janela e consumo atômico por item. |
-| 9 | `009_google_drive_connections.sql` | Tokens cifrados e RLS para Google Drive. |
-| 10 | `010_mcp_github_tasks.sql` | MCPs, conexão GitHub, tarefas do workspace e RPC de custo variável. |
-
-Depois das migrações, valide com duas contas de teste que cada usuário só consegue ler ou alterar seu próprio perfil, preferências, uso e notificações. Teste também chamadas sem bearer, bearer inválido, sessão revogada e tentativa de enviar `user_id` de outra conta. Não habilite exclusões de retenção antes de testar backup e restauração.
+As migrações corretivas `018` e `019` podem remover estruturas/dados antigos. Não pule, reordene ou aplique scripts em produção para “fazer passar” sem aprovação e plano. Consulte [`database/supabase/README.md`](../database/supabase/README.md), confira o histórico/schema do ambiente e teste um caminho de upgrade/instalação limpa isoladamente. O estado das políticas no repositório não substitui teste com duas contas.
 
 ## Publicação na Vercel
 
@@ -233,9 +220,9 @@ Todas as APIs privadas devem ser chamadas com `Authorization: Bearer <access_tok
 
 | Endpoint | Método | Entrada principal | Saída/erros relevantes |
 |---|---|---|---|
-| `/api/chat` | `POST` | `{ messages, attachments, mcpConnectorIds }` | `message`, `usage`, `credit_cost` e contagem de ferramentas MCP; `401`, `402`, `409`, `413`, `422`, `429`, `502` conforme a falha. |
-| `/api/mcp` | `GET`, `POST`, `PATCH`, `DELETE` | Cadastro, edição, status e exclusão de MCP. | Nunca devolve `secret_payload`; exige bearer e Supabase privado. |
-| `/api/tasks` | `GET`, `POST`, `PATCH`, `DELETE` | Histórico, progresso, status e resultado de tarefas do usuário. | Dados isolados por usuário; exige bearer. |
+| `/api/chat` | `POST` | `{ messages, attachments, mcpConnectorIds }` | `message`, `usage`, `credit_cost` e contagem de ferramentas MCP; status dependem da falha. |
+| `/api/mcp` (rewrite para `/api/workspace?route=mcp`) | `GET`, `POST`, `PATCH`, `DELETE` | Cadastro, edição, status e exclusão de MCP. | Não devolve `secret_payload`; a rota utiliza handler compartilhado do workspace. |
+| `/api/tasks` (rewrite para `/api/workspace?route=tasks`) | `GET`, `POST`, `PATCH`, `DELETE` | Lista e mantém tarefas/status do usuário. | A API filtra pelo usuário autenticado; teste real de isolamento continua pendente. |
 | `/api/github-connect` | `GET` | Inicia OAuth com estado assinado. | Devolve URL oficial do GitHub; exige bearer. |
 | `/api/github-callback` | `GET` | Código e estado enviados pelo GitHub. | Salva token cifrado e redireciona ao chat. |
 | `/api/github-status` | `GET` | Nenhuma | Status e identidade pública da conexão. |
@@ -245,7 +232,7 @@ Todas as APIs privadas devem ser chamadas com `Authorization: Bearer <access_tok
 | `/api/usage` | `GET` | Nenhuma | Saldo, resets, limite e contagem de anexos do usuário autenticado. |
 | `/api/retention` | `GET` | Header de cron | Job administrativo protegido por `CRON_SECRET`; não é rota de usuário. |
 
-O histórico aceito pelo chat tem no máximo 72 itens recebidos, mantém os 24 mais recentes, limita cada mensagem a 8.000 caracteres e o total a 32.000 caracteres. O servidor normaliza nomes de arquivos, valida Data URLs, limita o corpo e não executa arquivos enviados.
+A API recebe no máximo 72 mensagens, usa até 48 no contexto, limita mensagem do usuário a 8.000 caracteres e o conteúdo agregado a 32.000 caracteres. A saída máxima é 16.000 caracteres (64.000 para respostas de código). O histórico de interface é outro limite: até 10 conversas locais, com 72 mensagens salvas em cada uma. O servidor normaliza nomes, valida anexos e não executa arquivos enviados.
 
 ## Segurança
 
@@ -255,14 +242,14 @@ A segurança é composta por camadas e não por uma promessa de invulnerabilidad
 |---|---|
 | Segredos | Chaves privadas são lidas no servidor; o script procura padrões conhecidos no conteúdo versionado. |
 | Autenticação | Chat, pesquisa e uso validam o bearer token no endpoint Auth do Supabase. |
-| Autorização | O banco usa RLS/`FORCE RLS`; a identidade vem de `auth.uid()`, não de `user_id` enviado pelo cliente. |
+| Autorização | As migrações declaram políticas por usuário/participante, mas não há validação automatizada de duas contas nem confirmação dinâmica do estado de produção. Algumas tabelas não usam `FORCE RLS`; filtros de handlers com service role também são importantes. |
 | XSS | Conteúdo do usuário é inserido com APIs seguras; Markdown da resposta é escapado antes da renderização controlada. |
 | Prompt injection | Mensagens, anexos e resultados web são tratados como dados não confiáveis no prompt server-side. |
 | Moderação | Padrões de pedidos operacionais de violência, invasão, malware, fraude e crimes são bloqueados preventivamente. |
-| Abuso | Chat e WebKazer possuem limites por IP e usuário, limites de payload, timeouts e respostas limitadas. |
+| Abuso | Chat: 8 req/min por IP e 12 por usuário; pesquisa: 6 req/min por IP e 4 por usuário. Rate limits usam `Map` por processo e não são distribuídos entre instâncias. |
 | Uploads | Allowlist de formatos, máximo de dez itens por janela após a migração `008`, até três imagens e até 4 MB de anexos por envio. |
 | Headers | CSP, HSTS, framing negado, MIME nosniff, políticas de origem e ausência de cache em APIs. |
-| Dependências | `npm audit --omit=dev` e workflow de segurança executados em mudanças no código. |
+| Dependências | Script `npm audit --omit=dev` e workflow CI versionado; conferir resultado para cada commit. |
 
 Os limites em memória são best effort em ambiente serverless e não substituem rate limiting distribuído ou controles de custo do provedor. A proteção contra prompt injection baseada em instruções não garante que todo ataque seja eliminado. A revisão humana, a configuração correta do Supabase/Vercel e testes autorizados continuam necessários.
 
@@ -276,16 +263,16 @@ A central pública em `/documentos` reúne o texto informativo de privacidade, t
 
 | Item | Limite/documentação |
 |---|---|
-| Créditos Free | 1.500 créditos por janela de cinco horas, com consumo padrão de 10 créditos por mensagem, conforme migrações `007` e `008`. |
-| Anexos | Dez fotos/arquivos por janela no plano Free após aplicação de `008`; o servidor limita cada envio a até 4 MB no total. |
+| Uso/limites | O código chama RPCs de uso e reserva consumo no servidor; política efetiva depende do schema implantado. Não inferir disponibilidade ou ciclo apenas a partir de migrações antigas. |
+| Anexos | O servidor limita cada envio a até 4 MB no total; limites por conta dependem da RPC/schema atual. |
 | Imagens | Até três imagens por requisição, nos formatos JPEG, PNG, WebP ou GIF. |
 | Arquivos | PDF, DOCX e arquivos de texto/código da allowlist; a extração é limitada e ocorre em memória. |
-| Mensagens | Até 24 mensagens recentes processadas, de um máximo de 72 itens recebidos. |
-| Resposta | Até 12.000 caracteres após limpeza do conteúdo do modelo. |
-| Pesquisa | Query e fontes são limitadas pelo endpoint; o resumo pode retornar indisponível sem impedir a abertura das fontes. |
+| Mensagens | Até 72 itens recebidos, até 48 mensagens selecionadas para contexto e até 32.000 caracteres agregados. |
+| Resposta | Até 16.000 caracteres; respostas de código podem chegar a 64.000 caracteres. |
+| Pesquisa | 6 solicitações/minuto por IP e 4/minuto por usuário no endpoint, além de limites de corpo e pergunta; os buckets são locais ao processo. |
 | MCPs | Presets e servidores personalizados são gerenciados no Perfil ou dentro do botão “+”; MCPs remotos com autenticação por variáveis podem ser descobertos e chamados durante o chat. |
 | GitHub | OAuth e listagem de repositórios dependem das variáveis privadas do GitHub e da migração `010`. |
-| Créditos variáveis | O custo parte de 10 e aumenta por tamanho do pedido, anexos, intenção de código/visual e MCPs ativos; o servidor decide e reserva atomicamente. |
+| Consumo de uso | A reserva de chat/pesquisa é feita por RPC server-side; os valores e resets ativos devem ser confirmados no schema do ambiente, não em descrições antigas. |
 | Compra Pro | A chamada existe na interface, mas a compra não está integrada neste estado do projeto. |
 
 ## PWA e distribuição móvel
@@ -304,7 +291,7 @@ npm run check
 npm run security:audit -- --audit-level=high
 ```
 
-`npm run check` inclui segurança, regressões de chat/pesquisa e os testes do Brain para intenção atual, histórico e roteamento. O Dependabot em `.github/dependabot.yml` acompanha as dependências npm. Os mesmos comandos podem ser configurados em GitHub Actions, Vercel ou outro CI autorizado para cada push e pull request. Falhas devem ser tratadas antes do deploy; `npm audit` sem vulnerabilidades é apenas um retrato do momento, não uma certificação de segurança.
+`npm run check` inclui verificações de segurança e regressões; o workflow versionado em `.github/workflows/ci.yml` também executa `npm test`, `npm run integration:test` e `npm run security:audit -- --audit-level=high`. Confira o resultado do run no commit exato: CI configurado não significa que a execução mais recente passou. Smoke tests não provam integrações reais, RLS ou deploy. `npm audit` é apenas um retrato da execução, não certificação de segurança.
 
 ## Documentos e autoria
 
