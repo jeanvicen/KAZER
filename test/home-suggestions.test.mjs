@@ -44,11 +44,14 @@ test("client validates labels and keeps a 20-item no-repeat fallback cycle", () 
   const bank = new Function(`return ${bankLiteral}`)();
   assert.ok(bank.length >= 30);
   const categoryNames = [...client.matchAll(/^    (\w+): '<(?:rect|path|circle)/gm)].map((match) => match[1]);
-  const clientBlock = runFunctionBlock(client, "const normalize =", "let recentItems =", "return { validItem, normalize };");
+  const clientBlockStart = client.indexOf("const normalize =");
+  const clientBlockEnd = client.indexOf("let recentItems =", clientBlockStart);
+  assert.ok(clientBlockStart >= 0 && clientBlockEnd > clientBlockStart, "client validation source must exist");
+  const clientBlock = client.slice(clientBlockStart, clientBlockEnd);
   const { validItem, normalize } = new Function(
-    "CATEGORY_ICONS",
-    `const ALLOWED_CATEGORIES = new Set(Object.keys(CATEGORY_ICONS)); ${clientBlock}`
-  )(Object.fromEntries(categoryNames.map((name) => [name, ""]))) || {};
+    "ALLOWED_CATEGORIES",
+    `${clientBlock}\nreturn { validItem, normalize };`
+  )(new Set(categoryNames));
   assert.equal(validItem({ texto: "Planejar uma manhã tranquila", categoria: "plan" }).texto, "Planejar uma manhã tranquila");
   assert.equal(validItem({ texto: "Frase longa com seis palavras aqui", categoria: "plan" }), null);
   assert.equal(validItem({ texto: "Prompt malicioso", categoria: "<script>" }), null);
