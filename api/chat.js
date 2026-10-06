@@ -449,10 +449,10 @@ module.exports = async function handler(request, response) {
   if (body?.purpose === "title") {
     const titleMessages = parseTitleMessages(body?.messages);
     if (!titleMessages) return sendJson(response, 400, { error: "Conversa inválida para gerar título." });
-    const titlePrompt = [{ role: "user", content: "Crie um título curto para esta conversa. Responda SOMENTE com o título, em português, com no máximo 6 palavras, sem aspas, sem ponto final e sem explicações. O título deve representar o objetivo principal do usuário, não copiar literalmente a primeira mensagem.\n\nConversa:\n" + titleMessages.map((item) => `${item.role === "user" ? "Usuário" : "KAZER"}: ${item.content}`).join("\n").slice(0, 6000) }];
+    const titlePrompt = [{ role: "user", content: "Crie um título curto para esta conversa. Responda SOMENTE com o título, em português, com no máximo 6 palavras e 48 caracteres, sem aspas, sem ponto final e sem explicações. O título deve representar o objetivo principal do usuário, não copiar literalmente a primeira mensagem.\n\nConversa:\n" + titleMessages.map((item) => `${item.role === "user" ? "Usuário" : "KAZER"}: ${item.content}`).join("\n").slice(0, 6000) }];
     const result = await callGroq({ messages: titlePrompt, hasImages: false, timeoutMs: 12_000 });
     if (result.failure) return sendJson(response, 502, { error: "Não foi possível gerar o título agora." });
-    const title = cleanModelContent(result.data?.choices?.[0]?.message?.content).replace(/[\r\n]+/g, " ").replace(/^['"“”]+|['"“”]+$/g, "").trim().slice(0, 72);
+    const title = cleanModelContent(result.data?.choices?.[0]?.message?.content).replace(/[\r\n]+/g, " ").replace(/^['"“”]+|['"“”]+$/g, "").trim().slice(0, 48);
     if (!title) return sendJson(response, 502, { error: "O título gerado estava vazio." });
     return sendJson(response, 200, { title });
   }

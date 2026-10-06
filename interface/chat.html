@@ -6434,22 +6434,26 @@
         });
 
         const titleCase = (value) => String(value || "").replace(/\b\w/g, (letter) => letter.toUpperCase());
-
+        const normalizeChatTitle = (value, fallback = "Nova conversa") => {
+          const raw = String(value || "").replace(/[\r\n]+/g, " ").replace(/```/g, "").replace(/^\s*(?:título|titulo|title)\s*:\s*/i, "").replace(/^['"“”«»]+|['"“”«»]+$/g, "").replace(/\s+/g, " ").trim();
+          const title = raw.split(/\s+/).filter(Boolean).slice(0, 6).join(" ").replace(/[.!?,;:]+$/g, "").slice(0, 48).trim();
+          const invalid = !title || /^(?:ok|pronto|prontinho|feito|resolvido|sem título|sem titulo|nova conversa|conversa inicial|título|titulo)$/i.test(title) || /^\d+(?:\s+\w+)?$/i.test(title);
+          return invalid ? String(fallback || "Nova conversa").slice(0, 48).trim() : title;
+        };
         const createChatTitle = (prompt, files = []) => {
           const source = String(prompt || "").replace(/\s+/g, " ").trim();
           const normalized = source.toLocaleLowerCase();
           const meaningful = source.replace(/[^\p{L}\p{N}\s-]/gu, " ").split(/\s+/).filter((word) => word.length > 2 && !/^(para|com|uma|uns|das|dos|que|como|por|esse|essa|isso|mais|meu|minha|você|voce|the|and|for|with|this|that)$/i.test(word));
           if (/^(oi|olá|ola|e aí|e ai|bom dia|boa tarde|boa noite|hello|hi)[!.?\s]*$/i.test(source)) return "Conversa inicial";
           if (files.length && !source) return "Análise de arquivos";
-          if (/landing page|página|pagina|site|website|interface|tela|app|aplicativo|design|layout/i.test(normalized)) return "Projeto de interface e design";
-          if (/código|codigo|bug|erro|programa|javascript|python|api|repositório|repositorio/i.test(normalized)) return "Análise e solução técnica";
-          if (/imagem|foto|logo|visual|ilustra|diagrama|gráfico|grafico/i.test(normalized)) return "Criação visual e direção de arte";
-          if (/explique|explica|como funciona|o que é|o que e|diferença|diferenca/i.test(normalized)) return "Explicação sobre " + (titleCase(meaningful.slice(0, 3).join(" ")) || "o assunto");
-          if (/planeje|planejar|organize|organizar|roteiro|estratégia|estrategia/i.test(normalized)) return "Planejamento de " + (titleCase(meaningful.slice(0, 3).join(" ")) || "uma ideia");
-          const topic = titleCase(meaningful.slice(0, 5).join(" ")).slice(0, 54);
-          return topic ? "Ideias sobre " + topic : "Nova conversa";
+          if (/landing page|página|pagina|site|website|interface|tela|app|aplicativo|design|layout/i.test(normalized)) return "Projeto de interface";
+          if (/código|codigo|bug|erro|programa|javascript|python|api|repositório|repositorio/i.test(normalized)) return "Solução técnica";
+          if (/imagem|foto|logo|visual|ilustra|diagrama|gráfico|grafico/i.test(normalized)) return "Criação visual";
+          if (/explique|explica|como funciona|o que é|o que e|diferença|diferenca/i.test(normalized)) return normalizeChatTitle("Explicação sobre " + (titleCase(meaningful.slice(0, 3).join(" ")) || "o assunto"));
+          if (/planeje|planejar|organize|organizar|roteiro|estratégia|estrategia/i.test(normalized)) return normalizeChatTitle("Planejamento de " + (titleCase(meaningful.slice(0, 3).join(" ")) || "uma ideia"));
+          const topic = titleCase(meaningful.slice(0, 4).join(" "));
+          return normalizeChatTitle(topic ? "Ideias sobre " + topic : "Nova conversa");
         };
-
         const rememberChat = (prompt, files = []) => {
           if (activeChatHistoryId) return activeChatHistoryId;
           const id = window.crypto?.randomUUID?.() || "chat-" + Date.now();
@@ -6477,8 +6481,9 @@
             const response = await fetchWithAuth("/api/chat", { method: "POST", body: JSON.stringify({ purpose: "title", messages }), signal });
             const data = await response.json().catch(() => ({}));
             if (!response.ok || typeof data.title !== "string" || !data.title.trim()) { useFallbackTitle(); return; }
-            const title = data.title.replace(/[\r\n]+/g, " ").replace(/^['"“”]+|['"“”]+$/g, "").trim().slice(0, 72);
-            if (!title || /^(nova conversa|gerando título|conversa inicial|sem título)$/i.test(title)) { useFallbackTitle(); return; }
+            const fallback = createChatTitle(String(messages?.find((message) => message?.role === "user")?.content || ""), []);
+            const title = normalizeChatTitle(data.title, fallback);
+            if (!title || title === "Nova conversa" && fallback !== "Nova conversa") { useFallbackTitle(); return; }
             const items = readChatHistory();
             const item = items.find((entry) => entry.id === chatId);
             if (!item || item.titleGenerated) return;
