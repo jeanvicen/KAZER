@@ -37,8 +37,10 @@ test("server enforces four unique, short suggestions and safe categories", () =>
 test("client validates labels and keeps a 20-item no-repeat fallback cycle", () => {
   const interval = Number(client.match(/const SUGGESTION_INTERVAL_MS = (\d+);/)?.[1]);
   assert.equal(interval, 120000);
-  const bankLiteral = client.match(/const FALLBACK_BANK = (\[[\s\S]*?\n  \];/)?.[1];
-  assert.ok(bankLiteral, "local fallback bank must exist");
+  const fallbackStart = client.indexOf("const FALLBACK_BANK = [");
+  const fallbackEnd = client.indexOf("\n  ];", fallbackStart);
+  assert.ok(fallbackStart >= 0 && fallbackEnd >= 0, "local fallback bank must exist");
+  const bankLiteral = client.slice(fallbackStart + "const FALLBACK_BANK = ".length, fallbackEnd + "\n  ]".length);
   const bank = new Function(`return ${bankLiteral}`)();
   assert.ok(bank.length >= 30);
   const categoryNames = [...client.matchAll(/^    (\w+): '<(?:rect|path|circle)/gm)].map((match) => match[1]);
