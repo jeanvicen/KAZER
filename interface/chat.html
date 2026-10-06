@@ -4871,9 +4871,9 @@
       .history-item-copy { display: grid; grid-template-columns: minmax(0, 1fr); gap: 4px; min-width: 0; }
       .history-item-copy strong { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
       .history-item-copy .history-item-time { display: block; width: fit-content; color: var(--text-dim); font-size: 12px; line-height: 1.2; }
-      .history-item-menu { min-width: 156px; padding: 6px; border-radius: 8px; }
-      .history-item-menu.is-floating { position: fixed; z-index: 200; }
-      .history-item-menu-delete { padding: 10px 11px; color: var(--text); font-size: 12px; }
+      .history-item-menu { width: max-content; min-width: 0; max-width: calc(100vw - 16px); padding: 4px; border-radius: 9px; box-sizing: border-box; }
+      .history-item-menu.is-floating { position: fixed; z-index: 200; display: block; width: max-content; height: auto; }
+      .history-item-menu-delete { display: block; width: auto; min-width: 0; max-width: none; min-height: 32px; padding: 7px 10px; color: var(--text); font-size: 12px; line-height: 1.2; white-space: nowrap; }
       .history-item-menu-delete:hover { background: rgba(255,255,255,.07); color: var(--text); }
       @media (max-width: 680px) {
         .history-item-open { min-height: 66px; padding: 9px 0; }
@@ -6309,11 +6309,14 @@
           const margin = 8;
           const toggleRect = toggle.getBoundingClientRect();
           const menuRect = menu.getBoundingClientRect();
-          const left = Math.max(margin, Math.min(toggleRect.right - menuRect.width, window.innerWidth - menuRect.width - margin));
-          const opensAbove = toggleRect.bottom + menuRect.height + margin > window.innerHeight && toggleRect.top - menuRect.height - margin >= margin;
-          const top = opensAbove ? toggleRect.top - menuRect.height - margin : toggleRect.bottom + margin;
+          const rightSide = toggleRect.right + margin;
+          const leftSide = toggleRect.left - menuRect.width - margin;
+          const left = rightSide + menuRect.width <= window.innerWidth - margin
+            ? rightSide
+            : Math.max(margin, leftSide);
+          const top = Math.max(margin, Math.min(toggleRect.top + (toggleRect.height - menuRect.height) / 2, window.innerHeight - menuRect.height - margin));
           menu.style.left = `${Math.round(left)}px`;
-          menu.style.top = `${Math.round(Math.max(margin, top))}px`;
+          menu.style.top = `${Math.round(top)}px`;
         };
         document.addEventListener("click", (event) => {
           if (!event.target.closest("[data-history-menu-toggle], .history-item-menu")) closeHistoryMenus();
@@ -6342,7 +6345,7 @@
             const latestMessage = Array.isArray(item.messages) ? [...item.messages].reverse().find((message) => message && typeof message.content === "string" && message.content.trim()) : null;
             const rawPreview = String(latestMessage?.content || item.excerpt || "Conversa com o KAZER");
             const preview = rawPreview.replace(/```[\s\S]*?```/g, "Trecho de código").replace(/!\[[^\]]*\]\([^)]*\)/g, "Imagem compartilhada").replace(/\[([^\]]+)\]\([^)]*\)/g, "$1").replace(/`([^`]+)`/g, "$1").replace(/^\s{0,3}#{1,6}\s+/gm, "").replace(/^\s{0,3}>\s?/gm, "").replace(/^\s*\|?[\s:|-]{3,}\|?\s*$/gm, "").replace(/\|/g, " ").replace(/\*\*|__|~~/g, "").replace(/\s+/g, " ").trim().slice(0, 150);
-            return heading + '<div class="history-item" data-history-row="' + escapeHtml(item.id) + '"><button class="history-item-open" type="button" data-history-id="' + escapeHtml(item.id) + '"><span class="history-item-copy"><strong>' + escapeHtml(item.title) + '</strong><time class="history-item-time" datetime="' + escapeHtml(item.createdAt) + '">' + escapeHtml(historyDateLabel(item.createdAt)) + '</time></span></button><div class="history-item-menu-wrap"><button class="history-item-menu-toggle" type="button" aria-label="Mais opções para esta história" aria-haspopup="menu" aria-expanded="false" data-history-menu-toggle="' + escapeHtml(item.id) + '">⋯</button><div class="history-item-menu" role="menu" hidden><button class="history-item-menu-delete" type="button" role="menuitem" data-history-delete="' + escapeHtml(item.id) + '">Apagar histórico</button></div></div></div>';
+            return heading + '<div class="history-item" data-history-row="' + escapeHtml(item.id) + '"><button class="history-item-open" type="button" data-history-id="' + escapeHtml(item.id) + '"><span class="history-item-copy"><strong>' + escapeHtml(item.title) + '</strong><time class="history-item-time" datetime="' + escapeHtml(item.createdAt) + '">' + escapeHtml(historyDateLabel(item.createdAt)) + '</time></span></button><div class="history-item-menu-wrap"><button class="history-item-menu-toggle" type="button" aria-label="Mais opções para esta história" aria-haspopup="menu" aria-expanded="false" data-history-menu-toggle="' + escapeHtml(item.id) + '">⋯</button><div class="history-item-menu" role="menu" hidden><button class="history-item-menu-delete" type="button" role="menuitem" data-history-delete="' + escapeHtml(item.id) + '">Apagar história</button></div></div></div>';
           }).join("");
           historyList.querySelectorAll("[data-global-notice]").forEach((button) => button.addEventListener("click", () => showGlobalNotice(false)));
           historyList.querySelectorAll("[data-history-id]").forEach((button) => button.addEventListener("click", (event) => {
