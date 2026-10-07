@@ -9,7 +9,6 @@ Esta pasta reúne a documentação técnica, operacional, jurídica e os relató
 - [Configuração do Brain](configuration.md)
 - [Testes e verificações](testing.md)
 - [Banco Supabase](../database/supabase/README.md)
-- [Login com Google pelo Supabase Auth](google-login-supabase.md)
 - [Planos, ferramentas e monetização](../planos/README.md)
 
 ## Governança e operação
