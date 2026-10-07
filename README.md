@@ -5,21 +5,29 @@
 <h1 align="center">KAZER</h1>
 
 <p align="center">
-  <strong>Seu espaço pessoal para conversar, pesquisar e organizar ideias.</strong><br>
-  Aplicação web/PWA em desenvolvimento · interface em português · código proprietário
+  <strong>Conversa. Pesquisa. Workspace. Ateliê.</strong><br>
+  Espaço pessoal em português · web/PWA · código proprietário · sem aluguel de GPU no plano livre
 </p>
 
 <p align="center">
-  <a href="https://kazer.vercel.app">Abrir o produto</a> ·
-  <a href="docs/project-guide.md">Guia do projeto</a> ·
-  <a href="SECURITY.md">Segurança</a> ·
-  <a href="docs/testing.md">Testes</a>
+  <a href="https://kazer.vercel.app"><strong>Abrir o produto</strong></a>
+  ·
+  <a href="planos/CATALOGO-FERRAMENTAS.md">Ferramentas</a>
+  ·
+  <a href="planos/ATELIE.md">Ateliê</a>
+  ·
+  <a href="planos/MONETIZACAO-ZERO.md">Caixa</a>
+  ·
+  <a href="docs/project-guide.md">Guia</a>
+  ·
+  <a href="SECURITY.md">Segurança</a>
 </p>
 
 <p align="center">
   <a href="https://github.com/jeanvicen/KAZER/actions/workflows/ci.yml"><img src="https://github.com/jeanvicen/KAZER/actions/workflows/ci.yml/badge.svg?branch=main" alt="CI"></a>
   <img src="https://img.shields.io/badge/Node.js-%E2%89%A520-339933?logo=node.js&logoColor=white" alt="Node.js 20 ou superior">
   <img src="https://img.shields.io/badge/deploy-Vercel-000000?logo=vercel&logoColor=white" alt="Vercel">
+  <img src="https://img.shields.io/badge/infra-R%24%200-8C6420" alt="Infra Hobby a R$ 0">
 </p>
 
 ---
@@ -32,7 +40,9 @@ A imagem abaixo é uma captura pública da tela de boas-vindas/login do KAZER. *
   <img src="docs/assets/readme-welcome.png" alt="Tela pública de boas-vindas e login do KAZER, sem dados de conta" width="900">
 </p>
 
-## O que existe no repositório
+## Já no ar
+
+O produto publicado em [kazer.vercel.app](https://kazer.vercel.app) é o que o usuário usa hoje. Esta tabela descreve o que o código documenta — não o que um planejamento promete.
 
 | Área | Situação documentada no código |
 |---|---|
@@ -45,6 +55,32 @@ A imagem abaixo é uma captura pública da tela de boas-vindas/login do KAZER. *
 | **Planos** | A interface pode apresentar uma chamada para Kazer Pro; **compra e cobrança não estão implementadas**. |
 
 > O estado das integrações depende das configurações externas e das migrações aplicadas. Uma rota ou interface no repositório não comprova por si só que serviços externos estão configurados ou testados em produção.
+
+## O que entra ao lado
+
+Nada disto apaga `interface/`, `api/` ou `database/`. Cada item nasce como módulo novo. Detalhe em [`planos/`](planos/README.md).
+
+| Para o usuário | Por que pagam lá fora | Como o KAZER faz sem GPU |
+|---|---|---|
+| Selo e marca em SVG | Recraft Basic ~US$ 12 | Ateliê no browser |
+| Brand kit + social | Canva Pro ~US$ 12–15 | Tokens CSS + 1:1 / 9:16 / 16:9 |
+| Voz PT · JP | ElevenLabs (crédito) | Web Speech do aparelho |
+| Proposta MEI | Freelancer R$ 80–200 | HTML imprimível + PIX |
+| PIX do Pro | Cartão gringo + IOF | Abacate Pay R$ 0,80 / parcela |
+
+Pesquisa de 7 de outubro de 2026: [`planos/PESQUISA-2026-10-07.md`](planos/PESQUISA-2026-10-07.md).
+
+## Como a casa ganha sem gastar para abrir
+
+Infra livre enquanto couber nos planos Hobby: Vercel, Supabase, Groq, Hugging Face, GitHub, Web Speech, SVG no cliente.
+
+| Assinantes | Preço | Bruto / mês | Infra |
+|---:|---:|---:|---:|
+| 40 | R$ 29 | R$ 1.160 | R$ 0 |
+| 100 | R$ 29 | R$ 2.900 | R$ 0 |
+| 40 | R$ 79 | R$ 3.160 | R$ 0 |
+
+Taxa só na venda. Cadastro do gateway é grátis. Contas em [`planos/MONETIZACAO-ZERO.md`](planos/MONETIZACAO-ZERO.md).
 
 ## Como o KAZER funciona
 
@@ -96,6 +132,7 @@ Os smoke tests de integração fazem stubs de respostas externas; eles validam c
 | `download/` | Manifesto, service worker, ícones e assets oficiais. |
 | `mobile/` | Projeto Expo/EAS que abre a experiência publicada. |
 | `docs/` | Guias técnicos, arquitetura, testes e auditorias. |
+| `planos/` | Catálogo, ateliê, caixa e pesquisa — ao lado do produto, nunca no lugar. |
 | `.github/workflows/` | Verificações automáticas do CI. |
 
 </details>
@@ -109,9 +146,10 @@ Os smoke tests de integração fazem stubs de respostas externas; eles validam c
 - [Migrações e compatibilidade Supabase](database/supabase/README.md)
 - [Testes e limitações de validação](docs/testing.md)
 - [Auditoria de segurança e riscos pendentes](SECURITY.md)
-- [Roadmap/documentação de planos](planos/README.md)
+- [Roadmap / ateliê / caixa](planos/README.md)
 
 ## Status e propriedade
 
 O KAZER continua em desenvolvimento. Funcionalidades disponíveis dependem do deploy e da configuração dos provedores; itens de planejamento não devem ser interpretados como recursos ativos. Não há checkout Kazer Pro neste estado do produto. Consulte [`LICENSE.md`](LICENSE.md) para os termos de uso do código e dos ativos.
 
+**Regra da casa:** melhorar sempre. Nunca destruir. Nunca trocar o que já funciona por moda.

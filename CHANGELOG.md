@@ -5,6 +5,8 @@ Todas as mudanças relevantes do KAZER serão registradas aqui.
 ## [Unreleased]
 
 - README reorganizado: produto no ar, o que entra depois, e o caminho de receita sem gastar para começar.
+- Pesquisa de 7/10/2026 em `planos/PESQUISA-2026-10-07.md`: Groq aposentou Llama 3.3 em 16/08/2026; Recraft V4.1 Vector; Abacate Pay assinatura sem taxa extra.
+- Catálogo, Ateliê e Caixa atualizados com WhatsApp one-pager, pack de prompts e BYOK — sempre **ao lado**, nunca no lugar.
 - Pasta `planos/` preenchida com catálogo de ferramentas, Ateliê, monetização zero e roadmap. Nenhum arquivo de `interface/`, `api/` ou `database/` foi removido ou substituído.
 - Índice de `docs/` aponta para os planos.
 - Adicionado CI no GitHub Actions para testes, regressões e auditoria de dependências.
