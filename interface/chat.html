@@ -2757,6 +2757,16 @@
       .mcp-form textarea { min-height: 72px; resize: vertical; }
       .mcp-form input:focus, .mcp-form select:focus, .mcp-form textarea:focus { border-color: var(--purple); }
       .mcp-form-actions { display: flex; justify-content: flex-end; gap: 8px; padding-top: 4px; }
+      .mcp-approval-card { width: min(620px, 100%); margin: 10px 0 12px; padding: 16px; border: 1px solid rgba(204,167,82,.4); border-radius: 16px; background: linear-gradient(145deg, rgba(204,167,82,.085), var(--card) 58%); box-shadow: 0 14px 40px rgba(0,0,0,.2); }
+      .mcp-approval-card h3 { margin: 0; color: var(--text); font-size: 14px; font-weight: 680; }
+      .mcp-approval-card p { margin: 8px 0; color: var(--text-soft); font-size: 12px; line-height: 1.5; white-space: pre-wrap; overflow-wrap: anywhere; }
+      .mcp-approval-warning { color: var(--warning) !important; font-size: 11px !important; }
+      .mcp-approval-payload { max-height: 220px; margin: 10px 0; padding: 10px; overflow: auto; border: 1px solid var(--line-soft); border-radius: 10px; background: rgba(0,0,0,.22); color: var(--text-soft); font: 11px/1.45 ui-monospace, SFMono-Regular, Menlo, monospace; white-space: pre-wrap; overflow-wrap: anywhere; }
+      .mcp-approval-actions { display: flex; justify-content: flex-end; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+      .mcp-approval-actions button { min-width: 44px; min-height: 44px; padding: 0 14px; border: 1px solid var(--line); border-radius: 10px; background: transparent; color: var(--text); font-size: 12px; font-weight: 650; cursor: pointer; }
+      .mcp-approval-actions button:focus-visible { outline: 2px solid var(--text); outline-offset: 2px; }
+      .mcp-approval-actions .mcp-approval-allow { border-color: rgba(204,167,82,.65); background: rgba(204,167,82,.16); }
+      .mcp-approval-actions .mcp-approval-deny:hover { border-color: var(--danger); color: var(--danger); }
       .mcp-primary-button { min-height: 36px; padding: 0 14px; border-radius: 9px; background: var(--text); color: var(--accent-ink); font-size: 11px; font-weight: 700; cursor: pointer; }
       .mcp-secondary-button { min-height: 36px; padding: 0 14px; border: 1px solid var(--line); border-radius: 9px; background: transparent; color: var(--text); font-size: 11px; cursor: pointer; }
       .connector-single-action { display: flex; align-items: center; gap: 12px; width: 100%; margin-top: 10px; padding: 13px 14px; border: 1px solid var(--line-soft); border-radius: 16px; background: rgba(204,167,82,.038); color: var(--text); text-align: left; font-size: 13px; font-weight: 570; cursor: pointer; transition: border-color 155ms var(--ease), background 155ms var(--ease),
@@ -8056,6 +8066,70 @@
           return row;
         };
 
+        const waitForMcpApproval = ({ approval, signal }) => new Promise((resolve) => {
+          let settled = false;
+          const row = document.createElement("article");
+          row.className = "message-row assistant";
+          row.setAttribute("aria-label", "Confirmação de ação do conector");
+          const card = document.createElement("section");
+          card.className = "mcp-approval-card";
+          card.setAttribute("role", "group");
+          card.setAttribute("aria-label", "Ação MCP aguardando confirmação");
+          const title = document.createElement("h3");
+          title.textContent = "O conector quer executar uma ação";
+          const target = document.createElement("p");
+          target.textContent = `${String(approval.connectorName || "Conector MCP").slice(0, 120)} · ${String(approval.toolName || "ferramenta").slice(0, 120)}`;
+          const description = document.createElement("p");
+          description.textContent = String(approval.description || "Confira os dados antes de permitir.").slice(0, 1000);
+          const warning = document.createElement("p");
+          warning.className = "mcp-approval-warning";
+          warning.textContent = "Nada será executado sem sua autorização. Permitir libera apenas esta chamada.";
+          const payloadLabel = document.createElement("p");
+          payloadLabel.textContent = "Dados que serão enviados:";
+          const payload = document.createElement("pre");
+          payload.className = "mcp-approval-payload";
+          try { payload.textContent = JSON.stringify(approval.arguments ?? {}, null, 2).slice(0, 14_000); }
+          catch { payload.textContent = "Não foi possível exibir os argumentos."; }
+          const actions = document.createElement("div");
+          actions.className = "mcp-approval-actions";
+          const deny = document.createElement("button");
+          deny.type = "button";
+          deny.className = "mcp-approval-deny";
+          deny.textContent = "Recusar";
+          deny.setAttribute("aria-label", "Recusar esta ação MCP");
+          const allow = document.createElement("button");
+          allow.type = "button";
+          allow.className = "mcp-approval-allow";
+          allow.textContent = "Permitir uma vez";
+          allow.setAttribute("aria-label", "Permitir uma vez esta ação MCP");
+          actions.append(deny, allow);
+          card.append(title, target, description, warning, payloadLabel, payload, actions);
+          row.appendChild(card);
+          const expiresAt = Date.parse(approval.expiresAt || "");
+          const expiryTimer = Number.isFinite(expiresAt) ? window.setTimeout(() => settle(null), Math.max(0, expiresAt - Date.now())) : null;
+          const cleanup = () => {
+            if (expiryTimer !== null) window.clearTimeout(expiryTimer);
+            signal?.removeEventListener("abort", onAbort);
+            deny.removeEventListener("click", onDeny);
+            allow.removeEventListener("click", onAllow);
+          };
+          const settle = (value) => {
+            if (settled) return;
+            settled = true;
+            cleanup();
+            row.remove();
+            resolve(value);
+          };
+          const onAbort = () => settle(null);
+          const onDeny = () => settle("deny");
+          const onAllow = () => settle("approve");
+          deny.addEventListener("click", onDeny);
+          allow.addEventListener("click", onAllow);
+          signal?.addEventListener("abort", onAbort, { once: true });
+          append(row);
+          if (signal?.aborted) settle(null);
+        });
+
         const append = (node) => {
           messageList.appendChild(node);
           scrollBottom();
@@ -8195,24 +8269,58 @@
               return;
             }
             setMessageAttachmentStatus(userRow, "uploading");
-            const result = useWebResearch
-              ? await fetchWithAuth("/api/research", {
+            let result;
+            let data;
+            if (useWebResearch) {
+              result = await fetchWithAuth("/api/research", {
+                method: "POST",
+                body: JSON.stringify({ query: webResearchRequest.query, question: webResearchRequest.question, billingQuery: prompt, mode: "web" }),
+                signal: controller.signal,
+              });
+              data = await result.json().catch(() => ({}));
+              if (!result.ok) {
+                if (result.status === 402) { await loadUsage(false); showCreditLimit(); }
+                throw new Error(data.error || "Não foi possível consultar a pesquisa na web.");
+              }
+            } else {
+              const chatBody = { messages: conversationMessages, attachments, mcpConnectorIds, githubRepo };
+              result = await fetchWithAuth("/api/chat", { method: "POST", body: JSON.stringify(chatBody), signal: controller.signal });
+              data = await result.json().catch(() => ({}));
+              if (!result.ok) {
+                if (result.status === 402) { await loadUsage(false); showCreditLimit(); }
+                if (result.status === 409 && !data.mcpApproval) { await loadUsage(false); showAttachmentLimit(); }
+                throw new Error(data.error || "Não foi possível obter uma resposta.");
+              }
+              if (files.length) {
+                setMessageAttachmentStatus(userRow, "sent");
+                clearAlreadySentAttachments();
+              }
+              if (data.usage) {
+                applyUsageState(data.usage, true);
+                data.usage = null;
+              }
+              const initialCreditCost = data.credit_cost;
+              while (data.mcpApprovalRequired) {
+                const approval = data.mcpApproval;
+                const decision = await waitForMcpApproval({ approval, signal: controller.signal });
+                if (!decision) {
+                  if (controller.signal.aborted) throw new DOMException("A solicitação foi interrompida.", "AbortError");
+                  throw new Error("A confirmação expirou. Envie o pedido novamente para solicitar outra.");
+                }
+                result = await fetchWithAuth("/api/chat", {
                   method: "POST",
-                  body: JSON.stringify({ query: webResearchRequest.query, question: webResearchRequest.question, billingQuery: prompt, mode: "web" }),
-                  signal: controller.signal,
-                })
-              : await fetchWithAuth("/api/chat", {
-                  method: "POST",
-                  body: JSON.stringify({ messages: conversationMessages, attachments, mcpConnectorIds, githubRepo }),
+                  body: JSON.stringify({ ...chatBody, mcpApprovalId: approval.id, mcpApprovalDecision: decision }),
                   signal: controller.signal,
                 });
-            const data = await result.json().catch(() => ({}));
-            if (!result.ok) {
-              if (result.status === 402) { await loadUsage(false); showCreditLimit(); }
-              if (result.status === 409) { await loadUsage(false); showAttachmentLimit(); }
-              throw new Error(data.error || (useWebResearch ? "Não foi possível consultar a pesquisa na web." : "Não foi possível obter uma resposta."));
+                data = await result.json().catch(() => ({}));
+                if (!result.ok) {
+                  if (result.status === 402) { await loadUsage(false); showCreditLimit(); }
+                  throw new Error(data.error || "Não foi possível concluir a confirmação da ação.");
+                }
+              }
+              data.credit_cost = initialCreditCost;
             }
-            if (files.length) {
+            if (files.length && useWebResearch) {
               setMessageAttachmentStatus(userRow, "sent");
               clearAlreadySentAttachments();
             }

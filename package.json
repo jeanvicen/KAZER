@@ -19,9 +19,14 @@
     "node": ">=20"
   },
   "dependencies": {
-    "mammoth": "^1.8.0",
+    "mammoth": "^1.13.0",
     "pdf-parse": "^1.1.1",
     "playwright-core": "^1.55.0"
+  },
+  "overrides": {
+    "mammoth": {
+      "argparse": "3.0.2"
+    }
   },
   "license": "UNLICENSED"
 }
