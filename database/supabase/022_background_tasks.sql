@@ -221,7 +221,6 @@ begin
       select id from public.kazer_background_tasks
       where status in ('completed','failed','waiting_confirmation')
         and notification_sent_at is null
-        and notification_attempted_at is null
         and created_at < now() - interval '10 seconds'
         and (last_client_seen_at is null or last_client_seen_at < now() - interval '25 seconds')
         and (notification_lease_until is null or notification_lease_until < now())

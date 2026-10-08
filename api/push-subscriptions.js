@@ -21,7 +21,7 @@ module.exports = async function handler(request, response) {
 
   try {
     const existing = await supabaseRequest("kazer_push_subscriptions", {
-      query: { select: "id", endpoint: `eq.${token}`, limit: 1 },
+      query: { select: "id", endpoint: `eq.${token}`, user_id: `eq.${user.id}`, limit: 1 },
     });
     const row = Array.isArray(existing) ? existing[0] : null;
     if (request.method === "DELETE") {
@@ -30,7 +30,7 @@ module.exports = async function handler(request, response) {
     }
     const payload = { user_id: user.id, endpoint: token, platform, updated_at: new Date().toISOString() };
     if (row) {
-      await supabaseRequest("kazer_push_subscriptions", { method: "PATCH", query: { id: `eq.${row.id}` }, body: payload });
+      await supabaseRequest("kazer_push_subscriptions", { method: "PATCH", query: { id: `eq.${row.id}`, user_id: `eq.${user.id}` }, body: payload });
     } else {
       await supabaseRequest("kazer_push_subscriptions", { method: "POST", body: payload });
     }

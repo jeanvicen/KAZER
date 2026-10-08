@@ -19,10 +19,10 @@ Use host externo que suporte um container continuamente ativo e política de rei
 
 ## Recuperação e idempotência
 
-- A chave de idempotência é única por usuário e é reutilizada quando o cliente reenvia um enqueue após falha de rede.
+- A chave de idempotência é única por usuário e o cliente salva a chave e os IDs locais antes do enqueue. Ao retomar, sincroniza tarefas aceitas mesmo se a resposta do enqueue foi perdida; a fila do servidor permanece como fonte da verdade. Uma requisição que nunca chegou ao servidor não pode ser reconstruída com anexos após recarregar a página.
 - Retries automáticos do worker são limitados a falhas transitórias enquanto o processo ainda sabe que a requisição falhou. Uma tarefa cujo lease expirou é marcada como falha e **não é reexecutada automaticamente**: o provedor pode ter concluído a chamada antes da interrupção. Um retry manual pode gerar uma nova chamada/model cost.
 - Tarefas em execução não podem ser canceladas pela API porque encerrar o worker não prova que o provedor interrompeu uma chamada. Cancelamento só é aceito antes da execução; para atividade já iniciada, aguarde sincronização.
-- A entrega Expo Push é deliberadamente at-most-once: a tentativa é registrada antes do envio para evitar reenvio duplicado em caso de timeout ambíguo. Uma interrupção pode, portanto, perder uma notificação; a fila e a consulta autenticada continuam sendo a fonte da verdade.
+- Expo Push é um canal auxiliar, não uma garantia de entrega. Falhas com lease expirado voltam a ser tentadas; um timeout ambíguo pode gerar duplicidade. Um ticket Expo aceito não comprova entrega no dispositivo; a fila e a consulta autenticada continuam sendo a fonte da verdade.
 
 ## Configuração local/host
 
@@ -36,7 +36,9 @@ O worker usa dependências já declaradas no `package.json` principal e não ins
 
 ## Estado da integração de interface
 
-A interface existente ainda usa `POST /api/chat` e `POST /api/research` de forma síncrona. Os endpoints de fila e o worker não alteram a tela automaticamente: falta integrar submit idempotente, persistência da chave/IDs de conversa/mensagem no histórico local, polling/sincronização após retomada, deep links de `taskId` e ações de tarefa na UI. Não declarar execução global, retomada ou notificação como pronta antes de implementar e testar esse fluxo.
+A branch de implementação integra enfileiramento idempotente para chat comum, pesquisa acionada pelo compositor e análise/processamento de arquivos; a exceção MCP continua usando o fluxo síncrono já existente. Os IDs de tarefa/mensagem/conversa e a chave de idempotência são gravados no histórico local antes do enqueue; ao iniciar, focar, retomar a aba ou abrir `?taskId=…`, o cliente sincroniza, retoma polling, reconcilia resultados e evita duplicar respostas por tarefa. A sincronização usa o endpoint autenticado e mantém o Supabase como fonte da verdade. Isso ainda não é uma capacidade operacional global: a migration não foi aplicada, o worker não tem host configurado e não há validação E2E em Supabase isolado.
+
+A ponte nativa de token Expo e a PWA Web Push **não estão integradas nesta branch**. O app Expo atual não registra token nem processa toques em notificações. Push só pode ser habilitado após integração de `expo-notifications`, consentimento, EAS project ID e credenciais FCM/APNs; PWA requer um fluxo separado com service worker e VAPID. Até lá, a interface recupera resultados quando aberta/retomada e deep links podem ser consumidos se outro canal abrir a URL com `taskId`.
 
 ## Revisão/aplicação da migração
 
