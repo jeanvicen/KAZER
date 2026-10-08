@@ -4950,6 +4950,7 @@
     </style>
     <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300..800&family=Geist+Mono:wght@400;500;600&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="/interface/kazer-premium.css?v=20261005b" />
+    <link rel="stylesheet" href="/interface/computer-kazer.css?v=20261008a" />
     <script>
       window.setTimeout(() => {
         const fallbackApp = document.getElementById("app");
@@ -4997,9 +4998,9 @@
           <label class="history-search-field" id="historySearchField"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-4-4"></path></svg><input id="historySearchInput" type="search" aria-label="Buscar nas conversas" placeholder="Buscar" autocomplete="off" /></label>
         </header>
         <div class="history-future-slot">
-          <button class="history-shortcut history-shortcut-computer" id="historyComputerAction" type="button" aria-label="Computer KAZER">
+          <button class="history-shortcut history-shortcut-computer" id="historyComputerAction" type="button" aria-label="Modo Computer Kazer">
             <span class="history-shortcut-mark" aria-hidden="true"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="3" width="17" height="13.5" rx="2.4"></rect><circle cx="9.1" cy="9.1" r=".65" fill="currentColor" stroke="none"></circle><circle cx="14.9" cy="9.1" r=".65" fill="currentColor" stroke="none"></circle><path d="M9.2 19.5h5.6M12 16.7v2.8M7 13.2h10"></path></svg></span>
-            <span class="history-shortcut-copy"><strong>Computer KAZER</strong></span>
+            <span class="history-shortcut-copy"><strong>Modo Computer</strong></span>
           </button>
           <button class="history-shortcut history-shortcut-connectors" id="historyConnectorsAction" type="button" aria-label="Conectores">
             <span class="history-shortcut-mark" aria-hidden="true"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 4v4M16 4v4M6 8h12v3a6 6 0 0 1-6 6v3"></path></svg></span>
@@ -5323,6 +5324,52 @@
       <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
     </main>
+
+    <section class="computer-screen" id="computerKazerScreen" hidden role="dialog" aria-modal="true" aria-labelledby="computerWelcomeTitle">
+      <div class="computer-view">
+        <div class="computer-system-status" aria-hidden="true"><span id="computerClock">13:11</span><span class="computer-system-icons"><svg viewBox="0 0 20 20" fill="none"><path d="M2 7.6a12 12 0 0 1 16 0M5 10.7a7.5 7.5 0 0 1 10 0M8 13.8a3.2 3.2 0 0 1 4 0" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><circle cx="10" cy="16.2" r=".8" fill="currentColor"/></svg><span class="computer-battery"></span></span></div>
+        <section class="computer-welcome" id="computerWelcomeView">
+          <header class="computer-topbar"><button class="computer-intro-back" id="computerWelcomeBack" type="button" aria-label="Voltar ao Kazer"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 5-7 7 7 7"/></svg></button><span aria-hidden="true"></span></header>
+          <div class="computer-screen-scroll computer-intro-scroll">
+            <div class="computer-hero">
+              <span class="computer-hero-mark" aria-hidden="true"><svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5" width="23" height="17" rx="3.2"/><path d="M10 27h10M15 22v5M11 11h8M11 15h5"/><path d="m23 19 5.5 6-2.9.2-.9 2.6L21 21.5" fill="#c9a64b" stroke="#c9a64b"/></svg></span>
+              <span class="computer-brand-label">KAZER</span>
+              <h1 id="computerWelcomeTitle">Computer Kazer</h1>
+              <p>Um agente para executar tarefas com você no controle.</p>
+            </div>
+            <section class="computer-how-card" aria-labelledby="computerHowTitle">
+              <span class="computer-section-label" id="computerHowTitle">COMO FUNCIONA</span>
+              <div class="computer-steps">
+                <article class="computer-step"><span class="computer-step-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="10.8" cy="11.5" r="7.2"/><circle cx="10.8" cy="11.5" r="3.1"/><path d="m16 16 4.3 4.3"/></svg></span><div><h2>Você define o objetivo</h2><p>Descreva o que precisa fazer em uma única mensagem.</p></div></article>
+                <article class="computer-step"><span class="computer-step-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="3.5" width="17" height="13" rx="2.3"/><path d="M8.5 20.5h7M12 16.5v4M9 8h6M9 11.5h3"/><path d="m17 12 4 4.5-2.2.1-.8 2-2.4-4.7" fill="#c9a64b" stroke="#c9a64b"/></svg></span><div><h2>Kazer executa a tarefa</h2><p>Acompanhe pesquisas, organização de dados e navegação em tempo real.</p></div></article>
+                <article class="computer-step"><span class="computer-step-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 19 6v5.2c0 4.7-3 7.8-7 9.8-4-2-7-5.1-7-9.8V6l7-3Z"/><path d="m8.8 12.1 2.1 2.1 4.4-4.5"/></svg></span><div><h2>Você mantém o controle</h2><p>Confirmações são solicitadas apenas antes de ações importantes.</p></div></article>
+              </div>
+            </section>
+            <p class="computer-quota"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M12 7v5l3.2 2"/></svg><span>Plano gratuito: 1 sessão a cada 7 dias</span></p>
+            <p class="computer-disclosure">O Kazer mostra o que está fazendo e pede confirmação antes de ações que enviam, compram, publicam ou excluem algo.</p>
+          </div>
+          <footer class="computer-intro-footer"><button class="computer-primary-button" id="computerStartButton" type="button">Iniciar Computer Kazer<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h13M12 5l7 7-7 7"/></svg></button><button class="computer-secondary-button" id="computerNotNow" type="button">Agora não</button></footer>
+        </section>
+        <section class="computer-operational" id="computerOperationalView" hidden>
+          <header class="computer-topbar"><button class="computer-icon-button" id="computerOperationalBack" type="button" aria-label="Voltar ao Kazer"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 5-7 7 7 7"/></svg></button><div class="computer-topbar-title"><strong id="computerOperationalTitle">Computer Kazer</strong><span class="computer-live-state"><i class="computer-live-dot" aria-hidden="true"></i><span id="computerHeaderState">Executando tarefa</span></span></div><button class="computer-icon-button" id="computerMenuButton" type="button" aria-label="Mais opções" aria-expanded="false" aria-controls="computerMenu"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/></svg></button></header>
+          <div class="computer-menu" id="computerMenu" hidden><button id="computerShowConfirmation" type="button">Ver exemplo de confirmação</button><button id="computerCloseMenu" type="button">Voltar ao chat</button></div>
+          <div class="computer-screen-scroll">
+            <p class="computer-run-notice"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></svg><span>Prévia visual: o executor do Computer Kazer ainda não está conectado. Nenhuma tarefa ou ação externa será executada.</span></p>
+            <section class="computer-task-card" aria-labelledby="computerTaskLabel"><span class="computer-section-label" id="computerTaskLabel">TAREFA ATUAL · EXEMPLO</span><p class="computer-task-copy" id="computerTaskCopy">Pesquise notebooks para programação até R$ 4.000.</p></section>
+            <section class="computer-status-card" aria-label="Status da tarefa"><span class="computer-status-pulse" aria-hidden="true"></span><div class="computer-status-copy"><strong id="computerStatusText">Comparando configurações e preços...</strong><small id="computerStatusStep">Etapa 3 de 4 · demonstração</small></div><button class="computer-pause-round" id="computerPauseRound" type="button" aria-label="Pausar demonstração" title="Pausar demonstração"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="7" y="6" width="3.6" height="12" rx="1"/><rect x="13.4" y="6" width="3.6" height="12" rx="1"/></svg></button></section>
+            <div class="computer-status-actions"><span class="computer-section-label">STATUS</span><button id="computerDetailsButton" type="button" aria-expanded="false" aria-controls="computerDetails">Detalhes</button></div>
+            <div class="computer-details" id="computerDetails" hidden><strong>Como esta tela funciona:</strong> esta é uma composição de demonstração. Nenhuma busca, navegação ou operação está ocorrendo no momento.</div>
+            <section class="computer-activity-card" aria-labelledby="computerActivityLabel"><div class="computer-activity-head"><span class="computer-section-label" id="computerActivityLabel">ATIVIDADE</span></div><div class="computer-activity-window" role="img" aria-label="Prévia abstrata de uma página de pesquisa, sem site real"><div class="computer-window-top"><span class="computer-window-dots" aria-hidden="true"><i></i><i></i><i></i></span><span class="computer-window-label">PESQUISA · PRÉVIA</span></div><div class="computer-search-ghost"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.8"/><path d="m16 16 4 4"/></svg><span>notebooks para programação até R$ 4.000</span></div><div class="computer-result-row"><span class="computer-result-mark"></span><span class="computer-result-lines" aria-hidden="true"><i></i><i></i></span><span class="computer-result-price"></span></div><div class="computer-result-row"><span class="computer-result-mark"></span><span class="computer-result-lines" aria-hidden="true"><i></i><i></i></span><span class="computer-result-price"></span></div><span class="computer-analysis-tag">Kazer está analisando resultados</span></div></section>
+            <section class="computer-progress" aria-labelledby="computerProgressLabel"><span class="computer-section-label" id="computerProgressLabel">ETAPAS</span><div class="computer-progress-list"><div class="computer-progress-item is-done"><span class="computer-progress-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 4 4L19 6"/></svg></span><span>Objetivo entendido</span></div><div class="computer-progress-item is-done"><span class="computer-progress-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 4 4L19 6"/></svg></span><span>Critérios definidos</span></div><div class="computer-progress-item is-active"><span class="computer-progress-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3" fill="currentColor" stroke="none"/></svg></span><span>Comparando opções</span></div><div class="computer-progress-item"><span class="computer-progress-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="8"/></svg></span><span>Preparando resultado</span></div></div></section>
+          </div>
+          <footer class="computer-bottom"><form class="computer-instruction-form" id="computerInstructionForm"><button class="computer-round-control" type="button" disabled aria-label="Anexar (indisponível nesta prévia)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button><input id="computerInstructionInput" type="text" placeholder="Adicione uma instrução à tarefa..." aria-label="Instrução adicional para a tarefa" autocomplete="off"/><button class="computer-round-control" type="button" disabled aria-label="Ditado por voz (indisponível nesta prévia)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="3" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></button></form><button class="computer-pause-wide" id="computerPauseWide" type="button"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="7" y="6" width="3.6" height="12" rx="1"/><rect x="13.4" y="6" width="3.6" height="12" rx="1"/></svg><span>Pausar demonstração</span></button></footer>
+        </section>
+      </div>
+      <div class="computer-confirmation" id="computerConfirmation" hidden>
+        <section class="computer-confirmation-sheet" role="dialog" aria-modal="true" aria-labelledby="computerConfirmTitle" aria-describedby="computerConfirmCopy"><div class="computer-sheet-handle" aria-hidden="true"></div><span class="computer-confirm-shield" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 19 6v5.2c0 4.7-3 7.8-7 9.8-4-2-7-5.1-7-9.8V6l7-3Z"/><path d="m8.8 12.1 2.1 2.1 4.4-4.5"/></svg></span><span class="computer-section-label">CONFIRMAÇÃO NECESSÁRIA</span><h2 id="computerConfirmTitle">Pronto para enviar</h2><p id="computerConfirmCopy">O Kazer preencheu o formulário. Ao confirmar, os dados serão enviados para este site.</p><div class="computer-review-card"><div class="computer-review-row"><span>Destino</span><strong>exemplo.com</strong></div><div class="computer-review-row"><span>Ação</span><strong>Enviar formulário</strong></div><div class="computer-review-row"><span>Dados</span><strong>Nome, e-mail e telefone</strong></div></div><p class="computer-review-note">Revise os dados antes de continuar.</p><small class="computer-demo-caption">Exemplo visual de confirmação. Nenhum formulário será enviado.</small><div class="computer-confirm-actions"><button class="computer-review-button" id="computerReviewButton" type="button">Revisar</button><button class="computer-confirm-button" id="computerConfirmButton" type="button">Confirmar envio</button></div></section>
+      </div>
+      <div class="computer-toast" id="computerToast" role="status" aria-live="polite" hidden></div>
+    </section>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="/interface/web-search-intent.js"></script>
@@ -8343,7 +8390,7 @@
           const actionText = historySearchAction?.querySelector(".history-mobile-action-label");
           if (actionText) actionText.textContent = label;
         };
-        document.getElementById("historyComputerAction")?.addEventListener("click", () => showToast("Em desenvolvimento"));
+        document.getElementById("historyComputerAction")?.addEventListener("click", () => document.dispatchEvent(new CustomEvent("kazer:computer-open", { detail: { userId: currentUser?.id || "guest" } })));
         historySearchInput?.addEventListener("input", renderChatHistory);
         historySearchAction?.addEventListener("click", () => {
           const isOpen = !historyScreen?.classList.contains("is-search-open");
@@ -8867,6 +8914,7 @@
     <script src="/interface/connector-icons.js"></script>
     <script src="/interface/kazer-workspace.js"></script>
     <script src="/interface/kazer-premium.js?v=20261006-home-suggestions" defer></script>
+    <script src="/interface/computer-kazer.js?v=20261008a" defer></script>
   </body>
 </html>
 
