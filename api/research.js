@@ -2,6 +2,7 @@ const { applyRateLimit, authenticateUser, hasSafeFetchMetadata, isSameOrigin, ra
 const { callUsageRpc, calculateWebSearchCreditCost } = require("./_usage");
 const { runResearch } = require("./_research-orchestrator");
 const { callKazerBrain } = require("./_kazer-brain");
+const { getBackgroundTaskContext } = require("./_background-context");
 
 const MAX_REQUEST_BYTES = 24 * 1024;
 const MAX_QUESTION_CHARS = 600;
@@ -14,14 +15,20 @@ function parseBody(request) {
 
 module.exports = async function handler(request, response) {
   if (request.method !== "POST") { response.setHeader("Allow", "POST"); return sendJson(response, 405, { error: "Método não permitido." }); }
-  if (!isSameOrigin(request) || !hasSafeFetchMetadata(request)) return sendJson(response, 403, { error: "Origem não autorizada." });
+  const backgroundContext = getBackgroundTaskContext(request);
+  if (!backgroundContext && (!isSameOrigin(request) || !hasSafeFetchMetadata(request))) return sendJson(response, 403, { error: "Origem não autorizada." });
   if (requestExceedsLimit(request, MAX_REQUEST_BYTES)) return sendJson(response, 413, { error: "A pesquisa excede o limite permitido." });
-  const ipLimit = rateLimit(request, "research-ip", { limit: 6, windowMs: 60_000 }); applyRateLimit(response, ipLimit);
-  if (!ipLimit.allowed) return sendJson(response, 429, { error: "Muitas pesquisas. Aguarde um momento." });
-  const user = await authenticateUser(request);
-  if (!user) return sendJson(response, 401, { error: "Sessão inválida ou expirada." });
-  const userLimit = rateLimit(request, "research-user", { limit: 4, windowMs: 60_000, identity: user.id }); applyRateLimit(response, userLimit);
-  if (!userLimit.allowed) return sendJson(response, 429, { error: "Limite de pesquisas atingido. Aguarde um minuto." });
+  let user;
+  if (backgroundContext) {
+    user = { id: backgroundContext.userId };
+  } else {
+    const ipLimit = rateLimit(request, "research-ip", { limit: 6, windowMs: 60_000 }); applyRateLimit(response, ipLimit);
+    if (!ipLimit.allowed) return sendJson(response, 429, { error: "Muitas pesquisas. Aguarde um momento." });
+    user = await authenticateUser(request);
+    if (!user) return sendJson(response, 401, { error: "Sessão inválida ou expirada." });
+    const userLimit = rateLimit(request, "research-user", { limit: 4, windowMs: 60_000, identity: user.id }); applyRateLimit(response, userLimit);
+    if (!userLimit.allowed) return sendJson(response, 429, { error: "Limite de pesquisas atingido. Aguarde um minuto." });
+  }
   const body = parseBody(request);
   if (!body || Array.isArray(body)) return sendJson(response, 400, { error: "JSON inválido." });
   if (Buffer.byteLength(JSON.stringify(body), "utf8") > MAX_REQUEST_BYTES) return sendJson(response, 413, { error: "A pesquisa excede o limite permitido." });
@@ -32,11 +39,13 @@ module.exports = async function handler(request, response) {
   let result;
   try { result = await runResearch({ question, deep }); } catch (error) { console.error("Research orchestrator failed", error?.message || "unknown"); return sendJson(response, 502, { error: "Não foi possível concluir a pesquisa agora." }); }
   const creditCost = calculateWebSearchCreditCost(question, deep ? "deep" : "web", result.sources.length);
-  let usage;
-  try { usage = await callUsageRpc(request, "consume_kazer_usage", { p_message_count: 1, p_attachment_count: 0 }); }
-  catch (initialError) {
-    try { usage = await callUsageRpc(request, "consume_chat_usage", { p_credit_amount: creditCost, p_attachment_count: 0 }); }
-    catch (error) { if (error.code === "usage_limit_reached") return sendJson(response, 402, { error: "Seu uso mensal chegou a 100%.", usage: { usage_limit_reached: true, credits_limit_reached: true } }); return sendJson(response, 503, { error: "Não foi possível validar os limites da conta agora." }); }
+  let usage = backgroundContext?.usage || null;
+  if (!backgroundContext) {
+    try { usage = await callUsageRpc(request, "consume_kazer_usage", { p_message_count: 1, p_attachment_count: 0 }); }
+    catch (initialError) {
+      try { usage = await callUsageRpc(request, "consume_chat_usage", { p_credit_amount: creditCost, p_attachment_count: 0 }); }
+      catch (error) { if (error.code === "usage_limit_reached") return sendJson(response, 402, { error: "Seu uso mensal chegou a 100%.", usage: { usage_limit_reached: true, credits_limit_reached: true } }); return sendJson(response, 503, { error: "Não foi possível validar os limites da conta agora." }); }
+    }
   }
   const safeEvidence = result.evidence.map((item) => ({ ...item, relevantText: redactSensitiveText(item.relevantText), relevantPassage: redactSensitiveText(item.relevantPassage) }));
   let summary = safeEvidence.length ? "A pesquisa foi concluída com evidências de fontes consultadas." : "Não encontrei evidências públicas suficientes para verificar essa informação.";

@@ -16,6 +16,7 @@ Esta pasta contém migrações incrementais. O Supabase Auth continua sendo a fo
 | `019_remove_memory_system.sql` | Remove componentes e dados do sistema de memória anterior. É corretiva/destrutiva em bases que receberam esse sistema. |
 | `020_monthly_usage_percentage.sql` | RPC/estrutura de uso mensal atual do código. |
 | `021_security_function_search_path.sql` | Endurece `search_path` de funções SQL. |
+| `022_background_tasks.sql` | **Proposta ainda não aplicada:** fila idempotente, eventos, subscriptions Expo, RLS restrita, claims/leases e purge de retenção. Exige revisão/aprovação separada antes de qualquer aplicação. |
 
 Consulte o SQL de cada migração e o histórico efetivamente aplicado antes de qualquer operação. Numerações ausentes refletem a sequência versionada atual e não são um convite para recriar objetos históricos por conta própria.
 
@@ -29,7 +30,7 @@ O procedimento seguro é primeiro identificar, em um ambiente isolado, o histór
 
 As políticas SQL revisadas indicam escopo por usuário/participante em grande parte das tabelas, mas isso **não é prova de isolamento efetivo em produção**. Não há teste automatizado de duas contas cross-tenant. Permanecem pontos a confirmar, incluindo ausência de `FORCE ROW LEVEL SECURITY` em tabelas de mensagens diretas, concessões de leitura anteriores em `profiles` e filtros explícitos por usuário em handlers que usam service role.
 
-Antes de aprovar o estado de produção, revisar grants, policies, ownership e privilégios de funções; testar com duas contas distintas e IDs cruzados em ambiente de teste isolado; e conferir a configuração real do projeto. Nenhuma consulta/migração foi aplicada como parte desta documentação.
+Antes de aprovar o estado de produção, revisar grants, policies, ownership e privilégios de funções; testar com duas contas distintas e IDs cruzados em ambiente de teste isolado; e conferir a configuração real do projeto. Nenhuma consulta/migração foi aplicada como parte desta documentação. A proposta `022_background_tasks.sql` continua apenas versionada para revisão; não aplique no Supabase de produção sem aprovação específica após apresentação do SQL final.
 
 ## Retenção e operações
 
