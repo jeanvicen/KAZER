@@ -26,7 +26,10 @@ function validMcpIds(value) {
 }
 
 function safeError(response, error) {
-  console.error("Tasks endpoint error", error?.message || "unknown");
+  console.error("Tasks endpoint error", {
+    status: Number.isInteger(error?.status) && error.status >= 0 && error.status <= 599 ? error.status : 0,
+    code: typeof error?.code === "string" && /^[a-z0-9_-]{1,80}$/i.test(error.code) ? error.code : undefined,
+  });
   return sendJson(response, error?.status === 503 ? 503 : 500, {
     error: error?.status === 503 ? "A integração com o Supabase não está configurada no servidor." : "Não foi possível acessar as tarefas.",
   });

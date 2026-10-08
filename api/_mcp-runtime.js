@@ -1,5 +1,7 @@
+const crypto = require("node:crypto");
 const { connectorSecretPayload, supabaseRequest } = require("./_kazer-data");
 const { readTextWithLimit } = require("./_security");
+const { canonicalJson, sanitizeMcpInputSchema, validateMcpArguments } = require("./_mcp-schema");
 
 const { parsePublicUrl, requestPublicUrl } = require("./_ssrf");
 const MCP_PROTOCOL_VERSION = "2025-06-18";
@@ -8,6 +10,12 @@ const MAX_TOOLS_PER_SERVER = 24;
 const MAX_TOTAL_TOOLS = 48;
 const MAX_TOOL_RESULT_CHARS = 12000;
 const MAX_RPC_RESPONSE_BYTES = 1_000_000;
+
+function safeErrorFields(error) {
+  const status = Number.isInteger(error?.status) && error.status >= 0 && error.status <= 599 ? error.status : 0;
+  const code = typeof error?.code === "string" && /^[a-z0-9_-]{1,80}$/i.test(error.code) ? error.code : undefined;
+  return { status, ...(code ? { code } : {}) };
+}
 
 function safeText(value, maximum = 1200) {
   return String(value || "").replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g, " ").trim().slice(0, maximum);
@@ -44,10 +52,20 @@ function buildHeaders(secret) {
 }
 
 function validateToolSchema(schema) {
-  if (!schema || typeof schema !== "object" || Array.isArray(schema)) return { type: "object", properties: {} };
-  const copy = JSON.parse(JSON.stringify(schema));
-  if (copy.type !== "object") return { type: "object", properties: {} };
-  return copy;
+  return sanitizeMcpInputSchema(schema);
+}
+
+function fingerprint(value) {
+  return crypto.createHash("sha256").update(typeof value === "string" ? value : canonicalJson(value), "utf8").digest("hex");
+}
+
+function mcpRuntimeFingerprint(servers) {
+  const stable = (Array.isArray(servers) ? servers : []).map((server) => ({
+    id: server.id,
+    config: server.configFingerprint,
+    tools: (server.tools || []).map((tool) => ({ name: tool.name, schema: fingerprint(tool.inputSchema), description: tool.description })),
+  })).sort((left, right) => String(left.id).localeCompare(String(right.id)));
+  return fingerprint(stable);
 }
 
 function isAllowedRemoteUrl(value) {
@@ -83,7 +101,14 @@ async function mcpRequest(server, method, params, id) {
 async function initializeServer(row) {
   if (row.type !== "remote" || !row.base_url) return null;
   const secret = connectorSecretPayload(row);
-  const server = { id: row.id, name: row.name, url: row.base_url, headers: buildHeaders(secret), sessionId: null };
+  const server = {
+    id: row.id,
+    name: row.name,
+    url: row.base_url,
+    headers: buildHeaders(secret),
+    sessionId: null,
+    configFingerprint: fingerprint({ id: row.id, name: row.name, base_url: row.base_url, secret_payload: row.secret_payload || "" }),
+  };
   await mcpRequest(server, "initialize", {
     protocolVersion: MCP_PROTOCOL_VERSION,
     capabilities: {},
@@ -98,7 +123,7 @@ async function initializeServer(row) {
       name: safeText(tool.name, 120),
       description: safeText(tool.description || `Ferramenta do MCP ${row.name}`, 1000),
       inputSchema: validateToolSchema(tool.inputSchema),
-    })).filter((tool) => tool.name),
+    })).filter((tool) => tool.name && tool.inputSchema).sort((left, right) => left.name.localeCompare(right.name)), 
   };
 }
 
@@ -111,7 +136,7 @@ async function getConnectedMcpCount(userId, requestedIds = []) {
     const connected = Array.isArray(rows) ? rows : [];
     return requested.size ? connected.filter((row) => requested.has(String(row.id))).length : connected.length;
   } catch (error) {
-    console.warn("MCP count unavailable", error?.message || "unknown");
+    console.warn("MCP count unavailable", safeErrorFields(error));
     return 0;
   }
 }
@@ -129,12 +154,12 @@ async function loadMcpRuntime(userId, requestedIds = []) {
         const server = await initializeServer(row);
         if (server?.tools?.length) servers.push(server);
       } catch (error) {
-        console.warn("MCP discovery skipped", { connectorId: row.id, error: error?.message || "unavailable" });
+        console.warn("MCP discovery skipped", { connectorId: row.id, ...safeErrorFields(error) });
       }
     }
     return servers;
   } catch (error) {
-    console.warn("MCP runtime unavailable", error?.message || "unknown");
+    console.warn("MCP runtime unavailable", safeErrorFields(error));
     return [];
   }
 }
@@ -149,15 +174,23 @@ function flattenTools(servers) {
       if (byName.has(name)) continue;
       const exposed = { type: "function", function: { name, description: `[${server.name}] ${tool.description}`, parameters: tool.inputSchema } };
       tools.push(exposed);
-      byName.set(name, { server, tool });
+      byName.set(name, {
+        server,
+        tool,
+        functionName: name,
+        serverFingerprint: server.configFingerprint,
+        schemaFingerprint: fingerprint(tool.inputSchema),
+      });
     }
   }
   return { tools, byName };
 }
 
 async function callMcpTool(entry, argumentsValue) {
-  const result = await mcpRequest(entry.server, "tools/call", { name: entry.tool.name, arguments: argumentsValue && typeof argumentsValue === "object" ? argumentsValue : {} }, Date.now());
+  const validation = validateMcpArguments(entry?.tool?.inputSchema, argumentsValue);
+  if (!validation.ok) throw new Error(validation.error);
+  const result = await mcpRequest(entry.server, "tools/call", { name: entry.tool.name, arguments: validation.args }, Date.now());
   return JSON.stringify(result || {}).slice(0, MAX_TOOL_RESULT_CHARS);
 }
 
-module.exports = { MAX_RPC_RESPONSE_BYTES, callMcpTool, flattenTools, getConnectedMcpCount, loadMcpRuntime, readRpcResponse };
+module.exports = { MAX_RPC_RESPONSE_BYTES, callMcpTool, flattenTools, getConnectedMcpCount, loadMcpRuntime, mcpRuntimeFingerprint, readRpcResponse };

@@ -35,3 +35,31 @@ jobs:
         run: npm run integration:test
       - name: Audit production dependencies
         run: npm run security:audit -- --audit-level=high
+
+  mcp-approval-migration:
+    name: Isolated MCP approval migration
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Verify approval migration in isolated PostgreSQL
+        env:
+          PGPASSWORD: postgres
+        run: >-
+          psql -h localhost -p 5432 -U postgres -d postgres -v ON_ERROR_STOP=1
+          -f test/mcp-approval-bootstrap.sql
+          -f database/supabase/022_mcp_action_approvals.sql
+          -f test/mcp-approval-assert.sql

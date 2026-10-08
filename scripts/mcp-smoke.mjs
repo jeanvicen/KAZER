@@ -38,6 +38,10 @@ const flattened = runtime.flattenTools([{
 }]);
 assert.equal(flattened.tools.length, 1);
 assert.equal(flattened.byName.size, 1);
+const schemaFingerprint = runtime.mcpRuntimeFingerprint([{ id: "connector-1", configFingerprint: "config-a", tools: [{ name: "search", description: "Search docs", inputSchema: { type: "object", properties: {} } }] }]);
+assert.equal(schemaFingerprint, runtime.mcpRuntimeFingerprint([{ id: "connector-1", configFingerprint: "config-a", tools: [{ name: "search", description: "Search docs", inputSchema: { properties: {}, type: "object" } }] }]));
+assert.notEqual(schemaFingerprint, runtime.mcpRuntimeFingerprint([{ id: "connector-1", configFingerprint: "config-b", tools: [{ name: "search", description: "Search docs", inputSchema: { type: "object", properties: {} } }] }]));
+await assert.rejects(runtime.callMcpTool({ server: { url: "http://127.0.0.1" }, tool: { name: "delete", inputSchema: { type: "object", properties: { target: { type: "string", enum: ["safe"] } }, required: ["target"], additionalProperties: false } } }, { target: "unapproved" }), /mcp_arguments_schema_mismatch/);
 assert.equal(data.connectorForClient({ id: "1", name: "MCP", type: "remote", base_url: "https://example.com", command: null, description: null, status: "connected", secret_payload: encrypted }).hasSecrets, true);
 const rpcPayload = JSON.stringify({ jsonrpc: "2.0", id: 1, result: { initialized: true } });
 const rpcResponse = await runtime.readRpcResponse(streamedResponse([Buffer.from(rpcPayload)]));
