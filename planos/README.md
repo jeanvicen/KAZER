@@ -11,7 +11,9 @@ Aqui entra só o que vem **ao lado**: ferramentas, ateliê, caixa e pesquisa de 
 | [CATALOGO-FERRAMENTAS.md](CATALOGO-FERRAMENTAS.md) | O que o usuário já tem e o que entra depois |
 | [ATELIE.md](ATELIE.md) | Designers, SVG, brand kit, social, voz |
 | [MONETIZACAO-ZERO.md](MONETIZACAO-ZERO.md) | Como ganhar sem gastar para abrir |
-| [PESQUISA-2026-10.md](PESQUISA-2026-10.md) | Pesquisa de outubro de 2026 ( Groq, Recraft, PIX, Canva ) |
+| [PESQUISA-2026-10.md](PESQUISA-2026-10.md) | Pesquisa de 6 de outubro de 2026 ( Groq, Recraft, PIX, Canva ) |
+| [PESQUISA-2026-10-07.md](PESQUISA-2026-10-07.md) | Atualização de 7/10: modelos, Recraft, assinatura |
+| [PESQUISA-2026-10-09.md](PESQUISA-2026-10-09.md) | Bancada no browser, designers, Chrome no aparelho, Pix conferido de novo |
 
 ## Regra da casa
 

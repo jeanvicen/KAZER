@@ -18,6 +18,8 @@
   ·
   <a href="planos/MONETIZACAO-ZERO.md">Caixa</a>
   ·
+  <a href="planos/PESQUISA-2026-10-09.md">Bancada</a>
+  ·
   <a href="docs/project-guide.md">Guia</a>
   ·
   <a href="SECURITY.md">Segurança</a>
@@ -69,6 +71,22 @@ Nada disto apaga `interface/`, `api/` ou `database/`. Cada item nasce como módu
 | PIX do Pro | Cartão gringo + IOF | Abacate Pay R$ 0,80 / parcela |
 
 Pesquisa de 7 de outubro de 2026: [`planos/PESQUISA-2026-10-07.md`](planos/PESQUISA-2026-10-07.md).
+
+## Bancada de 9 de outubro
+
+Pesquisa nova, sem apagar a de 6 e 7 de outubro. Tudo roda no navegador da pessoa. A casa não paga GPU e não hospeda o arquivo.
+
+| Peça | Quem cobra lá fora | No KAZER |
+|---|---|---|
+| Juntar, separar, girar PDF | iLovePDF, cota e anúncio | `pdf-lib` (MIT), no aparelho |
+| Comprimir foto e tirar paleta | TinyPNG, kit travado | Canvas, no aparelho |
+| Recortar pessoa | remove.bg, por crédito | MediaPipe (Apache). Sem biblioteca AGPL |
+| Deck 16:9 | Gamma ~US$ 9 | HTML do Brain + imprimir |
+| Cartão / link na bio | Linktree Pro | Um HTML para baixar |
+| Ler nota ou print | Adobe Scan | `tesseract.js` (Apache) |
+| Resumo no Chrome de mesa | ChatGPT Plus | API nativa, se a máquina aguentar. Celular continua no Brain |
+
+Licença, ordem de build e conta: [`planos/PESQUISA-2026-10-09.md`](planos/PESQUISA-2026-10-09.md).
 
 ## Como a casa ganha sem gastar para abrir
 
@@ -147,6 +165,7 @@ Os smoke tests de integração fazem stubs de respostas externas; eles validam c
 - [Testes e limitações de validação](docs/testing.md)
 - [Auditoria de segurança e riscos pendentes](SECURITY.md)
 - [Roadmap / ateliê / caixa](planos/README.md)
+- [Bancada de 9 de outubro](planos/PESQUISA-2026-10-09.md)
 
 ## Status e propriedade
 

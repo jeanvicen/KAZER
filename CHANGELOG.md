@@ -4,6 +4,7 @@ Todas as mudanças relevantes do KAZER serão registradas aqui.
 
 ## [Unreleased]
 
+- Pesquisa de 9/10/2026 em `planos/PESQUISA-2026-10-09.md`: bancada no browser (PDF, foto, recorte de pessoa, deck, cartão, OCR), atalho do Chrome só no desktop, Pix da Abacate conferido de novo. README e índice de `planos/` apontam para ela. Nenhum arquivo de `interface/`, `api/` ou `database/` foi alterado.
 - README reorganizado: produto no ar, o que entra depois, e o caminho de receita sem gastar para começar.
 - Pesquisa de 7/10/2026 em `planos/PESQUISA-2026-10-07.md`: Groq aposentou Llama 3.3 em 16/08/2026; Recraft V4.1 Vector; Abacate Pay assinatura sem taxa extra.
 - Catálogo, Ateliê e Caixa atualizados com WhatsApp one-pager, pack de prompts e BYOK — sempre **ao lado**, nunca no lugar.
