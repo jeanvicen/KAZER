@@ -20,6 +20,7 @@ const { supabaseRequest } = require("./_kazer-data");
 const { KAZER_BRAIN_VERSION, callKazerBrain } = require("./_kazer-brain");
 const { researchToolDefinition, runResearch } = require("./_research-orchestrator");
 const { currentBrazilContext, needsRealtimeResearch, researchContextText } = require("./_realtime-context");
+const { getBackgroundTaskContext } = require("./_background-context");
 
 const MAX_REQUEST_BYTES = 7 * 1024 * 1024;
 const MAX_TOTAL_ATTACHMENT_BYTES = 4 * 1024 * 1024;
@@ -492,28 +493,33 @@ module.exports = async function handler(request, response) {
     return sendJson(response, 405, { error: "Método não permitido." });
   }
 
-  if (!isSameOrigin(request) || !hasSafeFetchMetadata(request)) {
+  const backgroundContext = getBackgroundTaskContext(request);
+  if (!backgroundContext && (!isSameOrigin(request) || !hasSafeFetchMetadata(request))) {
     return sendJson(response, 403, { error: "Origem não autorizada." });
   }
   if (requestExceedsLimit(request, MAX_REQUEST_BYTES)) {
     return sendJson(response, 413, { error: "O conteúdo enviado excede o limite permitido." });
   }
 
-  const preAuthLimit = rateLimit(request, "chat-ip", { limit: 8, windowMs: 60_000 });
-  preAuthLimit.limit = 8;
-  applyRateLimit(response, preAuthLimit);
-  if (!preAuthLimit.allowed) {
-    return sendJson(response, 429, { error: "Muitas tentativas. Aguarde um momento e tente novamente." });
-  }
+  let user;
+  if (backgroundContext) {
+    user = { id: backgroundContext.userId };
+  } else {
+    const preAuthLimit = rateLimit(request, "chat-ip", { limit: 8, windowMs: 60_000 });
+    preAuthLimit.limit = 8;
+    applyRateLimit(response, preAuthLimit);
+    if (!preAuthLimit.allowed) {
+      return sendJson(response, 429, { error: "Muitas tentativas. Aguarde um momento e tente novamente." });
+    }
+    user = await authenticateUser(request);
+    if (!user) return sendJson(response, 401, { error: "Sessão inválida ou expirada." });
 
-  const user = await authenticateUser(request);
-  if (!user) return sendJson(response, 401, { error: "Sessão inválida ou expirada." });
-
-  const userLimit = rateLimit(request, "chat-user", { limit: 12, windowMs: 60_000, identity: user.id });
-  userLimit.limit = 12;
-  applyRateLimit(response, userLimit);
-  if (!userLimit.allowed) {
-    return sendJson(response, 429, { error: "Limite de mensagens atingido. Aguarde um minuto." });
+    const userLimit = rateLimit(request, "chat-user", { limit: 12, windowMs: 60_000, identity: user.id });
+    userLimit.limit = 12;
+    applyRateLimit(response, userLimit);
+    if (!userLimit.allowed) {
+      return sendJson(response, 429, { error: "Limite de mensagens atingido. Aguarde um minuto." });
+    }
   }
 
   if (!process.env.HF_TOKEN && !process.env.GROQ_API_KEY) {
@@ -584,43 +590,47 @@ module.exports = async function handler(request, response) {
   }
 
   const lastMessage = messages[messages.length - 1];
-  const requestedMcpCount = await getConnectedMcpCount(user.id, body?.mcpConnectorIds);
+  // Background tasks never load a user MCP connector: external side effects require
+  // an explicit, per-action confirmation flow that is not part of this worker.
+  const requestedMcpCount = backgroundContext ? 0 : await getConnectedMcpCount(user.id, body?.mcpConnectorIds);
   const capabilityPlan = planTask(lastMessage.content, { hasImages: prepared.imageParts.length > 0, hasFiles: prepared.fileNames.length > 0, hasTools: requestedMcpCount > 0, hasRepository: Boolean(repositoryContext) });
   const { taskType } = capabilityPlan;
   const creditCost = calculateChatCreditCost(messages, prepared.fileNames.length, requestedMcpCount);
-  let usage;
-  try {
-    usage = await callUsageRpc(request, "consume_kazer_usage", {
-      p_message_count: 1,
-      p_attachment_count: prepared.fileNames.length,
-    });
-  } catch (initialError) {
-    let error = initialError;
-    if (initialError.status === 404 || (initialError.status === 400 && initialError.code === "usage_rpc_failed")) {
-      try {
-        usage = await callUsageRpc(request, "consume_chat_usage", {
-          p_credit_amount: creditCost,
-          p_attachment_count: prepared.fileNames.length,
-        });
-        error = null;
-      } catch (fallbackError) {
-        error = fallbackError;
-      }
-    }
-    if (!error) {
-      // Compatibilidade temporária com ambientes que ainda não aplicaram a migração mensal.
-    } else if (error.code === "usage_limit_reached") {
-      return sendJson(response, 402, {
-        error: "Seu uso mensal chegou a 100%. As mensagens e os anexos serão liberados no primeiro dia do próximo mês.",
-        usage: { usage_limit_reached: true, credits_limit_reached: true },
+  let usage = backgroundContext?.usage || null;
+  if (!backgroundContext) {
+    try {
+      usage = await callUsageRpc(request, "consume_kazer_usage", {
+        p_message_count: 1,
+        p_attachment_count: prepared.fileNames.length,
       });
-    } else {
-      console.error("Usage reservation failed", error?.message || "unknown");
-      return sendJson(response, 503, { error: "Não foi possível validar os limites da conta agora." });
+    } catch (initialError) {
+      let error = initialError;
+      if (initialError.status === 404 || (initialError.status === 400 && initialError.code === "usage_rpc_failed")) {
+        try {
+          usage = await callUsageRpc(request, "consume_chat_usage", {
+            p_credit_amount: creditCost,
+            p_attachment_count: prepared.fileNames.length,
+          });
+          error = null;
+        } catch (fallbackError) {
+          error = fallbackError;
+        }
+      }
+      if (!error) {
+        // Compatibilidade temporária com ambientes que ainda não aplicaram a migração mensal.
+      } else if (error.code === "usage_limit_reached") {
+        return sendJson(response, 402, {
+          error: "Seu uso mensal chegou a 100%. As mensagens e os anexos serão liberados no primeiro dia do próximo mês.",
+          usage: { usage_limit_reached: true, credits_limit_reached: true },
+        });
+      } else {
+        console.error("Usage reservation failed", error?.message || "unknown");
+        return sendJson(response, 503, { error: "Não foi possível validar os limites da conta agora." });
+      }
     }
   }
 
-  const mcpServers = await loadMcpRuntime(user.id, body?.mcpConnectorIds);
+  const mcpServers = backgroundContext ? [] : await loadMcpRuntime(user.id, body?.mcpConnectorIds);
   const hasImages = prepared.imageParts.length > 0;
   const fileInstruction = prepared.fileContext
     ? `\n\nUse os anexos abaixo como contexto para responder:\n\n${prepared.fileContext}`

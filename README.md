@@ -160,6 +160,7 @@ Os smoke tests de integração fazem stubs de respostas externas; eles validam c
 - [Guia técnico do projeto](docs/project-guide.md)
 - [Índice da documentação](docs/README.md)
 - [Arquitetura de pesquisa](docs/RESEARCH-ARCHITECTURE.md)
+- [Tarefas em segundo plano (proposta)](docs/background-tasks.md)
 - [Configuração de ambiente](docs/configuration.md) e [`.env.example`](.env.example)
 - [Migrações e compatibilidade Supabase](database/supabase/README.md)
 - [Testes e limitações de validação](docs/testing.md)

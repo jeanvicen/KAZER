@@ -5358,6 +5358,18 @@
           response = await fetch(url, { ...options, headers: { ...(options.headers || {}), ...await getApiHeaders(true) } });
           return response;
         };
+        const saveNativePushToken = async (token) => {
+          const value = String(token || "").trim();
+          if (!/^(?:ExponentPushToken|ExpoPushToken)\[[A-Za-z0-9._-]{8,200}\]$/.test(value)) return;
+          try {
+            await fetchWithAuth("/api/push-subscriptions", { method: "POST", body: JSON.stringify({ token: value, platform: /iPhone|iPad|iPod/i.test(navigator.userAgent) ? "ios" : "android" }) });
+          } catch {}
+        };
+        window.addEventListener("kazer-expo-push-token", (event) => { void saveNativePushToken(event.detail); });
+        window.kazerRequestNativePush = () => {
+          if (settingsState?.notifications === false || !window.ReactNativeWebView?.postMessage) return;
+          try { window.ReactNativeWebView.postMessage(JSON.stringify({ type: "kazer_register_push" })); } catch {}
+        };
         // Narrow public bridge: only the authenticated home-suggestions purpose reaches /api/chat.
         window.kazerFetchHomeSuggestions = (payload = {}, signal) => fetchWithAuth("/api/chat", {
           method: "POST",
@@ -5582,6 +5594,9 @@
         let usageRefreshTimer = null;
         let busy = false;
         let activeRequestController = null;
+        let activeBackgroundTaskId = null;
+        let backgroundSyncTimer = null;
+        let backgroundSyncBusy = false;
         let toastTimer = null;
         let conversationMessages = [];
         let viewMode = new URLSearchParams(window.location.search).get("view") === "history" ? "history" : "kazer";
@@ -6660,6 +6675,133 @@
           refreshHistorySurface();
         };
 
+        const createBackgroundId = () => window.crypto?.randomUUID?.() || `kazer-${Date.now()}-${Math.random().toString(36).slice(2)}-${Math.random().toString(36).slice(2)}`;
+        const backgroundTaskPolls = new Map();
+        const backgroundTaskAnswer = (task) => {
+          if (task?.status === "failed") return String(task.error || "O Kazer não conseguiu concluir esta tarefa.");
+          if (task?.status === "cancelled") return "Tarefa cancelada.";
+          if (task?.status === "waiting_confirmation") return "Esta tarefa precisa da sua confirmação antes de continuar.";
+          const result = task?.result || {};
+          if (typeof result?.message?.content === "string") return result.message.content.trim();
+          if (typeof result?.summary === "string") {
+            const sources = Array.isArray(result.sources) ? result.sources.slice(0, 8) : [];
+            const footer = sources.length ? "\n\n**Fontes consultadas:**\n" + sources.map((source, index) => `[${index + 1}] ${source.title || "Fonte"} — ${source.uri}`).join("\n") : "";
+            return (result.summary.trim() || "A pesquisa terminou, mas não retornou um resumo.") + footer;
+          }
+          return typeof result?.content === "string" ? result.content.trim() : "";
+        };
+        const reconcileBackgroundTask = (task) => {
+          if (!task?.taskId || !task.conversationId || !task.messageId) return null;
+          const items = readChatHistory();
+          let item = items.find((entry) => entry.id === task.conversationId);
+          let changed = false;
+          if (!item) {
+            item = { id: task.conversationId, title: createChatTitle(task.inputPreview || "Tarefa do Kazer"), titleGenerated: true, excerpt: "Conversa com o KAZER", searchText: task.inputPreview || "", messages: [], createdAt: task.createdAt || new Date().toISOString(), kind: "chat" };
+            items.unshift(item);
+            changed = true;
+          }
+          if (!Array.isArray(item.messages)) item.messages = [];
+          let userMessage = item.messages.find((message) => message?.backgroundMessageId === task.messageId);
+          if (!userMessage) {
+            userMessage = { role: "user", content: task.inputPreview || "Solicitação enviada ao Kazer.", backgroundMessageId: task.messageId };
+            item.messages.push(userMessage);
+            changed = true;
+          }
+          if (userMessage.backgroundTaskId !== task.taskId) { userMessage.backgroundTaskId = task.taskId; changed = true; }
+          if (userMessage.backgroundIdempotencyKey) { delete userMessage.backgroundIdempotencyKey; changed = true; }
+          if (["completed", "failed", "cancelled", "waiting_confirmation"].includes(task.status)) {
+            const answer = backgroundTaskAnswer(task);
+            if (answer && !item.messages.some((message) => message?.role === "assistant" && message?.backgroundTaskId === task.taskId)) {
+              item.messages.push({ role: "assistant", content: answer, backgroundTaskId: task.taskId });
+              item.searchText = ((item.searchText || "") + " " + answer).trim().slice(0, 12000);
+              changed = true;
+            }
+          }
+          if (changed) saveChatHistory(items.slice(0, 10));
+          return changed ? task.conversationId : null;
+        };
+        const pollBackgroundTask = (taskId) => {
+          if (backgroundTaskPolls.has(taskId)) return backgroundTaskPolls.get(taskId);
+          const promise = (async () => {
+            let delayMs = 1400;
+            let networkFailures = 0;
+            while (true) {
+              try {
+                const response = await fetchWithAuth(`/api/background-tasks?id=${encodeURIComponent(taskId)}`, { method: "GET", cache: "no-store" });
+                const payload = await response.json().catch(() => ({}));
+                if (response.status === 404) return null;
+                if (!response.ok) throw new Error(payload.error || "Não foi possível sincronizar a tarefa.");
+                const task = payload.tasks?.[0];
+                if (!task) throw new Error("A tarefa não foi encontrada para esta conta.");
+                networkFailures = 0;
+                const changedConversation = reconcileBackgroundTask(task);
+                if (changedConversation && activeChatHistoryId === changedConversation && !document.hidden && !busy) openChatFromHistory(changedConversation);
+                if (["completed", "failed", "cancelled", "waiting_confirmation"].includes(task.status)) return task;
+                await new Promise((resolve) => window.setTimeout(resolve, delayMs));
+                delayMs = Math.min(5000, Math.round(delayMs * 1.35));
+              } catch (error) {
+                networkFailures += 1;
+                await new Promise((resolve) => window.setTimeout(resolve, Math.min(30_000, 800 * (2 ** Math.min(networkFailures, 5)))));
+              }
+            }
+          })().finally(() => {
+            backgroundTaskPolls.delete(taskId);
+            window.setTimeout(() => { void syncBackgroundTasks(); }, 6000);
+          });
+          backgroundTaskPolls.set(taskId, promise);
+          return promise;
+        };
+        const waitForBackgroundTask = (taskId, signal) => {
+          const shared = pollBackgroundTask(taskId);
+          if (!signal) return shared;
+          if (signal.aborted) return Promise.reject(new DOMException("Aborted", "AbortError"));
+          return new Promise((resolve, reject) => {
+            const onAbort = () => { cleanup(); reject(new DOMException("Aborted", "AbortError")); };
+            const cleanup = () => signal.removeEventListener("abort", onAbort);
+            signal.addEventListener("abort", onAbort, { once: true });
+            shared.then((task) => { cleanup(); resolve(task); }, (error) => { cleanup(); reject(error); });
+          });
+        };
+        const syncBackgroundTasks = async () => {
+          if (!currentUser || backgroundSyncBusy || document.hidden) return;
+          backgroundSyncBusy = true;
+          try {
+            const response = await fetchWithAuth("/api/background-tasks", { method: "GET", cache: "no-store" });
+            if (!response.ok) return;
+            const payload = await response.json().catch(() => ({}));
+            const tasks = Array.isArray(payload.tasks) ? payload.tasks : [];
+            const changedConversations = new Set();
+            for (const task of tasks) {
+              const changed = reconcileBackgroundTask(task);
+              if (changed) changedConversations.add(changed);
+              if (["queued", "running", "streaming"].includes(task.status) && !backgroundTaskPolls.has(task.taskId)) {
+                void waitForBackgroundTask(task.taskId, null).catch(() => {});
+              }
+            }
+            if (activeChatHistoryId && changedConversations.has(activeChatHistoryId) && !busy) openChatFromHistory(activeChatHistoryId);
+            if (tasks.some((task) => ["queued", "running", "streaming"].includes(task.status))) {
+              window.clearTimeout(backgroundSyncTimer);
+              backgroundSyncTimer = window.setTimeout(() => { void syncBackgroundTasks(); }, 6000);
+            }
+          } catch {} finally { backgroundSyncBusy = false; }
+        };
+        window.kazerHandleBackgroundTaskNotification = async (notice) => {
+          const taskId = String(notice?.taskId || "");
+          if (!taskId) return;
+          try {
+            const response = await fetchWithAuth(`/api/background-tasks?id=${encodeURIComponent(taskId)}`, { method: "GET", cache: "no-store" });
+            const payload = await response.json().catch(() => ({}));
+            const task = payload.tasks?.[0];
+            if (!response.ok || !task) return;
+            const conversationId = reconcileBackgroundTask(task);
+            await fetchWithAuth("/api/background-tasks", { method: "PATCH", body: JSON.stringify({ taskId, action: "viewed" }) }).catch(() => null);
+            if (conversationId && !busy) openChatFromHistory(conversationId);
+            const target = messageList.querySelector(`[data-background-task-id="${taskId}"]`);
+            target?.scrollIntoView({ behavior: "smooth", block: "center" });
+          } catch {}
+        };
+        window.addEventListener("kazer-background-task-notification", (event) => { void window.kazerHandleBackgroundTaskNotification(event.detail); });
+
         const openChatFromHistory = (id) => {
           const item = readChatHistory().find((entry) => entry.id === id);
           if (!item) return;
@@ -6684,6 +6826,8 @@
               }
             }
             const row = createMessage(message.role, displayText, { attachments: files, legacyAttachmentNames, attachmentState: attachmentRecord?.state || "sent" });
+            if (message.backgroundMessageId) row.dataset.backgroundMessageId = message.backgroundMessageId;
+            if (message.backgroundTaskId) row.dataset.backgroundTaskId = message.backgroundTaskId;
             if (files.length) {
               row.dataset.chatId = id;
               row.dataset.attachmentMessageIndex = String(index);
@@ -6693,6 +6837,7 @@
           setView("new-chat", { push: true });
           scrollBottom();
           messageInput.focus();
+          void syncBackgroundTasks();
         };
 
         const greetingVariants = [
@@ -6778,14 +6923,29 @@
           webSources.innerHTML = '<div class="web-loading">Pesquisando fontes atuais e preparando o resumo…</div>';
           const startedAt = Date.now();
           try {
-            const response = await fetchWithAuth("/api/research", { method: "POST", body: JSON.stringify({ query, mode: webMode }) });
-            const result = await response.json().catch(() => null);
+            const conversationId = `web-${createBackgroundId()}`;
+            const messageId = createBackgroundId();
+            const idempotencyKey = createBackgroundId();
+            const historyItem = { id: conversationId, title: createChatTitle(query, []), titleGenerated: true, excerpt: "Pesquisa WebKazer", searchText: query, messages: [{ role: "user", content: query, backgroundMessageId: messageId, backgroundIdempotencyKey: idempotencyKey }], createdAt: new Date().toISOString(), kind: "chat" };
+            saveChatHistory([historyItem, ...readChatHistory().filter((item) => item.id !== conversationId)].slice(0, 10));
+            const response = await fetchWithAuth("/api/background-tasks", {
+              method: "POST",
+              body: JSON.stringify({ type: "web_search", input: { query, question: query, mode: webMode }, conversationId, messageId, idempotencyKey, metadata: { source: "webkazer-panel" } }),
+            });
+            const queued = await response.json().catch(() => ({}));
+            if (!response.ok || !queued.task?.taskId) {
+              if (response.status === 402) { await loadUsage(false); showCreditLimit(); }
+              throw new Error(queued.error || "Pesquisa indisponível");
+            }
+            const taskId = queued.task.taskId;
+            window.kazerRequestNativePush?.();
+            if (queued.task.usage) applyUsageState(queued.task.usage, true);
+            const finished = await waitForBackgroundTask(taskId, null);
+            if (finished.status !== "completed") throw new Error(finished.error || "Pesquisa indisponível");
+            const result = finished.result || {};
+            reconcileBackgroundTask(finished);
             const remaining = Math.max(0, 650 - (Date.now() - startedAt));
             await new Promise((resolve) => window.setTimeout(resolve, remaining));
-            if (!response.ok) {
-              if (response.status === 402) { await loadUsage(false); showCreditLimit(); }
-              throw new Error(result?.error || "Pesquisa indisponível");
-            }
             if (result?.usage) applyUsageState(result.usage, true);
             renderWebResults(query, result);
           } catch (error) {
@@ -8148,6 +8308,9 @@
           const historyText = prompt + attachmentLabel;
           const displayText = text;
           const messageIndex = conversationMessages.length;
+          const messageId = createBackgroundId();
+          const idempotencyKey = createBackgroundId();
+          const needsForegroundConnector = !useWebResearch && mcpConnectorIds.length > 0;
           if (files.length) {
             const filesByMessage = messageAttachmentFiles.get(chatId) || new Map();
             filesByMessage.set(messageIndex, { files, state: "preparing" });
@@ -8160,7 +8323,8 @@
             userRow.dataset.attachmentMessageIndex = String(messageIndex);
           }
           append(userRow);
-          conversationMessages.push({ role: "user", content: historyText });
+          conversationMessages.push({ role: "user", content: historyText, backgroundMessageId: messageId, backgroundIdempotencyKey: idempotencyKey });
+          saveChatMessages(chatId, conversationMessages);
           messageInput.value = "";
           selectedFiles = [];
           renderAttachments();
@@ -8171,6 +8335,7 @@
           setBusy(true);
           const controller = new AbortController();
           let assistantRow = null;
+          let backgroundTaskIdForMessage = null;
           activeRequestController = controller;
           const restoreAttachmentsAfterFailedSend = () => {
             const attachmentWasSent = messageAttachmentFiles.get(chatId)?.get(messageIndex)?.state === "sent";
@@ -8195,26 +8360,67 @@
               return;
             }
             setMessageAttachmentStatus(userRow, "uploading");
-            const result = useWebResearch
-              ? await fetchWithAuth("/api/research", {
-                  method: "POST",
-                  body: JSON.stringify({ query: webResearchRequest.query, question: webResearchRequest.question, billingQuery: prompt, mode: "web" }),
-                  signal: controller.signal,
-                })
-              : await fetchWithAuth("/api/chat", {
-                  method: "POST",
-                  body: JSON.stringify({ messages: conversationMessages, attachments, mcpConnectorIds, githubRepo }),
-                  signal: controller.signal,
-                });
-            const data = await result.json().catch(() => ({}));
-            if (!result.ok) {
-              if (result.status === 402) { await loadUsage(false); showCreditLimit(); }
-              if (result.status === 409) { await loadUsage(false); showAttachmentLimit(); }
-              throw new Error(data.error || (useWebResearch ? "Não foi possível consultar a pesquisa na web." : "Não foi possível obter uma resposta."));
-            }
-            if (files.length) {
-              setMessageAttachmentStatus(userRow, "sent");
-              clearAlreadySentAttachments();
+            let data = {};
+            if (!needsForegroundConnector) {
+              const taskInput = useWebResearch
+                ? { query: webResearchRequest.query, question: webResearchRequest.question, billingQuery: prompt, mode: "web" }
+                : { messages: conversationMessages, attachments, mcpConnectorIds: [], githubRepo };
+              const taskResponse = await fetchWithAuth("/api/background-tasks", {
+                method: "POST",
+                body: JSON.stringify({
+                  type: useWebResearch ? "web_search" : files.length ? (files.some((file) => file.type.startsWith("image/")) ? "document_analysis" : "file_processing") : "chat_response",
+                  input: taskInput,
+                  conversationId: chatId,
+                  messageId,
+                  idempotencyKey,
+                  metadata: { attachmentNames: files.map((file) => file.name).slice(0, 10) },
+                }),
+                signal: controller.signal,
+              });
+              const queued = await taskResponse.json().catch(() => ({}));
+              if (!taskResponse.ok || !queued.task?.taskId) {
+                if (taskResponse.status === 402) { await loadUsage(false); showCreditLimit(); }
+                throw new Error(queued.error || "Não foi possível registrar a tarefa.");
+              }
+              const taskId = queued.task.taskId;
+              activeBackgroundTaskId = taskId;
+              backgroundTaskIdForMessage = taskId;
+              userRow.dataset.backgroundTaskId = taskId;
+              conversationMessages[messageIndex].backgroundTaskId = taskId;
+              saveChatMessages(chatId, conversationMessages);
+              window.kazerRequestNativePush?.();
+              if (queued.task.usage) applyUsageState(queued.task.usage, true);
+              if (files.length) {
+                setMessageAttachmentStatus(userRow, "sent");
+                clearAlreadySentAttachments();
+              }
+              const completedTask = await waitForBackgroundTask(taskId, controller.signal);
+              if (completedTask.status === "waiting_confirmation") throw new Error("Esta tarefa está aguardando uma confirmação antes de prosseguir.");
+              if (completedTask.status !== "completed") throw new Error(completedTask.error || "O Kazer não conseguiu concluir esta tarefa.");
+              data = completedTask.result || {};
+              activeBackgroundTaskId = null;
+            } else {
+              const result = useWebResearch
+                ? await fetchWithAuth("/api/research", {
+                    method: "POST",
+                    body: JSON.stringify({ query: webResearchRequest.query, question: webResearchRequest.question, billingQuery: prompt, mode: "web" }),
+                    signal: controller.signal,
+                  })
+                : await fetchWithAuth("/api/chat", {
+                    method: "POST",
+                    body: JSON.stringify({ messages: conversationMessages, attachments, mcpConnectorIds, githubRepo }),
+                    signal: controller.signal,
+                  });
+              data = await result.json().catch(() => ({}));
+              if (!result.ok) {
+                if (result.status === 402) { await loadUsage(false); showCreditLimit(); }
+                if (result.status === 409) { await loadUsage(false); showAttachmentLimit(); }
+                throw new Error(data.error || (useWebResearch ? "Não foi possível consultar a pesquisa na web." : "Não foi possível obter uma resposta."));
+              }
+              if (files.length) {
+                setMessageAttachmentStatus(userRow, "sent");
+                clearAlreadySentAttachments();
+              }
             }
             if (data.usage) applyUsageState(data.usage, true);
             if (activeRequestController !== controller) {
@@ -8236,9 +8442,10 @@
             if (typeof answer !== "string" || !answer.trim()) throw new Error("A resposta recebida estava vazia.");
             if (thinking.isConnected && !researchProgress) thinking.remove();
             assistantRow = createMessage("assistant", "", { writing: true });
+            if (backgroundTaskIdForMessage) assistantRow.dataset.backgroundTaskId = backgroundTaskIdForMessage;
             append(assistantRow);
             await revealAssistantMessage(assistantRow, answer.trim(), controller.signal);
-            conversationMessages.push({ role: "assistant", content: answer.trim() });
+            conversationMessages.push({ role: "assistant", content: answer.trim(), ...(backgroundTaskIdForMessage ? { backgroundTaskId: backgroundTaskIdForMessage } : {}) });
             saveChatMessages(chatId, conversationMessages);
             updateChatSearchText(chatId, answer.trim());
             if (conversationMessages.length === 2) generateChatTitle(chatId, conversationMessages.slice(), controller.signal);
@@ -8262,6 +8469,7 @@
             if (taskContext) window.kazerWorkspace?.failTask?.(taskContext, error.message || "Não foi possível conectar ao chat agora.");
             if (!researchProgress) append(createMessage("assistant", error.message || "Não foi possível conectar ao chat agora."));
           } finally {
+            if (activeBackgroundTaskId === backgroundTaskIdForMessage) activeBackgroundTaskId = null;
             if (activeRequestController === controller) {
               activeRequestController = null;
               if (thinking.isConnected && !researchProgress) thinking.remove();
@@ -8272,8 +8480,17 @@
           }
         };
 
-        const stop = () => {
+        const stop = async () => {
           if (!busy) return;
+          if (activeBackgroundTaskId) {
+            try {
+              const response = await fetchWithAuth("/api/background-tasks", { method: "PATCH", body: JSON.stringify({ taskId: activeBackgroundTaskId, action: "cancel" }) });
+              const payload = await response.json().catch(() => ({}));
+              if (!response.ok) { showToast(payload.error || "A tarefa já começou e continuará sincronizando."); return; }
+              activeBackgroundTaskId = null;
+              void syncBackgroundTasks();
+            } catch { showToast("Não consegui confirmar o cancelamento. A tarefa continua sendo sincronizada."); return; }
+          }
           if (activeRequestController) activeRequestController.abort();
           activeRequestController = null;
           const activeResearch = messageList.querySelector(".research-progress-card.is-searching");
@@ -8850,15 +9067,22 @@
           updateServiceWorker();
           window.setInterval(updateServiceWorker, 5 * 60 * 1000);
           window.addEventListener("pageshow", updateServiceWorker);
-          document.addEventListener("visibilitychange", () => { if (!document.hidden) updateServiceWorker(); });
+          document.addEventListener("visibilitychange", () => { if (!document.hidden) { updateServiceWorker(); void syncBackgroundTasks(); } });
         }
 
         window.addEventListener("resize", resizeInput);
+        window.addEventListener("focus", () => { void syncBackgroundTasks(); });
         resizeInput();
         updateSend();
         startAppSplash();
         setView(viewMode);
-        loadAccount().then(() => { updateGreeting(); if (viewMode === "history" || isDesktopLayout()) loadChatHistory(); });
+        loadAccount().then(() => {
+          updateGreeting();
+          if (viewMode === "history" || isDesktopLayout()) loadChatHistory();
+          void syncBackgroundTasks();
+          const taskId = new URLSearchParams(window.location.search).get("taskId");
+          if (taskId) void window.kazerHandleBackgroundTaskNotification({ taskId });
+        });
         window.setInterval(() => {
           if (!document.hidden && !app.classList.contains("in-conversation")) updateGreeting({ rotate: true });
         }, 120000);
