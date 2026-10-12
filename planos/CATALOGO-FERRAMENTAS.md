@@ -28,3 +28,17 @@ Pesquisa de mercado 2026 (ChatGPT, Claude, Perplexity, Canva Magic Studio, Gamma
 | Cérebro multi-modelo | Trancar em um vendor de US$ 20 | Groq + HF + Gemini Flash + OpenRouter :free |
 
 Nada disto apaga o chat. Cada item nasce como módulo novo.
+
+## Soma de 12 de outubro
+
+Não substitui a tabela acima nem a bancada de 9/10 (PDF, foto, recorte, deck, cartão, OCR). Detalhe e licença em [PESQUISA-2026-10-12.md](PESQUISA-2026-10-12.md).
+
+| Ferramenta | Por que pagam lá fora | Como o KAZER faz a R$ 0 |
+|---|---|---|
+| Oficina de fundo | Export de blob e malha travado | SVG no aparelho |
+| Vitrine | Mockup na faixa de US$ 15/mês | Moldura CSS, foto local |
+| Cartaz de link | API de imagem na casa das dezenas de dólares | SVG 1200×630 |
+| Grade de ícones | Pacote pago | Lucide (ISC / MIT), sem logo de marca |
+| Par de cores | Plugin de contraste | WCAG no canvas |
+| QR e recibo da banca | Gerador com anúncio, sistema com mensalidade | Chave Pix **da pessoa**, no celular. Não é o caixa do Pro |
+| Briefing | Reunião com designer | O Brain atual devolve paleta e tom |

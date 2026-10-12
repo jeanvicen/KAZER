@@ -18,7 +18,7 @@
   ·
   <a href="planos/MONETIZACAO-ZERO.md">Caixa</a>
   ·
-  <a href="planos/PESQUISA-2026-10-09.md">Bancada</a>
+  <a href="planos/PESQUISA-2026-10-12.md">Bancada</a>
   ·
   <a href="docs/project-guide.md">Guia</a>
   ·
@@ -87,6 +87,20 @@ Pesquisa nova, sem apagar a de 6 e 7 de outubro. Tudo roda no navegador da pesso
 | Resumo no Chrome de mesa | ChatGPT Plus | API nativa, se a máquina aguentar. Celular continua no Brain |
 
 Licença, ordem de build e conta: [`planos/PESQUISA-2026-10-09.md`](planos/PESQUISA-2026-10-09.md).
+
+## Bancada de 12 de outubro
+
+Pesquisa nova. Não apaga as de 6, 7 e 9. Continua no aparelho. Continua sem GPU. Não está no ar.
+
+| Peça | Quem cobra lá fora | No KAZER |
+|---|---|---|
+| Fundo, vitrine, cartaz de link | Placeit ~US$ 15/mês · API de imagem na casa dos US$ 49 / mil | SVG e moldura CSS, foto local |
+| Ícone e contraste | Pacote de ícone · plugin de acessibilidade | Lucide (ISC / MIT) e WCAG no canvas |
+| Carrossel e capa de story | Canva Pro | PNG no aparelho |
+| QR e recibo da banca | Gerador com anúncio | Chave Pix **da pessoa**, no celular. Não é o caixa do Pro |
+| Briefing de marca | Reunião com designer | O Brain que já existe devolve paleta e tom |
+
+O grátis sai com o selo “feito no KAZER”. O Pro, quando a compra existir, tira o selo. Licença e ordem: [`planos/PESQUISA-2026-10-12.md`](planos/PESQUISA-2026-10-12.md).
 
 ## Como a casa ganha sem gastar para abrir
 
@@ -167,6 +181,7 @@ Os smoke tests de integração fazem stubs de respostas externas; eles validam c
 - [Auditoria de segurança e riscos pendentes](SECURITY.md)
 - [Roadmap / ateliê / caixa](planos/README.md)
 - [Bancada de 9 de outubro](planos/PESQUISA-2026-10-09.md)
+- [Bancada de 12 de outubro](planos/PESQUISA-2026-10-12.md)
 
 ## Status e propriedade
 

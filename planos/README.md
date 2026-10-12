@@ -14,6 +14,7 @@ Aqui entra só o que vem **ao lado**: ferramentas, ateliê, caixa e pesquisa de 
 | [PESQUISA-2026-10.md](PESQUISA-2026-10.md) | Pesquisa de 6 de outubro de 2026 ( Groq, Recraft, PIX, Canva ) |
 | [PESQUISA-2026-10-07.md](PESQUISA-2026-10-07.md) | Atualização de 7/10: modelos, Recraft, assinatura |
 | [PESQUISA-2026-10-09.md](PESQUISA-2026-10-09.md) | Bancada no browser, designers, Chrome no aparelho, Pix conferido de novo |
+| [PESQUISA-2026-10-12.md](PESQUISA-2026-10-12.md) | Estúdio miúdo: fundo, vitrine, cartaz, ícone, contraste, QR da banca, recibo, briefing no Brain |
 
 ## Regra da casa
 
