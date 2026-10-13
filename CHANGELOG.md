@@ -4,6 +4,7 @@ Todas as mudanças relevantes do KAZER serão registradas aqui.
 
 ## [Unreleased]
 
+- Pesquisa de 13/10/2026 em `planos/PESQUISA-2026-10-13.md`: balcão no aparelho (etiqueta JsBarcode MIT, cardápio PT · JP, assinatura no papel, marca d'água com selo, figurinha 512, story via MediaRecorder sem FFmpeg, QR de Wi-Fi, anotador de print, semana de posts no Brain que já existe). README, catálogo, ateliê, caixa e índice de `planos/` apontam para ela. Nenhum arquivo de `interface/`, `api/` ou `database/` foi alterado. Pix da Abacate recarregado: R$ 0,80, sem mensalidade; cartão parcelado conferido na página de preços.
 - Pesquisa de 12/10/2026 em `planos/PESQUISA-2026-10-12.md`: estúdio miúdo no aparelho (fundo SVG, vitrine, cartaz de link, ícone Lucide, contraste, carrossel, QR e recibo da banca, briefing no Brain que já existe). README, catálogo, ateliê e índice de `planos/` apontam para ela. Nenhum arquivo de `interface/`, `api/` ou `database/` foi alterado. Pix da Abacate recarregado: R$ 0,80, sem mensalidade.
 - Pesquisa de 9/10/2026 em `planos/PESQUISA-2026-10-09.md`: bancada no browser (PDF, foto, recorte de pessoa, deck, cartão, OCR), atalho do Chrome só no desktop, Pix da Abacate conferido de novo. README e índice de `planos/` apontam para ela. Nenhum arquivo de `interface/`, `api/` ou `database/` foi alterado.
 - README reorganizado: produto no ar, o que entra depois, e o caminho de receita sem gastar para começar.

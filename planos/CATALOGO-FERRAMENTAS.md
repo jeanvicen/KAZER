@@ -42,3 +42,20 @@ Não substitui a tabela acima nem a bancada de 9/10 (PDF, foto, recorte, deck, c
 | Par de cores | Plugin de contraste | WCAG no canvas |
 | QR e recibo da banca | Gerador com anúncio, sistema com mensalidade | Chave Pix **da pessoa**, no celular. Não é o caixa do Pro |
 | Briefing | Reunião com designer | O Brain atual devolve paleta e tom |
+
+## Soma de 13 de outubro
+
+Não substitui as tabelas acima. Detalhe, licença e o que não é nota fiscal em [PESQUISA-2026-10-13.md](PESQUISA-2026-10-13.md).
+
+| Ferramenta | Por que pagam lá fora | Como o KAZER faz a R$ 0 |
+|---|---|---|
+| Etiqueta de gôndola | Mensalidade de etiqueta | JsBarcode (MIT) no aparelho. Não é nota |
+| Cardápio de uma folha | Arte de cardápio | HTML para imprimir, PT ou PT · JP |
+| Assinatura no papel | Por envelope | signature_pad (MIT). Não é certificado |
+| Marca d'água em lote | App cobra para tirar o selo | Canvas. Grátis leva o selo KAZER |
+| Figurinha 512 | Pack pago | Quadrado no canvas, sem marca de terceiro |
+| Story em vídeo | Export sem selo é pago | MediaRecorder nativo. Sem FFmpeg |
+| QR do Wi-Fi | Gerador com anúncio | Senha da loja só no celular |
+| Anotador de print | Captura anotada é paga | Seta e tarja na foto local |
+| Cartão PT · JP | Gráfica | Duas faces no aparelho |
+| Semana de posts | Agenda de social paga | O Brain atual devolve sete linhas |

@@ -20,6 +20,8 @@
   ·
   <a href="planos/PESQUISA-2026-10-12.md">Bancada</a>
   ·
+  <a href="planos/PESQUISA-2026-10-13.md">Balcão</a>
+  ·
   <a href="docs/project-guide.md">Guia</a>
   ·
   <a href="SECURITY.md">Segurança</a>
@@ -102,6 +104,22 @@ Pesquisa nova. Não apaga as de 6, 7 e 9. Continua no aparelho. Continua sem GPU
 
 O grátis sai com o selo “feito no KAZER”. O Pro, quando a compra existir, tira o selo. Licença e ordem: [`planos/PESQUISA-2026-10-12.md`](planos/PESQUISA-2026-10-12.md).
 
+## Balcão de 13 de outubro
+
+Pesquisa nova. Não apaga as de 6, 7, 9 e 12. Continua no aparelho. Continua sem GPU. Não está no ar.
+
+| Peça | Quem cobra lá fora | No KAZER |
+|---|---|---|
+| Etiqueta de gôndola | Sistema de etiqueta com mensalidade | JsBarcode (MIT), no aparelho. Não é nota fiscal |
+| Cardápio de uma folha | Designer de cardápio | HTML para imprimir, PT ou PT · JP |
+| Assinatura no papel | Por envelope | signature_pad (MIT). Não é certificado |
+| Marca d'água em lote | App cobra para tirar o selo | Canvas. Grátis leva “feito no KAZER”. Pro leva o logo da pessoa |
+| Story, figurinha, print | CapCut e captura paga | Vídeo nativo, quadrado 512, seta na foto. Sem FFmpeg |
+| Wi-Fi da loja e cartão PT · JP | Gerador com anúncio · gráfica | QR no celular. A senha não sai do aparelho |
+| Semana de posts | Agenda de social paga | O Brain que já existe devolve sete linhas |
+
+O selo no grátis é o anúncio: a peça viaja no WhatsApp sem a casa pagar impulsionamento. Licença e ordem: [`planos/PESQUISA-2026-10-13.md`](planos/PESQUISA-2026-10-13.md).
+
 ## Como a casa ganha sem gastar para abrir
 
 Infra livre enquanto couber nos planos Hobby: Vercel, Supabase, Groq, Hugging Face, GitHub, Web Speech, SVG no cliente.
@@ -182,6 +200,7 @@ Os smoke tests de integração fazem stubs de respostas externas; eles validam c
 - [Roadmap / ateliê / caixa](planos/README.md)
 - [Bancada de 9 de outubro](planos/PESQUISA-2026-10-09.md)
 - [Bancada de 12 de outubro](planos/PESQUISA-2026-10-12.md)
+- [Balcão de 13 de outubro](planos/PESQUISA-2026-10-13.md)
 
 ## Status e propriedade
 

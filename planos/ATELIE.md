@@ -24,6 +24,22 @@ Somam. Não substituem as cinco acima. Licença e ordem em [PESQUISA-2026-10-12.
 13. **Banca** — QR da chave Pix da pessoa, mais recibo de uma folha. Não é o caixa do Pro.
 14. **Briefing** — o Brain atual devolve paleta e tom para estas peças usarem.
 
+## Peças de 13 de outubro (plano, ainda não no ar)
+
+Somam. Não substituem as de cima. Licença e ordem em [PESQUISA-2026-10-13.md](PESQUISA-2026-10-13.md).
+
+15. **Etiqueta de gôndola** — preço e código de barras no aparelho. Não é nota fiscal.
+16. **Cardápio** — uma folha, português ou português e japonês.
+17. **Assinatura desenhada** — entra no recibo e na proposta. Não é certificado.
+18. **Marca d'água em lote** — o grátis leva o selo KAZER. O Pro leva o logo da pessoa.
+19. **Figurinha 512** — quadrado para status, sem marca de aplicativo de mensagem.
+20. **Story em vídeo** — gravação nativa do navegador, só depois do carrossel. Sem FFmpeg.
+21. **QR do Wi-Fi** — senha da loja só no celular.
+22. **Anotador de print** — seta, texto e tarja na foto local.
+23. **Cartão PT · JP** — duas faces, texto vertical, QR de contato.
+24. **Antes / depois** — duas fotos locais, um controle CSS.
+25. **Semana de posts** — sete linhas do Brain que já existe.
+
 ## Direção de arte (já documentada)
 
 O visual do Brain continua em [`docs/visual-system.md`](../docs/visual-system.md): `kazer-svg` e `kazer-html`, composição com foco, sem cartão repetido. O ateliê só **reutiliza** essa linguagem.
@@ -34,3 +50,4 @@ O visual do Brain continua em [`docs/visual-system.md`](../docs/visual-system.md
 - Não mover o selo para dentro de `interface/chat.html` apagando o composer.
 - Não pedir cartão para baixar SVG.
 - Não guardar a chave Pix do usuário no servidor.
+- Não guardar senha de Wi-Fi nem o traço da assinatura no servidor.

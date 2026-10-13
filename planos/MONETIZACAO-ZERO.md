@@ -25,12 +25,15 @@ Cadastro grátis. Sem mensalidade para abrir.
 
 Cartão internacional + IOF mata MEI. PIX em reais é o caminho.
 
+Conferido de novo em 13/10/2026 na [página de preços](https://www.abacatepay.com/pricing): Pix continua R$ 0,80, sem mensalidade. Cartão à vista 3,5% + R$ 0,60; 2x a 6x passa a 4% + R$ 0,60; 7x a 12x passa a 4,5% + R$ 0,60. No plano de R$ 29 o Pix segue mais barato. Parcelar no cartão não entra no plano livre.
+
 ## Outras entradas a custo zero
 
 - **Afiliado** — indicar Canva / Recraft / hospedagem para quem quiser GPU; o KAZER fica no SVG grátis.
 - **Infoproduto** — pack de prompts + brand kits gerados no ateliê, vendido no Hotmart/Kiwify (cadastro livre, comissão só na venda).
 - **PWA** — distribuição sem loja, sem 30%.
 - **BYOK** — o Pro paga a interface; o token gordo é do cliente.
+- **Selo que viaja** — etiqueta, cardápio, figurinha e story do plano livre saem com “feito no KAZER”. Quem paga o Pro tira o selo e coloca o logo da própria banca. A casa não paga anúncio. Detalhe em [PESQUISA-2026-10-13.md](PESQUISA-2026-10-13.md).
 
 ## O que não fazer
 
