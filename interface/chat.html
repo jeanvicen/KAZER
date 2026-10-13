@@ -174,6 +174,23 @@
         pointer-events: auto;
       }
 
+      .chat-mode-indicators { position: relative; z-index: 21; display: flex; align-items: center; gap: 8px; min-height: 44px; pointer-events: auto; }
+      .chat-mode-indicator { display: grid; place-items: center; flex: 0 0 auto; min-height: 44px; padding: 0; border: 1px solid rgba(255,255,255,.085); background: color-mix(in srgb, var(--card) 84%, transparent); color: var(--text-soft); box-shadow: 0 5px 16px rgba(0,0,0,.13), inset 0 1px 0 rgba(255,255,255,.035); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); }
+      .chat-mode-indicator-current { width: clamp(92px, 30vw, 112px); border-color: color-mix(in srgb, var(--accent-readable) 22%, var(--line)); border-radius: 999px; color: var(--text); }
+      .chat-mode-indicator-computer { width: 44px; border-radius: 15px; color: var(--text-dim); opacity: .56; cursor: not-allowed; }
+      .chat-mode-indicator .icon { width: 20px; height: 20px; }
+      .chat-mode-indicator-current .icon { color: var(--accent-readable); }
+      .chat-mode-indicator-computer .icon { width: 21px; height: 21px; }
+      .chat-mode-eye { transform-box: fill-box; transform-origin: center; }
+      @media (hover: hover) { .chat-mode-indicator-computer:disabled:hover .chat-mode-eye { animation: chat-mode-eye-blink 360ms ease-in-out; } }
+      @keyframes chat-mode-eye-blink { 0%, 42%, 100% { transform: scaleY(1); } 50%, 82% { transform: scaleY(.12); } }
+      :root[data-theme="light"] .chat-mode-indicator { border-color: rgba(36,33,31,.1); background: color-mix(in srgb, var(--card) 92%, transparent); color: #5f5c59; box-shadow: 0 5px 16px rgba(35,30,25,.08), inset 0 1px 0 rgba(255,255,255,.7); }
+      :root[data-theme="light"] .chat-mode-indicator-current { border-color: color-mix(in srgb, var(--accent-readable) 30%, var(--line)); color: #282625; }
+      :root[data-theme="light"] .chat-mode-indicator-current .icon { color: var(--accent-readable); }
+      :root[data-theme="light"] .chat-mode-indicator-computer { color: #77736d; opacity: .58; }
+      @media (max-width: 560px) { .chat-mode-indicators { gap: 6px; } .chat-mode-indicator { min-height: 42px; } .chat-mode-indicator-current { width: clamp(88px, 28vw, 104px); } .chat-mode-indicator-computer { width: 42px; border-radius: 14px; } }
+      @media (prefers-reduced-motion: reduce) { .chat-mode-indicator-computer .chat-mode-eye { animation: none !important; } }
+
       .chat-history-back { position: absolute; z-index: 80; top: max(18px, env(safe-area-inset-top)); right: clamp(18px, 4vw, 42px); display: grid !important; place-items: center; width: 50px; height: 43px; border: 1px solid rgba(230,210,163,.34); border-radius: 14px; background: linear-gradient(145deg, rgba(42,32,38,.92), rgba(19,19,25,.94)); color: #e9d7ac; cursor: pointer; pointer-events: auto !important; touch-action: manipulation; text-decoration: none; box-shadow: 0 8px 24px rgba(0,0,0,.22), inset 0 1px 0 rgba(255,255,255,.08); backdrop-filter: blur(16px); transition: transform 180ms var(--ease), border-color 180ms var(--ease), background 180ms var(--ease), box-shadow 180ms var(--ease); }
       .chat-history-back .icon { width: 21px; height: 21px; filter: drop-shadow(0 0 5px rgba(230,210,163,.35)); }
       .chat-history-back:hover { border-color: rgba(234,216,174,.72); background: linear-gradient(145deg, rgba(100,86,53,.96), rgba(27,21,29,.96)); box-shadow: 0 10px 26px rgba(0,0,0,.3), 0 0 0 3px rgba(230,210,163,.08); transform: translateY(-1px); }
@@ -5038,6 +5055,10 @@
       </header>
 
       <header class="topbar" aria-label="Barra de conversa">
+        <div class="chat-mode-indicators" role="group" aria-label="Modos de conversa">
+          <span class="chat-mode-indicator chat-mode-indicator-current" role="img" aria-label="Chat normal, modo atual" title="Chat normal"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11.5a8 8 0 0 1-8 8 8.4 8.4 0 0 1-3.4-.7L4 21l1.3-3.8A8 8 0 1 1 20 11.5Z"></path><path d="M8.5 10.5h7M8.5 14h4.5"></path></svg></span>
+          <button class="chat-mode-indicator chat-mode-indicator-computer" type="button" disabled aria-disabled="true" aria-label="Computer, indisponível no momento" title="Computer indisponível no momento"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="4.5" width="17" height="12.5" rx="2.5"></rect><circle class="chat-mode-eye" cx="9" cy="10.5" r="1.1" fill="currentColor" stroke="none"></circle><circle class="chat-mode-eye" cx="15" cy="10.5" r="1.1" fill="currentColor" stroke="none"></circle><path d="M8 21h8M12 17v4"></path></svg></button>
+        </div>
         <a class="chat-history-back" id="chatHistoryBack" href="?view=history" aria-label="Abrir histórico de chats" title="Histórico de chats"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4.5 12a7.5 7.5 0 1 0 2.2-5.3"></path><path d="M4.5 5.3v4.2h4.2"></path><path d="M12 8.2v4.2l2.8 1.7"></path></svg></a>
         <div class="credit-indicator" id="creditIndicator" aria-label="Uso do ciclo"><span class="credit-indicator-label" aria-hidden="true">USO</span><span class="credit-indicator-value" id="creditBalanceValue">—%</span></div>
       </header>
