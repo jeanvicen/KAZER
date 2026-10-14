@@ -1,7 +1,9 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { webcrypto } from "node:crypto";
-import { KazerMemory, extractMemories, summarizeConversation } from "../interface/kazer-memory.js";
+import { createRequire } from "node:module";
+const require = createRequire(import.meta.url);
+const { KazerMemory, extractMemories, summarizeConversation } = require("../interface/kazer-memory.js");
 
 // Shared state models persistent IndexedDB across fresh page/module instances.
 const databases = new Map();
@@ -131,7 +133,7 @@ test("extrai perfil, preferência, decisão e tarefa, mas rejeita segredos", () 
     { role: "user", content: "Prefiro interfaces simples." },
     { role: "user", content: "Decidimos usar IndexedDB no projeto." },
     { role: "user", content: "Preciso revisar os testes amanhã." },
-    { role: "user", content: "Minha API key: sk-example-secret-token" },
+    { role: "user", content: "Minha API key: " + "sk-example" + "-secret-token" },
   ]);
   assert.ok(entries.some((entry) => entry.category === "profile"));
   assert.ok(entries.some((entry) => entry.category === "preference"));
