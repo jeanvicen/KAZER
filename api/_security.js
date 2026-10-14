@@ -6,6 +6,8 @@ const crypto = require("node:crypto");
 
 const rateBuckets = new Map();
 const MAX_RATE_BUCKETS = 5000;
+const RATE_BUCKET_SWEEP_INTERVAL_MS = 5000;
+let lastRateBucketSweepAt = 0;
 const DEFAULT_AUTH_TIMEOUT_MS = 5000;
 // A anon key é pública por definição e também é usada pelo frontend. O servidor
 // continua exigindo o token Bearer do usuário; nunca usa service_role como fallback.
@@ -128,30 +130,52 @@ async function authenticateUser(request) {
   }
 }
 
+function sweepExpiredRateBuckets(now) {
+  if (now - lastRateBucketSweepAt < RATE_BUCKET_SWEEP_INTERVAL_MS) return;
+  lastRateBucketSweepAt = now;
+  for (const [candidateKey, candidate] of rateBuckets) {
+    const candidateWindowMs = Math.max(1, Number(candidate.windowMs) || 60_000);
+    if (now - candidate.startedAt >= candidateWindowMs) rateBuckets.delete(candidateKey);
+  }
+}
+
 function rateLimit(request, bucketName, { limit, windowMs = 60_000, identity = "" } = {}) {
   const now = Date.now();
+  const safeWindowMs = Math.max(1, Math.floor(Number(windowMs) || 60_000));
   const key = `${bucketName}:${identity || getClientIp(request)}`;
   let bucket = rateBuckets.get(key);
-  if (!bucket || now - bucket.startedAt >= windowMs) {
-    bucket = { startedAt: now, count: 0 };
+  if (bucket && now - bucket.startedAt >= (Number(bucket.windowMs) || safeWindowMs)) {
+    rateBuckets.delete(key);
+    bucket = null;
+  }
+
+  if (!bucket && rateBuckets.size >= MAX_RATE_BUCKETS) {
+    sweepExpiredRateBuckets(now);
+    if (rateBuckets.size >= MAX_RATE_BUCKETS) {
+      return {
+        allowed: false,
+        limit,
+        remaining: 0,
+        resetAt: Math.ceil((now + safeWindowMs) / 1000),
+        retryAfter: Math.max(1, Math.ceil(safeWindowMs / 1000)),
+      };
+    }
+  }
+
+  if (!bucket) {
+    bucket = { startedAt: now, count: 0, windowMs: safeWindowMs };
     rateBuckets.set(key, bucket);
   }
   bucket.count += 1;
 
-  if (rateBuckets.size > MAX_RATE_BUCKETS) {
-    for (const [candidateKey, candidate] of rateBuckets) {
-      if (now - candidate.startedAt >= windowMs) rateBuckets.delete(candidateKey);
-    }
-  }
-
   const remaining = Math.max(0, limit - bucket.count);
-  const resetAt = Math.ceil((bucket.startedAt + windowMs) / 1000);
+  const resetAt = Math.ceil((bucket.startedAt + bucket.windowMs) / 1000);
   return {
     allowed: bucket.count <= limit,
     limit,
     remaining,
     resetAt,
-    retryAfter: Math.max(1, Math.ceil((bucket.startedAt + windowMs - now) / 1000)),
+    retryAfter: Math.max(1, Math.ceil((bucket.startedAt + bucket.windowMs - now) / 1000)),
   };
 }
 
@@ -226,4 +250,5 @@ module.exports = {
   supabaseBaseUrl,
   timingSafeEqualText,
 };
+
 

@@ -27,7 +27,7 @@ A auditoria npm deve ser conferida por execução/commit. Na execução CI de `0
 | **Execução local e Browser Agent** | Valores `command` de MCP local não foram executados na auditoria. Computer KAZER aparenta planejamento, sem runner de produção encontrado. O Chromium de pesquisa pode ser lançado com `--no-sandbox`; a configuração efetiva do deployment não foi confirmada. |
 | **OAuth GitHub** | O escopo `repo` é amplo, mas necessário para descoberta/contexto de repositórios privados; não remover essa funcionalidade sem alternativa. Não foi observada revogação remota do token ao desconectar; expiração do token não foi confirmada. O estado assinado pode ser aceito sem cookie em compatibilidade mobile. Testar ciclo de vida e informar claramente o comportamento. |
 | **CSP** | `'unsafe-inline'` permanece; há blocos inline em login/chat/documentos e preview HTML gerado dentro de iframe sandbox. Removê-lo diretamente pode quebrar funcionalidades. Migrar por etapas (nonce/hash/externos) com testes antes de apertar a política. |
-| **Rate limits** | Limites são mantidos em `Map` em memória por processo, não compartilhados globalmente entre instâncias serverless; `MAX_RATE_BUCKETS` não é limite rígido de memória. Usar storage distribuído e quotas do provedor se a escala/riscos justificarem. |
+| **Rate limits** | O `Map` local continua isolado por instância serverless, portanto não substitui limite distribuído. O código agora remove buckets expirados e aplica `MAX_RATE_BUCKETS` como teto: quando a capacidade está cheia, novas identidades recebem bloqueio temporário até haver espaço, sem interromper buckets existentes. Avaliar storage distribuído e quotas do provedor se a escala/riscos justificarem. |
 | **Logs** | Alguns caminhos de erro podem registrar texto bruto vindo de provider ou banco. Isso é risco de exposição de conteúdo/diagnóstico; não há evidência nesta revisão de que segredos tenham sido efetivamente registrados. Redigir/normalizar mensagens e revisar retenção de logs. |
 | **Retenção e chaves operacionais** | RLS, secrets, cron, backups, HTTPS, variáveis Vercel e estado das migrações dependem também da configuração externa e não foram confirmados em produção. A exclusão de contas é irreversível; manter desativada até validar backup/restore e procedimento operacional. |
 
@@ -40,3 +40,4 @@ A revisão de 6 out. não acessou dados/schema de produção nem aplicou migraç
 ## Relato responsável
 
 Não inclua tokens, URLs assinadas ou dados de usuário em issues públicas. Encaminhe achados de segurança pelos canais privados indicados pelo projeto/organização e preserve evidências sem expor dados pessoais.
+

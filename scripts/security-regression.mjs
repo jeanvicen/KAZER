@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { createRequire } from "node:module";
 const require = createRequire(import.meta.url);
-const { authenticateUser, redactSensitiveText } = require("../api/_security.js");
+const { authenticateUser, rateLimit, redactSensitiveText } = require("../api/_security.js");
 
 const originalEnv = { SUPABASE_URL: process.env.SUPABASE_URL, SUPABASE_ANON_KEY: process.env.SUPABASE_ANON_KEY, SUPABASE_KEY: process.env.SUPABASE_KEY };
 const originalFetch = globalThis.fetch;
@@ -69,4 +69,28 @@ try {
   }
 }
 
-console.log("security-regression: OK — authentication timers are cleared on network and body failures.");
+const rateLimitRequest = { headers: {} };
+for (let index = 0; index < 5000; index += 1) {
+  const result = rateLimit(rateLimitRequest, "capacity-regression", {
+    limit: 2,
+    windowMs: 60_000,
+    identity: `capacity-user-${index}`,
+  });
+  assert.equal(result.allowed, true, `bucket ${index} should fit within the configured memory cap`);
+}
+const overflowResult = rateLimit(rateLimitRequest, "capacity-regression", {
+  limit: 2,
+  windowMs: 60_000,
+  identity: "capacity-overflow-user",
+});
+assert.equal(overflowResult.allowed, false, "new identities must fail closed when all rate-limit buckets are occupied");
+assert.equal(overflowResult.remaining, 0, "overflow must report no remaining requests");
+const knownIdentityResult = rateLimit(rateLimitRequest, "capacity-regression", {
+  limit: 2,
+  windowMs: 60_000,
+  identity: "capacity-user-0",
+});
+assert.equal(knownIdentityResult.allowed, true, "existing identities must keep working while the map is full");
+
+console.log("security-regression: OK — auth timers clear and rate-limit buckets stay bounded.");
+

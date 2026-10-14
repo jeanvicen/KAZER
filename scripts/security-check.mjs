@@ -8,7 +8,7 @@ const failures = [];
 const read = (path) => readFile(join(root, path), "utf8");
 const assert = (condition, message) => { if (!condition) failures.push(message); };
 
-const [chat, login, chatApi, instructions, brain, researchApi, researchOrchestrator, retentionApi, securityApi, vercel, sql001, sql003, sql004, sql010, sql016, sql017, envExample] = await Promise.all([
+const [chat, login, chatApi, instructions, brain, researchApi, researchOrchestrator, retentionApi, securityApi, vercel, sql001, sql003, sql004, sql010, sql016, sql017, envExample, inspectorNote] = await Promise.all([
   read("interface/chat.html"),
   read("interface/login.html"),
   read("api/chat.js"),
@@ -26,6 +26,7 @@ const [chat, login, chatApi, instructions, brain, researchApi, researchOrchestra
   read("database/supabase/016_security_rls_rpc_cleanup.sql"),
   read("database/supabase/017_notification_retention.sql"),
   read(".env.example"),
+  read("interface/kazer-inspector-note.js"),
 ]);
 
 for (const [name, value] of [["chat.html", chat], ["login.html", login]]) {
@@ -54,6 +55,8 @@ for (const expected of ["content-security-policy", "strict-transport-security", 
 }
 assert(vercel.includes("upgrade-insecure-requests"), "vercel.json: HTTPS não é forçado pela CSP");
 assert(vercel.includes('"X-Frame-Options", "value": "DENY"'), "vercel.json: framing não está negado");
+assert(chat.includes('/interface/kazer-inspector-note.js') && login.includes('/interface/kazer-inspector-note.js'), "telas de chat/login sem mensagem de inspeção");
+assert(inspectorNote.includes("console.info") && inspectorNote.includes("Achou, né?") && inspectorNote.includes("não cole códigos desconhecidos"), "mensagem do console sem aviso contra self-XSS");
 const publicApiFiles = readdirSync(join(root, "api")).filter((name) => name.endsWith(".js") && !name.startsWith("_"));
 assert(publicApiFiles.length <= 12, `Vercel Hobby: ${publicApiFiles.length} funções públicas detectadas; máximo permitido: 12`);
 
@@ -80,7 +83,7 @@ assert(terms.includes("Propriedade intelectual") && terms.includes("Nenhum direi
 assert(copyrightNotice.includes("Aviso de direitos autorais") && copyrightNotice.includes("Não há licença open source"), "Aviso autoral incompleto");
 assert(dependabot.includes("package-ecosystem: npm"), "Dependabot sem acompanhamento de npm");
 
-const syntaxTargets = ["api/_security.js", "api/_research-browser.js", "api/_research-orchestrator.js", "api/research.js", "api/_kazer-brain.js", "api/_kazer-data.js", "api/_github.js", "api/_mcp-runtime.js", "api/_usage.js", "api/_github-connect-handler.js", "api/_github-callback-handler.js", "api/_github-status-handler.js", "api/_github-repos-handler.js", "api/_github-disconnect-handler.js", "api/_mcp-handler.js", "api/_tasks-handler.js", "api/chat.js", "api/github.js", "api/workspace.js", "api/retention.js", "download/sw.js"];
+const syntaxTargets = ["interface/kazer-inspector-note.js", "api/_security.js", "api/_research-browser.js", "api/_research-orchestrator.js", "api/research.js", "api/_kazer-brain.js", "api/_kazer-data.js", "api/_github.js", "api/_mcp-runtime.js", "api/_usage.js", "api/_github-connect-handler.js", "api/_github-callback-handler.js", "api/_github-status-handler.js", "api/_github-repos-handler.js", "api/_github-disconnect-handler.js", "api/_mcp-handler.js", "api/_tasks-handler.js", "api/chat.js", "api/github.js", "api/workspace.js", "api/retention.js", "download/sw.js"];
 for (const target of syntaxTargets) {
   try {
     execFileSync(process.execPath, ["--check", join(root, target)], { stdio: "pipe" });
@@ -104,3 +107,4 @@ if (failures.length) {
   process.exit(1);
 }
 console.log("security-check: OK — políticas, limites, headers, autenticação e padrões de segredo verificados.");
+
