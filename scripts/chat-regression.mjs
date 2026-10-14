@@ -87,7 +87,7 @@ assert(chatUi.includes("A mensagem que falhou continua sendo contexto válido"),
 assert(!chatUi.includes("conversationMessages.pop();"), "O frontend ainda descarta a mensagem que falhou");
 assert(!/voice|microphone|getUserMedia|SpeechRecognition|voiceButton/i.test(chatUi), "A interface ainda contém referências ao microfone");
 assert(!chatUi.includes("getUserMedia") && !chatUi.includes("SpeechRecognition"), "O JavaScript ainda tenta acessar o microfone");
-assert(chatUi.includes('data-settings-section="memory"') && chatUi.includes("memoryShareSwitch"), "Configurações ainda não expõem a memória local e seu controle de compartilhamento");
+assert(chatUi.includes('data-settings-section="memory"') && chatUi.includes('id="memoryScreen"') && chatUi.includes("openMemoryScreen(item)") && chatUi.includes("memoryShareSwitch") && !chatUi.includes('data-settings-panel="memory"'), "A memória deve abrir em uma tela própria a partir de um único item de Configurações");
 assert(!/nexoSkills|NEXO|MENTE|SKILLS/.test(chatUi), "A interface ainda contém a opção NEXO // MENTE & SKILLS");
 assert(!chatUi.includes("nexoSkillsButton.addEventListener"), "A opção NEXO // MENTE & SKILLS já possui uma ação antes da hora");
 assert(chatUi.includes("installProgress") && chatUi.includes("installCompletionTimer"), "A instalação não possui progresso nem timeout");
