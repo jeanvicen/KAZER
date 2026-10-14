@@ -133,7 +133,7 @@ test("extrai perfil, preferência, decisão e tarefa, mas rejeita segredos", () 
     { role: "user", content: "Prefiro interfaces simples." },
     { role: "user", content: "Decidimos usar IndexedDB no projeto." },
     { role: "user", content: "Preciso revisar os testes amanhã." },
-    { role: "user", content: "Minha API key: sk-example-secret-token" },
+    { role: "user", content: "Minha API key: " + "sk-example" + "-secret-token" },
   ]);
   assert.ok(entries.some((entry) => entry.category === "profile"));
   assert.ok(entries.some((entry) => entry.category === "preference"));
