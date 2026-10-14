@@ -40,6 +40,19 @@ Somam. Não substituem as de cima. Licença e ordem em [PESQUISA-2026-10-13.md](
 24. **Antes / depois** — duas fotos locais, um controle CSS.
 25. **Semana de posts** — sete linhas do Brain que já existe.
 
+## Peças de 14 de outubro (plano, ainda não no ar)
+
+Somam. Não substituem as de cima. Licença e ordem em [PESQUISA-2026-10-14.md](PESQUISA-2026-10-14.md).
+
+26. **Assinatura de e-mail** — tabela HTML para colar no Gmail. Não hospeda foto e não é a assinatura desenhada no papel.
+27. **Certificado de oficina** — nome, oficina e data. Não é diploma.
+28. **Rampa de cor** — culori (MIT), hex e OKLCH. O par de contraste da peça 12 continua.
+29. **Folha de gráfica** — marca de corte, sangria de 3 mm, px ↔ mm. É a margem, não o cardápio.
+30. **Grade 3×3** — nove fotos locais, um PNG. Não publica e não é o carrossel.
+31. **Prancha** — quadro de referência no aparelho. Não é o antes/depois.
+32. **Quanto cobrar** — hora, material e margem. Não é o contador.
+33. **Vale da banca** — código local impresso. Não é cupom fiscal.
+
 ## Direção de arte (já documentada)
 
 O visual do Brain continua em [`docs/visual-system.md`](../docs/visual-system.md): `kazer-svg` e `kazer-html`, composição com foco, sem cartão repetido. O ateliê só **reutiliza** essa linguagem.
@@ -51,3 +64,5 @@ O visual do Brain continua em [`docs/visual-system.md`](../docs/visual-system.md
 - Não pedir cartão para baixar SVG.
 - Não guardar a chave Pix do usuário no servidor.
 - Não guardar senha de Wi-Fi nem o traço da assinatura no servidor.
+- Não guardar lista de alunos, preço do cliente nem código de vale no servidor.
+- Não hospedar a foto da assinatura de e-mail.

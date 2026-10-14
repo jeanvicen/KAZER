@@ -27,6 +27,8 @@ Cartão internacional + IOF mata MEI. PIX em reais é o caminho.
 
 Conferido de novo em 13/10/2026 na [página de preços](https://www.abacatepay.com/pricing): Pix continua R$ 0,80, sem mensalidade. Cartão à vista 3,5% + R$ 0,60; 2x a 6x passa a 4% + R$ 0,60; 7x a 12x passa a 4,5% + R$ 0,60. No plano de R$ 29 o Pix segue mais barato. Parcelar no cartão não entra no plano livre.
 
+Conferido de novo em 14/10/2026 na mesma página: Pix, saque e cartão iguais ao dia 13. A página também publica saque mínimo de R$ 3,50 e TED a R$ 5,00. Nenhum dos dois entra no plano livre. Continua sem mensalidade.
+
 ## Outras entradas a custo zero
 
 - **Afiliado** — indicar Canva / Recraft / hospedagem para quem quiser GPU; o KAZER fica no SVG grátis.
@@ -34,6 +36,7 @@ Conferido de novo em 13/10/2026 na [página de preços](https://www.abacatepay.c
 - **PWA** — distribuição sem loja, sem 30%.
 - **BYOK** — o Pro paga a interface; o token gordo é do cliente.
 - **Selo que viaja** — etiqueta, cardápio, figurinha e story do plano livre saem com “feito no KAZER”. Quem paga o Pro tira o selo e coloca o logo da própria banca. A casa não paga anúncio. Detalhe em [PESQUISA-2026-10-13.md](PESQUISA-2026-10-13.md).
+- **Assinatura e certificado que viajam** — o HTML de e-mail e o certificado de oficina do plano livre saem com o mesmo selo. Cada e-mail e cada aluno carregam o nome, sem a casa pagar impulsionamento. O Pro tira o selo. Detalhe em [PESQUISA-2026-10-14.md](PESQUISA-2026-10-14.md).
 
 ## O que não fazer
 

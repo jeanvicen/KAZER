@@ -59,3 +59,18 @@ Não substitui as tabelas acima. Detalhe, licença e o que não é nota fiscal e
 | Anotador de print | Captura anotada é paga | Seta e tarja na foto local |
 | Cartão PT · JP | Gráfica | Duas faces no aparelho |
 | Semana de posts | Agenda de social paga | O Brain atual devolve sete linhas |
+
+## Soma de 14 de outubro
+
+Não substitui as tabelas acima. Detalhe, licença e o que não é diploma nem cupom fiscal em [PESQUISA-2026-10-14.md](PESQUISA-2026-10-14.md).
+
+| Ferramenta | Por que pagam lá fora | Como o KAZER faz a R$ 0 |
+|---|---|---|
+| Assinatura de e-mail | WiseStamp Pro+ a partir de US$ 9/mês | HTML de tabela, no aparelho. Sem hospedar foto |
+| Certificado de oficina | Modelo no Canva Pro | HTML para imprimir. Não é diploma |
+| Rampa de cor | Sistema de cor travado na exportação | culori (MIT): hex, OKLCH e CSS |
+| Folha de gráfica | Sangria cobrada de novo pela gráfica | SVG com marca de corte e 3 mm |
+| Grade 3×3 | Planoly Starter US$ 14–16/mês | Nove fotos locais, um PNG. Não publica |
+| Prancha | Milanote US$ 9,99/mês no anual | Quadro no aparelho. Arquivo não sobe |
+| Quanto cobrar | Planilha de precificação | Conta local. Não é o contador |
+| Vale da banca | App de fidelidade com mensalidade | Código no celular. Não é cupom fiscal |
