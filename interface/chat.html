@@ -4967,6 +4967,7 @@
     </style>
     <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300..800&family=Geist+Mono:wght@400;500;600&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="/interface/kazer-premium.css?v=20261005b" />
+    <link rel="stylesheet" href="/interface/kazer-memory.css?v=20261013" />
     <script>
       window.setTimeout(() => {
         const fallbackApp = document.getElementById("app");
@@ -5094,6 +5095,7 @@
           <nav class="settings-nav-list" aria-label="Categorias de configurações">
             <button class="settings-nav-item active" type="button" data-settings-section="general"><span class="settings-nav-icon settings-nav-icon-text" aria-hidden="true">◌</span><span class="settings-nav-icon settings-nav-icon-svg" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6 7 7M17 17l1.4 1.4M18.4 5.6 17 7M7 17l-1.4 1.4"></path><circle cx="12" cy="12" r="3.5"></circle></svg></span><span>Geral</span></button>
             <button class="settings-nav-item" type="button" data-settings-section="data"><span class="settings-nav-icon settings-nav-icon-text" aria-hidden="true">▣</span><span class="settings-nav-icon settings-nav-icon-svg" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="10" rx="2"></rect><path d="M8 11V8a4 4 0 0 1 8 0v3"></path></svg></span><span>Dados e privacidade</span></button>
+            <button class="settings-nav-item" type="button" data-settings-section="memory"><span class="settings-nav-icon settings-nav-icon-text" aria-hidden="true">◉</span><span class="settings-nav-icon settings-nav-icon-svg" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a9 9 0 1 0 9 9"></path><path d="M12 7v5l3 2"></path><circle cx="18.5" cy="5.5" r="2.5"></circle></svg></span><span>Memória</span></button>
             <button class="settings-nav-item" type="button" data-settings-section="documents"><span class="settings-nav-icon settings-nav-icon-text" aria-hidden="true">▤</span><span class="settings-nav-icon settings-nav-icon-svg" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h9l3 3v15H6z"></path><path d="M14 3v4h4M9 12h6M9 16h6"></path></svg></span><span>Documentos</span></button>
             <button class="settings-nav-item" type="button" data-settings-section="account"><span class="settings-nav-icon settings-nav-icon-text" aria-hidden="true">◎</span><span class="settings-nav-icon settings-nav-icon-svg" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 20 6v5c0 4.8-3.2 8.5-8 10-4.8-1.5-8-5.2-8-10V6l8-3Z"></path><path d="m8.6 12 2.2 2.2 4.7-4.7"></path></svg></span><span>Conta e segurança</span></button>
           </nav>
@@ -5115,6 +5117,27 @@
             <section class="settings-section" data-settings-panel="data" hidden>
               <p class="settings-section-intro">Gerencie as preferências salvas neste navegador.</p>
               <div class="settings-group"><div class="settings-group-title" role="heading" aria-level="2">Dados locais</div><button class="settings-action-row" id="clearLocalData" type="button"><span><strong>Limpar preferências locais</strong><small>Remove tema e opções salvas neste navegador.</small></span><span class="settings-row-arrow">›</span></button></div>
+            </section>
+            <section class="settings-section" data-settings-panel="memory" hidden>
+              <p class="settings-section-intro">Suas memórias são armazenadas neste dispositivo, separadas por conta e criptografadas com AES-256-GCM no navegador. O KAZER não envia memória para armazenamento central.</p>
+              <div class="memory-privacy-note" role="note"><strong>Privacidade local</strong><span>Por padrão, trechos de memória não são enviados à IA. Se você autorizar o uso nas respostas, apenas os trechos relevantes serão enviados junto com a mensagem ao serviço de IA remoto. O modo privado pausa a recuperação contextual para respostas, o compartilhamento e novas gravações, sem apagar memórias existentes; você ainda pode consultar e gerenciar a biblioteca local.</span></div>
+              <div class="settings-group memory-preferences">
+                <div class="settings-group-title" role="heading" aria-level="2">Privacidade e uso</div>
+                <div class="settings-control"><div><strong>Modo privado</strong><small>Não recupera memórias para contextualizar respostas, não compartilha com a IA e pausa novas gravações nesta sessão.</small></div><button class="switch" id="memoryPrivateSwitch" type="button" aria-label="Alternar modo privado" aria-pressed="false"></button></div>
+                <div class="settings-control"><div><strong>Usar memórias nas respostas</strong><small>Autoriza o envio de trechos relevantes junto às mensagens para gerar respostas contextualizadas. Desativado por padrão.</small></div><button class="switch" id="memoryShareSwitch" type="button" aria-label="Autorizar o uso de memórias nas respostas" aria-pressed="false"></button></div>
+              </div>
+              <div class="settings-group memory-library-group">
+                <div class="settings-group-title memory-list-heading"><span>Memórias salvas</span><span id="memoryCount" aria-live="polite">0 memórias salvas</span></div>
+                <div class="memory-toolbar"><label class="memory-search-field"><span class="sr-only">Buscar memórias</span><input id="memorySearch" type="search" placeholder="Buscar memórias…" autocomplete="off" /></label><label class="memory-filter-field"><span class="sr-only">Filtrar categoria</span><select id="memoryCategoryFilter"><option value="all">Todas as categorias</option><option value="profile">Perfil</option><option value="preference">Preferências</option><option value="decision">Decisões</option><option value="task">Tarefas</option><option value="conversation">Conversas</option><option value="fact">Fatos</option></select></label></div>
+                <div class="memory-list" id="memoryList" role="list" aria-live="polite"><p class="memory-empty">Entre na sua conta para abrir as memórias locais.</p></div>
+              </div>
+              <div class="settings-group memory-actions-group">
+                <div class="settings-group-title" role="heading" aria-level="2">Backup e gestão</div>
+                <div class="memory-export-actions"><button class="memory-secondary-button is-primary" id="memoryExportJson" type="button">Baixar JSON</button><button class="memory-secondary-button" id="memoryExportMarkdown" type="button">Baixar Markdown</button><button class="memory-secondary-button" id="memoryImportButton" type="button">Importar/restaurar</button><input id="memoryImportFile" type="file" accept=".json,.md,application/json,text/markdown,text/plain" hidden /></div>
+                <p class="memory-backup-warning">Os arquivos exportados contêm suas memórias em texto legível. Guarde-os em local seguro. O navegador não permite ler arquivos do dispositivo sem você selecioná-los.</p>
+                <button class="settings-action-row memory-clear-action" id="memoryClearAll" type="button"><span><strong>Apagar toda a memória</strong><small>Remove as memórias criptografadas e a chave local deste dispositivo.</small></span><span class="settings-row-arrow">›</span></button>
+              </div>
+              <p class="memory-status" id="memoryStatus" role="status" aria-live="polite">A memória ainda não foi inicializada.</p>
             </section>
             <section class="settings-section" data-settings-panel="documents" hidden>
               <p class="settings-section-intro">Consulte os documentos públicos do Kazer em uma única página.</p>
@@ -5344,6 +5367,8 @@
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="/interface/web-search-intent.js"></script>
+    <script src="/interface/kazer-memory.js?v=20261013"></script>
+    <script src="/interface/kazer-memory-ui.js?v=20261013"></script>
     <script>
       (() => {
         const app = document.getElementById("app");
@@ -5934,6 +5959,7 @@
           }
           currentUser = sessionResult.data.session.user;
           releaseChat();
+          try { await window.KazerMemoryUI?.initialize(currentUser.id); } catch { /* memória é local e não pode bloquear a abertura do chat */ }
           const safeQuery = (query) => Promise.race([
             query,
             new Promise((resolve) => window.setTimeout(() => resolve({ data: null, error: { message: "timeout" } }), 2500))
@@ -6181,7 +6207,7 @@
           profileMoreToggle?.setAttribute("aria-expanded", "false");
         };
 
-        const settingsLabels = { general: "Geral", data: "Dados e privacidade", documents: "Documentos", account: "Conta e segurança" };
+        const settingsLabels = { general: "Geral", data: "Dados e privacidade", memory: "Memória", documents: "Documentos", account: "Conta e segurança" };
         const isMobileSettingsViewport = () => window.matchMedia?.("(max-width: 680px)").matches ?? window.innerWidth <= 680;
 
         const setSwitch = (element, value) => {
@@ -8307,6 +8333,42 @@
           reader.readAsDataURL(file);
         });
 
+        const buildMemoryRequestMessages = async (prompt, allowMemory) => {
+          const messages = conversationMessages.map((message) => ({ role: message.role, content: message.content }));
+          if (!allowMemory) return messages;
+          const store = window.KazerMemoryUI?.getStore?.();
+          if (!store) return messages;
+          try {
+            const latestUserIndex = (() => { for (let index = messages.length - 1; index >= 0; index -= 1) if (messages[index].role === "user") return index; return -1; })();
+            if (latestUserIndex < 0) return messages;
+            const currentLength = messages[latestUserIndex].content.length;
+            const budget = Math.min(1400, 7800 - currentLength);
+            if (budget < 240) return messages;
+            const context = await store.contextFor(prompt, { limit: 5, maxChars: budget });
+            const latestPrefs = await store.getPreferences();
+            if (!latestPrefs.privateMode && latestPrefs.shareContext && context && messages[latestUserIndex].content.length + context.length <= 8000) {
+              messages[latestUserIndex].content += context;
+            }
+          } catch { /* consulta local indisponível: a mensagem continua sem memória */ }
+          return messages;
+        };
+
+        const saveLocalConversationMemory = async (messages, chatId) => {
+          const store = window.KazerMemoryUI?.getStore?.();
+          const memoryCore = window.KazerMemoryCore;
+          if (!store || !memoryCore) return;
+          try {
+            const prefs = await store.getPreferences();
+            if (prefs.privateMode) return;
+            for (const entry of memoryCore.extractMemories(messages)) await store.save(entry);
+            const summary = memoryCore.summarizeConversation(messages, chatId);
+            if (summary) await store.save(summary);
+            await window.KazerMemoryUI.refresh();
+          } catch (error) {
+            console.warn("Kazer local memory save failed", error?.message || "unavailable");
+          }
+        };
+
         const submit = async () => {
           if (busy) return;
           const text = messageInput.value.trim();
@@ -8379,10 +8441,11 @@
             }
             setMessageAttachmentStatus(userRow, "uploading");
             let data = {};
+            const requestMessages = await buildMemoryRequestMessages(prompt, !useWebResearch);
             if (!needsForegroundConnector) {
               const taskInput = useWebResearch
                 ? { query: webResearchRequest.query, question: webResearchRequest.question, billingQuery: prompt, mode: "web" }
-                : { messages: conversationMessages, attachments, mcpConnectorIds: [], githubRepo };
+                : { messages: requestMessages, attachments, mcpConnectorIds: [], githubRepo };
               const taskResponse = await fetchWithAuth("/api/background-tasks", {
                 method: "POST",
                 body: JSON.stringify({
@@ -8426,7 +8489,7 @@
                   })
                 : await fetchWithAuth("/api/chat", {
                     method: "POST",
-                    body: JSON.stringify({ messages: conversationMessages, attachments, mcpConnectorIds, githubRepo }),
+                    body: JSON.stringify({ messages: requestMessages, attachments, mcpConnectorIds, githubRepo }),
                     signal: controller.signal,
                   });
               data = await result.json().catch(() => ({}));
@@ -8465,6 +8528,7 @@
             await revealAssistantMessage(assistantRow, answer.trim(), controller.signal);
             conversationMessages.push({ role: "assistant", content: answer.trim(), ...(backgroundTaskIdForMessage ? { backgroundTaskId: backgroundTaskIdForMessage } : {}) });
             saveChatMessages(chatId, conversationMessages);
+            await saveLocalConversationMemory(conversationMessages, chatId);
             updateChatSearchText(chatId, answer.trim());
             if (conversationMessages.length === 2) generateChatTitle(chatId, conversationMessages.slice(), controller.signal);
             if (taskContext) window.kazerWorkspace?.finishTask?.(taskContext, answer.trim(), data.credit_cost);
@@ -8788,6 +8852,7 @@
           closeAccountScreen(false);
           closeSettingsModal();
           closeMenus();
+          window.KazerMemoryUI?.close();
           try { await kazerSupabase?.auth.signOut(); } catch (error) { console.warn("Kazer logout failed", error); }
           window.setTimeout(() => {
             const openedFromInterfaceFolder = window.location.pathname.includes("/interface/");
