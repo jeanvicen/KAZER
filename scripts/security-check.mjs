@@ -56,7 +56,7 @@ for (const expected of ["content-security-policy", "strict-transport-security", 
 assert(vercel.includes("upgrade-insecure-requests"), "vercel.json: HTTPS não é forçado pela CSP");
 assert(vercel.includes('"X-Frame-Options", "value": "DENY"'), "vercel.json: framing não está negado");
 assert(chat.includes('/interface/kazer-inspector-note.js') && login.includes('/interface/kazer-inspector-note.js'), "telas de chat/login sem mensagem de inspeção");
-assert(inspectorNote.includes("console.info") && inspectorNote.includes("Achou, né?") && inspectorNote.includes("não cole códigos desconhecidos"), "mensagem do console sem aviso contra self-XSS");
+assert(inspectorNote.includes("console.info") && inspectorNote.includes("Achou, né?") && inspectorNote.includes("Não cole códigos desconhecidos"), "mensagem do console sem aviso contra self-XSS");
 const publicApiFiles = readdirSync(join(root, "api")).filter((name) => name.endsWith(".js") && !name.startsWith("_"));
 assert(publicApiFiles.length <= 12, `Vercel Hobby: ${publicApiFiles.length} funções públicas detectadas; máximo permitido: 12`);
 
