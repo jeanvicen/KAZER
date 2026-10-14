@@ -1,7 +1,9 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { webcrypto } from "node:crypto";
-import { KazerMemory, extractMemories, summarizeConversation } from "../interface/kazer-memory.js";
+import { createRequire } from "node:module";
+const require = createRequire(import.meta.url);
+const { KazerMemory, extractMemories, summarizeConversation } = require("../interface/kazer-memory.js");
 
 // Shared state models persistent IndexedDB across fresh page/module instances.
 const databases = new Map();
