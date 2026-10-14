@@ -87,11 +87,12 @@ assert(chatUi.includes("A mensagem que falhou continua sendo contexto válido"),
 assert(!chatUi.includes("conversationMessages.pop();"), "O frontend ainda descarta a mensagem que falhou");
 assert(!/voice|microphone|getUserMedia|SpeechRecognition|voiceButton/i.test(chatUi), "A interface ainda contém referências ao microfone");
 assert(!chatUi.includes("getUserMedia") && !chatUi.includes("SpeechRecognition"), "O JavaScript ainda tenta acessar o microfone");
-assert(!/nexoSkills|NEXO|MENTE|SKILLS|memory|memories|Memória|memórias/.test(chatUi), "A interface ainda contém memória ou NEXO // MENTE & SKILLS");
+assert(chatUi.includes('data-settings-section="memory"') && chatUi.includes("memoryShareSwitch"), "Configurações ainda não expõem a memória local e seu controle de compartilhamento");
+assert(!/nexoSkills|NEXO|MENTE|SKILLS/.test(chatUi), "A interface ainda contém a opção NEXO // MENTE & SKILLS");
 assert(!chatUi.includes("nexoSkillsButton.addEventListener"), "A opção NEXO // MENTE & SKILLS já possui uma ação antes da hora");
 assert(chatUi.includes("installProgress") && chatUi.includes("installCompletionTimer"), "A instalação não possui progresso nem timeout");
 assert(chatUi.includes('fetch("/download/android/kazer.apk"') && chatUi.includes('link.download = "kazer.apk"'), "O botão não baixa o APK real");
 assert(chatUi.includes("appinstalled") && chatUi.includes("setInstallProgress(100"), "A instalação não confirma conclusão real");
 assert(chatUi.includes(".slice(-72)"), "O histórico local ainda é cortado cedo demais ao salvar a conversa");
 assert(apk.length > 500000 && apk.subarray(0, 2).toString() === "PK", "O APK release publicado não é um pacote Android válido");
-console.log("chat-regression: OK — normalização de conteúdo do provider, contexto, anexos, assinatura, instalação, memória e NEXO removidos, e microfone verificados.");
+console.log("chat-regression: OK — normalização de conteúdo do provider, contexto, anexos, assinatura, instalação, controles da memória local, opção legada NEXO e microfone verificados.");
