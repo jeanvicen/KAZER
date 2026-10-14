@@ -5095,7 +5095,7 @@
           <nav class="settings-nav-list" aria-label="Categorias de configurações">
             <button class="settings-nav-item active" type="button" data-settings-section="general"><span class="settings-nav-icon settings-nav-icon-text" aria-hidden="true">◌</span><span class="settings-nav-icon settings-nav-icon-svg" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6 7 7M17 17l1.4 1.4M18.4 5.6 17 7M7 17l-1.4 1.4"></path><circle cx="12" cy="12" r="3.5"></circle></svg></span><span>Geral</span></button>
             <button class="settings-nav-item" type="button" data-settings-section="data"><span class="settings-nav-icon settings-nav-icon-text" aria-hidden="true">▣</span><span class="settings-nav-icon settings-nav-icon-svg" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="10" rx="2"></rect><path d="M8 11V8a4 4 0 0 1 8 0v3"></path></svg></span><span>Dados e privacidade</span></button>
-            <button class="settings-nav-item" type="button" data-settings-section="memory"><span class="settings-nav-icon settings-nav-icon-text" aria-hidden="true">◉</span><span class="settings-nav-icon settings-nav-icon-svg" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a9 9 0 1 0 9 9"></path><path d="M12 7v5l3 2"></path><circle cx="18.5" cy="5.5" r="2.5"></circle></svg></span><span>Memória</span></button>
+            <button class="settings-nav-item" type="button" data-settings-section="memory"><span class="settings-nav-icon settings-nav-icon-text" aria-hidden="true">◉</span><span class="settings-nav-icon settings-nav-icon-svg" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a9 9 0 1 0 9 9"></path><path d="M12 7v5l3 2"></path><circle cx="18.5" cy="5.5" r="2.5"></circle></svg></span><span>Memórias</span></button>
             <button class="settings-nav-item" type="button" data-settings-section="documents"><span class="settings-nav-icon settings-nav-icon-text" aria-hidden="true">▤</span><span class="settings-nav-icon settings-nav-icon-svg" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h9l3 3v15H6z"></path><path d="M14 3v4h4M9 12h6M9 16h6"></path></svg></span><span>Documentos</span></button>
             <button class="settings-nav-item" type="button" data-settings-section="account"><span class="settings-nav-icon settings-nav-icon-text" aria-hidden="true">◎</span><span class="settings-nav-icon settings-nav-icon-svg" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 20 6v5c0 4.8-3.2 8.5-8 10-4.8-1.5-8-5.2-8-10V6l8-3Z"></path><path d="m8.6 12 2.2 2.2 4.7-4.7"></path></svg></span><span>Conta e segurança</span></button>
           </nav>
@@ -5117,27 +5117,6 @@
             <section class="settings-section" data-settings-panel="data" hidden>
               <p class="settings-section-intro">Gerencie as preferências salvas neste navegador.</p>
               <div class="settings-group"><div class="settings-group-title" role="heading" aria-level="2">Dados locais</div><button class="settings-action-row" id="clearLocalData" type="button"><span><strong>Limpar preferências locais</strong><small>Remove tema e opções salvas neste navegador.</small></span><span class="settings-row-arrow">›</span></button></div>
-            </section>
-            <section class="settings-section" data-settings-panel="memory" hidden>
-              <p class="settings-section-intro">Suas memórias são armazenadas neste dispositivo, separadas por conta e criptografadas com AES-256-GCM no navegador. O KAZER não envia memória para armazenamento central.</p>
-              <div class="memory-privacy-note" role="note"><strong>Privacidade local</strong><span>Por padrão, trechos de memória não são enviados à IA. Se você autorizar o uso nas respostas, apenas os trechos relevantes serão enviados junto com a mensagem ao serviço de IA remoto. O modo privado pausa a recuperação contextual para respostas, o compartilhamento e novas gravações, sem apagar memórias existentes; você ainda pode consultar e gerenciar a biblioteca local.</span></div>
-              <div class="settings-group memory-preferences">
-                <div class="settings-group-title" role="heading" aria-level="2">Privacidade e uso</div>
-                <div class="settings-control"><div><strong>Modo privado</strong><small>Não recupera memórias para contextualizar respostas, não compartilha com a IA e pausa novas gravações nesta sessão.</small></div><button class="switch" id="memoryPrivateSwitch" type="button" aria-label="Alternar modo privado" aria-pressed="false"></button></div>
-                <div class="settings-control"><div><strong>Usar memórias nas respostas</strong><small>Autoriza o envio de trechos relevantes junto às mensagens para gerar respostas contextualizadas. Desativado por padrão.</small></div><button class="switch" id="memoryShareSwitch" type="button" aria-label="Autorizar o uso de memórias nas respostas" aria-pressed="false"></button></div>
-              </div>
-              <div class="settings-group memory-library-group">
-                <div class="settings-group-title memory-list-heading"><span>Memórias salvas</span><span id="memoryCount" aria-live="polite">0 memórias salvas</span></div>
-                <div class="memory-toolbar"><label class="memory-search-field"><span class="sr-only">Buscar memórias</span><input id="memorySearch" type="search" placeholder="Buscar memórias…" autocomplete="off" /></label><label class="memory-filter-field"><span class="sr-only">Filtrar categoria</span><select id="memoryCategoryFilter"><option value="all">Todas as categorias</option><option value="profile">Perfil</option><option value="preference">Preferências</option><option value="decision">Decisões</option><option value="task">Tarefas</option><option value="conversation">Conversas</option><option value="fact">Fatos</option></select></label></div>
-                <div class="memory-list" id="memoryList" role="list" aria-live="polite"><p class="memory-empty">Entre na sua conta para abrir as memórias locais.</p></div>
-              </div>
-              <div class="settings-group memory-actions-group">
-                <div class="settings-group-title" role="heading" aria-level="2">Backup e gestão</div>
-                <div class="memory-export-actions"><button class="memory-secondary-button is-primary" id="memoryExportJson" type="button">Baixar JSON</button><button class="memory-secondary-button" id="memoryExportMarkdown" type="button">Baixar Markdown</button><button class="memory-secondary-button" id="memoryImportButton" type="button">Importar/restaurar</button><input id="memoryImportFile" type="file" accept=".json,.md,application/json,text/markdown,text/plain" hidden /></div>
-                <p class="memory-backup-warning">Os arquivos exportados contêm suas memórias em texto legível. Guarde-os em local seguro. O navegador não permite ler arquivos do dispositivo sem você selecioná-los.</p>
-                <button class="settings-action-row memory-clear-action" id="memoryClearAll" type="button"><span><strong>Apagar toda a memória</strong><small>Remove as memórias criptografadas e a chave local deste dispositivo.</small></span><span class="settings-row-arrow">›</span></button>
-              </div>
-              <p class="memory-status" id="memoryStatus" role="status" aria-live="polite">A memória ainda não foi inicializada.</p>
             </section>
             <section class="settings-section" data-settings-panel="documents" hidden>
               <p class="settings-section-intro">Consulte os documentos públicos do Kazer em uma única página.</p>
@@ -5204,6 +5183,37 @@
             <button type="button" id="connectorCustomSubmit" disabled>Adicionar</button>
           </div>
         </div>
+      </section>
+
+      <section class="memory-screen" id="memoryScreen" role="dialog" aria-modal="true" aria-labelledby="memoryScreenTitle" aria-hidden="true" hidden>
+        <header class="memory-screen-head">
+          <button class="memory-screen-back" id="memoryScreenBack" type="button" aria-label="Voltar para Configurações"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"></path></svg></button>
+          <div class="memory-screen-heading"><span>MEMÓRIA LOCAL</span><h1 id="memoryScreenTitle">Memórias</h1></div>
+          <span class="memory-screen-spacer" aria-hidden="true"></span>
+        </header>
+        <main class="memory-screen-scroll">
+          <div class="memory-screen-inner">
+            <div class="memory-screen-intro"><h2>Seu contexto, sob seu controle.</h2><p>Consulte e gerencie o que o KAZER lembra de você. As memórias ficam neste dispositivo, separadas por conta e criptografadas com AES-256-GCM.</p></div>
+              <div class="memory-privacy-note" role="note"><strong>Privacidade local</strong><span>Por padrão, trechos de memória não são enviados à IA. Se você autorizar o uso nas respostas, apenas os trechos relevantes serão enviados junto com a mensagem ao serviço de IA remoto. O modo privado pausa a recuperação contextual para respostas, o compartilhamento e novas gravações, sem apagar memórias existentes; você ainda pode consultar e gerenciar a biblioteca local.</span></div>
+              <div class="settings-group memory-preferences">
+                <div class="settings-group-title" role="heading" aria-level="2">Privacidade e uso</div>
+                <div class="settings-control"><div><strong>Modo privado</strong><small>Não recupera memórias para contextualizar respostas, não compartilha com a IA e pausa novas gravações nesta sessão.</small></div><button class="switch" id="memoryPrivateSwitch" type="button" aria-label="Alternar modo privado" aria-pressed="false"></button></div>
+                <div class="settings-control"><div><strong>Usar memórias nas respostas</strong><small>Autoriza o envio de trechos relevantes junto às mensagens para gerar respostas contextualizadas. Desativado por padrão.</small></div><button class="switch" id="memoryShareSwitch" type="button" aria-label="Autorizar o uso de memórias nas respostas" aria-pressed="false"></button></div>
+              </div>
+              <div class="settings-group memory-library-group">
+                <div class="settings-group-title memory-list-heading"><span>Memórias salvas</span><span id="memoryCount" aria-live="polite">0 memórias salvas</span></div>
+                <div class="memory-toolbar"><label class="memory-search-field"><span class="sr-only">Buscar memórias</span><input id="memorySearch" type="search" placeholder="Buscar memórias…" autocomplete="off" /></label><label class="memory-filter-field"><span class="sr-only">Filtrar categoria</span><select id="memoryCategoryFilter"><option value="all">Todas as categorias</option><option value="profile">Perfil</option><option value="preference">Preferências</option><option value="decision">Decisões</option><option value="task">Tarefas</option><option value="conversation">Conversas</option><option value="fact">Fatos</option></select></label></div>
+                <div class="memory-list" id="memoryList" role="list" aria-live="polite"><p class="memory-empty">Entre na sua conta para abrir as memórias locais.</p></div>
+              </div>
+              <div class="settings-group memory-actions-group">
+                <div class="settings-group-title" role="heading" aria-level="2">Backup e gestão</div>
+                <div class="memory-export-actions"><button class="memory-secondary-button is-primary" id="memoryExportJson" type="button">Baixar JSON</button><button class="memory-secondary-button" id="memoryExportMarkdown" type="button">Baixar Markdown</button><button class="memory-secondary-button" id="memoryImportButton" type="button">Importar/restaurar</button><input id="memoryImportFile" type="file" accept=".json,.md,application/json,text/markdown,text/plain" hidden /></div>
+                <p class="memory-backup-warning">Os arquivos exportados contêm suas memórias em texto legível. Guarde-os em local seguro. O navegador não permite ler arquivos do dispositivo sem você selecioná-los.</p>
+                <button class="settings-action-row memory-clear-action" id="memoryClearAll" type="button"><span><strong>Apagar toda a memória</strong><small>Remove as memórias criptografadas e a chave local deste dispositivo.</small></span><span class="settings-row-arrow">›</span></button>
+              </div>
+              <p class="memory-status" id="memoryStatus" role="status" aria-live="polite">A memória ainda não foi inicializada.</p>
+          </div>
+        </main>
       </section>
 
       <section class="usage-screen" id="usageScreen" role="dialog" aria-modal="true" aria-labelledby="usageScreenTitle" aria-hidden="true" hidden>
@@ -5520,6 +5530,8 @@
         const settingsMobileAccountPhoto = document.getElementById("settingsMobileAccountPhoto");
         const settingsAccountOpen = document.getElementById("settingsAccountOpen");
         const settingsMobileUpgrade = document.getElementById("settingsMobileUpgrade");
+        const memoryScreen = document.getElementById("memoryScreen");
+        const memoryScreenBack = document.getElementById("memoryScreenBack");
         const usageScreen = document.getElementById("usageScreen");
         const usageBack = document.getElementById("usageBack");
         const usagePlanName = document.getElementById("usagePlanName");
@@ -5859,6 +5871,50 @@
             usageFeedback.textContent = "A conta não retornou dados de consumo ou atualização.";
           }
         };
+
+        let memoryScreenReturnFocus = null;
+        let memoryScreenReturnSection = "general";
+        const openMemoryScreen = (returnFocus = null) => {
+          memoryScreenReturnFocus = returnFocus || [...settingsNavItems].find((item) => item.dataset.settingsSection === "memory") || null;
+          memoryScreenReturnSection = activeSettingsSection;
+          settingsNavItems.forEach((item) => item.classList.toggle("active", item === memoryScreenReturnFocus));
+          closeCustomSelects();
+          closeAttachmentSheet();
+          profilePopover.classList.remove("visible");
+          webPopover.classList.remove("visible");
+          profileMore?.classList.remove("open");
+          profileMoreToggle?.setAttribute("aria-expanded", "false");
+          memoryScreen.hidden = false;
+          memoryScreen.setAttribute("aria-hidden", "false");
+          if (settingsPopover && !settingsPopover.hidden) settingsPopover.setAttribute("aria-hidden", "true");
+          requestAnimationFrame(() => memoryScreen.classList.add("visible"));
+          memoryScreenBack?.focus({ preventScroll: true });
+        };
+
+        const closeMemoryScreen = () => {
+          memoryScreen?.classList.remove("visible");
+          memoryScreen?.setAttribute("aria-hidden", "true");
+          window.setTimeout(() => {
+            if (memoryScreen) memoryScreen.hidden = true;
+            if (settingsPopover && !settingsPopover.hidden) settingsPopover.setAttribute("aria-hidden", "false");
+            renderSettingsSection(memoryScreenReturnSection);
+            const target = memoryScreenReturnFocus?.isConnected && !memoryScreenReturnFocus.hidden ? memoryScreenReturnFocus : null;
+            (target || settingsNavItems[0])?.focus({ preventScroll: true });
+            memoryScreenReturnFocus = null;
+          }, 180);
+        };
+
+        memoryScreenBack?.addEventListener("click", closeMemoryScreen);
+        memoryScreen?.addEventListener("keydown", (event) => {
+          if (event.key === "Escape") { event.preventDefault(); closeMemoryScreen(); return; }
+          if (event.key !== "Tab") return;
+          const controls = [...memoryScreen.querySelectorAll('button:not(:disabled):not([hidden]), input:not(:disabled):not([hidden]), select:not(:disabled):not([hidden]), textarea:not(:disabled):not([hidden])')].filter((element) => element.getClientRects().length);
+          if (!controls.length) return;
+          const first = controls[0];
+          const last = controls[controls.length - 1];
+          if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
+          else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
+        });
 
         const openUsageScreen = async () => {
           closeCustomSelects();
@@ -8863,7 +8919,7 @@
         settingsLogoutAction.addEventListener("click", logout);
         accountLogoutAction?.addEventListener("click", logout);
         document.addEventListener("click", (event) => {
-          if (!event.target.closest(".profile-popover") && !event.target.closest("#historyBrand") && !event.target.closest("#historySettingsAction") && !event.target.closest(".settings-popover") && !event.target.closest(".web-popover") && !event.target.closest(".attachment-sheet") && !event.target.closest("#attachButton") && !event.target.closest("#accountScreen") && !event.target.closest(".usage-screen") && !event.target.closest(".plans-screen") && !event.target.closest("#plansBackdrop")) closeMenus();
+          if (!event.target.closest(".profile-popover") && !event.target.closest("#historyBrand") && !event.target.closest("#historySettingsAction") && !event.target.closest(".settings-popover") && !event.target.closest(".web-popover") && !event.target.closest(".attachment-sheet") && !event.target.closest("#attachButton") && !event.target.closest("#accountScreen") && !event.target.closest(".usage-screen") && !event.target.closest("#memoryScreen") && !event.target.closest(".plans-screen") && !event.target.closest("#plansBackdrop")) closeMenus();
         });
 
         closeSettings.addEventListener("click", closeSettingsModal);
@@ -8877,6 +8933,7 @@
         });
         settingsNavItems.forEach((item) => {
           item.addEventListener("click", () => {
+            if (item.dataset.settingsSection === "memory") { openMemoryScreen(item); return; }
             renderSettingsSection(item.dataset.settingsSection);
             if (isMobileSettingsViewport()) settingsPopover.classList.add("mobile-section-open");
           });
