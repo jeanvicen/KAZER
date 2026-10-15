@@ -17,6 +17,7 @@ Aqui entra só o que vem **ao lado**: ferramentas, ateliê, caixa e pesquisa de 
 | [PESQUISA-2026-10-12.md](PESQUISA-2026-10-12.md) | Estúdio miúdo: fundo, vitrine, cartaz, ícone, contraste, QR da banca, recibo, briefing no Brain |
 | [PESQUISA-2026-10-13.md](PESQUISA-2026-10-13.md) | Balcão: etiqueta, cardápio, selo que viaja, Wi-Fi, story, cartão PT · JP |
 | [PESQUISA-2026-10-14.md](PESQUISA-2026-10-14.md) | Mesa do designer: e-mail, certificado, rampa OKLCH, gráfica, grade, prancha, preço, vale |
+| [PESQUISA-2026-10-15.md](PESQUISA-2026-10-15.md) | Gaveta: arquivo que não sobe — HEIC, PDF de fotos, GPS, tarja, 3×4, .vcf, cartaz, obrigado |
 
 ## Regra da casa
 
