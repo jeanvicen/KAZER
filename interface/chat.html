@@ -3712,8 +3712,6 @@
       .empty-brand-alien-wrap::before { position: absolute; z-index: 0; inset: -28px; border-radius: 50%; background: radial-gradient(circle, rgba(205,164,68,.19), rgba(205,164,68,.055) 42%, transparent 72%); content: ""; opacity: 0; }
       .empty-brand-alien { position: relative; z-index: 1; display: block; width: 62px; height: 62px; object-fit: contain; }
       .empty-brand-caption { position: absolute; top: calc(50% - 62px); left: 50%; width: min(86vw, 350px); margin: 0; color: var(--text-dim); font-size: 11px; font-weight: 430; letter-spacing: .035em; line-height: 1.5; text-align: center; transform: translateX(-50%); }
-      #emptyState .empty-brand-lockup,
-      #emptyState .new-chat-greeting-time { display: none !important; }
       .empty-state.brand-morph .empty-brand-lockup .empty-word { animation: new-chat-word-transform 2200ms cubic-bezier(.22,1,.36,1) both; }
       .empty-state.brand-morph .empty-brand-alien-wrap { animation: new-chat-mark-transform 2200ms cubic-bezier(.22,1,.36,1) both; }
       .empty-state.brand-morph .empty-brand-alien-wrap::before { animation: new-chat-halo 2200ms ease both; }
@@ -5316,7 +5314,7 @@
       </div>
 
       <section class="conversation-area" id="conversationArea" aria-label="Conversa">
-        <section class="empty-state" id="emptyState"><div class="new-chat-greeting" id="newChatGreeting" aria-live="polite"><span class="new-chat-greeting-time" id="greetingTime">Boa noite</span><h2>Olá, <strong id="greetingName">Kazer</strong></h2><p id="greetingQuestion">O que vamos fazer hoje?</p></div><div class="empty-brand-lockup" id="emptyBrandLockup"><h1 class="empty-word">KAZER</h1><span class="empty-brand-alien-wrap" aria-hidden="true"><img class="empty-brand-alien" src="../download/assets/kazer-mark.svg?v=20260922" alt="" /></span></div><p class="empty-brand-caption">Sua próxima ideia começa aqui.</p></section>
+        <section class="empty-state" id="emptyState"><div class="new-chat-greeting" id="newChatGreeting" aria-live="polite"><h2>Olá, <strong id="greetingName">Kazer</strong></h2><p id="greetingQuestion">O que vamos fazer hoje?</p></div><p class="empty-brand-caption">Sua próxima ideia começa aqui.</p></section>
         <section class="message-list" id="messageList" hidden aria-live="polite"></section>
       </section>
 
@@ -8656,15 +8654,6 @@
           messageInput.focus();
         };
 
-        let newChatBrandMomentTimer = 0;
-        const playNewChatBrandMoment = () => {
-          if (!emptyState || window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches) return;
-          window.clearTimeout(newChatBrandMomentTimer);
-          emptyState.classList.remove("brand-morph");
-          void emptyState.offsetWidth;
-          emptyState.classList.add("brand-morph");
-          newChatBrandMomentTimer = window.setTimeout(() => emptyState.classList.remove("brand-morph"), 2400);
-        };
 
         const reset = () => {
           if (activeRequestController) activeRequestController.abort();
@@ -8680,7 +8669,6 @@
           messageList.hidden = true;
           emptyState.hidden = false;
           app.classList.remove("in-conversation");
-          playNewChatBrandMoment();
           messageInput.value = "";
           resizeInput();
           closeMenus();
