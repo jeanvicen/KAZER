@@ -7,7 +7,7 @@ import test from "node:test";
 
 const require = createRequire(import.meta.url);
 const { isPublicAddress } = require("../api/_research-search-utils.js");
-const { createPinnedLookup, parsePublicUrl, requestPinnedUrl, requestPublicUrl, resolvePublicAddress } = require("../api/_ssrf.js");
+const { createPinnedLookup, parsePublicUrl, requestPublicUrl, resolvePublicAddress } = require("../api/_ssrf.js");
 const { fetchResearchPage } = require("../api/_research-orchestrator.js");
 const { fulfillPinnedBrowserRequest } = require("../api/_research-browser.js");
 
@@ -150,7 +150,7 @@ test("research browser pins each request and revalidates redirect destinations",
   assert.deepEqual(connections[0].options.headers, { "user-agent": "KAZER-Research/1.0" });
 });
 
-test("research browser uses the pinned Node transport for actual connections and preserves request bodies", async () => {
+test("research browser uses the pinned HTTP transport for actual connections and preserves request bodies", async () => {
   const captures = [];
   const route = fakeBrowserRoute(fakeBrowserRequest("https://rebinding.example.com/search", {
     method: "POST",
@@ -167,8 +167,13 @@ test("research browser uses the pinned Node transport for actual connections and
 
   await fulfillPinnedBrowserRequest(route, {
     resolveAddress: (hostname) => resolvePublicAddress(hostname, publicResolver),
-    pinnedRequest: (url, address, options) => requestPinnedUrl(url, address, {
+    pinnedRequest: (url, address, options) => requestPublicUrl(url.href, {
       ...options,
+      protocols: [url.protocol],
+      resolver: async (hostname) => {
+        assert.equal(hostname, url.hostname);
+        return [{ address: address.address, family: address.family }];
+      },
       requestImplementation: fakeTransport([{
         status: 200,
         headers: { "content-type": "text/html", "x-research-test": "ok" },
