@@ -53,6 +53,19 @@ Somam. Não substituem as de cima. Licença e ordem em [PESQUISA-2026-10-14.md](
 32. **Quanto cobrar** — hora, material e margem. Não é o contador.
 33. **Vale da banca** — código local impresso. Não é cupom fiscal.
 
+## Peças de 15 de outubro (plano, ainda não no ar)
+
+Somam. Não substituem as de cima. Licença e ordem em [PESQUISA-2026-10-15.md](PESQUISA-2026-10-15.md).
+
+34. **HEIC → JPEG** — só se o navegador já abre. Sem libheif.
+35. **Fotos num PDF** — pdf-lib (MIT). Não é juntar PDF com PDF.
+36. **Cópia sem GPS** — exifr (MIT) só avisa. O canvas apaga o EXIF.
+37. **Tarja de dado** — esconde CPF, conta ou telefone. Não é o anotador de print.
+38. **Foto 3×4** — guia e folha 10×15. Não é documento de órgão.
+39. **Cartão .vcf** — contato que o celular guarda. Não hospeda perfil.
+40. **Cartaz de avaliação** — link que a loja já tem. Fica no balcão.
+41. **Obrigado do pedido** — cartão pequeno para o pacote. Não é nota.
+
 ## Direção de arte (já documentada)
 
 O visual do Brain continua em [`docs/visual-system.md`](../docs/visual-system.md): `kazer-svg` e `kazer-html`, composição com foco, sem cartão repetido. O ateliê só **reutiliza** essa linguagem.
@@ -66,3 +79,7 @@ O visual do Brain continua em [`docs/visual-system.md`](../docs/visual-system.md
 - Não guardar senha de Wi-Fi nem o traço da assinatura no servidor.
 - Não guardar lista de alunos, preço do cliente nem código de vale no servidor.
 - Não hospedar a foto da assinatura de e-mail.
+- Não subir HEIC, foto de documento, CPF, GPS ou .vcf para o servidor.
+- Não empacotar libheif nem outro wasm de codec copyleft.
+- Não chamar a foto 3×4 de documento oficial.
+- Não hospedar o cartão de visita. O .vcf baixa. O perfil não mora na Vercel.

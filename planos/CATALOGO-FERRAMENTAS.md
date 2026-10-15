@@ -74,3 +74,18 @@ Não substitui as tabelas acima. Detalhe, licença e o que não é diploma nem c
 | Prancha | Milanote US$ 9,99/mês no anual | Quadro no aparelho. Arquivo não sobe |
 | Quanto cobrar | Planilha de precificação | Conta local. Não é o contador |
 | Vale da banca | App de fidelidade com mensalidade | Código no celular. Não é cupom fiscal |
+
+## Soma de 15 de outubro
+
+Não substitui as tabelas acima. Detalhe, licença e o que não sobe para o servidor em [PESQUISA-2026-10-15.md](PESQUISA-2026-10-15.md).
+
+| Ferramenta | Por que pagam lá fora | Como o KAZER faz a R$ 0 |
+|---|---|---|
+| HEIC → JPEG | Conversor pede a foto | Canvas, se o navegador já abre. Sem libheif |
+| Fotos → um PDF | Smallpdf e iLovePDF sobem o arquivo | pdf-lib (MIT). Não é juntar PDF com PDF |
+| Cópia sem GPS | Site pede a foto | exifr (MIT) só lê. Canvas grava JPEG limpo |
+| Tarja de dado | Tarja com upload | Retângulo no aparelho. Não é o anotador de print |
+| Foto 3×4 | App cobra R$ 4,90 para tirar o selo | Guia e folha 10×15. Não é o órgão |
+| Cartão .vcf | HiHello Professional US$ 6/mês no anual | Texto + PNG. Sem hospedar perfil |
+| Cartaz de avaliação | Gerador com anúncio | Link que a pessoa cola. Papel de balcão |
+| Obrigado do pedido | Modelo no Canva Pro | Cartão pequeno para o pacote. Não é nota |
