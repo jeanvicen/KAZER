@@ -107,15 +107,6 @@
         animation: app-splash-brand-in 700ms cubic-bezier(.2, .9, .25, 1) 80ms forwards;
       }
 
-      .app-splash-symbol {
-        display: block;
-        width: clamp(48px, 13vw, 72px);
-        height: clamp(48px, 13vw, 72px);
-        flex: 0 0 auto;
-        margin: 0;
-        background: url("../download/assets/kazer-badge.svg?v=20261005") center / contain no-repeat;
-        animation: app-splash-symbol-pulse 2600ms ease-in-out infinite;
-      }
 
       .app-splash-title {
         display: block;
@@ -151,10 +142,6 @@
         to { opacity: 1; transform: scale(1); }
       }
 
-      @keyframes app-splash-symbol-pulse {
-        0%, 100% { filter: brightness(1); }
-        50% { filter: brightness(1.35); }
-      }
 
       @keyframes app-splash-fade-up {
         from { opacity: 0; transform: translateY(10px); }
@@ -4982,7 +4969,7 @@
     <main class="app" id="app" data-auth-pending="true">
       <div class="app-splash" id="appSplash" role="status" aria-label="Abertura do Kazer">
         <div class="app-splash-brand">
-          <span class="app-splash-symbol" aria-hidden="true"></span>
+          
           <strong class="app-splash-title" id="appSplashTitle">KAZER</strong>
         </div>
         <span class="app-splash-credit">KLYPZA</span>
