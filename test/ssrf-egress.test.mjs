@@ -190,6 +190,16 @@ test("research browser uses the pinned Node transport for actual connections and
   assert.equal(route.fulfilled.body.toString(), "pinned response");
 });
 
+test("research browser fulfills no-content responses without adding a body", async () => {
+  const route = fakeBrowserRoute(fakeBrowserRequest("https://empty.example.com/"));
+  await fulfillPinnedBrowserRequest(route, {
+    resolveAddress: async () => ({ address: "93.184.216.34", family: 4 }),
+    pinnedRequest: async () => new Response(null, { status: 204 }),
+  });
+  assert.equal(route.fulfilled.status, 204);
+  assert.equal(Object.hasOwn(route.fulfilled, "body"), false);
+});
+
 test("research browser rejects private destinations and redirect chains over the limit before connecting", async () => {
   let privateResolutionCount = 0;
   await assert.rejects(fulfillPinnedBrowserRequest(fakeBrowserRoute(fakeBrowserRequest("http://127.0.0.1/admin")), {

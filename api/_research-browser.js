@@ -73,9 +73,9 @@ async function fulfillPinnedBrowserRequest(route, {
     timeoutMs: 10_000,
     maxBytes: MAX_BROWSER_RESPONSE_BYTES,
   });
-  const headers = Object.fromEntries(response.headers.entries());
-  const responseBody = Buffer.from(await response.arrayBuffer());
-  await route.fulfill({ status: response.status, headers, body: responseBody });
+  const fulfillment = { status: response.status, headers: Object.fromEntries(response.headers.entries()) };
+  if (![204, 205, 304].includes(response.status)) fulfillment.body = Buffer.from(await response.arrayBuffer());
+  await route.fulfill(fulfillment);
 }
 
 class ResearchBrowser {
