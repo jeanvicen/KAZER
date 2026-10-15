@@ -24,6 +24,8 @@
   ·
   <a href="planos/PESQUISA-2026-10-14.md">Mesa</a>
   ·
+  <a href="planos/PESQUISA-2026-10-15.md">Gaveta</a>
+  ·
   <a href="docs/project-guide.md">Guia</a>
   ·
   <a href="SECURITY.md">Segurança</a>
@@ -34,7 +36,7 @@
   <img src="https://img.shields.io/badge/Node.js-%E2%89%A520-339933?logo=node.js&logoColor=white" alt="Node.js 20 ou superior">
   <img src="https://img.shields.io/badge/deploy-Vercel-000000?logo=vercel&logoColor=white" alt="Vercel">
   <img src="https://img.shields.io/badge/infra-R%24%200-8C6420" alt="Infra Hobby a R$ 0">
-  <img src="https://img.shields.io/badge/pesquisa-14%20out-8C6420" alt="Pesquisa de 14 de outubro de 2026">
+  <img src="https://img.shields.io/badge/pesquisa-15%20out-8C6420" alt="Pesquisa de 15 de outubro de 2026">
 </p>
 
 ---
@@ -140,6 +142,23 @@ Pesquisa nova. Não apaga as de 6, 7, 9, 12 e 13. Continua no aparelho. Continua
 
 O selo no grátis segue o anúncio: o e-mail e o certificado saem com o nome. Licença e ordem: [`planos/PESQUISA-2026-10-14.md`](planos/PESQUISA-2026-10-14.md).
 
+## Gaveta de 15 de outubro
+
+Pesquisa nova. Não apaga as de 6, 7, 9, 12, 13 e 14. Continua no aparelho. Continua sem GPU. Não está no ar.
+
+| Peça | Quem cobra lá fora | No KAZER |
+|---|---|---|
+| HEIC → JPEG | Conversor que pede a foto | Canvas, se o navegador já abre. Sem libheif |
+| Fotos → um PDF | Smallpdf e iLovePDF sobem o arquivo | `pdf-lib` (MIT). Não é juntar PDF com PDF |
+| Cópia sem GPS | Site que pede a foto | exifr (MIT) só lê. Canvas grava JPEG limpo |
+| Tarja de CPF | Tarja com upload | Retângulo no aparelho. Não é o anotador de print |
+| Foto 3×4 | App cobra R$ 4,90 para tirar o selo | Guia e folha 10×15. Não é o órgão |
+| Cartão .vcf | HiHello ~US$ 6/mês no anual | Texto + PNG. Sem hospedar perfil |
+| Cartaz de avaliação | Gerador com anúncio | Link que a pessoa cola. Papel de balcão |
+| Obrigado do pedido | Modelo no Canva Pro | Cartão pequeno para o pacote. Não é nota |
+
+Documento sai sem selo. Peça de parede leva “feito no KAZER” no grátis. Licença e ordem: [`planos/PESQUISA-2026-10-15.md`](planos/PESQUISA-2026-10-15.md).
+
 ## Como a casa ganha sem gastar para abrir
 
 Infra livre enquanto couber nos planos Hobby: Vercel, Supabase, Groq, Hugging Face, GitHub, Web Speech, SVG no cliente.
@@ -150,7 +169,7 @@ Infra livre enquanto couber nos planos Hobby: Vercel, Supabase, Groq, Hugging Fa
 | 100 | R$ 29 | R$ 2.900 | R$ 0 |
 | 40 | R$ 79 | R$ 3.160 | R$ 0 |
 
-Taxa só na venda. Cadastro do gateway é grátis. Conferido em 14/10: Pix da Abacate segue R$ 0,80, sem mensalidade. Contas em [`planos/MONETIZACAO-ZERO.md`](planos/MONETIZACAO-ZERO.md).
+Taxa só na venda. Cadastro do gateway é grátis. Conferido em 14/10 e de novo em 15/10: Pix da Abacate segue R$ 0,80, sem mensalidade. Contas em [`planos/MONETIZACAO-ZERO.md`](planos/MONETIZACAO-ZERO.md).
 
 ## Como o KAZER funciona
 
@@ -222,6 +241,7 @@ Os smoke tests de integração fazem stubs de respostas externas; eles validam c
 - [Bancada de 12 de outubro](planos/PESQUISA-2026-10-12.md)
 - [Balcão de 13 de outubro](planos/PESQUISA-2026-10-13.md)
 - [Mesa de 14 de outubro](planos/PESQUISA-2026-10-14.md)
+- [Gaveta de 15 de outubro](planos/PESQUISA-2026-10-15.md)
 
 ## Status e propriedade
 
