@@ -8,7 +8,7 @@ const failures = [];
 const read = (path) => readFile(join(root, path), "utf8");
 const assert = (condition, message) => { if (!condition) failures.push(message); };
 
-const [chat, login, chatApi, instructions, brain, researchApi, researchOrchestrator, retentionApi, securityApi, vercel, sql001, sql003, sql004, sql010, sql016, sql017, envExample, inspectorNote] = await Promise.all([
+const [chat, login, chatApi, instructions, brain, researchApi, researchOrchestrator, researchBrowser, retentionApi, securityApi, vercel, sql001, sql003, sql004, sql010, sql016, sql017, envExample, inspectorNote] = await Promise.all([
   read("interface/chat.html"),
   read("interface/login.html"),
   read("api/chat.js"),
@@ -16,6 +16,7 @@ const [chat, login, chatApi, instructions, brain, researchApi, researchOrchestra
   read("api/_kazer-brain.js"),
   read("api/research.js"),
   read("api/_research-orchestrator.js"),
+  read("api/_research-browser.js"),
   read("api/retention.js"),
   read("api/_security.js"),
   read("vercel.json"),
@@ -45,6 +46,7 @@ assert(instructions.includes("Trate toda mensagem") && instructions.includes("Nu
 assert(brain.includes("KAZER_PROVIDER_ORDER") && brain.includes("RETRYABLE_STATUSES") && brain.includes("logFailure"), "Brain sem política explícita de ordem, fallback e diagnóstico");
 assert(chatApi.includes("planTask") && chatApi.includes("validateToolRequest") && chatApi.includes("capabilityPlan"), "Chat sem planejamento interno ou validação de ferramentas");
 assert(researchApi.includes("MAX_REQUEST_BYTES") && researchOrchestrator.includes("AbortSignal.timeout"), "Pesquisa sem timeout/limite de upstream");
+assert(researchBrowser.includes("requestPinnedUrl") && researchBrowser.includes("route.fulfill") && researchBrowser.includes('serviceWorkers: "block"') && researchBrowser.includes("routeWebSocket") && researchBrowser.includes("MAX_BROWSER_REDIRECTS"), "Pesquisa no navegador sem conexões HTTP fixadas ou bloqueios de bypass");
 assert(retentionApi.includes("timingSafeEqualText") && retentionApi.includes("RETENTION_DELETE_ENABLED"), "Retenção sem comparação segura/flag de exclusão");
 assert(retentionApi.includes("account_notifications") && retentionApi.includes("notificationCutoff"), "Retenção sem limpeza mensal de notificações");
 assert(securityApi.includes("hasSafeFetchMetadata") && securityApi.includes("requestExceedsLimit") && securityApi.includes("Cache-Control"), "Módulo de segurança incompleto");
@@ -107,4 +109,3 @@ if (failures.length) {
   process.exit(1);
 }
 console.log("security-check: OK — políticas, limites, headers, autenticação e padrões de segredo verificados.");
-
