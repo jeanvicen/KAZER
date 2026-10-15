@@ -9,6 +9,7 @@ const require = createRequire(import.meta.url);
 const { isPublicAddress } = require("../api/_research-search-utils.js");
 const { createPinnedLookup, parsePublicUrl, requestPublicUrl, resolvePublicAddress } = require("../api/_ssrf.js");
 const { fetchResearchPage } = require("../api/_research-orchestrator.js");
+const { fulfillPinnedBrowserRequest } = require("../api/_research-browser.js");
 
 function fakeTransport(replies, captures = []) {
   return {
@@ -38,6 +39,25 @@ function fakeTransport(replies, captures = []) {
 }
 
 const publicResolver = async () => [{ address: "93.184.216.34", family: 4 }];
+
+function fakeBrowserRequest(url, { method = "GET", headers = {}, body = null, redirectedFrom = null } = {}) {
+  return {
+    url: () => url,
+    method: () => method,
+    headers: () => headers,
+    postDataBuffer: () => body,
+    redirectedFrom: () => redirectedFrom,
+  };
+}
+
+function fakeBrowserRoute(request) {
+  const route = {
+    fulfilled: null,
+    request: () => request,
+    fulfill: async (response) => { route.fulfilled = response; },
+  };
+  return route;
+}
 
 test("public address policy rejects private, reserved, mapped and documentation ranges", () => {
   for (const address of [
@@ -87,6 +107,122 @@ test("public request connects to the DNS answer it validated", async () => {
   assert.equal(captures[0].options.hostname, "public.example.com");
   assert.equal(captures[0].options.servername, "public.example.com");
   assert.deepEqual(captures[0].pinned, [{ address: "93.184.216.34", family: 4 }]);
+});
+
+test("research browser pins each request and revalidates redirect destinations", async () => {
+  const firstRequest = fakeBrowserRequest("https://origin.example.com/start", {
+    headers: {
+      "accept-encoding": "zstd, gzip, br",
+      connection: "keep-alive",
+      host: "origin.example.com",
+      "user-agent": "KAZER-Research/1.0",
+    },
+  });
+  const firstRoute = fakeBrowserRoute(firstRequest);
+  const secondRequest = fakeBrowserRequest("https://target.example.net/final", { redirectedFrom: firstRequest });
+  const secondRoute = fakeBrowserRoute(secondRequest);
+  const resolutions = [];
+  const connections = [];
+  const resolveAddress = async (hostname) => {
+    resolutions.push(hostname);
+    return { address: hostname === "origin.example.com" ? "93.184.216.34" : "1.1.1.1", family: 4 };
+  };
+  const pinnedRequest = async (url, address, options) => {
+    connections.push({ hostname: url.hostname, address: address.address, options });
+    return url.hostname === "origin.example.com"
+      ? new Response(null, { status: 302, headers: { location: "https://target.example.net/final" } })
+      : new Response("read safely", { status: 200, headers: { "content-type": "text/html" } });
+  };
+
+  await fulfillPinnedBrowserRequest(firstRoute, { resolveAddress, pinnedRequest });
+  await fulfillPinnedBrowserRequest(secondRoute, { resolveAddress, pinnedRequest });
+
+  assert.deepEqual(resolutions, ["origin.example.com", "target.example.net"]);
+  assert.deepEqual(connections.map(({ hostname, address }) => [hostname, address]), [
+    ["origin.example.com", "93.184.216.34"],
+    ["target.example.net", "1.1.1.1"],
+  ]);
+  assert.equal(firstRoute.fulfilled.status, 302);
+  assert.equal(firstRoute.fulfilled.headers.location, "https://target.example.net/final");
+  assert.equal(secondRoute.fulfilled.status, 200);
+  assert.equal(secondRoute.fulfilled.body.toString(), "read safely");
+  assert.equal(connections[0].options.maxBytes, 1_500_000);
+  assert.deepEqual(connections[0].options.headers, { "user-agent": "KAZER-Research/1.0" });
+});
+
+test("research browser uses the pinned HTTP transport for actual connections and preserves request bodies", async () => {
+  const captures = [];
+  const route = fakeBrowserRoute(fakeBrowserRequest("https://rebinding.example.com/search", {
+    method: "POST",
+    headers: {
+      "accept-encoding": "zstd, gzip",
+      connection: "keep-alive",
+      host: "attacker.invalid",
+      "content-type": "application/x-www-form-urlencoded",
+      "content-length": "9",
+      "user-agent": "KAZER-Research/1.0",
+    },
+    body: Buffer.from("q=article"),
+  }));
+
+  await fulfillPinnedBrowserRequest(route, {
+    resolveAddress: (hostname) => resolvePublicAddress(hostname, publicResolver),
+    pinnedRequest: (url, address, options) => requestPublicUrl(url.href, {
+      ...options,
+      protocols: [url.protocol],
+      resolver: async (hostname) => {
+        assert.equal(hostname, url.hostname);
+        return [{ address: address.address, family: address.family }];
+      },
+      requestImplementation: fakeTransport([{
+        status: 200,
+        headers: { "content-type": "text/html", "x-research-test": "ok" },
+        body: "pinned response",
+      }], captures),
+    }),
+  });
+
+  assert.equal(captures.length, 1);
+  assert.equal(captures[0].options.hostname, "rebinding.example.com");
+  assert.equal(captures[0].options.method, "POST");
+  assert.equal(captures[0].body, "q=article");
+  assert.deepEqual(captures[0].pinned, [{ address: "93.184.216.34", family: 4 }]);
+  assert.equal(captures[0].options.headers["Accept-Encoding"], "gzip, deflate, br");
+  assert.equal(Object.keys(captures[0].options.headers).some((name) => name.toLowerCase() === "host"), false);
+  assert.equal(route.fulfilled.status, 200);
+  assert.equal(route.fulfilled.headers["content-type"], "text/html");
+  assert.equal(route.fulfilled.headers["x-research-test"], "ok");
+  assert.equal(route.fulfilled.body.toString(), "pinned response");
+});
+
+test("research browser fulfills no-content responses without adding a body", async () => {
+  const route = fakeBrowserRoute(fakeBrowserRequest("https://empty.example.com/"));
+  await fulfillPinnedBrowserRequest(route, {
+    resolveAddress: async () => ({ address: "93.184.216.34", family: 4 }),
+    pinnedRequest: async () => new Response(null, { status: 204 }),
+  });
+  assert.equal(route.fulfilled.status, 204);
+  assert.equal(Object.hasOwn(route.fulfilled, "body"), false);
+});
+
+test("research browser rejects private destinations and redirect chains over the limit before connecting", async () => {
+  let privateResolutionCount = 0;
+  await assert.rejects(fulfillPinnedBrowserRequest(fakeBrowserRoute(fakeBrowserRequest("http://127.0.0.1/admin")), {
+    resolveAddress: async () => { privateResolutionCount += 1; return { address: "93.184.216.34", family: 4 }; },
+    pinnedRequest: async () => new Response("should not happen"),
+  }), /unsafe_public_url/);
+  assert.equal(privateResolutionCount, 0);
+
+  let overlongRequest = fakeBrowserRequest("https://long-chain.example/0");
+  for (let index = 0; index < 6; index += 1) {
+    overlongRequest = fakeBrowserRequest(`https://long-chain.example/${index + 1}`, { redirectedFrom: overlongRequest });
+  }
+  let overlongResolutionCount = 0;
+  await assert.rejects(fulfillPinnedBrowserRequest(fakeBrowserRoute(overlongRequest), {
+    resolveAddress: async () => { overlongResolutionCount += 1; return { address: "93.184.216.34", family: 4 }; },
+    pinnedRequest: async () => new Response("should not happen"),
+  }), /research_redirect_limit/);
+  assert.equal(overlongResolutionCount, 0);
 });
 
 test("public response limits cover both wire bytes and decompressed bytes", async () => {
