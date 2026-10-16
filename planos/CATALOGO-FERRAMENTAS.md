@@ -89,3 +89,18 @@ Não substitui as tabelas acima. Detalhe, licença e o que não sobe para o serv
 | Cartão .vcf | HiHello Professional US$ 6/mês no anual | Texto + PNG. Sem hospedar perfil |
 | Cartaz de avaliação | Gerador com anúncio | Link que a pessoa cola. Papel de balcão |
 | Obrigado do pedido | Modelo no Canva Pro | Cartão pequeno para o pacote. Não é nota |
+
+## Soma de 16 de outubro
+
+Não substitui as tabelas acima. Detalhe, licença e o que não sobe para o servidor em [PESQUISA-2026-10-16.md](PESQUISA-2026-10-16.md).
+
+| Ferramenta | Por que pagam lá fora | Como o KAZER faz a R$ 0 |
+|---|---|---|
+| Logo chapado → SVG | O JPG sobe e a ferramenta cobra | ImageTracerJS 1.2.6 (Unlicense). Não é foto |
+| Branco → transparente | Editor pede o arquivo | Canvas. Não é o recorte de pessoa |
+| Duotone | Duas tintas no Canva Pro | Canvas. Não é a rampa OKLCH |
+| DPI da gráfica | A reimpressão | Conta de px e cm. Não é a sangria |
+| Caixa simples | Molde com marca no grátis | SVG em milímetro. A gráfica confere |
+| Conta da vitrine | Planilha de taxa | A pessoa digita a % que o painel mostrou |
+| Cartaz DE/POR | Modelo no Canva Pro | HTML de gôndola. Não é a etiqueta |
+| Monograma | Favicon com upload | PNG 16–512 no aparelho. Não é o selo da casa |

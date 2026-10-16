@@ -26,6 +26,8 @@
   ·
   <a href="planos/PESQUISA-2026-10-15.md">Gaveta</a>
   ·
+  <a href="planos/PESQUISA-2026-10-16.md">Prensa</a>
+  ·
   <a href="docs/project-guide.md">Guia</a>
   ·
   <a href="SECURITY.md">Segurança</a>
@@ -36,7 +38,7 @@
   <img src="https://img.shields.io/badge/Node.js-%E2%89%A520-339933?logo=node.js&logoColor=white" alt="Node.js 20 ou superior">
   <img src="https://img.shields.io/badge/deploy-Vercel-000000?logo=vercel&logoColor=white" alt="Vercel">
   <img src="https://img.shields.io/badge/infra-R%24%200-8C6420" alt="Infra Hobby a R$ 0">
-  <img src="https://img.shields.io/badge/pesquisa-15%20out-8C6420" alt="Pesquisa de 15 de outubro de 2026">
+  <img src="https://img.shields.io/badge/pesquisa-16%20out-8C6420" alt="Pesquisa de 16 de outubro de 2026">
 </p>
 
 ---
@@ -159,6 +161,23 @@ Pesquisa nova. Não apaga as de 6, 7, 9, 12, 13 e 14. Continua no aparelho. Cont
 
 Documento sai sem selo. Peça de parede leva “feito no KAZER” no grátis. Licença e ordem: [`planos/PESQUISA-2026-10-15.md`](planos/PESQUISA-2026-10-15.md).
 
+## Prensa de 16 de outubro
+
+Pesquisa nova. Não apaga as de 6, 7, 9, 12, 13, 14 e 15. Continua no aparelho. Continua sem GPU. Não está no ar.
+
+| Peça | Quem cobra lá fora | No KAZER |
+|---|---|---|
+| Logo chapado → SVG | Vector Magic cobra e o arquivo sobe | ImageTracerJS 1.2.6 (Unlicense). Não é foto |
+| Branco → transparente | Editor pede o arquivo | Canvas. Não é o recorte de pessoa |
+| Duotone | Duas tintas travadas no Canva Pro | Canvas. Não é a rampa OKLCH |
+| DPI da gráfica | A reimpressão | px e cm. Não é a folha de sangria |
+| Caixa simples | Pacdora: o grátis não tira a marca | SVG em milímetro. A gráfica confere |
+| Conta da vitrine | Planilha de taxa | A pessoa digita a % do painel |
+| Cartaz DE/POR | Modelo no Canva Pro | HTML de gôndola. Não é a etiqueta |
+| Monograma | Gerador de favicon pede upload | PNG 16–512. Não é o selo da casa |
+
+Número na tela sai sem selo. Peça que viaja leva “feito no KAZER” no grátis. No logo, a linha fica fora da marca. Licença e ordem: [`planos/PESQUISA-2026-10-16.md`](planos/PESQUISA-2026-10-16.md).
+
 ## Como a casa ganha sem gastar para abrir
 
 Infra livre enquanto couber nos planos Hobby: Vercel, Supabase, Groq, Hugging Face, GitHub, Web Speech, SVG no cliente.
@@ -242,6 +261,7 @@ Os smoke tests de integração fazem stubs de respostas externas; eles validam c
 - [Balcão de 13 de outubro](planos/PESQUISA-2026-10-13.md)
 - [Mesa de 14 de outubro](planos/PESQUISA-2026-10-14.md)
 - [Gaveta de 15 de outubro](planos/PESQUISA-2026-10-15.md)
+- [Prensa de 16 de outubro](planos/PESQUISA-2026-10-16.md)
 
 ## Status e propriedade
 

@@ -31,6 +31,8 @@ Conferido de novo em 14/10/2026 na mesma página: Pix, saque e cartão iguais ao
 
 Conferido de novo em 15/10/2026 na mesma página: Pix R$ 0,80, saque, boleto, cartão, TED e saque mínimo iguais ao dia 14. Continua sem mensalidade.
 
+Conferido de novo em 16/10/2026 na mesma página: Pix R$ 0,80, saque, boleto, cartão, TED e saque mínimo iguais ao dia 15. Continua sem mensalidade.
+
 ## Outras entradas a custo zero
 
 - **Afiliado** — indicar Canva / Recraft / hospedagem para quem quiser GPU; o KAZER fica no SVG grátis.
@@ -40,6 +42,7 @@ Conferido de novo em 15/10/2026 na mesma página: Pix R$ 0,80, saque, boleto, ca
 - **Selo que viaja** — etiqueta, cardápio, figurinha e story do plano livre saem com “feito no KAZER”. Quem paga o Pro tira o selo e coloca o logo da própria banca. A casa não paga anúncio. Detalhe em [PESQUISA-2026-10-13.md](PESQUISA-2026-10-13.md).
 - **Assinatura e certificado que viajam** — o HTML de e-mail e o certificado de oficina do plano livre saem com o mesmo selo. Cada e-mail e cada aluno carregam o nome, sem a casa pagar impulsionamento. O Pro tira o selo. Detalhe em [PESQUISA-2026-10-14.md](PESQUISA-2026-10-14.md).
 - **Gaveta que não sobe** — HEIC, PDF de fotos, tarja e GPS ficam no aparelho. O grátis faz um arquivo, sem selo em cima do dado. O Pro faz o lote, ainda no aparelho. A peça de parede (3×4, cartaz de avaliação, cartão .vcf, obrigado do pedido) leva o selo no grátis. Detalhe em [PESQUISA-2026-10-15.md](PESQUISA-2026-10-15.md).
+- **Prensa que não sobe** — logo, duotone, molde e cartaz DE/POR nascem no aparelho. O grátis leva “feito no KAZER”; no logo a linha fica fora da marca. DPI e lucro da vitrine não levam selo na tela. A casa não chama API de vetor nem trava porcentagem de marketplace. Detalhe em [PESQUISA-2026-10-16.md](PESQUISA-2026-10-16.md).
 
 ## O que não fazer
 

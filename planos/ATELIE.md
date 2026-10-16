@@ -66,6 +66,19 @@ Somam. Não substituem as de cima. Licença e ordem em [PESQUISA-2026-10-15.md](
 40. **Cartaz de avaliação** — link que a loja já tem. Fica no balcão.
 41. **Obrigado do pedido** — cartão pequeno para o pacote. Não é nota.
 
+## Peças de 16 de outubro (plano, ainda não no ar)
+
+Somam. Não substituem as de cima. Licença e ordem em [PESQUISA-2026-10-16.md](PESQUISA-2026-10-16.md).
+
+42. **Logo chapado → SVG** — ImageTracerJS (Unlicense). Recusa foto. A linha “feito no KAZER” fica fora da marca.
+43. **Branco → transparente** — canvas. Não é o recorte de pessoa.
+44. **Duotone** — duas tintas na foto local. Não é a rampa OKLCH.
+45. **DPI da gráfica** — pixels e centímetros. Não é a folha de sangria.
+46. **Caixa simples** — um molde em milímetro. A gráfica confere. Não é 3D.
+47. **Conta da vitrine** — a pessoa digita a taxa que o painel mostrou. Não é o contador.
+48. **Cartaz DE/POR** — preço riscado na gôndola. Não é a etiqueta de código.
+49. **Monograma** — letras em 16–512. Não é o selo da casa nem a grade Lucide.
+
 ## Direção de arte (já documentada)
 
 O visual do Brain continua em [`docs/visual-system.md`](../docs/visual-system.md): `kazer-svg` e `kazer-html`, composição com foco, sem cartão repetido. O ateliê só **reutiliza** essa linguagem.
@@ -83,3 +96,9 @@ O visual do Brain continua em [`docs/visual-system.md`](../docs/visual-system.md
 - Não empacotar libheif nem outro wasm de codec copyleft.
 - Não chamar a foto 3×4 de documento oficial.
 - Não hospedar o cartão de visita. O .vcf baixa. O perfil não mora na Vercel.
+- Não subir logo, foto ou molde da prensa para o servidor.
+- Não empacotar Potrace nem outro traçador GPL. O traço é ImageTracerJS (Unlicense).
+- Não gravar taxa de marketplace no código. A pessoa digita a porcentagem do painel.
+- Não chamar o molde de caixa de faca aprovada pela gráfica.
+- Não prometer traço de foto com qualidade de estúdio pago.
+- Não colocar o selo dentro dos caminhos do logo.
