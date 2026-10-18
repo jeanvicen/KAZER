@@ -1,5 +1,5 @@
-const { getUserBearer, requireUser, supabaseRequest, unauthorized } = require("./_kazer-data");
-const { applyRateLimit, publicSupabaseAnonKey, rateLimit, requestExceedsLimit, sendJson, supabaseBaseUrl } = require("./_security");
+const { getUserBearer, requireUser, supabaseRequest, unauthorized } = require("../server/storage/_kazer-data");
+const { applyRateLimit, publicSupabaseAnonKey, rateLimit, requestExceedsLimit, sendJson, supabaseBaseUrl } = require("../server/security/_security");
 
 const MAX_TASK_BYTES = 7 * 1024 * 1024;
 const TASK_TYPES = new Set(["chat_response", "web_search", "document_analysis", "file_processing", "image_generation", "report_generation", "computer_agent", "upload_processing", "other"]);

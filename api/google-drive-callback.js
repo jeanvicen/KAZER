@@ -1,4 +1,4 @@
-const { exchangeCode, saveConnection, verifyState } = require("./_google-drive");
+const { exchangeCode, saveConnection, verifyState } = require("../server/integrations/_google-drive");
 module.exports = async (request, response) => {
   const query = request.query || {};
   const redirect = (status, message) => { response.status(status); response.setHeader("Content-Type", "text/html; charset=utf-8"); response.setHeader("Cache-Control", "no-store"); response.end(`<!doctype html><meta charset="utf-8"><title>Google Drive</title><script>window.opener?.postMessage(${JSON.stringify({ type: "kazer-google-drive", status, message })}, window.location.origin);window.close();</script><p>${message}</p>`); };

@@ -4,7 +4,7 @@ import { readFile } from "node:fs/promises";
 import { createRequire } from "node:module";
 
 const require = createRequire(import.meta.url);
-const { selectConversationMessages } = require("../api/_kazer-context.js");
+const { selectConversationMessages } = require("../server/agent/_kazer-context.js");
 const chatSource = await readFile(new URL("../api/chat.js", import.meta.url), "utf8");
 const cleanUserContentSource = chatSource.match(/function cleanUserContent\([\s\S]*?(?=\nfunction normalizeRepositoryContext)/)?.[0];
 const historyParserSource = chatSource.match(/function parseMessages\([\s\S]*?(?=\nfunction parseDataUrl)/)?.[0];

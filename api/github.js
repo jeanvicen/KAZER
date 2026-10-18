@@ -4,12 +4,12 @@
  * deployment counts this file as a single serverless function.
  */
 const handlers = {
-  connect: require("./_github-connect-handler"),
-  authorize: require("./_github-authorize-handler"),
-  callback: require("./_github-callback-handler"),
-  status: require("./_github-status-handler"),
-  repos: require("./_github-repos-handler"),
-  disconnect: require("./_github-disconnect-handler"),
+  connect: require("../server/integrations/_github-connect-handler"),
+  authorize: require("../server/integrations/_github-authorize-handler"),
+  callback: require("../server/integrations/_github-callback-handler"),
+  status: require("../server/integrations/_github-status-handler"),
+  repos: require("../server/integrations/_github-repos-handler"),
+  disconnect: require("../server/integrations/_github-disconnect-handler"),
 };
 
 module.exports = async function handler(request, response) {

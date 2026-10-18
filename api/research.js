@@ -1,8 +1,8 @@
-const { applyRateLimit, authenticateUser, hasSafeFetchMetadata, isSameOrigin, rateLimit, requestExceedsLimit, redactSensitiveText, sendJson } = require("./_security");
-const { callUsageRpc, calculateWebSearchCreditCost } = require("./_usage");
-const { runResearch } = require("./_research-orchestrator");
-const { callKazerBrain } = require("./_kazer-brain");
-const { getBackgroundTaskContext } = require("./_background-context");
+const { applyRateLimit, authenticateUser, hasSafeFetchMetadata, isSameOrigin, rateLimit, requestExceedsLimit, redactSensitiveText, sendJson } = require("../server/security/_security");
+const { callUsageRpc, calculateWebSearchCreditCost } = require("../server/usage/_usage");
+const { runResearch } = require("../server/research/_research-orchestrator");
+const { callKazerBrain } = require("../server/agent/_kazer-brain");
+const { getBackgroundTaskContext } = require("../server/tasks/_background-context");
 
 const MAX_REQUEST_BYTES = 24 * 1024;
 const MAX_QUESTION_CHARS = 600;

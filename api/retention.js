@@ -9,7 +9,7 @@ const {
   sendJson,
   supabaseBaseUrl,
   timingSafeEqualText,
-} = require("./_security");
+} = require("../server/security/_security");
 
 const INACTIVITY_YEARS = 3;
 const WARNING_DAYS = [50, 30, 5];

@@ -12,7 +12,7 @@ O mapa completo, com responsabilidade de cada pasta e seus limites, está em [`r
 
 ```text
 KAZER/
-├── api/                    Rotas serverless e adaptadores de compatibilidade
+├── api/                    Rotas HTTP serverless da Vercel, sem módulos auxiliares
 ├── server/                 Implementações backend agrupadas por domínio
 ├── interface/              Páginas estáticas e código do navegador
 ├── mobile/                 App Expo que envolve o produto web
@@ -70,7 +70,7 @@ O handler HTTP, o worker e as migrações estão separados porque têm ciclos de
 
 | Caminho | Contrato atual | Verificação antes de mudar |
 |---|---|---|
-| `api/` | A raiz das funções serverless e das rotas HTTP é definida pela Vercel. Arquivos `api/_*.js` são adaptadores de compatibilidade de uma linha. | `vercel.json`, imports, smoke tests de API e build/deploy isolado. |
+| `api/` | A raiz das rotas HTTP serverless é o contrato de deploy atual da Vercel. Contém apenas handlers de rota. | `vercel.json`, imports, smoke tests de API e build/deploy isolado. |
 | `server/` | Implementações internas separadas por domínio: agente, integrações, pesquisa, segurança, armazenamento, tarefas e uso. | Testes de regressão, imports, análise estática e build de produção. |
 | `interface/` | HTML, CSS e JavaScript estáticos servidos pelos rewrites existentes. | Destinos em `vercel.json`, links locais e teste de navegação. |
 | `download/` | URLs públicas de manifesto, service worker, ícones, APK e materiais. | Referências em HTML, PWA, `assetlinks.json`, README e headers. |
@@ -85,7 +85,7 @@ Esses caminhos são parte da arquitetura de publicação. Não mover, renomear, 
 
 1. Coloque cada arquivo no domínio existente mais próximo; crie uma pasta nova somente quando houver uma responsabilidade ou ciclo de build realmente distinto.
 2. Preserve nomes e caminhos públicos de API, páginas, downloads, service worker e migrações.
-3. Mantenha handlers HTTP finos quando possível e deixe lógica relacionada em módulos privados existentes, sem criar uma segunda implementação da mesma capacidade.
+3. Mantenha handlers HTTP finos em `api/` e lógica compartilhada em `server/<domínio>/`, sem duplicar implementações.
 4. Use a raiz para configuração exigida pelas ferramentas; mantenha configuração móvel no diretório `mobile/` e tarefas longas no `worker/`.
 5. Novas tabelas ou políticas entram como migração nova e sequencial; não reescreva migrações já aplicadas.
 6. Cada mudança de código recebe teste/regressão no diretório `test/` ou `scripts/`; mudanças somente documentais não devem alterar payloads, comportamento ou conectividade.
@@ -103,4 +103,5 @@ Esses caminhos são parte da arquitetura de publicação. Não mover, renomear, 
 A decisão de preservar limites claros, agrupar por responsabilidade e evitar camadas/distribuição sem necessidade considera estas referências. São princípios para orientar o projeto, não modelos para copiar sem avaliar o runtime atual:
 
 - [Node.js Best Practices — Project Architecture Practices](https://github.com/goldbergyoni/nodebestpractices): organização por componentes e separação de camadas com limites explícitos.
+- [Vercel — Advanced Configuration](https://vercel.com/docs/functions/configuring-functions/advanced-configuration): documenta o roteamento por arquivos em `api/` para projetos sem framework e o tratamento de arquivos auxiliares com `_`; a Vercel também descreve alternativas de build customizado, que exigiriam validação separada neste projeto.
 - [Graphite — How we organize our monorepo to ship fast](https://graphite.com/blog/how-we-organize-our-monorepo-to-ship-fast): módulos composáveis e redução de amplificação de mudanças, carga cognitiva e dependências implícitas; o artigo também ressalta que sua arquitetura é específica ao contexto da empresa.

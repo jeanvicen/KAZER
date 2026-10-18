@@ -9,12 +9,12 @@ KAZER/
 ├── .github/                 CI, Dependabot e CODEOWNERS
 ├── .well-known/             Associação pública do app Android
 ├── .agents/                 Recursos de desenvolvimento para agentes
-├── api/                     Rotas Vercel e adaptadores de compatibilidade
-│   ├── chat.js              Rota de chat e orquestração HTTP
-│   ├── research.js          Rota de pesquisa web
+├── api/                     Rotas HTTP serverless da Vercel (11 handlers)
+│   ├── chat.js              Chat
+│   ├── research.js          Pesquisa web
 │   ├── workspace.js         Tarefas e conectores
 │   ├── background-tasks.js  Entrada das tarefas de longa duração
-│   └── _*.js                Adaptadores antigos; cada um reexporta server/
+│   └── ...                  GitHub, Drive, uso, retenção e notificações
 ├── server/                  Implementações backend por domínio
 │   ├── agent/               Brain, Skills, contexto e terminal isolado
 │   ├── integrations/        GitHub, Drive, MCP e plugins
@@ -57,7 +57,7 @@ A lista é intencionalmente resumida: para descobrir os arquivos concretos, use 
 |---|---|---|
 | Uma tela/página estática | `interface/` | Não renomeie páginas existentes sem atualizar `vercel.json`, navegação e links. |
 | Um endpoint HTTP | `api/<rota>.js` | Preserve autenticação, validação, limites, timeouts e contrato JSON. |
-| Lógica interna de backend | `server/<domínio>/` | Mantenha uma única implementação; deixe `api/_*.js` apenas como adaptadores de compatibilidade. |
+| Lógica interna de backend | `server/<domínio>/` | Mantenha uma única implementação; `api/` deve conter somente handlers de rota Vercel. |
 | Pesquisa, conectores ou Skills | `server/research/`, `server/integrations/`, `server/agent/` e `skills/` | Mantenha allowlists, validação server-side e bundle de Skills da Vercel sincronizados. |
 | Migração de schema | Novo arquivo numerado em `database/supabase/` | Nunca renumere/regrave migração já aplicada; documente pré-requisitos e rollback. |
 | Tarefa longa | `worker/` mais o contrato existente em `api/`/banco | Não assuma que a fila ou migração existe em produção sem confirmação. |
@@ -69,7 +69,7 @@ A lista é intencionalmente resumida: para descobrir os arquivos concretos, use 
 
 ## Arquivos de raiz que são intencionais
 
-`package.json`, `package-lock.json`, `.nvmrc`, `.env.example` e `vercel.json` ficam na raiz porque as ferramentas e o deploy da aplicação atual os leem dali. `.github/`, `.well-known/`, `.agents/` e os arquivos de licença, segurança e contribuição também têm consumidores próprios. Não os mova para uma pasta `config/` sem antes alterar e testar os consumidores. `api/` permanece como limite de rotas da Vercel; sua lógica compartilhada é mantida em `server/`, e os arquivos internos antigos permanecem como adaptadores compatíveis.
+`package.json`, `package-lock.json`, `.nvmrc`, `.env.example` e `vercel.json` ficam na raiz porque as ferramentas e o deploy da aplicação atual os leem dali. `.github/`, `.well-known/`, `.agents/` e os arquivos de licença, segurança e contribuição também têm consumidores próprios. Não os mova para uma pasta `config/` sem antes alterar e testar os consumidores. `api/` é o diretório padrão de rotas serverless deste deploy da Vercel; toda lógica compartilhada fica em `server/`. Para removê-lo de verdade, seria necessário trocar o modelo de build/deploy e validar todos os arquivos estáticos e rotas.
 
 `mobile/` possui um pacote Expo e lockfile próprios; não é um workspace npm configurado no pacote raiz. Essa separação deve ser mantida até existir uma decisão e um build de monorepo testados.
 

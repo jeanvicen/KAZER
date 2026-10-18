@@ -98,7 +98,7 @@ flowchart LR
 | Retenção | Avisos de inatividade e job diário de retenção, com exclusão desligada por padrão. | `api/retention.js`, `vercel.json` e migrações Supabase. |
 | PWA | Instalação na tela inicial, manifesto, service worker e cache restrito do app shell. | `download/manifest.webmanifest`, `download/sw.js` e `vercel.json`. |
 | Plugins | Google Drive e gerenciamento de conexões MCP; o runtime executa MCP remoto. Valores `command` de MCP local não foram executados nesta revisão. | `interface/chat.html`, `interface/kazer-workspace.js`, rewrite `/api/mcp` para `api/workspace.js`, `server/integrations/_mcp-runtime.js` e migração `010`. |
-| GitHub | OAuth para vincular a conta, listar/buscar repositórios e usar um repositório como contexto do pedido. | `api/github-*.js`, `interface/kazer-workspace.js` e `kazer_github_connections`. |
+| GitHub | OAuth para vincular a conta, listar/buscar repositórios e usar um repositório como contexto do pedido. | `api/github.js` (com rewrites de compatibilidade em `vercel.json`), `interface/kazer-workspace.js` e `kazer_github_connections`. |
 | Workspace | Interface/API para registrar tarefas, status/progresso, conectores e repositórios. O terminal opcional do Brain é efêmero e não grava resultados de volta no GitHub; não mostrar custo de tarefa: a coluna `credit_cost` foi removida do schema atual. | `interface/chat.html`, `interface/kazer-workspace.js`, `api/workspace.js`, `server/tasks/_tasks-handler.js` e `kazer_tasks`. |
 | Kazer Pro | Chamada visual de oferta; a tela informa que a página de compra está em preparação. | `interface/chat.html`. |
 
@@ -109,7 +109,7 @@ A aplicação é deliberadamente dividida entre um cliente estático e funções
 | Camada | Responsabilidade | Regra de proteção |
 |---|---|---|
 | Navegador | Exibir a interface, manter sessão do Supabase, montar requisições e renderizar respostas. | Nunca armazenar ou enviar chaves privadas; escapar conteúdo antes de inserir no DOM. |
-| `api/` | Adaptadores HTTP Vercel: autenticar bearer token, validar entrada e devolver JSON. | Preservar URLs e contratos; manter rotas finas e não colocar segredos no cliente. |
+| `api/` | Rotas HTTP serverless Vercel: autenticar bearer token, validar entrada e devolver JSON. | Preservar URLs e contratos; manter apenas handlers de rota e não colocar segredos no cliente. |
 | `server/` | Implementações internas por domínio, usadas pelas rotas e pelo worker. | Lógica única, validação server-side, dependências explícitas e testes de regressão. |
 | Supabase Auth | Cadastro, login, renovação e revogação da sessão. | Usar somente o fluxo oficial; não gravar senhas em tabelas próprias. |
 | PostgreSQL/Supabase | Perfis, preferências, avisos, tarefas, integrações e dados de uso conforme o schema aplicado. | Migrações declaram políticas e RPCs; RLS efetivo em produção e isolamento cross-account ainda precisam de validação. |
@@ -121,7 +121,7 @@ A aplicação é deliberadamente dividida entre um cliente estático e funções
 | Caminho | Conteúdo |
 |---|---|
 | `interface/` | Páginas web estáticas e scripts/CSS do navegador. |
-| `api/` | Rotas serverless e adaptadores de compatibilidade de módulos antigos; chat, pesquisa, uso, retenção, MCP, tarefas e integrações. |
+| `api/` | Handlers HTTP serverless do deploy Vercel; chat, pesquisa, uso, retenção, MCP, tarefas e integrações. A lógica compartilhada reside em `server/`. |
 | `server/` | Implementações backend agrupadas por domínio: agente, integrações, pesquisa, segurança, armazenamento, tarefas e uso. |
 | `database/supabase/` | Migrações SQL incrementais e instruções do banco. |
 | `download/` | URLs públicas de manifesto, service worker, ícones, APK e materiais PWA/Android/iOS. |

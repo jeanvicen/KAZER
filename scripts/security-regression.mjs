@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { createRequire } from "node:module";
 const require = createRequire(import.meta.url);
-const { authenticateUser, rateLimit, redactSensitiveText } = require("../api/_security.js");
+const { authenticateUser, rateLimit, redactSensitiveText } = require("../server/security/_security.js");
 
 const originalEnv = { SUPABASE_URL: process.env.SUPABASE_URL, SUPABASE_ANON_KEY: process.env.SUPABASE_ANON_KEY, SUPABASE_KEY: process.env.SUPABASE_KEY };
 const originalFetch = globalThis.fetch;

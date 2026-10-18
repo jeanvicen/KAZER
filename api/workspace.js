@@ -3,8 +3,8 @@
  * MCP and task APIs share one Vercel Function to remain within the Hobby limit.
  */
 const handlers = {
-  mcp: require("./_mcp-handler"),
-  tasks: require("./_tasks-handler"),
+  mcp: require("../server/integrations/_mcp-handler"),
+  tasks: require("../server/tasks/_tasks-handler"),
 };
 
 module.exports = async function handler(request, response) {

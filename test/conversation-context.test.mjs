@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { createRequire } from "node:module";
 
 const require = createRequire(import.meta.url);
-const { selectConversationMessages } = require("../api/_kazer-context.js");
+const { selectConversationMessages } = require("../server/agent/_kazer-context.js");
 
 const turn = (role, content) => ({ role, content });
 

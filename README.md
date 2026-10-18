@@ -235,7 +235,7 @@ Os smoke tests de integração fazem stubs de respostas externas; eles validam c
 | Caminho | Conteúdo |
 |---|---|
 | `interface/` | Páginas estáticas e scripts/CSS do navegador. |
-| `api/` | Rotas HTTP da Vercel e adaptadores de compatibilidade. |
+| `api/` | Rotas HTTP serverless da Vercel; a lógica compartilhada fica em `server/`. |
 | `server/` | Implementações backend agrupadas por domínio. |
 | `database/supabase/` | Migrações incrementais e documentação do banco. |
 | `download/` | URLs públicas: manifesto, service worker, ícones, APK e assets. |

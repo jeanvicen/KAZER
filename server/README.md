@@ -1,20 +1,15 @@
-# Server-side modules
+# Backend por domínio
 
-This directory contains the implementation behind the Vercel HTTP adapters in `api/`.
-The domain folders are deliberately separate from route registration: adding or moving a
-module here does not create a new HTTP endpoint.
+Esta pasta concentra as implementações internas do backend do KAZER, agrupadas por responsabilidade. Ela não registra endpoints HTTP; as rotas serverless da Vercel ficam em `api/` e importam os módulos daqui.
 
-| Folder | Responsibility |
+| Pasta | Responsabilidade |
 |---|---|
-| `agent/` | Brain, task context, instructions, Skills, and isolated terminal adapter. |
-| `integrations/` | GitHub, Google Drive, MCP, and plugin runtimes. |
-| `research/` | Search orchestration, browser research, evidence helpers, and live context. |
-| `security/` | Request security, URL/IP validation, and SSRF protections. |
-| `storage/` | Supabase/data access shared by server routes. |
-| `tasks/` | Workspace task handlers and background-task context. |
-| `usage/` | Usage policy and billing/limit helpers. |
+| `agent/` | Brain, contexto, instruções, Skills e executor de terminal isolado. |
+| `integrations/` | GitHub, Google Drive, MCP e runtime de plugins. |
+| `research/` | Orquestração de pesquisa, browser e utilitários de evidências. |
+| `security/` | Segurança de requests, validação de URL/IP e proteções SSRF. |
+| `storage/` | Acesso ao Supabase e às estruturas de dados compartilhadas. |
+| `tasks/` | Handlers de tarefas e contexto de trabalho em segundo plano. |
+| `usage/` | Regras de uso e limites. |
 
-`api/_*.js` files are intentionally retained as one-line compatibility adapters for
-existing imports and test harnesses. Put implementations in this directory; do not add a
-second copy of business logic under `api/`. Route URLs remain defined by the existing
-`api/*.js` handlers and `vercel.json`.
+**Regra de organização:** novas rotas entram em `api/<rota>.js`; a lógica reutilizável entra em `server/<domínio>/`. Não duplique implementação dentro de `api/` nem mova o diretório de rotas sem revisar a configuração de deploy e os caminhos públicos.

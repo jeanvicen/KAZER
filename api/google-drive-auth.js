@@ -1,5 +1,5 @@
-const { authenticateUser, applyRateLimit, isSameOrigin, hasSafeFetchMetadata, rateLimit, sendJson } = require("./_security");
-const { authorizationUrl } = require("./_google-drive");
+const { authenticateUser, applyRateLimit, isSameOrigin, hasSafeFetchMetadata, rateLimit, sendJson } = require("../server/security/_security");
+const { authorizationUrl } = require("../server/integrations/_google-drive");
 module.exports = async (request, response) => {
   if (request.method !== "GET") return sendJson(response, 405, { error: "Método não permitido." }, { Allow: "GET" });
   if (!isSameOrigin(request) || !hasSafeFetchMetadata(request)) return sendJson(response, 403, { error: "Origem não permitida." });

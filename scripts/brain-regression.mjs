@@ -1,9 +1,9 @@
 import assert from "node:assert/strict";
 import { createRequire } from "node:module";
 const require = createRequire(import.meta.url);
-const { classifyTask, planTask, selectConversationMessages, validateToolRequest } = require("../api/_kazer-context.js");
-const { buildSystemInstructions } = require("../api/_kazer-instructions.js");
-const brain = require("../api/_kazer-brain.js");
+const { classifyTask, planTask, selectConversationMessages, validateToolRequest } = require("../server/agent/_kazer-context.js");
+const { buildSystemInstructions } = require("../server/agent/_kazer-instructions.js");
+const brain = require("../server/agent/_kazer-brain.js");
 
 assert.equal(classifyTask("Altere somente o botão"), "conversation");
 assert.equal(classifyTask("Não altere o fundo. Só altere o botão."), "conversation");

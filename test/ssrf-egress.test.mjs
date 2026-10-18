@@ -6,10 +6,10 @@ import { gzipSync } from "node:zlib";
 import test from "node:test";
 
 const require = createRequire(import.meta.url);
-const { isPublicAddress } = require("../api/_research-search-utils.js");
-const { createPinnedLookup, parsePublicUrl, requestPublicUrl, resolvePublicAddress } = require("../api/_ssrf.js");
-const { fetchResearchPage } = require("../api/_research-orchestrator.js");
-const { fulfillPinnedBrowserRequest } = require("../api/_research-browser.js");
+const { isPublicAddress } = require("../server/research/_research-search-utils.js");
+const { createPinnedLookup, parsePublicUrl, requestPublicUrl, resolvePublicAddress } = require("../server/security/_ssrf.js");
+const { fetchResearchPage } = require("../server/research/_research-orchestrator.js");
+const { fulfillPinnedBrowserRequest } = require("../server/research/_research-browser.js");
 
 function fakeTransport(replies, captures = []) {
   return {

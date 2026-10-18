@@ -9,7 +9,7 @@ const {
   isSameOrigin,
   sendJson,
   supabaseBaseUrl,
-} = require("./_security");
+} = require("../server/security/_security");
 
 const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY || "sb_publishable_1z--HkCLItfs9qqHdf8WHA_WwhPVfnS";
 

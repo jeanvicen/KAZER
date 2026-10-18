@@ -17,12 +17,11 @@ const requiredFiles = [
   'interface/login.html',
   'interface/chat.html',
   'api/chat.js',
-  'api/_security.js',
+  'server/security/_security.js',
   'server/README.md',
   'server/agent/_kazer-brain.js',
   'server/integrations/_github.js',
   'server/research/_research-orchestrator.js',
-  'server/security/_security.js',
   'server/storage/_kazer-data.js',
   'server/tasks/_tasks-handler.js',
   'server/usage/_usage.js',
@@ -36,10 +35,11 @@ test('arquivos essenciais do projeto existem', () => {
   }
 });
 
-test('os caminhos antigos do backend continuam como adaptadores compatíveis', () => {
-  const legacy = require('../api/_security.js');
+test('api/ contém rotas finas e a lógica fica em server/', () => {
   const implementation = require('../server/security/_security.js');
-  assert.equal(legacy.redactSensitiveText, implementation.redactSensitiveText);
+  assert.equal(typeof implementation.redactSensitiveText, 'function');
+  assert.equal(existsSync(resolve(root, 'api/_security.js')), false);
+  assert.match(read('api/chat.js'), /require\(\"\.\.\/server\/security\/_security/);
 });
 
 test('package declara runtime, licença e scripts de qualidade', () => {

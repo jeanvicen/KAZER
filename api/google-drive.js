@@ -1,7 +1,7 @@
-const { authenticateUser, applyRateLimit, isSameOrigin, hasSafeFetchMetadata, rateLimit, sendJson, requestExceedsLimit } = require("./_security");
-const { callUsageRpc } = require("./_usage");
-const { accessTokenForRequest, deleteConnection, driveFetch, getConnection } = require("./_google-drive");
-const { emit, narrate, startEventStream } = require("./_plugin-runtime");
+const { authenticateUser, applyRateLimit, isSameOrigin, hasSafeFetchMetadata, rateLimit, sendJson, requestExceedsLimit } = require("../server/security/_security");
+const { callUsageRpc } = require("../server/usage/_usage");
+const { accessTokenForRequest, deleteConnection, driveFetch, getConnection } = require("../server/integrations/_google-drive");
+const { emit, narrate, startEventStream } = require("../server/integrations/_plugin-runtime");
 
 const MAX_BODY = 8 * 1024 * 1024;
 function bodyOf(request) { if (typeof request.body === "object" && request.body) return request.body; try { return JSON.parse(request.body || "{}"); } catch { return null; } }

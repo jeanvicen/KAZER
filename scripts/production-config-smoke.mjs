@@ -14,8 +14,8 @@ delete process.env.SUPABASE_ANON_KEY;
 process.env.SUPABASE_SERVICE_ROLE_KEY = "test-only-service-role";
 
 const require = createRequire(import.meta.url);
-const security = require("../api/_security.js");
-const data = require("../api/_kazer-data.js");
+const security = require("../server/security/_security.js");
+const data = require("../server/storage/_kazer-data.js");
 
 assert.equal(security.supabaseBaseUrl(), "https://mqjunopzycdezzjmlhip.supabase.co");
 assert.ok(security.publicSupabaseAnonKey());

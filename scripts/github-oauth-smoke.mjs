@@ -10,9 +10,9 @@ process.env.PUBLIC_APP_ORIGINS = "https://kazer.vercel.app";
 process.env.GITHUB_OAUTH_STATE_SECRET = "smoke-state-secret-at-least-thirty-two-bytes-long";
 
 const require = createRequire(import.meta.url);
-const { readState, signState } = require("../api/_github.js");
-const handler = require("../api/_github-callback-handler.js");
-const authorizeHandler = require("../api/_github-authorize-handler.js");
+const { readState, signState } = require("../server/integrations/_github.js");
+const handler = require("../server/integrations/_github-callback-handler.js");
+const authorizeHandler = require("../server/integrations/_github-authorize-handler.js");
 const workspaceSource = await fs.readFile(new URL("../interface/kazer-workspace.js", import.meta.url), "utf8");
 const connectSource = await fs.readFile(new URL("../server/integrations/_github-connect-handler.js", import.meta.url), "utf8");
 const authorizeSource = await fs.readFile(new URL("../server/integrations/_github-authorize-handler.js", import.meta.url), "utf8");

@@ -62,7 +62,7 @@ assert.equal(githubAuthorizeUrl.searchParams.get("redirect_uri"), "https://kazer
 assert.equal(githubAuthorizeUrl.searchParams.get("scope"), "repo read:user");
 assert.ok(githubAuthorizeUrl.searchParams.get("state"));
 
-const directHandler = require("../api/_github-authorize-handler.js");
+const directHandler = require("../server/integrations/_github-authorize-handler.js");
 const directResponse = responseOf();
 await directHandler({ ...request, method: "POST", headers: { ...request.headers, host: "kazer.example" }, body: { access_token: "test-bearer-token-123456" } }, directResponse);
 assert.equal(directResponse.statusCode, 302);

@@ -12,16 +12,16 @@ const {
   redactSensitiveText,
   requestExceedsLimit,
   sendJson,
-} = require("./_security");
-const { callUsageRpc, calculateChatCreditCost } = require("./_usage");
-const { callMcpTool, flattenTools, getConnectedMcpCount, loadMcpRuntime } = require("./_mcp-runtime");
-const { decodeToken, getConnection, githubFetch, repoForClient } = require("./_github");
-const { supabaseRequest } = require("./_kazer-data");
-const { KAZER_BRAIN_VERSION, callKazerBrain } = require("./_kazer-brain");
-const { researchToolDefinition, runResearch } = require("./_research-orchestrator");
-const { currentBrazilContext, needsRealtimeResearch, researchContextText } = require("./_realtime-context");
-const { getBackgroundTaskContext } = require("./_background-context");
-const { executeTerminalCommand, isTerminalConfigured, terminalToolDefinition, validateTerminalArguments } = require("./_kazer-terminal");
+} = require("../server/security/_security");
+const { callUsageRpc, calculateChatCreditCost } = require("../server/usage/_usage");
+const { callMcpTool, flattenTools, getConnectedMcpCount, loadMcpRuntime } = require("../server/integrations/_mcp-runtime");
+const { decodeToken, getConnection, githubFetch, repoForClient } = require("../server/integrations/_github");
+const { supabaseRequest } = require("../server/storage/_kazer-data");
+const { KAZER_BRAIN_VERSION, callKazerBrain } = require("../server/agent/_kazer-brain");
+const { researchToolDefinition, runResearch } = require("../server/research/_research-orchestrator");
+const { currentBrazilContext, needsRealtimeResearch, researchContextText } = require("../server/research/_realtime-context");
+const { getBackgroundTaskContext } = require("../server/tasks/_background-context");
+const { executeTerminalCommand, isTerminalConfigured, terminalToolDefinition, validateTerminalArguments } = require("../server/agent/_kazer-terminal");
 
 const MAX_REQUEST_BYTES = 7 * 1024 * 1024;
 const MAX_TOTAL_ATTACHMENT_BYTES = 4 * 1024 * 1024;
@@ -38,9 +38,9 @@ const MAX_FILE_BYTES = 4 * 1024 * 1024;
 const MAX_IMAGES = 3;
 const MAX_EXTRACTED_FILE_CHARS = 18000;
 
-const { buildSystemInstructions } = require("./_kazer-instructions");
-const { loadAgentSkill, selectAgentSkill, skillDeclaresPermission } = require("./_kazer-skills");
-const { classifyTask, planTask, selectConversationMessages, validateToolRequest } = require("./_kazer-context");
+const { buildSystemInstructions } = require("../server/agent/_kazer-instructions");
+const { loadAgentSkill, selectAgentSkill, skillDeclaresPermission } = require("../server/agent/_kazer-skills");
+const { classifyTask, planTask, selectConversationMessages, validateToolRequest } = require("../server/agent/_kazer-context");
 const VISUAL_REQUEST_PATTERN = /\b(?:imagem|visual|desenho|desenhar|ilustra[cç][aã]o|logo|[ií]cone|[ií]cones|layout|interface|tela|prot[oó]tipo|mockup|wireframe|diagrama|fluxograma|gr[aá]fico|chart|dashboard|slide|cart[aã]o|banner|poster|p[oó]ster|infogr[aá]fico|planta|mapa|composi[cç][aã]o|design|image|drawing|illustration|icon|icons|screen|prototype|mockup|wireframe|diagram|flowchart|chart|dashboard|slide|card|banner|poster|infographic|visual(?:ly)?|look like)\b/i;
 const CODE_REQUEST_PATTERN = /\b(?:index\.html?|index\.htm|\.html?|\.css|\.js|\.ts|\.tsx|\.jsx|\.py|\.sql|\.json|\.md)\b|(?:\b(?:c[oó]digo|code|arquivo|file|script|snippet|trecho|fun[cç][aã]o|function|programa|program|implemente|crie|escreva|mostre|me d[eê])\b[\s\S]{0,100}\b(?:html|css|javascript|typescript|python|sql|json|markdown|c[oó]digo|code)\b)/i;
 

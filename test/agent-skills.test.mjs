@@ -8,7 +8,7 @@ const {
   safeReadSkillFile,
   selectAgentSkill,
   skillDeclaresPermission,
-} = require('../api/_kazer-skills.js');
+} = require('../server/agent/_kazer-skills.js');
 
 test('skills are selected from task intent, not from a client-supplied skill id', () => {
   assert.equal(selectAgentSkill({ text: 'Quanto custa este modelo hoje?', taskType: 'analysis', needsResearch: true }), 'kazer-research');

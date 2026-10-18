@@ -5,7 +5,7 @@ const require = createRequire(import.meta.url);
 const {
   calculateChatCreditCost,
   calculateWebSearchCreditCost,
-} = require("../api/_usage.js");
+} = require("../server/usage/_usage.js");
 
 const simpleChat = calculateChatCreditCost([{ role: "user", content: "Olá" }]);
 const longChat = calculateChatCreditCost([{ role: "user", content: "a".repeat(5000) }]);

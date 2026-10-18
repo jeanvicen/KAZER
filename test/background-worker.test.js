@@ -1,6 +1,6 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
-const { attachBackgroundTaskContext, getBackgroundTaskContext } = require("../api/_background-context");
+const { attachBackgroundTaskContext, getBackgroundTaskContext } = require("../server/tasks/_background-context");
 const { invokeTask } = require("../worker/background-worker");
 
 test("trusted background context is process-local, not supplied by HTTP headers", () => {

@@ -8,7 +8,7 @@ const {
   safeWorkingDirectory,
   terminalToolDefinition,
   validateTerminalArguments,
-} = require('../api/_kazer-terminal.js');
+} = require('../server/agent/_kazer-terminal.js');
 
 test('terminal tool schema is narrow and command validation rejects path escape', () => {
   assert.equal(terminalToolDefinition.function.name, 'terminal_exec');

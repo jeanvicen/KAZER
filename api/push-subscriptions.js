@@ -1,5 +1,5 @@
-const { requireUser, supabaseRequest, unauthorized } = require("./_kazer-data");
-const { applyRateLimit, rateLimit, sendJson } = require("./_security");
+const { requireUser, supabaseRequest, unauthorized } = require("../server/storage/_kazer-data");
+const { applyRateLimit, rateLimit, sendJson } = require("../server/security/_security");
 
 function parseBody(request) {
   if (!request.body) return {};

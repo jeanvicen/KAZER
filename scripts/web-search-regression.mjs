@@ -5,7 +5,7 @@ import { readFile } from "node:fs/promises";
 const require = createRequire(import.meta.url);
 const root = new URL("..", import.meta.url).pathname;
 const intent = require(`${root}/interface/web-search-intent.js`);
-const utils = require(`${root}/api/_research-search-utils.js`);
+const utils = require(`${root}/server/research/_research-search-utils.js`);
 
 const positive = [
   "Quanto está o dólar hoje?",
