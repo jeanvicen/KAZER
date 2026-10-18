@@ -263,6 +263,55 @@ Os smoke tests de integração fazem stubs de respostas externas; eles validam c
 - [Gaveta de 15 de outubro](planos/PESQUISA-2026-10-15.md)
 - [Prensa de 16 de outubro](planos/PESQUISA-2026-10-16.md)
 
+## Capacidades de agente no Brain
+
+O Brain agora seleciona e carrega no servidor as Skills `kazer-research`,
+`kazer-code`, `kazer-security`, `kazer-docs`, `kazer-growth` e
+`kazer-design-system` conforme a intenção detectada. Cada Skill e suas
+referências permitidas ficam versionadas em `skills/`; a função de chat inclui
+esses arquivos no pacote de produção da Vercel. O cliente não escolhe um slug
+de Skill nem envia permissões para o servidor.
+
+As permissões do frontmatter são comparadas com uma lista confiável no servidor.
+Elas descrevem o escopo da Skill, mas **não concedem acesso por si só**: uma
+ferramenta só fica disponível quando o Brain a registra e a política do servidor
+a autoriza. A ferramenta `research_web` continua limitada a tarefas que precisam
+de pesquisa e exige `web.read` e `net.fetch`; ferramentas MCP continuam dependendo
+de conectores explicitamente selecionados e carregados após autenticação.
+
+### Limites atuais
+
+- A seleção de Skills e a inclusão de instruções/referências no Brain estão
+  implementadas e cobertas por testes. O Brain existente continua usando a
+  pesquisa autorizada e os conectores MCP já disponíveis, sem alterar a interface.
+- `terminal_exec` só é registrado numa solicitação interativa quando há um
+  repositório GitHub selecionado e validado, a conexão GitHub do usuário permite
+  lê-lo, `E2B_API_KEY` está configurada no servidor e a Skill ativa declara
+  `shell.exec` e `code.run`. Sem qualquer uma dessas condições, a ferramenta não
+  fica disponível.
+- Para executar um comando, o servidor copia para um sandbox E2B temporário
+  apenas arquivos de texto de extensões permitidas do branch padrão; arquivos de
+  segredo, binários e diretórios como `.env`, `.git`, `node_modules`, `dist` e
+  `build` são excluídos, e padrões conhecidos de chaves são redigidos. O código
+  selecionado é transmitido ao E2B para essa execução. O sandbox não recebe
+  credenciais do KAZER, não tem acesso de saída à internet, tem limite de 20 s por
+  comando e é encerrado ao final. Há no máximo uma execução por solicitação. Como
+  não há acesso de rede nem instalação de dependências, testes que dependam de
+  pacotes ausentes podem não ser executáveis nesse sandbox.
+- O terminal é efêmero e somente de validação: não grava de volta no GitHub nem no
+  servidor KAZER, não faz commit/deploy/publicação e não cria artefatos
+  persistentes. `files.write` continua sendo apenas uma declaração de Skill,
+  ainda sem armazenamento de arquivos ligado a ela. O Brain deve informar esses
+  limites e nunca alegar alterações ou validações sem resultado confirmado.
+- O runtime mantém os limites existentes do orquestrador (até cinco rodadas de
+  tool calling e seis chamadas por rodada); comandos e saída também têm limites
+  próprios no executor.
+
+As telas, o logotipo, os arquivos de interface e o deploy publicado permanecem
+inalterados. Para habilitar o terminal no deploy, configure `E2B_API_KEY` como
+variável de ambiente do servidor; sem ela, nenhum código é enviado ao E2B.
+**O código-fonte escolhido é enviado ao E2B quando o executor é usado.**
+
 ## Status e propriedade
 
 O KAZER continua em desenvolvimento. Funcionalidades disponíveis dependem do deploy e da configuração dos provedores; itens de planejamento não devem ser interpretados como recursos ativos. Não há checkout Kazer Pro neste estado do produto. Consulte [`LICENSE.md`](LICENSE.md) para os termos de uso do código e dos ativos.

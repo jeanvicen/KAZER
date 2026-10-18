@@ -19,6 +19,7 @@
     "node": ">=20"
   },
   "dependencies": {
+    "e2b": "2.10.0",
     "mammoth": "^1.8.0",
     "pdf-parse": "^1.1.1",
     "playwright-core": "^1.55.0"

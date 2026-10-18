@@ -21,6 +21,7 @@ const { KAZER_BRAIN_VERSION, callKazerBrain } = require("./_kazer-brain");
 const { researchToolDefinition, runResearch } = require("./_research-orchestrator");
 const { currentBrazilContext, needsRealtimeResearch, researchContextText } = require("./_realtime-context");
 const { getBackgroundTaskContext } = require("./_background-context");
+const { executeTerminalCommand, isTerminalConfigured, terminalToolDefinition, validateTerminalArguments } = require("./_kazer-terminal");
 
 const MAX_REQUEST_BYTES = 7 * 1024 * 1024;
 const MAX_TOTAL_ATTACHMENT_BYTES = 4 * 1024 * 1024;
@@ -38,6 +39,7 @@ const MAX_IMAGES = 3;
 const MAX_EXTRACTED_FILE_CHARS = 18000;
 
 const { buildSystemInstructions } = require("./_kazer-instructions");
+const { loadAgentSkill, selectAgentSkill, skillDeclaresPermission } = require("./_kazer-skills");
 const { classifyTask, planTask, selectConversationMessages, validateToolRequest } = require("./_kazer-context");
 const VISUAL_REQUEST_PATTERN = /\b(?:imagem|visual|desenho|desenhar|ilustra[cç][aã]o|logo|[ií]cone|[ií]cones|layout|interface|tela|prot[oó]tipo|mockup|wireframe|diagrama|fluxograma|gr[aá]fico|chart|dashboard|slide|cart[aã]o|banner|poster|p[oó]ster|infogr[aá]fico|planta|mapa|composi[cç][aã]o|design|image|drawing|illustration|icon|icons|screen|prototype|mockup|wireframe|diagram|flowchart|chart|dashboard|slide|card|banner|poster|infographic|visual(?:ly)?|look like)\b/i;
 const CODE_REQUEST_PATTERN = /\b(?:index\.html?|index\.htm|\.html?|\.css|\.js|\.ts|\.tsx|\.jsx|\.py|\.sql|\.json|\.md)\b|(?:\b(?:c[oó]digo|code|arquivo|file|script|snippet|trecho|fun[cç][aã]o|function|programa|program|implemente|crie|escreva|mostre|me d[eê])\b[\s\S]{0,100}\b(?:html|css|javascript|typescript|python|sql|json|markdown|c[oó]digo|code)\b)/i;
@@ -401,10 +403,10 @@ function parseHomeSuggestionResponse(value, excludedTexts) {
   return output;
 }
 
-async function callGroq({ messages, hasImages, tools = [], timeoutMs = 30_000, maxAttempts = MAX_GROQ_ATTEMPTS_PER_MODEL, runtimeContext = "", taskType = "conversation", hasFiles = false, hasRepository = false, capabilities = [] }) {
+async function callGroq({ messages, hasImages, tools = [], timeoutMs = 30_000, maxAttempts = MAX_GROQ_ATTEMPTS_PER_MODEL, runtimeContext = "", agentSkillPrompt = "", taskType = "conversation", hasFiles = false, hasRepository = false, capabilities = [] }) {
   const latest = messages.at(-1)?.content;
   const inferredTask = taskType === "conversation" ? classifyTask(typeof latest === "string" ? latest : "", { hasImages, hasFiles, hasTools: tools.length > 0 }) : taskType;
-  const systemContent = buildSystemInstructions({ taskType: inferredTask, hasImages, hasFiles, hasTools: tools.length > 0, hasRepository, runtimeContext });
+  const systemContent = buildSystemInstructions({ taskType: inferredTask, hasImages, hasFiles, hasTools: tools.length > 0, hasRepository, runtimeContext, agentSkillPrompt });
   return callKazerBrain({
     messages: [{ role: "system", content: systemContent }, ...messages],
     hasImages,
@@ -440,13 +442,22 @@ async function generateHomeSuggestions(localTimeBand, recentSuggestions) {
   return parseHomeSuggestionResponse(retry.data?.choices?.[0]?.message?.content, recentSuggestions);
 }
 
-async function callGroqWithMcp({ messages, hasImages, mcpServers, runtimeContext = "", hasFiles = false, hasRepository = false, taskType = "conversation", capabilityPlan = null }) {
+async function callGroqWithMcp({ messages, hasImages, mcpServers, runtimeContext = "", hasFiles = false, hasRepository = false, taskType = "conversation", capabilityPlan = null, agentSkill = null, userId = null, repository = null, allowTerminal = false }) {
   const { tools: mcpTools, byName } = flattenTools(mcpServers || []);
-  const tools = [...(capabilityPlan?.needsResearch ? [researchToolDefinition] : []), ...mcpTools];
+  // Tools are registered by the trusted server only. Skill metadata alone
+  // never grants a tool; terminal access additionally requires a selected repo,
+  // a connected GitHub account, E2B configuration, and the code Skill's grants.
+  const canResearch = Boolean(capabilityPlan?.needsResearch && agentSkill && skillDeclaresPermission(agentSkill, "web.read") && skillDeclaresPermission(agentSkill, "net.fetch"));
+  const canTerminal = Boolean(allowTerminal && userId && repository && isTerminalConfigured() && agentSkill && skillDeclaresPermission(agentSkill, "shell.exec") && skillDeclaresPermission(agentSkill, "code.run"));
+  const tools = [...(canResearch ? [researchToolDefinition] : []), ...(canTerminal ? [terminalToolDefinition] : []), ...mcpTools];
+  const researchToolEnabled = canResearch;
+  const terminalToolEnabled = canTerminal;
+  let terminalRunsRemaining = canTerminal ? 1 : 0;
+  const terminalDefinition = terminalToolDefinition.function;
   let currentMessages = [...messages];
   const timeoutMs = taskType === "coding" ? 75_000 : 30_000;
-  let result = await callGroq({ messages: currentMessages, hasImages, tools, runtimeContext, hasFiles, hasRepository, taskType, timeoutMs, capabilities: capabilityPlan?.capabilities || [] });
-  if (result.failure || !tools.length) return { ...result, mcpToolsUsed: 0, researchUsed: 0 };
+  let result = await callGroq({ messages: currentMessages, hasImages, tools, runtimeContext, agentSkillPrompt: agentSkill?.prompt || "", hasFiles, hasRepository, taskType, timeoutMs, capabilities: capabilityPlan?.capabilities || [] });
+  if (result.failure || !tools.length) return { ...result, mcpToolsUsed: 0, researchUsed: 0, agentSkill: agentSkill?.slug || null };
 
   let toolsUsed = 0;
   let researchUsed = 0;
@@ -465,26 +476,38 @@ async function callGroqWithMcp({ messages, hasImages, mcpServers, runtimeContext
       let toolContent = "Ferramenta indisponível.";
       try {
         const parsedArgs = JSON.parse(toolCall.function.arguments || "{}");
-        const validation = validateToolRequest(name, parsedArgs);
-        if (!validation.ok) throw new Error(validation.error);
-        const args = validation.args;
-        if (name === researchToolDefinition.function.name) {
-          const research = await runResearch({ question: args.question, deep: args.depth !== "normal" });
-          toolContent = JSON.stringify({ question: research.question, queries: research.queries, sources: research.sources, evidence: research.evidence, visitedUrls: research.visitedUrls, browserAvailable: research.browserAvailable, errors: research.errors, stopReason: research.stopReason }).slice(0, 42_000);
-          researchUsed += 1;
-        } else if (entry) {
-          toolContent = await callMcpTool(entry, args);
-          toolsUsed += 1;
+        if (name === terminalDefinition.name && terminalToolEnabled) {
+          if (terminalRunsRemaining <= 0) {
+            toolContent = JSON.stringify({ state: "denied", error: "terminal_call_limit_reached" });
+          } else {
+            terminalRunsRemaining -= 1;
+            const terminalValidation = validateTerminalArguments(parsedArgs);
+            if (!terminalValidation.ok) throw new Error(terminalValidation.error);
+            const terminalResult = await executeTerminalCommand({ userId, repository, args: terminalValidation.args });
+            toolContent = JSON.stringify(terminalResult).slice(0, 38_000);
+          }
+        } else {
+          const validation = validateToolRequest(name, parsedArgs);
+          if (!validation.ok) throw new Error(validation.error);
+          const args = validation.args;
+          if (name === researchToolDefinition.function.name && researchToolEnabled) {
+            const research = await runResearch({ question: args.question, deep: args.depth !== "normal" });
+            toolContent = JSON.stringify({ question: research.question, queries: research.queries, sources: research.sources, evidence: research.evidence, visitedUrls: research.visitedUrls, browserAvailable: research.browserAvailable, errors: research.errors, stopReason: research.stopReason }).slice(0, 42_000);
+            researchUsed += 1;
+          } else if (entry) {
+            toolContent = await callMcpTool(entry, args);
+            toolsUsed += 1;
+          }
         }
       } catch (error) {
         toolContent = `Falha ao consultar a ferramenta: ${String(error?.message || "erro").slice(0, 300)}`;
       }
       currentMessages.push({ role: "tool", tool_call_id: toolCall.id, content: toolContent });
     }
-    result = await callGroq({ messages: currentMessages, hasImages: false, tools, runtimeContext, hasFiles, hasRepository, taskType, timeoutMs, capabilities: capabilityPlan?.capabilities || [] });
+    result = await callGroq({ messages: currentMessages, hasImages: false, tools, runtimeContext, agentSkillPrompt: agentSkill?.prompt || "", hasFiles, hasRepository, taskType, timeoutMs, capabilities: capabilityPlan?.capabilities || [] });
     if (result.failure) break;
   }
-  return { ...result, mcpToolsUsed: toolsUsed, researchUsed };
+  return { ...result, mcpToolsUsed: toolsUsed, researchUsed, agentSkill: agentSkill?.slug || null };
 }
 
 module.exports = async function handler(request, response) {
@@ -595,6 +618,17 @@ module.exports = async function handler(request, response) {
   const requestedMcpCount = backgroundContext ? 0 : await getConnectedMcpCount(user.id, body?.mcpConnectorIds);
   const capabilityPlan = planTask(lastMessage.content, { hasImages: prepared.imageParts.length > 0, hasFiles: prepared.fileNames.length > 0, hasTools: requestedMcpCount > 0, hasRepository: Boolean(repositoryContext) });
   const { taskType } = capabilityPlan;
+  const selectedSkillSlug = selectAgentSkill({ text: lastMessage.content, taskType, needsResearch: capabilityPlan.needsResearch });
+  let agentSkill = null;
+  if (selectedSkillSlug) {
+    try {
+      agentSkill = loadAgentSkill(selectedSkillSlug);
+      if (!agentSkill) throw new Error("skill_not_available");
+    } catch (error) {
+      console.error("Agent skill unavailable", { skill: selectedSkillSlug, reason: String(error?.message || "unknown").slice(0, 120) });
+      return sendJson(response, 503, { error: "A capacidade necessária do KAZER está indisponível no servidor." });
+    }
+  }
   const creditCost = calculateChatCreditCost(messages, prepared.fileNames.length, requestedMcpCount);
   let usage = backgroundContext?.usage || null;
   if (!backgroundContext) {
@@ -672,7 +706,7 @@ module.exports = async function handler(request, response) {
     }
   }
 
-  const result = await callGroqWithMcp({ messages: apiMessages, hasImages, mcpServers, runtimeContext, hasFiles: prepared.fileNames.length > 0, hasRepository: Boolean(repositoryContext), taskType, capabilityPlan });
+  const result = await callGroqWithMcp({ messages: apiMessages, hasImages, mcpServers, runtimeContext, hasFiles: prepared.fileNames.length > 0, hasRepository: Boolean(repositoryContext), taskType, capabilityPlan, agentSkill, userId: user.id, repository: repositoryContext, allowTerminal: !backgroundContext });
   if (result.failure) {
     console.error("Groq request failed", result.failure);
     return sendJson(response, 502, { error: "O KAZER não conseguiu concluir a resposta agora. Tente novamente." });
@@ -696,5 +730,6 @@ module.exports = async function handler(request, response) {
     mcp_tools_used: result.mcpToolsUsed || 0,
     research_used: (result.researchUsed || 0) + forcedResearchUsed,
     repository_context: repositoryContext?.fullName || null,
+    agent_skill: result.agentSkill || null,
   });
 };
