@@ -5,7 +5,8 @@ Esta pasta reúne a documentação técnica, operacional, jurídica e os relató
 ## Comece por aqui
 
 - [Guia detalhado do projeto](project-guide.md)
-- [Arquitetura](architecture.md)
+- [Arquitetura e organização do repositório](architecture.md)
+- [Mapa detalhado de pastas e contratos de caminho](repository-structure.md)
 - [Configuração do Brain](configuration.md)
 - [Testes e verificações](testing.md)
 - [Banco Supabase](../database/supabase/README.md)

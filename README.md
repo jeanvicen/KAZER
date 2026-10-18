@@ -234,20 +234,26 @@ Os smoke tests de integração fazem stubs de respostas externas; eles validam c
 
 | Caminho | Conteúdo |
 |---|---|
-| `interface/` | Login, chat e páginas públicas. |
-| `api/` | Funções serverless para chat, pesquisa, uso, workspace e integrações. |
+| `interface/` | Páginas estáticas e scripts/CSS do navegador. |
+| `api/` | Rotas Vercel e módulos internos do backend. |
 | `database/supabase/` | Migrações incrementais e documentação do banco. |
-| `download/` | Manifesto, service worker, ícones e assets oficiais. |
-| `mobile/` | Projeto Expo/EAS que abre a experiência publicada. |
-| `docs/` | Guias técnicos, arquitetura, testes e auditorias. |
+| `download/` | URLs públicas: manifesto, service worker, ícones, APK e assets. |
+| `mobile/` | App Expo/WebView independente, com pacote e lockfile próprios. |
+| `worker/` | Processo separado para tarefas em segundo plano. |
+| `skills/` | Skills e referências carregadas pelo Brain no servidor. |
+| `scripts/` e `test/` | Verificações, smoke tests e regressões. |
+| `docs/` | Guias técnicos, arquitetura, testes, políticas e auditorias. |
 | `planos/` | Catálogo, ateliê, caixa e pesquisa — ao lado do produto, nunca no lugar. |
-| `.github/workflows/` | Verificações automáticas do CI. |
+| `Control/` | Configuração e instruções de avisos globais. |
+| `.github/`, `.well-known/` | CI e associação do app Android. |
+| [`Mapa completo`](docs/repository-structure.md) | Responsabilidades de cada pasta e caminhos que não devem ser movidos sem validação. |
 
 </details>
 
 ## Navegação
 
 - [Guia técnico do projeto](docs/project-guide.md)
+- [Arquitetura e mapa do repositório](docs/architecture.md) · [mapa detalhado de pastas](docs/repository-structure.md)
 - [Índice da documentação](docs/README.md)
 - [Arquitetura de pesquisa](docs/RESEARCH-ARCHITECTURE.md)
 - [Tarefas em segundo plano (proposta)](docs/background-tasks.md)

@@ -8,14 +8,14 @@
 
 ## Visão rápida da versão atual
 
-A revisão deste guia parte do código versionado no commit `0b9e9d87d587b670d9393b6ce7de2063440efad3`. Ela não comprova deploy, configurações externas, execução das migrações ou isolamento real em produção. O navegador mantém a sessão e parte do histórico; APIs privadas validam a sessão no servidor.
+Este guia descreve a organização observada na branch `main` em 18 de outubro de 2026. Ele não comprova deploy, configurações externas, execução das migrações ou isolamento real em produção. O navegador mantém a sessão e parte do histórico; APIs privadas validam a sessão no servidor.
 
 | Área | Estado observado no código |
 |---|---|
 | Histórico | Até 10 conversas por usuário no `localStorage` deste navegador/dispositivo, com até 72 mensagens por conversa; não há sincronização de histórico entre dispositivos demonstrada. |
 | Anexos | Imagens, PDF, DOCX e tipos de texto/código permitidos passam por validações e limites no backend. |
 | Uso | Há rotas/RPCs para consultar e consumir uso; a compatibilidade depende da versão do schema Supabase aplicado. |
-| Workspace | A API registra e atualiza tarefas/progresso e integrações; isso não comprova um executor geral de tarefas em produção. |
+| Workspace | A API registra tarefas/progresso e integrações. O chat também pode oferecer execução efêmera em sandbox isolado quando um repositório foi validado e o E2B está configurado; isso não equivale a um executor persistente de tarefas. |
 | Qualidade | O CI em `.github/workflows/ci.yml` inclui suíte unitária, verificações, smoke tests e auditoria npm; consulte o run do commit específico. |
 
 > **Nota de segurança:** um repositório público pode ser clonado. Para impedir acesso ao código, é necessário mantê-lo privado e restringir colaboradores; documentação e avisos autorais não substituem controles de acesso.
@@ -99,7 +99,7 @@ flowchart LR
 | PWA | Instalação na tela inicial, manifesto, service worker e cache restrito do app shell. | `download/manifest.webmanifest`, `download/sw.js` e `vercel.json`. |
 | Plugins | Google Drive e gerenciamento de conexões MCP; o runtime executa MCP remoto. Valores `command` de MCP local não foram executados nesta revisão. | `interface/chat.html`, `interface/kazer-workspace.js`, rewrite `/api/mcp` para `api/workspace.js`, `api/_mcp-runtime.js` e migração `010`. |
 | GitHub | OAuth para vincular a conta, listar/buscar repositórios e usar um repositório como contexto do pedido. | `api/github-*.js`, `interface/kazer-workspace.js` e `kazer_github_connections`. |
-| Workspace | Interface/API para registrar tarefas, status/progresso, conectores e repositórios; não há executor geral documentado aqui. Não mostrar custo de tarefa: a coluna `credit_cost` foi removida do schema atual. | `interface/chat.html`, `interface/kazer-workspace.js`, `api/workspace.js`, `api/_tasks-handler.js` e `kazer_tasks`. |
+| Workspace | Interface/API para registrar tarefas, status/progresso, conectores e repositórios. O terminal opcional do Brain é efêmero e não grava resultados de volta no GitHub; não mostrar custo de tarefa: a coluna `credit_cost` foi removida do schema atual. | `interface/chat.html`, `interface/kazer-workspace.js`, `api/workspace.js`, `api/_tasks-handler.js` e `kazer_tasks`. |
 | Kazer Pro | Chamada visual de oferta; a tela informa que a página de compra está em preparação. | `interface/chat.html`. |
 
 ## Arquitetura
@@ -119,16 +119,24 @@ A aplicação é deliberadamente dividida entre um cliente estático e funções
 
 | Caminho | Conteúdo |
 |---|---|
-| `interface/` | Telas públicas de login, chat e central de documentos. |
-| `api/` | Handlers serverless: chat, busca, uso, retenção, MCPs, tarefas, GitHub, Brain, contexto e segurança. |
+| `interface/` | Páginas web estáticas e scripts/CSS do navegador. |
+| `api/` | Rotas serverless e módulos internos privados do backend; chat, pesquisa, uso, retenção, MCP, tarefas, GitHub, Brain e segurança. |
 | `database/supabase/` | Migrações SQL incrementais e instruções do banco. |
-| `download/` | Manifesto, service worker, ícones, logos e materiais de distribuição PWA/Android/iOS. |
-| `scripts/` | Verificações automatizadas de segurança e sintaxe. |
-| `.github/` | CODEOWNERS, configuração do Dependabot e regras de propriedade do código. |
-| `` | Arquitetura, Brain, configuração, testes, termos, aviso autoral e governança. |
-| `vercel.json` | Rewrites, headers de segurança e cron de retenção. |
-| `.env.example` | Nomes e valores de exemplo das variáveis; nunca contém credenciais reais. |
-| `package.json` | Dependências Node, versão mínima e scripts de auditoria. |
+| `download/` | URLs públicas de manifesto, service worker, ícones, APK e materiais PWA/Android/iOS. |
+| `mobile/` | App Expo/WebView com `package.json` e lockfile independentes da raiz. |
+| `worker/` | Processo, inicialização e Dockerfile para tarefas em segundo plano. |
+| `skills/` | Skills e referências carregadas pelo Brain no servidor. |
+| `scripts/` | Verificações, testes de integração e manutenção. |
+| `test/` | Testes automatizados de regressão e compatibilidade. |
+| `docs/` | Arquitetura, guias, configuração, testes, políticas e auditorias. |
+| `planos/` | Pesquisa e planejamento de produto; históricos são preservados. |
+| `Control/` | Instruções e configuração de avisos globais. |
+| `.github/` | CI, Dependabot e CODEOWNERS. |
+| `.well-known/` | Associação pública do app Android. |
+| `vercel.json` | Rewrites, headers, cron e inclusão de arquivos usados por funções. |
+| `.env.example` | Nomes e valores de exemplo; nunca contém credenciais reais. |
+| `package.json` | Dependências e scripts Node da raiz; o app móvel mantém pacote próprio. |
+| [`repository-structure.md`](repository-structure.md) | Mapa detalhado e contratos de caminho que devem ser preservados. |
 
 ## Requisitos
 
@@ -174,6 +182,7 @@ Não faça commit de `.env`. O `.gitignore` já ignora arquivos de ambiente, `no
 | `GITHUB_CLIENT_SECRET` | Servidor privado | Sim para conectar GitHub | Segredo do OAuth App do GitHub. |
 | `GITHUB_OAUTH_STATE_SECRET` | Servidor privado | Recomendado | Segredo longo para assinar o estado do OAuth. |
 | `KAZER_CONNECTOR_ENCRYPTION_KEY` | Servidor privado | Obrigatória em produção | Chave aleatória longa para cifrar tokens/segredos de conectores; o código recusa ausência ou menos de 32 caracteres em `NODE_ENV=production`. Em ambiente não produtivo pode derivar do service role. |
+| `E2B_API_KEY` | Servidor privado | Não | Habilita terminal efêmero; o código selecionado é enviado ao E2B, sem credenciais do KAZER e sem rede de saída no sandbox. |
 | `CRON_SECRET` | Servidor privado | Só para retenção | Segredo para autorizar chamadas ao job `/api/retention`. |
 | `PUBLIC_APP_ORIGINS` | Servidor | Recomendado | Lista separada por vírgulas das origens HTTPS autorizadas, sem barra final. |
 | `RETENTION_DELETE_ENABLED` | Servidor | Sim | Mantenha `false`; somente um procedimento revisado pode habilitar exclusões permanentes. |
