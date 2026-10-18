@@ -3,7 +3,7 @@ const http = require("node:http");
 const https = require("node:https");
 const net = require("node:net");
 const zlib = require("node:zlib");
-const { isPublicAddress, isSafePublicHostname } = require("../research/_research-search-utils");
+const { isPublicAddress, isSafePublicHostname } = require("./_network-address");
 
 const DEFAULT_MAX_RESPONSE_BYTES = 1_500_000;
 const MAX_REQUEST_BYTES = 256_000;

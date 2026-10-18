@@ -1,6 +1,6 @@
 # Auditoria end-to-end do KAZER
 
-**Escopo auditado:** repositório `jeanvicen/KAZER`, commit `7a08b6d3e5f37b2d137bb2263e4a306bf48c403d`, documentação operacional no Notion e catálogo de modelos disponível via API nesta sessão. **Data da auditoria:** 17 de setembro de 2026.
+**Escopo auditado:** repositório `jeanvicenc4/KAZER`, commit `7a08b6d3e5f37b2d137bb2263e4a306bf48c403d`, documentação operacional no Notion e catálogo de modelos disponível via API nesta sessão. **Data da auditoria:** 17 de setembro de 2026.
 
 ## Conclusão executiva
 
@@ -108,7 +108,7 @@ O diferencial de confiança deve ser visível: cada ação conectada precisa ind
 
 ## Referências
 
-[1]: https://github.com/jeanvicen/KAZER "Repositório KAZER"
+[1]: https://github.com/jeanvicenc4/KAZER "Repositório KAZER"
 [2]: https://app.notion.com/p/e8d3f543c3aa4c228a0ad1c8f5c0c73b "KAZER — Limites do plano Free"
 [3]: https://app.notion.com/p/79a7df0eeb4d4844ab0eed46c4133d2f "Sistema de Memória Individual — Kaser AI"
 [4]: https://app.notion.com/p/4b493fddeee3444ab0eed46c4133d2f "Sistema de trabalho do agente"

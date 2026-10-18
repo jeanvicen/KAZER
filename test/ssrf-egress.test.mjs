@@ -6,7 +6,9 @@ import { gzipSync } from "node:zlib";
 import test from "node:test";
 
 const require = createRequire(import.meta.url);
-const { isPublicAddress } = require("../server/research/_research-search-utils.js");
+const addressPolicy = require("../server/security/_network-address.js");
+const { isPublicAddress } = addressPolicy;
+const researchSearchUtils = require("../server/research/_research-search-utils.js");
 const { createPinnedLookup, parsePublicUrl, requestPublicUrl, resolvePublicAddress } = require("../server/security/_ssrf.js");
 const { fetchResearchPage } = require("../server/research/_research-orchestrator.js");
 const { fulfillPinnedBrowserRequest } = require("../server/research/_research-browser.js");
@@ -58,6 +60,11 @@ function fakeBrowserRoute(request) {
   };
   return route;
 }
+
+test("research URL filtering reuses the security-owned network address policy", () => {
+  assert.equal(researchSearchUtils.isPublicAddress, addressPolicy.isPublicAddress);
+  assert.equal(researchSearchUtils.isSafePublicHostname, addressPolicy.isSafePublicHostname);
+});
 
 test("public address policy rejects private, reserved, mapped and documentation ranges", () => {
   for (const address of [

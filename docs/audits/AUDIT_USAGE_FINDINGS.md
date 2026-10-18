@@ -2,7 +2,7 @@
 
 ## Repositório e banco
 
-O repositório localizado foi `jeanvicen/KAZER`, clonado localmente em `/home/ubuntu/kazer-inspecao`. O projeto usa HTML/CSS/JavaScript estático servido pelo Vercel, funções Node em `api/` e Supabase para autenticação e dados.
+O repositório localizado foi `jeanvicenc4/KAZER`, clonado localmente em `/home/ubuntu/kazer-inspecao`. O projeto usa HTML/CSS/JavaScript estático servido pelo Vercel, funções Node em `api/` e Supabase para autenticação e dados.
 
 O projeto Supabase conectado é `Kazer`, referência `mqjunopzycdezzjmlhip`, em estado ACTIVE_HEALTHY. O banco real possui `profiles`, `user_settings`, `app_notices`, `app_maintenance` e `account_notifications`; não possui atualmente estrutura de créditos/anexos. O registro de migrações retornado pelo conector está vazio, apesar de o schema existir, portanto novas alterações devem ser aditivas e com nome próprio, sem depender cegamente do histórico remoto.
 

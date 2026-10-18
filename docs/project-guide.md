@@ -151,7 +151,7 @@ O Supabase precisa estar configurado com Auth por e-mail e com a confirmação d
 Clone o repositório, instale as dependências sem executar scripts de terceiros e copie o arquivo de ambiente de exemplo:
 
 ```bash
-git clone https://github.com/jeanvicen/KAZER.git
+git clone https://github.com/jeanvicenc4/KAZER.git
 cd KAZER
 npm ci --ignore-scripts
 cp .env.example .env

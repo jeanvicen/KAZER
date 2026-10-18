@@ -19,7 +19,7 @@ npm run security:audit -- --audit-level=high
 
 ## Integrações e limites
 
-O workflow em `.github/workflows/ci.yml` executa `npm test`, `npm run check`, `npm run integration:test` e a auditoria npm em pushes para `main` e pull requests. O resultado é específico ao commit e deve ser conferido no [histórico do workflow](https://github.com/jeanvicen/KAZER/actions/workflows/ci.yml); um workflow existente não significa que toda execução recente passou.
+O workflow em `.github/workflows/ci.yml` executa `npm test`, `npm run check`, `npm run integration:test` e a auditoria npm em pushes para `main` e pull requests. O resultado é específico ao commit e deve ser conferido no [histórico do workflow](https://github.com/jeanvicenc4/KAZER/actions/workflows/ci.yml); um workflow existente não significa que toda execução recente passou.
 
 Os testes de saída simulam o resolver DNS e o transporte HTTP: cobrem o caminho fixado de MCP, redirects do fallback HTTP de pesquisa e limites de bytes, mas não fazem probes de rede. Eles não eliminam nem testam a corrida DNS do Chromium/Playwright, porque o browser valida o destino e deixa o próprio Chromium resolver/conectar. Também não validam MCPs remotos reais nem acrescentam confirmação por ação ou validação completa de esquemas para chamadas de ferramentas do modelo. Os testes automatizados tampouco comprovam isolamento real entre duas contas Supabase, conteúdo/schema de produção, sucesso de deploy Vercel, OAuth em WebView/mobile, pentest, teste visual móvel ou configuração externa; esses itens exigem validação operacional separada.
 

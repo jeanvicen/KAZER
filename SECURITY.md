@@ -1,6 +1,6 @@
 # Segurança do KAZER
 
-**Escopo:** revisão estática do código e das migrações versionadas do repositório `jeanvicen/KAZER`; não é pentest, auditoria de produção nem certificação. Os apontamentos de implementação abaixo foram rechecados no commit `0b9e9d87d587b670d9393b6ce7de2063440efad3` (6 out. 2026). Configurações externas e o schema efetivamente implantado não foram verificados dinamicamente.
+**Escopo:** revisão estática do código e das migrações versionadas do repositório `jeanvicenc4/KAZER`; não é pentest, auditoria de produção nem certificação. Os apontamentos de implementação abaixo foram rechecados no commit `0b9e9d87d587b670d9393b6ce7de2063440efad3` (6 out. 2026). Configurações externas e o schema efetivamente implantado não foram verificados dinamicamente.
 
 > Esta documentação separa controles observados de riscos ainda pendentes. Um controle no repositório não prova que as variáveis, políticas do Supabase ou configurações Vercel estejam iguais em produção.
 

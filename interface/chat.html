@@ -6458,7 +6458,7 @@
 
         const historyIcon = (kind) => kind === "task" ? '<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="m8.5 12.2 2.3 2.3 4.7-5"></path></svg>' : '<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11.5a8 8 0 0 1-8 8 8.4 8.4 0 0 1-3.4-.7L4 21l1.3-3.8A8 8 0 1 1 20 11.5Z"></path><path d="M8.5 11.5h7"></path></svg>';
 
-        const globalNoticeUrl = "https://raw.githubusercontent.com/jeanvicen/KAZER/main/Control/notificacao.json";
+        const globalNoticeUrl = "https://raw.githubusercontent.com/jeanvicenc4/KAZER/main/Control/notificacao.json";
         const validGlobalNotice = (value) => value && value.ativo === true && Number.isInteger(Number(value.versao)) && Number(value.versao) >= 1 && String(value.titulo || "").trim() && String(value.mensagem || "").trim();
         const hideGlobalNotice = () => {
           if (!globalNoticeModal) return;

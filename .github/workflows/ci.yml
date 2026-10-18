@@ -29,6 +29,8 @@ jobs:
         run: npm ci --ignore-scripts
       - name: Build the background worker container
         run: docker build --tag kazer-background-worker:ci --file worker/Dockerfile .
+      - name: Load worker and Skill assets inside the built container
+        run: docker run --rm --entrypoint node kazer-background-worker:ci -e "require('./worker/background-worker'); const { loadAgentSkill } = require('./server/agent/_kazer-skills'); if (!loadAgentSkill('kazer-code')) throw new Error('worker Skill assets unavailable')"
       - name: Run unit and regression tests
         run: npm test
       - name: Run repository checks

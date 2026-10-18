@@ -34,7 +34,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/jeanvicen/KAZER/actions/workflows/ci.yml"><img src="https://github.com/jeanvicen/KAZER/actions/workflows/ci.yml/badge.svg?branch=main" alt="CI"></a>
+  <a href="https://github.com/jeanvicenc4/KAZER/actions/workflows/ci.yml"><img src="https://github.com/jeanvicenc4/KAZER/actions/workflows/ci.yml/badge.svg?branch=main" alt="CI"></a>
   <img src="https://img.shields.io/badge/Node.js-%E2%89%A520-339933?logo=node.js&logoColor=white" alt="Node.js 20 ou superior">
   <img src="https://img.shields.io/badge/deploy-Vercel-000000?logo=vercel&logoColor=white" alt="Vercel">
   <img src="https://img.shields.io/badge/infra-R%24%200-8C6420" alt="Infra Hobby a R$ 0">
@@ -216,7 +216,7 @@ As rotas serverless validam a sessão e os dados no servidor. O navegador usa a 
 Requisitos: Node.js 20 ou superior (versão declarada em `.nvmrc`) e npm.
 
 ```bash
-git clone https://github.com/jeanvicen/KAZER.git
+git clone https://github.com/jeanvicenc4/KAZER.git
 cd KAZER
 npm ci --ignore-scripts
 npm test
