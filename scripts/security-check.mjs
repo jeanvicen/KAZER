@@ -12,13 +12,13 @@ const [chat, login, chatApi, instructions, brain, researchApi, researchOrchestra
   read("interface/chat.html"),
   read("interface/login.html"),
   read("api/chat.js"),
-  read("api/_kazer-instructions.js"),
-  read("api/_kazer-brain.js"),
+  read("server/agent/_kazer-instructions.js"),
+  read("server/agent/_kazer-brain.js"),
   read("api/research.js"),
-  read("api/_research-orchestrator.js"),
-  read("api/_research-browser.js"),
+  read("server/research/_research-orchestrator.js"),
+  read("server/research/_research-browser.js"),
   read("api/retention.js"),
-  read("api/_security.js"),
+  read("server/security/_security.js"),
   read("vercel.json"),
   read("database/supabase/001_auth_accounts.sql"),
   read("database/supabase/003_retention_notifications.sql"),
@@ -85,7 +85,23 @@ assert(terms.includes("Propriedade intelectual") && terms.includes("Nenhum direi
 assert(copyrightNotice.includes("Aviso de direitos autorais") && copyrightNotice.includes("Não há licença open source"), "Aviso autoral incompleto");
 assert(dependabot.includes("package-ecosystem: npm"), "Dependabot sem acompanhamento de npm");
 
-const syntaxTargets = ["interface/kazer-inspector-note.js", "api/_security.js", "api/_research-browser.js", "api/_research-orchestrator.js", "api/research.js", "api/_kazer-brain.js", "api/_kazer-data.js", "api/_github.js", "api/_mcp-runtime.js", "api/_usage.js", "api/_github-connect-handler.js", "api/_github-callback-handler.js", "api/_github-status-handler.js", "api/_github-repos-handler.js", "api/_github-disconnect-handler.js", "api/_mcp-handler.js", "api/_tasks-handler.js", "api/chat.js", "api/github.js", "api/workspace.js", "api/retention.js", "download/sw.js"];
+async function listJavaScriptFiles(directory) {
+  const entries = await readdir(join(root, directory), { withFileTypes: true });
+  const files = [];
+  for (const entry of entries) {
+    const relativePath = join(directory, entry.name);
+    if (entry.isDirectory()) files.push(...await listJavaScriptFiles(relativePath));
+    else if (entry.isFile() && entry.name.endsWith(".js")) files.push(relativePath);
+  }
+  return files;
+}
+
+const syntaxTargets = [
+  "interface/kazer-inspector-note.js",
+  "download/sw.js",
+  ...(await listJavaScriptFiles("api")),
+  ...(await listJavaScriptFiles("server")),
+];
 for (const target of syntaxTargets) {
   try {
     execFileSync(process.execPath, ["--check", join(root, target)], { stdio: "pipe" });

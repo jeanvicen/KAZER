@@ -1,6 +1,6 @@
 const crypto = require("node:crypto");
-const { supabaseRequest } = require("../api/_kazer-data");
-const { attachBackgroundTaskContext } = require("../api/_background-context");
+const { supabaseRequest } = require("../server/storage/_kazer-data");
+const { attachBackgroundTaskContext } = require("../server/tasks/_background-context");
 const chatHandler = require("../api/chat");
 const researchHandler = require("../api/research");
 

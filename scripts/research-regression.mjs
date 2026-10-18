@@ -25,7 +25,7 @@ const api = await readFile(new URL("../api/research.js", import.meta.url), "utf8
 assert.match(api, /authenticateUser/);
 assert.match(api, /runResearch/);
 assert.match(api, /evidence/);
-const browserSource = await readFile(new URL("../api/_research-browser.js", import.meta.url), "utf8");
+const browserSource = await readFile(new URL("../server/research/_research-browser.js", import.meta.url), "utf8");
 assert.match(browserSource, /playwright-core/);
 assert.match(browserSource, /route\.abort/);
 assert.match(browserSource, /page\.goto/);

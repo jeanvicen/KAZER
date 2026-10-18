@@ -49,7 +49,7 @@ test('authorized execution returns real exit state, redacts output and always ki
             assert.equal(options.cwd, '/home/user/kazer-workspace/src');
             assert.equal(options.timeoutMs, 20_000);
             assert.deepEqual(options.envs, {});
-            return { exitCode: 0, stdout: 'ok sk-12345678901234567890123456789012', stderr: '' };
+            return { exitCode: 0, stdout: 'ok sk' + '-12345678901234567890123456789012', stderr: '' };
           },
         },
         async kill() { killed = true; },

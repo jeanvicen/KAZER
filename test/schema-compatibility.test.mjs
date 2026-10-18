@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
 
-const taskApi = readFileSync(new URL("../api/_tasks-handler.js", import.meta.url), "utf8");
+const taskApi = readFileSync(new URL("../server/tasks/_tasks-handler.js", import.meta.url), "utf8");
 const taskMigration = readFileSync(new URL("../database/supabase/018_remove_consumption_controls.sql", import.meta.url), "utf8");
 const driveApi = readFileSync(new URL("../api/google-drive.js", import.meta.url), "utf8");
 const serviceWorker = readFileSync(new URL("../download/sw.js", import.meta.url), "utf8");

@@ -13,12 +13,12 @@ O Brain decide se deve pesquisar por meio de tool-calling. Perguntas simples pod
 
 ## Componentes
 
-- `api/_research-orchestrator.js`: coordena consultas, páginas visitadas, ações, limites, erros e evidências.
-- `api/_research-browser.js`: Browser Agent real baseado em `playwright-core`; abre páginas, executa JavaScript, extrai texto/headings/links, encontra texto, clica, rola, navega no histórico, abre/fecha abas e captura screenshots.
+- `server/research/_research-orchestrator.js`: coordena consultas, páginas visitadas, ações, limites, erros e evidências.
+- `server/research/_research-browser.js`: Browser Agent real baseado em `playwright-core`; abre páginas, executa JavaScript, extrai texto/headings/links, encontra texto, clica, rola, navega no histórico, abre/fecha abas e captura screenshots.
 - `api/research.js`: endpoint autenticado do novo fluxo, com rate limit, créditos, fontes e evidências.
 - `api/chat.js`: expõe a ferramenta `research_web` ao Brain e devolve `research_used` para observabilidade.
 - `interface/chat.html`: o WebKazer direto agora usa `/api/research`.
-- O antigo endpoint `api/web-search.js` foi removido após a validação. O parser foi renomeado para `api/_research-search-utils.js` e agora é apenas um adaptador interno de descoberta usado pelo Search Tool.
+- O antigo endpoint `api/web-search.js` foi removido após a validação. O parser foi renomeado para `server/research/_research-search-utils.js` e agora é apenas um adaptador interno de descoberta usado pelo Search Tool.
 
 ## Pesquisa em múltiplas etapas
 

@@ -12,7 +12,8 @@ O mapa completo, com responsabilidade de cada pasta e seus limites, está em [`r
 
 ```text
 KAZER/
-├── api/                    Rotas serverless e módulos privados do backend
+├── api/                    Rotas serverless e adaptadores de compatibilidade
+├── server/                 Implementações backend agrupadas por domínio
 ├── interface/              Páginas estáticas e código do navegador
 ├── mobile/                 App Expo que envolve o produto web
 ├── worker/                 Processo para tarefas em segundo plano
@@ -69,7 +70,8 @@ O handler HTTP, o worker e as migrações estão separados porque têm ciclos de
 
 | Caminho | Contrato atual | Verificação antes de mudar |
 |---|---|---|
-| `api/` | A raiz das funções serverless é definida pela Vercel. Arquivos com `_` são módulos internos importados por handlers. | `vercel.json`, imports, smoke tests de API e build/deploy isolado. |
+| `api/` | A raiz das funções serverless e das rotas HTTP é definida pela Vercel. Arquivos `api/_*.js` são adaptadores de compatibilidade de uma linha. | `vercel.json`, imports, smoke tests de API e build/deploy isolado. |
+| `server/` | Implementações internas separadas por domínio: agente, integrações, pesquisa, segurança, armazenamento, tarefas e uso. | Testes de regressão, imports, análise estática e build de produção. |
 | `interface/` | HTML, CSS e JavaScript estáticos servidos pelos rewrites existentes. | Destinos em `vercel.json`, links locais e teste de navegação. |
 | `download/` | URLs públicas de manifesto, service worker, ícones, APK e materiais. | Referências em HTML, PWA, `assetlinks.json`, README e headers. |
 | `skills/` | Arquivos lidos no servidor; `vercel.json` inclui `skills/**` na função de chat. | Caminhos usados pelo loader, allowlist e teste de empacotamento. |

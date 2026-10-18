@@ -6,8 +6,8 @@ import { inflateSync } from "node:zlib";
 const root = new URL("..", import.meta.url).pathname;
 const chatApi = await readFile(`${root}/api/chat.js`, "utf8");
 const chatUi = await readFile(`${root}/interface/chat.html`, "utf8");
-const contextApi = await readFile(`${root}/api/_kazer-context.js`, "utf8");
-const instructionsApi = await readFile(`${root}/api/_kazer-instructions.js`, "utf8");
+const contextApi = await readFile(`${root}/server/agent/_kazer-context.js`, "utf8");
+const instructionsApi = await readFile(`${root}/server/agent/_kazer-instructions.js`, "utf8");
 const researchApi = await readFile(`${root}/api/research.js`, "utf8");
 const apk = await readFile(`${root}/download/android/kazer.apk`);
 

@@ -55,7 +55,7 @@ As regras completas estão em [`LICENSE.md`](../LICENSE.md), [`TERMOS-DE-USO.md`
 
 ## Visão geral
 
-O KAZER é uma aplicação estática preparada para Vercel, com páginas HTML/CSS/JavaScript em `interface/`, funções serverless Node.js em `api/` e recursos de autenticação, preferências, avisos, uso e retenção apoiados pelo Supabase. As migrações definem RLS, mas produção não foi inspecionada dinamicamente. O processamento de chat usa um Brain server-side com entendimento de intenção, plano interno de capacidades, instruções modulares, roteamento previsível e fallback explícito de modelos/providers; a pesquisa do WebKazer consulta múltiplos provedores públicos, lê fontes em segundo plano e usa o mesmo Brain para sintetizar evidências.
+O KAZER é uma aplicação estática preparada para Vercel, com páginas HTML/CSS/JavaScript em `interface/`, rotas serverless Node.js em `api/`, implementações backend por domínio em `server/` e recursos de autenticação, preferências, avisos, uso e retenção apoiados pelo Supabase. As migrações definem RLS, mas produção não foi inspecionada dinamicamente. O processamento de chat usa um Brain server-side com entendimento de intenção, plano interno de capacidades, instruções modulares, roteamento previsível e fallback explícito de modelos/providers; a pesquisa do WebKazer consulta múltiplos provedores públicos, lê fontes em segundo plano e usa o mesmo Brain para sintetizar evidências.
 
 A interface pode funcionar como site responsivo e como PWA instalável. O fluxo de conta usa Supabase Auth, a sessão é mantida no navegador e as rotas privadas exigem o bearer token da sessão. O histórico de conversas é salvo no `localStorage` por usuário neste navegador/dispositivo (até 10 conversas e 72 mensagens por conversa no código revisado); não é uma cópia persistente no banco nem sincroniza entre dispositivos. O **Nova conversa** inicia outro registro local.
 
@@ -93,13 +93,13 @@ flowchart LR
 | Chat | Conversa com histórico da página, respostas em Markdown simples e geração progressiva visual. | `interface/chat.html` e `api/chat.js`. |
 | Imagens | Envio de JPEG, PNG, WebP e GIF para análise visual, dentro dos limites da conta. | `interface/chat.html` e `api/chat.js`. |
 | Arquivos | Leitura limitada de PDF, DOCX e arquivos de texto/código compatíveis. | `api/chat.js`, `pdf-parse` e `mammoth`. |
-| Research Orchestrator | Pesquisa multietapas, Browser Agent, evidências e citações. | `api/research.js`, `api/_research-orchestrator.js` e `api/_research-browser.js`. |
+| Research Orchestrator | Pesquisa multietapas, Browser Agent, evidências e citações. | `api/research.js`, `server/research/_research-orchestrator.js` e `server/research/_research-browser.js`. |
 | Preferências | Tema, idioma, avisos e aviso de instalação, com fallback local e sincronização no perfil. | `user_settings` e `localStorage`. |
 | Retenção | Avisos de inatividade e job diário de retenção, com exclusão desligada por padrão. | `api/retention.js`, `vercel.json` e migrações Supabase. |
 | PWA | Instalação na tela inicial, manifesto, service worker e cache restrito do app shell. | `download/manifest.webmanifest`, `download/sw.js` e `vercel.json`. |
-| Plugins | Google Drive e gerenciamento de conexões MCP; o runtime executa MCP remoto. Valores `command` de MCP local não foram executados nesta revisão. | `interface/chat.html`, `interface/kazer-workspace.js`, rewrite `/api/mcp` para `api/workspace.js`, `api/_mcp-runtime.js` e migração `010`. |
+| Plugins | Google Drive e gerenciamento de conexões MCP; o runtime executa MCP remoto. Valores `command` de MCP local não foram executados nesta revisão. | `interface/chat.html`, `interface/kazer-workspace.js`, rewrite `/api/mcp` para `api/workspace.js`, `server/integrations/_mcp-runtime.js` e migração `010`. |
 | GitHub | OAuth para vincular a conta, listar/buscar repositórios e usar um repositório como contexto do pedido. | `api/github-*.js`, `interface/kazer-workspace.js` e `kazer_github_connections`. |
-| Workspace | Interface/API para registrar tarefas, status/progresso, conectores e repositórios. O terminal opcional do Brain é efêmero e não grava resultados de volta no GitHub; não mostrar custo de tarefa: a coluna `credit_cost` foi removida do schema atual. | `interface/chat.html`, `interface/kazer-workspace.js`, `api/workspace.js`, `api/_tasks-handler.js` e `kazer_tasks`. |
+| Workspace | Interface/API para registrar tarefas, status/progresso, conectores e repositórios. O terminal opcional do Brain é efêmero e não grava resultados de volta no GitHub; não mostrar custo de tarefa: a coluna `credit_cost` foi removida do schema atual. | `interface/chat.html`, `interface/kazer-workspace.js`, `api/workspace.js`, `server/tasks/_tasks-handler.js` e `kazer_tasks`. |
 | Kazer Pro | Chamada visual de oferta; a tela informa que a página de compra está em preparação. | `interface/chat.html`. |
 
 ## Arquitetura
@@ -109,7 +109,8 @@ A aplicação é deliberadamente dividida entre um cliente estático e funções
 | Camada | Responsabilidade | Regra de proteção |
 |---|---|---|
 | Navegador | Exibir a interface, manter sessão do Supabase, montar requisições e renderizar respostas. | Nunca armazenar ou enviar chaves privadas; escapar conteúdo antes de inserir no DOM. |
-| `api/` | Autenticar bearer token, validar entrada, aplicar limites, chamar serviços externos e devolver JSON. | Validar novamente tudo no servidor, aplicar timeout, limites de bytes e respostas genéricas. |
+| `api/` | Adaptadores HTTP Vercel: autenticar bearer token, validar entrada e devolver JSON. | Preservar URLs e contratos; manter rotas finas e não colocar segredos no cliente. |
+| `server/` | Implementações internas por domínio, usadas pelas rotas e pelo worker. | Lógica única, validação server-side, dependências explícitas e testes de regressão. |
 | Supabase Auth | Cadastro, login, renovação e revogação da sessão. | Usar somente o fluxo oficial; não gravar senhas em tabelas próprias. |
 | PostgreSQL/Supabase | Perfis, preferências, avisos, tarefas, integrações e dados de uso conforme o schema aplicado. | Migrações declaram políticas e RPCs; RLS efetivo em produção e isolamento cross-account ainda precisam de validação. |
 | Vercel | Hospedagem estática, funções serverless, headers e cron diário. | Variáveis secretas privadas, HTTPS, CSP, HSTS e revisão de logs. |
@@ -120,7 +121,8 @@ A aplicação é deliberadamente dividida entre um cliente estático e funções
 | Caminho | Conteúdo |
 |---|---|
 | `interface/` | Páginas web estáticas e scripts/CSS do navegador. |
-| `api/` | Rotas serverless e módulos internos privados do backend; chat, pesquisa, uso, retenção, MCP, tarefas, GitHub, Brain e segurança. |
+| `api/` | Rotas serverless e adaptadores de compatibilidade de módulos antigos; chat, pesquisa, uso, retenção, MCP, tarefas e integrações. |
+| `server/` | Implementações backend agrupadas por domínio: agente, integrações, pesquisa, segurança, armazenamento, tarefas e uso. |
 | `database/supabase/` | Migrações SQL incrementais e instruções do banco. |
 | `download/` | URLs públicas de manifesto, service worker, ícones, APK e materiais PWA/Android/iOS. |
 | `mobile/` | App Expo/WebView com `package.json` e lockfile independentes da raiz. |
@@ -245,7 +247,7 @@ A API recebe no máximo 72 mensagens, usa até 48 no contexto, limita mensagem d
 
 ## Segurança
 
-A segurança é composta por camadas e não por uma promessa de invulnerabilidade. O módulo `api/_security.js` centraliza autenticação server-side no Supabase, verificação de origem, Fetch Metadata, rate limiting best effort, limites de corpo, timeout, leitura limitada de respostas, comparação segura de segredos e redaction de logs.
+A segurança é composta por camadas e não por uma promessa de invulnerabilidade. O módulo `server/security/_security.js` centraliza autenticação server-side no Supabase, verificação de origem, Fetch Metadata, rate limiting best effort, limites de corpo, timeout, leitura limitada de respostas, comparação segura de segredos e redaction de logs.
 
 | Controle | Estado atual |
 |---|---|

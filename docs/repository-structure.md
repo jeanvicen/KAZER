@@ -9,12 +9,20 @@ KAZER/
 ├── .github/                 CI, Dependabot e CODEOWNERS
 ├── .well-known/             Associação pública do app Android
 ├── .agents/                 Recursos de desenvolvimento para agentes
-├── api/                     Endpoints Vercel e módulos backend privados
-│   ├── chat.js              Rota de chat e orquestração
+├── api/                     Rotas Vercel e adaptadores de compatibilidade
+│   ├── chat.js              Rota de chat e orquestração HTTP
 │   ├── research.js          Rota de pesquisa web
 │   ├── workspace.js         Tarefas e conectores
 │   ├── background-tasks.js  Entrada das tarefas de longa duração
-│   └── _*.js                Módulos internos importados pelas rotas
+│   └── _*.js                Adaptadores antigos; cada um reexporta server/
+├── server/                  Implementações backend por domínio
+│   ├── agent/               Brain, Skills, contexto e terminal isolado
+│   ├── integrations/        GitHub, Drive, MCP e plugins
+│   ├── research/            Busca, browser e evidências
+│   ├── security/            Segurança de requests e SSRF
+│   ├── storage/             Acesso de dados/Supabase
+│   ├── tasks/               Tarefas e contexto do worker
+│   └── usage/               Limites e uso
 ├── database/supabase/       Migrações SQL numeradas e guia do banco
 ├── docs/                    Arquitetura, configuração, testes, políticas e auditorias
 │   ├── audits/              Auditorias e relatórios históricos
@@ -49,8 +57,8 @@ A lista é intencionalmente resumida: para descobrir os arquivos concretos, use 
 |---|---|---|
 | Uma tela/página estática | `interface/` | Não renomeie páginas existentes sem atualizar `vercel.json`, navegação e links. |
 | Um endpoint HTTP | `api/<rota>.js` | Preserve autenticação, validação, limites, timeouts e contrato JSON. |
-| Lógica interna de backend | Módulo privado em `api/` ou no domínio que já a possui | Não importe segredo para o navegador nem crie rota pública por engano. |
-| Pesquisa, conectores ou Skills | Módulos de `api/` e arquivos de `skills/` correspondentes | Mantenha allowlists, validação server-side e bundle de Skills da Vercel sincronizados. |
+| Lógica interna de backend | `server/<domínio>/` | Mantenha uma única implementação; deixe `api/_*.js` apenas como adaptadores de compatibilidade. |
+| Pesquisa, conectores ou Skills | `server/research/`, `server/integrations/`, `server/agent/` e `skills/` | Mantenha allowlists, validação server-side e bundle de Skills da Vercel sincronizados. |
 | Migração de schema | Novo arquivo numerado em `database/supabase/` | Nunca renumere/regrave migração já aplicada; documente pré-requisitos e rollback. |
 | Tarefa longa | `worker/` mais o contrato existente em `api/`/banco | Não assuma que a fila ou migração existe em produção sem confirmação. |
 | Código do app móvel | `mobile/` | Use o `package.json` e lockfile móveis; não misture dependências com a raiz. |
@@ -61,7 +69,7 @@ A lista é intencionalmente resumida: para descobrir os arquivos concretos, use 
 
 ## Arquivos de raiz que são intencionais
 
-`package.json`, `package-lock.json`, `.nvmrc`, `.env.example` e `vercel.json` ficam na raiz porque as ferramentas e o deploy da aplicação atual os leem dali. `.github/`, `.well-known/`, `.agents/` e os arquivos de licença, segurança e contribuição também têm consumidores próprios. Não os mova para uma pasta `config/` sem antes alterar e testar os consumidores.
+`package.json`, `package-lock.json`, `.nvmrc`, `.env.example` e `vercel.json` ficam na raiz porque as ferramentas e o deploy da aplicação atual os leem dali. `.github/`, `.well-known/`, `.agents/` e os arquivos de licença, segurança e contribuição também têm consumidores próprios. Não os mova para uma pasta `config/` sem antes alterar e testar os consumidores. `api/` permanece como limite de rotas da Vercel; sua lógica compartilhada é mantida em `server/`, e os arquivos internos antigos permanecem como adaptadores compatíveis.
 
 `mobile/` possui um pacote Expo e lockfile próprios; não é um workspace npm configurado no pacote raiz. Essa separação deve ser mantida até existir uma decisão e um build de monorepo testados.
 

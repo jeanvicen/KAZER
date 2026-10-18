@@ -2,7 +2,7 @@
 
 O Brain é um adaptador server-side para providers compatíveis com Chat Completions. O cliente recebe apenas a resposta e a versão pública do Brain; tokens, endpoints, providers e modelos não são expostos.
 
-Antes da chamada, `api/_kazer-context.js` produz um plano interno leve com tipo de tarefa, complexidade, restrições, capacidades necessárias, necessidade de pesquisa, validação e múltiplas etapas. Esse plano orienta a montagem do prompt e a disponibilidade de ferramentas, mas não expõe raciocínio interno ao usuário.
+Antes da chamada, `server/agent/_kazer-context.js` produz um plano interno leve com tipo de tarefa, complexidade, restrições, capacidades necessárias, necessidade de pesquisa, validação e múltiplas etapas. Esse plano orienta a montagem do prompt e a disponibilidade de ferramentas, mas não expõe raciocínio interno ao usuário.
 
 ## Roteamento
 
