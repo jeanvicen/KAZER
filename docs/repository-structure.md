@@ -16,7 +16,7 @@ KAZER/
 │   ├── background-tasks.js  Entrada das tarefas de longa duração
 │   └── ...                  GitHub, Drive, uso, retenção e notificações
 ├── server/                  Implementações backend por domínio
-│   ├── agent/               Brain, Skills, contexto e terminal isolado
+│   ├── agent/               Brain, sugestões, Skills, contexto e terminal isolado
 │   ├── integrations/        GitHub, Drive, MCP e plugins
 │   ├── research/            Busca, browser e evidências
 │   ├── security/            Segurança de requests e SSRF

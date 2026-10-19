@@ -4,7 +4,7 @@ Esta pasta concentra as implementações internas do backend do KAZER, agrupadas
 
 | Pasta | Responsabilidade |
 |---|---|
-| `agent/` | Brain, contexto, instruções, Skills e executor de terminal isolado. |
+| `agent/` | Brain, contexto, instruções, Skills, sugestões da página inicial e executor de terminal isolado. |
 | `integrations/` | GitHub, Google Drive, MCP e runtime de plugins. |
 | `research/` | Orquestração de pesquisa, browser e utilitários de evidências. |
 | `security/` | Segurança de requests, validação de URL/IP e proteções SSRF. |

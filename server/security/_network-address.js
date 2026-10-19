@@ -62,4 +62,4 @@ function isSafePublicHostname(value) {
   return hostname.includes(".");
 }
 
-module.exports = { isPublicAddress, isSafePublicHostname, parseIpv6 };
+module.exports = { isPublicAddress, isSafePublicHostname };

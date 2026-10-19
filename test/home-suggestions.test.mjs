@@ -1,21 +1,14 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
+import { createRequire } from "node:module";
 import vm from "node:vm";
 
 const client = readFileSync(new URL("../interface/kazer-premium.js", import.meta.url), "utf8");
-const server = readFileSync(new URL("../api/chat.js", import.meta.url), "utf8");
 const html = readFileSync(new URL("../interface/chat.html", import.meta.url), "utf8");
 const css = readFileSync(new URL("../interface/kazer-premium.css", import.meta.url), "utf8");
-const runFunctionBlock = (source, start, end, tail) => {
-  const from = source.indexOf(start);
-  const to = source.indexOf(end, from);
-  assert.notEqual(from, -1, `missing source block: ${start}`);
-  assert.notEqual(to, -1, `missing source block end: ${end}`);
-  return new Function(`${source.slice(from, to)}\n${tail}`)();
-};
-
-const serverValidators = runFunctionBlock(server, "const HOME_SUGGESTION_CATEGORIES", "async function callGroq(", "return { normalizeHomeSuggestionText, parseHomeSuggestionResponse };");
+const require = createRequire(import.meta.url);
+const { HOME_SUGGESTION_TIME_BANDS, normalizeHomeSuggestionText, parseHomeSuggestionResponse } = require("../server/agent/_home-suggestions.js");
 const validBatch = [
   { texto: "Planejar uma manhã tranquila", categoria: "plan" },
   { texto: "Escrever com mais clareza", categoria: "write" },
@@ -24,8 +17,10 @@ const validBatch = [
 ];
 
 test("server enforces four unique, short suggestions and safe categories", () => {
-  const { parseHomeSuggestionResponse } = serverValidators;
-  assert.equal(parseHomeSuggestionResponse(JSON.stringify(validBatch), [] )?.length, 4);
+  assert.deepEqual([...HOME_SUGGESTION_TIME_BANDS].sort(), ["madrugada", "manha", "noite", "tarde"]);
+  assert.equal(normalizeHomeSuggestionText("  Planejar uma manhã tranquila  "), "Planejar uma manhã tranquila");
+  assert.equal(normalizeHomeSuggestionText("Fazer algo muito legal hoje de manhã"), "");
+  assert.equal(parseHomeSuggestionResponse(JSON.stringify(validBatch), [])?.length, 4);
   assert.equal(parseHomeSuggestionResponse(`\n\`\`\`json\n${JSON.stringify(validBatch)}\n\`\`\``, [])?.length, 4);
   assert.equal(parseHomeSuggestionResponse(JSON.stringify(validBatch.slice(0, 3)), []), null);
   assert.equal(parseHomeSuggestionResponse(JSON.stringify([...validBatch, validBatch[0]]), []), null);
