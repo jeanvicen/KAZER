@@ -98,6 +98,7 @@ async function initializeServer(row) {
       name: safeText(tool.name, 120),
       description: safeText(tool.description || `Ferramenta do MCP ${row.name}`, 1000),
       inputSchema: validateToolSchema(tool.inputSchema),
+      readOnly: tool.annotations?.readOnlyHint === true,
     })).filter((tool) => tool.name),
   };
 }
@@ -139,11 +140,14 @@ async function loadMcpRuntime(userId, requestedIds = []) {
   }
 }
 
-function flattenTools(servers) {
+// Fora do modo Computer só entram ferramentas que o servidor MCP declara
+// como somente leitura (annotations.readOnlyHint).
+function flattenTools(servers, { computer = true } = {}) {
   const tools = [];
   const byName = new Map();
   for (const server of servers) {
     for (const tool of server.tools || []) {
+      if (!computer && !tool.readOnly) continue;
       if (tools.length >= MAX_TOTAL_TOOLS) break;
       const name = `mcp_${String(server.id).replace(/[^a-zA-Z0-9]/g, "").slice(0, 16)}_${String(tool.name).replace(/[^a-zA-Z0-9_]/g, "_").slice(0, 48)}`.slice(0, 64);
       if (byName.has(name)) continue;

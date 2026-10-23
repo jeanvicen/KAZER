@@ -16,6 +16,8 @@ const {
 const { callUsageRpc, calculateChatCreditCost } = require("../server/usage/_usage");
 const { callMcpTool, flattenTools, getConnectedMcpCount, loadMcpRuntime } = require("../server/integrations/_mcp-runtime");
 const { decodeToken, getConnection, githubFetch, repoForClient } = require("../server/integrations/_github");
+const { ACTION_LABELS: GITHUB_ACTION_LABELS, createGitHubSession, executeGitHubTool, githubToolDefinitions, isGitHubTool } = require("../server/integrations/_github-tools");
+const { VERCEL_ACTION_LABELS, createVercelSession, executeVercelTool, isVercelTool, vercelToolDefinitions } = require("../server/integrations/_vercel");
 const { supabaseRequest } = require("../server/storage/_kazer-data");
 const { KAZER_BRAIN_VERSION, callKazerBrain } = require("../server/agent/_kazer-brain");
 const { HOME_SUGGESTION_TIME_BANDS, generateHomeSuggestions, normalizeHomeSuggestionText } = require("../server/agent/_home-suggestions");
@@ -380,14 +382,23 @@ async function callBrain({ messages, hasImages, tools = [], timeoutMs = 30_000, 
   });
 }
 
-async function runAgentTurn({ messages, hasImages, mcpServers, runtimeContext = "", hasFiles = false, hasRepository = false, taskType = "conversation", capabilityPlan = null, agentSkill = null, userId = null, repository = null, allowTerminal = false }) {
-  const { tools: mcpTools, byName } = flattenTools(mcpServers || []);
+function actionSummary(name, args) {
+  const target = args?.path || args?.branch || args?.head || args?.project || args?.deploymentId || args?.query || args?.title || args?.command || "";
+  return String(target).replace(/[\u0000-\u001f\u007f]/g, " ").slice(0, 120);
+}
+
+async function runAgentTurn({ messages, hasImages, mcpServers, runtimeContext = "", hasFiles = false, hasRepository = false, taskType = "conversation", capabilityPlan = null, agentSkill = null, userId = null, repository = null, allowTerminal = false, computer = false, githubSession = null, vercelSession = null }) {
+  // Chat normal só lê; o modo Computer libera escrita, deploy e terminal.
+  const { tools: mcpTools, byName } = flattenTools(mcpServers || [], { computer });
+  const githubTools = githubSession ? githubToolDefinitions({ computer }) : [];
+  const vercelTools = vercelSession ? vercelToolDefinitions({ computer }) : [];
+  const actions = [];
   // Tools are registered by the trusted server only. Skill metadata alone
   // never grants a tool; terminal access additionally requires a selected repo,
   // a connected GitHub account, E2B configuration, and the code Skill's grants.
   const canResearch = Boolean(capabilityPlan?.needsResearch && agentSkill && skillDeclaresPermission(agentSkill, "web.read") && skillDeclaresPermission(agentSkill, "net.fetch"));
-  const canTerminal = Boolean(allowTerminal && userId && repository && isTerminalConfigured() && agentSkill && skillDeclaresPermission(agentSkill, "shell.exec") && skillDeclaresPermission(agentSkill, "code.run"));
-  const tools = [...(canResearch ? [researchToolDefinition] : []), ...(canTerminal ? [terminalToolDefinition] : []), ...mcpTools];
+  const canTerminal = Boolean(computer && allowTerminal && userId && repository && isTerminalConfigured() && agentSkill && skillDeclaresPermission(agentSkill, "shell.exec") && skillDeclaresPermission(agentSkill, "code.run"));
+  const tools = [...(canResearch ? [researchToolDefinition] : []), ...(canTerminal ? [terminalToolDefinition] : []), ...githubTools, ...vercelTools, ...mcpTools];
   const researchToolEnabled = canResearch;
   const terminalToolEnabled = canTerminal;
   let terminalRunsRemaining = canTerminal ? 1 : 0;
@@ -395,11 +406,12 @@ async function runAgentTurn({ messages, hasImages, mcpServers, runtimeContext = 
   let currentMessages = [...messages];
   const timeoutMs = taskType === "coding" ? 75_000 : 30_000;
   let result = await callBrain({ messages: currentMessages, hasImages, tools, runtimeContext, agentSkillPrompt: agentSkill?.prompt || "", hasFiles, hasRepository, taskType, timeoutMs, capabilities: capabilityPlan?.capabilities || [] });
-  if (result.failure || !tools.length) return { ...result, mcpToolsUsed: 0, researchUsed: 0, agentSkill: agentSkill?.slug || null };
+  if (result.failure || !tools.length) return { ...result, mcpToolsUsed: 0, researchUsed: 0, actions, agentSkill: agentSkill?.slug || null };
 
   let toolsUsed = 0;
   let researchUsed = 0;
-  for (let round = 0; round < 5; round += 1) {
+  const maxRounds = computer ? 10 : 5;
+  for (let round = 0; round < maxRounds; round += 1) {
     const assistantMessage = result.data?.choices?.[0]?.message;
     const toolCalls = Array.isArray(assistantMessage?.tool_calls) ? assistantMessage.tool_calls.slice(0, 6) : [];
     if (!toolCalls.length) break;
@@ -412,9 +424,18 @@ async function runAgentTurn({ messages, hasImages, mcpServers, runtimeContext = 
       const name = toolCall?.function?.name;
       const entry = byName.get(name);
       let toolContent = "Ferramenta indisponível.";
+      let parsedArgs = {};
+      const action = { tool: String(name || "").slice(0, 64), label: GITHUB_ACTION_LABELS[name] || VERCEL_ACTION_LABELS[name] || (name === terminalDefinition.name ? "Executou no terminal" : name === researchToolDefinition.function.name ? "Pesquisou na web" : entry ? `Usou ${entry.server.name}` : "Ferramenta"), target: "", state: "done" };
       try {
-        const parsedArgs = JSON.parse(toolCall.function.arguments || "{}");
-        if (name === terminalDefinition.name && terminalToolEnabled) {
+        parsedArgs = JSON.parse(toolCall.function.arguments || "{}");
+        action.target = actionSummary(name, parsedArgs);
+        if (isGitHubTool(name) && githubSession) {
+          toolContent = JSON.stringify(await executeGitHubTool(githubSession, name, parsedArgs, { computer })).slice(0, 30_000);
+          toolsUsed += 1;
+        } else if (isVercelTool(name) && vercelSession) {
+          toolContent = JSON.stringify(await executeVercelTool(vercelSession, name, parsedArgs, { computer })).slice(0, 20_000);
+          toolsUsed += 1;
+        } else if (name === terminalDefinition.name && terminalToolEnabled) {
           if (terminalRunsRemaining <= 0) {
             toolContent = JSON.stringify({ state: "denied", error: "terminal_call_limit_reached" });
           } else {
@@ -438,14 +459,16 @@ async function runAgentTurn({ messages, hasImages, mcpServers, runtimeContext = 
           }
         }
       } catch (error) {
+        action.state = "error";
         toolContent = `Falha ao consultar a ferramenta: ${String(error?.message || "erro").slice(0, 300)}`;
       }
+      if (actions.length < 40) actions.push(action);
       currentMessages.push({ role: "tool", tool_call_id: toolCall.id, content: toolContent });
     }
     result = await callBrain({ messages: currentMessages, hasImages: false, tools, runtimeContext, agentSkillPrompt: agentSkill?.prompt || "", hasFiles, hasRepository, taskType, timeoutMs, capabilities: capabilityPlan?.capabilities || [] });
     if (result.failure) break;
   }
-  return { ...result, mcpToolsUsed: toolsUsed, researchUsed, agentSkill: agentSkill?.slug || null };
+  return { ...result, mcpToolsUsed: toolsUsed, researchUsed, actions, agentSkill: agentSkill?.slug || null };
 }
 
 module.exports = async function handler(request, response) {
@@ -538,6 +561,7 @@ module.exports = async function handler(request, response) {
     return sendJson(response, 400, { error: "Histórico de conversa inválido." });
   }
   const repositoryContext = await resolveRepositoryContext(user.id, body?.githubRepo);
+  const computerMode = !backgroundContext && body?.mode === "computer";
   if (isModeratedRequest(messages)) {
     return sendJson(response, 422, { error: "Não posso processar esse conteúdo. Reformule o pedido de forma segura e respeitosa." });
   }
@@ -603,6 +627,8 @@ module.exports = async function handler(request, response) {
   }
 
   const mcpServers = backgroundContext ? [] : await loadMcpRuntime(user.id, body?.mcpConnectorIds);
+  const githubSession = repositoryContext && !backgroundContext ? await createGitHubSession(user.id, repositoryContext) : null;
+  const vercelSession = backgroundContext ? null : await createVercelSession(user.id).catch(() => null);
   const hasImages = prepared.imageParts.length > 0;
   const fileInstruction = prepared.fileContext
     ? `\n\nUse os anexos abaixo como contexto para responder:\n\n${prepared.fileContext}`
@@ -612,9 +638,12 @@ module.exports = async function handler(request, response) {
     ? "\n\nINSTRUÇÃO DE RENDERIZAÇÃO: este pedido tem intenção visual. Entregue o resultado visual dentro da resposta usando um bloco ```kazer-svg ou ```kazer-html. Não devolva o SVG/HTML como bloco de código comum, não use mermaid e não entregue apenas instruções para o usuário executar. Intercale uma explicação curta com o visual renderizável. Para kazer-svg: viewBox + preserveAspectRatio; defs com gradientes multi-stop (linear/radial), filtros leves (blur, drop-shadow, lighting, turbulence controlado); camadas fundo/atmosfera/foco; iluminação (key/fill/rim), sombras suaves, micro-detalhe e formas orgânicas — qualidade de estúdio, ainda 100% vetorial e sem recursos externos."
     : "";
   const repositoryInstruction = repositoryContext
-    ? `\n\nCONTEXTO DE REPOSITÓRIO AUTORIZADO: a pessoa selecionou ${repositoryContext.fullName} (${repositoryContext.htmlUrl}), branch padrão ${repositoryContext.defaultBranch}${repositoryContext.language ? ` e linguagem principal ${repositoryContext.language}` : ""}. Use esse contexto para responder sobre o trabalho pedido; não invente acesso a arquivos ou ações concluídas.`
+    ? `\n\nCONTEXTO DE REPOSITÓRIO AUTORIZADO: a pessoa selecionou ${repositoryContext.fullName} (${repositoryContext.htmlUrl}), branch padrão ${repositoryContext.defaultBranch}${repositoryContext.language ? ` e linguagem principal ${repositoryContext.language}` : ""}. Use esse contexto para responder sobre o trabalho pedido; não invente acesso a arquivos ou ações concluídas.${githubSession ? (computerMode ? " MODO COMPUTER ATIVO: você pode ler e alterar o repositório com as ferramentas github_*. Nunca grave na branch padrão: crie uma branch de trabalho (ex.: kazer/<tarefa>), grave os arquivos completos, abra um pull request e informe o link real retornado." : " CHAT NORMAL: use as ferramentas github_* apenas para ler arquivos, commits, issues e pull requests. Você não pode alterar o repositório neste modo; se a pessoa pedir alterações, entregue o código e explique que o modo Computer faz a alteração direto no GitHub.") : ""}`
     : "";
-  const latestText = `${lastMessage.content}${repositoryInstruction}${visualInstruction}${fileInstruction}`.slice(0, MAX_TOTAL_CHARS);
+  const vercelInstruction = vercelSession
+    ? (computerMode ? "\n\nVERCEL CONECTADA (modo Computer): use vercel_* para ler projetos, deploys e logs e, se pedido, refazer um deploy." : "\n\nVERCEL CONECTADA (chat normal): use vercel_* somente para ler projetos, deploys e logs. Refazer deploy exige o modo Computer.")
+    : "";
+  const latestText = `${lastMessage.content}${repositoryInstruction}${vercelInstruction}${visualInstruction}${fileInstruction}`.slice(0, MAX_TOTAL_CHARS);
   const latestContent = hasImages
     ? [{ type: "text", text: latestText }, ...prepared.imageParts]
     : latestText;
@@ -644,7 +673,7 @@ module.exports = async function handler(request, response) {
     }
   }
 
-  const result = await runAgentTurn({ messages: apiMessages, hasImages, mcpServers, runtimeContext, hasFiles: prepared.fileNames.length > 0, hasRepository: Boolean(repositoryContext), taskType, capabilityPlan, agentSkill, userId: user.id, repository: repositoryContext, allowTerminal: !backgroundContext });
+  const result = await runAgentTurn({ messages: apiMessages, hasImages, mcpServers, runtimeContext, hasFiles: prepared.fileNames.length > 0, hasRepository: Boolean(repositoryContext), taskType, capabilityPlan, agentSkill, userId: user.id, repository: repositoryContext, allowTerminal: !backgroundContext, computer: computerMode, githubSession, vercelSession });
   if (result.failure) {
     console.error("Groq request failed", result.failure);
     return sendJson(response, 502, { error: "O KAZER não conseguiu concluir a resposta agora. Tente novamente." });
@@ -668,6 +697,8 @@ module.exports = async function handler(request, response) {
     mcp_tools_used: result.mcpToolsUsed || 0,
     research_used: (result.researchUsed || 0) + forcedResearchUsed,
     repository_context: repositoryContext?.fullName || null,
+    mode: computerMode ? "computer" : "chat",
+    actions: result.actions || [],
     agent_skill: result.agentSkill || null,
   });
 };

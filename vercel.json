@@ -1,7 +1,8 @@
 {
   "functions": {
     "api/chat.js": {
-      "includeFiles": "skills/**"
+      "includeFiles": "skills/**",
+      "maxDuration": 300
     }
   },
   "crons": [
@@ -96,6 +97,18 @@
     {
       "source": "/api/tasks",
       "destination": "/api/workspace?route=tasks"
+    },
+    {
+      "source": "/api/vercel",
+      "destination": "/api/workspace?route=vercel"
+    },
+    {
+      "source": "/api/billing/checkout",
+      "destination": "/api/usage?route=checkout"
+    },
+    {
+      "source": "/api/billing/webhook",
+      "destination": "/api/usage?route=webhook"
     },
     {
       "source": "/documentos",

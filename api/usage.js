@@ -10,10 +10,15 @@ const {
   sendJson,
   supabaseBaseUrl,
 } = require("../server/security/_security");
+const { checkoutHandler, webhookHandler } = require("../server/usage/_billing");
 
 const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY || "sb_publishable_1z--HkCLItfs9qqHdf8WHA_WwhPVfnS";
 
 module.exports = async function handler(request, response) {
+  // Cobrança do Pro divide esta função para respeitar o limite do Vercel Hobby.
+  const route = String(request?.query?.route || "").toLowerCase();
+  if (route === "checkout") return checkoutHandler(request, response);
+  if (route === "webhook") return webhookHandler(request, response);
   if (request.method !== "GET") {
     response.setHeader("Allow", "GET");
     return sendJson(response, 405, { error: "Método não permitido." });
