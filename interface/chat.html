@@ -4970,6 +4970,7 @@
     <link rel="stylesheet" href="/interface/kazer-memory.css?v=20261013" />
     <link rel="stylesheet" href="/interface/kazer-logo3d.css?v=20261023" />
     <link rel="stylesheet" href="/interface/kazer-nova.css?v=20261023" />
+    <link rel="stylesheet" href="/interface/kazer-studio.css?v=20261023" />
     <script>
       window.setTimeout(() => {
         const fallbackApp = document.getElementById("app");
@@ -7755,7 +7756,22 @@
           }
           let hasContent = false;
           let visualCount = 0;
+          // Blocos ```file:caminho viram um projeto (árvore, prévia e .zip) e
+          // ```kazer-scene abre na KAZER Engine (kazer-studio.js).
+          const projectFiles = [];
+          let projectSlot = null;
           segments.forEach((segment) => {
+            if (segment.type === "code" && /^file:/i.test(segment.language || "") && window.kazerRenderProject) {
+              projectFiles.push({ path: segment.language.slice(5), content: segment.code, complete: segment.complete });
+              if (!projectSlot) { projectSlot = document.createElement("div"); projectSlot.className = "kz-project-slot"; container.appendChild(projectSlot); }
+              hasContent = true;
+              return;
+            }
+            if (segment.type === "code" && segment.language === "kazer-scene" && window.kazerRenderSceneCard) {
+              container.appendChild(window.kazerRenderSceneCard(segment.code, { writing, complete: segment.complete }));
+              hasContent = true;
+              return;
+            }
             if (segment.type === "visual") {
               if (visualCount >= MAX_VISUAL_BLOCKS || segment.code.length > MAX_VISUAL_CODE_CHARS) {
                 const notice = document.createElement("p");
@@ -7787,6 +7803,7 @@
               hasContent = true;
             }
           });
+          if (projectSlot) projectSlot.replaceWith(window.kazerRenderProject(projectFiles, { writing }));
           if (!hasContent && !writing) {
             const paragraph = document.createElement("p");
             paragraph.textContent = "Não consegui preparar essa resposta agora.";
@@ -8291,7 +8308,9 @@
           const messageId = createBackgroundId();
           const idempotencyKey = createBackgroundId();
           // Ferramentas (GitHub, Vercel, MCP, Computer) só rodam na resposta em primeiro plano.
-          const needsForegroundTools = !useWebResearch && (Boolean(githubRepo) || chatMode === "computer" || Boolean(window.kazerVercelConnected));
+          const chatModel = window.kazerModel === "flame" ? "flame" : "kz";
+          const engineMode = chatMode === "computer" && window.kazerEngineMode === true;
+          const needsForegroundTools = !useWebResearch && (Boolean(githubRepo) || chatMode === "computer" || chatModel === "flame" || Boolean(window.kazerVercelConnected));
           const needsForegroundConnector = !useWebResearch && mcpConnectorIds.length > 0 || needsForegroundTools;
           if (files.length) {
             const filesByMessage = messageAttachmentFiles.get(chatId) || new Map();
@@ -8345,6 +8364,10 @@
             setMessageAttachmentStatus(userRow, "uploading");
             let data = {};
             const requestMessages = await buildMemoryRequestMessages(prompt, !useWebResearch);
+            // Engine: a cena atual vai junto para o KAZER editar o que já existe.
+            const sceneContext = engineMode ? String(window.kazerEngineSceneContext?.() || "") : "";
+            const latestRequest = requestMessages[requestMessages.length - 1];
+            if (sceneContext && latestRequest?.role === "user" && latestRequest.content.length + sceneContext.length <= 7900) latestRequest.content += sceneContext;
             if (!needsForegroundConnector) {
               const taskInput = useWebResearch
                 ? { query: webResearchRequest.query, question: webResearchRequest.question, billingQuery: prompt, mode: "web" }
@@ -8392,13 +8415,14 @@
                   })
                 : await fetchWithAuth("/api/chat", {
                     method: "POST",
-                    body: JSON.stringify({ messages: requestMessages, attachments, mcpConnectorIds, githubRepo, mode: chatMode }),
+                    body: JSON.stringify({ messages: requestMessages, attachments, mcpConnectorIds, githubRepo, mode: chatMode, model: chatModel, engine: engineMode }),
                     signal: controller.signal,
                   });
               data = await result.json().catch(() => ({}));
               if (!result.ok) {
                 if (result.status === 402) { await loadUsage(false); showCreditLimit(); }
-                if (result.status === 409) { await loadUsage(false); showAttachmentLimit(); }
+                if (result.status === 409 && data.code === "flame_not_configured") window.kazerOpenFlameConfig?.();
+                else if (result.status === 409) { await loadUsage(false); showAttachmentLimit(); }
                 throw new Error(data.error || (useWebResearch ? "Não foi possível consultar a pesquisa na web." : "Não foi possível obter uma resposta."));
               }
               if (files.length) {
@@ -8429,6 +8453,8 @@
             if (backgroundTaskIdForMessage) assistantRow.dataset.backgroundTaskId = backgroundTaskIdForMessage;
             append(assistantRow);
             if (Array.isArray(data.actions) && data.actions.length) window.kazerRenderActions?.(assistantRow, data.actions, data.mode);
+            if (Array.isArray(data.widgets) && data.widgets.length) window.kazerRenderWidgets?.(assistantRow, data.widgets);
+            if (useWebResearch && researchSources.length) window.kazerRenderSources?.(assistantRow, data.sources, { mode: data.researchMode, upgrade: data.upgradeForDeep });
             await revealAssistantMessage(assistantRow, answer.trim(), controller.signal);
             conversationMessages.push({ role: "assistant", content: answer.trim(), ...(backgroundTaskIdForMessage ? { backgroundTaskId: backgroundTaskIdForMessage } : {}) });
             saveChatMessages(chatId, conversationMessages);
@@ -9076,6 +9102,8 @@
     <script src="/interface/kazer-premium.js?v=20261006-home-suggestions" defer></script>
     <script src="/interface/kazer-logo3d.js?v=20261023" defer></script>
     <script src="/interface/kazer-nova.js?v=20261023" defer></script>
+    <script src="/interface/kazer-studio.js?v=20261023" defer></script>
+    <script src="/interface/kazer-engine.js?v=20261023" defer></script>
   </body>
 </html>
 

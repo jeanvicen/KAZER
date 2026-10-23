@@ -445,6 +445,7 @@
     if (tag === "HR") return "rule";
     if (tag === "PRE" || element.classList.contains("code-block")) return "code";
     if (tag === "TABLE" || element.querySelector?.(":scope > table, table")) return "table";
+    if (element.classList.contains("kz-project") || element.classList.contains("kz-scene-card")) return "visual";
     if (element.classList.contains("visual-block") || tag === "IMG" || tag === "FIGURE" || tag === "svg") return "visual";
     return "text";
   }

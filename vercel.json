@@ -103,6 +103,10 @@
       "destination": "/api/workspace?route=vercel"
     },
     {
+      "source": "/api/models",
+      "destination": "/api/workspace?route=models"
+    },
+    {
       "source": "/api/billing/checkout",
       "destination": "/api/usage?route=checkout"
     },

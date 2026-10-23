@@ -20,6 +20,7 @@ const { ACTION_LABELS: GITHUB_ACTION_LABELS, createGitHubSession, executeGitHubT
 const { VERCEL_ACTION_LABELS, createVercelSession, executeVercelTool, isVercelTool, vercelToolDefinitions } = require("../server/integrations/_vercel");
 const { supabaseRequest } = require("../server/storage/_kazer-data");
 const { KAZER_BRAIN_VERSION, callKazerBrain } = require("../server/agent/_kazer-brain");
+const { loadFlameConfig } = require("../server/agent/_flame-api");
 const { HOME_SUGGESTION_TIME_BANDS, generateHomeSuggestions, normalizeHomeSuggestionText } = require("../server/agent/_home-suggestions");
 const { researchToolDefinition, runResearch } = require("../server/research/_research-orchestrator");
 const { currentBrazilContext, needsRealtimeResearch, researchContextText } = require("../server/research/_realtime-context");
@@ -45,6 +46,10 @@ const { loadAgentSkill, selectAgentSkill, skillDeclaresPermission } = require(".
 const { classifyTask, planTask, selectConversationMessages, validateToolRequest } = require("../server/agent/_kazer-context");
 const VISUAL_REQUEST_PATTERN = /\b(?:imagem|visual|desenho|desenhar|ilustra[cç][aã]o|logo|[ií]cone|[ií]cones|layout|interface|tela|prot[oó]tipo|mockup|wireframe|diagrama|fluxograma|gr[aá]fico|chart|dashboard|slide|cart[aã]o|banner|poster|p[oó]ster|infogr[aá]fico|planta|mapa|composi[cç][aã]o|design|image|drawing|illustration|icon|icons|screen|prototype|mockup|wireframe|diagram|flowchart|chart|dashboard|slide|card|banner|poster|infographic|visual(?:ly)?|look like)\b/i;
 const CODE_REQUEST_PATTERN = /\b(?:index\.html?|index\.htm|\.html?|\.css|\.js|\.ts|\.tsx|\.jsx|\.py|\.sql|\.json|\.md)\b|(?:\b(?:c[oó]digo|code|arquivo|file|script|snippet|trecho|fun[cç][aã]o|function|programa|program|implemente|crie|escreva|mostre|me d[eê])\b[\s\S]{0,100}\b(?:html|css|javascript|typescript|python|sql|json|markdown|c[oó]digo|code)\b)/i;
+
+// Arquivos e projetos: a interface monta árvore, prévia e .zip a partir destes blocos.
+const FILES_INSTRUCTION = "ARQUIVOS E PROJETOS: quando a pessoa pedir arquivos, um site, um projeto, um index.html, um app ou um .zip, entregue CADA arquivo completo em um bloco cercado cuja linguagem é file:caminho, por exemplo ```file:index.html, ```file:css/style.css, ```file:js/app.js ou ```file:README.md. Use caminhos relativos coerentes entre si (o index.html deve referenciar ./css/style.css e ./js/app.js). A interface do KAZER mostra a árvore, a prévia ao vivo do index.html e o botão para baixar tudo em .zip — não diga que não consegue criar arquivos ou zip. Fora desses casos, siga as regras normais de código.";
+const ENGINE_INSTRUCTION = "KAZER ENGINE (modo Computer · Engine, inspirado no Godot): a pessoa está editando uma cena 2D no editor do KAZER. Responda com uma explicação curta e UM bloco ```kazer-scene contendo JSON válido da cena COMPLETA atualizada, no formato {\"name\":\"Main\",\"size\":[960,540],\"background\":\"#11212D\",\"gravity\":1200,\"nodes\":[{\"name\":\"Player\",\"type\":\"CharacterBody2D\",\"position\":[120,380],\"size\":[36,48],\"color\":\"#CCD0CF\",\"shape\":\"rect\",\"script\":\"platformer\",\"props\":{\"speed\":260,\"jump\":560}}]}. Tipos: Node2D, Sprite2D, StaticBody2D (chão/plataforma sólida), CharacterBody2D (jogador), Area2D (moeda, perigo ou objetivo), Label (texto, campo text), Camera2D. Scripts: platformer, topdown, patrol (props.distance, props.speed), rotate (props.speed em graus/s), bounce, collectible (soma pontos), hazard (reinicia), goal (vitória), follow_player, none. shape: rect ou circle. Cores em hex. Posições em pixels, origem no canto superior esquerdo do nó. Se a mensagem trouxer a cena atual, preserve o que a pessoa não pediu para mudar. A interface roda a cena ao vivo e exporta um projeto Godot 4 (.zip).";
 
 const MODERATION_PATTERNS = [
   /\b(?:como|passo a passo|instru[cç][oõ]es|ensine|fabricar|montar|construir|detonar|envenenar|hackear|invadir|roubar|matar|burlar)\b[\s\S]{0,100}\b(?:bomba|explosivo|arma|veneno|malware|ransomware|senha|cart[aã]o|conta|v[ií]tima|pol[ií]cia|crime)\b/i,
@@ -367,7 +372,7 @@ function wait(milliseconds) {
   return new Promise((resolve) => setTimeout(resolve, milliseconds));
 }
 
-async function callBrain({ messages, hasImages, tools = [], timeoutMs = 30_000, maxAttempts = MAX_BRAIN_ATTEMPTS_PER_MODEL, runtimeContext = "", agentSkillPrompt = "", taskType = "conversation", hasFiles = false, hasRepository = false, capabilities = [] }) {
+async function callBrain({ messages, hasImages, tools = [], timeoutMs = 30_000, maxAttempts = MAX_BRAIN_ATTEMPTS_PER_MODEL, runtimeContext = "", agentSkillPrompt = "", taskType = "conversation", hasFiles = false, hasRepository = false, capabilities = [], customProvider = null }) {
   const latest = messages.at(-1)?.content;
   const inferredTask = taskType === "conversation" ? classifyTask(typeof latest === "string" ? latest : "", { hasImages, hasFiles, hasTools: tools.length > 0 }) : taskType;
   const systemContent = buildSystemInstructions({ taskType: inferredTask, hasImages, hasFiles, hasTools: tools.length > 0, hasRepository, runtimeContext, agentSkillPrompt });
@@ -379,6 +384,7 @@ async function callBrain({ messages, hasImages, tools = [], timeoutMs = 30_000, 
     maxAttempts,
     taskType: inferredTask,
     capabilities,
+    customProvider,
   });
 }
 
@@ -387,7 +393,7 @@ function actionSummary(name, args) {
   return String(target).replace(/[\u0000-\u001f\u007f]/g, " ").slice(0, 120);
 }
 
-async function runAgentTurn({ messages, hasImages, mcpServers, runtimeContext = "", hasFiles = false, hasRepository = false, taskType = "conversation", capabilityPlan = null, agentSkill = null, userId = null, repository = null, allowTerminal = false, computer = false, githubSession = null, vercelSession = null, isPro = false }) {
+async function runAgentTurn({ messages, hasImages, mcpServers, runtimeContext = "", hasFiles = false, hasRepository = false, taskType = "conversation", capabilityPlan = null, agentSkill = null, userId = null, repository = null, allowTerminal = false, computer = false, githubSession = null, vercelSession = null, isPro = false, customProvider = null }) {
   // Chat normal só lê; o modo Computer libera escrita, deploy e terminal.
   const { tools: mcpTools, byName } = flattenTools(mcpServers || [], { computer });
   const githubTools = githubSession ? githubToolDefinitions({ computer }) : [];
@@ -405,7 +411,7 @@ async function runAgentTurn({ messages, hasImages, mcpServers, runtimeContext = 
   const terminalDefinition = terminalToolDefinition.function;
   let currentMessages = [...messages];
   const timeoutMs = taskType === "coding" ? 75_000 : 30_000;
-  let result = await callBrain({ messages: currentMessages, hasImages, tools, runtimeContext, agentSkillPrompt: agentSkill?.prompt || "", hasFiles, hasRepository, taskType, timeoutMs, capabilities: capabilityPlan?.capabilities || [] });
+  let result = await callBrain({ messages: currentMessages, hasImages, tools, runtimeContext, agentSkillPrompt: agentSkill?.prompt || "", hasFiles, hasRepository, taskType, timeoutMs, capabilities: capabilityPlan?.capabilities || [], customProvider });
   if (result.failure || !tools.length) return { ...result, mcpToolsUsed: 0, researchUsed: 0, actions, agentSkill: agentSkill?.slug || null };
 
   let toolsUsed = 0;
@@ -465,7 +471,7 @@ async function runAgentTurn({ messages, hasImages, mcpServers, runtimeContext = 
       if (actions.length < 40) actions.push(action);
       currentMessages.push({ role: "tool", tool_call_id: toolCall.id, content: toolContent });
     }
-    result = await callBrain({ messages: currentMessages, hasImages: false, tools, runtimeContext, agentSkillPrompt: agentSkill?.prompt || "", hasFiles, hasRepository, taskType, timeoutMs, capabilities: capabilityPlan?.capabilities || [] });
+    result = await callBrain({ messages: currentMessages, hasImages: false, tools, runtimeContext, agentSkillPrompt: agentSkill?.prompt || "", hasFiles, hasRepository, taskType, timeoutMs, capabilities: capabilityPlan?.capabilities || [], customProvider });
     if (result.failure) break;
   }
   return { ...result, mcpToolsUsed: toolsUsed, researchUsed, actions, agentSkill: agentSkill?.slug || null };
@@ -562,6 +568,13 @@ module.exports = async function handler(request, response) {
   }
   const repositoryContext = await resolveRepositoryContext(user.id, body?.githubRepo);
   const computerMode = !backgroundContext && body?.mode === "computer";
+  const engineMode = computerMode && body?.engine === true;
+  // Flame API: modelo e chave da própria pessoa; não consome a cota do KAZER.
+  let customProvider = null;
+  if (!backgroundContext && body?.model === "flame") {
+    customProvider = await loadFlameConfig(user.id).catch(() => null);
+    if (!customProvider) return sendJson(response, 409, { error: "Configure sua Flame API (provedor, modelo e chave) antes de usá-la.", code: "flame_not_configured" });
+  }
   if (isModeratedRequest(messages)) {
     return sendJson(response, 422, { error: "Não posso processar esse conteúdo. Reformule o pedido de forma segura e respeitosa." });
   }
@@ -593,7 +606,7 @@ module.exports = async function handler(request, response) {
   }
   const creditCost = calculateChatCreditCost(messages, prepared.fileNames.length, requestedMcpCount);
   let usage = backgroundContext?.usage || null;
-  if (!backgroundContext) {
+  if (!backgroundContext && !customProvider) {
     try {
       usage = await callUsageRpc(request, "consume_kazer_usage", {
         p_message_count: 1,
@@ -656,7 +669,7 @@ module.exports = async function handler(request, response) {
   const isProPlan = String(usage?.plan || "").toLowerCase().includes("pro");
   const realtimeRequested = !hasImages && needsRealtimeResearch(lastMessage.content);
   let researchWidgets = [];
-  let runtimeContext = currentBrazilContext();
+  let runtimeContext = `${currentBrazilContext()}\n\n${FILES_INSTRUCTION}${engineMode ? `\n\n${ENGINE_INSTRUCTION}` : ""}`;
   let forcedResearchUsed = 0;
   if (realtimeRequested) {
     try {
@@ -676,7 +689,7 @@ module.exports = async function handler(request, response) {
     }
   }
 
-  const result = await runAgentTurn({ messages: apiMessages, hasImages, mcpServers, runtimeContext, hasFiles: prepared.fileNames.length > 0, hasRepository: Boolean(repositoryContext), taskType, capabilityPlan, agentSkill, userId: user.id, repository: repositoryContext, allowTerminal: !backgroundContext, computer: computerMode, githubSession, vercelSession, isPro: isProPlan });
+  const result = await runAgentTurn({ messages: apiMessages, hasImages, mcpServers, runtimeContext, hasFiles: prepared.fileNames.length > 0, hasRepository: Boolean(repositoryContext), taskType, capabilityPlan, agentSkill, userId: user.id, repository: repositoryContext, allowTerminal: !backgroundContext, computer: computerMode, githubSession, vercelSession, isPro: isProPlan, customProvider });
   if (result.failure) {
     console.error("Groq request failed", result.failure);
     return sendJson(response, 502, { error: "O KAZER não conseguiu concluir a resposta agora. Tente novamente." });
@@ -702,6 +715,7 @@ module.exports = async function handler(request, response) {
     widgets: researchWidgets,
     repository_context: repositoryContext?.fullName || null,
     mode: computerMode ? "computer" : "chat",
+    model: customProvider ? "flame" : "kz-1.1",
     actions: result.actions || [],
     agent_skill: result.agentSkill || null,
   });

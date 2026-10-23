@@ -50,3 +50,14 @@ test('MCP: chat normal só recebe ferramentas readOnlyHint', () => {
   assert.deepEqual(flattenTools(servers, { computer: false }).tools.map((tool) => tool.function.name.endsWith('read_thing')), [true]);
   assert.equal(flattenTools(servers, { computer: true }).tools.length, 2);
 });
+
+test('Flame API aceita só HTTPS público e modelos com nome válido', () => {
+  const flame = require('../server/agent/_flame-api.js');
+  assert.equal(flame.normalizeBaseUrl('https://api.openai.com/v1/chat/completions'), 'https://api.openai.com/v1');
+  assert.throws(() => flame.normalizeBaseUrl('http://api.openai.com/v1'));
+  assert.throws(() => flame.normalizeBaseUrl('https://127.0.0.1/v1'));
+  assert.throws(() => flame.normalizeBaseUrl('https://localhost/v1'));
+  assert.equal(flame.cleanModel('gpt-5-mini'), 'gpt-5-mini');
+  assert.equal(flame.cleanModel('bad model; rm'), '');
+  assert.ok(flame.PRESETS.openai && flame.PRESETS.anthropic && flame.PRESETS.custom);
+});

@@ -56,7 +56,20 @@ function buildProviderAttempts({ hasImages, modelOverride, preferredProvider, ta
 function logFailure(attempt, failure, startedAt, capabilities = []) {
   console.warn("KAZER brain attempt failed", { provider: providerLabel(attempt.kind), model: attempt.model, task_type: attempt.taskType, capabilities: capabilities.slice(0, 8), status: failure.status || 0, reason: failure.reason || "upstream_failure", duration_ms: Date.now() - startedAt });
 }
-async function callKazerBrain({ messages, hasImages, tools = [], timeoutMs = 30_000, maxAttempts = 2, modelOverride = "", preferredProvider = "", taskType = "conversation", capabilities = [] }) {
+async function callKazerBrain({ messages, hasImages, tools = [], timeoutMs = 30_000, maxAttempts = 2, modelOverride = "", preferredProvider = "", taskType = "conversation", capabilities = [], customProvider = null }) {
+  // Flame API: a chave da própria pessoa substitui os provedores do KAZER.
+  if (customProvider) {
+    const { callFlame } = require("./_flame-api");
+    try {
+      const body = { messages, temperature: taskType === "coding" ? 0.2 : 0.4, max_tokens: taskType === "coding" ? 12000 : 4000, ...(tools.length ? { tools } : {}) };
+      const result = await callFlame(customProvider, body, { timeoutMs: Math.max(timeoutMs, 45_000) });
+      const message = result.data?.choices?.[0]?.message;
+      if (result.ok && message && ((typeof message.content === "string" && message.content.trim()) || message.tool_calls?.length)) return { data: result.data, model: "flame", provider: "flame", brain_version: KAZER_BRAIN_VERSION, task_type: taskType };
+      return { failure: { status: result.status, error: result.data?.error?.message || "flame_failed", reason: "flame_provider_error", provider: "flame" } };
+    } catch (error) {
+      return { failure: { status: 0, error: "flame_network_error", reason: String(error?.message || "network").slice(0, 80), provider: "flame" } };
+    }
+  }
   const attempts = buildProviderAttempts({ hasImages, modelOverride, preferredProvider, taskType });
   if (!attempts.length) return { failure: { status: 0, error: "brain_not_configured", reason: "no_provider_configured" } };
   let lastFailure = null;
