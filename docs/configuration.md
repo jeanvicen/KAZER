@@ -31,3 +31,13 @@ A ordem e os nomes de modelo são configuração operacional, não instruções 
 Aplique `database/supabase/023_vercel_and_pro_billing.sql` antes de ativar a cobrança: ela cria as tabelas de conexão Vercel, cobranças e assinaturas e torna `get_my_usage`/`consume_kazer_usage` sensíveis ao plano (Free 1.000 eventos, Pro 10.000).
 
 O webhook não confia só no segredo: ele confirma na API da Abacate Pay que a cobrança está `PAID` antes de chamar `kazer_activate_pro`, que é idempotente.
+
+## Pesquisa e Flame API
+
+| Variável | Função |
+|---|---|
+| `SEARXNG_URL` | Opcional. URL HTTPS de uma instância SearxNG própria (como no Vane). Sem ela, o KAZER usa as fontes públicas sem chave. |
+
+Aplique `database/supabase/024_flame_api_keys.sql` para habilitar a Flame API (chave de IA da própria pessoa). A chave é validada com uma chamada mínima antes de ser salva e fica cifrada com `KAZER_CONNECTOR_ENCRYPTION_KEY`.
+
+O plano decide a profundidade da pesquisa no servidor: Free usa o modo `balanced` (até 4 buscas e 8 páginas); Pro usa `quality` (até 12 buscas e 20 páginas, todas as fontes).

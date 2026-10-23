@@ -3,7 +3,7 @@
 /* ── Seletor de modelo ───────────────────────────────────────────────── */
 .kz-model { position: absolute; left: 50%; top: 50%; z-index: 40; transform: translate(-50%, -50%); }
 .kz-model-button { display: inline-flex; align-items: center; gap: 8px; height: 38px; padding: 0 12px 0 14px; border: 1px solid var(--kz-line-2); border-radius: 13px; background: color-mix(in srgb, var(--kz-surface) 80%, transparent); color: var(--kz-white); font: 640 13.5px/1 var(--sans); letter-spacing: -.01em; cursor: pointer; backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); transition: border-color 200ms, transform 240ms var(--kz-spring), box-shadow 260ms; }
-.kz-model-button:hover { border-color: var(--kz-line-3, rgba(204, 208, 207, .3)); transform: translateY(-1px); box-shadow: 0 10px 30px -18px rgba(0, 0, 0, .7); }
+.kz-model-button:hover { border-color: var(--kz-line-3, rgb(var(--kz-rgb-frost) / .3)); transform: translateY(-1px); box-shadow: 0 10px 30px -18px rgba(0, 0, 0, .7); }
 .kz-model-button svg { color: var(--kz-mist); transition: transform 260ms var(--kz-ease); }
 .kz-model-button[aria-expanded="true"] svg { transform: rotate(180deg); }
 .kz-model-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--kz-frost); box-shadow: 0 0 0 3px color-mix(in srgb, var(--kz-frost) 18%, transparent); }
@@ -96,10 +96,10 @@
 .kz-project-tree button:hover { color: var(--kz-white); background: color-mix(in srgb, var(--kz-frost) 5%, transparent); }
 .kz-project-tree button.is-active { color: var(--kz-white); background: color-mix(in srgb, var(--kz-frost) 10%, transparent); }
 .kz-project-view { position: relative; min-width: 0; }
-.kz-project-preview { position: relative; height: 100%; min-height: 340px; background: #fff; }
+.kz-project-preview { position: relative; height: 100%; min-height: 340px; background: var(--kz-strong); }
 .kz-project-preview[hidden], .kz-project-code[hidden] { display: none; }
-.kz-project-preview iframe { display: block; width: 100%; height: 100%; min-height: 340px; border: 0; background: #fff; }
-.kz-project-expand { position: absolute; right: 10px; bottom: 10px; width: 34px; height: 34px; border: 1px solid rgba(6, 20, 27, .15); border-radius: 10px; background: rgba(255, 255, 255, .85); color: #06141B; cursor: pointer; }
+.kz-project-preview iframe { display: block; width: 100%; height: 100%; min-height: 340px; border: 0; background: var(--kz-strong); }
+.kz-project-expand { position: absolute; right: 10px; bottom: 10px; width: 34px; height: 34px; border: 1px solid rgb(var(--kz-rgb-ink) / .15); border-radius: 10px; background: rgba(255, 255, 255, .85); color: #06141B; cursor: pointer; }
 .kz-project.is-expanded { position: fixed; inset: 16px; z-index: 180; margin: 0; display: flex; flex-direction: column; }
 .kz-project.is-expanded .kz-project-body { flex: 1; }
 .kz-project.is-expanded .kz-project-preview, .kz-project.is-expanded iframe, .kz-project.is-expanded .kz-project-tree { max-height: none; height: 100%; }

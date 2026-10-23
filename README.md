@@ -59,7 +59,9 @@ O produto publicado em [kazer.vercel.app](https://kazer.vercel.app) é o que o u
 |---|---|
 | **Chat com IA** | API server-side com roteamento do Brain entre provedores configurados, histórico de conversa enviado pelo cliente e renderização de respostas. |
 | **Anexos** | Fluxo para imagens, PDF, DOCX e formatos de texto/código permitidos, com validação e limites no servidor. |
-| **Pesquisa WebKazer** | Rota dedicada de pesquisa e síntese de fontes; a documentação distingue pesquisa pelo usuário e chamada pelo Brain. |
+| **Pesquisa WebKazer** | Pesquisa estilo Vane: web + fontes especializadas (acadêmico, discussões, código, notícias, vídeo), widgets e profundidade por plano (Free equilibrada, Pro a fundo). |
+| **Modelos** | K.z 1.1 (padrão) ou Flame API com a chave de IA da própria pessoa. |
+| **Arquivos e Engine** | Projetos com prévia e .zip; KAZER Engine estilo Godot com exportação para Godot 4. |
 | **Workspace** | Cadastro e acompanhamento de tarefas, status/progresso, conectores MCP e repositórios; o repositório não documenta um executor geral dessas tarefas. |
 | **Conectores** | Google Drive, MCP remoto (com token opcional), GitHub OAuth e Vercel por token. Segredos ficam cifrados no backend. |
 | **Conta e PWA** | Supabase Auth, interface web responsiva, manifesto e service worker para instalação como PWA. |

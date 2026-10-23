@@ -126,6 +126,36 @@
   renderPicker();
   window.setTimeout(loadFlame, 700);
 
+  /* ── Tema claro/escuro com transição suave ─────────────────────────── */
+  new MutationObserver(() => {
+    document.documentElement.classList.add("kz-theme-switching");
+    window.setTimeout(() => document.documentElement.classList.remove("kz-theme-switching"), 520);
+  }).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+  const themeButton = document.createElement("button");
+  themeButton.type = "button";
+  themeButton.className = "kz-rail-btn kz-theme-toggle";
+  themeButton.dataset.tip = "Tema claro/escuro";
+  themeButton.setAttribute("aria-label", "Alternar tema claro ou escuro");
+  const paintThemeIcon = () => {
+    const light = document.documentElement.dataset.theme === "light";
+    themeButton.innerHTML = light
+      ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M20.2 15.3A8.2 8.2 0 0 1 8.7 3.8 8.5 8.5 0 1 0 20.2 15.3Z"/></svg>'
+      : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>';
+  };
+  themeButton.addEventListener("click", () => {
+    const select = document.getElementById("appearanceSelect");
+    const next = document.documentElement.dataset.theme === "light" ? "dark" : "light";
+    if (select) { select.value = next; select.dispatchEvent(new Event("change", { bubbles: true })); }
+    else document.documentElement.dataset.theme = next;
+    paintThemeIcon();
+  });
+  paintThemeIcon();
+  window.setTimeout(() => {
+    const settings = document.querySelector('.kz-rail-btn[data-rail="settings"]');
+    settings?.before(themeButton);
+    paintThemeIcon();
+  }, 0);
+
   /* ── Fontes da pesquisa (estilo motor de respostas) ────────────────── */
   const KIND_LABEL = { web: "Web", wiki: "Wikipédia", academic: "Acadêmico", discussion: "Discussão", code: "Código", news: "Notícia", video: "Vídeo" };
   window.kazerRenderSources = (row, sources, { mode, upgrade } = {}) => {

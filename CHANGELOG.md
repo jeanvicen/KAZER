@@ -4,6 +4,12 @@ Todas as mudanças relevantes do KAZER serão registradas aqui.
 
 ## [Unreleased]
 
+- **Pesquisa estilo Vane** (MIT, ver `NOTICE.md`): classificador da pergunta, fontes especializadas sem chave (Wikipédia, OpenAlex, arXiv, Reddit, Hacker News, Stack Overflow, GitHub, Google Notícias, YouTube; SearxNG opcional via `SEARXNG_URL`), widgets de clima, cálculo e cotação e modos speed/balanced/quality. Free pesquisa em "balanced"; Pro pesquisa a fundo em "quality". Respostas mostram cartões de fontes.
+- **Seletor de modelo** no topo: K.z 1.1 (padrão) e **Flame API**, que usa a chave da própria pessoa em qualquer API compatível com OpenAI (chave cifrada, URL checada contra SSRF, validação antes de salvar, sem consumir a cota). Migração `024_flame_api_keys.sql`.
+- **Arquivos e .zip:** blocos ```file:caminho viram projeto com árvore, prévia ao vivo do `index.html` em sandbox e download .zip.
+- **KAZER Engine** no modo Computer: editor 2D inspirado no Godot (árvore de cena, inspetor, viewport jogável), edição pelo chat com ```kazer-scene e exportação de projeto Godot 4.
+- **Temas:** tokens RGB para claro/escuro; modo claro baseado no Cloud Dancer (Pantone 2026) com acento teal no Computer; botão de tema no trilho e transição suave.
+- **Login:** aurora, constelação que reage ao ponteiro, órbita 3D com chips, verbo que alterna no título, abas Entrar/Criar conta e borda animada.
 - **Modo Computer.** O seletor Chat/Computer fica no campo de mensagem. No Chat o KAZER só lê (arquivos, commits, issues e PRs do repositório selecionado, projetos e deploys da Vercel, ferramentas MCP com `readOnlyHint`). No Computer ele também cria branches, grava arquivos, abre PRs e issues, refaz deploys e usa o terminal em sandbox. A regra vale no servidor (`api/chat.js`), e escrita na branch padrão é sempre recusada.
 - **Conectores de verdade.** A tela de Conectores conecta GitHub (OAuth) e escolhe o repositório, conecta a Vercel por token cifrado (`/api/vercel`) e salva conectores MCP personalizados com token opcional.
 - **KAZER Pro.** Checkout PIX via Abacate Pay (`/api/billing/checkout`), webhook verificado (`/api/billing/webhook`) e migração `023_vercel_and_pro_billing.sql` com limite 10× para o Pro. Sem `ABACATEPAY_API_KEY`, o botão avisa que o pagamento abre em breve.

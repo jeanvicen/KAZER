@@ -80,3 +80,84 @@ html, body { background: #06141B !important; }
 @keyframes kz-login-card { from { opacity: 0; transform: translateY(26px) scale(.97); } to { opacity: 1; transform: none; } }
 @media (prefers-reduced-motion: reduce) { .card, .brand-features li, .brand-panel-title em { animation: none !important; } }
 .card::after, .form-column::before, .form-column::after { filter: grayscale(1) !important; }
+
+/* ── Login Nova 2: aurora, constelação, órbita 3D, abas ──────────────── */
+.kz-constellation { position: fixed; inset: 0; z-index: 0; width: 100vw; height: 100vh; pointer-events: none; }
+.kz-aurora { position: fixed; inset: -20%; z-index: 0; pointer-events: none; filter: blur(70px) saturate(1.1); opacity: .75; }
+.kz-aurora i { position: absolute; width: 46vmax; height: 46vmax; border-radius: 50%; mix-blend-mode: screen; animation: kz-aurora 22s ease-in-out infinite alternate; }
+.kz-aurora i:nth-child(1) { left: 0; top: 0; background: radial-gradient(circle, rgba(155, 168, 171, .34), transparent 60%); }
+.kz-aurora i:nth-child(2) { right: 0; top: 20%; background: radial-gradient(circle, rgba(14, 124, 123, .28), transparent 60%); animation-duration: 28s; animation-delay: -6s; }
+.kz-aurora i:nth-child(3) { left: 30%; bottom: 0; background: radial-gradient(circle, rgba(74, 92, 106, .45), transparent 60%); animation-duration: 34s; animation-delay: -12s; }
+@keyframes kz-aurora { 0% { transform: translate(0, 0) scale(1); } 50% { transform: translate(8vw, 6vh) scale(1.15); } 100% { transform: translate(-6vw, 10vh) scale(.92); } }
+.overlay, .form-column, .brand-panel { position: relative; z-index: 1; }
+.atmosphere { opacity: .55; }
+
+.brand-panel .kz-hero { position: relative; width: clamp(200px, 22vw, 280px); height: clamp(200px, 22vw, 280px); display: grid; place-items: center; perspective: 900px; }
+.kz-orbit3d { position: absolute; inset: -18%; transform-style: preserve-3d; animation: kz-orbit-spin 24s linear infinite; pointer-events: none; }
+.kz-ring { position: absolute; inset: 0; border: 1px solid rgba(204, 208, 207, .2); border-radius: 50%; transform: rotateX(72deg); box-shadow: 0 0 30px rgba(155, 168, 171, .12) inset; }
+.kz-ring--b { inset: 12%; transform: rotateX(72deg) rotateY(28deg); border-color: rgba(14, 124, 123, .35); }
+.kz-chip3d {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  padding: 6px 11px;
+  border: 1px solid rgba(204, 208, 207, .22);
+  border-radius: 999px;
+  background: rgba(17, 33, 45, .78);
+  color: #eef1f1;
+  font: 600 11.5px/1 var(--sans);
+  white-space: nowrap;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  transform: rotateY(calc(var(--i) * 90deg)) translateZ(clamp(96px, 10vw, 136px)) rotateY(calc(var(--i) * -90deg)) translate(-50%, -50%);
+  animation: kz-chip-face 24s linear infinite;
+}
+@keyframes kz-orbit-spin { from { transform: rotateX(-12deg) rotateY(0); } to { transform: rotateX(-12deg) rotateY(360deg); } }
+@keyframes kz-chip-face { from { rotate: y 0deg; } to { rotate: y -360deg; } }
+.brand-panel .kz-hero .kz-orbit { display: none !important; }
+
+.brand-panel-title .kz-verb { display: inline-block; background: linear-gradient(100deg, #ffffff, #CCD0CF 50%, #9BA8AB); -webkit-background-clip: text; background-clip: text; color: transparent; transition: opacity 300ms, transform 300ms var(--ease), filter 300ms; }
+.brand-panel-title .kz-verb.is-out { opacity: 0; transform: translateY(-40%) rotateX(60deg); filter: blur(8px); }
+.brand-panel-title .kz-verb.is-in { animation: kz-verb-in 600ms var(--spring) both; }
+@keyframes kz-verb-in { from { opacity: 0; transform: translateY(40%) rotateX(-60deg); filter: blur(8px); } to { opacity: 1; transform: none; filter: none; } }
+
+.card { position: relative; isolation: isolate; backdrop-filter: blur(22px) saturate(1.2) !important; -webkit-backdrop-filter: blur(22px) saturate(1.2) !important; }
+.card::after {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  z-index: -1;
+  border-radius: inherit;
+  padding: 1px;
+  background: conic-gradient(from var(--kz-login-angle, 0deg), transparent 0 60%, rgba(204, 208, 207, .7) 72%, rgba(14, 124, 123, .7) 80%, transparent 92%);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  animation: kz-login-orbit 7s linear infinite;
+  filter: none !important;
+}
+@property --kz-login-angle { syntax: "<angle>"; initial-value: 0deg; inherits: false; }
+@keyframes kz-login-orbit { to { --kz-login-angle: 360deg; } }
+
+.kz-auth-tabs { position: relative; display: grid; grid-template-columns: 1fr 1fr; margin: 0 0 22px; padding: 4px; border: 1px solid rgba(204, 208, 207, .14); border-radius: 14px; background: rgba(6, 20, 27, .55); }
+.kz-auth-tabs[hidden] { display: none; }
+.kz-auth-tabs button { position: relative; z-index: 1; height: 36px; border: 0; background: none; color: #9BA8AB; font: 650 13px/1 var(--sans); cursor: pointer; transition: color 260ms; }
+.kz-auth-tabs button[aria-selected="true"] { color: #06141B; }
+.kz-auth-pill { position: absolute; top: 4px; bottom: 4px; left: 4px; width: calc(50% - 4px); border-radius: 10px; background: linear-gradient(135deg, #eef1f1, #CCD0CF); box-shadow: 0 6px 18px -6px rgba(204, 208, 207, .55); transition: transform 460ms var(--spring); }
+.kz-auth-tabs[data-active="signup"] .kz-auth-pill { transform: translateX(100%); }
+.form-section.active, .form-section:not(.hidden) { animation: kz-form-in 520ms var(--ease) both; }
+@keyframes kz-form-in { from { opacity: 0; transform: translateY(10px); filter: blur(4px); } to { opacity: 1; transform: none; filter: none; } }
+.input-group { animation: kz-login-rise 600ms var(--ease) both; }
+.input-group:nth-of-type(2) { animation-delay: 80ms; }
+.input-group:nth-of-type(3) { animation-delay: 160ms; }
+
+.submit-btn { position: relative; overflow: hidden; }
+.submit-btn::before { content: ""; position: absolute; left: var(--mx, 50%); top: var(--my, 50%); width: 240px; height: 240px; border-radius: 50%; background: radial-gradient(circle, rgba(255, 255, 255, .65), transparent 60%); transform: translate(-50%, -50%) scale(0); transition: transform 360ms var(--ease); pointer-events: none; }
+.submit-btn:hover::before { transform: translate(-50%, -50%) scale(1); }
+.submit-btn .btn-text { position: relative; }
+
+@media (prefers-reduced-motion: reduce) { .kz-aurora i, .kz-orbit3d, .kz-chip3d, .card::after, .kz-auth-pill, .form-section, .input-group { animation: none !important; transition: none !important; } }
+@media (max-width: 900px) { .kz-aurora { opacity: .5; } }
+.brand-panel .kz-hero { transform-style: preserve-3d; margin-left: clamp(24px, 4vw, 64px); }
+.brand-panel .kz-hero .kz-login-alien { transform: translateZ(1px); transform-style: preserve-3d; }
+.kz-chip3d { backface-visibility: hidden; }
