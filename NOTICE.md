@@ -12,6 +12,10 @@ O projeto usa dependências e serviços de terceiros. Os direitos desses compone
 
 Antes de adicionar um componente, registre no pull request ou no inventário interno o nome, versão, origem, licença, URL, finalidade, risco e compatibilidade. Não remova avisos de terceiros nem combine material sob licença incompatível com a distribuição pretendida.
 
+## Atribuições de código aberto
+
+- **Vane** (https://github.com/ItzCrazyKns/Vane), licença MIT, © 2026 ItzCrazyKns. `server/research/_vane-sources.js` adapta o desenho de pesquisa do Vane: classificação da pergunta, fontes por foco (web, acadêmico, discussões), modos speed/balanced/quality e widgets de clima, cálculo e cotação. A licença MIT exige manter este aviso: "Permission is hereby granted, free of charge, to any person obtaining a copy of this software... The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software."
+
 ## Preservação
 
 Não remova, oculte, falsifique ou altere este aviso, `LICENSE.md`, os cabeçalhos de autoria, o histórico Git ou as atribuições de terceiros. Se este projeto for incorporado a uma distribuição autorizada, mantenha as atribuições exigidas e inclua a licença específica concedida por escrito.

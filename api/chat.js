@@ -387,7 +387,7 @@ function actionSummary(name, args) {
   return String(target).replace(/[\u0000-\u001f\u007f]/g, " ").slice(0, 120);
 }
 
-async function runAgentTurn({ messages, hasImages, mcpServers, runtimeContext = "", hasFiles = false, hasRepository = false, taskType = "conversation", capabilityPlan = null, agentSkill = null, userId = null, repository = null, allowTerminal = false, computer = false, githubSession = null, vercelSession = null }) {
+async function runAgentTurn({ messages, hasImages, mcpServers, runtimeContext = "", hasFiles = false, hasRepository = false, taskType = "conversation", capabilityPlan = null, agentSkill = null, userId = null, repository = null, allowTerminal = false, computer = false, githubSession = null, vercelSession = null, isPro = false }) {
   // Chat normal só lê; o modo Computer libera escrita, deploy e terminal.
   const { tools: mcpTools, byName } = flattenTools(mcpServers || [], { computer });
   const githubTools = githubSession ? githubToolDefinitions({ computer }) : [];
@@ -450,8 +450,8 @@ async function runAgentTurn({ messages, hasImages, mcpServers, runtimeContext = 
           if (!validation.ok) throw new Error(validation.error);
           const args = validation.args;
           if (name === researchToolDefinition.function.name && researchToolEnabled) {
-            const research = await runResearch({ question: args.question, deep: args.depth !== "normal" });
-            toolContent = JSON.stringify({ question: research.question, queries: research.queries, sources: research.sources, evidence: research.evidence, visitedUrls: research.visitedUrls, browserAvailable: research.browserAvailable, errors: research.errors, stopReason: research.stopReason }).slice(0, 42_000);
+            const research = await runResearch({ question: args.question, researchMode: isPro ? "quality" : "balanced" });
+            toolContent = JSON.stringify({ question: research.question, mode: research.mode, widgets: research.widgets, queries: research.queries, sources: research.sources, evidence: research.evidence, visitedUrls: research.visitedUrls, browserAvailable: research.browserAvailable, errors: research.errors, stopReason: research.stopReason }).slice(0, 42_000);
             researchUsed += 1;
           } else if (entry) {
             toolContent = await callMcpTool(entry, args);
@@ -653,18 +653,21 @@ module.exports = async function handler(request, response) {
     { role: "user", content: latestContent },
   ];
 
+  const isProPlan = String(usage?.plan || "").toLowerCase().includes("pro");
   const realtimeRequested = !hasImages && needsRealtimeResearch(lastMessage.content);
+  let researchWidgets = [];
   let runtimeContext = currentBrazilContext();
   let forcedResearchUsed = 0;
   if (realtimeRequested) {
     try {
       const realtimeResearch = await runResearch({
         question: lastMessage.content,
-        deep: true,
+        researchMode: isProPlan ? "quality" : "balanced",
         maxSearches: 6,
         maxPages: 6,
         maxActions: 24,
       });
+      researchWidgets = realtimeResearch.widgets || [];
       runtimeContext += `\n\n${researchContextText(realtimeResearch, redactSensitiveText)}\n\nA pesquisa atual já foi executada no servidor. Não faça uma segunda pesquisa para esta mesma pergunta, a menos que as evidências estejam vazias.`;
       forcedResearchUsed = 1;
     } catch (error) {
@@ -673,7 +676,7 @@ module.exports = async function handler(request, response) {
     }
   }
 
-  const result = await runAgentTurn({ messages: apiMessages, hasImages, mcpServers, runtimeContext, hasFiles: prepared.fileNames.length > 0, hasRepository: Boolean(repositoryContext), taskType, capabilityPlan, agentSkill, userId: user.id, repository: repositoryContext, allowTerminal: !backgroundContext, computer: computerMode, githubSession, vercelSession });
+  const result = await runAgentTurn({ messages: apiMessages, hasImages, mcpServers, runtimeContext, hasFiles: prepared.fileNames.length > 0, hasRepository: Boolean(repositoryContext), taskType, capabilityPlan, agentSkill, userId: user.id, repository: repositoryContext, allowTerminal: !backgroundContext, computer: computerMode, githubSession, vercelSession, isPro: isProPlan });
   if (result.failure) {
     console.error("Groq request failed", result.failure);
     return sendJson(response, 502, { error: "O KAZER não conseguiu concluir a resposta agora. Tente novamente." });
@@ -696,6 +699,7 @@ module.exports = async function handler(request, response) {
     mcp_servers_available: mcpServers.length,
     mcp_tools_used: result.mcpToolsUsed || 0,
     research_used: (result.researchUsed || 0) + forcedResearchUsed,
+    widgets: researchWidgets,
     repository_context: repositoryContext?.fullName || null,
     mode: computerMode ? "computer" : "chat",
     actions: result.actions || [],

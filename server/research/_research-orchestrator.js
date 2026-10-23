@@ -1,6 +1,7 @@
 const { getSearchQueryVariants, normalizeSearchQuery, parseBingResults, parseBingRssResults, parseDuckResults, rankAndDedupeResults, safeSearchResultUrl } = require("./_research-search-utils");
 const { ResearchBrowser, cleanText } = require("./_research-browser");
 const { requestPublicUrl } = require("../security/_ssrf");
+const { MODES, classifyQuestion, runWidgets, searchSpecializedSources } = require("./_vane-sources");
 
 const DEFAULT_BUDGETS = {
   normal: { searches: 4, pages: 8, actions: 16 },
@@ -76,6 +77,7 @@ function stripExternalInstructions(text) {
 function evidenceFromSource(source, page, query, accessedAt, browserAvailable) {
   const relevantText = stripExternalInstructions(page?.text || source.snippet || "");
   return {
+    kind: source.kind || "web",
     sourceUrl: safeSearchResultUrl(source.uri),
     sourceTitle: cleanText(page?.title || source.title, 240),
     relevantText,
@@ -131,17 +133,22 @@ async function httpFallback(source, timeoutMs = 5_000, networkOptions = {}) {
   }
 }
 
-async function runResearch({ question, mode = "normal", deep = false, maxSearches, maxPages, maxActions } = {}) {
+// researchMode segue o Vane: speed, balanced (Free) e quality (Pro, a fundo).
+async function runResearch({ question, mode = "normal", deep = false, researchMode = "", maxSearches, maxPages, maxActions } = {}) {
   const normalized = normalizeSearchQuery(question).slice(0, 240);
   if (normalized.length < 2) throw new Error("research_question_invalid");
-  const isDeep = Boolean(deep || mode === "deep");
+  const vaneMode = MODES[researchMode] ? researchMode : (deep || mode === "deep" ? "quality" : "balanced");
+  const isDeep = vaneMode === "quality";
+  const classification = classifyQuestion(question);
   const budget = DEFAULT_BUDGETS[isDeep ? "deep" : "normal"];
   const limits = {
     searches: Math.min(budget.searches, Math.max(1, Number(maxSearches) || budget.searches)),
     pages: Math.min(budget.pages, Math.max(1, Number(maxPages) || budget.pages)),
     actions: Math.min(budget.actions, Math.max(4, Number(maxActions) || budget.actions)),
   };
-  const state = { question: cleanText(question, 600), queries: [], visitedUrls: [], actions: [], evidence: [], errors: [], browserAvailable: false, limits, candidateCount: 0, stopReason: "budget" };
+  const state = { question: cleanText(question, 600), mode: vaneMode, classification, widgets: [], sourcesUsed: ["web"], queries: [], visitedUrls: [], actions: [], evidence: [], errors: [], browserAvailable: false, limits, candidateCount: 0, stopReason: "budget" };
+  const specializedJob = searchSpecializedSources(normalized, classification, vaneMode).catch((error) => ({ items: [], sourcesUsed: [], errors: [String(error?.message || "specialized_failed")] }));
+  const widgetsJob = runWidgets(question, classification).catch(() => []);
   const browser = new ResearchBrowser({ maxActions: limits.actions });
   const started = await browser.start();
   state.browserAvailable = started.available;
@@ -153,17 +160,33 @@ async function runResearch({ question, mode = "normal", deep = false, maxSearche
     const batches = await Promise.allSettled(variants.map((query) => searchWeb(query, isDeep ? "deep" : "web")));
     const rawSources = batches.flatMap((item) => item.status === "fulfilled" ? item.value : []);
     batches.forEach((item) => { if (item.status === "rejected") state.errors.push(String(item.reason?.message || "search_failed").slice(0, 240)); });
-    const sourcePool = rankAndDedupeResults(normalized, rawSources, isDeep ? 120 : 12);
+    const specialized = await specializedJob;
+    state.widgets = await widgetsJob;
+    state.sourcesUsed = ["web", ...specialized.sourcesUsed];
+    state.errors.push(...specialized.errors);
+    const webPool = rankAndDedupeResults(normalized, rawSources, isDeep ? 120 : 12);
+    const seen = new Set(webPool.map((source) => source.uri));
+    const extra = specialized.items.filter((item) => item.uri && !seen.has(item.uri) && seen.add(item.uri));
+    // Intercala fontes especializadas com a web para variar o tipo de evidência.
+    const sourcePool = [];
+    for (let index = 0; index < Math.max(webPool.length, extra.length); index += 1) {
+      if (webPool[index]) sourcePool.push({ ...webPool[index], kind: webPool[index].kind || "web" });
+      if (extra[index]) sourcePool.push(extra[index]);
+    }
     state.candidateCount = sourcePool.length;
     // A descoberta já é uma fonte útil. Não esconda os resultados só porque
     // uma página bloqueou o crawler ou excedeu o timeout serverless.
-    state.sources = sourcePool.map((source) => ({ title: source.title, uri: source.uri, snippet: source.snippet, pageRead: false, browserUsed: false }));
-    const selected = sourcePool.slice(0, limits.pages);
+    state.sources = sourcePool.map((source) => ({ title: source.title, uri: source.uri, snippet: source.snippet, kind: source.kind || "web", site: source.site, year: source.year, thumbnail: source.thumbnail, pageRead: false, browserUsed: false }));
+    // Fontes estruturadas (resumos acadêmicos, discussões, código) já trazem o
+    // texto útil; só páginas da web e notícias são abertas.
+    const structured = sourcePool.filter((source) => ["academic", "discussion", "code", "video", "wiki"].includes(source.kind)).slice(0, Math.ceil(limits.pages / 2));
+    structured.forEach((source) => state.evidence.push(evidenceFromSource(source, { title: source.title, text: source.snippet, pageRead: false, headings: [] }, normalized, new Date().toISOString(), false)));
+    const selected = sourcePool.filter((source) => !structured.includes(source) && !["video"].includes(source.kind)).slice(0, Math.max(1, limits.pages - structured.length));
     state.visitedUrls = selected.map((source) => source.uri);
 
     if (state.browserAvailable) {
       for (const source of selected) {
-        if (state.evidence.length >= limits.pages) break;
+        if (state.evidence.length >= limits.pages + structured.length) break;
         const accessedAt = new Date().toISOString();
         let page;
         try { page = await browser.open(source.uri); state.actions.push({ type: "browser_open", url: source.uri, at: accessedAt }); }
@@ -188,9 +211,9 @@ async function runResearch({ question, mode = "normal", deep = false, maxSearche
   } finally {
     await browser.close();
   }
-  return { ...state, sources: state.sources || state.evidence.map(publicSource), evidence: state.evidence.slice(0, limits.pages) };
+  return { ...state, sources: state.sources || state.evidence.map(publicSource), evidence: state.evidence.slice(0, limits.pages + Math.ceil(limits.pages / 2)) };
 }
 
 const researchToolDefinition = { type: "function", function: { name: "research_web", description: "Pesquisa profundamente na Internet: cria várias consultas, coleta até 120 candidatos, abre páginas públicas, cruza evidências e retorna apenas dados para uma síntese final. Use para fatos atuais, pesquisa explícita, comparação ou quando fontes externas forem necessárias; o processo deve permanecer invisível ao usuário.", parameters: { type: "object", properties: { question: { type: "string", description: "Pergunta ou objetivo da pesquisa" }, depth: { type: "string", enum: ["normal", "deep"] } }, required: ["question"] } } };
 
-module.exports = { DEFAULT_BUDGETS, researchToolDefinition, runResearch, searchWeb, deepQueries, fetchResearchPage, httpFallback };
+module.exports = { MODES, DEFAULT_BUDGETS, researchToolDefinition, runResearch, searchWeb, deepQueries, fetchResearchPage, httpFallback };
