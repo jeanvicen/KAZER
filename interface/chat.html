@@ -3,11 +3,11 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <meta name="theme-color" content="#070707" />
+    <meta name="theme-color" content="#06141B" />
     <title>KAZER</title>
     <meta name="description" content="Kazer: converse, organize e crie em um espaço inteligente." />
     <link rel="manifest" href="../download/manifest.webmanifest" />
-    <link rel="icon" href="../download/assets/kazer-badge.svg?v=20261005" type="image/svg+xml" />
+    <link rel="icon" href="../download/assets/kazer-alien.svg?v=20261023" type="image/svg+xml" />
     <link rel="alternate icon" href="../download/icons/favicon-32.png?v=20261005" type="image/png" />
     <link rel="apple-touch-icon" href="../download/icons/apple-touch-icon.png?v=20261005" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -113,7 +113,7 @@
         height: clamp(48px, 13vw, 72px);
         flex: 0 0 auto;
         margin: 0;
-        background: url("../download/assets/kazer-badge.svg?v=20261005") center / contain no-repeat;
+        background: url("../download/assets/kazer-alien.svg?v=20261023") center / contain no-repeat;
         animation: app-splash-symbol-pulse 2600ms ease-in-out infinite;
       }
 
@@ -4968,6 +4968,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300..800&family=Geist+Mono:wght@400;500;600&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="/interface/kazer-premium.css?v=20261005b" />
     <link rel="stylesheet" href="/interface/kazer-memory.css?v=20261013" />
+    <link rel="stylesheet" href="/interface/kazer-nova.css?v=20261023" />
     <script>
       window.setTimeout(() => {
         const fallbackApp = document.getElementById("app");
@@ -5009,7 +5010,7 @@
 
       <section class="history-screen" id="historyScreen" aria-label="Histórico de chats" aria-hidden="true" hidden>
         <header class="history-topbar">
-          <button class="history-brand" id="historyBrand" type="button" aria-label="Abrir configurações" title="Configurações"><img class="history-brand-mark" src="../download/assets/kazer-badge.svg?v=20261005" alt="" /><span class="history-brand-name">KAZER</span></button>
+          <button class="history-brand" id="historyBrand" type="button" aria-label="Abrir configurações" title="Configurações"><img class="history-brand-mark" src="../download/assets/kazer-alien.svg?v=20261023" alt="" /><span class="history-brand-name">KAZER</span></button>
           <button class="desktop-sidebar-toggle" id="desktopSidebarToggle" type="button" aria-label="Abrir histórico de conversas" aria-controls="historyScreen" aria-expanded="false" title="Abrir histórico de conversas"><svg class="icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="12" cy="5" r="1.55"></circle><circle cx="12" cy="12" r="1.55"></circle><circle cx="12" cy="19" r="1.55"></circle></svg></button>
           <button class="history-mobile-account" id="historyAccountAction" type="button" aria-label="Abrir informações da conta" title="Abrir conta"><span class="history-mobile-avatar"><span class="history-avatar-fallback" id="historyAvatarFallback" aria-hidden="true">K</span><img id="historyAccountAvatar" alt="" hidden referrerpolicy="no-referrer" /></span><span class="history-mobile-account-copy"><strong id="historyAccountName">Conta KAZER</strong><small id="historyAccountBrand">KAZER</small></span></button>
           <button class="history-exit-action" id="historyExitAction" type="button" aria-label="Voltar para o chat" title="Voltar para o chat"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12h15"></path><path d="m13 5 7 7-7 7"></path></svg></button>
@@ -5071,7 +5072,7 @@
           <div><strong id="profileDisplayName">Kazer</strong><small id="profileEmail">Conta conectada</small></div>
         </div>
         <div class="menu-actions">
-          <button class="pro-action" id="proAction" type="button" aria-label="Obter Kazer Pro"><span class="pro-badge">PRO</span><span class="pro-copy"><strong>Kazer Pro</strong><small>Recursos em planejamento</small></span><svg class="icon pro-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"></path></svg></button>
+          <button class="pro-action" id="proAction" type="button" aria-label="Obter Kazer Pro"><span class="pro-badge">PRO</span><span class="pro-copy"><strong>Kazer Pro</strong><small>10× mais uso + modo Computer</small></span><svg class="icon pro-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"></path></svg></button>
 
           <div class="profile-more" id="profileMore"><button class="profile-more-toggle" id="profileMoreToggle" type="button" aria-expanded="false"><span>Mais opções</span><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg></button><div class="profile-more-options"><div class="profile-integrations-grid"><button class="profile-integration-action" id="githubProfileAction" type="button"><span class="profile-integration-icon github" aria-hidden="true"><svg viewBox="0 0 24 24" role="img"><path d="M12 2.5a9.5 9.5 0 0 0-3 18.51c.48.09.65-.21.65-.46v-1.7c-2.65.58-3.2-1.12-3.2-1.12-.44-1.1-1.06-1.4-1.06-1.4-.87-.6.07-.59.07-.59.96.07 1.47.99 1.47.99.85 1.46 2.22 1.04 2.76.8.09-.62.33-1.04.6-1.28-2.12-.24-4.35-1.06-4.35-4.72 0-1.04.37-1.9.98-2.57-.1-.24-.43-1.22.1-2.54 0 0 .8-.26 2.62.98A9.1 9.1 0 0 1 12 7.08a9 9 0 0 1 2.38.32c1.82-1.24 2.62-.98 2.62-.98.53 1.32.2 2.3.1 2.54.61.67.98 1.53.98 2.57 0 3.67-2.23 4.48-4.36 4.72.34.3.64.88.64 1.77v2.62c0 .25.17.55.65.46A9.5 9.5 0 0 0 12 2.5Z"></path></svg></span><strong>GitHub</strong><small id="githubProfileStatus">Autorizar acesso aos repositórios</small></button><button class="profile-integration-action" id="mcpProfileAction" type="button"><span class="profile-integration-icon" aria-hidden="true">⌁</span><strong>Conectores</strong><small id="mcpProfileStatus">Conectores prontos</small></button></div><button class="profile-more-option" id="webKazerAction" type="button"><span>WebKazer<br><small>Pesquisa na web</small></span><span aria-hidden="true">↗</span></button></div></div>
           <button class="menu-action settings-menu-icon" id="settingsAction" type="button" aria-label="Configurações" title="Configurações"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6 7 7M17 17l1.4 1.4M18.4 5.6 17 7M7 17l-1.4 1.4"></path><circle cx="12" cy="12" r="3.5"></circle></svg></button>
@@ -5089,7 +5090,7 @@
               <svg class="settings-mobile-account-chevron icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"></path></svg>
             </button>
             <div class="settings-mobile-subscription-block"><span class="settings-mobile-section-label">Assinatura</span><div class="settings-mobile-subscription-card">
-              <div class="settings-mobile-subscription-head"><div class="settings-mobile-subscription-copy"><strong>KAZER Pro</strong><small>Compare os planos e conheça os recursos disponíveis.</small></div><button class="settings-mobile-upgrade" id="settingsMobileUpgrade" type="button" aria-label="Conhecer KAZER Pro e comparar planos">Conhecer</button></div>
+              <div class="settings-mobile-subscription-head"><div class="settings-mobile-subscription-copy"><strong>KAZER Pro</strong><small>10× mais uso, Computer com prioridade e conectores sem limite.</small></div><button class="settings-mobile-upgrade" id="settingsMobileUpgrade" type="button" aria-label="Conhecer KAZER Pro e comparar planos">Conhecer</button></div>
             </div></div>
           </div>
           <label class="settings-search"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-4-4"></path></svg><input id="settingsSearch" type="search" aria-label="Pesquisar configurações" placeholder="Pesquisar configuração" autocomplete="off" /></label>
@@ -5239,10 +5240,10 @@
               <p class="usage-feedback" id="usageFeedback" role="status" aria-live="polite">Carregando informações reais de uso…</p>
             </section>
             <section class="usage-pro-card" aria-labelledby="usageProTitle">
-              <div class="usage-pro-heading"><span class="usage-pro-dot" aria-hidden="true"></span><span class="usage-pro-label">KAZER PRO</span><span class="usage-pro-status">EM PLANEJAMENTO</span></div>
-              <h2 id="usageProTitle">Um plano futuro, sem promessas.</h2>
-              <p>Compare o Free ativo com os recursos Pro planejados, ainda indisponíveis.</p>
-              <button id="usageComparePlans" type="button">Comparar planos <span aria-hidden="true">→</span></button>
+              <div class="usage-pro-heading"><span class="usage-pro-dot" aria-hidden="true"></span><span class="usage-pro-label">KAZER PRO</span><span class="usage-pro-status">DISPONÍVEL</span></div>
+              <h2 id="usageProTitle">Faça mais antes do fim do mês.</h2>
+              <p>Com o Pro, seu limite mensal fica 10× maior e o modo Computer trabalha nos seus repositórios e deploys.</p>
+              <button id="usageComparePlans" type="button">Conhecer o KAZER Pro <span aria-hidden="true">→</span></button>
             </section>
           </div>
         </main>
@@ -5252,19 +5253,19 @@
       <section class="plans-screen" id="plansScreen" role="dialog" aria-modal="true" aria-label="Planos do KAZER" aria-hidden="true" hidden>
         <header class="plans-head">
           <button class="icon-button" id="plansBack" type="button" aria-label="Fechar"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"></path></svg></button>
-          <div class="plans-head-copy"><span>LOJA KAZER</span><h2>Compare planos</h2><small>Free ativo · KAZER Pro em planejamento.</small></div>
+          <div class="plans-head-copy"><span>LOJA KAZER</span><h2>Compare planos</h2><small>Comece grátis. Vá além com o Pro.</small></div>
           <span class="connectors-head-spacer" aria-hidden="true"></span>
         </header>
         <div class="plans-brand-banner">
-          <span class="plans-brand-mark"><img src="../download/assets/kazer-badge.svg?v=20261005" alt="Símbolo KAZER" /></span>
-          <div class="plans-brand-copy"><span>PLANOS KAZER</span><h3>Compare os planos.</h3><p>O Free está ativo. O KAZER Pro ainda está em planejamento.</p></div>
+          <span class="plans-brand-mark"><img src="../download/assets/kazer-alien.svg?v=20261023" alt="Símbolo KAZER" /></span>
+          <div class="plans-brand-copy"><span>PLANOS KAZER</span><h3>Compare os planos.</h3><p>Pagamento por PIX, ativação automática e sem fidelidade.</p></div>
           <span class="plans-brand-orbit" aria-hidden="true"><i></i></span>
         </div>
         <div class="plans-body" data-mobile-plan="free">
-          <div class="plans-section-heading"><span>PLANOS E RECURSOS</span><small>Compare o que está ativo e o que ainda está em planejamento.</small></div>
+          <div class="plans-section-heading"><span>PLANOS E RECURSOS</span><small>Tudo que você já usa, com muito mais espaço para criar.</small></div>
           <div class="plans-mobile-switch" id="plansMobileSwitch" role="tablist" aria-label="Escolha um plano para comparar">
             <button class="plans-mobile-choice active" type="button" role="tab" aria-selected="true" aria-controls="planFreeCard" data-mobile-plan-choice="free"><span>Free</span><small>Seu plano atual</small></button>
-            <button class="plans-mobile-choice" type="button" role="tab" aria-selected="false" aria-controls="planProCard" data-mobile-plan-choice="pro"><span>KAZER Pro</span><small>Em planejamento</small></button>
+            <button class="plans-mobile-choice" type="button" role="tab" aria-selected="false" aria-controls="planProCard" data-mobile-plan-choice="pro"><span>KAZER Pro</span><small>10× mais uso</small></button>
           </div>
           <article class="plan-card plan-card-current" id="planFreeCard" aria-label="Plano Free atual">
             <div class="plan-card-topline"><span class="plan-card-label">FREE</span><span class="plan-current-pill">SEU PLANO ATUAL</span></div>
@@ -5276,24 +5277,25 @@
               <li><span class="plan-feature-check">✓</span><span>Chat com o KAZER</span></li>
               <li><span class="plan-feature-check">✓</span><span>Pesquisa WebKazer</span></li>
               <li><span class="plan-feature-check">✓</span><span>Envio de anexos na conversa</span></li>
-              <li><span class="plan-feature-check">✓</span><span>Uso da conta consultável em detalhes</span></li>
+              <li><span class="plan-feature-check">✓</span><span>Modo Computer com GitHub e Vercel</span></li>
+              <li><span class="plan-feature-check">✓</span><span>1.000 eventos por mês</span></li>
             </ul>
             <div class="plan-card-current-foot"><span class="plan-current-dot"></span>Você está neste plano</div>
           </article>
 
           <article class="plan-card plan-card-pro" id="planProCard" aria-label="Plano KAZER Pro">
-            <div class="plan-card-topline"><span class="plan-card-pro-badge">KAZER PRO</span><span class="plan-pro-pill">EM PLANEJAMENTO</span></div>
-            <p class="plan-card-pro-tagline">Recursos ainda em planejamento.</p>
-            <p class="plan-card-desc">Os benefícios abaixo estão em planejamento e ainda não estão ativos.</p>
+            <div class="plan-card-topline"><span class="plan-card-pro-badge">KAZER PRO</span><span class="plan-pro-pill">MAIS ESCOLHIDO</span></div>
+            <p class="plan-card-pro-tagline">Para quem cria todo dia.</p>
+            <p class="plan-card-desc">Tudo do Free, sem freio: mais uso, mais contexto e o Computer executando por você.</p>
             <div class="plan-card-divider"></div>
             <ul class="plan-card-compare-list plan-card-pro-list">
-              <li><span class="plan-feature-pro">◷</span><span><strong>Limites de uso ampliados</strong><small class="plan-benefit-status">Planejado · valores e período ainda não definidos</small></span></li>
-              <li><span class="plan-feature-pro">◷</span><span><strong>Modelos e inteligência avançados</strong><small class="plan-benefit-status">Planejado · catálogo ainda não disponível</small></span></li>
-              <li><span class="plan-feature-pro">◷</span><span><strong>Mais contexto para conversas longas</strong><small class="plan-benefit-status">Planejado · capacidade ainda não definida</small></span></li>
-              <li><span class="plan-feature-pro">◷</span><span><strong>Maior capacidade para anexos e conectores</strong><small class="plan-benefit-status">Planejado · limites ainda não definidos</small></span></li>
+              <li><span class="plan-feature-pro">✦</span><span><strong>10× mais uso por mês</strong><small class="plan-benefit-status">10.000 eventos em vez de 1.000</small></span></li>
+              <li><span class="plan-feature-pro">✦</span><span><strong>Modo Computer com prioridade</strong><small class="plan-benefit-status">Branches, commits, PRs e deploys por você</small></span></li>
+              <li><span class="plan-feature-pro">✦</span><span><strong>Conectores sem limite</strong><small class="plan-benefit-status">GitHub, Vercel e qualquer MCP personalizado</small></span></li>
+              <li><span class="plan-feature-pro">✦</span><span><strong>Mais anexos e conversas longas</strong><small class="plan-benefit-status">O limite acompanha seu plano</small></span></li>
             </ul>
-            <button type="button" id="plansProAction">Status do KAZER Pro <span aria-hidden="true">↗</span></button>
-            <p class="plan-card-pro-note">KAZER Pro ainda está em planejamento e não está disponível para contratação.</p>
+            <button type="button" id="plansProAction">Assinar o KAZER Pro com PIX <span aria-hidden="true">→</span></button>
+            <p class="plan-card-pro-note">Pagamento único por PIX · ativa sozinho após a confirmação · sem renovação automática.</p>
           </article>
         </div>
       </section>
@@ -5339,7 +5341,7 @@
             </div>
           </div>
           <div class="attachment-list" id="attachmentList" hidden aria-live="polite"></div>
-          <p class="composer-caption">KAZER organiza seus próximos passos</p>
+          <p class="composer-caption">Chat lê · Computer executa — o KAZER pode errar, revise o que importa.</p>
         </form>
       </div>
 
@@ -5962,6 +5964,7 @@
           const isProPlan = normalizedPlan === "pro" || normalizedPlan === "kazer_pro";
           if (settingsMobileUpgrade) settingsMobileUpgrade.hidden = isProPlan;
           if (proAction) proAction.hidden = isProPlan;
+          app.classList.toggle("kz-is-pro", isProPlan);
           updateUsageDisplay(next, animate);
           renderUsageScreen(next, false);
           const nextReset = next.next_reset_at || next.next_credit_reset_at || next.monthly_reset_at;
@@ -7241,7 +7244,7 @@
 
         const timeNow = () => new Intl.DateTimeFormat("pt-BR", { hour: "2-digit", minute: "2-digit" }).format(new Date());
 
-        const assistantMarkAsset = "../download/assets/kazer-badge.svg?v=20261005";
+        const assistantMarkAsset = "../download/assets/kazer-alien.svg?v=20261023";
 
         const createAssistantSymbol = (className) => {
           const symbol = document.createElement("span");
@@ -8104,181 +8107,19 @@
         const revealAssistantMessage = async (row, text, signal) => {
           const content = row.querySelector(".assistant-content");
           if (!content) return;
-          const total = text.length;
-          let index = 0;
-          while (index < total) {
-            if (signal.aborted) throw new DOMException("A geração foi interrompida.", "AbortError");
-            index = Math.min(total, index + Math.max(2, Math.ceil(total / 150)));
-            renderAssistantContent(content, text.slice(0, index), { writing: index < total });
-            // A pessoa mantém o controle da rolagem enquanto o texto cresce.
-            await new Promise((resolve) => window.setTimeout(resolve, index < total ? 18 : 0));
-          }
+          if (signal.aborted) throw new DOMException("A geração foi interrompida.", "AbortError");
+          // Renderiza uma única vez e anima por bloco (kazer-nova.js): mais leve
+          // que redesenhar o Markdown inteiro a cada quadro.
+          // A pessoa mantém o controle da rolagem enquanto a resposta aparece.
           renderAssistantContent(content, text, { writing: false });
+          const duration = Math.min(2600, Number(window.kazerAnimateReveal?.(content)) || 0);
+          const endsAt = Date.now() + duration;
+          while (Date.now() < endsAt) {
+            if (signal.aborted) throw new DOMException("A geração foi interrompida.", "AbortError");
+            await new Promise((resolve) => window.setTimeout(resolve, 60));
+          }
           attachAssistantActions(row, text);
         };
-
-        let thinkingAttractorPointsCache = null;
-        const getThinkingAttractorPoints = () => {
-          if (thinkingAttractorPointsCache) return thinkingAttractorPointsCache;
-          const a = 0.95, b = 0.7, c = 0.6, d = 3.5, e = 0.25, f = 0.1, dt = 0.008;
-          const derivative = (x, y, z) => [
-            (z - b) * x - d * y,
-            d * x + (z - b) * y,
-            c + a * z - (z * z * z) / 3 - (x * x + y * y) * (1 + e * z) + f * z * x * x * x
-          ];
-          const step = (x, y, z) => {
-            const k1 = derivative(x, y, z);
-            const k2 = derivative(x + k1[0] * dt / 2, y + k1[1] * dt / 2, z + k1[2] * dt / 2);
-            const k3 = derivative(x + k2[0] * dt / 2, y + k2[1] * dt / 2, z + k2[2] * dt / 2);
-            const k4 = derivative(x + k3[0] * dt, y + k3[1] * dt, z + k3[2] * dt);
-            return [
-              x + (k1[0] + 2 * k2[0] + 2 * k3[0] + k4[0]) * dt / 6,
-              y + (k1[1] + 2 * k2[1] + 2 * k3[1] + k4[1]) * dt / 6,
-              z + (k1[2] + 2 * k2[2] + 2 * k3[2] + k4[2]) * dt / 6
-            ];
-          };
-          let x = 0.1, y = 0, z = 0;
-          for (let index = 0; index < 8000; index += 1) [x, y, z] = step(x, y, z);
-          const rawPoints = [];
-          for (let index = 0; index < 12000; index += 1) {
-            [x, y, z] = step(x, y, z);
-            if (index % 5 === 0) rawPoints.push([x, y, z]);
-          }
-          const center = rawPoints.reduce((sum, point) => [sum[0] + point[0], sum[1] + point[1], sum[2] + point[2]], [0, 0, 0]).map((value) => value / rawPoints.length);
-          const maxRadius = rawPoints.reduce((maximum, point) => Math.max(maximum, Math.hypot(point[0] - center[0], point[1] - center[1], point[2] - center[2])), 0) || 1;
-          thinkingAttractorPointsCache = rawPoints.map((point) => [(point[0] - center[0]) / maxRadius, (point[1] - center[1]) / maxRadius, (point[2] - center[2]) / maxRadius]);
-          return thinkingAttractorPointsCache;
-        };
-
-        const startThinkingAttractor = (canvas) => {
-          if (!canvas.isConnected) return;
-          const context = canvas.getContext("2d", { alpha: true });
-          if (!context) return;
-          const bounds = canvas.getBoundingClientRect();
-          const width = Math.max(1, bounds.width || 54);
-          const height = Math.max(1, bounds.height || 54);
-          const pixelRatio = Math.min(window.devicePixelRatio || 1, 1.75);
-          canvas.width = Math.round(width * pixelRatio);
-          canvas.height = Math.round(height * pixelRatio);
-          context.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
-          const points = getThinkingAttractorPoints();
-          const projected = new Float32Array(points.length * 2);
-          const reducedMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches === true;
-          const startedAt = performance.now();
-          const matrixGlyphs = [
-            [1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1],
-            [1, 0, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1],
-            [1, 1, 1, 0, 1, 0, 1, 1, 1, 0, 0, 1],
-            [1, 1, 0, 1, 0, 1, 1, 1, 1, 0, 1, 1],
-            [1, 0, 1, 0, 1, 0, 1, 1, 1, 1, 0, 1],
-            [1, 1, 1, 1, 0, 0, 1, 0, 1, 1, 1, 1],
-            [1, 1, 1, 1, 0, 1, 1, 0, 1, 1, 1, 1],
-            [1, 0, 1, 1, 1, 0, 1, 0, 1, 1, 1, 1]
-          ];
-          const draw = (now) => {
-            if (!canvas.isConnected) return;
-            const time = reducedMotion ? 0 : (now - startedAt) / 1000;
-            context.clearRect(0, 0, width, height);
-            const centerX = width / 2, centerY = height / 2;
-            const unit = Math.min(width, height) * 0.70;
-            const angleY = time * 0.34, angleX = 0.34 + Math.sin(time * 0.21) * 0.22, angleZ = Math.sin(time * 0.15) * 0.12;
-            const cosY = Math.cos(angleY), sinY = Math.sin(angleY), cosX = Math.cos(angleX), sinX = Math.sin(angleX), cosZ = Math.cos(angleZ), sinZ = Math.sin(angleZ);
-            for (let index = 0; index < points.length; index += 1) {
-              const point = points[index];
-              const x1 = point[0] * cosY + point[2] * sinY;
-              const z1 = -point[0] * sinY + point[2] * cosY;
-              const y2 = point[1] * cosX - z1 * sinX;
-              const z2 = point[1] * sinX + z1 * cosX;
-              const x3 = x1 * cosZ - y2 * sinZ;
-              const y3 = x1 * sinZ + y2 * cosZ;
-              const perspective = 1 / (1.9 - z2 * 0.24);
-              projected[index * 2] = centerX + x3 * unit * perspective;
-              projected[index * 2 + 1] = centerY + y3 * unit * perspective;
-            }
-
-            context.save();
-            context.globalCompositeOperation = "source-over";
-            context.beginPath();
-            context.moveTo(projected[0], projected[1]);
-            for (let index = 1; index < points.length; index += 1) context.lineTo(projected[index * 2], projected[index * 2 + 1]);
-            context.strokeStyle = "rgba(132, 117, 82, .18)";
-            context.lineWidth = 1.7;
-            context.shadowColor = "rgba(203, 180, 125, .15)";
-            context.shadowBlur = 2;
-            context.stroke();
-            context.shadowBlur = 0;
-            context.strokeStyle = "rgba(203, 180, 125, .54)";
-            context.lineWidth = 0.95;
-            context.stroke();
-            context.strokeStyle = "rgba(239, 225, 191, .34)";
-            context.lineWidth = 0.42;
-            context.stroke();
-
-            if (!reducedMotion) {
-              const trailCount = 2;
-              for (let trail = 0; trail < trailCount; trail += 1) {
-                const head = Math.floor((time * (32 + trail * 4) + trail * points.length / trailCount) % points.length);
-                context.beginPath();
-                context.moveTo(projected[head * 2], projected[head * 2 + 1]);
-                for (let stepIndex = 1; stepIndex <= 36; stepIndex += 1) {
-                  const pointIndex = (head + stepIndex) % points.length;
-                  context.lineTo(projected[pointIndex * 2], projected[pointIndex * 2 + 1]);
-                }
-                context.strokeStyle = trail % 2 ? "rgba(226, 210, 169, .64)" : "rgba(168, 151, 111, .52)";
-                context.lineWidth = trail % 3 === 0 ? 1.35 : 0.85;
-                context.shadowColor = "rgba(203, 180, 125, .38)";
-                context.shadowBlur = 1.5;
-                context.stroke();
-              }
-              for (let glyph = 0; glyph < matrixGlyphs.length; glyph += 2) {
-                const pointIndex = Math.floor((time * (35 + glyph * 2) + glyph * points.length / matrixGlyphs.length) % points.length);
-                const before = (pointIndex + points.length - 4) % points.length;
-                const after = (pointIndex + 4) % points.length;
-                const angle = Math.atan2(projected[after * 2 + 1] - projected[before * 2 + 1], projected[after * 2] - projected[before * 2]);
-                context.save();
-                context.translate(projected[pointIndex * 2], projected[pointIndex * 2 + 1]);
-                context.rotate(angle);
-                context.globalAlpha = 0.24 + (0.5 + 0.5 * Math.sin(time * 2.1 + glyph * 1.7)) * 0.22;
-                context.fillStyle = "rgba(232, 218, 181, .68)";
-                context.shadowColor = "rgba(203, 180, 125, .38)";
-                context.shadowBlur = 2;
-                const bits = matrixGlyphs[glyph];
-                for (let bit = 0; bit < bits.length; bit += 1) {
-                  if (!bits[bit]) continue;
-                  const column = bit % 3, row = Math.floor(bit / 3);
-                  context.fillRect((column - 1) * 0.9, (row - 1.5) * 0.9, 0.62, 0.62);
-                }
-                context.restore();
-              }
-              context.shadowBlur = 3;
-              context.shadowColor = "rgba(203, 180, 125, .30)";
-              for (let spark = 0; spark < 8; spark += 1) {
-                const pointIndex = Math.floor((time * (56 + spark * 2) + spark * points.length / 8) % points.length);
-                const pulse = 0.22 + (0.5 + 0.5 * Math.sin(time * 2.7 + spark * 1.9)) * 0.6;
-                const size = spark % 5 === 0 ? 1.5 : 0.9;
-                context.fillStyle = `rgba(224, 207, 161, ${(pulse * 0.48).toFixed(3)})`;
-                context.fillRect(projected[pointIndex * 2] - size / 2, projected[pointIndex * 2 + 1] - size / 2, size, size);
-              }
-            }
-            context.restore();
-
-            context.save();
-            context.globalCompositeOperation = "source-over";
-            context.strokeStyle = "rgba(203, 180, 125, .24)";
-            context.lineWidth = 0.7;
-            const inset = 3.5, corner = 5.5;
-            context.beginPath();
-            context.moveTo(inset + corner, inset); context.lineTo(inset, inset); context.lineTo(inset, inset + corner);
-            context.moveTo(width - inset - corner, inset); context.lineTo(width - inset, inset); context.lineTo(width - inset, inset + corner);
-            context.moveTo(inset, height - inset - corner); context.lineTo(inset, height - inset); context.lineTo(inset + corner, height - inset);
-            context.moveTo(width - inset, height - inset - corner); context.lineTo(width - inset, height - inset); context.lineTo(width - inset - corner, height - inset);
-            context.stroke();
-            context.restore();
-            if (!reducedMotion) window.requestAnimationFrame(draw);
-          };
-          window.requestAnimationFrame(draw);
-        };
-
         const createThinking = () => {
           const row = document.createElement("article");
           row.className = "message-row assistant";
@@ -8439,15 +8280,18 @@
           const chatId = rememberChat(prompt, files);
           const taskContext = useWebResearch ? null : (window.kazerWorkspace?.startTask?.({ prompt, attachmentCount: files.length }) || null);
           window.kazerActiveTaskContext = taskContext;
-          const mcpConnectorIds = useWebResearch ? [] : (taskContext?.mcpConnectorIds || []);
-          const githubRepo = useWebResearch ? null : (taskContext?.repo || null);
+          const chatMode = !useWebResearch && window.kazerChatMode === "computer" ? "computer" : "chat";
+          const mcpConnectorIds = useWebResearch ? [] : (taskContext?.mcpConnectorIds || (chatMode === "computer" && Array.isArray(window.kazerMcpSelection) ? window.kazerMcpSelection : []));
+          const githubRepo = useWebResearch ? null : (window.kazerSelectedRepository || taskContext?.repo || null);
           const attachmentLabel = files.length ? "\n\nAnexos enviados: " + files.map((file) => file.name).join(", ") : "";
           const historyText = prompt + attachmentLabel;
           const displayText = text;
           const messageIndex = conversationMessages.length;
           const messageId = createBackgroundId();
           const idempotencyKey = createBackgroundId();
-          const needsForegroundConnector = !useWebResearch && mcpConnectorIds.length > 0;
+          // Ferramentas (GitHub, Vercel, MCP, Computer) só rodam na resposta em primeiro plano.
+          const needsForegroundTools = !useWebResearch && (Boolean(githubRepo) || chatMode === "computer" || Boolean(window.kazerVercelConnected));
+          const needsForegroundConnector = !useWebResearch && mcpConnectorIds.length > 0 || needsForegroundTools;
           if (files.length) {
             const filesByMessage = messageAttachmentFiles.get(chatId) || new Map();
             filesByMessage.set(messageIndex, { files, state: "preparing" });
@@ -8468,6 +8312,7 @@
           resizeInput();
           const researchProgress = useWebResearch ? createWebResearchProgress(prompt) : null;
           const thinking = researchProgress?.row || createThinking();
+          if (!researchProgress) window.kazerDecorateThinking?.(thinking, { mode: chatMode, repo: githubRepo });
           append(thinking);
           setBusy(true);
           const controller = new AbortController();
@@ -8546,7 +8391,7 @@
                   })
                 : await fetchWithAuth("/api/chat", {
                     method: "POST",
-                    body: JSON.stringify({ messages: requestMessages, attachments, mcpConnectorIds, githubRepo }),
+                    body: JSON.stringify({ messages: requestMessages, attachments, mcpConnectorIds, githubRepo, mode: chatMode }),
                     signal: controller.signal,
                   });
               data = await result.json().catch(() => ({}));
@@ -8582,6 +8427,7 @@
             assistantRow = createMessage("assistant", "", { writing: true });
             if (backgroundTaskIdForMessage) assistantRow.dataset.backgroundTaskId = backgroundTaskIdForMessage;
             append(assistantRow);
+            if (Array.isArray(data.actions) && data.actions.length) window.kazerRenderActions?.(assistantRow, data.actions, data.mode);
             await revealAssistantMessage(assistantRow, answer.trim(), controller.signal);
             conversationMessages.push({ role: "assistant", content: answer.trim(), ...(backgroundTaskIdForMessage ? { backgroundTaskId: backgroundTaskIdForMessage } : {}) });
             saveChatMessages(chatId, conversationMessages);
@@ -8803,7 +8649,7 @@
           profileMoreToggle.setAttribute("aria-expanded", String(isOpen));
         });
         webKazerAction.addEventListener("click", () => openWeb());
-        const openPro = () => { closeMenus(); showToast("KAZER Pro ainda está em planejamento; nenhuma contratação está disponível."); };
+        const openPro = () => { closeMenus(); openPlansScreen(); };
         let plansReturnFocus = null;
         const openPlansScreen = ({ keepSettingsOpen = false, returnFocus = null } = {}) => {
           plansReturnFocus = returnFocus;
@@ -8877,7 +8723,8 @@
             tab.setAttribute("aria-selected", String(active));
           });
         });
-        plansProAction?.addEventListener("click", () => showToast("KAZER Pro ainda está em planejamento; nenhuma contratação está disponível."));
+        // O checkout do Pro é tratado por kazer-nova.js (PIX via /api/billing/checkout).
+        window.kazerOpenPlans = () => openPlansScreen();
         proAction.addEventListener("click", openPro);
         creditProButton?.addEventListener("click", openPro);
         attachmentProButton?.addEventListener("click", openPro);
@@ -9085,6 +8932,10 @@
             connectorCustomModal.hidden = true;
           }, 220);
         };
+        window.kazerOpenConnectors = openConnectorsScreen;
+        window.kazerCloseConnectors = closeConnectorsScreen;
+        window.kazerCloseConnectorCustomModal = closeConnectorCustomModal;
+        window.kazerOpenConnectorCustomModal = openConnectorCustomModal;
         connectorSingleAction?.addEventListener("click", openConnectorsScreen);
         connectorsBack?.addEventListener("click", closeConnectorsScreen);
         connectorsBackdrop?.addEventListener("click", closeConnectorsScreen);
@@ -9222,6 +9073,7 @@
     <script src="/interface/connector-icons.js"></script>
     <script src="/interface/kazer-workspace.js"></script>
     <script src="/interface/kazer-premium.js?v=20261006-home-suggestions" defer></script>
+    <script src="/interface/kazer-nova.js?v=20261023" defer></script>
   </body>
 </html>
 

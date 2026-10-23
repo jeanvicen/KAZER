@@ -170,6 +170,7 @@
       const data = await api("/api/github-repos?page=1&per_page=50");
       state.repos = Array.isArray(data.repos) ? data.repos : [];
       state.reposLoaded = true;
+      window.dispatchEvent(new CustomEvent("kazer:connectors-changed"));
       renderRepos($("#workspaceRepoSearch")?.value || "");
     } catch (error) {
       if (list) list.innerHTML = `<div class="workspace-empty">${escapeHtml(error.message)}</div>`;
@@ -182,6 +183,7 @@
       state.github = data.connection || { connected: false };
       if (statusLabel) statusLabel.textContent = state.github.connected ? `Conectado como ${state.github.login}` : "Conectar repositórios";
       renderConnectorStrip();
+      window.dispatchEvent(new CustomEvent("kazer:connectors-changed"));
       if (state.github.connected) refreshRepos();
       if (state.tab === "repos" && workspace?.classList.contains("visible")) renderRepos();
     } catch {
@@ -217,6 +219,8 @@
       if (statusLabel) statusLabel.textContent = "Conectar repositórios";
       renderConnectorStrip();
       renderRepos();
+      window.kazerWorkspace?.selectRepository?.(null);
+      window.dispatchEvent(new CustomEvent("kazer:connectors-changed"));
       notify("GitHub desconectado");
     } catch (error) { notify(error.message); }
   }
@@ -251,6 +255,7 @@
       window.kazerMcpSelection = state.connectors.filter((connector) => connector.status === "connected").map((connector) => connector.id);
       updateMcpBadge();
       renderConnectorStrip();
+      window.dispatchEvent(new CustomEvent("kazer:connectors-changed"));
       if (state.mcpModal) renderMcpModal();
     } catch (error) {
       state.connectors = [];
@@ -365,6 +370,19 @@
     failTask: (context, error) => updateTask(context, { status: "error", progress: 100, error: String(error || "Falha na tarefa").slice(0, 2000), logs: [{ type: "error", message: String(error || "Falha na tarefa").slice(0, 1000) }] }),
     stopTask: (context) => updateTask(context, { status: "stopped", progress: 100, error: "Resposta interrompida pelo usuário.", logs: [{ type: "info", message: "Tarefa interrompida pelo usuário" }] }),
     refresh: refreshTasks,
+    // Usado pela tela de Conectores (kazer-nova.js).
+    api,
+    state,
+    connectGitHub,
+    disconnectGitHub,
+    loadGitHubStatus,
+    loadConnectors,
+    refreshRepos,
+    selectRepository(repo) {
+      state.selectedRepo = repo || null;
+      window.kazerSelectedRepository = repo || null;
+      window.dispatchEvent(new CustomEvent("kazer:repo-selected", { detail: repo || null }));
+    },
   };
 
   toggle?.addEventListener("click", () => workspace?.classList.contains("visible") ? closeWorkspace() : openWorkspace());

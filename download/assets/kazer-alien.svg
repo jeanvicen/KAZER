@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240" role="img" aria-label="KAZER">
+  <defs>
+    <linearGradient id="kz-a-skin" x1="0" y1="0" x2="0.4" y2="1">
+      <stop offset="0" stop-color="#ffffff"/>
+      <stop offset="0.55" stop-color="#e9ecec"/>
+      <stop offset="1" stop-color="#c9cfcf"/>
+    </linearGradient>
+    <linearGradient id="kz-a-plate" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#f6f7f7"/>
+      <stop offset="1" stop-color="#bfc6c7"/>
+    </linearGradient>
+  </defs>
+  <g stroke="#9BA8AB" stroke-opacity=".55" stroke-width="1.2">
+    <path fill="url(#kz-a-skin)" d="M120 14C166 14 197 46 197 90C197 132 162 162 120 170C78 162 43 132 43 90C43 46 74 14 120 14Z"/>
+    <path fill="url(#kz-a-plate)" d="M14 150C40 151 64 157 80 168C86 178 88 190 86 201C64 196 38 192 16 190C12 176 12 162 14 150Z"/>
+    <path fill="url(#kz-a-plate)" d="M226 150C200 151 176 157 160 168C154 178 152 190 154 201C176 196 202 192 224 190C228 176 228 162 226 150Z"/>
+    <path fill="url(#kz-a-plate)" d="M70 196C102 212 138 212 170 196L172 214C140 232 100 232 68 214Z"/>
+  </g>
+  <path fill="#06141B" d="M60 94C80 84 106 100 111 128C90 131 64 120 60 94Z"/>
+  <path fill="#06141B" d="M180 94C160 84 134 100 129 128C150 131 176 120 180 94Z"/>
+</svg>
