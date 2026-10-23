@@ -26,7 +26,7 @@ function billingConfigured() {
 
 function appOrigin(request) {
   const configured = String(process.env.PUBLIC_APP_ORIGINS || "").split(",").map((value) => value.trim().replace(/\/$/, "")).filter(Boolean);
-  return configured[0] || `https://${String(request?.headers?.host || "kazer.vercel.app").split(",")[0].trim()}`;
+  return configured[0] || `https://${String(request?.headers?.host || "").split(",")[0].trim()}`;
 }
 
 async function abacate(path, { method = "GET", body } = {}) {

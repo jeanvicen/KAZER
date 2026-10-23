@@ -10,8 +10,6 @@
 </p>
 
 <p align="center">
-  <a href="https://kazer.vercel.app"><strong>Abrir o produto</strong></a>
-  ·
   <a href="planos/CATALOGO-FERRAMENTAS.md">Ferramentas</a>
   ·
   <a href="planos/ATELIE.md">Ateliê</a>
@@ -53,7 +51,7 @@ A imagem abaixo é uma captura pública da tela de boas-vindas/login do KAZER. *
 
 ## Já no ar
 
-O produto publicado em [kazer.vercel.app](https://kazer.vercel.app) é o que o usuário usa hoje. Esta tabela descreve o que o código documenta — não o que um planejamento promete.
+Esta tabela descreve o que o código documenta — não o que um planejamento promete.
 
 | Área | Situação documentada no código |
 |---|---|

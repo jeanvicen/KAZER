@@ -354,7 +354,7 @@ Execute a migration `database/supabase/009_google_drive_connections.sql` no Supa
 
 ## Aplicativo móvel Expo / EAS
 
-O app nativo está em [`mobile/`](../mobile/). Ele usa Expo + WebView para abrir a versão publicada do KAZER em `https://kazer.vercel.app/chat`, preservando o fluxo web atual sem transformar a aplicação Vercel em um projeto Expo.
+O app nativo está em [`mobile/`](../mobile/). Ele usa Expo + WebView para abrir a versão publicada do KAZER (URL definida em `EXPO_PUBLIC_KAZER_URL`), preservando o fluxo web atual sem transformar a aplicação Vercel em um projeto Expo.
 
 Para o **Build from GitHub / EAS**, use:
 

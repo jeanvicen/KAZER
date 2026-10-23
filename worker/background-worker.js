@@ -45,7 +45,7 @@ async function invokeTask(task) {
     method: "POST",
     url: task.task_type === "web_search" ? "/api/research" : "/api/chat",
     headers: {
-      host: process.env.KAZER_APP_HOST || "kazer.vercel.app",
+      host: process.env.KAZER_APP_HOST || "kazer.local",
       "content-length": String(Buffer.byteLength(JSON.stringify(body || {}), "utf8")),
     },
     body,

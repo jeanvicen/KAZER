@@ -1,6 +1,6 @@
 # KAZER Mobile (Expo + EAS)
 
-Este diretório é o aplicativo nativo Expo do KAZER. Ele abre a aplicação web publicada em `https://kazer.vercel.app/chat` dentro de uma WebView, mantendo a autenticação e a interface existentes.
+Este diretório é o aplicativo nativo Expo do KAZER. Ele abre a aplicação web publicada (URL em `EXPO_PUBLIC_KAZER_URL`) dentro de uma WebView, mantendo a autenticação e a interface existentes.
 
 ## Rodar localmente
 

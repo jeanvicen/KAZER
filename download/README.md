@@ -1,6 +1,6 @@
 # Kazer — distribuição
 
-Este diretório reúne os arquivos de distribuição do mesmo Kazer publicado em `https://kazer.vercel.app`. A interface, as imagens, os textos e as funcionalidades do site permanecem na estrutura existente; as camadas móveis apenas empacotam esse conteúdo.
+Este diretório reúne os arquivos de distribuição do mesmo Kazer publicado na web. A interface, as imagens, os textos e as funcionalidades do site permanecem na estrutura existente; as camadas móveis apenas empacotam esse conteúdo.
 
 ## PWA
 
@@ -16,7 +16,7 @@ A página `interface/chat.html` exibe o aviso **Instalar Kazer?** e usa o prompt
 
 ## Android e Google Play
 
-A pasta `android/twa/` contém um projeto Trusted Web Activity gerado a partir do manifesto público. Ele abre `https://kazer.vercel.app/chat` sem duplicar a interface dentro do APK.
+A pasta `android/twa/` contém um projeto Trusted Web Activity gerado a partir do manifesto público. Ele abre a rota `/chat` do domínio publicado sem duplicar a interface dentro do APK.
 
 O projeto gera um APK release assinado para instalação manual em `android/kazer.apk`. O projeto TWA foi criado com Bubblewrap e o build de release usa uma keystore protegida fora do Git. As instruções completas ficam em `android/README.md`.
 

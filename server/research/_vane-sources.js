@@ -9,7 +9,7 @@ const { cleanText } = require("./_research-browser");
 
 const TIMEOUT_MS = 7_000;
 const MAX_BYTES = 1_500_000;
-const UA = "KAZER-Research/3.0 (+https://kazer.vercel.app)";
+const UA = "KAZER-Research/3.0";
 
 // Modos herdados do Vane. Free fica em "balanced"; Pro libera "quality".
 const MODES = {
