@@ -56,7 +56,7 @@ body {
     var(--kz-ink) !important;
   background-attachment: fixed !important;
 }
-.app, .conversation-area, .history-screen:not(.app.desktop-sidebar-enabled #historyScreen) { background: transparent !important; }
+.app, .conversation-area { background: transparent !important; }
 
 /* ── Trilho lateral (desktop) ────────────────────────────────────────── */
 .kz-rail { display: none; }

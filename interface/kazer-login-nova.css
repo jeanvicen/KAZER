@@ -161,3 +161,27 @@ html, body { background: #06141B !important; }
 .brand-panel .kz-hero { transform-style: preserve-3d; margin-left: clamp(24px, 4vw, 64px); }
 .brand-panel .kz-hero .kz-login-alien { transform: translateZ(1px); transform-style: preserve-3d; }
 .kz-chip3d { backface-visibility: hidden; }
+
+/* ── Login PX: cartão único centralizado (estilo Perplexity/Manus) ──── */
+@media (min-width: 980px) {
+  .overlay { grid-template-columns: minmax(0, 1fr) !important; align-items: center !important; justify-items: center !important; padding: 48px 20px !important; }
+  .brand-panel { display: none !important; }
+  .form-column { padding: 0 !important; }
+  .auth-shell .brand-top { display: flex !important; }
+}
+.auth-shell { max-width: 430px !important; gap: 22px !important; }
+.brand-top { gap: 10px !important; }
+.brand-top .kz-coin, .brand-top img { display: none !important; }
+.brand-top .kz-logo3d { --size: 84px; margin-bottom: 4px; }
+.brand-top .brand-word { display: none !important; }
+.kz-px-welcome { margin: 0; color: #eef1f1; font: 640 clamp(26px, 5vw, 32px)/1.1 var(--sans); letter-spacing: -.04em; text-align: center; }
+.kz-px-welcome-sub { margin: 0; color: #9BA8AB; font: 500 14.5px/1.5 var(--sans); text-align: center; }
+.card { padding: 26px 26px 22px !important; border-radius: 26px !important; }
+.form-eyebrow, .form-section > h1, .switch-text { display: none !important; }
+#recoveryForm h1, #newPasswordForm h1 { display: block !important; font-size: 22px !important; }
+#recoveryForm .switch-text, #newPasswordForm .switch-text { display: block !important; }
+.kz-px-features { display: flex; justify-content: center; flex-wrap: wrap; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.kz-px-features li { display: inline-flex; align-items: center; gap: 6px; padding: 7px 12px; border: 1px solid rgba(204, 208, 207, .14); border-radius: 999px; background: rgba(17, 33, 45, .55); color: #CCD0CF; font: 560 12px/1 var(--sans); animation: kz-login-rise 700ms var(--ease) both; animation-delay: calc(400ms + var(--i) * 80ms); }
+.kz-px-features li::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--c, #8fc3d6); box-shadow: 0 0 8px var(--c, #8fc3d6); }
+.legal { margin-top: 2px !important; }
+@media (max-width: 420px) { .card { padding: 20px 18px 18px !important; } .brand-top .kz-logo3d { --size: 70px; } }

@@ -1,0 +1,209 @@
+/*
+ * KAZER PX — camada final de layout (carregada por último no chat).
+ * Referências de UX: Perplexity (barra lateral com rótulos, campo único com
+ * modo/modelo/anexo, pergunta como título, fontes em cartões), Manus (painel
+ * do computador ao lado, chips de tarefa) e Grok (modelo dentro do campo).
+ */
+
+/* ── Correções de base ───────────────────────────────────────────────── */
+.app:not(.desktop-sidebar-enabled) #historyScreen { background: var(--kz-ink) !important; }
+.chat-mode-indicators, .workspace-toggle, .new-chat-header { display: none !important; }
+
+/* ── Barra lateral (desktop) ─────────────────────────────────────────── */
+@media (min-width: 1080px) {
+  .app.desktop-sidebar-enabled { --kz-rail: 236px; }
+  .app.desktop-sidebar-enabled.kz-px-rail-collapsed { --kz-rail: 68px; }
+  .app.desktop-sidebar-enabled .kz-rail { align-items: stretch; gap: 2px; padding: 14px 12px 14px; transition: width 320ms var(--kz-ease); }
+  .kz-rail .kz-rail-logo { display: flex; align-items: center; gap: 10px; height: 44px; margin: 0 0 12px; padding: 0 6px; color: var(--kz-white); text-decoration: none; }
+  .kz-px-word { font: 600 22px/1 var(--sans); letter-spacing: -.04em; }
+  .kz-px-collapse { position: absolute; top: 22px; right: 12px; display: grid; place-items: center; width: 30px; height: 30px; border: 0; border-radius: 9px; background: none; color: var(--kz-mist); cursor: pointer; }
+  .kz-px-collapse:hover { background: rgb(var(--kz-rgb-frost) / .08); color: var(--kz-white); }
+  .kz-rail .kz-rail-btn { justify-content: flex-start; gap: 12px; width: 100%; height: 40px; padding: 0 12px; border-radius: 12px; display: flex; align-items: center; }
+  .kz-rail .kz-rail-btn svg { flex: 0 0 auto; width: 19px; height: 19px; }
+  .kz-rail .kz-rail-btn::after { display: none; }
+  .kz-px-label { color: inherit; font: 560 13.5px/1.2 var(--sans); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .kz-rail .kz-rail-btn.is-new { justify-content: center; height: 42px; margin: 0 0 12px; border-radius: 999px; }
+  .kz-rail .kz-rail-btn.is-new .kz-px-label { font-weight: 650; }
+  .kz-rail .kz-rail-pro { display: flex; align-items: center; justify-content: flex-start; gap: 10px; width: 100%; height: auto; min-height: 56px; margin-bottom: 8px; padding: 10px 12px; border-radius: 14px; text-align: left; font-size: inherit; letter-spacing: normal; }
+  .kz-px-pro-mark { display: grid; place-items: center; flex: 0 0 auto; width: 34px; height: 34px; border-radius: 10px; background: var(--kz-frost); color: var(--kz-ink); font: 800 10px/1 var(--sans); letter-spacing: .06em; }
+  .kz-rail-pro .kz-px-label b { display: block; font-size: 13px; }
+  .kz-rail-pro .kz-px-label small { display: block; margin-top: 2px; color: var(--kz-mist); font-size: 11px; font-weight: 500; white-space: normal; }
+  .kz-rail .kz-rail-avatar { margin: 6px 0 0 6px; }
+  /* Recolhida: só ícones */
+  .app.kz-px-rail-collapsed .kz-rail { padding: 14px 12px; }
+  .app.kz-px-rail-collapsed .kz-px-label, .app.kz-px-rail-collapsed .kz-px-word { display: none; }
+  .app.kz-px-rail-collapsed .kz-rail .kz-rail-btn, .app.kz-px-rail-collapsed .kz-rail .kz-rail-pro { justify-content: center; padding: 0; }
+  .app.kz-px-rail-collapsed .kz-rail-logo { justify-content: center; padding: 0; margin-top: 30px; }
+  .app.kz-px-rail-collapsed .kz-px-collapse { left: 50%; right: auto; transform: translateX(-50%); top: 12px; }
+  .app.kz-px-rail-collapsed .kz-rail .kz-rail-btn::after { display: block; }
+  .app.kz-px-rail-collapsed .kz-rail .kz-rail-pro { min-height: 44px; }
+  .app.kz-px-rail-collapsed .kz-px-pro-mark { width: 30px; height: 30px; }
+  .kz-px-topbrand, .kz-px-topnew { display: none !important; }
+}
+
+/* ── Topo no celular e tablet ────────────────────────────────────────── */
+@media (max-width: 1079px) {
+  .topbar {
+    position: fixed !important;
+    inset: 0 0 auto 0 !important;
+    z-index: 40 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    height: calc(56px + env(safe-area-inset-top)) !important;
+    padding: env(safe-area-inset-top) 10px 0 !important;
+    border-bottom: 1px solid var(--kz-line) !important;
+    background: rgb(var(--kz-rgb-ink) / .82) !important;
+    backdrop-filter: blur(18px) saturate(1.2) !important;
+    -webkit-backdrop-filter: blur(18px) saturate(1.2) !important;
+  }
+  .topbar > * { position: static !important; transform: none !important; margin: 0 !important; }
+  .topbar .credit-indicator { display: none !important; }
+  .topbar #chatHistoryBack, .kz-px-topnew {
+    display: grid !important;
+    place-items: center;
+    width: 40px !important;
+    height: 40px !important;
+    border: 0 !important;
+    border-radius: 12px !important;
+    background: transparent !important;
+    color: var(--kz-white) !important;
+    box-shadow: none !important;
+  }
+  .topbar #chatHistoryBack { order: 0; }
+  .topbar #chatHistoryBack .icon { width: 22px; height: 22px; }
+  .kz-px-topbrand { order: 1; display: inline-flex; align-items: center; gap: 7px; color: var(--kz-white) !important; font: 600 19px/1 var(--sans); letter-spacing: -.04em; text-decoration: none; }
+  .kz-px-topnew { order: 2; }
+  :root[data-theme="light"] .kz-px-topbrand img { filter: drop-shadow(0 0 1px rgba(6, 20, 27, .5)); }
+  .conversation-area { padding-top: calc(56px + env(safe-area-inset-top)) !important; }
+}
+
+/* ── Início ──────────────────────────────────────────────────────────── */
+.new-chat-greeting h2 { font-size: clamp(26px, 4.2vw, 40px) !important; font-weight: 560 !important; letter-spacing: -.035em !important; }
+.new-chat-greeting h2 strong { font-weight: 560 !important; }
+.new-chat-greeting p { font-size: clamp(14px, 1.6vw, 16px) !important; }
+@media (max-width: 640px) {
+  .new-chat-greeting .kz-hero .kz-logo3d { --size: 56px; }
+  .kz-suggestions { display: flex !important; flex-wrap: nowrap !important; gap: 8px !important; overflow-x: auto; padding-bottom: 4px; scroll-snap-type: x proximity; scrollbar-width: none; grid-template-columns: none !important; }
+  .kz-suggestions::-webkit-scrollbar { display: none; }
+  .kz-suggestions > * { flex: 0 0 auto; width: auto !important; max-width: none !important; white-space: nowrap; scroll-snap-align: start; }
+  .kz-suggestions > * span { overflow: visible !important; text-overflow: clip !important; }
+  .kz-pro-banner { display: none !important; }
+}
+
+/* ── Campo de mensagem (modo, modelo, anexo, enviar) ─────────────────── */
+.composer-box { border-radius: 26px !important; }
+.composer-controls { flex-wrap: nowrap; }
+.composer-controls .kz-modes { order: 1; margin-left: 0; }
+.composer-controls .kz-engine-toggle { order: 2; }
+.composer-controls .kz-context-chips { order: 3; }
+.composer-controls .composer-controls-spacer { order: 4; flex: 1 1 auto; }
+.composer-controls .kz-model { order: 5; }
+.composer-controls .attach-button { order: 6; }
+.composer-controls .send-button { order: 7; }
+.composer .kz-model { position: relative; left: auto; top: auto; bottom: auto; transform: none; z-index: 5; }
+.composer .kz-model-button { height: 34px; padding: 0 10px; border-radius: 11px; background: transparent; backdrop-filter: none; -webkit-backdrop-filter: none; font-size: 12.5px; }
+.composer .kz-model-button:hover { background: rgb(var(--kz-rgb-frost) / .07); transform: none; box-shadow: none; }
+.composer .kz-model-menu { top: auto; bottom: calc(100% + 10px); left: auto; right: -40px; transform: none; transform-origin: bottom right; animation: kz-px-menu-up 280ms var(--kz-spring) both; }
+@keyframes kz-px-menu-up { from { opacity: 0; transform: translateY(8px) scale(.97); } to { opacity: 1; transform: none; } }
+.attach-button { width: 36px !important; height: 36px !important; border: 0 !important; background: transparent !important; color: var(--kz-mist) !important; }
+.attach-button:hover { background: rgb(var(--kz-rgb-frost) / .07) !important; color: var(--kz-white) !important; }
+.send-button { width: 38px !important; height: 38px !important; border-radius: 50% !important; }
+.app.kz-mode-computer .send-button { background: var(--kz-computer) !important; color: var(--kz-ink) !important; }
+@media (max-width: 640px) {
+  .composer-controls { gap: 4px !important; padding-left: 8px !important; padding-right: 8px !important; }
+  .kz-mode { padding: 0 9px; }
+  .kz-mode span { display: none; }
+  .kz-mode[aria-checked="true"] span { display: inline; }
+  .composer .kz-model-name { max-width: 70px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .composer .kz-model-button svg { display: none; }
+  .composer .kz-model-menu { right: -84px; width: min(320px, calc(100vw - 24px)); }
+  .composer-dock { padding-bottom: max(10px, env(safe-area-inset-bottom)) !important; }
+}
+
+/* ── Conversa: pergunta como título, resposta com cabeçalho ──────────── */
+.message-row.user { align-items: flex-start !important; justify-content: flex-start !important; text-align: left !important; animation: kz-px-question 620ms var(--kz-ease) both; }
+.message-row.user .user-message-content { align-items: flex-start !important; max-width: 100% !important; width: 100%; }
+.message-row.user .message-bubble { max-width: 100% !important; padding: 0 !important; border: 0 !important; border-radius: 0 !important; background: none !important; box-shadow: none !important; color: var(--kz-white) !important; font: 600 clamp(21px, 2.8vw, 28px)/1.25 var(--sans) !important; letter-spacing: -.025em !important; }
+.message-row.user .message-meta { display: none !important; }
+.message-row.user:not(:first-child) { margin-top: 30px !important; padding-top: 26px !important; border-top: 1px solid var(--kz-line); }
+@keyframes kz-px-question { from { opacity: 0; transform: translateY(12px); filter: blur(6px); } to { opacity: 1; transform: none; filter: none; } }
+.message-row.assistant .assistant-response::before {
+  content: "KAZER";
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 22px;
+  margin: 0 0 12px;
+  padding-left: 28px;
+  background: url("../download/assets/kazer-alien.svg?v=20261023") left center / 20px 20px no-repeat;
+  color: var(--kz-mist);
+  font: 700 11px/1 var(--sans);
+  letter-spacing: .14em;
+}
+.message-row.assistant .assistant-content { font-size: 15.5px !important; line-height: 1.72 !important; }
+.app.in-conversation .message-list { padding-bottom: 40px; }
+
+/* ── Painel "Computador do KAZER" (estilo Manus) ─────────────────────── */
+.kz-px-computer { position: fixed; top: 0; right: 0; bottom: 0; z-index: 35; display: flex; flex-direction: column; width: 400px; border-left: 1px solid var(--kz-line); background: rgb(var(--kz-rgb-surface) / .96); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); animation: kz-px-panel 520ms var(--kz-spring) both; }
+.kz-px-computer[hidden] { display: none; }
+@keyframes kz-px-panel { from { transform: translateX(100%); opacity: .4; } to { transform: none; opacity: 1; } }
+.kz-px-computer header { display: flex; align-items: center; gap: 10px; padding: 16px 16px 12px; }
+.kz-px-computer header strong { color: var(--kz-white); font: 650 14px/1 var(--sans); }
+.kz-px-computer header small { color: var(--kz-mist); font-size: 12px; }
+.kz-px-computer header button { margin-left: auto; width: 30px; height: 30px; border: 0; border-radius: 9px; background: none; color: var(--kz-mist); cursor: pointer; }
+.kz-px-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--kz-slate); }
+.kz-px-computer.is-running .kz-px-dot { background: var(--kz-computer); box-shadow: 0 0 0 4px rgb(var(--kz-rgb-computer) / .2); animation: kz-ping 1.2s ease-out infinite; }
+.kz-px-screen { margin: 0 16px; border: 1px solid var(--kz-line-2); border-radius: 16px; background: var(--kz-ink); overflow: hidden; }
+.kz-px-screen-bar { display: flex; align-items: center; gap: 6px; padding: 10px 12px; border-bottom: 1px solid var(--kz-line); background: rgb(var(--kz-rgb-steel) / .4); }
+.kz-px-screen-bar i { width: 9px; height: 9px; border-radius: 50%; background: rgb(var(--kz-rgb-frost) / .25); }
+.kz-px-screen-bar span { margin-left: 8px; color: var(--kz-mist); font: 500 11.5px/1 ui-monospace, monospace; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.kz-px-steps { display: grid; gap: 10px; min-height: 180px; margin: 0; padding: 16px; list-style: none; position: relative; }
+.kz-px-computer.is-running .kz-px-steps::after { content: ""; position: absolute; left: 0; right: 0; height: 40px; background: linear-gradient(180deg, transparent, rgb(var(--kz-rgb-computer) / .12), transparent); animation: kz-px-scan 2.4s ease-in-out infinite; pointer-events: none; }
+@keyframes kz-px-scan { from { top: 0; } to { top: calc(100% - 40px); } }
+.kz-px-steps li { display: flex; align-items: center; gap: 10px; color: var(--kz-mist); font: 500 13px/1.3 var(--sans); opacity: .45; transition: opacity 400ms; }
+.kz-px-steps li::before { content: ""; width: 8px; height: 8px; border: 1.5px solid currentColor; border-radius: 50%; }
+.kz-px-steps li.is-on { opacity: 1; color: var(--kz-white); }
+.kz-px-steps li.is-on::before { background: var(--kz-computer); border-color: var(--kz-computer); }
+.kz-px-steps li.is-done { opacity: .85; }
+.kz-px-steps li.is-done::before { background: var(--kz-ok); border-color: var(--kz-ok); }
+.kz-px-computer section { flex: 1; min-height: 0; padding: 16px; overflow: auto; }
+.kz-px-computer h4 { margin: 0 0 10px; color: var(--kz-mist); font: 700 10.5px/1 var(--sans); letter-spacing: .12em; text-transform: uppercase; }
+.kz-px-log { display: grid; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.kz-px-log li { display: grid; grid-template-columns: 20px 1fr; gap: 8px; padding: 9px 10px; border: 1px solid var(--kz-line); border-radius: 11px; color: var(--kz-mist); font-size: 12.5px; animation: kz-in-li 420ms var(--kz-ease) both; animation-delay: calc(var(--kz-li, 0) * 50ms); }
+.kz-px-log li.is-empty { display: block; border-style: dashed; }
+.kz-px-log li i { display: grid; place-items: center; width: 20px; height: 20px; border-radius: 6px; background: rgb(var(--kz-rgb-ok) / .14); color: var(--kz-ok); font-style: normal; font-size: 11px; }
+.kz-px-log li.is-error i { background: rgb(var(--kz-rgb-err) / .14); color: var(--kz-err); }
+.kz-px-log li b { display: block; color: var(--kz-white); font-weight: 600; }
+.kz-px-log li code { color: var(--kz-frost); font-size: 11.5px; word-break: break-all; }
+@media (min-width: 1180px) {
+  .app.desktop-sidebar-enabled.kz-px-computer-open .conversation-area { width: calc(100% - var(--desktop-sidebar-width) - 400px) !important; }
+  .app.desktop-sidebar-enabled.kz-px-computer-open .composer-dock { right: 400px !important; }
+  .app.desktop-sidebar-enabled.kz-px-computer-open .topbar { right: 400px !important; }
+}
+@media (max-width: 1179px) { .kz-px-computer { display: none !important; } }
+@media (prefers-reduced-motion: reduce) { .kz-px-computer, .message-row.user, .kz-px-steps::after { animation: none !important; } }
+
+/* Ajustes de verificação visual */
+.message-list .message-row.user { align-self: stretch !important; align-items: flex-start !important; margin-left: 0 !important; }
+.message-list .message-row.user .user-message-content, .message-list .message-row.user .message-bubble { margin-left: 0 !important; text-align: left !important; }
+.app.in-conversation .kz-suggestions, .app.in-conversation .kz-pro-banner { display: none !important; }
+@media (min-width: 1080px) {
+  .topbar .credit-indicator { position: fixed !important; top: 16px !important; right: 20px !important; left: auto !important; }
+  .app.kz-px-computer-open .topbar .credit-indicator { right: 420px !important; }
+}
+.message-list .message-row.user .user-message-content { display: block !important; width: 100% !important; }
+.message-list .message-row.user .message-bubble { display: block !important; width: 100% !important; }
+@media (min-width: 1180px) { .app.kz-px-computer-open .kz-computer-run { display: none !important; } }
+
+/* Histórico (biblioteca) no novo visual */
+#historyScreen .history-intro h1, #historyScreen h1 { font-family: var(--sans) !important; font-weight: 640 !important; letter-spacing: -.03em !important; font-style: normal !important; }
+#historyScreen .history-shortcut, #historyScreen .history-item, #historyScreen .history-list > * { border-color: var(--kz-line) !important; background: rgb(var(--kz-rgb-surface) / .6) !important; }
+#historyScreen .history-shortcut-mark, #historyScreen .history-empty-mark, #historyScreen [class*="icon"] { color: var(--kz-mist) !important; border-color: var(--kz-line-2) !important; background: rgb(var(--kz-rgb-steel) / .45) !important; }
+#historyScreen .history-new-chat { background: var(--kz-frost) !important; color: var(--kz-ink) !important; border: 0 !important; }
+#historyScreen .history-mobile-avatar, #historyScreen .history-mobile-account { border-color: var(--kz-line-2) !important; color: var(--kz-white) !important; }
+@media (min-width: 641px) {
+  .composer-dock .composer, .composer-dock .kz-suggestions, .composer-dock .kz-pro-banner { width: min(780px, 100%) !important; max-width: 780px !important; margin-left: auto !important; margin-right: auto !important; }
+  .kz-suggestions { display: flex !important; flex-wrap: wrap !important; justify-content: center; grid-template-columns: none !important; }
+  .kz-suggestions > * { flex: 0 1 auto; width: auto !important; }
+}

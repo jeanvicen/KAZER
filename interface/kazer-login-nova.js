@@ -123,6 +123,16 @@
     sync();
   }
 
+  /* Topo centralizado: alien 3D + boas-vindas + recursos */
+  const brandTop = doc.querySelector(".auth-shell .brand-top");
+  if (brandTop && !brandTop.querySelector(".kz-px-welcome")) {
+    const logo = window.kazerCreateLogo3D?.({ depth: 6 });
+    if (logo) brandTop.prepend(logo);
+    brandTop.insertAdjacentHTML("beforeend", '<h1 class="kz-px-welcome">Bem-vindo ao KAZER</h1><p class="kz-px-welcome-sub">Pergunte, pesquise a fundo e deixe o Computer executar.</p>');
+    const legal = doc.querySelector(".legal");
+    legal?.insertAdjacentHTML("beforebegin", '<ul class="kz-px-features" aria-label="Recursos do KAZER"><li style="--i:0;--c:#8fc3d6">Pesquisa a fundo</li><li style="--i:1;--c:#7fd1b0">Computer</li><li style="--i:2;--c:#CCD0CF">Engine</li><li style="--i:3;--c:#ff8a4c">Flame API</li></ul>');
+  }
+
   /* Botão principal: brilho segue o ponteiro */
   doc.querySelectorAll(".submit-btn").forEach((button) => {
     button.addEventListener("pointermove", (event) => {
