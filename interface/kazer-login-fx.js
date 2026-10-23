@@ -1,4 +1,4 @@
-/* KAZER — camada visual do login: emblema 3D, partículas douradas, inclinação e CTA.
+/* KAZER — camada visual do login: emblema 3D, partículas, inclinação e CTA.
    Não altera IDs, formulários nem chamadas do Supabase. */
 (() => {
   "use strict";
@@ -6,7 +6,7 @@
   const root = doc.documentElement;
   const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   const coarse = window.matchMedia("(pointer: coarse)").matches;
-  const BADGE = "../download/assets/kazer-badge.svg?v=20261005";
+  const BADGE = "../download/assets/kazer-alien.svg?v=20261023";
 
   root.classList.add("kz-fx");
 
@@ -76,9 +76,14 @@
       ring.appendChild(dot);
       hero.appendChild(ring);
     });
-    const coin = makeCoin("hero");
-    hero.appendChild(coin);
-    coins.push(coin);
+    // Alien 3D em camadas (kazer-logo3d.js); a moeda fica como alternativa.
+    const alien = window.kazerCreateLogo3D?.({ className: "kz-login-alien" });
+    if (alien) hero.appendChild(alien);
+    else {
+      const coin = makeCoin("hero");
+      hero.appendChild(coin);
+      coins.push(coin);
+    }
     panelBody.insertAdjacentElement("afterbegin", hero);
   }
 

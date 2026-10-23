@@ -1,0 +1,48 @@
+/* KAZER Nova — central de documentos na paleta aço-noite. */
+:root:not([data-theme="light"]) {
+  --page: #06141B !important;
+  --page-deep: #040e13 !important;
+  --surface: rgba(17, 33, 45, .82) !important;
+  --surface-solid: #11212D !important;
+  --surface-raised: #182b39 !important;
+  --line: rgba(204, 208, 207, .13) !important;
+  --line-soft: rgba(204, 208, 207, .07) !important;
+  --text: #eef1f1 !important;
+  --text-soft: #CCD0CF !important;
+  --text-muted: #9BA8AB !important;
+  --text-faint: #6f8086 !important;
+  --accent: #CCD0CF !important;
+  --accent-strong: #eef1f1 !important;
+  --accent-soft: rgba(155, 168, 171, .12) !important;
+}
+:root[data-theme="light"] { --accent: #253745 !important; --accent-strong: #11212D !important; --accent-soft: rgba(37, 55, 69, .08) !important; }
+:root:not([data-theme="light"]) body {
+  background:
+    radial-gradient(70vmax 50vmax at -10% -10%, rgba(155, 168, 171, .14), transparent 60%),
+    radial-gradient(50vmax 40vmax at 110% 40%, rgba(37, 55, 69, .5), transparent 70%),
+    var(--page) !important;
+  background-attachment: fixed !important;
+}
+.brand-mark { background: url("../download/assets/kazer-alien.svg?v=20261023") center / contain no-repeat !important; border: 0 !important; box-shadow: none !important; }
+.docs-hero-logo { display: block; margin-bottom: 22px; }
+.hero h1 { letter-spacing: -.045em !important; animation: kz-docs-rise 900ms cubic-bezier(.22, 1, .36, 1) both; }
+.hero .hero-copy { animation: kz-docs-rise 900ms cubic-bezier(.22, 1, .36, 1) 120ms both; }
+.hero-meta { animation: kz-docs-rise 900ms cubic-bezier(.22, 1, .36, 1) 220ms both; }
+.scroll-progress { background: linear-gradient(90deg, #4A5C6A, #CCD0CF, #ffffff) !important; }
+.sidebar-nav a { transition: color 200ms, background 200ms, padding-left 260ms cubic-bezier(.34, 1.56, .64, 1) !important; }
+.sidebar-nav a.active { padding-left: 16px !important; }
+.mode-compare { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin: 22px 0 8px; }
+.mode-card { display: grid; gap: 8px; padding: 18px; border: 1px solid var(--line); border-radius: 18px; background: var(--surface); }
+.mode-card strong { color: var(--text); font-size: 15px; }
+.mode-card span { color: var(--text-muted); font-size: 14px; line-height: 1.6; }
+.mode-card.is-computer { border-color: rgba(143, 195, 214, .32); background: linear-gradient(160deg, rgba(143, 195, 214, .08), var(--surface)); }
+.mode-card.is-computer strong { color: #b9dfeb; }
+:root[data-theme="light"] .mode-card.is-computer strong { color: #1d5a6e; }
+@media (max-width: 640px) { .mode-compare { grid-template-columns: 1fr; } }
+.reveal-enabled .document-section .principle, .reveal-enabled .document-section .mode-card { opacity: 0; transform: translateY(14px); transition: opacity 700ms cubic-bezier(.22, 1, .36, 1), transform 700ms cubic-bezier(.22, 1, .36, 1); }
+.reveal-enabled .document-section.is-visible .principle, .reveal-enabled .document-section.is-visible .mode-card { opacity: 1; transform: none; }
+.document-section.is-visible .principle:nth-child(2), .document-section.is-visible .mode-card:nth-child(2) { transition-delay: 90ms; }
+.document-section.is-visible .principle:nth-child(3) { transition-delay: 180ms; }
+.document-section.is-visible .principle:nth-child(4) { transition-delay: 270ms; }
+@keyframes kz-docs-rise { from { opacity: 0; transform: translateY(16px); filter: blur(6px); } to { opacity: 1; transform: none; filter: none; } }
+@media (prefers-reduced-motion: reduce) { .hero h1, .hero .hero-copy, .hero-meta { animation: none !important; } .reveal-enabled .document-section .principle, .reveal-enabled .document-section .mode-card { opacity: 1; transform: none; transition: none; } }

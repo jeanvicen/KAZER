@@ -1,0 +1,82 @@
+/*
+ * KAZER Nova — login e criação de conta na paleta aço-noite.
+ * Só remapeia tokens e acrescenta movimento; IDs e formulários não mudam.
+ */
+:root {
+  --bg: #06141B !important;
+  --bg-2: #0a1b24 !important;
+  --surface: rgba(17, 33, 45, .78) !important;
+  --surface-solid: #11212D !important;
+  --input: rgba(6, 20, 27, .7) !important;
+  --line: rgba(204, 208, 207, .09) !important;
+  --line-2: rgba(204, 208, 207, .16) !important;
+  --line-3: rgba(204, 208, 207, .28) !important;
+  --text: #eef1f1 !important;
+  --text-2: #9BA8AB !important;
+  --text-3: #6f8086 !important;
+  --white: #eef1f1 !important;
+  --ink: #06141B !important;
+  --gold: #CCD0CF !important;
+  --gold-soft: #eef1f1 !important;
+  --gold-line: rgba(204, 208, 207, .32) !important;
+  --gold-glow: rgba(155, 168, 171, .16) !important;
+  --gold-grad: linear-gradient(118deg, #4A5C6A 0%, #9BA8AB 20%, #eef1f1 40%, #ffffff 50%, #CCD0CF 62%, #4A5C6A 84%, #9BA8AB 100%) !important;
+  --metal-grad: var(--gold-grad) !important;
+}
+
+html, body { background: #06141B !important; }
+.atmosphere {
+  background:
+    radial-gradient(70vmax 52vmax at -10% -14%, rgba(155, 168, 171, .2), transparent 60%),
+    radial-gradient(50vmax 42vmax at 112% 118%, rgba(37, 55, 69, .75), transparent 70%),
+    #06141B !important;
+}
+.atmosphere::before, .atmosphere::after { filter: hue-rotate(170deg) saturate(.2) !important; }
+
+.brand-panel { background: linear-gradient(160deg, rgba(17, 33, 45, .72), rgba(6, 20, 27, .5)) !important; border-color: rgba(204, 208, 207, .08) !important; }
+.brand-panel-kicker, .form-eyebrow, .credit, .brand-panel-foot b { color: #9BA8AB !important; background: none !important; -webkit-text-fill-color: currentColor !important; }
+.brand-panel-title { font-family: var(--sans) !important; font-weight: 600 !important; letter-spacing: -.045em !important; line-height: 1.02 !important; font-size: clamp(40px, 4.6vw, 64px) !important; }
+.brand-panel-title em { font-family: var(--serif) !important; font-weight: 400 !important; letter-spacing: -.02em !important; background: linear-gradient(100deg, #6b7d86, #eef1f1 35%, #9BA8AB 60%, #ffffff 80%) !important; background-size: 200% 100% !important; -webkit-background-clip: text !important; background-clip: text !important; color: transparent !important; animation: kz-login-sheen 8s ease-in-out infinite; }
+@keyframes kz-login-sheen { 0%, 100% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } }
+.feature-icon { border-color: rgba(204, 208, 207, .16) !important; background: rgba(37, 55, 69, .5) !important; color: #CCD0CF !important; }
+.brand-features li { animation: kz-login-rise 700ms var(--ease) both; }
+.brand-features li:nth-child(1) { animation-delay: 380ms; }
+.brand-features li:nth-child(2) { animation-delay: 460ms; }
+.brand-features li:nth-child(3) { animation-delay: 540ms; }
+
+.card { border-color: rgba(204, 208, 207, .14) !important; background: linear-gradient(180deg, rgba(24, 43, 57, .82), rgba(17, 33, 45, .86)) !important; box-shadow: 0 40px 90px -40px rgba(0, 0, 0, .85), 0 1px 0 rgba(255, 255, 255, .05) inset !important; animation: kz-login-card 900ms var(--spring) both; }
+.card::before { background: linear-gradient(90deg, transparent, rgba(204, 208, 207, .5), transparent) !important; }
+.form-section h1 { font-family: var(--sans) !important; font-weight: 640 !important; letter-spacing: -.035em !important; }
+.input-wrapper input { background: rgba(6, 20, 27, .7) !important; border-color: rgba(204, 208, 207, .14) !important; color: #eef1f1 !important; transition: border-color 220ms var(--ease), box-shadow 300ms var(--ease) !important; }
+.input-wrapper input:focus { border-color: rgba(204, 208, 207, .45) !important; box-shadow: 0 0 0 4px rgba(155, 168, 171, .12) !important; }
+.input-wrapper:focus-within .input-icon { color: #eef1f1 !important; }
+.submit-btn { background: linear-gradient(135deg, #eef1f1, #CCD0CF 45%, #9BA8AB) !important; color: #06141B !important; border: 0 !important; box-shadow: 0 18px 40px -18px rgba(204, 208, 207, .6) !important; transition: transform 260ms var(--spring), box-shadow 260ms !important; }
+.submit-btn:hover { transform: translateY(-2px) !important; box-shadow: 0 24px 48px -18px rgba(204, 208, 207, .75) !important; }
+.submit-btn .btn-text { color: #06141B !important; }
+.switch-link, .label-action, .legal a { color: #eef1f1 !important; text-decoration-color: rgba(204, 208, 207, .4) !important; }
+.password-meter span { background: rgba(204, 208, 207, .14) !important; }
+.password-meter[data-score="1"] span:nth-child(1) { background: #ef8f8f !important; }
+.password-meter[data-score="2"] span:nth-child(-n+2) { background: #e7c27a !important; }
+.password-meter[data-score="3"] span { background: #7fd1b0 !important; }
+.trust-row svg { color: #7fd1b0 !important; }
+
+/* Alien 3D no painel da marca */
+.kz-hero .kz-login-alien { --size: clamp(110px, 12vw, 150px); position: relative; z-index: 2; }
+.kz-hero .kz-orbit { border-color: rgba(204, 208, 207, .16) !important; }
+.kz-hero .kz-orbit i { background: #CCD0CF !important; box-shadow: 0 0 12px #CCD0CF !important; }
+.kz-coin-edge { background: linear-gradient(90deg, #253745, #4A5C6A 50%, #253745) !important; }
+.kz-coin-face { background: radial-gradient(circle at 35% 30%, #182b39, #06141B 75%) !important; border-color: rgba(204, 208, 207, .35) !important; }
+.kz-coin-glare { background: linear-gradient(115deg, transparent 35%, rgba(255, 255, 255, .25) 50%, transparent 65%) !important; }
+.kz-particle, .kz-spark { background: #CCD0CF !important; box-shadow: 0 0 8px rgba(204, 208, 207, .6) !important; }
+
+/* Abertura / retorno / transição */
+.intro-screen, .return-screen, .access-transition { background: radial-gradient(70vmax 60vmax at 50% 40%, #11212D, #06141B 70%) !important; }
+.intro-kicker, .return-kicker, .transition-state { color: #9BA8AB !important; }
+.intro-title em, .return-title em { background: linear-gradient(100deg, #9BA8AB, #ffffff 50%, #9BA8AB) !important; -webkit-background-clip: text !important; background-clip: text !important; color: transparent !important; }
+.return-primary { background: linear-gradient(135deg, #eef1f1, #CCD0CF 45%, #9BA8AB) !important; color: #06141B !important; }
+.transition-core { border-color: rgba(204, 208, 207, .3) !important; box-shadow: 0 0 60px rgba(155, 168, 171, .3) !important; }
+
+@keyframes kz-login-rise { from { opacity: 0; transform: translateY(12px); filter: blur(6px); } to { opacity: 1; transform: none; filter: none; } }
+@keyframes kz-login-card { from { opacity: 0; transform: translateY(26px) scale(.97); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .card, .brand-features li, .brand-panel-title em { animation: none !important; } }
+.card::after, .form-column::before, .form-column::after { filter: grayscale(1) !important; }

@@ -61,9 +61,10 @@ O produto publicado em [kazer.vercel.app](https://kazer.vercel.app) é o que o u
 | **Anexos** | Fluxo para imagens, PDF, DOCX e formatos de texto/código permitidos, com validação e limites no servidor. |
 | **Pesquisa WebKazer** | Rota dedicada de pesquisa e síntese de fontes; a documentação distingue pesquisa pelo usuário e chamada pelo Brain. |
 | **Workspace** | Cadastro e acompanhamento de tarefas, status/progresso, conectores MCP e repositórios; o repositório não documenta um executor geral dessas tarefas. |
-| **Conectores** | Integrações com Google Drive, MCP remoto e GitHub OAuth. Segredos de conectores são tratados no backend. |
+| **Conectores** | Google Drive, MCP remoto (com token opcional), GitHub OAuth e Vercel por token. Segredos ficam cifrados no backend. |
 | **Conta e PWA** | Supabase Auth, interface web responsiva, manifesto e service worker para instalação como PWA. |
-| **Planos** | A interface pode apresentar uma chamada para Kazer Pro; **compra e cobrança não estão implementadas**. |
+| **Modo Computer** | Chat só lê GitHub, Vercel e MCPs somente leitura; Computer cria branches, commits, PRs, issues e redeploys — nunca na branch padrão. A regra é aplicada no servidor. |
+| **Planos** | KAZER Pro com checkout PIX (Abacate Pay) e ativação por webhook verificado; depende de `ABACATEPAY_API_KEY`, `ABACATEPAY_WEBHOOK_SECRET` e da migração `023`. |
 
 > O estado das integrações depende das configurações externas e das migrações aplicadas. Uma rota ou interface no repositório não comprova por si só que serviços externos estão configurados ou testados em produção.
 
