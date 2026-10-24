@@ -58,13 +58,13 @@
     topbar.append(brand, fresh);
   }
 
-  /* ── Seletor de modelo dentro do campo (como Perplexity e Grok) ────── */
+  /* ── Seletor de modelo no topo, ao centro (como ChatGPT e Grok) ────── */
   function moveModelPicker() {
     const picker = $(".kz-model");
-    const send = $("#sendButton");
-    if (!picker || !send || picker.dataset.px) return Boolean(picker);
-    picker.dataset.px = "1";
-    send.before(picker);
+    const topbar = $(".topbar");
+    if (!picker || !topbar) return Boolean(picker);
+    if (picker.parentElement !== topbar) topbar.append(picker);
+    picker.classList.add("kz-model--top");
     return true;
   }
 
