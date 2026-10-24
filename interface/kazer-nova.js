@@ -455,7 +455,7 @@
     const blocks = [...content.children];
     if (!blocks.length) return 0;
     const totalWords = (content.textContent || "").split(/\s+/).length;
-    const animateWords = totalWords <= MAX_ANIMATED_WORDS;
+    const animateWords = totalWords <= MAX_ANIMATED_WORDS && !window.matchMedia?.("(pointer: coarse), (max-width: 1079px)").matches;
     content.classList.add("kz-reveal");
     let delay = 0;
     const counter = { value: 0 };

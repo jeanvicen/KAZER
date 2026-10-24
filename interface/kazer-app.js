@@ -127,7 +127,7 @@
   drawer.setAttribute("aria-label", "Menu e sessões");
   drawer.innerHTML = `<header class="kz-drawer-head"><button class="kz-round" type="button" data-settings aria-label="Configurações">${I.gear}</button><strong data-name>KAZER</strong><button class="kz-round" type="button" data-search aria-label="Buscar sessões">${I.search}</button><button class="kz-round" type="button" data-close aria-label="Voltar ao chat">${I.arrow}</button></header>
     <label class="kz-drawer-search" hidden>${I.search}<input type="search" placeholder="Buscar sessões" autocomplete="off"></label>
-    <nav class="kz-drawer-nav"><button type="button" data-go="connectors">${I.plug}<span>Conectores</span></button><button type="button" data-go="computer">${I.computer}<span>Computer</span></button><button type="button" data-go="memory">${I.memory}<span>Memórias</span></button><button type="button" data-go="docs">${I.docs}<span>Documentos</span></button></nav>
+    <nav class="kz-drawer-nav"><button type="button" data-go="connectors">${I.plug}<span>Conectores</span></button><button type="button" data-go="computer">${I.computer}<span>Computer</span></button></nav>
     <div class="kz-drawer-sessions"><div class="kz-sessions-head"><h3>Sessões</h3><label class="kz-filter"><select aria-label="Filtrar sessões"><option value="all">Tudo</option><option value="pinned">Fixadas</option><option value="archived">Arquivadas</option></select>${I.down}</label></div><ol class="kz-sessions"></ol></div>
     <button class="kz-fab" type="button" data-new aria-label="Nova conversa">${I.plus}</button>`;
   document.body.append(drawer);
@@ -173,8 +173,6 @@
     closeDrawer();
     if (go === "connectors") window.setTimeout(() => window.kazerOpenConnectors?.(), 120);
     if (go === "computer") window.kazerSetMode?.("computer");
-    if (go === "memory") window.setTimeout(() => $("#memoryOpenButton")?.click(), 120);
-    if (go === "docs") window.location.href = "/documentos";
   });
   filterSelect.addEventListener("change", renderDrawer);
   searchInput.addEventListener("input", renderDrawer);
@@ -215,7 +213,7 @@
         ${row("model", "Modelo", model)}
         ${row("language", "Idioma", esc(LANG_LABEL()))}
         ${row("connectors", "Conectores", "GitHub, Vercel e MCP")}
-        ${row("memory", "Memórias", "O que o KAZER lembra de você")}
+        ${row("memory", "Memórias", "Trechos privados do que o KAZER sabe")}
         <h4>Aparência</h4>
         ${row("theme", "Tema", THEME_LABEL[theme] || "Escuro")}
         ${toggle("live", "Fundo vivo", "Animação de cor na tela inicial; some ao conversar.", liveEnabled())}
@@ -364,6 +362,8 @@
     });
     window.addEventListener("kazer:connectors-changed", () => window.setTimeout(apply, 0));
   }
+
+  document.addEventListener("visibilitychange", () => html.classList.toggle("kz-page-hidden", document.hidden));
 
   /* ── Esc fecha a camada aberta ──────────────────────────────────────── */
   document.addEventListener("keydown", (event) => {

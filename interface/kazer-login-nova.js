@@ -33,7 +33,11 @@
   resize();
   addEventListener("resize", resize);
   addEventListener("pointermove", (event) => { pointer.x = event.clientX; pointer.y = event.clientY; }, { passive: true });
+  // Em telas de toque a constelação (custo quadrático por quadro) fica desligada.
+  const touchDevice = window.matchMedia("(pointer: coarse), (max-width: 979px)").matches;
+  if (touchDevice) canvas.remove();
   const draw = () => {
+    if (touchDevice) return;
     ctx.clearRect(0, 0, innerWidth, innerHeight);
     for (const p of points) {
       if (!reduced) { p.x += p.vx; p.y += p.vy; }

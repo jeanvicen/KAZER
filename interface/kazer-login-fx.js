@@ -148,9 +148,9 @@
   doc.body.prepend(canvas);
   const ctx = canvas.getContext("2d");
   let W = 0, H = 0, DPR = 1, parts = [], rafDust = 0, running = false;
-  const COUNT = () => (window.innerWidth < 700 ? 34 : 70);
+  const COUNT = () => (coarse ? 16 : window.innerWidth < 700 ? 34 : 70);
   const resize = () => {
-    DPR = Math.min(window.devicePixelRatio || 1, 2);
+    DPR = coarse ? 1 : Math.min(window.devicePixelRatio || 1, 2);
     W = window.innerWidth;
     H = window.innerHeight;
     canvas.width = Math.round(W * DPR);
@@ -186,7 +186,7 @@
       ctx.beginPath();
       ctx.arc(x, y, s.r * (0.6 + s.z), 0, Math.PI * 2);
       ctx.fill();
-      if (s.z > 0.82) {
+      if (!coarse && s.z > 0.82) {
         ctx.globalAlpha = s.a * tw * 0.18;
         ctx.beginPath();
         ctx.arc(x, y, s.r * 5, 0, Math.PI * 2);
