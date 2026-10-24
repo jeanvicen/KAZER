@@ -82,11 +82,14 @@
   window.kazerDecorateThinking = (row, options = {}) => {
     decorate?.(row, options);
     if (options.mode !== "computer") return;
+    const plan = window.kazerPlanComputerSteps?.(options.prompt, options.repo);
+    if (!plan) return;
     openPanel();
     panel.classList.add("is-running");
     $("[data-status]", panel).textContent = "trabalhando…";
     $("[data-target]", panel).textContent = options.repo?.fullName || "ambiente KAZER";
-    const steps = ["Entendendo a tarefa", options.repo?.fullName ? `Abrindo ${options.repo.fullName}` : "Preparando o ambiente", "Planejando as alterações", "Executando ferramentas", "Revisando o resultado"];
+    const steps = plan.list;
+    $("[data-status]", panel).textContent = plan.title;
     const list = $("[data-steps]", panel);
     list.innerHTML = steps.map((step) => `<li>${escapeHtml(step)}</li>`).join("");
     const items = [...list.children];

@@ -27,15 +27,53 @@
   const pickerButton = $(".kz-model-button", picker);
   const pickerMenu = $(".kz-model-menu", picker);
 
+  // Nome curto do provedor para o topo ("OpenAI", "Grok", "Claude"...).
+  const shortProvider = (label) => String(label || "Flame").replace(/\s*\(([^)]+)\)/, (_, inner) => (/compat/i.test(inner) ? "" : ` ${inner}`)).replace(/^(Anthropic|xAI|Moonshot|Perplexity) /, "").trim();
+
+  function flameModels() {
+    const preset = flame.presets.find((item) => item.id === flame.provider);
+    const list = flame.liveModels?.length ? flame.liveModels : preset?.models || [];
+    return [...new Set([flame.model, ...list].filter(Boolean))];
+  }
+
   function renderPicker() {
-    const isFlame = window.kazerModel === "flame";
-    $(".kz-model-name", picker).textContent = isFlame ? "Flame API" : "K.z 1.1";
+    const isFlame = window.kazerModel === "flame" && flame.configured !== false;
+    $(".kz-model-name", picker).textContent = isFlame ? (flame.model ? `${shortProvider(flame.providerLabel)} · ${flame.model}` : "Flame API") : "K.z 1.1";
     picker.classList.toggle("is-flame", isFlame);
     const flameDetail = flame.configured ? `${escapeHtml(flame.providerLabel)} · ${escapeHtml(flame.model)}` : "Use a API da IA que você quiser";
+    const models = flame.configured ? flameModels() : [];
+    const modelList = models.length ? `<div class="kz-model-sub"><p>Modelos ${escapeHtml(shortProvider(flame.providerLabel))}${flame.loadingModels ? " · carregando…" : ""}</p><div class="kz-model-sub-list">${models.map((id) => `<button type="button" class="kz-model-pick${isFlame && id === flame.model ? " is-active" : ""}" data-pick="${escapeHtml(id)}" title="${escapeHtml(id)}"><span>${escapeHtml(id)}</span>${isFlame && id === flame.model ? "<i>✓</i>" : ""}</button>`).join("")}</div></div>` : "";
     pickerMenu.innerHTML = `
       <button class="kz-model-option${isFlame ? "" : " is-active"}" type="button" role="option" aria-selected="${!isFlame}" data-model="kz"><span class="kz-model-icon">K</span><span><strong>K.z 1.1</strong><small>Modelo do KAZER · pesquisa, Computer e arquivos</small></span></button>
       <button class="kz-model-option${isFlame ? " is-active" : ""}" type="button" role="option" aria-selected="${isFlame}" data-model="flame"><span class="kz-model-icon is-flame"><svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M12 2c1 4 5 6 5 11a5 5 0 0 1-10 0c0-2 1-3.5 2-4.5 0 2 1 3 2 3 0-3-1-6 1-9.5Z"/></svg></span><span><strong>Flame API</strong><small>${flameDetail}</small></span></button>
-      <button class="kz-model-config" type="button" data-flame-config>${flame.configured ? "Trocar chave ou modelo" : "Configurar Flame API"}</button>`;
+      ${modelList}
+      <button class="kz-model-config" type="button" data-flame-config>${flame.configured ? "Trocar provedor ou chave" : "Configurar Flame API"}</button>`;
+  }
+
+  // Busca uma vez a lista real de modelos da chave da pessoa.
+  async function loadLiveModels() {
+    if (!flame.configured || flame.liveFor === `${flame.provider}:${flame.baseUrl}`) return;
+    flame.liveFor = `${flame.provider}:${flame.baseUrl}`;
+    flame.loadingModels = true;
+    renderPicker();
+    try { const data = await api("/api/models?list=1"); flame.liveModels = (data.models || []).filter((id) => !/embed|whisper|tts|dall-e|moderation|image|audio|realtime|transcribe/i.test(id)); } catch { flame.liveModels = []; }
+    flame.loadingModels = false;
+    if (!pickerMenu.hidden) renderPicker();
+  }
+
+  async function pickFlameModel(id) {
+    if (id === flame.model && window.kazerModel === "flame") return;
+    if (id !== flame.model) {
+      toast(`Validando ${id}…`);
+      try {
+        const data = await api("/api/models", { method: "POST", body: JSON.stringify({ action: "model", model: id }) });
+        Object.assign(flame, data.flame || {});
+      } catch (error) { toast(error.message); return; }
+    }
+    window.kazerModel = "flame";
+    store.set("kazer-model", "flame");
+    renderPicker();
+    toast(`${shortProvider(flame.providerLabel)} · ${flame.model} responde agora (não usa sua cota).`);
   }
 
   function setModel(model) {
@@ -46,25 +84,31 @@
     toast(window.kazerModel === "flame" ? `Flame API: ${flame.providerLabel || "sua chave"} responde agora (não usa sua cota).` : "K.z 1.1 ativo.");
   }
 
+  const closePicker = () => { pickerMenu.hidden = true; pickerButton.setAttribute("aria-expanded", "false"); };
   pickerButton.addEventListener("click", (event) => {
     event.stopPropagation();
     const open = pickerMenu.hidden;
+    if (open) renderPicker();
     pickerMenu.hidden = !open;
     pickerButton.setAttribute("aria-expanded", String(open));
+    if (open) loadLiveModels();
   });
   pickerMenu.addEventListener("click", (event) => {
+    const pick = event.target.closest("[data-pick]");
+    if (pick) { closePicker(); pickFlameModel(pick.dataset.pick); return; }
     const option = event.target.closest("[data-model]");
     if (option) setModel(option.dataset.model);
     if (event.target.closest("[data-flame-config]")) openFlameConfig();
-    pickerMenu.hidden = true;
-    pickerButton.setAttribute("aria-expanded", "false");
+    closePicker();
   });
   document.addEventListener("click", (event) => { if (!event.target.closest(".kz-model")) { pickerMenu.hidden = true; pickerButton.setAttribute("aria-expanded", "false"); } });
 
   async function loadFlame() {
     try {
       const data = await api("/api/models");
-      Object.assign(flame, data.flame || { configured: false }, { presets: data.presets || [], loaded: true });
+      const before = `${flame.provider}:${flame.baseUrl}`;
+      Object.assign(flame, { configured: false, provider: "", providerLabel: "", baseUrl: "", model: "" }, data.flame || {}, { presets: data.presets || [], loaded: true });
+      if (before !== `${flame.provider}:${flame.baseUrl}`) { flame.liveFor = ""; flame.liveModels = []; }
     } catch { flame.loaded = false; }
     if (window.kazerModel === "flame" && flame.loaded && !flame.configured) window.kazerModel = "kz";
     renderPicker();
@@ -81,7 +125,7 @@
       <header><span class="kz-model-icon is-flame"><svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M12 2c1 4 5 6 5 11a5 5 0 0 1-10 0c0-2 1-3.5 2-4.5 0 2 1 3 2 3 0-3-1-6 1-9.5Z"/></svg></span><div><h2 id="kzFlameTitle">Flame API</h2><p>Use a IA que você quiser com a sua própria chave. Ela é validada, cifrada no servidor e nunca volta para o navegador. Mensagens pela Flame não gastam a cota do KAZER.</p></div></header>
       <label>Provedor<select name="provider">${presets.map((preset) => `<option value="${escapeHtml(preset.id)}"${preset.id === current.id ? " selected" : ""}>${escapeHtml(preset.label)}</option>`).join("")}</select></label>
       <label data-base>URL da API<input name="baseUrl" type="url" placeholder="https://api.exemplo.com/v1" value="${escapeHtml(flame.baseUrl || current.baseUrl || "")}"></label>
-      <label>Modelo<input name="model" required autocomplete="off" value="${escapeHtml(flame.model || current.model || "")}" placeholder="nome-do-modelo"></label>
+      <label>Modelo<input name="model" required autocomplete="off" list="kzFlameModels" value="${escapeHtml(flame.model || current.model || "")}" placeholder="nome-do-modelo"><datalist id="kzFlameModels"></datalist></label>
       <label>Chave de API<input name="apiKey" type="password" required autocomplete="off" placeholder="${flame.configured ? "Cole a chave de novo para trocar" : "sk-…"}"></label>
       <footer>${flame.configured ? '<button class="kz-btn is-danger" type="button" data-flame-remove>Remover</button>' : ""}<span></span><button class="kz-btn" type="button" data-flame-cancel>Cancelar</button><button class="kz-btn is-primary" type="submit">Validar e usar</button></footer>
     </form>`;
@@ -91,6 +135,7 @@
       const preset = presets.find((item) => item.id === form.provider.value);
       $("[data-base]", form).hidden = form.provider.value !== "custom";
       if (preset && form.provider.value !== "custom") { form.baseUrl.value = preset.baseUrl; if (!flame.configured || flame.provider !== preset.id) form.model.value = preset.model; }
+      $("#kzFlameModels", form).innerHTML = (preset?.models || []).map((id) => `<option value="${escapeHtml(id)}"></option>`).join("");
     };
     form.provider.addEventListener("change", sync);
     sync();

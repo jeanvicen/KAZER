@@ -122,11 +122,6 @@
 }
 
 /* ── Conversa: pergunta como título, resposta com cabeçalho ──────────── */
-.message-row.user { align-items: flex-start !important; justify-content: flex-start !important; text-align: left !important; animation: kz-px-question 620ms var(--kz-ease) both; }
-.message-row.user .user-message-content { align-items: flex-start !important; max-width: 100% !important; width: 100%; }
-.message-row.user .message-bubble { max-width: 100% !important; padding: 0 !important; border: 0 !important; border-radius: 0 !important; background: none !important; box-shadow: none !important; color: var(--kz-white) !important; font: 600 clamp(21px, 2.8vw, 28px)/1.25 var(--sans) !important; letter-spacing: -.025em !important; }
-.message-row.user .message-meta { display: none !important; }
-.message-row.user:not(:first-child) { margin-top: 30px !important; padding-top: 26px !important; border-top: 1px solid var(--kz-line); }
 @keyframes kz-px-question { from { opacity: 0; transform: translateY(12px); filter: blur(6px); } to { opacity: 1; transform: none; filter: none; } }
 .message-row.assistant .assistant-response::before {
   content: "KAZER";
@@ -185,15 +180,11 @@
 @media (prefers-reduced-motion: reduce) { .kz-px-computer, .message-row.user, .kz-px-steps::after { animation: none !important; } }
 
 /* Ajustes de verificação visual */
-.message-list .message-row.user { align-self: stretch !important; align-items: flex-start !important; margin-left: 0 !important; }
-.message-list .message-row.user .user-message-content, .message-list .message-row.user .message-bubble { margin-left: 0 !important; text-align: left !important; }
 .app.in-conversation .kz-suggestions, .app.in-conversation .kz-pro-banner { display: none !important; }
 @media (min-width: 1080px) {
   .topbar .credit-indicator { position: fixed !important; top: 16px !important; right: 20px !important; left: auto !important; }
   .app.kz-px-computer-open .topbar .credit-indicator { right: 420px !important; }
 }
-.message-list .message-row.user .user-message-content { display: block !important; width: 100% !important; }
-.message-list .message-row.user .message-bubble { display: block !important; width: 100% !important; }
 @media (min-width: 1180px) { .app.kz-px-computer-open .kz-computer-run { display: none !important; } }
 
 /* Histórico (biblioteca) no novo visual */

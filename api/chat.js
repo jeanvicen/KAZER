@@ -21,6 +21,7 @@ const { VERCEL_ACTION_LABELS, createVercelSession, executeVercelTool, isVercelTo
 const { supabaseRequest } = require("../server/storage/_kazer-data");
 const { KAZER_BRAIN_VERSION, callKazerBrain } = require("../server/agent/_kazer-brain");
 const { loadFlameConfig } = require("../server/agent/_flame-api");
+const { connectorToolDefinitions, connectorsInstruction, createConnectorSession, executeConnectorTool } = require("../server/integrations/_connectors-hub");
 const { HOME_SUGGESTION_TIME_BANDS, generateHomeSuggestions, normalizeHomeSuggestionText } = require("../server/agent/_home-suggestions");
 const { researchToolDefinition, runResearch } = require("../server/research/_research-orchestrator");
 const { currentBrazilContext, needsRealtimeResearch, researchContextText } = require("../server/research/_realtime-context");
@@ -81,6 +82,14 @@ function normalizeRepositoryContext(value) {
     defaultBranch: cleanUserContent(value.defaultBranch || "main").slice(0, 120),
     language: cleanUserContent(value.language || "").slice(0, 80) || null,
   };
+}
+
+// Computer: nada de roteiro fixo. A resposta nasce do pedido e do que foi feito.
+const COMPUTER_STYLE_INSTRUCTION = "MODO COMPUTER — ESTILO: cada resposta é feita sob medida para o pedido. Não use roteiros, cabeçalhos ou listas de etapas genéricas (como 'Entendendo a tarefa', 'Planejando', 'Revisando'). Se a mensagem for conversa, dúvida ou pergunta, responda normalmente, sem relatório de tarefa e sem fingir que executou algo. Só quando houver trabalho real (criar, alterar, corrigir, publicar), descreva o que foi feito de fato, com os nomes reais de arquivos, branches, links e resultados das ferramentas, e o próximo passo concreto. Nunca invente ações que não aconteceram.";
+
+// "pro" e planos acima (ex.: "pro_plus", "max", "team") liberam o modo Computer.
+function isProPlanName(plan) {
+  return /\b(?:pro|plus|max|team|business|enterprise)\b/i.test(String(plan || "").replace(/_/g, " "));
 }
 
 async function resolveRepositoryContext(userId, value) {
@@ -393,18 +402,19 @@ function actionSummary(name, args) {
   return String(target).replace(/[\u0000-\u001f\u007f]/g, " ").slice(0, 120);
 }
 
-async function runAgentTurn({ messages, hasImages, mcpServers, runtimeContext = "", hasFiles = false, hasRepository = false, taskType = "conversation", capabilityPlan = null, agentSkill = null, userId = null, repository = null, allowTerminal = false, computer = false, githubSession = null, vercelSession = null, isPro = false, customProvider = null }) {
+async function runAgentTurn({ messages, hasImages, mcpServers, runtimeContext = "", hasFiles = false, hasRepository = false, taskType = "conversation", capabilityPlan = null, agentSkill = null, userId = null, repository = null, allowTerminal = false, computer = false, githubSession = null, vercelSession = null, connectorSession = null, isPro = false, customProvider = null }) {
   // Chat normal só lê; o modo Computer libera escrita, deploy e terminal.
   const { tools: mcpTools, byName } = flattenTools(mcpServers || [], { computer });
   const githubTools = githubSession ? githubToolDefinitions({ computer }) : [];
   const vercelTools = vercelSession ? vercelToolDefinitions({ computer }) : [];
+  const hubTools = connectorToolDefinitions(connectorSession, { computer });
   const actions = [];
   // Tools are registered by the trusted server only. Skill metadata alone
   // never grants a tool; terminal access additionally requires a selected repo,
   // a connected GitHub account, E2B configuration, and the code Skill's grants.
   const canResearch = Boolean(capabilityPlan?.needsResearch && agentSkill && skillDeclaresPermission(agentSkill, "web.read") && skillDeclaresPermission(agentSkill, "net.fetch"));
   const canTerminal = Boolean(computer && allowTerminal && userId && repository && isTerminalConfigured() && agentSkill && skillDeclaresPermission(agentSkill, "shell.exec") && skillDeclaresPermission(agentSkill, "code.run"));
-  const tools = [...(canResearch ? [researchToolDefinition] : []), ...(canTerminal ? [terminalToolDefinition] : []), ...githubTools, ...vercelTools, ...mcpTools];
+  const tools = [...(canResearch ? [researchToolDefinition] : []), ...(canTerminal ? [terminalToolDefinition] : []), ...githubTools, ...vercelTools, ...hubTools, ...mcpTools];
   const researchToolEnabled = canResearch;
   const terminalToolEnabled = canTerminal;
   let terminalRunsRemaining = canTerminal ? 1 : 0;
@@ -440,6 +450,11 @@ async function runAgentTurn({ messages, hasImages, mcpServers, runtimeContext = 
           toolsUsed += 1;
         } else if (isVercelTool(name) && vercelSession) {
           toolContent = JSON.stringify(await executeVercelTool(vercelSession, name, parsedArgs, { computer })).slice(0, 20_000);
+          toolsUsed += 1;
+        } else if (name === "connector_api" && connectorSession) {
+          action.label = "Usou conector";
+          action.target = String(parsedArgs.connector || "").slice(0, 60);
+          toolContent = JSON.stringify(await executeConnectorTool(connectorSession, parsedArgs, { computer })).slice(0, 20_000);
           toolsUsed += 1;
         } else if (name === terminalDefinition.name && terminalToolEnabled) {
           if (terminalRunsRemaining <= 0) {
@@ -575,6 +590,13 @@ module.exports = async function handler(request, response) {
     customProvider = await loadFlameConfig(user.id).catch(() => null);
     if (!customProvider) return sendJson(response, 409, { error: "Configure sua Flame API (provedor, modelo e chave) antes de usá-la.", code: "flame_not_configured" });
   }
+  // O modo Computer (ações reais em repositórios, deploys e terminal) é exclusivo do Pro.
+  if (computerMode) {
+    const planInfo = await callUsageRpc(request, "get_my_usage").catch(() => null);
+    if (!isProPlanName(planInfo?.plan)) {
+      return sendJson(response, 402, { error: "O modo Computer é exclusivo do KAZER Pro. Assine o Pro para o KAZER executar tarefas por você.", code: "pro_required" });
+    }
+  }
   if (isModeratedRequest(messages)) {
     return sendJson(response, 422, { error: "Não posso processar esse conteúdo. Reformule o pedido de forma segura e respeitosa." });
   }
@@ -642,6 +664,7 @@ module.exports = async function handler(request, response) {
   const mcpServers = backgroundContext ? [] : await loadMcpRuntime(user.id, body?.mcpConnectorIds);
   const githubSession = repositoryContext && !backgroundContext ? await createGitHubSession(user.id, repositoryContext) : null;
   const vercelSession = backgroundContext ? null : await createVercelSession(user.id).catch(() => null);
+  const connectorSession = backgroundContext ? null : await createConnectorSession(user.id).catch(() => null);
   const hasImages = prepared.imageParts.length > 0;
   const fileInstruction = prepared.fileContext
     ? `\n\nUse os anexos abaixo como contexto para responder:\n\n${prepared.fileContext}`
@@ -666,10 +689,12 @@ module.exports = async function handler(request, response) {
     { role: "user", content: latestContent },
   ];
 
-  const isProPlan = String(usage?.plan || "").toLowerCase().includes("pro");
+  const isProPlan = isProPlanName(usage?.plan);
   const realtimeRequested = !hasImages && needsRealtimeResearch(lastMessage.content);
   let researchWidgets = [];
   let runtimeContext = `${currentBrazilContext()}\n\n${FILES_INSTRUCTION}${engineMode ? `\n\n${ENGINE_INSTRUCTION}` : ""}`;
+  if (computerMode) runtimeContext += `\n\n${COMPUTER_STYLE_INSTRUCTION}`;
+  if (!backgroundContext) runtimeContext += `\n\n${connectorsInstruction(connectorSession)}`;
   let forcedResearchUsed = 0;
   if (realtimeRequested) {
     try {
@@ -689,7 +714,7 @@ module.exports = async function handler(request, response) {
     }
   }
 
-  const result = await runAgentTurn({ messages: apiMessages, hasImages, mcpServers, runtimeContext, hasFiles: prepared.fileNames.length > 0, hasRepository: Boolean(repositoryContext), taskType, capabilityPlan, agentSkill, userId: user.id, repository: repositoryContext, allowTerminal: !backgroundContext, computer: computerMode, githubSession, vercelSession, isPro: isProPlan, customProvider });
+  const result = await runAgentTurn({ messages: apiMessages, hasImages, mcpServers, runtimeContext, hasFiles: prepared.fileNames.length > 0, hasRepository: Boolean(repositoryContext), taskType, capabilityPlan, agentSkill, userId: user.id, repository: repositoryContext, allowTerminal: !backgroundContext, computer: computerMode, githubSession, vercelSession, connectorSession, isPro: isProPlan, customProvider });
   if (result.failure) {
     console.error("Groq request failed", result.failure);
     return sendJson(response, 502, { error: "O KAZER não conseguiu concluir a resposta agora. Tente novamente." });

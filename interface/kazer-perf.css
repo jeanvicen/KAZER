@@ -26,7 +26,7 @@
 
   /* Entradas mais baratas: sem blur animado */
   .message-row.user, .kz-word, .kz-in--heading, .kz-in--visual, .form-section, .input-group, .brand-panel-title .kz-verb { filter: none !important; }
-  .kz-word { animation-name: kz-fade !important; }
+  .kz-reveal .kz-word { animation-name: kz-write-lite !important; }
 
   /* Sombras grandes custam ao rolar */
   .composer-box, .kz-project, .kz-widget, .kz-source { box-shadow: none !important; }

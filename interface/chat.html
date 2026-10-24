@@ -4972,10 +4972,11 @@
     <link rel="stylesheet" href="/interface/kazer-nova.css?v=20261023" />
     <link rel="stylesheet" href="/interface/kazer-studio.css?v=20261023" />
     <link rel="stylesheet" href="/interface/kazer-theme.css?v=20261023" />
-    <link rel="stylesheet" href="/interface/kazer-px.css?v=20261025" />
+    <link rel="stylesheet" href="/interface/kazer-px.css?v=20261026" />
     <link rel="stylesheet" href="/interface/kazer-app.css?v=20261024" />
     <link rel="stylesheet" href="/interface/kazer-gold.css?v=20261024" />
-    <link rel="stylesheet" href="/interface/kazer-perf.css?v=20261025" />
+    <link rel="stylesheet" href="/interface/kazer-flow.css?v=20261027" />
+    <link rel="stylesheet" href="/interface/kazer-perf.css?v=20261026" />
     <script>
       window.setTimeout(() => {
         const fallbackApp = document.getElementById("app");
@@ -5845,6 +5846,10 @@
           const plan = String(next.plan || "").trim().toLowerCase().replace(/[-\s]+/g, "_");
           const planLabel = plan === "pro" || plan === "kazer_pro" ? "KAZER Pro" : plan === "free" ? "Plano Free" : String(next.plan || "Plano não informado").trim();
           if (usagePlanName) usagePlanName.textContent = planLabel;
+          window.kazerPlan = plan;
+          window.kazerIsPro = /\b(?:pro|plus|max|team|business|enterprise)\b/.test(plan.replace(/_/g, " "));
+          document.documentElement.classList.toggle("kz-is-pro", window.kazerIsPro);
+          window.dispatchEvent(new CustomEvent("kazer:plan", { detail: { plan, pro: window.kazerIsPro } }));
           const percent = readUsageNumber(next.usage_percent);
           const used = readUsageNumber(next.usage_used);
           const limit = readUsageNumber(next.usage_limit);
@@ -7488,6 +7493,12 @@
         };
 
         const createCodeBlock = (language, code, { writing = false, complete = true } = {}) => {
+          // ```kazer-connect vira o cartão "Conectar" (login oficial ou cartão seguro).
+          if (/^kazer-(?:connect|secure)$/i.test(String(language || "").trim()) && window.kazerRenderConnectCard) {
+            const card = complete ? window.kazerRenderConnectCard(code) : null;
+            if (card) return card;
+            if (!complete) { const wait = document.createElement("section"); wait.className = "kz-cx-card is-loading"; wait.textContent = "Preparando cartão de conexão…"; return wait; }
+          }
           const block = document.createElement("section");
           block.className = "code-block";
           const head = document.createElement("header");
@@ -8318,7 +8329,7 @@
           const gameRequest = /\b(?:jogo|jogos|game|games|fase|level|platformer|plataforma 2d|personagem jog[aá]vel|godot|sprite|inimigos?|moedas?|top-?down|arcade|2d)\b/i.test(prompt);
           const engineMode = chatMode === "computer" && (gameRequest || document.body.classList.contains("kz-engine-open"));
           window.kazerEngineMode = engineMode;
-          const needsForegroundTools = !useWebResearch && (Boolean(githubRepo) || chatMode === "computer" || chatModel === "flame" || Boolean(window.kazerVercelConnected));
+          const needsForegroundTools = !useWebResearch && (Boolean(githubRepo) || chatMode === "computer" || chatModel === "flame" || Boolean(window.kazerVercelConnected) || Boolean(window.kazerHubConnected) || /\b(?:conect|integr|connect|vincul)/i.test(prompt));
           const needsForegroundConnector = !useWebResearch && mcpConnectorIds.length > 0 || needsForegroundTools;
           if (files.length) {
             const filesByMessage = messageAttachmentFiles.get(chatId) || new Map();
@@ -8340,7 +8351,7 @@
           resizeInput();
           const researchProgress = useWebResearch ? createWebResearchProgress(prompt) : null;
           const thinking = researchProgress?.row || createThinking();
-          if (!researchProgress) window.kazerDecorateThinking?.(thinking, { mode: chatMode, repo: githubRepo });
+          if (!researchProgress) window.kazerDecorateThinking?.(thinking, { mode: chatMode, repo: githubRepo, prompt });
           append(thinking);
           setBusy(true);
           const controller = new AbortController();
@@ -8428,7 +8439,8 @@
                   });
               data = await result.json().catch(() => ({}));
               if (!result.ok) {
-                if (result.status === 402) { await loadUsage(false); showCreditLimit(); }
+                if (result.status === 402 && data.code === "pro_required") { window.kazerSetMode?.("chat"); window.kazerOpenPlans?.(); }
+                else if (result.status === 402) { await loadUsage(false); showCreditLimit(); }
                 if (result.status === 409 && data.code === "flame_not_configured") window.kazerOpenFlameConfig?.();
                 else if (result.status === 409) { await loadUsage(false); showAttachmentLimit(); }
                 throw new Error(data.error || (useWebResearch ? "Não foi possível consultar a pesquisa na web." : "Não foi possível obter uma resposta."));
@@ -9120,11 +9132,12 @@
     <script src="/interface/kazer-workspace.js"></script>
     <script src="/interface/kazer-premium.js?v=20261006-home-suggestions" defer></script>
     <script src="/interface/kazer-logo3d.js?v=20261023" defer></script>
-    <script src="/interface/kazer-nova.js?v=20261023" defer></script>
-    <script src="/interface/kazer-studio.js?v=20261023" defer></script>
+    <script src="/interface/kazer-nova.js?v=20261026" defer></script>
+    <script src="/interface/kazer-studio.js?v=20261026" defer></script>
     <script src="/interface/kazer-engine.js?v=20261023" defer></script>
-    <script src="/interface/kazer-px.js?v=20261025" defer></script>
-    <script src="/interface/kazer-app.js?v=20261024" defer></script>
+    <script src="/interface/kazer-px.js?v=20261026" defer></script>
+    <script src="/interface/kazer-connect.js?v=20261026" defer></script>
+    <script src="/interface/kazer-app.js?v=20261026" defer></script>
   </body>
 </html>
 

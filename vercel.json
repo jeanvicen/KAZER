@@ -107,6 +107,14 @@
       "destination": "/api/workspace?route=models"
     },
     {
+      "source": "/api/connect/callback",
+      "destination": "/api/workspace?route=connect&action=callback"
+    },
+    {
+      "source": "/api/connect",
+      "destination": "/api/workspace?route=connect"
+    },
+    {
       "source": "/api/billing/checkout",
       "destination": "/api/usage?route=checkout"
     },

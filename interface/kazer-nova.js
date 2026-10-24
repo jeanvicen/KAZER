@@ -87,7 +87,7 @@
     button("home", "Início", ICONS.home, newChat);
     button("history", "Histórico", ICONS.history, () => $("#desktopSidebarToggle")?.click());
     button("connectors", "Conectores", ICONS.plug, () => window.kazerOpenConnectors?.());
-    button("computer", "Modo Computer", ICONS.computer, () => setMode(mode === "computer" ? "chat" : "computer"));
+    button("computer", "Modo Computer", ICONS.computer, () => (mode === "computer" ? setMode("chat", { announce: true }) : openComputer()));
     const spacer = document.createElement("span");
     spacer.className = "kz-rail-spacer";
     rail.append(spacer);
@@ -104,41 +104,38 @@
   buildRail();
 
   /* ── Modo Chat / Computer ──────────────────────────────────────────── */
+  // O Computer não fica mais no campo de mensagem: abre pelo histórico
+  // (gaveta ou barra lateral) e é exclusivo do KAZER Pro.
   let mode = store.get("kazer-mode", "chat") === "computer" ? "computer" : "chat";
   const controls = $(".composer-controls");
   const attach = $("#attachButton");
   const modes = document.createElement("div");
-  modes.className = "kz-modes";
-  modes.setAttribute("role", "radiogroup");
-  modes.setAttribute("aria-label", "Modo do KAZER");
-  modes.innerHTML = `<span class="kz-mode-pill" aria-hidden="true"></span><button class="kz-mode" type="button" role="radio" data-mode="chat">${ICONS.chat}<span>Chat</span></button><button class="kz-mode" type="button" role="radio" data-mode="computer">${ICONS.computer}<span>Computer</span></button>`;
+  modes.className = "kz-computer-tag";
+  modes.hidden = true;
+  modes.innerHTML = `${ICONS.computer}<span>Computer</span><b>PRO</b><button type="button" data-exit aria-label="Sair do modo Computer">×</button>`;
   const chips = document.createElement("div");
   chips.className = "kz-context-chips";
   if (controls && attach) attach.after(modes, chips);
   modes.addEventListener("click", (event) => {
-    const target = event.target.closest("[data-mode]");
-    if (target) setMode(target.dataset.mode, { announce: true });
+    if (event.target.closest("[data-exit]")) setMode("chat", { announce: true });
   });
-
-  function positionPill() {
-    const active = modes.querySelector(`[data-mode="${mode}"]`);
-    const pill = modes.querySelector(".kz-mode-pill");
-    if (!active || !pill || !active.offsetWidth) return;
-    pill.style.setProperty("--w", `${active.offsetWidth}px`);
-    pill.style.setProperty("--x", `${active.offsetLeft - 3}px`);
-  }
+  const proKnown = () => typeof window.kazerIsPro === "boolean";
 
   function setMode(next, { announce = false } = {}) {
+    if (next === "computer" && proKnown() && !window.kazerIsPro) {
+      toast("O modo Computer é exclusivo do KAZER Pro.");
+      window.kazerOpenPlans?.();
+      next = "chat";
+    }
     mode = next === "computer" ? "computer" : "chat";
     window.kazerChatMode = mode;
     store.set("kazer-mode", mode);
     app?.classList.toggle("kz-mode-computer", mode === "computer");
-    modes.querySelectorAll("[data-mode]").forEach((item) => item.setAttribute("aria-checked", String(item.dataset.mode === mode)));
+    modes.hidden = mode !== "computer";
     document.querySelector('.kz-rail-btn[data-rail="computer"]')?.classList.toggle("is-active", mode === "computer");
     const input = $("#messageInput");
     if (input) input.placeholder = mode === "computer" ? "Descreva uma tarefa — o KAZER executa no GitHub e na Vercel…" : "Pergunte qualquer coisa…";
     document.querySelectorAll(".kz-hero .kz-logo3d").forEach((logo) => logo.classList.toggle("is-computer", mode === "computer"));
-    positionPill();
     renderChips();
     if (announce) {
       if (mode === "computer") toast(ws()?.state?.github?.connected ? "Modo Computer: o KAZER pode criar branches, commits, PRs e deploys." : "Modo Computer ligado. Conecte o GitHub em Conectores para editar repositórios.");
@@ -146,8 +143,22 @@
     }
   }
   requestAnimationFrame(() => setMode(mode));
-  window.addEventListener("resize", positionPill);
+  // Quando o plano chega e não é Pro, volta ao Chat.
+  window.addEventListener("kazer:plan", (event) => { if (!event.detail?.pro && mode === "computer") setMode("chat"); });
   window.kazerSetMode = setMode;
+
+  // Pelo histórico: abre um chat novo já no modo Computer.
+  function openComputer() {
+    if (proKnown() && !window.kazerIsPro) return setMode("computer");
+    if (app?.classList.contains("in-conversation")) {
+      store.set("kazer-mode", "computer");
+      window.location.href = "?view=chat";
+      return;
+    }
+    setMode("computer", { announce: true });
+    $("#messageInput")?.focus({ preventScroll: true });
+  }
+  window.kazerOpenComputer = openComputer;
 
   /* ── Contexto (repositório e Vercel) ───────────────────────────────── */
   const vercel = { connection: { connected: false }, projects: [], loaded: false };
@@ -378,7 +389,77 @@
   window.addEventListener("kazer:repo-selected", renderChips);
 
   /* ── Pensando / Computer ───────────────────────────────────────────── */
-  window.kazerDecorateThinking = (row, { mode: runMode = "chat", repo = null } = {}) => {
+  // Passos montados a partir do pedido. Conversa e perguntas não viram
+  // "tarefa": retornam null e o Computer responde como chat.
+  const WORK_VERB = /\b(?:cri[ae]r?|crie|fa[cz]a?|fazer|mont[ae]r?|ger[ae]r?|escrev[ae]r?|implement[ae]r?|adicion[ae]r?|coloc[ae]r?|corrij[ae]|corrig[ei]r?|arrum[ae]r?|consert[ae]r?|refator[ae]r?|atualiz[ae]r?|mud[ae]r?|troc[ae]r?|remov[ae]r?|tir[ae]r?|apag[ae]r?|instal[ae]r?|configur[ae]r?|publi(?:que|ca|car)|deploy|subi?r?|suba|abr[ae]r?|build|create|make|fix|add|update|remove|refactor|ship)\b/i;
+  const QUESTION_ONLY = /^(?:oi|ol[aá]|e a[ií]|bom dia|boa tarde|boa noite|obrigad[oa]|valeu|tudo bem|quem [eé] voc[eê]|o que [eé]|como funciona|por que|qual|quais|quando|onde)\b/i;
+  function subjectOf(text) {
+    const match = text.match(/\b(?:um|uma|o|a|os|as|meu|minha|no|na|do|da)\s+([\p{L}\d][\p{L}\d\s-]{2,38}?)(?=[,.!?;:]|\s+(?:com|que|para|pra|no|na|em|usando|e)\b|$)/iu);
+    return (match?.[1] || "").trim().replace(/\s+/g, " ");
+  }
+  function planComputerSteps(prompt, repo) {
+    const text = String(prompt || "").trim();
+    if (!text || text.length < 8 || (QUESTION_ONLY.test(text) && !WORK_VERB.test(text)) || !WORK_VERB.test(text)) return null;
+    const subject = subjectOf(text);
+    const thing = subject || "a tarefa";
+    const where = repo?.fullName ? repo.fullName : "";
+    const list = [];
+    let title = "trabalhando";
+    const has = (pattern) => pattern.test(text);
+    if (where) list.push(`Lendo ${where}`);
+    if (has(/\b(?:jogo|game|fase|level|godot|sprite|personagem)\b/i)) {
+      title = "criando o jogo";
+      list.push(`Desenhando ${thing}`, "Programando controles e física", "Testando a fase na Engine");
+    } else if (has(/\b(?:bug|erro|quebr|crash|falh|corrij|corrig|consert|arrum)/i)) {
+      title = "corrigindo";
+      list.push(subject ? `Localizando ${subject}` : "Localizando o problema", "Aplicando a correção", "Conferindo se o erro sumiu");
+    } else if (has(/\b(?:deploy|publi|vercel|produção|subir|suba)\b/i)) {
+      title = "publicando";
+      list.push("Verificando o projeto na Vercel", "Disparando o deploy", "Acompanhando o build");
+    } else if (has(/\b(?:site|p[aá]gina|landing|app|aplicativo|tela|interface|navbar|bot[aã]o|componente|layout)\b/i)) {
+      title = `construindo ${thing}`.slice(0, 48);
+      list.push(`Estruturando ${thing}`, "Escrevendo HTML, CSS e JS", "Montando a prévia");
+    } else if (has(/\b(?:refator|organiz|limp|melhor)/i)) {
+      title = "refatorando";
+      list.push(`Mapeando ${thing}`, "Reescrevendo sem mudar o comportamento");
+    } else if (has(/\b(?:arquivo|zip|planilha|csv|json|documento|pdf|relat[oó]rio)\b/i)) {
+      title = "gerando arquivos";
+      list.push(`Escrevendo ${thing}`, "Empacotando para download");
+    } else {
+      list.push(`Trabalhando em ${thing}`);
+    }
+    if (where && has(/\b(?:pr|pull request|branch|commit|reposit[oó]rio|github)\b/i)) list.push("Criando branch e abrindo pull request");
+    return { title, list: [...new Set(list)].slice(0, 5) };
+  }
+  window.kazerPlanComputerSteps = planComputerSteps;
+
+  // KAZER em pixel art trabalhando no notebook (SVG com crispEdges).
+  const PIXEL_ROWS = [
+    "....wwwwww......",
+    "...wwwwwwww.....",
+    "..wwwwwwwwww....",
+    "..wkkwwwwkkw....",
+    "..wkkkwwkkkw....",
+    "...wkkwwkkw.....",
+    "....wwwwww......",
+    "...yyyyyyyy.....",
+    "..yyyyyyyyyy....",
+    ".gggggggggggggg.",
+    ".gssssssssssssg.",
+    ".gsyysssyyyssg..",
+    ".gssssssssssssg.",
+    ".gggggggggggggg.",
+    "dddddddddddddddd",
+  ];
+  const PIXEL_COLORS = { w: "#e9e6df", k: "#121212", y: "#c9a24d", g: "#6d6a63", s: "#1f2a22", d: "#3a3226" };
+  function pixelWorker() {
+    let rects = "";
+    PIXEL_ROWS.forEach((row, y) => [...row].forEach((c, x) => { if (PIXEL_COLORS[c]) rects += `<rect x="${x}" y="${y}" width="1" height="1" fill="${PIXEL_COLORS[c]}"/>`; }));
+    return `<svg class="kz-pixel" viewBox="0 0 16 16" width="44" height="44" shape-rendering="crispEdges" aria-hidden="true"><g class="kz-pixel-body">${rects}<g class="kz-pixel-blink"><rect x="3" y="3" width="2" height="2" fill="#e9e6df"/><rect x="9" y="3" width="2" height="2" fill="#e9e6df"/></g></g><g class="kz-pixel-hands"><rect class="kz-ph-a" x="3" y="9" width="2" height="1" fill="#e9e6df"/><rect class="kz-ph-b" x="10" y="9" width="2" height="1" fill="#e9e6df"/></g><g class="kz-pixel-screen"><rect x="3" y="10" width="3" height="1" fill="#c9a24d"/><rect x="7" y="12" width="4" height="1" fill="#c9a24d"/><rect x="4" y="12" width="2" height="1" fill="#8fbf7a"/></g><g class="kz-pixel-bits"><rect x="13" y="6" width="1" height="1" fill="#c9a24d"/><rect x="14" y="3" width="1" height="1" fill="#dcc07a"/><rect x="12" y="1" width="1" height="1" fill="#c9a24d"/></g></svg>`;
+  }
+  window.kazerPixelWorker = pixelWorker;
+
+  window.kazerDecorateThinking = (row, { mode: runMode = "chat", repo = null, prompt = "" } = {}) => {
     const thinking = row.querySelector(".thinking-row");
     if (!thinking) return;
     thinking.classList.add("kz-has-alien");
@@ -387,10 +468,11 @@
     holder.append(createLogo3D({ size: 40, depth: 4, className: `is-thinking${runMode === "computer" ? " is-computer" : ""}` }));
     thinking.prepend(holder);
     if (runMode !== "computer") return;
+    const steps = planComputerSteps(prompt, repo);
+    if (!steps) return;
     const panel = document.createElement("div");
     panel.className = "kz-computer-run";
-    const steps = ["Entendendo a tarefa", repo?.fullName ? `Abrindo ${repo.fullName}` : "Preparando o ambiente", "Planejando as alterações", "Executando ferramentas", "Revisando o resultado"];
-    panel.innerHTML = `<div class="kz-computer-head">${ICONS.computer.replace("<svg", '<svg width="18" height="18"')}<span>KAZER Computer <small>· trabalhando</small></span></div><ol class="kz-computer-steps">${steps.map((step) => `<li>${escapeHtml(step)}</li>`).join("")}</ol>`;
+    panel.innerHTML = `<div class="kz-computer-head">${pixelWorker()}<span>KAZER Computer <small>· ${escapeHtml(steps.title)}</small></span></div><ol class="kz-computer-steps">${steps.list.map((step) => `<li>${escapeHtml(step)}</li>`).join("")}</ol>`;
     thinking.after(panel);
     const items = [...panel.querySelectorAll("li")];
     let step = 0;
@@ -455,7 +537,7 @@
     const blocks = [...content.children];
     if (!blocks.length) return 0;
     const totalWords = (content.textContent || "").split(/\s+/).length;
-    const animateWords = totalWords <= MAX_ANIMATED_WORDS && !window.matchMedia?.("(pointer: coarse), (max-width: 1079px)").matches;
+    const animateWords = totalWords <= (window.matchMedia?.("(pointer: coarse), (max-width: 1079px)").matches ? 320 : MAX_ANIMATED_WORDS);
     content.classList.add("kz-reveal");
     let delay = 0;
     const counter = { value: 0 };
@@ -476,6 +558,7 @@
         delay += type === "code" || type === "visual" ? 260 : 120;
       }
     });
+    content.style.setProperty("--kz-end", `${delay + 500}ms`);
     window.setTimeout(() => {
       content.classList.remove("kz-reveal");
       blocks.forEach((block) => block.classList.remove("kz-in", `kz-in--${blockType(block)}`));
