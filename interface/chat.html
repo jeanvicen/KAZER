@@ -4973,6 +4973,7 @@
     <link rel="stylesheet" href="/interface/kazer-studio.css?v=20261023" />
     <link rel="stylesheet" href="/interface/kazer-theme.css?v=20261023" />
     <link rel="stylesheet" href="/interface/kazer-px.css?v=20261024" />
+    <link rel="stylesheet" href="/interface/kazer-app.css?v=20261024" />
     <script>
       window.setTimeout(() => {
         const fallbackApp = document.getElementById("app");
@@ -8754,6 +8755,17 @@
         });
         // O checkout do Pro é tratado por kazer-nova.js (PIX via /api/billing/checkout).
         window.kazerOpenPlans = () => openPlansScreen();
+        // Ponte para a camada de app (kazer-app.js): histórico, conta e telas.
+        window.kazerHistory = {
+          list: () => readChatHistory(),
+          open: (id) => { setView("new-chat"); openChatFromHistory(id); },
+          update: (id, patch) => { saveChatHistory(readChatHistory().map((item) => item.id === id ? { ...item, ...patch } : item)); renderChatHistory(); },
+          remove: (id) => { saveChatHistory(readChatHistory().filter((item) => item.id !== id)); renderChatHistory(); },
+          dateLabel: (value) => historyDateLabel(value),
+        };
+        window.kazerOpenSettings = (section) => openSettings(section);
+        window.kazerOpenAccount = () => openAccountScreen();
+        window.kazerAccount = () => ({ name: currentUser?.user_metadata?.display_name || currentUser?.user_metadata?.full_name || currentUser?.email?.split("@")[0] || "Kazer", email: currentUser?.email || "", avatar: currentUser?.user_metadata?.avatar_url || "" });
         proAction.addEventListener("click", openPro);
         creditProButton?.addEventListener("click", openPro);
         attachmentProButton?.addEventListener("click", openPro);
@@ -9107,6 +9119,7 @@
     <script src="/interface/kazer-studio.js?v=20261023" defer></script>
     <script src="/interface/kazer-engine.js?v=20261023" defer></script>
     <script src="/interface/kazer-px.js?v=20261024" defer></script>
+    <script src="/interface/kazer-app.js?v=20261024" defer></script>
   </body>
 </html>
 
