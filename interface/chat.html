@@ -4974,6 +4974,7 @@
     <link rel="stylesheet" href="/interface/kazer-theme.css?v=20261023" />
     <link rel="stylesheet" href="/interface/kazer-px.css?v=20261024" />
     <link rel="stylesheet" href="/interface/kazer-app.css?v=20261024" />
+    <link rel="stylesheet" href="/interface/kazer-gold.css?v=20261024" />
     <script>
       window.setTimeout(() => {
         const fallbackApp = document.getElementById("app");
@@ -8312,7 +8313,10 @@
           const idempotencyKey = createBackgroundId();
           // Ferramentas (GitHub, Vercel, MCP, Computer) só rodam na resposta em primeiro plano.
           const chatModel = window.kazerModel === "flame" ? "flame" : "kz";
-          const engineMode = chatMode === "computer" && window.kazerEngineMode === true;
+          // No Computer, pedidos de jogo ligam a KAZER Engine automaticamente.
+          const gameRequest = /\b(?:jogo|jogos|game|games|fase|level|platformer|plataforma 2d|personagem jog[aá]vel|godot|sprite|inimigos?|moedas?|top-?down|arcade|2d)\b/i.test(prompt);
+          const engineMode = chatMode === "computer" && (gameRequest || document.body.classList.contains("kz-engine-open"));
+          window.kazerEngineMode = engineMode;
           const needsForegroundTools = !useWebResearch && (Boolean(githubRepo) || chatMode === "computer" || chatModel === "flame" || Boolean(window.kazerVercelConnected));
           const needsForegroundConnector = !useWebResearch && mcpConnectorIds.length > 0 || needsForegroundTools;
           if (files.length) {

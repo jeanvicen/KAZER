@@ -127,7 +127,7 @@
   drawer.setAttribute("aria-label", "Menu e sessões");
   drawer.innerHTML = `<header class="kz-drawer-head"><button class="kz-round" type="button" data-settings aria-label="Configurações">${I.gear}</button><strong data-name>KAZER</strong><button class="kz-round" type="button" data-search aria-label="Buscar sessões">${I.search}</button><button class="kz-round" type="button" data-close aria-label="Voltar ao chat">${I.arrow}</button></header>
     <label class="kz-drawer-search" hidden>${I.search}<input type="search" placeholder="Buscar sessões" autocomplete="off"></label>
-    <nav class="kz-drawer-nav"><button type="button" data-go="connectors">${I.plug}<span>Conectores</span></button><button type="button" data-go="computer">${I.computer}<span>Computer</span></button><button type="button" data-go="engine">${I.engine}<span>Engine</span></button><button type="button" data-go="memory">${I.memory}<span>Memórias</span></button><button type="button" data-go="docs">${I.docs}<span>Documentos</span></button></nav>
+    <nav class="kz-drawer-nav"><button type="button" data-go="connectors">${I.plug}<span>Conectores</span></button><button type="button" data-go="computer">${I.computer}<span>Computer</span></button><button type="button" data-go="memory">${I.memory}<span>Memórias</span></button><button type="button" data-go="docs">${I.docs}<span>Documentos</span></button></nav>
     <div class="kz-drawer-sessions"><div class="kz-sessions-head"><h3>Sessões</h3><label class="kz-filter"><select aria-label="Filtrar sessões"><option value="all">Tudo</option><option value="pinned">Fixadas</option><option value="archived">Arquivadas</option></select>${I.down}</label></div><ol class="kz-sessions"></ol></div>
     <button class="kz-fab" type="button" data-new aria-label="Nova conversa">${I.plus}</button>`;
   document.body.append(drawer);
@@ -173,7 +173,6 @@
     closeDrawer();
     if (go === "connectors") window.setTimeout(() => window.kazerOpenConnectors?.(), 120);
     if (go === "computer") window.kazerSetMode?.("computer");
-    if (go === "engine") { window.kazerSetMode?.("computer"); window.kazerOpenEngine?.(); }
     if (go === "memory") window.setTimeout(() => $("#memoryOpenButton")?.click(), 120);
     if (go === "docs") window.location.href = "/documentos";
   });

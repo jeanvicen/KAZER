@@ -199,3 +199,18 @@ html, body, .atmosphere { background: #141617 !important; }
 .input-wrapper input { background: rgba(255, 255, 255, .05) !important; border-color: rgba(255, 255, 255, .1) !important; }
 .kz-auth-tabs { background: rgba(255, 255, 255, .05) !important; border-color: rgba(255, 255, 255, .08) !important; }
 .submit-btn { background: #e8eaea !important; box-shadow: 0 18px 40px -18px rgba(232, 234, 234, .45) !important; }
+
+/* ── Login dourado (metálico discreto) ──────────────────────────────── */
+.kz-aurora i:nth-child(1) { background: radial-gradient(circle, rgba(138, 106, 34, .7), transparent 62%) !important; }
+.kz-aurora i:nth-child(2) { background: radial-gradient(circle, rgba(75, 59, 22, .75), transparent 62%) !important; }
+.kz-aurora i:nth-child(3) { background: radial-gradient(circle, rgba(185, 138, 53, .5), transparent 62%) !important; }
+.kz-px-welcome { background: linear-gradient(100deg, #f1e6c8 0%, #DCC07A 35%, #f5ecd2 55%, #C9A24D 80%, #efe2bf 100%) !important; background-size: 220% 100% !important; -webkit-background-clip: text !important; background-clip: text !important; color: transparent !important; animation: kz-login-gold 9s ease-in-out infinite; }
+@keyframes kz-login-gold { 0%, 100% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } }
+.kz-auth-pill { background: linear-gradient(140deg, #E2C67F, #C9A24D 48%, #B08A3A) !important; box-shadow: 0 6px 18px -6px rgba(201, 162, 77, .55) !important; }
+.kz-auth-tabs button[aria-selected="true"] { color: #1a1406 !important; }
+.submit-btn { background: linear-gradient(140deg, #E2C67F 0%, #C9A24D 48%, #B08A3A 100%) !important; box-shadow: 0 18px 40px -18px rgba(201, 162, 77, .6), inset 0 1px 0 rgba(255, 240, 200, .5) !important; }
+.submit-btn .btn-text { color: #1a1406 !important; }
+.input-wrapper input:focus { border-color: rgba(201, 162, 77, .55) !important; box-shadow: 0 0 0 4px rgba(201, 162, 77, .12) !important; }
+.card::after { background: conic-gradient(from var(--kz-login-angle, 0deg), transparent 0 62%, rgba(226, 198, 127, .75) 74%, rgba(201, 162, 77, .5) 82%, transparent 92%) !important; }
+.switch-link, .label-action { color: #DCC07A !important; }
+.kz-px-features li::before { background: #C9A24D !important; box-shadow: 0 0 8px rgba(201, 162, 77, .8) !important; }

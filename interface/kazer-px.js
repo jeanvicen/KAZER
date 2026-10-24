@@ -22,15 +22,6 @@
     });
     const logo = $(".kz-rail-logo", rail);
     if (logo && !logo.querySelector(".kz-px-word")) logo.insertAdjacentHTML("beforeend", '<span class="kz-px-word">kazer</span>');
-    const engine = document.createElement("button");
-    engine.type = "button";
-    engine.className = "kz-rail-btn";
-    engine.dataset.rail = "engine";
-    engine.dataset.tip = "Engine";
-    engine.setAttribute("aria-label", "KAZER Engine");
-    engine.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 11h4M8 9v4M15 12h.01M18 10h.01"/><rect x="2" y="6" width="20" height="12" rx="6"/></svg><span class="kz-px-label">Engine</span>';
-    engine.addEventListener("click", () => { window.kazerSetMode?.("computer"); window.kazerOpenEngine?.(); });
-    $('.kz-rail-btn[data-rail="computer"]', rail)?.after(engine);
     const pro = $(".kz-rail-pro", rail);
     if (pro && !pro.querySelector(".kz-px-label")) pro.innerHTML = '<span class="kz-px-pro-mark">PRO</span><span class="kz-px-label"><b>KAZER Pro</b><small>10× mais uso e pesquisa a fundo</small></span>';
     const toggle = document.createElement("button");

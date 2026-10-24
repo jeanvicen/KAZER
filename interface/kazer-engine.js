@@ -470,7 +470,9 @@
   window.kazerCloseEngine = closeEngine;
 
   /* ── Botão "Engine" no composer (só no modo Computer) ──────────────── */
-  const modes = document.querySelector(".kz-modes");
+  // O Computer liga a Engine sozinho quando o pedido é um jogo (chat.html);
+  // não há mais botão separado no campo de mensagem.
+  const modes = null;
   if (modes && !document.querySelector(".kz-engine-toggle")) {
     const toggle = document.createElement("button");
     toggle.type = "button";
