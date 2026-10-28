@@ -1,0 +1,13 @@
+# Deny-by-default: configuração documental, ainda não carregada pelo runtime.
+default_policy: deny
+permissions:
+  - read
+  - write
+  - network
+  - shell
+  - filesystem
+  - admin
+human_approval_required:
+  - write
+  - shell
+  - admin
