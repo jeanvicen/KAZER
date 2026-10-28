@@ -1,15 +1,29 @@
-"""Contrato para chamadas API com destinos e escopos autorizados."""
+"""Chamadas API somente a destinos e escopos previamente autorizados."""
 
-from typing import Any
+from typing import ClassVar
+from pydantic import BaseModel, ConfigDict
+
+from kazer.tools.base_tool import BaseTool, Permission, ToolResult
 
 
-class ApiClientTool:
-    """Contrato para chamadas API com destinos e escopos autorizados."""
+class ApiClientToolInput(BaseModel):
+    """Schema inicial estrito; campos operacionais serão definidos na implementação."""
 
-    def __init__(self) -> None:
-        """Reserva ponto de injeção de dependências; sem efeitos colaterais."""
-        raise NotImplementedError("Este contrato ainda não foi implementado.")
+    model_config = ConfigDict(extra="forbid", frozen=True)
 
-    def execute(self, *args: Any, **kwargs: Any) -> Any:
-        """Representa operação futura, ainda sem implementação."""
-        raise NotImplementedError("Este contrato ainda não foi implementado.")
+
+class ApiClientTool(BaseTool):
+    """Chamadas API somente a destinos e escopos previamente autorizados."""
+
+    name: ClassVar[str] = "api_client"
+    description: ClassVar[str] = "Chamadas API somente a destinos e escopos previamente autorizados."
+    input_schema: ClassVar[type[BaseModel]] = ApiClientToolInput
+    permissions: ClassVar[frozenset[Permission]] = frozenset({
+        Permission.NETWORK,
+        Permission.READ,
+    })
+    destructive: ClassVar[bool] = False
+
+    async def execute(self, arguments: BaseModel) -> ToolResult:
+        """Executa somente após passagem obrigatória pelo tool_guard."""
+        raise NotImplementedError("Ferramenta intencionalmente não implementada.")

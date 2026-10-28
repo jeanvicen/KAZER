@@ -1,15 +1,28 @@
-"""Contrato para operações de banco limitadas por política."""
+"""Operações de banco limitadas por política e escopo de usuário."""
 
-from typing import Any
+from typing import ClassVar
+from pydantic import BaseModel, ConfigDict
+
+from kazer.tools.base_tool import BaseTool, Permission, ToolResult
 
 
-class DatabaseTool:
-    """Contrato para operações de banco limitadas por política."""
+class DatabaseToolInput(BaseModel):
+    """Schema inicial estrito; campos operacionais serão definidos na implementação."""
 
-    def __init__(self) -> None:
-        """Reserva ponto de injeção de dependências; sem efeitos colaterais."""
-        raise NotImplementedError("Este contrato ainda não foi implementado.")
+    model_config = ConfigDict(extra="forbid", frozen=True)
 
-    def execute(self, *args: Any, **kwargs: Any) -> Any:
-        """Representa operação futura, ainda sem implementação."""
-        raise NotImplementedError("Este contrato ainda não foi implementado.")
+
+class DatabaseTool(BaseTool):
+    """Operações de banco limitadas por política e escopo de usuário."""
+
+    name: ClassVar[str] = "database"
+    description: ClassVar[str] = "Operações de banco limitadas por política e escopo de usuário."
+    input_schema: ClassVar[type[BaseModel]] = DatabaseToolInput
+    permissions: ClassVar[frozenset[Permission]] = frozenset({
+        Permission.READ,
+    })
+    destructive: ClassVar[bool] = False
+
+    async def execute(self, arguments: BaseModel) -> ToolResult:
+        """Executa somente após passagem obrigatória pelo tool_guard."""
+        raise NotImplementedError("Ferramenta intencionalmente não implementada.")
