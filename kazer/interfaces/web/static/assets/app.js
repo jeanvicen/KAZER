@@ -27,6 +27,7 @@ const ui = {
   lede: $("auth-lede"),
   form: $("auth-form"),
   email: $("email"),
+  recoveryCode: $("recovery-code"),
   password: $("password"),
   confirm: $("confirm"),
   hint: $("password-hint"),
