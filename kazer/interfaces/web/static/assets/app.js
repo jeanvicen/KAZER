@@ -1,6 +1,7 @@
-// Tela de entrada do KAZER: orquestra a abertura, os modos de autenticação e a
-// cena digital. Toda decisão de autenticação acontece no servidor; o navegador
-// nunca guarda senha nem token (o cookie de sessão é HttpOnly).
+// Tela de entrada do KAZER: abertura em partículas, início com a cena e as duas
+// entradas, e a vista de conta (entrar, criar, recuperar, redefinir). Toda
+// decisão de autenticação acontece no servidor; o navegador nunca guarda senha
+// nem token (o cookie de sessão é HttpOnly).
 
 import { playIntro } from "./intro.js";
 import { startScene } from "./scene.js";
@@ -13,12 +14,15 @@ const DISPLAY_FONT = '"Grenze Gotisch", Georgia, serif';
 const $ = (id) => document.getElementById(id);
 const ui = {
   intro: $("intro"),
+  home: $("home"),
+  auth: $("auth"),
+  openSignup: $("open-signup"),
+  openSignin: $("open-signin"),
+  back: $("back"),
+  taglineText: $("tagline-text"),
   formView: $("form-view"),
-  modes: $("modes"),
-  tabs: [$("tab-signin"), $("tab-signup")],
-  heading: $("heading"),
-  headingTitle: $("heading-title"),
-  headingLede: $("heading-lede"),
+  title: $("auth-title"),
+  lede: $("auth-lede"),
   form: $("auth-form"),
   email: $("email"),
   password: $("password"),
@@ -27,12 +31,12 @@ const ui = {
   alert: $("form-alert"),
   alertText: $("form-alert-text"),
   alertAction: $("form-alert-action"),
+  availability: $("availability"),
   submit: $("submit"),
   submitLabel: $("submit-label"),
   forgot: $("forgot"),
   switchLink: $("switch"),
   note: $("privacy-note"),
-  availability: $("availability"),
   notice: $("notice"),
   noticeTitle: $("notice-title"),
   noticeBody: $("notice-body"),
@@ -52,53 +56,56 @@ const MODES = {
   signin: {
     fields: ["email", "password"],
     autocomplete: "current-password",
-    submit: "Continue",
+    title: "Entrar no KAZER",
+    lede: "Use o e-mail e a senha da sua conta.",
+    submit: "Entrar",
   },
   signup: {
     fields: ["email", "password", "confirm"],
     autocomplete: "new-password",
-    submit: "Continue",
+    title: "Criar sua conta",
+    lede: "Só e-mail e senha. Sem login social, sem rastreadores.",
+    submit: "Criar conta",
   },
   recover: {
     fields: ["email"],
-    submit: "Send reset link",
-    title: "Reset your password",
-    lede: "Enter the email for your account. If it exists, we'll send a link to choose a new password.",
+    title: "Recuperar acesso",
+    lede: "Digite o e-mail da conta. Se ela existir, enviaremos um link para criar uma nova senha.",
+    submit: "Enviar link",
   },
   reset: {
     fields: ["password", "confirm"],
     autocomplete: "new-password",
-    submit: "Update password",
-    title: "Choose a new password",
-    lede: "This signs you out on every device.",
+    title: "Nova senha",
+    lede: "Ao salvar, você sai de todos os dispositivos.",
+    submit: "Salvar nova senha",
   },
 };
 
 const FIELD_ERRORS = {
-  invalid_email: ["email", "Enter a valid email address."],
-  password_too_short: ["password", "Use at least 10 characters."],
-  password_too_long: ["password", "Use 128 characters or fewer."],
-  password_too_common: ["password", "This password is too easy to guess. Try a longer phrase."],
+  invalid_email: ["email", "Digite um e-mail válido."],
+  password_too_short: ["password", "Use pelo menos 10 caracteres."],
+  password_too_long: ["password", "Use no máximo 128 caracteres."],
+  password_too_common: ["password", "Essa senha é fácil demais de adivinhar. Tente uma frase mais longa."],
 };
 
 function waitText(seconds) {
-  if (!seconds) return "Too many attempts. Wait a moment and try again.";
-  const minutes = Math.ceil(seconds / 60);
+  if (!seconds) return "Muitas tentativas. Aguarde um pouco e tente de novo.";
   return seconds < 90
-    ? `Too many attempts. Try again in ${seconds} seconds.`
-    : `Too many attempts. Try again in ${minutes} minutes.`;
+    ? `Muitas tentativas. Tente de novo em ${seconds} segundos.`
+    : `Muitas tentativas. Tente de novo em ${Math.ceil(seconds / 60)} minutos.`;
 }
 
 function generalError(result) {
   const code = result.data.error;
-  if (code === "network") return "Can't reach KAZER. Check your connection and try again.";
+  if (code === "network") return "Sem conexão com o KAZER. Verifique sua internet e tente de novo.";
   if (code === "rate_limited") return waitText(result.data.retry_after);
-  if (code === "delivery_failed") return "We couldn't send the email right now. Try again in a moment.";
-  if (code === "auth_unavailable") return "Accounts aren't open on this deployment yet.";
+  if (code === "delivery_failed") return "Não conseguimos enviar o e-mail agora. Tente de novo em instantes.";
+  if (code === "auth_unavailable") return "As contas ainda não estão abertas neste ambiente.";
   if (["forbidden_origin", "unsupported_media_type", "payload_too_large", "invalid_request"].includes(code)) {
-    return "This request was blocked. Reload the page and try again.";
+    return "A solicitação foi bloqueada. Recarregue a página e tente de novo.";
   }
-  return "KAZER couldn't complete this right now. Try again.";
+  return "O KAZER não conseguiu concluir agora. Tente de novo.";
 }
 
 // ---------- API ----------
@@ -134,19 +141,123 @@ async function api(path, body, { timeout = 15000 } = {}) {
   }
 }
 
-// ---------- Estado e modos ----------
+// ---------- Estado ----------
 
 const state = {
+  view: "home",
   mode: "signin",
   busy: false,
   resetToken: null,
+  session: null,
   // O servidor informa se há armazenamento persistente; sem ele, nada de login simulado.
   available: true,
 };
 
+let scene = null;
+
 function setHidden(element, hidden) {
   element.hidden = hidden;
 }
+
+// ---------- Vistas (início ↔ conta) ----------
+
+function animateView(element, back) {
+  if (reducedMotion) return;
+  const name = back ? "is-entering-back" : "is-entering";
+  element.classList.remove("is-entering", "is-entering-back");
+  void element.offsetWidth;
+  element.classList.add(name);
+  element.addEventListener("animationend", () => element.classList.remove(name), { once: true });
+}
+
+function showView(view, { back = false } = {}) {
+  if (state.view === view) return;
+  state.view = view;
+  const auth = view === "auth";
+  setHidden(ui.home, auth);
+  setHidden(ui.auth, !auth);
+  animateView(auth ? ui.auth : ui.home, back);
+  window.scrollTo(0, 0);
+  if (auth) scene?.pause("auth");
+  else scene?.resume("auth");
+  tagline.toggle(!auth);
+}
+
+// O botão voltar do celular volta ao início em vez de sair do site.
+function openAuth(mode, { focus = true } = {}) {
+  if (state.session) enterApp(state.session);
+  else setMode(mode);
+  if (state.view !== "auth") window.history.pushState({ view: "auth" }, "");
+  showView("auth");
+  if (focus) focusAuth();
+}
+
+function goHome() {
+  if (window.history.state?.view === "auth") window.history.back();
+  else showView("home", { back: true });
+}
+
+window.addEventListener("popstate", (event) => {
+  if (event.state?.view === "auth") showView("auth");
+  else showView("home", { back: true });
+});
+
+function focusAuth() {
+  if (!ui.notice.hidden) {
+    ui.noticeTitle.focus({ preventScroll: true });
+    return;
+  }
+  ui.title.focus({ preventScroll: true });
+  if (finePointer) {
+    const first = MODES[state.mode].fields.map((name) => ui[name]).find((input) => !input.value);
+    (first || ui[MODES[state.mode].fields[0]]).focus({ preventScroll: true });
+  }
+}
+
+ui.openSignup.addEventListener("click", () => openAuth("signup"));
+ui.openSignin.addEventListener("click", () => openAuth("signin"));
+ui.back.addEventListener("click", goHome);
+
+// ---------- Frase digitada ----------
+
+const tagline = (() => {
+  const words = ["executa", "constrói", "resolve", "cria"];
+  const lead = "O KAZER ";
+  let word = 0;
+  let chars = words[0].length;
+  let deleting = false;
+  let timer = 0;
+  let running = false;
+
+  function step() {
+    const target = words[word];
+    if (!deleting && chars === target.length) {
+      deleting = true;
+      timer = window.setTimeout(step, 2400);
+      return;
+    }
+    if (deleting && chars === 0) {
+      deleting = false;
+      word = (word + 1) % words.length;
+    }
+    chars += deleting ? -1 : 1;
+    ui.taglineText.textContent = lead + words[word].slice(0, chars);
+    timer = window.setTimeout(step, deleting ? 45 : 85);
+  }
+
+  return {
+    toggle(on) {
+      if (reducedMotion || on === running) return;
+      running = on && !document.hidden;
+      window.clearTimeout(timer);
+      if (running) timer = window.setTimeout(step, 1200);
+    },
+  };
+})();
+
+document.addEventListener("visibilitychange", () => tagline.toggle(state.view === "home" && !document.hidden));
+
+// ---------- Formulário ----------
 
 function clearFeedback() {
   for (const name of Object.keys(fields)) {
@@ -187,23 +298,8 @@ function setMode(mode, { focus = false } = {}) {
   const previous = state.mode;
   state.mode = mode;
   clearFeedback();
-
-  const tabbed = mode === "signin" || mode === "signup";
-  setHidden(ui.modes, !tabbed);
-  setHidden(ui.heading, tabbed);
-  ui.modes.dataset.active = mode;
-  ui.tabs.forEach((tab) => {
-    const selected = tab.dataset.mode === mode;
-    tab.setAttribute("aria-selected", String(selected));
-    tab.tabIndex = selected ? 0 : -1;
-  });
-  if (tabbed) {
-    ui.form.setAttribute("aria-labelledby", mode === "signin" ? "tab-signin" : "tab-signup");
-  } else {
-    ui.headingTitle.textContent = config.title;
-    ui.headingLede.textContent = config.lede;
-    ui.form.setAttribute("aria-labelledby", "heading-title");
-  }
+  ui.title.textContent = config.title;
+  ui.lede.textContent = config.lede;
 
   for (const [name, wrapper] of Object.entries(fields)) {
     const visible = config.fields.includes(name);
@@ -219,31 +315,20 @@ function setMode(mode, { focus = false } = {}) {
     }
   }
   if (config.autocomplete) ui.password.autocomplete = config.autocomplete;
-  setHidden(ui.hint, !(mode === "signup" || mode === "reset"));
-  ui.password.setAttribute(
-    "aria-describedby",
-    mode === "signup" || mode === "reset" ? "password-hint password-error" : "password-error",
-  );
+  const newPassword = mode === "signup" || mode === "reset";
+  setHidden(ui.hint, !newPassword);
+  ui.password.setAttribute("aria-describedby", newPassword ? "password-hint password-error" : "password-error");
   ui.submitLabel.textContent = config.submit;
   setHidden(ui.forgot, mode !== "signin");
   setHidden(ui.note, mode !== "signup");
-  if (mode === "signin") linkContent("No account?", "Create one");
-  else if (mode === "signup") linkContent("Have an account?", "Sign in");
-  else linkContent("", "Back to sign in");
+  if (mode === "signin") linkContent("Não tem conta?", "Criar conta");
+  else if (mode === "signup") linkContent("Já tem conta?", "Entrar");
+  else linkContent("", "Voltar para entrar");
   ui.switchLink.parentElement.classList.toggle("is-single", mode !== "signin");
 
-  showForm();
-  if (focus) {
-    const first = config.fields.map((name) => ui[name]).find((input) => !input.value) || ui[config.fields[0]];
-    if (tabbed) ui.tabs.find((tab) => tab.dataset.mode === mode).focus();
-    else ui.headingTitle.focus();
-    if (!tabbed && finePointer) first.focus();
-  }
-}
-
-function showForm() {
   setHidden(ui.notice, true);
   setHidden(ui.formView, false);
+  if (focus) focusAuth();
 }
 
 function setBusy(busy) {
@@ -251,9 +336,6 @@ function setBusy(busy) {
   ui.submit.disabled = busy || !state.available;
   ui.submit.setAttribute("aria-busy", String(busy));
   for (const name of Object.keys(fields)) ui[name].readOnly = busy;
-  ui.tabs.forEach((tab) => {
-    tab.disabled = busy;
-  });
 }
 
 function setUnavailable() {
@@ -280,25 +362,17 @@ function showNotice({ title, body = [], actions = [], status = "" }) {
     ...actions.map((action) => {
       const button = document.createElement("button");
       button.type = "button";
-      button.className = action.primary ? "primary" : "link";
-      if (action.primary) {
-        const label = document.createElement("span");
-        label.className = "primary__label";
-        label.textContent = action.label;
-        const progress = document.createElement("span");
-        progress.className = "primary__progress";
-        progress.setAttribute("aria-hidden", "true");
-        button.append(label, progress);
-      } else {
-        button.textContent = action.label;
-      }
+      button.className = action.primary ? "button button--primary" : "link";
+      button.textContent = action.label;
       button.addEventListener("click", () => action.run(button));
       return button;
     }),
   );
   setHidden(ui.formView, true);
   setHidden(ui.notice, false);
-  if (!root.classList.contains("is-intro")) ui.noticeTitle.focus({ preventScroll: true });
+  if (state.view === "auth" && !root.classList.contains("is-intro")) {
+    ui.noticeTitle.focus({ preventScroll: true });
+  }
 }
 
 function backToSignIn(status = "") {
@@ -312,7 +386,7 @@ async function resend(email, button, report) {
   button.disabled = false;
   report(
     result.ok
-      ? "If this account still needs confirmation, a new link is on its way."
+      ? "Se a conta ainda precisar de confirmação, um novo link está a caminho."
       : generalError(result),
   );
 }
@@ -322,12 +396,13 @@ async function resend(email, button, report) {
 // Ponto de integração: quando a interface principal do KAZER existir, a
 // navegação pós-login acontece aqui (por exemplo, `location.assign("/app")`).
 function enterApp(session) {
+  state.session = session;
   showNotice({
-    title: "Session active",
-    body: ["Signed in as ", emailNode(session.email), "."],
+    title: "Sessão ativa",
+    body: ["Conectado como ", emailNode(session.email), "."],
     actions: [
       {
-        label: "Sign out",
+        label: "Sair",
         primary: true,
         run: async (button) => {
           button.disabled = true;
@@ -339,6 +414,7 @@ function enterApp(session) {
             ui.noticeStatus.textContent = generalError(result);
             return;
           }
+          state.session = null;
           ui.password.value = "";
           backToSignIn();
         },
@@ -356,18 +432,18 @@ function validateLocally() {
   const errors = [];
   const email = ui.email.value.trim();
   if (MODES[mode].fields.includes("email")) {
-    if (!email) errors.push(["email", "Enter your email address."]);
-    else if (!EMAIL_SHAPE.test(email)) errors.push(["email", "Enter a valid email address."]);
+    if (!email) errors.push(["email", "Digite seu e-mail."]);
+    else if (!EMAIL_SHAPE.test(email)) errors.push(["email", "Digite um e-mail válido."]);
   }
   if (MODES[mode].fields.includes("password")) {
     const password = ui.password.value;
-    if (!password) errors.push(["password", "Enter your password."]);
-    else if (mode !== "signin" && password.length < 10) errors.push(["password", "Use at least 10 characters."]);
-    else if (password.length > 128) errors.push(["password", "Use 128 characters or fewer."]);
+    if (!password) errors.push(["password", "Digite sua senha."]);
+    else if (mode !== "signin" && password.length < 10) errors.push(["password", "Use pelo menos 10 caracteres."]);
+    else if (password.length > 128) errors.push(["password", "Use no máximo 128 caracteres."]);
   }
   if (MODES[mode].fields.includes("confirm")) {
-    if (!ui.confirm.value) errors.push(["confirm", "Repeat your password."]);
-    else if (ui.confirm.value !== ui.password.value) errors.push(["confirm", "Passwords don't match."]);
+    if (!ui.confirm.value) errors.push(["confirm", "Repita a senha."]);
+    else if (ui.confirm.value !== ui.password.value) errors.push(["confirm", "As senhas não coincidem."]);
   }
   return errors;
 }
@@ -394,11 +470,11 @@ async function submitSignIn(email) {
   }
   if (result.data.error === "invalid_credentials") {
     ui.password.value = "";
-    showAlert("Incorrect email or password.");
+    showAlert("E-mail ou senha incorretos.");
     ui.password.focus();
   } else if (result.data.error === "email_not_verified") {
-    showAlert("Confirm your email before signing in.", {
-      label: "Resend confirmation link",
+    showAlert("Confirme seu e-mail antes de entrar.", {
+      label: "Reenviar link de confirmação",
       run: () => resend(email, ui.alertAction, (message) => {
         ui.alertText.textContent = message;
       }),
@@ -417,20 +493,20 @@ async function submitSignUp(email) {
   ui.password.value = "";
   ui.confirm.value = "";
   showNotice({
-    title: "Check your inbox",
+    title: "Confira seu e-mail",
     body: [
-      "We sent a message to ",
+      "Enviamos uma mensagem para ",
       emailNode(email),
-      ". Follow the link inside to activate your account. It expires in 24 hours.",
+      ". Abra o link para ativar sua conta. Ele vale por 24 horas.",
     ],
     actions: [
       {
-        label: "Resend link",
+        label: "Reenviar link",
         run: (button) => resend(email, button, (message) => {
           ui.noticeStatus.textContent = message;
         }),
       },
-      { label: "Back to sign in", run: () => backToSignIn() },
+      { label: "Voltar para entrar", run: () => backToSignIn() },
     ],
   });
 }
@@ -442,13 +518,13 @@ async function submitRecover(email) {
     return;
   }
   showNotice({
-    title: "Check your inbox",
+    title: "Confira seu e-mail",
     body: [
-      "If an account exists for ",
+      "Se existir uma conta para ",
       emailNode(email),
-      ", a reset link will arrive shortly. It expires in 30 minutes.",
+      ", o link chega em instantes. Ele vale por 30 minutos.",
     ],
-    actions: [{ label: "Back to sign in", run: () => backToSignIn() }],
+    actions: [{ label: "Voltar para entrar", run: () => backToSignIn() }],
   });
 }
 
@@ -462,20 +538,20 @@ async function submitReset() {
     ui.password.value = "";
     ui.confirm.value = "";
     showNotice({
-      title: "Password updated",
-      body: ["You've been signed out on every device. Sign in with your new password."],
-      actions: [{ label: "Sign in", primary: true, run: () => backToSignIn() }],
+      title: "Senha atualizada",
+      body: ["Você saiu de todos os dispositivos. Entre com a nova senha."],
+      actions: [{ label: "Entrar", primary: true, run: () => backToSignIn() }],
     });
     return;
   }
   if (result.data.error === "invalid_token") {
     state.resetToken = null;
     showNotice({
-      title: "Link expired",
-      body: ["This reset link is invalid or has already been used. Request a new one."],
+      title: "Link expirado",
+      body: ["Este link é inválido ou já foi usado. Peça um novo."],
       actions: [
-        { label: "Request a new link", primary: true, run: () => setMode("recover", { focus: true }) },
-        { label: "Back to sign in", run: () => backToSignIn() },
+        { label: "Pedir novo link", primary: true, run: () => setMode("recover", { focus: true }) },
+        { label: "Voltar para entrar", run: () => backToSignIn() },
       ],
     });
     return;
@@ -515,21 +591,6 @@ for (const name of Object.keys(fields)) {
   });
 }
 
-// ---------- Alternância (padrão WAI-ARIA de abas) ----------
-
-ui.tabs.forEach((tab, index) => {
-  tab.addEventListener("click", () => {
-    if (state.mode !== tab.dataset.mode) setMode(tab.dataset.mode);
-  });
-  tab.addEventListener("keydown", (event) => {
-    if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
-    event.preventDefault();
-    const next =
-      event.key === "Home" ? 0 : event.key === "End" ? 1 : (index + (event.key === "ArrowRight" ? 1 : -1) + 2) % 2;
-    setMode(ui.tabs[next].dataset.mode, { focus: true });
-  });
-});
-
 ui.forgot.addEventListener("click", () => setMode("recover", { focus: true }));
 ui.switchLink.addEventListener("click", () => {
   if (state.mode === "signin") setMode("signup", { focus: true });
@@ -537,8 +598,6 @@ ui.switchLink.addEventListener("click", () => {
 });
 
 // ---------- Teclado virtual ----------
-
-let scene = null;
 
 function watchKeyboard() {
   const viewport = window.visualViewport;
@@ -559,10 +618,7 @@ function watchKeyboard() {
     if (open === root.classList.contains("kb-open")) return;
     root.classList.toggle("kb-open", open);
     if (open) {
-      scene?.pause("keyboard");
       window.requestAnimationFrame(() => document.activeElement?.scrollIntoView({ block: "center" }));
-    } else {
-      scene?.resume("keyboard");
     }
   };
   viewport.addEventListener("resize", update);
@@ -577,7 +633,7 @@ function watchKeyboard() {
 function takeLinkAction() {
   const hash = window.location.hash.slice(1);
   if (!hash) return null;
-  window.history.replaceState(null, "", window.location.pathname + window.location.search);
+  window.history.replaceState(window.history.state, "", window.location.pathname + window.location.search);
   const [key, value = ""] = hash.split("=", 2);
   if (key === "recover") return { type: "recover" };
   if ((key === "verify" || key === "reset") && /^[\w-]{20,128}$/.test(value)) {
@@ -594,29 +650,31 @@ function handleLinkAction(action) {
     state.resetToken = action.token;
     setMode("reset");
   } else if (action.type === "verify") {
-    showNotice({ title: "Confirming your email", status: "Checking the link…" });
+    showNotice({ title: "Confirmando seu e-mail", status: "Verificando o link…" });
     api("/api/auth/verify-email", { token: action.token }).then((result) => {
       if (result.ok) {
         showNotice({
-          title: "Email confirmed",
-          body: ["Your account is active. Sign in to continue."],
-          actions: [{ label: "Sign in", primary: true, run: () => backToSignIn() }],
+          title: "E-mail confirmado",
+          body: ["Sua conta está ativa. Entre para continuar."],
+          actions: [{ label: "Entrar", primary: true, run: () => backToSignIn() }],
         });
       } else if (result.data.error === "invalid_token") {
         showNotice({
-          title: "Link expired",
-          body: ["This confirmation link is invalid or has already been used. Sign in to get a new one."],
-          actions: [{ label: "Sign in", primary: true, run: () => backToSignIn() }],
+          title: "Link expirado",
+          body: ["Este link de confirmação é inválido ou já foi usado. Entre para receber um novo."],
+          actions: [{ label: "Entrar", primary: true, run: () => backToSignIn() }],
         });
       } else {
         showNotice({
-          title: "Couldn't confirm",
+          title: "Não foi possível confirmar",
           body: [generalError(result)],
-          actions: [{ label: "Back to sign in", run: () => backToSignIn() }],
+          actions: [{ label: "Voltar para entrar", run: () => backToSignIn() }],
         });
       }
     });
   }
+  if (state.view !== "auth") window.history.pushState({ view: "auth" }, "");
+  showView("auth");
 }
 
 // ---------- Abertura ----------
@@ -626,11 +684,10 @@ function revealInterface() {
   root.classList.add("is-revealed");
   if (!scene) {
     scene = startScene(ui.scene, { reducedMotion });
-    if (root.classList.contains("kb-open")) scene.pause("keyboard");
+    if (state.view === "auth") scene.pause("auth");
   }
-  if (!ui.notice.hidden) ui.noticeTitle.focus({ preventScroll: true });
-  else if (finePointer && state.mode !== "reset") ui.email.focus({ preventScroll: true });
-  else if (finePointer) ui.password.focus({ preventScroll: true });
+  tagline.toggle(state.view === "home");
+  if (state.view === "auth") focusAuth();
 }
 
 function withTimeout(promise, ms, fallback) {
@@ -639,6 +696,7 @@ function withTimeout(promise, ms, fallback) {
 
 async function boot() {
   const linkAction = takeLinkAction();
+  window.history.replaceState({ view: "home" }, "");
   setMode("signin");
   watchKeyboard();
   // Link colado numa aba já aberta muda só o fragmento, sem recarregar.
@@ -649,15 +707,17 @@ async function boot() {
     withTimeout(document.fonts.load(`500 64px ${DISPLAY_FONT}`).catch(() => null), 700, null),
   ]);
 
+  if (session?.ok && session.data.available === false) setUnavailable();
+
   // Sessão válida: sem replay da abertura completa (links de e-mail têm prioridade).
   if (session?.ok && session.data.authenticated && !linkAction) {
     ui.intro.remove();
+    openAuth("signin", { focus: false });
     enterApp(session.data);
     revealInterface();
     return;
   }
 
-  if (session?.ok && session.data.available === false) setUnavailable();
   handleLinkAction(linkAction);
   if (reducedMotion || !ui.intro.getContext) {
     ui.intro.remove();

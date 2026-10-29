@@ -19,13 +19,13 @@ def verification_message(to: str, origin: str, token: str) -> MailMessage:
     """Link de confirmação de e-mail (24 h, uso único)."""
     return MailMessage(
         to=to,
-        subject="Confirm your KAZER account",
+        subject="Confirme sua conta KAZER",
         body=_paragraphs(
-            "Confirm the email address for your KAZER account:",
+            "Confirme o e-mail da sua conta KAZER:",
             f"{origin}/#verify={token}",
-            "The link expires in 24 hours and works once.",
-            "If you didn't create a KAZER account, ignore this message. "
-            "Unconfirmed accounts are deleted automatically after 7 days.",
+            "O link vale por 24 horas e funciona uma única vez.",
+            "Se você não criou uma conta no KAZER, ignore esta mensagem. "
+            "Contas não confirmadas são apagadas automaticamente após 7 dias.",
         ),
     )
 
@@ -34,13 +34,12 @@ def existing_account_message(to: str, origin: str) -> MailMessage:
     """Aviso enviado quando alguém tenta registrar um e-mail que já tem conta."""
     return MailMessage(
         to=to,
-        subject="Your KAZER account",
+        subject="Sua conta KAZER",
         body=_paragraphs(
-            "Someone tried to create a KAZER account with this email address, "
-            "which already has one.",
-            "If it was you, sign in or reset your password here:",
+            "Alguém tentou criar uma conta no KAZER com este e-mail, que já possui uma conta.",
+            "Se foi você, entre ou redefina sua senha aqui:",
             f"{origin}/#recover",
-            "If it wasn't you, no action is needed. Your account was not changed.",
+            "Se não foi você, nenhuma ação é necessária. Sua conta não foi alterada.",
         ),
     )
 
@@ -49,12 +48,12 @@ def password_reset_message(to: str, origin: str, token: str) -> MailMessage:
     """Link de redefinição de senha (30 min, uso único)."""
     return MailMessage(
         to=to,
-        subject="Reset your KAZER password",
+        subject="Redefina sua senha do KAZER",
         body=_paragraphs(
-            "Use this link to choose a new password for your KAZER account:",
+            "Use este link para criar uma nova senha para sua conta KAZER:",
             f"{origin}/#reset={token}",
-            "The link expires in 30 minutes and works once. "
-            "Changing your password signs you out on every device.",
-            "If you didn't ask for this, ignore this message. Your password stays the same.",
+            "O link vale por 30 minutos e funciona uma única vez. "
+            "Ao trocar a senha, você sai de todos os dispositivos.",
+            "Se você não pediu isso, ignore esta mensagem. Sua senha continua a mesma.",
         ),
     )

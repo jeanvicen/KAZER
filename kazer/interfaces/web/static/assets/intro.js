@@ -32,13 +32,37 @@ function pickShade() {
   return 0;
 }
 
-// Desenha o nome num canvas auxiliar e amostra uma grade regular de pontos.
+// Símbolo do KAZER (Fenda): duas metades de um losango separadas pelo cursor.
+const MARK = [
+  [30, 1.14, 10, 27.5, 30, 53.86],
+  [34, 10.14, 54, 36.5, 34, 62.86],
+];
+
+// Desenha símbolo + nome com deslocamento horizontal opcional (truque da sombra do halo).
+function paintLockup(g, word, dx) {
+  const s = word.markSize / 64;
+  for (const [ax, ay, bx, by, cx, cy] of MARK) {
+    g.beginPath();
+    g.moveTo(word.centerX + (ax - 32) * s + dx, word.markTop + ay * s);
+    g.lineTo(word.centerX + (bx - 32) * s + dx, word.markTop + by * s);
+    g.lineTo(word.centerX + (cx - 32) * s + dx, word.markTop + cy * s);
+    g.closePath();
+    g.fill();
+  }
+  let x = word.left + dx;
+  word.glyphs.forEach((ch, i) => {
+    g.fillText(ch, x, word.baseline);
+    x += word.widths[i] + word.tracking;
+  });
+}
+
+// Desenha o logo num canvas auxiliar e amostra uma grade regular de pontos.
 function sampleWord(text, fontFamily, width, height, budget) {
   const canvas = document.createElement("canvas");
   canvas.width = Math.ceil(width);
   canvas.height = Math.ceil(height);
   const g = canvas.getContext("2d", { willReadFrequently: true });
-  const fontSize = Math.min(width * 0.21, height * 0.19, 172);
+  const fontSize = Math.min(width * 0.2, height * 0.14, 150);
   g.font = `500 ${fontSize}px ${fontFamily}`;
   const tracking = fontSize * 0.12;
   const glyphs = [...text];
@@ -48,13 +72,14 @@ function sampleWord(text, fontFamily, width, height, budget) {
   const ascent = metrics.actualBoundingBoxAscent || fontSize * 0.72;
   const descent = metrics.actualBoundingBoxDescent || fontSize * 0.04;
   const centerY = height * 0.42;
-  const baseline = centerY + (ascent - descent) / 2;
-  let x = (width - total) / 2;
+  const markSize = fontSize * 0.95;
+  const gapY = fontSize * 0.32;
+  const markTop = centerY - (markSize + gapY + ascent - descent) / 2;
+  const baseline = markTop + markSize + gapY + ascent;
   g.fillStyle = "#fff";
-  glyphs.forEach((ch, i) => {
-    g.fillText(ch, x, baseline);
-    x += widths[i] + tracking;
-  });
+  paintLockup(g, {
+    markSize, markTop, centerX: width / 2, left: (width - total) / 2, glyphs, widths, tracking, baseline,
+  }, 0);
 
   const data = g.getImageData(0, 0, canvas.width, canvas.height).data;
   const inside = (px, py) => data[(py * canvas.width + px) * 4 + 3] > 140;
@@ -82,11 +107,13 @@ function sampleWord(text, fontFamily, width, height, budget) {
     centerX: width / 2,
     centerY,
     fontSize,
+    markSize,
+    markTop,
     halfWidth: total / 2,
   };
 }
 
-// Brilho contido apenas atrás do nome (não se espalha pela tela).
+// Brilho contido apenas atrás do logo (não se espalha pela tela).
 function renderHalo(word, width, height) {
   const canvas = document.createElement("canvas");
   canvas.width = Math.ceil(width);
@@ -98,11 +125,7 @@ function renderHalo(word, width, height) {
   g.shadowBlur = Math.max(18, word.gap * 9);
   g.shadowOffsetX = shift;
   g.fillStyle = "#fff";
-  let x = word.left - shift;
-  word.glyphs.forEach((ch, i) => {
-    g.fillText(ch, x, word.baseline);
-    x += word.widths[i] + word.tracking;
-  });
+  paintLockup(g, word, -shift);
   return canvas;
 }
 
@@ -214,9 +237,9 @@ export function playIntro(canvas, { text, fontFamily, onReveal, onDone }) {
     ctx.clearRect(0, 0, width, height);
 
     if (t >= GLITCH_START && t < GLITCH_END && (glitchBands.length === 0 || Math.random() < 0.35)) {
-      const top = word.centerY - word.fontSize * 0.42;
+      const top = word.centerY - word.fontSize;
       glitchBands = Array.from({ length: 3 }, () => ({
-        y: top + Math.random() * word.fontSize * 0.8,
+        y: top + Math.random() * word.fontSize * 2,
         h: 3 + Math.random() * 10,
         dx: (Math.random() - 0.5) * 18,
       }));

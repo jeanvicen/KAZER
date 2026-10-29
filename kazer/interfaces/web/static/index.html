@@ -1,13 +1,20 @@
 <!doctype html>
-<html lang="en" class="is-booting">
+<html lang="pt-BR" class="is-booting">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
   <meta name="color-scheme" content="dark">
   <meta name="theme-color" content="#030303">
   <meta name="referrer" content="no-referrer">
+  <meta name="description" content="KAZER — assistente de inteligência artificial.">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="KAZER">
   <title>KAZER</title>
-  <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="icon" href="/assets/brand/favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="/assets/brand/apple-touch-icon.png">
   <link rel="preload" href="/assets/fonts/grenze-gotisch-500.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="/assets/kazer.css">
   <script type="module" src="/assets/app.js"></script>
@@ -15,85 +22,105 @@
 <body>
   <canvas class="intro" id="intro" aria-hidden="true"></canvas>
 
-  <main class="stage" id="stage">
-    <section class="auth" id="auth" aria-labelledby="wordmark">
-      <h1 class="wordmark" id="wordmark" data-text="KAZER">KAZER</h1>
+  <main class="app">
+    <!-- Início: cena, frase e as duas entradas -->
+    <section class="view home" id="home" aria-labelledby="brand-name">
+      <header class="brand reveal" data-i="0">
+        <svg class="mark" viewBox="0 0 64 64" aria-hidden="true" focusable="false"><polygon class="mark__l" points="30,1.14 10,27.5 30,53.86"/><polygon class="mark__r" points="34,10.14 54,36.5 34,62.86"/></svg>
+        <h1 class="brand__name" id="brand-name" data-text="KAZER">KAZER</h1>
+      </header>
 
-      <div class="view" id="form-view">
-        <div class="modes reveal" role="tablist" aria-label="Account access" id="modes" data-i="1">
-          <button class="modes__tab" type="button" role="tab" id="tab-signin" data-mode="signin"
-                  aria-selected="true" aria-controls="auth-form">Sign In</button>
-          <button class="modes__tab" type="button" role="tab" id="tab-signup" data-mode="signup"
-                  aria-selected="false" aria-controls="auth-form" tabindex="-1">Create Account</button>
-          <span class="modes__rail" aria-hidden="true"></span>
-        </div>
-
-        <div class="heading reveal" id="heading" hidden>
-          <h2 class="heading__title" id="heading-title" tabindex="-1"></h2>
-          <p class="heading__lede" id="heading-lede"></p>
-        </div>
-
-        <form class="form" id="auth-form" role="tabpanel" aria-labelledby="tab-signin" novalidate>
-          <div class="field reveal" data-field="email" data-i="2">
-            <label class="field__label" for="email">Email</label>
-            <input class="field__input" id="email" name="email" type="email" inputmode="email"
-                   autocomplete="username" autocapitalize="off" spellcheck="false" maxlength="254"
-                   required aria-describedby="email-error">
-            <p class="field__error" id="email-error"></p>
-          </div>
-
-          <div class="field reveal" data-field="password" data-i="3">
-            <label class="field__label" for="password">Password</label>
-            <input class="field__input" id="password" name="password" type="password"
-                   autocomplete="current-password" maxlength="128" required
-                   aria-describedby="password-hint password-error">
-            <p class="field__hint" id="password-hint" hidden>At least 10 characters. A phrase works well.</p>
-            <p class="field__error" id="password-error"></p>
-          </div>
-
-          <div class="field" data-field="confirm" hidden>
-            <label class="field__label" for="confirm">Confirm password</label>
-            <input class="field__input" id="confirm" name="confirm" type="password"
-                   autocomplete="new-password" maxlength="128" aria-describedby="confirm-error">
-            <p class="field__error" id="confirm-error"></p>
-          </div>
-
-          <div class="alert" id="form-alert" role="alert" hidden>
-            <p class="alert__text" id="form-alert-text"></p>
-            <button class="link alert__action" type="button" id="form-alert-action" hidden></button>
-          </div>
-
-          <p class="availability" id="availability" role="status" hidden>Accounts aren't open on this deployment yet.</p>
-
-          <div class="reveal" data-i="4">
-            <button class="primary" type="submit" id="submit">
-              <span class="primary__label" id="submit-label">Continue</span>
-              <span class="primary__progress" aria-hidden="true"></span>
-            </button>
-          </div>
-
-          <div class="links reveal" data-i="5">
-            <button class="link" type="button" id="forgot">Forgot password?</button>
-            <button class="link" type="button" id="switch"></button>
-          </div>
-
-          <p class="note" id="privacy-note" hidden>Your account stores only an email address and a password hash.</p>
-        </form>
+      <div class="hero" id="hero" aria-hidden="true">
+        <canvas class="hero__canvas" id="scene-canvas"></canvas>
       </div>
 
-      <div class="view notice" id="notice" hidden>
-        <h2 class="notice__title" id="notice-title" tabindex="-1"></h2>
-        <p class="notice__body" id="notice-body"></p>
-        <p class="notice__status" id="notice-status" role="status"></p>
-        <div class="notice__actions" id="notice-actions"></div>
+      <p class="tagline reveal" data-i="1">
+        <span class="tagline__lead">Você imagina.</span>
+        <span class="tagline__line" aria-hidden="true"><span id="tagline-text">O KAZER executa</span><span class="caret">_</span></span>
+        <span class="sr-only">O KAZER executa.</span>
+      </p>
+
+      <div class="cta reveal" data-i="2">
+        <button class="button button--primary" type="button" id="open-signup">Criar conta</button>
+        <button class="button button--secondary" type="button" id="open-signin">Entrar</button>
       </div>
+
+      <p class="legal reveal" data-i="3">Ao continuar, você concorda com os <a href="/termos">Termos de Uso</a> e com a <a href="/privacidade">Política de Privacidade</a>.</p>
     </section>
 
-    <section class="scene" id="scene" aria-hidden="true">
-      <canvas class="scene__canvas" id="scene-canvas"></canvas>
+    <!-- Conta: entrar, criar, recuperar e redefinir -->
+    <section class="view auth" id="auth" aria-labelledby="auth-title" hidden>
+      <header class="auth__bar">
+        <button class="icon-button" type="button" id="back" aria-label="Voltar">
+          <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M15 5l-7 7 7 7"/></svg>
+        </button>
+        <svg class="mark mark--bar" viewBox="0 0 64 64" aria-hidden="true" focusable="false"><polygon class="mark__l" points="30,1.14 10,27.5 30,53.86"/><polygon class="mark__r" points="34,10.14 54,36.5 34,62.86"/></svg>
+        <span class="auth__spacer"></span>
+      </header>
+
+      <div class="auth__body">
+        <div id="form-view">
+          <h2 class="auth__title" id="auth-title" tabindex="-1">Entrar no KAZER</h2>
+          <p class="auth__lede" id="auth-lede"></p>
+
+          <form class="form" id="auth-form" aria-labelledby="auth-title" novalidate>
+            <div class="field" data-field="email">
+              <label class="field__label" for="email">E-mail</label>
+              <input class="field__input" id="email" name="email" type="email" inputmode="email"
+                     autocomplete="username" autocapitalize="off" spellcheck="false" maxlength="254"
+                     required aria-describedby="email-error">
+              <p class="field__error" id="email-error"></p>
+            </div>
+
+            <div class="field" data-field="password">
+              <label class="field__label" for="password">Senha</label>
+              <input class="field__input" id="password" name="password" type="password"
+                     autocomplete="current-password" maxlength="128" required
+                     aria-describedby="password-error">
+              <p class="field__hint" id="password-hint" hidden>Mínimo de 10 caracteres. Uma frase funciona bem.</p>
+              <p class="field__error" id="password-error"></p>
+            </div>
+
+            <div class="field" data-field="confirm" hidden>
+              <label class="field__label" for="confirm">Confirmar senha</label>
+              <input class="field__input" id="confirm" name="confirm" type="password"
+                     autocomplete="new-password" maxlength="128" aria-describedby="confirm-error">
+              <p class="field__error" id="confirm-error"></p>
+            </div>
+
+            <div class="alert" id="form-alert" role="alert" hidden>
+              <p class="alert__text" id="form-alert-text"></p>
+              <button class="link alert__action" type="button" id="form-alert-action" hidden></button>
+            </div>
+
+            <p class="availability" id="availability" role="status" hidden>As contas ainda não estão abertas neste ambiente.</p>
+
+            <button class="button button--primary button--submit" type="submit" id="submit">
+              <span class="button__label" id="submit-label">Entrar</span>
+              <svg class="mark mark--busy" viewBox="0 0 64 64" aria-hidden="true" focusable="false"><polygon class="mark__l" points="30,1.14 10,27.5 30,53.86"/><polygon class="mark__r" points="34,10.14 54,36.5 34,62.86"/></svg>
+            </button>
+
+            <div class="links">
+              <button class="link" type="button" id="forgot">Esqueci minha senha</button>
+              <button class="link" type="button" id="switch"></button>
+            </div>
+
+            <p class="note" id="privacy-note" hidden>Sua conta guarda apenas o e-mail e um hash da senha.</p>
+          </form>
+        </div>
+
+        <div class="notice" id="notice" hidden>
+          <h2 class="notice__title" id="notice-title" tabindex="-1"></h2>
+          <p class="notice__body" id="notice-body"></p>
+          <p class="notice__status" id="notice-status" role="status"></p>
+          <div class="notice__actions" id="notice-actions"></div>
+        </div>
+      </div>
+
+      <p class="legal legal--auth">Ao continuar, você concorda com os <a href="/termos">Termos de Uso</a> e com a <a href="/privacidade">Política de Privacidade</a>.</p>
     </section>
   </main>
 
-  <noscript><p class="noscript">KAZER needs JavaScript enabled to sign in.</p></noscript>
+  <noscript><p class="noscript">O KAZER precisa de JavaScript ativado para entrar.</p></noscript>
 </body>
 </html>

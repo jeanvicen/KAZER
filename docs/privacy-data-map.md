@@ -30,8 +30,9 @@ Contas que nunca confirmam o e-mail são apagadas automaticamente após 7 dias. 
 | Serviço | Recebe | Quando |
 | --- | --- | --- |
 | Servidor SMTP configurado (`SMTP_HOST`) | Endereço de e-mail do destinatário e o texto da mensagem (que inclui o link com token) | Registro, reenvio de confirmação e redefinição de senha |
+| Hospedagem (Vercel, no deploy de produção) | Dados técnicos de cada requisição, como IP e horário, processados pela plataforma | Toda visita ao site |
 
-Nenhum outro serviço recebe dados. Os e-mails são texto puro, sem HTML, imagens remotas ou links rastreados. A escolha do provedor SMTP determina a política de retenção dele; documente-a ao configurar produção.
+Nenhum outro serviço recebe dados da aplicação. Os e-mails são texto puro, sem HTML, imagens remotas ou links rastreados. A escolha do provedor SMTP determina a política de retenção dele; documente-a ao configurar produção.
 
 Em desenvolvimento, o backend `file` grava as mensagens em `data/outbox/` (ignorado pelo git, permissão 0600) em vez de enviá-las. Produção recusa esse backend.
 
@@ -43,6 +44,10 @@ O servidor web roda sem log de acesso por padrão (sem IPs nem caminhos). Os eve
 
 O esquema já suporta exclusão completa: `AuthStore.delete_user()` remove a linha de `users` e, em cascata, todas as sessões e links. Não há outro lugar com dados da conta. **Ainda falta** a interface autenticada para o próprio usuário pedir a exclusão (com reautenticação), que depende da área logada do KAZER. Até lá, a exclusão é um procedimento administrativo sobre o banco.
 
-## Pendências jurídicas
+## Documentos legais
 
-O repositório não possui Política de Privacidade nem Termos de Uso; por isso a tela não exibe links legais. Esses documentos precisam ser redigidos e revisados antes de abrir cadastro ao público, refletindo este mapa de dados e o provedor SMTP escolhido.
+Os Termos de Uso (`/termos`) e a Política de Privacidade (`/privacidade`) refletem este mapa. Pendências antes de abrir cadastros ao público:
+
+- identificar o controlador (nome ou razão social, documento) e o canal do encarregado na seção 2 da Política;
+- nomear o provedor SMTP escolhido na seção 5;
+- revisão jurídica, incluindo a aplicabilidade da guarda de registros de acesso do art. 15 do Marco Civil da Internet (Lei nº 12.965/2014), que hoje não é feita.

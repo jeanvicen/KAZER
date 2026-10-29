@@ -47,11 +47,8 @@ def _build(message: MailMessage, sender: str) -> EmailMessage:
     email["Subject"] = message.subject
     email["Date"] = formatdate(localtime=False)
     email["Message-ID"] = make_msgid(domain="kazer.local")
-    # Corpo ASCII vai em 7bit: links ficam íntegros mesmo no arquivo bruto.
-    if message.body.isascii():
-        email.set_content(message.body, cte="7bit")
-    else:
-        email.set_content(message.body)
+    # Sem quoted-printable: os links ficam íntegros até no arquivo bruto.
+    email.set_content(message.body, cte="7bit" if message.body.isascii() else "8bit")
     return email
 
 

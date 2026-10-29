@@ -119,7 +119,7 @@ def test_registration_does_not_reveal_existing_accounts(
     service, outbox, _ = env
     _register_and_verify(service, outbox)
     service.register("ana@example.com", "another strong secret", "c2")  # mesma resposta, sem erro
-    assert outbox.messages[-1].subject == "Your KAZER account"
+    assert outbox.messages[-1].subject == "Sua conta KAZER"
     assert "#verify=" not in outbox.messages[-1].body
     # A senha original continua valendo.
     assert service.login("ana@example.com", PASSWORD, "c2").email == "ana@example.com"

@@ -37,13 +37,16 @@ make run
 make web   # http://127.0.0.1:8000 (KAZER_HOST/KAZER_PORT alteram o endereço)
 ```
 
-A tela abre quase toda preta: partículas convergem das bordas, formam KAZER e se abrem para revelar o formulário (≈1,9 s; qualquer toque ou tecla pula). Abaixo do formulário, uma cena em pixel art mostra uma silhueta sem rosto trabalhando num computador cujo monitor monta KAZER em pixels. Tudo é HTML, CSS e Canvas sem build nem dependências de frontend, servido pelo próprio app em `kazer/interfaces/web/static/`.
+A tela abre quase toda preta: partículas convergem das bordas e formam o símbolo e o nome KAZER, que se abrem para revelar o início (≈1,9 s; qualquer toque ou tecla pula). O início cabe numa única tela, sem rolagem: uma cena em pixel art de um quarto à noite (janela com a cidade ao lado do computador; o programador digita, toma café e às vezes olha para quem está na tela; no monitor, o KAZER em versão "coder" programa, testa, constrói e publica), a frase "Você imagina. O KAZER executa_", os botões **Criar conta** e **Entrar** e os links para os Termos de Uso e a Política de Privacidade. A interface está em português do Brasil. Tudo é HTML, CSS e Canvas sem build nem dependências de frontend, servido pelo próprio app em `kazer/interfaces/web/static/`.
+
+O símbolo do KAZER (Fenda) e seus estados estão em [docs/brand.md](docs/brand.md). Com o manifesto (`/manifest.webmanifest`), o site pode ser adicionado à tela inicial e abre em modo app, sem barra de endereço.
 
 O que funciona de verdade, ponta a ponta:
 
 - criar conta (e-mail + senha, confirmação de senha), confirmar e-mail por link, entrar, manter sessão (cookie HttpOnly, 14 dias), sair;
 - recuperar senha por link de uso único (30 min), que encerra todas as sessões;
 - validação local e no servidor, mensagens de erro acessíveis, limites contra tentativas automatizadas;
+- Termos de Uso (`/termos`) e Política de Privacidade (`/privacidade`) que descrevem o tratamento real de dados;
 - sem login social, sem rastreadores, sem recursos externos.
 
 Em desenvolvimento os e-mails são gravados em `data/outbox/*.eml`; abra o arquivo e use o link. Em produção (`KAZER_ENV=production`) o app exige HTTPS em `KAZER_PUBLIC_URL`, cookies `Secure` e SMTP configurado, e se recusa a iniciar sem eles. Dados coletados, retenção e exclusão: [docs/privacy-data-map.md](docs/privacy-data-map.md).

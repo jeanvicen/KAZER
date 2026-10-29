@@ -1,0 +1,230 @@
+/* KAZER — documentos legais. Mesma paleta da tela de entrada, foco em leitura. */
+
+@font-face {
+  font-family: "Grenze Gotisch";
+  src: url("fonts/grenze-gotisch-500.woff2") format("woff2");
+  font-weight: 500;
+  font-display: swap;
+}
+
+:root {
+  --black: #030303;
+  --black-2: #080808;
+  --surface: #0d0d0d;
+  --text: #f5f5f5;
+  --text-2: #a3a3a3;
+  --border: #242424;
+  color-scheme: dark;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  background: var(--black);
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--black);
+  color: var(--text);
+  font: 400 1rem/1.7 system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+a {
+  color: var(--text);
+  text-decoration: underline;
+  text-decoration-color: #555;
+  text-underline-offset: 0.2em;
+}
+
+a:hover {
+  text-decoration-color: currentColor;
+}
+
+a:focus-visible {
+  outline: 1px solid var(--text);
+  outline-offset: 3px;
+}
+
+.page {
+  max-width: 44rem;
+  margin: 0 auto;
+  padding:
+    max(env(safe-area-inset-top), 1.25rem)
+    max(env(safe-area-inset-right), 1.25rem)
+    max(env(safe-area-inset-bottom), 3rem)
+    max(env(safe-area-inset-left), 1.25rem);
+}
+
+.top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.5rem 0 2.5rem;
+}
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  color: var(--text);
+  text-decoration: none;
+}
+
+.brand svg {
+  width: 1.35rem;
+  height: 1.35rem;
+  fill: currentColor;
+}
+
+.brand span {
+  font: 500 1.4rem / 1 "Grenze Gotisch", Georgia, serif;
+  letter-spacing: 0.14em;
+}
+
+.back {
+  color: var(--text-2);
+  font-size: 0.875rem;
+  text-decoration: none;
+}
+
+.back:hover {
+  color: var(--text);
+}
+
+h1 {
+  margin: 0 0 0.5rem;
+  font-size: clamp(1.75rem, 6vw, 2.25rem);
+  font-weight: 650;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+}
+
+.meta {
+  margin: 0 0 2rem;
+  color: var(--text-2);
+  font-size: 0.875rem;
+}
+
+.summary {
+  margin: 0 0 2.5rem;
+  padding: 1.1rem 1.25rem;
+  border: 1px solid var(--border);
+  border-radius: 1rem;
+  background: var(--black-2);
+}
+
+.summary h2 {
+  margin: 0 0 0.5rem;
+  border: 0;
+  padding: 0;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-2);
+}
+
+.summary ul {
+  margin: 0;
+  padding-left: 1.1rem;
+}
+
+.pending {
+  margin: 1rem 0;
+  padding: 0.9rem 1.1rem;
+  border: 1px dashed #4a4a4a;
+  border-radius: 0.875rem;
+  color: var(--text-2);
+  font-size: 0.9375rem;
+}
+
+.pending strong {
+  color: var(--text);
+}
+
+h2 {
+  margin: 2.5rem 0 0.75rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--border);
+  font-size: 1.15rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  line-height: 1.35;
+}
+
+h3 {
+  margin: 1.5rem 0 0.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+p,
+li {
+  color: #d6d6d6;
+}
+
+ul,
+ol {
+  padding-left: 1.25rem;
+}
+
+li + li {
+  margin-top: 0.35rem;
+}
+
+.table {
+  margin: 1rem 0;
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: 0.875rem;
+}
+
+table {
+  width: 100%;
+  min-width: 34rem;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+th,
+td {
+  padding: 0.7rem 0.85rem;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+  vertical-align: top;
+}
+
+th {
+  color: var(--text-2);
+  font-weight: 600;
+  background: var(--black-2);
+}
+
+tr:last-child td {
+  border-bottom: 0;
+}
+
+td {
+  color: #d6d6d6;
+}
+
+.foot {
+  margin-top: 3rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--border);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.5rem;
+  color: var(--text-2);
+  font-size: 0.875rem;
+}

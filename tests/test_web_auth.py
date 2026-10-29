@@ -62,9 +62,27 @@ def test_index_has_strict_headers(client: TestClient) -> None:
     assert response.headers["referrer-policy"] == "no-referrer"
     assert response.headers["x-frame-options"] == "DENY"
     body = response.text.lower()
-    for provider in ("google", "facebook", "apple", "twitter", "github", "analytics", "gtag"):
-        assert provider not in body
+    social = ("google", "facebook", "appleid", "twitter", "github", "oauth", "continuar com")
+    trackers = ("analytics", "gtag", "pixel", "segment")
+    for marker in social + trackers:
+        assert marker not in body
     assert "http://" not in body and "https://" not in body  # nenhum recurso externo
+    assert 'id="open-signup"' in body and 'id="open-signin"' in body
+
+
+def test_legal_pages_and_manifest(client: TestClient) -> None:
+    for path, title in (("/termos", "Termos de Uso"), ("/privacidade", "Política de Privacidade")):
+        page = client.get(path)
+        assert page.status_code == 200
+        assert title in page.text
+        assert "content-security-policy" in page.headers
+        assert "http://" not in page.text and "https://" not in page.text
+    manifest = client.get("/manifest.webmanifest")
+    assert manifest.headers["content-type"].startswith("application/manifest+json")
+    assert manifest.json()["display"] == "standalone"
+    home = client.get("/")
+    assert 'href="/termos"' in home.text and 'href="/privacidade"' in home.text
+    assert "manifest-src 'self'" in home.headers["content-security-policy"]
 
 
 def test_full_flow_over_http(client: TestClient, outbox: Outbox) -> None:

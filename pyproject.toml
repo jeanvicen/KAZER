@@ -30,7 +30,13 @@ include = ["kazer*"]
 entrypoint = "kazer.interfaces.web.asgi:app"
 
 [tool.setuptools.package-data]
-"kazer.interfaces.web" = ["static/*.html", "static/assets/*", "static/assets/fonts/*"]
+"kazer.interfaces.web" = [
+    "static/*.html",
+    "static/*.webmanifest",
+    "static/assets/*",
+    "static/assets/brand/*",
+    "static/assets/fonts/*",
+]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

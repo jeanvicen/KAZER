@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="dark">
+  <meta name="theme-color" content="#030303">
+  <meta name="referrer" content="no-referrer">
+  <title>Política de Privacidade — KAZER</title>
+  <link rel="icon" href="/assets/brand/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/assets/legal.css">
+</head>
+<body>
+  <main class="page">
+    <header class="top">
+      <a class="brand" href="/" aria-label="KAZER — início">
+        <svg viewBox="0 0 64 64" aria-hidden="true"><polygon points="30,1.14 10,27.5 30,53.86"/><polygon points="34,10.14 54,36.5 34,62.86"/></svg>
+        <span>KAZER</span>
+      </a>
+      <a class="back" href="/">Voltar</a>
+    </header>
+
+    <article>
+      <h1>Política de Privacidade</h1>
+      <p class="meta">Versão 1.0 · Vigente desde 29 de outubro de 2026</p>
+
+      <section class="summary" aria-labelledby="resumo">
+        <h2 id="resumo">Resumo</h2>
+        <ul>
+          <li>Para ter uma conta, guardamos apenas seu e-mail e um hash da sua senha.</li>
+          <li>Usamos um único cookie, estritamente necessário para manter você conectado.</li>
+          <li>Não usamos publicidade, analytics, pixels de rastreamento nem login social.</li>
+          <li>Você pode pedir acesso, correção ou exclusão dos seus dados a qualquer momento.</li>
+        </ul>
+      </section>
+
+      <h2 id="sobre">1. Sobre esta política</h2>
+      <p>Esta Política explica como o KAZER trata dados pessoais na tela de entrada e nas contas de usuário, em conformidade com a Lei Geral de Proteção de Dados Pessoais (Lei nº 13.709/2018 — LGPD). Ela descreve o que o sistema faz hoje. Antes de lançar novas funcionalidades que tratem outros dados, esta Política será atualizada.</p>
+
+      <h2 id="controlador">2. Quem é o controlador</h2>
+      <p>O controlador dos dados pessoais é o responsável pelo projeto KAZER, que decide como e por que os dados são tratados.</p>
+      <p class="pending"><strong>Identificação em definição.</strong> O nome do controlador, o documento de identificação e o canal de contato do encarregado (DPO) serão publicados nesta seção antes da abertura de cadastros ao público. Até lá, o ambiente público não aceita novas contas.</p>
+
+      <h2 id="dados">3. Dados que tratamos</h2>
+      <div class="table">
+        <table>
+          <thead>
+            <tr><th scope="col">Dado</th><th scope="col">Finalidade</th><th scope="col">Base legal (LGPD)</th><th scope="col">Retenção</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>E-mail</td><td>Identificar a conta e enviar links de confirmação e de recuperação</td><td>Execução de contrato (art. 7º, V)</td><td>Enquanto a conta existir</td></tr>
+            <tr><td>Hash da senha (Argon2id)</td><td>Verificar a senha sem armazená-la</td><td>Execução de contrato (art. 7º, V)</td><td>Enquanto a conta existir</td></tr>
+            <tr><td>Datas de criação e de confirmação da conta</td><td>Gerenciar o ciclo de vida da conta</td><td>Execução de contrato (art. 7º, V)</td><td>Enquanto a conta existir; contas não confirmadas são apagadas após 7 dias</td></tr>
+            <tr><td>Identificador de sessão (somente o hash)</td><td>Manter você conectado</td><td>Execução de contrato (art. 7º, V)</td><td>Até 14 dias ou até você sair</td></tr>
+            <tr><td>Links de confirmação e de redefinição (somente o hash)</td><td>Garantir uso único e expiração</td><td>Execução de contrato (art. 7º, V)</td><td>24 horas (confirmação) e 30 minutos (redefinição)</td></tr>
+            <tr><td>Endereço IP</td><td>Limitar tentativas automatizadas e proteger contas contra fraude</td><td>Legítimo interesse (art. 7º, IX)</td><td>Apenas na memória do servidor, por até 1 hora</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Não coletamos nome, telefone, data de nascimento, localização, dados de pagamento, identificadores de dispositivo nem dados de redes sociais. A senha em texto puro nunca é gravada nem registrada em logs. Os registros de eventos de segurança do KAZER não contêm e-mail, IP, senha ou tokens.</p>
+
+      <h2 id="cookies">4. Cookies e armazenamento no navegador</h2>
+      <p>Usamos um único cookie, estritamente necessário: o cookie de sessão, marcado como <em>HttpOnly</em>, <em>Secure</em> e <em>SameSite=Lax</em>. Ele é criado quando você entra e apagado quando você sai ou quando a sessão expira. Por ser essencial ao funcionamento da conta, não depende de consentimento.</p>
+      <p>Não usamos cookies de publicidade ou de analytics, pixels de rastreamento, nem <em>localStorage</em> ou <em>sessionStorage</em> para dados pessoais. A página não carrega scripts, fontes ou imagens de terceiros.</p>
+
+      <h2 id="compartilhamento">5. Compartilhamento e operadores</h2>
+      <p>Não vendemos dados pessoais nem os compartilhamos para publicidade. Alguns fornecedores tratam dados em nome do KAZER, como operadores:</p>
+      <ul>
+        <li><strong>Hospedagem — Vercel Inc.:</strong> infraestrutura em que o site funciona. Processa dados técnicos das requisições, como endereço IP e horário, para entregar e proteger o serviço, segundo as políticas da própria Vercel.</li>
+        <li><strong>Envio de e-mail — provedor SMTP contratado pelo KAZER:</strong> recebe seu endereço de e-mail e o texto da mensagem, incluindo o link de confirmação ou de redefinição. O provedor será identificado nesta Política quando o envio estiver ativo no ambiente público.</li>
+      </ul>
+      <p>Também podemos fornecer dados quando houver obrigação legal ou ordem de autoridade competente, limitando-nos ao que for exigido.</p>
+
+      <h2 id="transferencia">6. Transferência internacional</h2>
+      <p>Os operadores acima podem tratar dados fora do Brasil, inclusive nos Estados Unidos. Essas transferências devem observar as hipóteses do art. 33 da LGPD.</p>
+
+      <h2 id="ia">7. Funcionalidades de inteligência artificial</h2>
+      <p>As funcionalidades de assistente do KAZER ainda não estão disponíveis. Antes de lançá-las, esta Política será atualizada para informar quais dados das conversas serão tratados, por quais provedores de modelos, para quais finalidades e por quanto tempo. Não fazemos promessas sobre uso de dados para treinamento de modelos que não possam ser garantidas pelos contratos e configurações vigentes.</p>
+
+      <h2 id="seguranca">8. Segurança</h2>
+      <p>Adotamos medidas técnicas proporcionais ao risco, entre elas: senhas protegidas com Argon2id; sessões em cookie <em>HttpOnly</em> com o identificador guardado apenas como hash; links de uso único com expiração; HTTPS; limites contra tentativas automatizadas; e uma política de segurança de conteúdo que bloqueia recursos externos.</p>
+      <p>Nenhum sistema é imune a incidentes. Se ocorrer um incidente de segurança que possa acarretar risco ou dano relevante, comunicaremos os titulares afetados e a Autoridade Nacional de Proteção de Dados (ANPD), nos termos do art. 48 da LGPD.</p>
+
+      <h2 id="direitos">9. Seus direitos</h2>
+      <p>Nos termos do art. 18 da LGPD, você pode solicitar:</p>
+      <ul>
+        <li>confirmação da existência de tratamento e acesso aos seus dados;</li>
+        <li>correção de dados incompletos, inexatos ou desatualizados;</li>
+        <li>anonimização, bloqueio ou eliminação de dados desnecessários, excessivos ou tratados em desconformidade com a lei;</li>
+        <li>portabilidade dos dados a outro fornecedor;</li>
+        <li>eliminação dos dados e encerramento da conta;</li>
+        <li>informação sobre as entidades com as quais compartilhamos dados;</li>
+        <li>oposição a tratamento baseado em legítimo interesse, quando cabível.</li>
+      </ul>
+      <p>Ao excluir sua conta, apagamos o e-mail, o hash da senha, as sessões e os links associados. Enquanto a exclusão pelo próprio painel não estiver disponível, ela é feita mediante solicitação pelo canal do controlador (seção 2). Responderemos dentro dos prazos do art. 19 da LGPD. Você também pode apresentar reclamação à ANPD.</p>
+
+      <h2 id="menores">10. Crianças e adolescentes</h2>
+      <p>O KAZER não se destina a menores de 18 anos e não coleta intencionalmente dados de crianças e adolescentes. Se identificarmos uma conta nessa situação, ela será excluída.</p>
+
+      <h2 id="alteracoes">11. Alterações</h2>
+      <p>Podemos atualizar esta Política. A versão e a data de vigência ficam no topo do documento. Mudanças relevantes serão comunicadas com antecedência razoável pelo e-mail da conta ou na tela de entrada.</p>
+    </article>
+
+    <footer class="foot">
+      <a href="/termos">Termos de Uso</a>
+      <a href="/">Voltar ao KAZER</a>
+    </footer>
+  </main>
+</body>
+</html>

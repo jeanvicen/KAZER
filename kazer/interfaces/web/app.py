@@ -46,6 +46,7 @@ _CSP = "; ".join(
         "img-src 'self'",
         "font-src 'self'",
         "connect-src 'self'",
+        "manifest-src 'self'",
         "base-uri 'none'",
         "form-action 'none'",
         "frame-ancestors 'none'",
@@ -202,8 +203,13 @@ def create_app(settings: Settings | None = None, service: AuthService | None = N
             cookie_name, path="/", secure=settings.cookie_secure, httponly=True, samesite="lax"
         )
 
-    async def index(request: Request) -> Response:
-        return FileResponse(STATIC_DIR / "index.html", headers={"Cache-Control": "no-cache"})
+    def page(name: str, media_type: str = "text/html") -> Callable[[Request], Awaitable[Response]]:
+        async def serve(request: Request) -> Response:
+            return FileResponse(
+                STATIC_DIR / name, media_type=media_type, headers={"Cache-Control": "no-cache"}
+            )
+
+        return serve
 
     @_endpoint
     async def session(request: Request) -> Response:
@@ -291,7 +297,10 @@ def create_app(settings: Settings | None = None, service: AuthService | None = N
         yield
 
     routes = [
-        Route("/", index),
+        Route("/", page("index.html")),
+        Route("/termos", page("termos.html")),
+        Route("/privacidade", page("privacidade.html")),
+        Route("/manifest.webmanifest", page("manifest.webmanifest", "application/manifest+json")),
         Route("/api/auth/session", session, methods=["GET"]),
         Route("/api/auth/register", register, methods=["POST"]),
         Route("/api/auth/verify-email", verify_email, methods=["POST"]),

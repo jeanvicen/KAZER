@@ -1,69 +1,57 @@
-// Cena digital do KAZER: pixel art monocromática, halo em ASCII, dithering e
-// um monitor antigo. Sem partículas: tudo vive numa grade fixa de 192×96 pixels
-// ampliada por fator inteiro, sem suavização. Puramente decorativa.
+// Cena do KAZER: um quarto à noite em pixel art. Janela com a cidade ao lado do
+// computador, luminária quente, e um programador que digita, toma café e às
+// vezes olha para quem está na tela. No monitor, o KAZER em versão "coder"
+// alterna tarefas. Grade fixa de 144×160 pixels ampliada por fator inteiro.
+// Puramente decorativa: não representa nenhum processo real do aplicativo.
 
-const W = 192;
-const H = 96;
-const LOOP = 16000;
-const FRAME_MS = 1000 / 15;
+const W = 144;
+const H = 160;
+const FRAME_MS = 1000 / 12;
+const MAN_LOOP = 22000;
+const SCREEN_LOOP = 18000;
 
-const SCREEN = { x: 94, y: 15, w: 72, h: 39 };
-const LIGHT = { x: 130, y: 34 };
-const BG = 3;
+const rgba = (hex) => {
+  const n = parseInt(hex.slice(1), 16);
+  return (0xff000000 | ((n & 0xff) << 16) | (n & 0xff00) | ((n >> 16) & 0xff)) >>> 0;
+};
+
+const P = Object.fromEntries(
+  Object.entries({
+    void: "#030303",
+    wall0: "#100e20", wall1: "#16132b", wall2: "#1c1836", wall3: "#231e42", wall4: "#2b2550",
+    warm1: "#2e2142", warm2: "#3d2944", warm3: "#523447",
+    base: "#0d0b19", floor0: "#0f0c1b", floor1: "#151127", floor2: "#1b1630",
+    rug: "#2a1d3c", rugEdge: "#3b2a55", rugDot: "#4a3466",
+    sky0: "#080b24", sky1: "#0d1238", sky2: "#141a4e", sky3: "#211f63", sky4: "#352a73",
+    star: "#e9e7ff", starDim: "#7f7bbd", moon: "#fff1c9", moonShade: "#d9c592", moonGlow: "#26276a",
+    cityFar: "#1b1950", cityNear: "#0f0d2c", win1: "#ffcc66", win2: "#ff9f5a", win3: "#ffe9a8",
+    beacon: "#ff6f91",
+    frame: "#3e3458", frameHi: "#5f5287", frameLo: "#2a2340", sill: "#6b5c8c",
+    glass: "#2a3070",
+    curtain: "#5b2e52", curtainHi: "#743b67", curtainLo: "#42203c", rod: "#2b2440",
+    desk: "#7e5038", deskHi: "#b07650", deskGrain: "#6d4430", deskFront: "#4b2c22", deskDark: "#331d17",
+    shelf: "#7e5038", shelfLo: "#4b2c22",
+    bookRose: "#c45a6a", bookAmber: "#e0a050", bookBlue: "#5c6bc0", bookPurple: "#8e6fc4",
+    bookCream: "#d9d0c0", bookDark: "#2c2840",
+    posterFrame: "#2b2440", posterMat: "#d9d0c0", posterBg: "#0d0d16", ink: "#f5f5f5",
+    bezel: "#23202f", bezelHi: "#3a3550", bezelLo: "#16141e", stand: "#1c1a28",
+    screen: "#0b0e22", screenBar: "#1b1938", screenGrid: "#11153a",
+    lav: "#9d9cff", lavDim: "#5d5cb0", pink: "#ff7aa8", amber: "#ffcc66", soft: "#e9e7ff",
+    lampBody: "#2c2840", lampShade: "#f2b65a", lampShadeLo: "#b9803a", bulb: "#fff4cf",
+    keyboard: "#2c2840", key: "#4a4466", keyHi: "#9d9cff", mouse: "#3a3654",
+    paper: "#d9d0c0", paperLine: "#a99f90",
+    mug: "#f3efe8", mugShade: "#c9bfb0", coffee: "#4a2a1e", steam: "#bdbbe0",
+    hair: "#1d1626", hairHi: "#3d3052", skin: "#e8b08a", skinLo: "#b97a5a", eye: "#1d1626",
+    glass2: "#c8c6ff", rim: "#8b8cf0",
+    hood: "#3b3f78", hoodLo: "#2a2c5a", hoodHi: "#565ca0", string: "#e9e7ff", pants: "#22243f",
+    chair: "#2b2238", chairHi: "#57466e", chairLo: "#1e1828", chairStripe: "#c45a6a",
+  }).map(([name, hex]) => [name, rgba(hex)]),
+);
 
 const BAYER = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5].map((v) => (v + 0.5) / 16);
 const bayer = (x, y) => BAYER[((y & 3) << 2) | (x & 3)];
+const clamp = (v, lo, hi) => (v < lo ? lo : v > hi ? hi : v);
 
-// Fonte 3×5 (terminal) e 5×7 (nome no monitor), desenhadas à mão.
-const FONT3 = {
-  A: "010101111101101", B: "110101110101110", C: "011100100100011", D: "110101101101110",
-  E: "111100110100111", F: "111100110100100", G: "011100101101011", H: "101101111101101",
-  I: "111010010010111", J: "001001001101010", K: "101101110101101", L: "100100100100111",
-  M: "101111111101101", N: "110101101101101", O: "010101101101010", P: "110101110100100",
-  Q: "010101101110011", R: "110101110101101", S: "011100010001110", T: "111010010010010",
-  U: "101101101101111", V: "101101101101010", W: "101101111111101", X: "101101010101101",
-  Y: "101101010010010", Z: "111001010100111", ".": "000000000000010", ":": "000010000010000",
-  "(": "001010010010001", ")": "100010010010100", "{": "011010110010011", "}": "110010011010110",
-  "=": "000111000111000", ">": "100010001010100", "-": "000000111000000", "_": "000000000000111",
-  "*": "000101010101000", "/": "001001010100100", ",": "000000000010100", "+": "000010111010000",
-  "#": "101111101111101", "|": "010010010010010", "█": "111111111111111",
-};
-const FONT5 = {
-  K: "10001100101010011000101001001010001",
-  A: "01110100011000111111100011000110001",
-  Z: "11111000010001000100010001000011111",
-  E: "11111100001000011110100001000011111",
-  R: "11110100011000111110101001001010001",
-};
-
-// Pseudocódigo decorativo; não representa nenhum processo real do aplicativo.
-const CODE = [
-  "> KAZER --LOCAL",
-  "LOAD CORE.MOD",
-  "SCOPE = SESSION",
-  "FN PLAN(TASK) {",
-  "  CTX = MIN(TASK)",
-  "  GUARD(CTX)",
-  "}",
-  "POLICY: DENY *",
-  "MEMORY: ISOLATED",
-  "RUN PIPELINE",
-];
-const KEYWORDS = new Set(["KAZER", "LOAD", "SCOPE", "FN", "POLICY", "MEMORY", "RUN", "GUARD"]);
-const CHAR_MS = 38;
-const LINE_PAUSE = 180;
-
-const T = {
-  codeEnd: 6400,
-  codeOut: 7000,
-  assembleEnd: 9400,
-  executing: 10700,
-  complete: 12100,
-  fadeOut: 13700,
-  blank: 14400,
-};
-
-// Gerador determinístico para que o loop seja sempre igual.
 function rng(seed) {
   let s = seed >>> 0;
   return () => {
@@ -75,373 +63,666 @@ function rng(seed) {
   };
 }
 
-const clamp = (v, lo, hi) => (v < lo ? lo : v > hi ? hi : v);
+// ---------- Primitivas ----------
 
-// ---------- Pré-cálculo do cenário estático ----------
-
-function buildBase() {
-  const base = new Uint8Array(W * H).fill(BG);
-  const set = (x, y, v) => {
-    if (x >= 0 && x < W && y >= 0 && y < H) base[y * W + x] = v;
+function painter(buf) {
+  const px = (x, y, c) => {
+    if (c !== undefined && x >= 0 && x < W && y >= 0 && y < H) buf[(y | 0) * W + (x | 0)] = c;
   };
-  const rect = (x0, y0, x1, y1, v) => {
-    for (let y = y0; y <= y1; y += 1) for (let x = x0; x <= x1; x += 1) set(x, y, v);
+  const rect = (x0, y0, x1, y1, c) => {
+    for (let y = y0; y <= y1; y += 1) for (let x = x0; x <= x1; x += 1) px(x, y, c);
   };
-
-  // Halo em ASCII na parede: densidade de caracteres segue a luz do monitor.
-  const ramp = [" ", ".", ":", "-", "=", "+"];
-  for (let cy = 0; cy < 64; cy += 6) {
-    for (let cx = 0; cx < W; cx += 4) {
-      const d = Math.hypot((cx + 1.5 - LIGHT.x) * 0.72, (cy + 2.5 - LIGHT.y) * 1.25);
-      const level = clamp(1 - d / 78, 0, 1) ** 2;
-      if (level < 0.06) continue;
-      const glyph = FONT3[ramp[Math.min(ramp.length - 1, Math.floor(level * ramp.length * 1.1))]];
-      if (!glyph) continue;
-      const v = Math.round(7 + level * 19);
-      for (let i = 0; i < 15; i += 1) {
-        if (glyph[i] === "1") set(cx + (i % 3), cy + Math.floor(i / 3), v);
-      }
-    }
-  }
-
-  // Mesa: superfície iluminada pelo monitor com dithering ordenado.
-  for (let y = 64; y <= 69; y += 1) {
-    for (let x = 30; x < W; x += 1) {
-      const level = clamp(1 - Math.abs(x - LIGHT.x) / 86, 0, 1) * (1 - (y - 64) / 9);
-      const fade = clamp((x - 30) / 18, 0, 1);
-      const v = level * 30 * fade;
-      const step = Math.floor(v / 6);
-      const frac = v / 6 - step;
-      set(x, y, 8 + step * 6 + (bayer(x, y) < frac ? 6 : 0));
-    }
-  }
-  // Fios técnicos: borda traseira e frontal da mesa, sumindo no escuro.
-  for (let x = 0; x < W; x += 1) {
-    const reach = clamp(1 - Math.abs(x - LIGHT.x) / 120, 0, 1);
-    set(x, 63, Math.round(BG + reach * 22));
-    if (x >= 30) set(x, 70, Math.round(6 + reach * 10));
-  }
-  for (let y = 71; y <= 76; y += 1) for (let x = 30; x < W; x += 1) set(x, y, 5);
-
-  // Monitor: lateral em profundidade, moldura, pé e base.
-  rect(171, 14, 173, 56, 7);
-  rect(90, 12, 170, 58, 15);
-  rect(90, 12, 170, 12, 27);
-  rect(90, 13, 90, 58, 20);
-  rect(170, 13, 170, 58, 11);
-  rect(SCREEN.x - 1, SCREEN.y - 1, SCREEN.x + SCREEN.w, SCREEN.y + SCREEN.h, 21);
-  set(160, 56, 74);
-  rect(127, 59, 133, 63, 11);
-  rect(128, 59, 128, 63, 19);
-  rect(116, 64, 144, 65, 13);
-  rect(116, 64, 144, 64, 24);
-
-  // Teclado à frente do monitor.
-  rect(104, 66, 140, 68, 14);
-  rect(104, 66, 140, 66, 30);
-  for (let x = 106; x <= 138; x += 2) set(x, 67, 21);
-
-  // Caneca: silhueta com luz vinda da esquerda.
-  rect(150, 58, 155, 64, 13);
-  rect(150, 58, 150, 64, 46);
-  rect(150, 58, 155, 58, 34);
-  rect(156, 60, 157, 62, 11);
-  set(156, 59, 24);
-
-  return base;
-}
-
-// Encosto da cadeira: primeiro plano, sobre o corpo.
-function buildChair() {
-  const chair = new Int16Array(W * H).fill(-1);
-  for (let y = 68; y < H; y += 1) {
-    for (let x = 58; x <= 100; x += 1) {
-      const top = y - 68;
-      const corner = Math.min(x - 58, 100 - x);
-      if (top < 4 && corner < 4 - top) continue;
-      chair[y * W + x] = 5;
-    }
-  }
-  for (let x = 58; x <= 100; x += 1) {
-    const edge = Math.min(x - 58, 100 - x);
-    const y = 68 + Math.max(0, 4 - edge);
-    if (y < H) chair[y * W + x] = Math.round(14 + clamp((x - 58) / 42, 0, 1) * 18);
-  }
-  for (let y = 72; y < H; y += 1) chair[y * W + 100] = 13;
-  return chair;
-}
-
-// Vinheta para o ambiente desaparecer no preto nas bordas.
-function buildVignette() {
-  const v = new Float32Array(W * H);
-  for (let y = 0; y < H; y += 1) {
-    for (let x = 0; x < W; x += 1) {
-      const fx = clamp(Math.min(x, W - 1 - x) / 26, 0, 1);
-      const fy = clamp(Math.min(y + 30, H - 1 - y) / 16, 0, 1);
-      v[y * W + x] = fx * fy;
-    }
-  }
-  return v;
-}
-
-function buildCode() {
-  const lines = [];
-  let at = 120;
-  for (const text of CODE) {
-    const colors = [];
-    const words = text.split(/([^A-Z]+)/);
-    for (const part of words) {
-      for (const ch of part) {
-        if (ch === ">") colors.push(245);
-        else if (/[A-Z]/.test(ch)) colors.push(KEYWORDS.has(part) ? 222 : 150);
-        else colors.push(ch === " " ? 0 : 96);
-      }
-    }
-    lines.push({ text, colors, start: at, end: at + text.length * CHAR_MS });
-    at += text.length * CHAR_MS + LINE_PAUSE;
-  }
-  return lines;
-}
-
-function buildBlocks() {
-  const random = rng(7);
-  const blocks = [];
-  [..."KAZER"].forEach((letter, gi) => {
-    const bits = FONT5[letter];
-    for (let i = 0; i < 35; i += 1) {
-      if (bits[i] !== "1") continue;
-      const gx = gi * 6 + (i % 5);
-      const gy = Math.floor(i / 5);
-      const arrive = T.codeOut + 300 + (gx / 29) * 650 + random() * 1100;
-      blocks.push({
-        gx,
-        gy,
-        arrive,
-        appear: arrive - 800 - random() * 400,
-        ox: Math.round((random() - 0.5) * 10),
-        oy: Math.round((random() - 0.5) * 6),
-        tone: 70 + Math.round(random() * 60),
-        seed: Math.floor(random() * 3),
-      });
-    }
-  });
-  const noise = Array.from({ length: 30 }, () => ({
-    x: Math.floor(random() * 34),
-    y: Math.floor(random() * 18),
-    at: T.codeOut + random() * 1800,
-    life: 110 + random() * 160,
-    tone: 40 + Math.round(random() * 60),
-  }));
-  return { blocks, noise };
-}
-
-// ---------- Desenho do monitor ----------
-
-function makeScreenPainter() {
-  const code = buildCode();
-  const { blocks, noise } = buildBlocks();
-  const scr = new Uint8Array(SCREEN.w * SCREEN.h);
-  const put = (x, y, v) => {
-    if (x >= 0 && x < SCREEN.w && y >= 0 && y < SCREEN.h && v > scr[y * SCREEN.w + x]) {
-      scr[y * SCREEN.w + x] = v;
-    }
-  };
-  const glyph3 = (ch, x, y, v, cut) => {
-    const bits = FONT3[ch];
-    if (!bits || v === 0) return;
-    for (let i = 0; i < 15; i += 1) {
-      const px = x + (i % 3);
-      const py = y + Math.floor(i / 3);
-      if (bits[i] === "1" && (cut === 0 || bayer(px, py) >= cut)) put(px, py, v);
-    }
-  };
-  const text3 = (text, x, y, v, cut = 0) => {
-    [...text].forEach((ch, i) => glyph3(ch, x + i * 4, y, v, cut));
-  };
-
-  const KX = 7;
-  const KY = 5;
-  const block = (gx, gy, v, cut) => {
-    for (let dy = 0; dy < 2; dy += 1) {
-      for (let dx = 0; dx < 2; dx += 1) {
-        const px = KX + gx * 2 + dx;
-        const py = KY + gy * 2 + dy;
-        if (cut === 0 || bayer(px, py) >= cut) put(px, py, v);
-      }
-    }
-  };
-
-  function paintCode(t, cut) {
-    let typing = null;
-    let started = 0;
-    for (const line of code) if (t >= line.start) started += 1;
-    // Rolagem suave em passos de pixel quando passa de seis linhas.
-    let top = 0;
-    code.forEach((line, i) => {
-      if (i >= 6 && t >= line.start) top += clamp((t - line.start) / 200, 0, 1);
-    });
-    code.forEach((line, i) => {
-      if (i >= started) return;
-      const y = Math.round(3 + (i - top) * 6);
-      if (y < -5 || y >= SCREEN.h) return;
-      const shown = Math.min(line.text.length, Math.floor((t - line.start) / CHAR_MS) + 1);
-      for (let c = 0; c < shown; c += 1) glyph3(line.text[c], 3 + c * 4, y, line.colors[c], cut);
-      if (t < line.end) typing = { x: 3 + shown * 4, y, index: shown };
-      else if (i === started - 1 && t < T.codeEnd) typing = { x: 3 + shown * 4, y, index: -1 };
-    });
-    return typing;
-  }
-
-  function paint(t, frameIndex) {
-    scr.fill(0);
-    let typing = null;
-    let lookingUp = false;
-
-    if (t < T.codeOut) {
-      const cut = t < T.codeEnd ? 0 : (t - T.codeEnd) / (T.codeOut - T.codeEnd);
-      typing = paintCode(t, cut);
-      if (typing && cut === 0 && (typing.index >= 0 || Math.floor(t / 530) % 2 === 0)) {
-        glyph3("█", typing.x, typing.y, 214, 0);
-      }
-      if (t >= T.codeEnd) typing = null;
-    }
-
-    if (t >= T.codeOut - 200 && t < T.blank) {
-      lookingUp = t >= T.codeOut + 200 && t < T.fadeOut;
-      const cut = t < T.fadeOut ? 0 : (t - T.fadeOut) / (T.blank - T.fadeOut);
-      for (const n of noise) {
-        if (t >= n.at && t < n.at + n.life && frameIndex % 2 === 0) block(n.x, n.y, n.tone, cut);
-      }
-      for (const b of blocks) {
-        if (t < b.appear) continue;
-        if (t >= b.arrive) {
-          block(b.gx, b.gy, t - b.arrive < 130 ? 255 : 230, cut);
-        } else if (t >= b.arrive - 500) {
-          const p = (t - (b.arrive - 500)) / 500;
-          block(b.gx + Math.round(b.ox * (1 - p)), b.gy + Math.round(b.oy * (1 - p)), 150, cut);
-        } else if ((frameIndex + b.seed) % 3 !== 0) {
-          block(b.gx + b.ox, b.gy + b.oy, b.tone, cut);
-        }
-      }
-      // Brilho de fósforo em volta das letras já formadas.
-      if (t >= T.assembleEnd - 200) {
-        const glow = Math.round(clamp((t - (T.assembleEnd - 200)) / 400, 0, 1) * 22);
-        for (let y = KY - 1; y <= KY + 14; y += 1) {
-          for (let x = KX - 1; x <= KX + 58; x += 1) {
-            const i = y * SCREEN.w + x;
-            if (scr[i] === 0 && (scr[i - 1] > 200 || scr[i + 1] > 200 || scr[i - SCREEN.w] > 200 || scr[i + SCREEN.w] > 200)) {
-              scr[i] = Math.round(glow * (cut === 0 ? 1 : 1 - cut));
-            }
-          }
-        }
-      }
-
-      if (t >= T.assembleEnd) {
-        let label = "INITIALIZING";
-        let progress = clamp((t - T.assembleEnd) / (T.executing - T.assembleEnd), 0, 1) * 0.34;
-        if (t >= T.complete) {
-          label = "COMPLETE";
-          progress = 1;
-        } else if (t >= T.executing) {
-          label = "EXECUTING";
-          progress = 0.34 + clamp((t - T.executing) / (T.complete - T.executing), 0, 1) * 0.58;
-        }
-        const blinkOff =
-          (t >= T.complete + 200 && t < T.complete + 320) ||
-          (t >= T.complete + 440 && t < T.complete + 560);
-        const x = Math.floor((SCREEN.w - (label.length * 4 - 1)) / 2);
-        if (!blinkOff) text3(label, x, 24, t >= T.complete ? 240 : 176, cut);
-        if (t < T.complete && Math.floor(t / 400) % 2 === 0) {
-          glyph3("█", x + label.length * 4 + 1, 24, 150, cut);
-        }
-        const segments = 12;
-        const filled = Math.floor(progress * segments + 1e-6);
-        for (let s = 0; s < segments; s += 1) {
-          const sx = 12 + s * 4;
-          for (let dx = 0; dx < 3; dx += 1) {
-            for (let dy = 0; dy < 2; dy += 1) {
-              if (cut === 0 || bayer(sx + dx, 32 + dy) >= cut) put(sx + dx, 32 + dy, s < filled ? 206 : 26);
-            }
-          }
-        }
-      }
-    }
-
-    if (t >= T.blank && Math.floor(t / 530) % 2 === 0) glyph3("█", 3, 3, 200, 0);
-    return { scr, typing, lookingUp };
-  }
-
-  return paint;
-}
-
-// ---------- Personagem (silhueta sem rosto, de costas) ----------
-
-const TORSO = [
-  [47, 11], [48, 15.5], [49, 18.5], [50, 20.5], [51, 22], [52, 23], [54, 24.2],
-  [57, 24.8], [62, 25], [75, 24], [95, 22],
-];
-
-function torsoHalfWidth(y) {
-  for (let i = 1; i < TORSO.length; i += 1) {
-    const [y1, w1] = TORSO[i];
-    const [y0, w0] = TORSO[i - 1];
-    if (y <= y1) return w0 + ((w1 - w0) * (y - y0)) / (y1 - y0);
-  }
-  return TORSO[TORSO.length - 1][1];
-}
-
-function paintBody(mask, breath, headDx, headDy, handUp) {
-  mask.fill(0);
-  const set = (x, y, m) => {
-    x = Math.round(x);
-    y = Math.round(y);
-    if (x >= 0 && x < W && y >= 0 && y < H) mask[y * W + x] = m;
-  };
-  const disc = (cx, cy, r, m) => {
+  const disc = (cx, cy, r, c) => {
     for (let y = Math.floor(cy - r); y <= Math.ceil(cy + r); y += 1) {
       for (let x = Math.floor(cx - r); x <= Math.ceil(cx + r); x += 1) {
-        if ((x - cx) ** 2 + (y - cy) ** 2 <= r * r) set(x, y, m);
+        if ((x - cx) ** 2 + (y - cy) ** 2 <= r * r) px(x, y, c);
       }
     }
   };
-  const limb = (x0, y0, x1, y1, r, m) => {
-    const steps = Math.ceil(Math.hypot(x1 - x0, y1 - y0) * 2);
-    for (let s = 0; s <= steps; s += 1) disc(x0 + ((x1 - x0) * s) / steps, y0 + ((y1 - y0) * s) / steps, r, m);
+  const line = (x0, y0, x1, y1, r, c) => {
+    const steps = Math.max(1, Math.ceil(Math.hypot(x1 - x0, y1 - y0) * 2));
+    for (let s = 0; s <= steps; s += 1) disc(x0 + ((x1 - x0) * s) / steps, y0 + ((y1 - y0) * s) / steps, r, c);
   };
+  const sprite = (x, y, rows, map, flip = false) => {
+    rows.forEach((row, j) => {
+      for (let i = 0; i < row.length; i += 1) {
+        const ch = row[flip ? row.length - 1 - i : i];
+        if (ch !== ".") px(x + i, y + j, map[ch]);
+      }
+    });
+  };
+  return { px, rect, disc, line, sprite };
+}
 
-  // Braço direito ao teclado (atrás do tronco na ordem de desenho).
-  limb(99, 54 + breath, 105, 62, 2.6, 4);
-  limb(105, 62, 112, 65 + handUp, 1.7, 4);
-  for (let x = 112; x <= 116; x += 1) {
-    set(x, 64 + handUp, 5);
-    set(x, 65 + handUp, 5);
-  }
-  // Cotovelo esquerdo sugerido na lateral.
-  limb(56, 58 + breath, 54, 64, 2.2, 4);
+// Fonte 3×5 para o terminal do monitor.
+const FONT3 = {
+  A: "010101111101101", C: "011100100100011", D: "110101101101110", E: "111100110100111",
+  I: "111010010010111", K: "101101110101101", O: "010101101101010", P: "110101110100100",
+  R: "110101110101101", S: "011100010001110", T: "111010010010010", U: "101101101101111",
+  Z: "111001010100111", ".": "000000000000010",
+};
 
-  for (let y = 47; y < H; y += 1) {
-    const half = torsoHalfWidth(y);
-    const cx = 79 + (y - 47) * 0.05;
-    for (let x = Math.ceil(cx - half); x <= Math.floor(cx + half); x += 1) {
-      // Só o peito sobe ao respirar; a parte baixa fica e cobre a fresta.
-      if (y < 70) set(x, y + breath, 1);
-      if (y >= 64) set(x, y, 1);
+// ---------- Cenário estático ----------
+
+function buildRoom() {
+  const buf = new Uint32Array(W * H);
+  const { px, rect, disc, line, sprite } = painter(buf);
+  const pick = (ramp, v, x, y) => {
+    const scaled = clamp(v, 0, 0.999) * (ramp.length - 1);
+    const i = Math.floor(scaled);
+    return ramp[Math.min(ramp.length - 1, i + (bayer(x, y) < scaled - i ? 1 : 0))];
+  };
+  const coolRamp = [P.wall0, P.wall1, P.wall2, P.wall3, P.wall4];
+  const warmRamp = [P.wall1, P.warm1, P.warm2, P.warm3];
+
+  // Parede: luz fria da janela à esquerda, quente da luminária à direita.
+  for (let y = 0; y < 110; y += 1) {
+    for (let x = 0; x < W; x += 1) {
+      const lamp = clamp(1 - Math.hypot((x - 124) * 0.9, (y - 74) * 1.1) / 44, 0, 1);
+      const moon = clamp(1 - Math.hypot((x - 33) * 0.8, (y - 50) * 0.7) / 70, 0, 1);
+      const shade = clamp(1 - y / 150, 0.4, 1);
+      if (lamp > 0.18) px(x, y, pick(warmRamp, lamp * 1.05, x, y));
+      else px(x, y, pick(coolRamp, (0.18 + moon * 0.55) * shade, x, y));
     }
   }
-  for (let y = 41; y <= 49; y += 1) for (let x = 75; x <= 83; x += 1) set(x, y + breath, 2);
+  rect(0, 108, W - 1, 111, P.base);
 
-  // Cabeça vista de trás: só o volume do cabelo, nenhum traço facial.
-  const hx = 79 + headDx;
-  const hy = 34 + breath + headDy;
-  for (let y = -10; y <= 10; y += 1) {
-    for (let x = -9; x <= 9; x += 1) {
-      const inside = (x / 7.6) ** 2 + (y / 9.2) ** 2 <= 1 || ((x + 0.6) / 7.9) ** 2 + ((y + 1.6) / 7.8) ** 2 <= 1;
-      if (inside) set(hx + x, hy + y, 3);
+  // Piso com tábuas e tapete.
+  for (let y = 112; y < H; y += 1) {
+    for (let x = 0; x < W; x += 1) {
+      const plank = (y - 112) % 7 === 0 || (x + ((y - 112) / 7 | 0) * 23) % 41 === 0;
+      px(x, y, plank ? P.floor0 : bayer(x, y) < 0.18 ? P.floor2 : P.floor1);
+    }
+  }
+  for (let y = 132; y < H; y += 1) {
+    for (let x = 0; x < W; x += 1) {
+      const d = ((x - 66) / 58) ** 2 + ((y - 152) / 20) ** 2;
+      if (d <= 1) px(x, y, d > 0.86 ? P.rugEdge : (x + y) % 6 === 0 && d < 0.6 ? P.rugDot : P.rug);
+    }
+  }
+
+  // Janela: céu, lua, cidade (janelas acesas são dinâmicas) e moldura.
+  const sky = [P.sky0, P.sky1, P.sky2, P.sky3, P.sky4];
+  for (let y = 18; y <= 80; y += 1) {
+    for (let x = 10; x <= 56; x += 1) px(x, y, pick(sky, (y - 18) / 66, x, y));
+  }
+  for (let y = 18; y <= 80; y += 1) {
+    for (let x = 10; x <= 56; x += 1) {
+      const d = Math.hypot(x - 43, y - 29);
+      if (d > 5.5 && d < 10 && bayer(x, y) < (10 - d) / 9) px(x, y, P.moonGlow);
+    }
+  }
+  disc(43, 29, 5, P.moon);
+  disc(45.5, 27.5, 4.4, P.sky1);
+  px(40, 31, P.moonShade);
+  px(41, 33, P.moonShade);
+  const random = rng(11);
+  let bx = 10;
+  while (bx <= 56) {
+    const w = 4 + Math.floor(random() * 6);
+    const top = 58 + Math.floor(random() * 12);
+    rect(bx, top, Math.min(56, bx + w - 1), 80, P.cityFar);
+    bx += w + (random() < 0.3 ? 1 : 0);
+  }
+  bx = 9;
+  while (bx <= 56) {
+    const w = 5 + Math.floor(random() * 7);
+    const top = 66 + Math.floor(random() * 10);
+    rect(bx, top, Math.min(56, bx + w - 1), 80, P.cityNear);
+    bx += w;
+  }
+  rect(22, 54, 23, 66, P.cityFar);
+  // Moldura, travessas e peitoril.
+  rect(6, 14, 60, 17, P.frame);
+  rect(6, 81, 60, 84, P.frame);
+  rect(6, 14, 9, 84, P.frame);
+  rect(57, 14, 60, 84, P.frame);
+  rect(32, 18, 34, 80, P.frame);
+  rect(10, 48, 56, 50, P.frame);
+  rect(6, 14, 60, 14, P.frameHi);
+  rect(6, 14, 6, 84, P.frameHi);
+  rect(60, 15, 60, 84, P.frameLo);
+  rect(33, 18, 33, 80, P.frameHi);
+  rect(10, 48, 56, 48, P.frameHi);
+  rect(3, 85, 63, 86, P.sill);
+  rect(3, 87, 63, 88, P.frameLo);
+  for (let i = 0; i < 6; i += 1) {
+    px(13 + i, 30 - i, P.glass);
+    px(16 + i, 30 - i, P.glass);
+  }
+
+  // Cortina e varão.
+  rect(0, 9, 68, 10, P.rod);
+  disc(68, 9.5, 1.5, P.frameHi);
+  for (let y = 11; y <= 100; y += 1) {
+    const sway = Math.round(Math.sin(y / 9) * 0.6);
+    for (let x = 0; x <= 7 + sway; x += 1) {
+      const fold = (x + Math.round(y / 30)) % 4;
+      px(x, y, fold === 0 ? P.curtainLo : fold === 2 ? P.curtainHi : P.curtain);
+    }
+  }
+
+  // Quadro com o símbolo do KAZER.
+  rect(70, 16, 88, 42, P.posterFrame);
+  rect(71, 17, 87, 41, P.posterMat);
+  rect(73, 19, 85, 39, P.posterBg);
+  sprite(75, 22, [
+    "....#.....",
+    "...##.....",
+    "..###.#...",
+    ".####.##..",
+    "#####.###.",
+    ".####.####",
+    "..###.###.",
+    "...##.##..",
+    "....#.#...",
+    "......#...",
+  ], { "#": P.ink });
+
+  // Prateleira com livros.
+  rect(96, 32, 143, 33, P.shelf);
+  rect(96, 34, 143, 34, P.shelfLo);
+  rect(100, 35, 101, 38, P.shelfLo);
+  rect(138, 35, 139, 38, P.shelfLo);
+  const books = [
+    [P.bookRose, 11], [P.bookAmber, 9], [P.bookBlue, 12], [P.bookCream, 10], [P.bookPurple, 13],
+    [P.bookDark, 11], [P.bookRose, 9], [P.bookBlue, 10],
+  ];
+  let x0 = 99;
+  books.forEach(([color, height], i) => {
+    const w = i % 3 === 0 ? 3 : 2;
+    rect(x0, 31 - height, x0 + w - 1, 31, color);
+    px(x0, 31 - height, P.soft);
+    x0 += w + 1;
+  });
+  for (let i = 0; i < 9; i += 1) rect(x0 + i, 31 - i, x0 + i + 1, 31 - i, P.bookAmber);
+
+  // Monitor (o conteúdo da tela é dinâmico).
+  rect(66, 50, 120, 90, P.bezel);
+  rect(66, 50, 120, 50, P.bezelHi);
+  rect(66, 50, 66, 90, P.bezelHi);
+  rect(120, 51, 120, 90, P.bezelLo);
+  rect(67, 90, 120, 90, P.bezelLo);
+  px(116, 88, P.lav);
+  rect(90, 91, 96, 94, P.stand);
+  rect(84, 95, 102, 95, P.stand);
+
+  // Mesa com veios e luz da luminária.
+  for (let y = 95; y <= 99; y += 1) {
+    for (let x = 12; x < W; x += 1) {
+      const warm = clamp(1 - Math.abs(x - 121) / 30, 0, 1);
+      let c = (x * 7 + y * 13) % 17 === 0 ? P.deskGrain : P.desk;
+      if (warm > 0.3 && bayer(x, y) < warm - 0.2) c = P.deskHi;
+      px(x, y, c);
+    }
+  }
+  rect(12, 95, W - 1, 95, P.deskHi);
+  rect(12, 100, W - 1, 105, P.deskFront);
+  rect(12, 106, W - 1, 106, P.deskDark);
+  rect(16, 107, 19, 126, P.deskDark);
+  rect(136, 107, 139, 126, P.deskDark);
+
+  // Papéis, teclado e mouse.
+  rect(14, 92, 25, 94, P.paper);
+  rect(15, 93, 23, 93, P.paperLine);
+  rect(16, 91, 26, 91, P.paperLine);
+  rect(78, 96, 108, 98, P.keyboard);
+  for (let x = 79; x <= 107; x += 2) px(x, 97, P.key);
+  rect(78, 96, 108, 96, P.key);
+  rect(112, 97, 115, 98, P.mouse);
+
+  // Luminária articulada com cone de luz quente.
+  for (let y = 84; y <= 93; y += 1) {
+    for (let x = 108; x <= 132; x += 1) {
+      const spread = (y - 74) * 0.75;
+      if (Math.abs(x - 121) < spread && bayer(x, y) < 0.16) px(x, y, P.warm3);
+    }
+  }
+  line(131, 92, 135, 80, 0.7, P.lampBody);
+  line(135, 80, 129, 71, 0.7, P.lampBody);
+  disc(135, 80, 1, P.lampShadeLo);
+  rect(126, 93, 137, 94, P.lampBody);
+  rect(127, 93, 136, 93, P.bezelHi);
+  sprite(114, 66, [
+    "..........###.",
+    "......#######.",
+    "...##########.",
+    ".############.",
+    "#############.",
+    ".bbbbbbbbbbb..",
+  ], { "#": P.lampShade, b: P.bulb });
+  rect(115, 70, 126, 70, P.lampShadeLo);
+
+  // Encosto da cadeira em primeiro plano (o corpo passa por trás).
+  const chair = new Uint32Array(W * H);
+  const cp = painter(chair);
+  for (let y = 113; y < H; y += 1) {
+    for (let x = 44; x <= 84; x += 1) {
+      const top = y - 113;
+      const corner = Math.min(x - 44, 84 - x);
+      if (top < 5 && corner < 5 - top) continue;
+      cp.px(x, y, x > 77 ? P.chairHi : x < 50 ? P.chairLo : P.chair);
+    }
+  }
+  for (let x = 49; x <= 79; x += 1) cp.px(x, 113, P.chairHi);
+  cp.rect(47, 119, 47, H - 1, P.chairStripe);
+  cp.rect(81, 119, 81, H - 1, P.chairStripe);
+  for (let y = 124; y < H; y += 6) cp.rect(52, y, 76, y, P.chairLo);
+
+  return { room: buf, chair };
+}
+
+// ---------- Personagem ----------
+
+const HEADS = {
+  back: [
+    ".....hhhhhh.....",
+    "...hhhhhhhhhh...",
+    "..hhhHHhhhhhhh..",
+    ".hhhHhhhhhhhhhh.",
+    ".hhhhhhhhhhhhhrr",
+    "hhhhhhhhhhhhhhhr",
+    "hhhhhhhhhhhhhhhr",
+    "hhhhhhhhhhhhhhsr",
+    "shhhhhhhhhhhhhsr",
+    "sShhhhhhhhhhhhSr",
+    ".Shhhhhhhhhhhhs.",
+    "..hhhhhhhhhhhh..",
+    "...hhhhhhhhhh...",
+    "....SssssssS....",
+    "....SssssssS....",
+  ],
+  half: [
+    ".....hhhhhh.....",
+    "...hhhhhhhhhh...",
+    "..hhhHHhhhhhhh..",
+    ".hhhHhhhhhhhhhh.",
+    ".hhhhhhhhhhhhhrr",
+    "hhhhhhhhhhhhhhhr",
+    "sshhhhhhhhhhhhhr",
+    "ssshhhhhhhhhhhhr",
+    "sssShhhhhhhhhhsr",
+    "sssShhhhhhhhhhhr",
+    ".ssShhhhhhhhhhs.",
+    "..sShhhhhhhhhh..",
+    "...Shhhhhhhhh...",
+    "....SssssssS....",
+    "....SssssssS....",
+  ],
+  face: [
+    ".....hhhhhh.....",
+    "...hhhhhhhhhh...",
+    "..hHHhhhhhhhhh..",
+    ".hHhhhhhhhhhhhh.",
+    ".hhhhhhhhhhhhhrr",
+    "hhsshhhhhhhhhhhr",
+    "hssssssshhhhhhhr",
+    "gggggggggShhhhhr",
+    "geGgsgeGgshhhhsr",
+    "sgggSsgggshhhhsr",
+    ".sssSssssShhhhs.",
+    "..ssssssSShhhh..",
+    "...sSSSSShhhh...",
+    "....SssssssS....",
+    "....SssssssS....",
+  ],
+  blink: [
+    ".....hhhhhh.....",
+    "...hhhhhhhhhh...",
+    "..hHHhhhhhhhhh..",
+    ".hHhhhhhhhhhhhh.",
+    ".hhhhhhhhhhhhhrr",
+    "hhsshhhhhhhhhhhr",
+    "hssssssshhhhhhhr",
+    "gggggggggShhhhhr",
+    "gSSggsSSgshhhhsr",
+    "sgggSsgggshhhhsr",
+    ".sssSssssShhhhs.",
+    "..ssssssSShhhh..",
+    "...sSSSSShhhh...",
+    "....SssssssS....",
+    "....SssssssS....",
+  ],
+};
+const HEAD_MAP = {
+  h: P.hair, H: P.hairHi, s: P.skin, S: P.skinLo, e: P.eye, g: P.hair, G: P.glass2, r: P.rim,
+};
+const MUG = [".wwww.", "wcccc.", "wwwwwW", "wwwwWW", "wwwwW.", ".WWW.."];
+const MUG_MAP = { w: P.mug, W: P.mugShade, c: P.coffee };
+
+// Linha do tempo do personagem (ms dentro do loop de 22 s).
+function manPose(t) {
+  if (t >= 5500 && t < 9200) {
+    const k = t - 5500;
+    const stage = k < 600 ? "reach" : k < 1100 ? "lift" : k < 2700 ? "sip" : k < 3200 ? "lift" : "reach";
+    return { head: stage === "sip" ? "half" : "back", mug: stage, typing: false, tilt: stage === "sip" ? -1 : 0 };
+  }
+  if (t >= 14500 && t < 17300) {
+    const k = t - 14500;
+    if (k < 400 || k >= 2400) return { head: "half", mug: "desk", typing: false, tilt: 0 };
+    const blink = k >= 1400 && k < 1520;
+    return { head: blink ? "blink" : "face", mug: "desk", typing: false, tilt: 0 };
+  }
+  return { head: "back", mug: "desk", typing: true, tilt: 0 };
+}
+
+function drawMan(buf, t, frameIndex, screenGlow) {
+  const { px, rect, line, sprite } = painter(buf);
+  const pose = manPose(t % MAN_LOOP);
+  const breath = Math.sin((t / 4200) * Math.PI * 2) > 0.6 ? -1 : 0;
+
+  // Tronco (moletom) visto de costas.
+  for (let y = 97; y < H; y += 1) {
+    const yy = y - 97;
+    const half = yy < 5 ? 10.5 + yy * 1.8 : Math.max(16.5, 19.5 - (yy - 5) * 0.08);
+    const cx = 62;
+    for (let x = Math.ceil(cx - half); x <= Math.floor(cx + half); x += 1) {
+      let c = P.hood;
+      if (x > cx + half - 2.5) c = P.rim;
+      else if (x > cx + half - 5) c = P.hoodHi;
+      else if (x < cx - half + 4) c = P.hoodLo;
+      else if (yy > 8 && (x === cx - 6 || x === cx + 4) && bayer(x, y) < 0.7) c = P.hoodLo;
+      px(x, y + (y < 104 ? breath : 0), c);
+    }
+  }
+  // Capuz caído nas costas.
+  rect(54, 95 + breath, 70, 99 + breath, P.hoodLo);
+  rect(55, 95 + breath, 69, 95 + breath, P.hoodHi);
+
+  // Braço direito ao teclado (luz do monitor no contorno).
+  const typingNow = pose.typing && Math.floor(t / 140) % 3 !== 0;
+  const hy = typingNow && frameIndex % 2 === 0 ? -1 : 0;
+  line(80, 101 + breath, 86, 108, 2.4, P.hood);
+  line(86, 108, 90, 99 + hy, 1.8, P.hood);
+  line(82, 100 + breath, 88, 107, 0.8, P.rim);
+  rect(89, 97 + hy, 92, 98 + hy, P.skin);
+  px(92, 97 + hy, P.skinLo);
+  if (typingNow) px(94 + ((t / 140) | 0) % 10, 97, P.keyHi);
+
+  // Braço esquerdo: digita ou pega o café.
+  const ARM = {
+    desk: { elbow: [40, 110], hand: null, mug: [27, 89] },
+    reach: { elbow: [37, 107], hand: [32, 93], mug: [27, 89] },
+    lift: { elbow: [37, 108], hand: [37, 91], mug: [35, 86] },
+    sip: { elbow: [39, 107], hand: [46, 89], mug: [45, 84] },
+  }[pose.mug];
+  line(45, 101 + breath, ARM.elbow[0], ARM.elbow[1], 2.6, P.hoodLo);
+  if (ARM.hand) {
+    line(ARM.elbow[0], ARM.elbow[1], ARM.hand[0], ARM.hand[1] + 1, 1.8, P.hoodLo);
+    line(ARM.elbow[0] + 1, ARM.elbow[1] - 1, ARM.hand[0] + 1, ARM.hand[1] + 2, 0.6, P.hood);
+  }
+  const mugAt = { x: ARM.mug[0], y: ARM.mug[1], inHand: pose.mug !== "desk" };
+
+  // Cabeça e pescoço.
+  sprite(54, 80 + breath + pose.tilt, HEADS[pose.head], HEAD_MAP);
+  if (pose.head === "face" && Math.floor(t / 260) % 5 === 0) px(57, 88 + breath, P.soft);
+
+  // Caneca (e vapor quando está na mesa).
+  sprite(mugAt.x, mugAt.y, MUG, MUG_MAP);
+  if (mugAt.inHand) {
+    rect(ARM.hand[0] - 1, ARM.hand[1] - 1, ARM.hand[0] + 1, ARM.hand[1] + 1, P.skin);
+    px(ARM.hand[0] + 1, ARM.hand[1] + 1, P.skinLo);
+  } else {
+    for (let i = 0; i < 2; i += 1) {
+      for (let k = 0; k < 7; k += 1) {
+        const life = ((t / 90 + k * 3 + i * 9) % 21) / 21;
+        const sy = mugAt.y - 1 - Math.floor(life * 10);
+        const sx = mugAt.x + 2 + i + Math.round(Math.sin(t / 400 + k + i * 2) * 1.2);
+        if (bayer(sx, sy) > life * 0.9) px(sx, sy, P.steam);
+      }
+    }
+  }
+
+  // Luz do monitor no rosto quando ele olha para a tela.
+  if (pose.head !== "face" && screenGlow > 0.5) px(69, 88 + breath, P.rim);
+}
+
+// ---------- Tela: o KAZER coder em ação ----------
+
+const SX = 67;
+const SY = 51;
+const SW = 53;
+const SH = 39;
+
+function drawScreen(buf, t, frameIndex) {
+  const { px, rect, sprite } = painter(buf);
+  const s = t % SCREEN_LOOP;
+  rect(SX, SY, SX + SW - 1, SY + SH - 1, P.screen);
+  for (let y = SY + 4; y < SY + SH; y += 4) for (let x = SX; x < SX + SW; x += 4) px(x, y, P.screenGrid);
+  rect(SX, SY, SX + SW - 1, SY + 6, P.screenBar);
+  px(SX + 2, SY + 3, P.pink);
+  px(SX + 4, SY + 3, P.amber);
+  px(SX + 6, SY + 3, P.lav);
+  [..."KAZER"].forEach((ch, i) => {
+    const bits = FONT3[ch];
+    for (let b = 0; b < 15; b += 1) {
+      if (bits[b] === "1") px(SX + 17 + i * 4 + (b % 3), SY + 1 + Math.floor(b / 3), P.lavDim);
+    }
+  });
+
+  const activity = Math.floor(s / 3600);
+  const local = s % 3600;
+  const thinking = activity === 4;
+
+  // O personagem: o símbolo do KAZER com olhos, braços e um laptop.
+  const bx = SX + 4;
+  const by = SY + 18;
+  const swing = thinking ? Math.round(Math.sin(local / 180) * 2) : 0;
+  const bob = !thinking && Math.floor(local / 160) % 2 === 0 ? 1 : 0;
+  sprite(bx, by - 2 + swing, [
+    "....#",
+    "...##",
+    "..###",
+    ".####",
+    "#####",
+    ".####",
+    "..###",
+    "...##",
+    "....#",
+  ], { "#": P.ink });
+  sprite(bx + 6, by + 1 - swing, [
+    "#....",
+    "##...",
+    "###..",
+    "####.",
+    "#####",
+    "####.",
+    "###..",
+    "##...",
+    "#....",
+  ], { "#": P.ink });
+  const blink = local % 1700 < 110;
+  px(bx + 3, by + 2 + swing, blink ? P.ink : P.screen);
+  px(bx + 7, by + 5 - swing, blink ? P.ink : P.screen);
+  rect(bx + 1, by + 11, bx + 13, by + 11, P.lavDim);
+  rect(bx + 3, by + 9 + bob, bx + 4, by + 9 + bob, P.lav);
+  rect(bx + 9, by + 9 + (1 - bob), bx + 10, by + 9 + (1 - bob), P.lav);
+  rect(bx + 2, by + 12, bx + 12, by + 12, P.lav);
+  if (thinking) {
+    for (let i = 0; i < 3; i += 1) {
+      if (Math.floor(local / 250) % 4 > i) px(bx + 3 + i * 3, by - 6, P.soft);
+    }
+  }
+
+  // Área de trabalho à direita: código, testes, construção, entrega, pensamento.
+  const ax = SX + 20;
+  const ay = SY + 9;
+  if (activity === 0) {
+    const random = rng(5);
+    const lines = Math.min(7, Math.floor(local / 420) + 1);
+    for (let l = 0; l < lines; l += 1) {
+      let x = ax + (l % 3 === 1 ? 3 : l % 3 === 2 ? 6 : 0);
+      const tokens = 2 + Math.floor(random() * 3);
+      for (let k = 0; k < tokens && x < SX + SW - 3; k += 1) {
+        const w = 2 + Math.floor(random() * 5);
+        const c = [P.amber, P.pink, P.lav, P.soft][Math.floor(random() * 4)];
+        rect(x, ay + l * 4, Math.min(SX + SW - 3, x + w - 1), ay + l * 4, c);
+        x += w + 1;
+      }
+    }
+    if (Math.floor(local / 260) % 2 === 0) rect(ax, ay + lines * 4, ax + 1, ay + lines * 4, P.soft);
+  } else if (activity === 1) {
+    for (let r = 0; r < 5; r += 1) {
+      const y = ay + 1 + r * 5;
+      const done = local > 450 + r * 420;
+      const failed = r === 3 && local < 2700;
+      rect(ax, y, ax + 3, y + 3, P.screenBar);
+      if (done) {
+        const c = failed ? P.pink : P.soft;
+        if (failed) {
+          px(ax, y, c); px(ax + 3, y, c); px(ax + 1, y + 1, c); px(ax + 2, y + 2, c);
+          px(ax, y + 3, c); px(ax + 3, y + 3, c); px(ax + 2, y + 1, c); px(ax + 1, y + 2, c);
+        } else {
+          px(ax, y + 2, c); px(ax + 1, y + 3, c); px(ax + 2, y + 2, c); px(ax + 3, y + 1, c);
+        }
+      }
+      rect(ax + 6, y + 1, ax + 6 + 8 + ((r * 7) % 12), y + 2, done ? P.lavDim : P.screenBar);
+    }
+  } else if (activity === 2) {
+    const placed = Math.min(14, Math.floor(local / 210));
+    const order = [[0, 0], [5, 0], [10, 0], [15, 0], [2, 1], [7, 1], [12, 1], [5, 2], [10, 2], [2, 3], [7, 3], [12, 3], [7, 4], [7, 5]];
+    const colors = [P.amber, P.pink, P.lav, P.soft];
+    for (let i = 0; i < placed; i += 1) {
+      const [cx, row] = order[i];
+      const y = ay + 24 - row * 4;
+      rect(ax + cx, y, ax + cx + 4, y + 2, colors[i % 4]);
+      px(ax + cx, y, P.soft);
+    }
+    if (placed < 14) {
+      const [cx, row] = order[placed];
+      const fall = Math.min(1, (local % 210) / 210);
+      const y = Math.round(ay + (24 - row * 4) * fall);
+      rect(ax + cx, y, ax + cx + 4, y + 2, colors[placed % 4]);
+    }
+  } else if (activity === 3) {
+    const progress = clamp(local / 1800, 0, 1);
+    rect(ax, ay + 2, ax + 27, ay + 4, P.screenBar);
+    rect(ax, ay + 2, ax + Math.round(27 * progress), ay + 4, P.lav);
+    if (local > 1800) {
+      const lift = Math.floor((local - 1800) / 60);
+      const ry = ay + 23 - lift;
+      if (ry > ay + 5) {
+        sprite(ax + 12, ry, [".#.", "###", "#P#", "###", "#.#"], { "#": P.soft, P: P.pink });
+        if (frameIndex % 2 === 0) px(ax + 13, ry + 5, P.amber);
+        px(ax + 13, ry + 6, P.pink);
+      } else {
+        const ok = "OK";
+        [...ok].forEach((ch, i) => {
+          const bits = FONT3[ch] || "111101101101111";
+          for (let b = 0; b < 15; b += 1) {
+            if (bits[b] === "1") px(ax + 10 + i * 4 + (b % 3), ay + 14 + Math.floor(b / 3), P.soft);
+          }
+        });
+      }
+    }
+  } else {
+    for (let i = 0; i < 9; i += 1) {
+      const phase = (local / 300 + i * 0.7) % 3;
+      if (phase < 1.4) px(ax + 4 + ((i * 11) % 24), ay + 6 + ((i * 7) % 20), i % 2 ? P.lav : P.amber);
+    }
+  }
+
+  // Leve varredura de monitor.
+  for (let y = SY + 7; y < SY + SH; y += 2) {
+    for (let x = SX; x < SX + SW; x += 1) {
+      const i = y * W + x;
+      if (buf[i] === P.screen) buf[i] = P.screenGrid;
     }
   }
 }
 
-const MATERIAL = [0, 9, 12, 11, 10, 18];
+// ---------- Céu vivo ----------
+
+function drawSky(buf, t, stars, lights) {
+  const { px } = painter(buf);
+  for (const star of stars) {
+    const on = Math.sin(t / star.speed + star.phase) > -0.2;
+    px(star.x, star.y, on ? (star.bright ? P.star : P.starDim) : P.sky1);
+  }
+  for (const light of lights) {
+    const on = light.blink ? Math.floor(t / light.blink + light.phase) % 5 !== 0 : true;
+    if (on) px(light.x, light.y, light.color);
+  }
+  // Avião cruzando o céu a cada 11 s.
+  const plane = (t % 11000) / 11000;
+  const ax = Math.round(10 + plane * 46);
+  if (plane < 1 && ax <= 56 && ax !== 33 && ax !== 34 && ax !== 32) {
+    const ay = 40 - Math.round(plane * 8);
+    if (ay !== 48 && ay !== 49 && ay !== 50) px(ax, ay, Math.floor(t / 300) % 2 ? P.beacon : P.star);
+  }
+  // Farol vermelho da torre.
+  if (Math.floor(t / 700) % 2 === 0) px(22, 53, P.beacon);
+}
+
+function buildSky() {
+  const random = rng(29);
+  const stars = [];
+  while (stars.length < 22) {
+    const x = 10 + Math.floor(random() * 47);
+    const y = 19 + Math.floor(random() * 32);
+    const nearMoon = Math.hypot(x - 43, y - 29) < 9;
+    const onFrame = (x >= 32 && x <= 34) || (y >= 48 && y <= 50);
+    if (nearMoon || onFrame) continue;
+    stars.push({ x, y, bright: random() < 0.35, speed: 400 + random() * 900, phase: random() * 6 });
+  }
+  const lights = [];
+  for (let i = 0; i < 26; i += 1) {
+    const x = 11 + Math.floor(random() * 45);
+    const y = 62 + Math.floor(random() * 17);
+    if (x >= 32 && x <= 34) continue;
+    lights.push({
+      x,
+      y,
+      color: [P.win1, P.win2, P.win3][Math.floor(random() * 3)],
+      blink: random() < 0.3 ? 300 + random() * 500 : 0,
+      phase: Math.floor(random() * 5),
+    });
+  }
+  return { stars, lights };
+}
+
+// Vinheta pontilhada: o quarto se dissolve no preto da página.
+function buildVignette() {
+  const edges = [];
+  for (let y = 0; y < H; y += 1) {
+    for (let x = 0; x < W; x += 1) {
+      const side = Math.min(x, W - 1 - x) / 9;
+      const top = y / 7;
+      const bottom = (H - 1 - y) / 16;
+      const keep = clamp(Math.min(side, top, bottom), 0, 1);
+      if (keep < 1) edges.push(y * W + x, Math.round(keep ** 1.4 * 256));
+    }
+  }
+  return Int32Array.from(edges);
+}
+
+export function createRoom() {
+  const { room, chair } = buildRoom();
+  const { stars, lights } = buildSky();
+  const vignette = buildVignette();
+  const frame = new Uint32Array(W * H);
+  return {
+    width: W,
+    height: H,
+    render(t, frameIndex, out) {
+      frame.set(room);
+      drawSky(frame, t, stars, lights);
+      drawScreen(frame, t, frameIndex);
+      drawMan(frame, t, frameIndex, 1);
+      for (let i = 0; i < W * H; i += 1) if (chair[i]) frame[i] = chair[i];
+      for (let k = 0; k < vignette.length; k += 2) {
+        const i = vignette[k];
+        const f = vignette[k + 1];
+        const v = frame[i];
+        const r = 3 + ((((v & 0xff) - 3) * f) >> 8);
+        const g = 3 + (((((v >> 8) & 0xff) - 3) * f) >> 8);
+        const b = 3 + (((((v >> 16) & 0xff) - 3) * f) >> 8);
+        frame[i] = (0xff000000 | (b << 16) | (g << 8) | r) >>> 0;
+      }
+      out.set(frame);
+    },
+  };
+}
 
 // ---------- Ciclo de animação ----------
 
@@ -450,90 +731,13 @@ export function startScene(canvas, { reducedMotion = false } = {}) {
   if (!ctx) return { pause() {}, resume() {}, destroy() {} };
   canvas.width = W;
   canvas.height = H;
-
-  const base = buildBase();
-  const chair = buildChair();
-  const vignette = buildVignette();
-  const paintScreen = makeScreenPainter();
-  const mask = new Uint8Array(W * H);
-  const frame = new Uint8Array(W * H);
+  const room = createRoom();
   const image = ctx.createImageData(W, H);
   const pixels = new Uint32Array(image.data.buffer);
-
-  const isScreen = (x, y) =>
-    x >= SCREEN.x && x < SCREEN.x + SCREEN.w && y >= SCREEN.y && y < SCREEN.y + SCREEN.h;
-
-  function render(t, frameIndex, grain) {
-    const { scr, typing, lookingUp } = paintScreen(t, frameIndex);
-    frame.set(base);
-
-    // Monitor: varredura, vinheta interna, reflexo no vidro e falhas raras.
-    let luma = 0;
-    const tear =
-      (t >= 3120 && t < 3200) || (t >= 8600 && t < 8680) || (t >= 12960 && t < 13040)
-        ? { y0: 6 + (Math.floor(t / 80) % 3) * 9, y1: 13 + (Math.floor(t / 80) % 3) * 9, dx: t < 9000 ? 2 : -2 }
-        : null;
-    for (let sy = 0; sy < SCREEN.h; sy += 1) {
-      const shift = tear && sy >= tear.y0 && sy < tear.y1 ? tear.dx : 0;
-      for (let sx = 0; sx < SCREEN.w; sx += 1) {
-        const srcX = sx - shift;
-        let v = srcX >= 0 && srcX < SCREEN.w ? scr[sy * SCREEN.w + srcX] : 0;
-        luma += v;
-        const ex = Math.min(sx, SCREEN.w - 1 - sx);
-        const ey = Math.min(sy, SCREEN.h - 1 - sy);
-        const edge = Math.min(ex / 6, ey / 4, 1);
-        v = 6 + v * (0.86 + 0.14 * edge);
-        if (sy & 1) v *= 0.8;
-        if (sy < 16 && sx - sy * 0.8 > 3 && sx - sy * 0.8 < 9) v += 5;
-        frame[(SCREEN.y + sy) * W + SCREEN.x + sx] = clamp(Math.round(v), 0, 255);
-      }
-    }
-    luma /= SCREEN.w * SCREEN.h;
-    const flicker = 1 + Math.sin(t * 0.031) * 0.02;
-    const gain = clamp(0.72 + luma / 34, 0.7, 1.4) * flicker;
-
-    // Personagem com luz de recorte vinda do monitor.
-    const breath = Math.sin((t / 4300) * Math.PI * 2) > 0.55 ? -1 : 0;
-    const handUp = typing && typing.index >= 0 && typing.index % 2 === 0 ? -1 : 0;
-    paintBody(mask, breath, 0, lookingUp ? -1 : 0, handUp);
-    for (let y = 20; y < H; y += 1) {
-      for (let x = 40; x < 122; x += 1) {
-        const i = y * W + x;
-        const m = mask[i];
-        if (!m) continue;
-        const lx = x < LIGHT.x ? 1 : -1;
-        const ly = y > LIGHT.y + 2 ? -1 : 0;
-        const outside = (dx, dy) => !mask[(y + dy) * W + x + dx];
-        let v = MATERIAL[m] + (m === 1 && bayer(x, y) < 0.12 ? 3 : 0);
-        const dist = Math.hypot(LIGHT.x - x, LIGHT.y - y);
-        const strength = (95 / (1 + dist / 55)) * gain;
-        if (outside(lx, 0) || (ly && outside(0, ly)) || (ly && outside(lx, ly))) v += strength;
-        else if (outside(lx * 2, 0) || (ly && outside(0, ly * 2))) v += strength * 0.32;
-        frame[i] = clamp(Math.round(v), 0, 255);
-      }
-    }
-    if (typing && typing.index >= 0) {
-      const key = 106 + ((typing.index * 7) % 16) * 2;
-      frame[67 * W + key] = 64;
-    }
-
-    for (let i = 0; i < W * H; i += 1) if (chair[i] >= 0) frame[i] = chair[i];
-
-    // Vinheta, grão contido e conversão para RGBA.
-    for (let y = 0; y < H; y += 1) {
-      for (let x = 0; x < W; x += 1) {
-        const i = y * W + x;
-        let v = frame[i];
-        if (!isScreen(x, y)) {
-          v = BG + (v - BG) * vignette[i];
-          if (grain && v < 40 && Math.random() < 0.018) v += 3 + Math.random() * 6;
-        }
-        const g = clamp(Math.round(v), 0, 255);
-        pixels[i] = 0xff000000 | (g << 16) | (g << 8) | g;
-      }
-    }
+  const draw = (t, frameIndex) => {
+    room.render(t, frameIndex, pixels);
     ctx.putImageData(image, 0, 0);
-  }
+  };
 
   // Escala inteira em pixels de dispositivo para manter os pixels nítidos.
   const container = canvas.parentElement;
@@ -549,7 +753,7 @@ export function startScene(canvas, { reducedMotion = false } = {}) {
   resizeObserver.observe(container);
 
   if (reducedMotion) {
-    render(T.complete + 900, 0, false);
+    draw(3000, 0);
     return {
       pause() {},
       resume() {},
@@ -574,7 +778,7 @@ export function startScene(canvas, { reducedMotion = false } = {}) {
     if (now - lastDraw >= FRAME_MS) {
       lastDraw = now;
       frameIndex += 1;
-      render(elapsed % LOOP, frameIndex, true);
+      draw(elapsed, frameIndex);
     }
     raf = requestAnimationFrame(tick);
   }
@@ -590,14 +794,14 @@ export function startScene(canvas, { reducedMotion = false } = {}) {
     if (!holds.size && !raf) raf = requestAnimationFrame(tick);
   };
 
-  // Para quando a aba some ou a cena sai da tela.
+  // Para quando a aba some, a cena sai da tela ou a tela de conta está aberta.
   const onVisibility = () => (document.hidden ? pause("hidden") : resume("hidden"));
   document.addEventListener("visibilitychange", onVisibility);
   const io = new IntersectionObserver(([entry]) =>
     entry.isIntersecting ? resume("offscreen") : pause("offscreen"),
   );
   io.observe(canvas);
-  render(0, 0, false);
+  draw(0, 0);
   raf = requestAnimationFrame(tick);
 
   return {
