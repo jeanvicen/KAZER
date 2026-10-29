@@ -6,8 +6,6 @@ from pathlib import Path
 from typing import Literal
 from urllib.parse import urlsplit
 
-from pydantic import model_validator
-
 from kazer.config.models import StrictModel
 
 Environment = Literal["development", "test", "production"]
@@ -28,24 +26,30 @@ class Settings(StrictModel):
     smtp_port: int = 587
     smtp_user: str = ""
     cookie_secure: bool = True
+    serverless: bool = False
 
-    @model_validator(mode="after")
-    def _fail_closed_in_production(self) -> "Settings":
-        """Produção exige HTTPS, cookies seguros e entrega real de e-mail."""
-        if self.environment != "production":
-            return self
+    @property
+    def auth_blockers(self) -> list[str]:
+        """Motivos que impedem a autenticação de operar com segurança.
+
+        Com qualquer bloqueio a tela continua no ar, mas a API de contas recusa
+        as operações (falha fechada) em vez de simular um login sem persistência.
+        """
         problems: list[str] = []
-        if urlsplit(self.public_url).scheme != "https":
-            problems.append("KAZER_PUBLIC_URL deve usar https")
-        if not self.cookie_secure:
-            problems.append("KAZER_COOKIE_SECURE não pode ser desativado")
-        if self.mail_backend != "smtp":
-            problems.append("KAZER_MAIL_BACKEND deve ser smtp")
-        if not self.smtp_host:
-            problems.append("SMTP_HOST é obrigatório")
-        if problems:
-            raise ValueError("Configuração de produção inválida: " + "; ".join(problems))
-        return self
+        if self.serverless:
+            problems.append(
+                "sem armazenamento persistente: o SQLite local não persiste em funções serverless"
+            )
+        if self.environment == "production":
+            if urlsplit(self.public_url).scheme != "https":
+                problems.append("KAZER_PUBLIC_URL deve usar https")
+            if not self.cookie_secure:
+                problems.append("KAZER_COOKIE_SECURE não pode ser desativado")
+            if self.mail_backend != "smtp":
+                problems.append("KAZER_MAIL_BACKEND deve ser smtp")
+            if not self.smtp_host:
+                problems.append("SMTP_HOST é obrigatório")
+        return problems
 
     @property
     def public_origin(self) -> str:
@@ -64,6 +68,8 @@ def load_settings(environ: Mapping[str, str] | None = None) -> Settings:
     """Carrega configuração validada; leitura de segredos é proibida aqui."""
     env = os.environ if environ is None else environ
     environment = env.get("KAZER_ENV", "development")
+    # A Vercel define VERCEL=1 nas funções; lá o disco é somente leitura e efêmero.
+    serverless = bool(env.get("VERCEL") or env.get("AWS_LAMBDA_FUNCTION_NAME"))
     values: dict[str, object] = {
         "environment": environment,
         "log_level": env.get("KAZER_LOG_LEVEL", "INFO"),
@@ -76,6 +82,9 @@ def load_settings(environ: Mapping[str, str] | None = None) -> Settings:
         "smtp_port": env.get("SMTP_PORT", "587"),
         "smtp_user": env.get("SMTP_USER", ""),
         # Cookies `Secure` por padrão; só o desenvolvimento local em http pode desligar.
-        "cookie_secure": _flag(env.get("KAZER_COOKIE_SECURE"), environment == "production"),
+        "cookie_secure": _flag(
+            env.get("KAZER_COOKIE_SECURE"), environment == "production" or serverless
+        ),
+        "serverless": serverless,
     }
     return Settings.model_validate(values)

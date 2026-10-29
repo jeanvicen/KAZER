@@ -6,6 +6,7 @@ que desligam cache, referer e APIs sensíveis do navegador.
 """
 
 import json
+import logging
 import math
 from collections.abc import AsyncIterator, Awaitable, Callable
 from contextlib import asynccontextmanager
@@ -30,6 +31,8 @@ from kazer.config.settings import Settings, load_settings
 from kazer.integrations.email import build_mail_sender
 from kazer.security.passwords import PasswordHashing
 from kazer.security.rate_limiter import RateLimiter
+
+logger = logging.getLogger("kazer.web")
 
 STATIC_DIR = Path(__file__).parent / "static"
 MAX_BODY_BYTES = 4096
@@ -116,18 +119,31 @@ def _client(request: Request) -> str:
     return request.client.host if request.client else "unknown"
 
 
+def _build_service(settings: Settings) -> AuthService | None:
+    """Cria o serviço real ou None quando a configuração não permite operar com segurança."""
+    blockers = settings.auth_blockers
+    if not blockers:
+        try:
+            mailer = build_mail_sender(settings)
+        except (LookupError, PermissionError):
+            blockers = ["senha SMTP não configurada"]
+        else:
+            return AuthService(
+                AuthStore(settings.database_path),
+                PasswordHashing(),
+                mailer,
+                RateLimiter(),
+                settings.public_origin,
+            )
+    # Só motivos de configuração, nunca valores; a tela segue no ar com contas fechadas.
+    logger.warning("auth.unavailable: %s", "; ".join(blockers))
+    return None
+
+
 def create_app(settings: Settings | None = None, service: AuthService | None = None) -> Starlette:
     """Monta a aplicação com dependências reais ou injetadas (testes)."""
     settings = settings or load_settings()
-    if service is None:
-        service = AuthService(
-            AuthStore(settings.database_path),
-            PasswordHashing(),
-            build_mail_sender(settings),
-            RateLimiter(),
-            settings.public_origin,
-        )
-    auth = service
+    auth = service if service is not None else _build_service(settings)
     cookie_name = "__Host-kazer_session" if settings.cookie_secure else "kazer_session"
     public_origin = settings.public_origin
 
@@ -159,6 +175,11 @@ def create_app(settings: Settings | None = None, service: AuthService | None = N
             raise AuthError("invalid_request", 400)
         return data
 
+    def require_auth() -> AuthService:
+        if auth is None:
+            raise AuthError("auth_unavailable", 503)
+        return auth
+
     def field(data: dict[str, Any], name: str) -> str:
         value = data.get(name)
         if not isinstance(value, str) or len(value) > FIELD_MAX_LENGTH:
@@ -186,6 +207,8 @@ def create_app(settings: Settings | None = None, service: AuthService | None = N
 
     @_endpoint
     async def session(request: Request) -> Response:
+        if auth is None:
+            return JSONResponse({"authenticated": False, "available": False})
         token = request.cookies.get(cookie_name)
         email = await run_in_threadpool(auth.session_email, token)
         if email is None:
@@ -197,6 +220,7 @@ def create_app(settings: Settings | None = None, service: AuthService | None = N
 
     @_endpoint
     async def register(request: Request) -> Response:
+        auth = require_auth()
         data = await read_json(request)
         email, password = field(data, "email"), field(data, "password")
         await run_in_threadpool(auth.register, email, password, _client(request))
@@ -204,6 +228,7 @@ def create_app(settings: Settings | None = None, service: AuthService | None = N
 
     @_endpoint
     async def resend_verification(request: Request) -> Response:
+        auth = require_auth()
         data = await read_json(request)
         message = await run_in_threadpool(
             auth.resend_verification, field(data, "email"), _client(request)
@@ -213,12 +238,14 @@ def create_app(settings: Settings | None = None, service: AuthService | None = N
 
     @_endpoint
     async def verify_email(request: Request) -> Response:
+        auth = require_auth()
         data = await read_json(request)
         await run_in_threadpool(auth.verify_email, field(data, "token"), _client(request))
         return JSONResponse({"status": "verified"})
 
     @_endpoint
     async def login(request: Request) -> Response:
+        auth = require_auth()
         data = await read_json(request)
         email, password = field(data, "email"), field(data, "password")
         grant = await run_in_threadpool(auth.login, email, password, _client(request))
@@ -230,6 +257,7 @@ def create_app(settings: Settings | None = None, service: AuthService | None = N
 
     @_endpoint
     async def logout(request: Request) -> Response:
+        auth = require_auth()
         check_origin(request)
         await run_in_threadpool(auth.logout, request.cookies.get(cookie_name))
         response = JSONResponse({"authenticated": False})
@@ -238,6 +266,7 @@ def create_app(settings: Settings | None = None, service: AuthService | None = N
 
     @_endpoint
     async def request_reset(request: Request) -> Response:
+        auth = require_auth()
         data = await read_json(request)
         message = await run_in_threadpool(
             auth.request_password_reset, field(data, "email"), _client(request)
@@ -247,6 +276,7 @@ def create_app(settings: Settings | None = None, service: AuthService | None = N
 
     @_endpoint
     async def confirm_reset(request: Request) -> Response:
+        auth = require_auth()
         data = await read_json(request)
         token, password = field(data, "token"), field(data, "password")
         await run_in_threadpool(auth.reset_password, token, password, _client(request))
@@ -256,7 +286,8 @@ def create_app(settings: Settings | None = None, service: AuthService | None = N
 
     @asynccontextmanager
     async def lifespan(app: Starlette) -> AsyncIterator[None]:
-        await run_in_threadpool(auth.initialize)
+        if auth is not None:
+            await run_in_threadpool(auth.initialize)
         yield
 
     routes = [

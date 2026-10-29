@@ -25,6 +25,10 @@ kazer = "kazer.main:main"
 [tool.setuptools.packages.find]
 include = ["kazer*"]
 
+# Vercel: o preset "python" (vercel.json) carrega esta app ASGI como função.
+[tool.vercel]
+entrypoint = "kazer.interfaces.web.asgi:app"
+
 [tool.setuptools.package-data]
 "kazer.interfaces.web" = ["static/*.html", "static/assets/*", "static/assets/fonts/*"]
 

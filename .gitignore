@@ -24,6 +24,8 @@ env/
 .python-version.local
 
 # Ferramentas e caches
+.vercel/
+build/
 .pytest_cache/
 .mypy_cache/
 .ruff_cache/

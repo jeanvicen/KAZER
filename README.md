@@ -48,6 +48,12 @@ O que funciona de verdade, ponta a ponta:
 
 Em desenvolvimento os e-mails são gravados em `data/outbox/*.eml`; abra o arquivo e use o link. Em produção (`KAZER_ENV=production`) o app exige HTTPS em `KAZER_PUBLIC_URL`, cookies `Secure` e SMTP configurado, e se recusa a iniciar sem eles. Dados coletados, retenção e exclusão: [docs/privacy-data-map.md](docs/privacy-data-map.md).
 
+### Deploy na Vercel
+
+Cada push na `main` gera um deploy de produção pela integração Git da Vercel. O `vercel.json` fixa o preset `python` e o `pyproject.toml` aponta a entrada ASGI (`kazer.interfaces.web.asgi:app`), então a configuração não depende do preset salvo no painel. Uma única função Python serve a tela, os assets e a API; arquivos do repositório não são publicados como estáticos.
+
+Funções serverless não têm disco persistente, e o SQLite local perderia contas entre execuções. Por isso, na Vercel a tela fica no ar com as contas **fechadas** (a API responde `503 auth_unavailable` e o botão aparece desativado com aviso) até existir um banco persistente e SMTP configurados. Nada de login simulado.
+
 Após o login, a tela mostra a sessão ativa e a opção de sair. A interface principal do KAZER ainda não existe; o ponto de navegação pós-login está marcado em `enterApp()` (`static/assets/app.js`).
 
 ## Variáveis de ambiente

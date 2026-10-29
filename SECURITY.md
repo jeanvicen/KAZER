@@ -49,7 +49,7 @@ Implementado em `kazer/auth` e `kazer/interfaces/web` (somente e-mail e senha; n
 - Limites por cliente (login, registro, envio de e-mail, uso de links) e bloqueio temporário por conta após 5 falhas em 15 min, com `Retry-After`.
 - CSRF: POST só com `Content-Type: application/json`, `Origin` da própria aplicação e `Sec-Fetch-Site` same-origin; corpo limitado a 4 KB.
 - Cabeçalhos: CSP sem origens externas e sem inline, `frame-ancestors 'none'`, `Referrer-Policy: no-referrer`, `nosniff`, COOP/CORP, `Permissions-Policy` restritiva, HSTS quando HTTPS; `Cache-Control: no-store` na API.
-- Produção falha fechada sem HTTPS, cookies seguros ou SMTP; a senha SMTP passa por `security/secrets.py`.
+- Falha fechada: sem HTTPS, cookies seguros, SMTP ou armazenamento persistente (caso de funções serverless como a Vercel), a tela continua no ar mas a API de contas recusa tudo com `503 auth_unavailable`; a senha SMTP passa por `security/secrets.py`.
 
 Lacunas conhecidas: os limites de taxa vivem na memória de um único processo (várias instâncias exigem armazenamento compartilhado); não há MFA, CAPTCHA nem verificação contra bases de senhas vazadas; a exclusão de conta pelo próprio usuário depende da futura área logada; o IP usado nos limites vem do socket ou de `X-Forwarded-For` apenas de proxies confiáveis do uvicorn (`FORWARDED_ALLOW_IPS`). Dados coletados e retenção: [docs/privacy-data-map.md](docs/privacy-data-map.md).
 

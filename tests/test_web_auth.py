@@ -10,7 +10,7 @@ from starlette.testclient import TestClient
 
 from kazer.auth.service import AuthService
 from kazer.auth.store import AuthStore
-from kazer.config.settings import Settings
+from kazer.config.settings import Settings, load_settings
 from kazer.integrations.email import MailMessage
 from kazer.interfaces.web.app import create_app
 from kazer.security.passwords import PasswordHashing
@@ -144,5 +144,25 @@ def test_login_rate_limit_returns_retry_after(client: TestClient, outbox: Outbox
 
 
 def test_production_settings_fail_closed() -> None:
-    with pytest.raises(ValueError):
-        Settings(environment="production", public_url="http://kazer.example", mail_backend="file")
+    settings = Settings(
+        environment="production", public_url="http://kazer.example", mail_backend="file"
+    )
+    assert len(settings.auth_blockers) >= 3
+
+
+def test_serverless_without_persistent_storage_keeps_accounts_closed() -> None:
+    settings = load_settings({"VERCEL": "1"})
+    assert settings.serverless and settings.cookie_secure
+    assert settings.auth_blockers
+    with TestClient(create_app(settings), headers={"Origin": "https://testserver"}) as client:
+        page = client.get("/")
+        assert page.status_code == 200 and "KAZER" in page.text
+        assert client.get("/assets/app.js").status_code == 200
+        assert "strict-transport-security" in page.headers
+        assert client.get("/api/auth/session").json() == {
+            "authenticated": False,
+            "available": False,
+        }
+        for path in ("/api/auth/login", "/api/auth/register", "/api/auth/password-reset"):
+            response = client.post(path, json={"email": "ana@example.com", "password": PASSWORD})
+            assert (response.status_code, response.json()) == (503, {"error": "auth_unavailable"})

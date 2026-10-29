@@ -32,6 +32,7 @@ const ui = {
   forgot: $("forgot"),
   switchLink: $("switch"),
   note: $("privacy-note"),
+  availability: $("availability"),
   notice: $("notice"),
   noticeTitle: $("notice-title"),
   noticeBody: $("notice-body"),
@@ -93,6 +94,7 @@ function generalError(result) {
   if (code === "network") return "Can't reach KAZER. Check your connection and try again.";
   if (code === "rate_limited") return waitText(result.data.retry_after);
   if (code === "delivery_failed") return "We couldn't send the email right now. Try again in a moment.";
+  if (code === "auth_unavailable") return "Accounts aren't open on this deployment yet.";
   if (["forbidden_origin", "unsupported_media_type", "payload_too_large", "invalid_request"].includes(code)) {
     return "This request was blocked. Reload the page and try again.";
   }
@@ -138,6 +140,8 @@ const state = {
   mode: "signin",
   busy: false,
   resetToken: null,
+  // O servidor informa se há armazenamento persistente; sem ele, nada de login simulado.
+  available: true,
 };
 
 function setHidden(element, hidden) {
@@ -244,12 +248,19 @@ function showForm() {
 
 function setBusy(busy) {
   state.busy = busy;
-  ui.submit.disabled = busy;
+  ui.submit.disabled = busy || !state.available;
   ui.submit.setAttribute("aria-busy", String(busy));
   for (const name of Object.keys(fields)) ui[name].readOnly = busy;
   ui.tabs.forEach((tab) => {
     tab.disabled = busy;
   });
+}
+
+function setUnavailable() {
+  state.available = false;
+  setHidden(ui.availability, false);
+  ui.submit.disabled = true;
+  ui.submit.setAttribute("aria-describedby", "availability");
 }
 
 // ---------- Avisos ----------
@@ -362,6 +373,7 @@ function validateLocally() {
 }
 
 function applyServerError(result) {
+  if (result.data.error === "auth_unavailable") setUnavailable();
   const mapped = FIELD_ERRORS[result.data.error];
   if (mapped && MODES[state.mode].fields.includes(mapped[0])) {
     fieldError(mapped[0], mapped[1]);
@@ -645,6 +657,7 @@ async function boot() {
     return;
   }
 
+  if (session?.ok && session.data.available === false) setUnavailable();
   handleLinkAction(linkAction);
   if (reducedMotion || !ui.intro.getContext) {
     ui.intro.remove();
