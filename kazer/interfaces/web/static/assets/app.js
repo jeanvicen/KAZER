@@ -50,6 +50,7 @@ const ui = {
 };
 const fields = {
   email: ui.form.querySelector('[data-field="email"]'),
+  recoveryCode: ui.form.querySelector('[data-field="recovery-code"]'),
   password: ui.form.querySelector('[data-field="password"]'),
   confirm: ui.form.querySelector('[data-field="confirm"]'),
 };
@@ -78,7 +79,7 @@ const MODES = {
     submit: "Enviar link",
   },
   reset: {
-    fields: ["password", "confirm"],
+    fields: ["recoveryCode", "password", "confirm"],
     autocomplete: "new-password",
     title: "Nova senha",
     lede: "Ao salvar, você sai de todos os dispositivos.",
@@ -360,6 +361,7 @@ function setMode(mode, { focus = false } = {}) {
   if (config.autocomplete) ui.password.autocomplete = config.autocomplete;
   const newPassword = mode === "signup" || mode === "reset";
   setHidden(ui.hint, !newPassword);
+  setHidden($("recovery-code-hint"), mode !== "reset");
   ui.password.setAttribute("aria-describedby", newPassword ? "password-hint password-error" : "password-error");
   ui.submitLabel.textContent = config.submit;
   setHidden(ui.forgot, mode !== "signin");
@@ -484,6 +486,9 @@ function validateLocally() {
     else if (mode !== "signin" && password.length < 10) errors.push(["password", "Use pelo menos 10 caracteres."]);
     else if (password.length > 128) errors.push(["password", "Use no máximo 128 caracteres."]);
   }
+  if (MODES[mode].fields.includes("recoveryCode") && !ui.recoveryCode.value.trim()) {
+    errors.push(["recoveryCode", "Abra o link de recuperação ou cole o código recebido."]);
+  }
   if (MODES[mode].fields.includes("confirm")) {
     if (!ui.confirm.value) errors.push(["confirm", "Repita a senha."]);
     else if (ui.confirm.value !== ui.password.value) errors.push(["confirm", "As senhas não coincidem."]);
@@ -573,13 +578,14 @@ async function submitRecover(email) {
 
 async function submitReset() {
   const result = await api("/api/auth/password-reset/confirm", {
-    token: state.resetToken,
+    token: ui.recoveryCode.value.trim() || state.resetToken,
     password: ui.password.value,
   });
   if (result.ok) {
     state.resetToken = null;
     ui.password.value = "";
     ui.confirm.value = "";
+    ui.recoveryCode.value = "";
     showNotice({
       title: "Senha atualizada",
       body: ["Você saiu de todos os dispositivos. Entre com a nova senha."],
@@ -700,6 +706,7 @@ function handleLinkAction(action) {
     setMode("recover");
   } else if (action.type === "reset") {
     state.resetToken = action.token;
+    ui.recoveryCode.value = action.token;
     setMode("reset");
   } else if (action.type === "verify") {
     showNotice({ title: "Confirmando seu e-mail", status: "Verificando o link…" });
