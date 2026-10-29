@@ -25,6 +25,9 @@ class Settings(StrictModel):
     smtp_host: str = ""
     smtp_port: int = 587
     smtp_user: str = ""
+    supabase_url: str = ""
+    supabase_publishable_key: str = ""
+    supabase_auth_redirect_url: str = ""
     cookie_secure: bool = True
     serverless: bool = False
 
@@ -36,7 +39,7 @@ class Settings(StrictModel):
         as operações (falha fechada) em vez de simular um login sem persistência.
         """
         problems: list[str] = []
-        if self.serverless:
+        if self.serverless and not self.supabase_configured:
             problems.append(
                 "sem armazenamento persistente: o SQLite local não persiste em funções serverless"
             )
@@ -45,11 +48,16 @@ class Settings(StrictModel):
                 problems.append("KAZER_PUBLIC_URL deve usar https")
             if not self.cookie_secure:
                 problems.append("KAZER_COOKIE_SECURE não pode ser desativado")
-            if self.mail_backend != "smtp":
+            if not self.supabase_configured and self.mail_backend != "smtp":
                 problems.append("KAZER_MAIL_BACKEND deve ser smtp")
-            if not self.smtp_host:
+            if not self.supabase_configured and not self.smtp_host:
                 problems.append("SMTP_HOST é obrigatório")
         return problems
+
+    @property
+    def supabase_configured(self) -> bool:
+        """Indica se o Auth pode operar sem usar o SQLite local."""
+        return bool(self.supabase_url and self.supabase_publishable_key)
 
     @property
     def public_origin(self) -> str:
@@ -81,6 +89,11 @@ def load_settings(environ: Mapping[str, str] | None = None) -> Settings:
         "smtp_host": env.get("SMTP_HOST", ""),
         "smtp_port": env.get("SMTP_PORT", "587"),
         "smtp_user": env.get("SMTP_USER", ""),
+        "supabase_url": env.get("SUPABASE_URL", ""),
+        "supabase_publishable_key": env.get("SUPABASE_PUBLISHABLE_KEY", ""),
+        "supabase_auth_redirect_url": env.get(
+            "SUPABASE_AUTH_REDIRECT_URL", env.get("KAZER_PUBLIC_URL", "http://localhost:8000")
+        ),
         # Cookies `Secure` por padrão; só o desenvolvimento local em http pode desligar.
         "cookie_secure": _flag(
             env.get("KAZER_COOKIE_SECURE"), environment == "production" or serverless

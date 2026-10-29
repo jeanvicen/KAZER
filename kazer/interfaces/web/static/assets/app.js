@@ -677,6 +677,15 @@ function takeLinkAction() {
   const hash = window.location.hash.slice(1);
   if (!hash) return null;
   window.history.replaceState(window.history.state, "", window.location.pathname + window.location.search);
+  const params = new URLSearchParams(hash);
+  const accessToken = params.get("access_token");
+  const authType = params.get("type");
+  if (accessToken && accessToken.length <= 4096 && (authType === "signup" || authType === "email")) {
+    return { type: "verify", token: accessToken };
+  }
+  if (accessToken && accessToken.length <= 4096 && authType === "recovery") {
+    return { type: "reset", token: accessToken };
+  }
   const [key, value = ""] = hash.split("=", 2);
   if (key === "recover") return { type: "recover" };
   if ((key === "verify" || key === "reset") && /^[\w-]{20,128}$/.test(value)) {

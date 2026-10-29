@@ -26,6 +26,7 @@ from starlette.staticfiles import StaticFiles
 from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
 from kazer.auth.service import AuthError, AuthService
+from kazer.auth.supabase_service import SupabaseAuthService
 from kazer.auth.store import AuthStore
 from kazer.config.settings import Settings, load_settings
 from kazer.integrations.email import build_mail_sender
@@ -120,8 +121,15 @@ def _client(request: Request) -> str:
     return request.client.host if request.client else "unknown"
 
 
-def _build_service(settings: Settings) -> AuthService | None:
+def _build_service(settings: Settings) -> AuthService | SupabaseAuthService | None:
     """Cria o serviço real ou None quando a configuração não permite operar com segurança."""
+    if settings.supabase_configured:
+        return SupabaseAuthService(
+            settings.supabase_url,
+            settings.supabase_publishable_key,
+            settings.supabase_auth_redirect_url or settings.public_origin,
+            RateLimiter(),
+        )
     blockers = settings.auth_blockers
     if not blockers:
         try:
@@ -141,7 +149,10 @@ def _build_service(settings: Settings) -> AuthService | None:
     return None
 
 
-def create_app(settings: Settings | None = None, service: AuthService | None = None) -> Starlette:
+def create_app(
+    settings: Settings | None = None,
+    service: AuthService | SupabaseAuthService | None = None,
+) -> Starlette:
     """Monta a aplicação com dependências reais ou injetadas (testes)."""
     settings = settings or load_settings()
     auth = service if service is not None else _build_service(settings)
@@ -176,7 +187,7 @@ def create_app(settings: Settings | None = None, service: AuthService | None = N
             raise AuthError("invalid_request", 400)
         return data
 
-    def require_auth() -> AuthService:
+    def require_auth() -> AuthService | SupabaseAuthService:
         if auth is None:
             raise AuthError("auth_unavailable", 503)
         return auth
