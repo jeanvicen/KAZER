@@ -7,6 +7,8 @@ from typing import Protocol
 # Allowlist por escopo: um adaptador só obtém os segredos do próprio escopo.
 _ALLOWED_SECRETS: Mapping[str, frozenset[str]] = {
     "email": frozenset({"SMTP_PASSWORD"}),
+    # Chave de serviço do Supabase: só para a exclusão de conta pela API admin.
+    "supabase_admin": frozenset({"SUPABASE_SERVICE_ROLE_KEY"}),
     # Chaves do provedor de modelo: lidas só pelo adaptador, nunca expostas ao navegador.
     "model": frozenset(
         {

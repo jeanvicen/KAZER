@@ -14,10 +14,11 @@ dependencies = [
     "starlette>=1.0,<2",
     "uvicorn>=0.30,<1",
     "argon2-cffi>=23.1,<26",
+    "httpx>=0.27,<1",
 ]
 
 [project.optional-dependencies]
-dev = ["pytest>=8,<9", "ruff>=0.6,<1", "mypy>=1.11,<2", "httpx2>=2,<3"]
+dev = ["pytest>=8,<9", "ruff>=0.6,<1", "mypy>=1.11,<2", "httpx>=0.27,<1", "httpx2>=2,<3"]
 # Só para KAZER_MODEL_PROVIDER=anthropic (SDK oficial); os outros provedores usam a biblioteca padrão.
 anthropic = ["anthropic>=2,<3"]
 

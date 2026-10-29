@@ -18,6 +18,7 @@ from starlette.responses import JSONResponse, Response, StreamingResponse
 from starlette.routing import Route
 
 from kazer.auth.service import AuthError
+from kazer.auth.store import User
 from kazer.chat.generation import LiveGeneration
 from kazer.chat.service import ChatError, ChatService
 from kazer.chat.store import Message
@@ -66,8 +67,15 @@ def chat_routes(ctx: WebContext, chat: ChatService | None) -> list[Route]:
 
     def service() -> ChatService:
         if chat is None:
-            raise AuthError("auth_unavailable", 503)
+            # Contas abertas (Supabase) mas sem banco do chat neste ambiente.
+            raise ChatError("chat_unavailable" if ctx.auth is not None else "auth_unavailable", 503)
         return chat
+
+    async def account(request: Request) -> tuple[User, str]:
+        user, token = await ctx.user(request)
+        if chat is not None:
+            await run_in_threadpool(chat.ensure_owner, user.id, user.email, user.created_at)
+        return user, token
 
     def timezone_of(data: dict[str, Any]) -> str | None:
         value = data.get("timezone")
@@ -75,12 +83,12 @@ def chat_routes(ctx: WebContext, chat: ChatService | None) -> list[Route]:
 
     @endpoint
     async def config(request: Request) -> Response:
-        await ctx.user(request)
+        await account(request)
         return JSONResponse(service().config())
 
     @endpoint
     async def send(request: Request) -> Response:
-        user, _ = await ctx.user(request)
+        user, _ = await account(request)
         data = await ctx.read_json(request, SEND_BODY_BYTES)
         exchange, live = await run_in_threadpool(service().send, user.id, data)
         head = {
@@ -97,7 +105,7 @@ def chat_routes(ctx: WebContext, chat: ChatService | None) -> list[Route]:
 
     @endpoint
     async def retry(request: Request) -> Response:
-        user, _ = await ctx.user(request)
+        user, _ = await account(request)
         data = await ctx.read_json(request)
         reply, live = await run_in_threadpool(
             service().retry, user.id, request.path_params["message_id"], timezone_of(data)
@@ -106,7 +114,7 @@ def chat_routes(ctx: WebContext, chat: ChatService | None) -> list[Route]:
 
     @endpoint
     async def follow(request: Request) -> Response:
-        user, _ = await ctx.user(request)
+        user, _ = await account(request)
         message_id = request.path_params["message_id"]
         after_raw = request.query_params.get("after", "-1")
         try:
@@ -121,7 +129,7 @@ def chat_routes(ctx: WebContext, chat: ChatService | None) -> list[Route]:
 
     @endpoint
     async def message(request: Request) -> Response:
-        user, _ = await ctx.user(request)
+        user, _ = await account(request)
         found = await run_in_threadpool(
             service().message, user.id, request.path_params["message_id"]
         )
@@ -129,14 +137,14 @@ def chat_routes(ctx: WebContext, chat: ChatService | None) -> list[Route]:
 
     @endpoint
     async def stop(request: Request) -> Response:
-        user, _ = await ctx.user(request)
+        user, _ = await account(request)
         ctx.check_origin(request)
         await run_in_threadpool(service().stop, user.id, request.path_params["message_id"])
         return JSONResponse({"status": "stopping"}, status_code=202)
 
     @endpoint
     async def conversations(request: Request) -> Response:
-        user, _ = await ctx.user(request)
+        user, _ = await account(request)
         page = await run_in_threadpool(
             lambda: service().list_conversations(
                 user.id,
@@ -148,7 +156,7 @@ def chat_routes(ctx: WebContext, chat: ChatService | None) -> list[Route]:
 
     @endpoint
     async def clear_conversations(request: Request) -> Response:
-        user, _ = await ctx.user(request)
+        user, _ = await account(request)
         data = await ctx.read_json(request)
         if data.get("confirm") is not True:
             raise ChatError("invalid_request", 400)
@@ -157,7 +165,7 @@ def chat_routes(ctx: WebContext, chat: ChatService | None) -> list[Route]:
 
     @endpoint
     async def conversation(request: Request) -> Response:
-        user, _ = await ctx.user(request)
+        user, _ = await account(request)
         conversation_id = request.path_params["conversation_id"]
         if request.method == "DELETE":
             ctx.check_origin(request)
@@ -175,7 +183,7 @@ def chat_routes(ctx: WebContext, chat: ChatService | None) -> list[Route]:
 
     @endpoint
     async def messages(request: Request) -> Response:
-        user, _ = await ctx.user(request)
+        user, _ = await account(request)
         page = await run_in_threadpool(
             service().messages,
             user.id,
@@ -186,7 +194,7 @@ def chat_routes(ctx: WebContext, chat: ChatService | None) -> list[Route]:
 
     @endpoint
     async def upload(request: Request) -> Response:
-        user, _ = await ctx.user(request)
+        user, _ = await account(request)
         ctx.check_origin(request)
         media_type = request.headers.get("content-type", "").split(";", 1)[0].strip().lower()
         if media_type in ("", "application/json", "application/x-www-form-urlencoded",
@@ -199,7 +207,7 @@ def chat_routes(ctx: WebContext, chat: ChatService | None) -> list[Route]:
 
     @endpoint
     async def attachment(request: Request) -> Response:
-        user, _ = await ctx.user(request)
+        user, _ = await account(request)
         attachment_id = request.path_params["attachment_id"]
         if request.method == "DELETE":
             ctx.check_origin(request)
@@ -219,7 +227,7 @@ def chat_routes(ctx: WebContext, chat: ChatService | None) -> list[Route]:
 
     @endpoint
     async def settings(request: Request) -> Response:
-        user, _ = await ctx.user(request)
+        user, _ = await account(request)
         chat_service = service()
         if request.method == "POST":
             data = await ctx.read_json(request, SETTINGS_BODY_BYTES)
@@ -245,21 +253,21 @@ def chat_routes(ctx: WebContext, chat: ChatService | None) -> list[Route]:
 
     @endpoint
     async def memories(request: Request) -> Response:
-        user, _ = await ctx.user(request)
+        user, _ = await account(request)
         data = await ctx.read_json(request)
         memory = await run_in_threadpool(service().add_memory, user.id, data.get("content"))
         return JSONResponse({"memory": memory.public()}, status_code=201)
 
     @endpoint
     async def memory(request: Request) -> Response:
-        user, _ = await ctx.user(request)
+        user, _ = await account(request)
         ctx.check_origin(request)
         await run_in_threadpool(service().delete_memory, user.id, request.path_params["memory_id"])
         return JSONResponse({"status": "deleted"})
 
     @endpoint
     async def clear_memories(request: Request) -> Response:
-        user, _ = await ctx.user(request)
+        user, _ = await account(request)
         data = await ctx.read_json(request)
         if data.get("confirm") is not True:
             raise ChatError("invalid_request", 400)
@@ -268,7 +276,7 @@ def chat_routes(ctx: WebContext, chat: ChatService | None) -> list[Route]:
 
     @endpoint
     async def change_password(request: Request) -> Response:
-        user, token = await ctx.user(request)
+        user, token = await account(request)
         data = await ctx.read_json(request)
         current, new = ctx.field(data, "current_password"), ctx.field(data, "password")
         await run_in_threadpool(
@@ -278,14 +286,14 @@ def chat_routes(ctx: WebContext, chat: ChatService | None) -> list[Route]:
 
     @endpoint
     async def revoke_sessions(request: Request) -> Response:
-        user, token = await ctx.user(request)
+        user, token = await account(request)
         ctx.check_origin(request)
         count = await run_in_threadpool(ctx.require_auth().revoke_other_sessions, user, token)
         return JSONResponse({"revoked": count})
 
     @endpoint
     async def delete_account(request: Request) -> Response:
-        user, _ = await ctx.user(request)
+        user, _ = await account(request)
         data = await ctx.read_json(request)
         password = ctx.field(data, "password")
         await run_in_threadpool(
@@ -299,7 +307,7 @@ def chat_routes(ctx: WebContext, chat: ChatService | None) -> list[Route]:
 
     @endpoint
     async def export(request: Request) -> Response:
-        user, _ = await ctx.user(request)
+        user, _ = await account(request)
         data = await run_in_threadpool(service().export, user.id)
         payload = {
             "format": "kazer-export/1",

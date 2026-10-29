@@ -239,6 +239,10 @@ class AuthService:
             return None
         return self._store.find_session_user(hash_token(token), self._now())
 
+    def resolve_session(self, token: str | None) -> tuple[User | None, SessionGrant | None]:
+        """Mesma interface do adaptador Supabase; sessões locais não precisam de renovação."""
+        return self.session_user(token), None
+
     def session_email(self, token: str | None) -> str | None:
         """Retorna o e-mail da sessão válida ou None."""
         user = self.session_user(token)

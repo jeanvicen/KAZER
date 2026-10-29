@@ -14,10 +14,13 @@ from starlette.responses import JSONResponse, Response
 
 from kazer.auth.service import AuthError, AuthService
 from kazer.auth.store import User
+from kazer.auth.supabase_service import SupabaseAuthService
 from kazer.chat.service import ChatError
 
 MAX_BODY_BYTES = 4096
 FIELD_MAX_LENGTH = 1024
+# Tokens de links do Supabase são JWTs (mais longos que os tokens locais).
+TOKEN_MAX_LENGTH = 8192
 
 Handler = Callable[[Request], Awaitable[Response]]
 
@@ -36,13 +39,17 @@ def error_response(exc: AuthError | ChatError) -> JSONResponse:
 
 
 def endpoint(handler: Handler) -> Handler:
-    """Converte falhas esperadas em respostas JSON."""
+    """Converte falhas esperadas em respostas JSON e grava o cookie renovado."""
 
     async def wrapped(request: Request) -> Response:
         try:
-            return await handler(request)
+            response = await handler(request)
         except (AuthError, ChatError) as exc:
-            return error_response(exc)
+            response = error_response(exc)
+        renew = getattr(request.state, "renew_session", None)
+        if renew is not None:
+            renew(response)
+        return response
 
     return wrapped
 
@@ -56,7 +63,12 @@ class WebContext:
     """Defesas de borda e resolução de sessão usadas por todas as rotas."""
 
     def __init__(
-        self, *, auth: AuthService | None, cookie_name: str, public_origin: str, secure: bool
+        self,
+        *,
+        auth: AuthService | SupabaseAuthService | None,
+        cookie_name: str,
+        public_origin: str,
+        secure: bool,
     ) -> None:
         """`auth` None: contas fechadas neste ambiente (falha fechada)."""
         self.auth = auth
@@ -101,26 +113,35 @@ class WebContext:
             raise AuthError("invalid_request", 400)
         return data
 
-    def require_auth(self) -> AuthService:
+    def require_auth(self) -> AuthService | SupabaseAuthService:
         """Serviço de contas ou 503 quando o ambiente não pode operar com segurança."""
         if self.auth is None:
             raise AuthError("auth_unavailable", 503)
         return self.auth
 
     async def user(self, request: Request) -> tuple[User, str]:
-        """Conta da sessão validada no servidor; base de toda autorização."""
+        """Conta da sessão validada no servidor; base de toda autorização.
+
+        Se o provedor renovou a sessão (access token vencido), o cookie novo é
+        gravado na própria resposta pelo `endpoint`.
+        """
         auth = self.require_auth()
         token = request.cookies.get(self.cookie_name) or ""
-        user = await run_in_threadpool(auth.session_user, token)
+        user, grant = await run_in_threadpool(auth.resolve_session, token)
         if user is None:
             raise AuthError("unauthenticated", 401)
+        if grant is not None:
+            request.state.renew_session = lambda response: self.set_session_cookie(
+                response, grant.token, grant.max_age
+            )
+            return user, grant.token
         return user, token
 
     @staticmethod
-    def field(data: dict[str, Any], name: str) -> str:
-        """Campo de texto curto obrigatório."""
+    def field(data: dict[str, Any], name: str, max_length: int = FIELD_MAX_LENGTH) -> str:
+        """Campo de texto obrigatório com tamanho limitado."""
         value = data.get(name)
-        if not isinstance(value, str) or len(value) > FIELD_MAX_LENGTH:
+        if not isinstance(value, str) or len(value) > max_length:
             raise AuthError("invalid_request", 400)
         return value
 

@@ -80,6 +80,15 @@
               <p class="field__error" id="email-error"></p>
             </div>
 
+            <div class="field" data-field="recovery-code" hidden>
+              <label class="field__label" for="recovery-code">Código de recuperação</label>
+              <input class="field__input" id="recovery-code" name="recovery-code" type="text"
+                     autocomplete="one-time-code" maxlength="4096" spellcheck="false"
+                     aria-describedby="recovery-code-hint recoveryCode-error">
+              <p class="field__hint" id="recovery-code-hint">O código é preenchido automaticamente pelo link do e-mail.</p>
+              <p class="field__error" id="recoveryCode-error"></p>
+            </div>
+
             <div class="field" data-field="password">
               <label class="field__label" for="password">Senha</label>
               <input class="field__input" id="password" name="password" type="password"

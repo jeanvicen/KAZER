@@ -68,6 +68,7 @@ const SEND_ERRORS = {
   not_retryable: "Essa resposta não pode ser gerada de novo.",
   unauthenticated: "Sua sessão expirou.",
   auth_unavailable: "As contas estão fechadas neste ambiente.",
+  chat_unavailable: "O chat ainda não está disponível neste ambiente.",
 };
 
 const UPLOAD_ERRORS = {
@@ -169,11 +170,11 @@ function setAccount(email) {
 
 async function loadSettings() {
   const result = await request("/api/settings");
-  S.settingsFailed = !result.ok;
+  S.settingsFailed = !result.ok && result.data.error !== "chat_unavailable";
   if (!result.ok) {
     if (result.data.error !== "unauthenticated") {
       // Sem configuração não dá para saber o que o modelo suporta: tudo fica desligado.
-      S.model = { available: false, features: {} };
+      S.model = { available: false, features: {}, chatUnavailable: result.data.error === "chat_unavailable" };
       applyModel();
     }
     return;
@@ -220,9 +221,11 @@ function applyModel() {
   S.ui.deep.classList.toggle("is-unavailable", !features.deep);
   if (!features.deep && S.options.deep) setDeep(false);
   S.ui.emptyNote.hidden = !unavailable;
-  S.ui.emptyNote.textContent = unavailable
-    ? "O KAZ 1.1 ainda não foi conectado a um modelo neste servidor. Seu histórico continua disponível."
-    : "";
+  S.ui.emptyNote.textContent = model.chatUnavailable
+    ? "O chat ainda não está disponível neste ambiente: falta configurar o banco das conversas. Sua conta está ativa."
+    : unavailable
+      ? "O KAZ 1.1 ainda não foi conectado a um modelo neste servidor. Seu histórico continua disponível."
+      : "";
   if (model.accept) S.ui.pickFiles.accept = model.accept.join(",");
   updateSendState();
 }
@@ -1599,7 +1602,10 @@ async function loadHistory({ query, more = false }) {
   S.ui.history.classList.remove("is-loading");
   if (asked !== history.query) return; // busca mudou no meio do caminho
   if (!result.ok) {
-    if (!more) S.ui.historyEmpty.textContent = "Não deu para carregar as conversas.";
+    if (!more) {
+      S.ui.historyEmpty.textContent =
+        result.data.error === "chat_unavailable" ? "O histórico ainda não está disponível neste ambiente." : "Não deu para carregar as conversas.";
+    }
     S.ui.historyEmpty.hidden = more;
     return;
   }

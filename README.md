@@ -57,7 +57,7 @@ Em desenvolvimento os e-mails são gravados em `data/outbox/*.eml`; abra o arqui
 
 Cada push na `main` gera um deploy de produção pela integração Git da Vercel. O `vercel.json` fixa o preset `python` e o `pyproject.toml` aponta a entrada ASGI (`kazer.interfaces.web.asgi:app`), então a configuração não depende do preset salvo no painel. Uma única função Python serve a tela, os assets e a API; arquivos do repositório não são publicados como estáticos.
 
-Funções serverless não têm disco persistente, e o SQLite local perderia contas entre execuções. Por isso, na Vercel a tela fica no ar com as contas **fechadas** (a API responde `503 auth_unavailable` e o botão aparece desativado com aviso) até existir um banco persistente e SMTP configurados. Nada de login simulado. O chat depende das contas, então também fica fechado na Vercel até lá; as variáveis do modelo podem ser cadastradas antes e passam a valer quando o banco persistente existir.
+Funções serverless não têm disco persistente, e o SQLite local perderia contas entre execuções. Por isso, na Vercel a tela fica no ar com as contas **fechadas** (a API responde `503 auth_unavailable` e o botão aparece desativado com aviso) até existir um banco persistente e SMTP configurados. Nada de login simulado. Com `SUPABASE_URL` e `SUPABASE_PUBLISHABLE_KEY` cadastradas, as contas passam a usar o Supabase Auth (também na Vercel). O chat guarda as conversas no SQLite do servidor, então em funções serverless ele responde `chat_unavailable` e avisa na tela até as conversas irem para o Postgres do Supabase. Estado detalhado: [docs/supabase-integration-status.md](docs/supabase-integration-status.md).
 
 ## Chat do KAZER
 

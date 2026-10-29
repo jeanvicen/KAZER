@@ -162,6 +162,7 @@ class ChatService:
         self._windows = (UsageWindow(3600, hourly_units), UsageWindow(86400, daily_units))
         self._hub = hub or (GenerationHub(store, provider, clock=clock) if provider else None)
         self._last_purge = 0
+        self._owners: set[str] = set()
 
     def _now(self) -> int:
         return int(self._clock())
@@ -681,6 +682,16 @@ class ChatService:
         """Dados do chat para download pela própria pessoa."""
         return self._store.export(user_id)
 
+    def ensure_owner(self, user_id: str, email: str, created_at: int) -> None:
+        """Contas externas (Supabase) ganham a linha local de posse na primeira visita."""
+        key = f"{user_id}:{email}"
+        if key in self._owners:
+            return
+        self._store.ensure_owner(user_id, email, created_at)
+        self._owners.add(key)
+
     def forget_user(self, user_id: str) -> None:
-        """Depois de excluir a conta (o banco já apagou em cascata), remove os arquivos."""
+        """Depois de excluir a conta: apaga o chat local em cascata e os arquivos."""
+        self._store.delete_owner(user_id)
+        self._owners = {key for key in self._owners if not key.startswith(f"{user_id}:")}
         self._uploads.delete_user(user_id)

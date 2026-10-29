@@ -16,7 +16,19 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
-_SCHEMA = """
+# Mesma tabela do AuthStore. Com o Supabase Auth, cada conta ganha aqui uma linha
+# "sombra" (sem senha) só para a posse e a exclusão em cascata do chat local.
+_OWNERS = """
+CREATE TABLE IF NOT EXISTS users (
+    id TEXT PRIMARY KEY,
+    email TEXT NOT NULL UNIQUE,
+    password_hash TEXT NOT NULL,
+    created_at INTEGER NOT NULL,
+    email_verified_at INTEGER
+);
+"""
+
+_SCHEMA = _OWNERS + """
 CREATE TABLE IF NOT EXISTS conversations (
     id TEXT PRIMARY KEY,
     user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -285,6 +297,27 @@ class ChatStore:
                 " finished_at = ? WHERE status = 'streaming'",
                 (now,),
             )
+
+    def ensure_owner(self, user_id: str, email: str, created_at: int) -> None:
+        """Garante a linha do dono (contas do Supabase); idempotente."""
+        with self._transaction() as conn:
+            row = conn.execute("SELECT email FROM users WHERE id = ?", (user_id,)).fetchone()
+            if row is not None and row["email"] == email:
+                return
+            # Mesmo e-mail com outro id = conta antiga já excluída no provedor: some em cascata.
+            conn.execute("DELETE FROM users WHERE email = ? AND id != ?", (email, user_id))
+            if row is None:
+                conn.execute(
+                    "INSERT INTO users (id, email, password_hash, created_at) VALUES (?, ?, '', ?)",
+                    (user_id, email, created_at),
+                )
+            else:
+                conn.execute("UPDATE users SET email = ? WHERE id = ?", (email, user_id))
+
+    def delete_owner(self, user_id: str) -> None:
+        """Apaga a conta local e, em cascata, todo o chat dela."""
+        with self._transaction() as conn:
+            conn.execute("DELETE FROM users WHERE id = ?", (user_id,))
 
     # ---------- Conversas ----------
 

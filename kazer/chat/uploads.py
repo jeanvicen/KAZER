@@ -34,6 +34,10 @@ TEXT_EXTENSIONS = frozenset(
 )
 
 _ID = re.compile(r"^[A-Za-z0-9_-]{16,64}$")
+# Donos: id local (hex de 32) ou UUID do Supabase Auth.
+_OWNER = re.compile(
+    r"^(?:[0-9a-f]{32}|[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$"
+)
 
 
 class UploadRejected(Exception):
@@ -116,7 +120,7 @@ class UploadStorage:
         self._root = root
 
     def _path(self, user_id: str, attachment_id: str) -> Path:
-        if not (valid_id(attachment_id) and re.fullmatch(r"[0-9a-f]{32}", user_id)):
+        if not (valid_id(attachment_id) and _OWNER.match(user_id)):
             raise ValueError("identificador inválido")
         return self._root / user_id / attachment_id
 
@@ -151,5 +155,5 @@ class UploadStorage:
 
     def delete_user(self, user_id: str) -> None:
         """Apaga todos os anexos de uma conta excluída."""
-        if re.fullmatch(r"[0-9a-f]{32}", user_id):
+        if _OWNER.match(user_id):
             shutil.rmtree(self._root / user_id, ignore_errors=True)

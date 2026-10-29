@@ -30,6 +30,7 @@ const PASSWORD_ERRORS = {
   password_too_long: "Use no máximo 128 caracteres.",
   password_too_common: "Essa senha é fácil demais de adivinhar. Tente uma frase mais longa.",
   rate_limited: "Muitas tentativas. Espere alguns minutos.",
+  password_change_failed: "O servidor de contas não aceitou a troca agora. Tente de novo em instantes.",
 };
 
 let open = null;
@@ -353,7 +354,13 @@ class SettingsPanel {
         return;
       }
       const count = result.data.revoked;
-      sessionsStatus.textContent = count ? `${count} ${count === 1 ? "sessão encerrada" : "sessões encerradas"}.` : "Nenhum outro dispositivo estava conectado.";
+      // -1: o provedor de contas encerra as outras sessões sem dizer quantas eram.
+      sessionsStatus.textContent =
+        count < 0
+          ? "Os outros dispositivos foram desconectados."
+          : count
+            ? `${count} ${count === 1 ? "sessão encerrada" : "sessões encerradas"}.`
+            : "Nenhum outro dispositivo estava conectado.";
       announce(sessionsStatus.textContent);
     });
 
@@ -714,7 +721,13 @@ class SettingsPanel {
           return;
         }
         button.reset();
-        deleteStatus.textContent = result.data.error === "invalid_password" ? "Senha incorreta." : result.data.error === "rate_limited" ? "Muitas tentativas. Espere alguns minutos." : "Não deu para excluir agora.";
+        deleteStatus.textContent =
+          {
+            invalid_password: "Senha incorreta.",
+            rate_limited: "Muitas tentativas. Espere alguns minutos.",
+            account_delete_unavailable:
+              "A exclusão automática ainda não está configurada neste servidor. Apague as conversas acima e peça a exclusão pelo canal da Política de Privacidade.",
+          }[result.data.error] || "Não deu para excluir agora.";
       },
     });
 

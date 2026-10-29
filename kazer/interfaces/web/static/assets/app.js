@@ -29,6 +29,7 @@ const ui = {
   lede: $("auth-lede"),
   form: $("auth-form"),
   email: $("email"),
+  recoveryCode: $("recovery-code"),
   password: $("password"),
   confirm: $("confirm"),
   hint: $("password-hint"),
@@ -52,6 +53,7 @@ const ui = {
 };
 const fields = {
   email: ui.form.querySelector('[data-field="email"]'),
+  recoveryCode: ui.form.querySelector('[data-field="recovery-code"]'),
   password: ui.form.querySelector('[data-field="password"]'),
   confirm: ui.form.querySelector('[data-field="confirm"]'),
 };
@@ -80,7 +82,7 @@ const MODES = {
     submit: "Enviar link",
   },
   reset: {
-    fields: ["password", "confirm"],
+    fields: ["recoveryCode", "password", "confirm"],
     autocomplete: "new-password",
     title: "Nova senha",
     lede: "Ao salvar, você sai de todos os dispositivos.",
@@ -365,6 +367,7 @@ function setMode(mode, { focus = false } = {}) {
   if (config.autocomplete) ui.password.autocomplete = config.autocomplete;
   const newPassword = mode === "signup" || mode === "reset";
   setHidden(ui.hint, !newPassword);
+  setHidden($("recovery-code-hint"), mode !== "reset");
   ui.password.setAttribute("aria-describedby", newPassword ? "password-hint password-error" : "password-error");
   ui.submitLabel.textContent = config.submit;
   setHidden(ui.forgot, mode !== "signin");
@@ -496,6 +499,9 @@ function validateLocally() {
     else if (mode !== "signin" && password.length < 10) errors.push(["password", "Use pelo menos 10 caracteres."]);
     else if (password.length > 128) errors.push(["password", "Use no máximo 128 caracteres."]);
   }
+  if (MODES[mode].fields.includes("recoveryCode") && !ui.recoveryCode.value.trim()) {
+    errors.push(["recoveryCode", "Abra o link de recuperação ou cole o código recebido."]);
+  }
   if (MODES[mode].fields.includes("confirm")) {
     if (!ui.confirm.value) errors.push(["confirm", "Repita a senha."]);
     else if (ui.confirm.value !== ui.password.value) errors.push(["confirm", "As senhas não coincidem."]);
@@ -585,13 +591,14 @@ async function submitRecover(email) {
 
 async function submitReset() {
   const result = await api("/api/auth/password-reset/confirm", {
-    token: state.resetToken,
+    token: ui.recoveryCode.value.trim() || state.resetToken,
     password: ui.password.value,
   });
   if (result.ok) {
     state.resetToken = null;
     ui.password.value = "";
     ui.confirm.value = "";
+    ui.recoveryCode.value = "";
     showNotice({
       title: "Senha atualizada",
       body: ["Você saiu de todos os dispositivos. Entre com a nova senha."],
@@ -689,6 +696,17 @@ function takeLinkAction() {
   const hash = window.location.hash.slice(1);
   if (!hash) return null;
   window.history.replaceState(window.history.state, "", window.location.pathname + window.location.search);
+  const params = new URLSearchParams(hash);
+  const accessToken = params.get("access_token");
+  const authType = params.get("type");
+  if (accessToken && accessToken.length <= 4096 && (authType === "signup" || authType === "email")) {
+    // Com o refresh token do mesmo link, o servidor já abre a sessão (direto para o chat).
+    const refresh = params.get("refresh_token");
+    return { type: "verify", token: accessToken, refresh: refresh && refresh.length <= 512 ? refresh : null };
+  }
+  if (accessToken && accessToken.length <= 4096 && authType === "recovery") {
+    return { type: "reset", token: accessToken };
+  }
   const [key, value = ""] = hash.split("=", 2);
   if (key === "recover") return { type: "recover" };
   if ((key === "verify" || key === "reset") && /^[\w-]{20,128}$/.test(value)) {
@@ -703,10 +721,13 @@ function handleLinkAction(action) {
     setMode("recover");
   } else if (action.type === "reset") {
     state.resetToken = action.token;
+    ui.recoveryCode.value = action.token;
     setMode("reset");
   } else if (action.type === "verify") {
     showNotice({ title: "Confirmando seu e-mail", status: "Verificando o link…" });
-    api("/api/auth/verify-email", { token: action.token }).then((result) => {
+    const body = { token: action.token };
+    if (action.refresh) body.refresh_token = action.refresh;
+    api("/api/auth/verify-email", body).then((result) => {
       if (result.ok && result.data.authenticated) {
         // O link confirma e já abre a sessão: direto para o chat.
         enterApp(result.data);

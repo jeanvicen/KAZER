@@ -22,8 +22,9 @@ from starlette.routing import Mount, Route
 from starlette.staticfiles import StaticFiles
 from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
-from kazer.auth.service import AuthService
+from kazer.auth.service import AuthError, AuthService
 from kazer.auth.store import AuthStore
+from kazer.auth.supabase_service import SupabaseAuthService
 from kazer.brain.model_provider import ModelProvider, build_provider
 from kazer.chat.service import ChatService
 from kazer.chat.store import ChatStore
@@ -31,9 +32,10 @@ from kazer.chat.uploads import UploadStorage
 from kazer.config.settings import Settings, load_settings
 from kazer.integrations.email import build_mail_sender
 from kazer.interfaces.web.chat_api import chat_routes
-from kazer.interfaces.web.common import WebContext, client_of, endpoint
+from kazer.interfaces.web.common import TOKEN_MAX_LENGTH, WebContext, client_of, endpoint
 from kazer.security.passwords import PasswordHashing
 from kazer.security.rate_limiter import RateLimiter
+from kazer.security.secrets import get_secret
 
 logger = logging.getLogger("kazer.web")
 
@@ -96,8 +98,16 @@ class SecurityHeaders:
         await self.app(scope, receive, send_with_headers)
 
 
-def _build_service(settings: Settings) -> AuthService | None:
+def _build_service(settings: Settings) -> AuthService | SupabaseAuthService | None:
     """Cria o serviço real ou None quando a configuração não permite operar com segurança."""
+    if settings.supabase_configured:
+        return SupabaseAuthService(
+            settings.supabase_url,
+            settings.supabase_publishable_key,
+            settings.supabase_auth_redirect_url or settings.public_origin,
+            RateLimiter(),
+            service_role_key=_service_role_key(),
+        )
     blockers = settings.auth_blockers
     if not blockers:
         try:
@@ -117,6 +127,13 @@ def _build_service(settings: Settings) -> AuthService | None:
     return None
 
 
+def _service_role_key() -> str | None:
+    try:
+        return get_secret("SUPABASE_SERVICE_ROLE_KEY", scope="supabase_admin")
+    except LookupError:
+        return None
+
+
 def _build_chat(settings: Settings, provider: ModelProvider | None) -> ChatService:
     return ChatService(
         ChatStore(settings.database_path),
@@ -129,7 +146,7 @@ def _build_chat(settings: Settings, provider: ModelProvider | None) -> ChatServi
 
 def create_app(
     settings: Settings | None = None,
-    service: AuthService | None = None,
+    service: AuthService | SupabaseAuthService | None = None,
     *,
     provider: ModelProvider | None = None,
     chat: ChatService | None = None,
@@ -144,8 +161,9 @@ def create_app(
         public_origin=settings.public_origin,
         secure=settings.cookie_secure,
     )
-    # O chat depende de contas: sem armazenamento seguro, ele também fica fechado.
-    if chat is None and auth is not None:
+    # O chat depende de contas e de disco persistente (SQLite). Em funções serverless
+    # (mesmo com o Supabase Auth ligado) ele fica fechado até existir um banco do chat.
+    if chat is None and auth is not None and not settings.serverless:
         chat = _build_chat(settings, provider if provider is not None else build_provider(settings))
 
     def page(name: str, media_type: str = "text/html") -> Callable[[Request], Awaitable[Response]]:
@@ -173,13 +191,16 @@ def create_app(
         if auth is None:
             return JSONResponse({"authenticated": False, "available": False})
         token = request.cookies.get(cookie_name)
-        email = await run_in_threadpool(auth.session_email, token)
-        if email is None:
+        user, grant = await run_in_threadpool(auth.resolve_session, token)
+        if user is None:
             response = JSONResponse({"authenticated": False})
             if token:
                 ctx.clear_session_cookie(response)
             return response
-        return JSONResponse({"authenticated": True, "email": email})
+        response = JSONResponse({"authenticated": True, "email": user.email})
+        if grant is not None:
+            ctx.set_session_cookie(response, grant.token, grant.max_age)
+        return response
 
     @endpoint
     async def register(request: Request) -> Response:
@@ -203,9 +224,16 @@ def create_app(
     async def verify_email(request: Request) -> Response:
         auth = ctx.require_auth()
         data = await ctx.read_json(request)
-        grant = await run_in_threadpool(
-            auth.verify_email, ctx.field(data, "token"), client_of(request)
-        )
+        token = ctx.field(data, "token", TOKEN_MAX_LENGTH)
+        refresh = data.get("refresh_token")
+        if isinstance(auth, SupabaseAuthService):
+            if refresh is not None and (not isinstance(refresh, str) or len(refresh) > 512):
+                raise AuthError("invalid_request", 400)
+            grant = await run_in_threadpool(auth.verify_email, token, client_of(request), refresh)
+        else:
+            grant = await run_in_threadpool(auth.verify_email, token, client_of(request))
+        if grant is None:
+            return JSONResponse({"status": "verified"})
         # Confirmou pelo link: entra direto no chat, sem passar de novo pelo login.
         await run_in_threadpool(auth.logout, request.cookies.get(cookie_name))
         response = JSONResponse({"status": "verified", "authenticated": True, "email": grant.email})
@@ -247,7 +275,8 @@ def create_app(
     async def confirm_reset(request: Request) -> Response:
         auth = ctx.require_auth()
         data = await ctx.read_json(request)
-        token, password = ctx.field(data, "token"), ctx.field(data, "password")
+        token = ctx.field(data, "token", TOKEN_MAX_LENGTH)
+        password = ctx.field(data, "password")
         await run_in_threadpool(auth.reset_password, token, password, client_of(request))
         response = JSONResponse({"status": "password_updated"})
         ctx.clear_session_cookie(response)
