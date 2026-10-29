@@ -140,7 +140,9 @@ a {
 
 .is-booting .app,
 .is-booting .hero,
-.is-intro .hero {
+.is-intro .hero,
+.is-booting .stage,
+.is-intro .stage {
   opacity: 0;
 }
 
@@ -721,6 +723,238 @@ a {
   }
 }
 
+/* ---------- Desktop e notebook ---------- */
+
+.stage,
+.subcopy {
+  display: none;
+}
+
+@media (min-width: 60rem) and (min-height: 35rem) {
+  :root {
+    --panel: clamp(26rem, 34vw, 34rem);
+  }
+
+  body {
+    overflow: hidden;
+  }
+
+  .app {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) var(--panel);
+    height: 100vh;
+    height: 100dvh;
+  }
+
+  /* Palco: a cena cobre toda a coluna e inclina levemente com o mouse. */
+  .stage {
+    display: block;
+    position: relative;
+    grid-column: 1;
+    grid-row: 1;
+    overflow: hidden;
+    background: var(--black);
+    transition: opacity 1100ms var(--ease-out) 120ms;
+  }
+
+  .stage__canvas {
+    position: absolute;
+    left: 0;
+    top: 0;
+    display: block;
+    image-rendering: pixelated;
+    transform:
+      perspective(1800px)
+      rotateY(calc(var(--tilt-x, 0) * 3deg))
+      rotateX(calc(var(--tilt-y, 0) * -2deg))
+      scale(1.05);
+    will-change: transform;
+  }
+
+  /* Linhas de varredura discretas e vinheta de cinema. */
+  .stage::before,
+  .stage::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+  }
+
+  .stage::before {
+    z-index: 1;
+    background: repeating-linear-gradient(
+      to bottom,
+      rgba(0, 0, 0, 0.16) 0,
+      rgba(0, 0, 0, 0.16) 1px,
+      transparent 1px,
+      transparent 3px
+    );
+    mix-blend-mode: multiply;
+  }
+
+  .stage::after {
+    z-index: 2;
+    background:
+      radial-gradient(120% 95% at 45% 45%, transparent 55%, rgba(3, 3, 3, 0.78) 100%),
+      linear-gradient(to right, transparent 88%, var(--black) 100%),
+      linear-gradient(to bottom, rgba(3, 3, 3, 0.55) 0, transparent 14%, transparent 86%, rgba(3, 3, 3, 0.7) 100%);
+  }
+
+  /* Painel: entrada ao lado da cena, com luz que acompanha o mouse. */
+  .view {
+    grid-column: 2;
+    grid-row: 1;
+    height: 100vh;
+    height: 100dvh;
+    min-height: 0;
+    overflow-y: auto;
+    padding: clamp(2rem, 6vh, 3.75rem) clamp(2rem, 3.6vw, 3.75rem);
+    position: relative;
+    isolation: isolate;
+    background: var(--black);
+  }
+
+  /* Borda e luz do painel acendem junto com a revelação, nunca durante as partículas. */
+  .view::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background: radial-gradient(34rem circle at var(--spot-x, 70%) var(--spot-y, 25%), rgba(245, 245, 245, 0.05), transparent 62%);
+    box-shadow: inset 1px 0 0 #151515;
+    transition: opacity 900ms var(--ease-out) 200ms;
+  }
+
+  .is-booting .view::before,
+  .is-intro .view::before {
+    opacity: 0;
+  }
+
+  .home {
+    align-items: stretch;
+    gap: 0;
+  }
+
+  .home .hero {
+    display: none;
+  }
+
+  .brand {
+    padding-top: 0;
+    gap: 0.75rem;
+  }
+
+  .brand .mark {
+    width: 2rem;
+    height: 2rem;
+  }
+
+  .brand__name {
+    font-size: 2.1rem;
+  }
+
+  .brand:hover .mark__l {
+    animation: mark-l 1.6s cubic-bezier(0.65, 0, 0.35, 1) infinite;
+  }
+
+  .brand:hover .mark__r {
+    animation: mark-r 1.6s cubic-bezier(0.65, 0, 0.35, 1) infinite;
+  }
+
+  .tagline {
+    margin-top: auto;
+    font-size: clamp(1.75rem, 2.5vw, 2.4rem);
+    line-height: 1.3;
+    text-align: left;
+    letter-spacing: -0.01em;
+  }
+
+  .tagline__lead {
+    margin-bottom: 0.35rem;
+    font-size: 0.55em;
+    letter-spacing: 0.04em;
+  }
+
+  .subcopy {
+    display: block;
+    max-width: 25rem;
+    margin: 1.25rem 0 2.5rem;
+    color: var(--text-2);
+    font-size: 1rem;
+    line-height: 1.6;
+  }
+
+  .cta {
+    max-width: 26rem;
+    gap: 0.85rem;
+  }
+
+  .button {
+    min-height: 3.5rem;
+    font-size: 1.0625rem;
+  }
+
+  /* Reflexo que atravessa o botão principal ao passar o mouse. */
+  .button--primary {
+    overflow: hidden;
+    isolation: isolate;
+  }
+
+  .button--primary::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background: linear-gradient(105deg, transparent 35%, rgba(255, 255, 255, 0.95) 50%, transparent 65%);
+    background-size: 250% 100%;
+    background-position: 140% 0;
+    transition: background-position 700ms var(--ease-out);
+  }
+
+  .button--primary:hover::after {
+    background-position: -40% 0;
+  }
+
+  .button--primary:hover {
+    box-shadow: 0 14px 44px -14px rgba(245, 245, 245, 0.5);
+  }
+
+  .button--secondary:hover {
+    background: #1a1a1d;
+  }
+
+  .legal {
+    margin-top: auto;
+    max-width: 24rem;
+    text-align: left;
+  }
+
+  .auth {
+    align-items: stretch;
+  }
+
+  .auth__bar {
+    max-width: none;
+  }
+
+  .auth__body {
+    flex: 0 0 auto;
+    max-width: 26rem;
+    margin: auto 0;
+    padding: 2rem 0;
+  }
+
+  .auth__title,
+  .notice__title {
+    font-size: 1.85rem;
+  }
+
+  .legal--auth {
+    margin-top: 0;
+  }
+}
+
 /* ---------- Movimento reduzido ---------- */
 
 @media (prefers-reduced-motion: reduce) {
@@ -734,8 +968,13 @@ a {
   }
 
   .reveal,
-  .hero {
+  .hero,
+  .stage {
     transition: opacity 400ms linear !important;
+    transform: none !important;
+  }
+
+  .stage__canvas {
     transform: none !important;
   }
 

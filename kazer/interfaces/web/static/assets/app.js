@@ -9,6 +9,8 @@ import { startScene } from "./scene.js";
 const root = document.documentElement;
 const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 const finePointer = window.matchMedia("(pointer: fine)").matches;
+// PC e notebook ganham a cena grande ao lado do painel; o celular segue com a versão leve.
+const desktopQuery = window.matchMedia("(min-width: 60rem) and (min-height: 35rem)");
 const DISPLAY_FONT = '"Grenze Gotisch", Georgia, serif';
 
 const $ = (id) => document.getElementById(id);
@@ -43,6 +45,8 @@ const ui = {
   noticeStatus: $("notice-status"),
   noticeActions: $("notice-actions"),
   scene: $("scene-canvas"),
+  stage: $("stage"),
+  stageCanvas: $("stage-canvas"),
 };
 const fields = {
   email: ui.form.querySelector('[data-field="email"]'),
@@ -154,6 +158,42 @@ const state = {
 };
 
 let scene = null;
+let sceneKind = null;
+let revealed = false;
+
+// Monta a cena certa para o tamanho da tela; a de desktop é carregada só quando precisa.
+async function mountScene() {
+  const kind = desktopQuery.matches ? "desktop" : "mobile";
+  if (kind === sceneKind) return;
+  sceneKind = kind;
+  scene?.destroy();
+  scene = null;
+  if (kind === "desktop") {
+    const { startDesktopScene } = await import("./scene-desktop.js");
+    if (sceneKind !== "desktop") return;
+    scene = startDesktopScene(ui.stageCanvas, { reducedMotion, stage: ui.stage });
+  } else {
+    scene = startScene(ui.scene, { reducedMotion });
+    if (state.view === "auth") scene.pause("auth");
+  }
+}
+
+desktopQuery.addEventListener("change", () => {
+  if (revealed) mountScene();
+});
+
+// Luz suave que acompanha o mouse no painel (só tem efeito no layout de desktop).
+if (finePointer && !reducedMotion) {
+  window.addEventListener(
+    "pointermove",
+    (event) => {
+      const panel = state.view === "auth" ? ui.auth : ui.home;
+      root.style.setProperty("--spot-x", `${event.clientX - panel.getBoundingClientRect().left}px`);
+      root.style.setProperty("--spot-y", `${event.clientY}px`);
+    },
+    { passive: true },
+  );
+}
 
 function setHidden(element, hidden) {
   element.hidden = hidden;
@@ -178,8 +218,11 @@ function showView(view, { back = false } = {}) {
   setHidden(ui.auth, !auth);
   animateView(auth ? ui.auth : ui.home, back);
   window.scrollTo(0, 0);
-  if (auth) scene?.pause("auth");
-  else scene?.resume("auth");
+  // No celular a cena some atrás da conta; no desktop ela continua ao lado do painel.
+  if (sceneKind === "mobile") {
+    if (auth) scene?.pause("auth");
+    else scene?.resume("auth");
+  }
   tagline.toggle(!auth);
 }
 
@@ -682,10 +725,12 @@ function handleLinkAction(action) {
 function revealInterface() {
   root.classList.remove("is-booting", "is-intro");
   root.classList.add("is-revealed");
-  if (!scene) {
-    scene = startScene(ui.scene, { reducedMotion });
-    if (state.view === "auth") scene.pause("auth");
-  }
+  revealed = true;
+  mountScene();
+  // O símbolo "gera" por um instante ao assentar.
+  const brand = ui.home.querySelector(".brand");
+  brand.classList.add("is-generating");
+  window.setTimeout(() => brand.classList.remove("is-generating"), 3200);
   tagline.toggle(state.view === "home");
   if (state.view === "auth") focusAuth();
 }

@@ -65,9 +65,15 @@ function rng(seed) {
 
 // ---------- Primitivas ----------
 
-function painter(buf) {
+// Superfície padrão (celular). A cena de desktop reaproveita os mesmos desenhos
+// em uma grade maior, com deslocamento.
+const MOBILE = { w: W, h: H, ox: 0, oy: 0 };
+
+function painter(buf, w = W, h = H, ox = 0, oy = 0) {
   const px = (x, y, c) => {
-    if (c !== undefined && x >= 0 && x < W && y >= 0 && y < H) buf[(y | 0) * W + (x | 0)] = c;
+    const tx = (x | 0) + ox;
+    const ty = (y | 0) + oy;
+    if (c !== undefined && tx >= 0 && tx < w && ty >= 0 && ty < h) buf[ty * w + tx] = c;
   };
   const rect = (x0, y0, x1, y1, c) => {
     for (let y = y0; y <= y1; y += 1) for (let x = x0; x <= x1; x += 1) px(x, y, c);
@@ -406,8 +412,8 @@ function manPose(t) {
   return { head: "back", mug: "desk", typing: true, tilt: 0 };
 }
 
-function drawMan(buf, t, frameIndex, screenGlow) {
-  const { px, rect, line, sprite } = painter(buf);
+function drawMan(buf, t, frameIndex, screenGlow, surface = MOBILE) {
+  const { px, rect, line, sprite } = painter(buf, surface.w, surface.h, surface.ox, surface.oy);
   const pose = manPose(t % MAN_LOOP);
   const breath = Math.sin((t / 4200) * Math.PI * 2) > 0.6 ? -1 : 0;
 
@@ -484,8 +490,8 @@ const SY = 51;
 const SW = 53;
 const SH = 39;
 
-function drawScreen(buf, t, frameIndex) {
-  const { px, rect, sprite } = painter(buf);
+function drawScreen(buf, t, frameIndex, surface = MOBILE) {
+  const { px, rect, sprite } = painter(buf, surface.w, surface.h, surface.ox, surface.oy);
   const s = t % SCREEN_LOOP;
   rect(SX, SY, SX + SW - 1, SY + SH - 1, P.screen);
   for (let y = SY + 4; y < SY + SH; y += 4) for (let x = SX; x < SX + SW; x += 4) px(x, y, P.screenGrid);
@@ -625,7 +631,7 @@ function drawScreen(buf, t, frameIndex) {
   // Leve varredura de monitor.
   for (let y = SY + 7; y < SY + SH; y += 2) {
     for (let x = SX; x < SX + SW; x += 1) {
-      const i = y * W + x;
+      const i = (y + surface.oy) * surface.w + x + surface.ox;
       if (buf[i] === P.screen) buf[i] = P.screenGrid;
     }
   }
@@ -723,6 +729,9 @@ export function createRoom() {
     },
   };
 }
+
+// Peças compartilhadas com a cena de desktop (scene-desktop.js).
+export { P, rgba, painter, bayer, clamp, rng, drawMan, drawScreen, FONT3, HEADS, HEAD_MAP };
 
 // ---------- Ciclo de animação ----------
 

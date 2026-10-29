@@ -23,6 +23,11 @@
   <canvas class="intro" id="intro" aria-hidden="true"></canvas>
 
   <main class="app">
+    <!-- Palco do desktop: a cena grande fica sempre à esquerda (oculto no celular) -->
+    <aside class="stage" id="stage" aria-hidden="true">
+      <canvas class="stage__canvas" id="stage-canvas"></canvas>
+    </aside>
+
     <!-- Início: cena, frase e as duas entradas -->
     <section class="view home" id="home" aria-labelledby="brand-name">
       <header class="brand reveal" data-i="0">
@@ -39,6 +44,8 @@
         <span class="tagline__line" aria-hidden="true"><span id="tagline-text">O KAZER executa</span><span class="caret">_</span></span>
         <span class="sr-only">O KAZER executa.</span>
       </p>
+
+      <p class="subcopy reveal" data-i="1">Um assistente de IA com conta própria. Só e-mail e senha: sem login social e sem rastreadores.</p>
 
       <div class="cta reveal" data-i="2">
         <button class="button button--primary" type="button" id="open-signup">Criar conta</button>

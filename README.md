@@ -39,6 +39,8 @@ make web   # http://127.0.0.1:8000 (KAZER_HOST/KAZER_PORT alteram o endereço)
 
 A tela abre quase toda preta: partículas convergem das bordas e formam o símbolo e o nome KAZER, que se abrem para revelar o início (≈1,9 s; qualquer toque ou tecla pula). O início cabe numa única tela, sem rolagem: uma cena em pixel art de um quarto à noite (janela com a cidade ao lado do computador; o programador digita, toma café e às vezes olha para quem está na tela; no monitor, o KAZER em versão "coder" programa, testa, constrói e publica), a frase "Você imagina. O KAZER executa_", os botões **Criar conta** e **Entrar** e os links para os Termos de Uso e a Política de Privacidade. A interface está em português do Brasil. Tudo é HTML, CSS e Canvas sem build nem dependências de frontend, servido pelo próprio app em `kazer/interfaces/web/static/`.
 
+No PC e no notebook (telas a partir de 960 × 560 px) o layout muda: a cena vira um palco de cinema em plano aberto à esquerda (`scene-desktop.js`, 288 × 240 pixels) e a entrada fica num painel à direita, sem esconder a cena. Esse palco tem chuva escorrendo na janela, gato dormindo no peitoril, vela, varal de luzes, segundo monitor com logs, poeira na luz da luminária, brilho (bloom) só nas fontes de luz e uma leve inclinação 3D que segue o mouse. O módulo só é baixado em telas grandes; o celular continua com a versão leve.
+
 O símbolo do KAZER (Fenda) e seus estados estão em [docs/brand.md](docs/brand.md). Com o manifesto (`/manifest.webmanifest`), o site pode ser adicionado à tela inicial e abre em modo app, sem barra de endereço.
 
 O que funciona de verdade, ponta a ponta:
