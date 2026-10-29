@@ -1,6 +1,6 @@
 # KAZER
 
-KAZER é a fundação de um agente de IA modular, auditável e extensível. Este repositório contém somente arquitetura inicial, documentação, contratos tipados e stubs: **não contém interface visual, integrações operacionais nem autonomia implementada**.
+KAZER é a fundação de um agente de IA modular, auditável e extensível. Este repositório contém a arquitetura inicial, documentação, contratos tipados e stubs do agente, além da **tela de entrada com autenticação própria por e-mail e senha**. Ainda **não contém a interface principal, integrações operacionais do agente nem autonomia implementada**.
 
 ## Visão do produto
 
@@ -8,7 +8,8 @@ Preparar uma base segura para um agente que poderá planejar tarefas, usar ferra
 
 ## Arquitetura em camadas
 
-- **Interfaces**: pontos de entrada CLI, API e webhook (stubs).
+- **Interfaces**: tela de entrada web com API de contas (`interfaces/web`); CLI, API do agente e webhook continuam stubs.
+- **Auth**: contas próprias por e-mail e senha, sessões e recuperação (`kazer/auth`).
 - **Core**: agente, orquestração, planejamento, roteamento, execução e estado.
 - **Brain**: contratos para provedores, prompts, decisões e montagem de contexto.
 - **Memory**: contratos para memória com escopo e política explícitos.
@@ -30,9 +31,28 @@ make run
 
 `main.py` é apenas um ponto de composição mínimo e ainda não inicia um agente funcional. Os módulos de produto permanecem como stubs intencionais.
 
+## Tela de entrada e autenticação
+
+```bash
+make web   # http://127.0.0.1:8000 (KAZER_HOST/KAZER_PORT alteram o endereço)
+```
+
+A tela abre quase toda preta: partículas convergem das bordas, formam KAZER e se abrem para revelar o formulário (≈1,9 s; qualquer toque ou tecla pula). Abaixo do formulário, uma cena em pixel art mostra uma silhueta sem rosto trabalhando num computador cujo monitor monta KAZER em pixels. Tudo é HTML, CSS e Canvas sem build nem dependências de frontend, servido pelo próprio app em `kazer/interfaces/web/static/`.
+
+O que funciona de verdade, ponta a ponta:
+
+- criar conta (e-mail + senha, confirmação de senha), confirmar e-mail por link, entrar, manter sessão (cookie HttpOnly, 14 dias), sair;
+- recuperar senha por link de uso único (30 min), que encerra todas as sessões;
+- validação local e no servidor, mensagens de erro acessíveis, limites contra tentativas automatizadas;
+- sem login social, sem rastreadores, sem recursos externos.
+
+Em desenvolvimento os e-mails são gravados em `data/outbox/*.eml`; abra o arquivo e use o link. Em produção (`KAZER_ENV=production`) o app exige HTTPS em `KAZER_PUBLIC_URL`, cookies `Secure` e SMTP configurado, e se recusa a iniciar sem eles. Dados coletados, retenção e exclusão: [docs/privacy-data-map.md](docs/privacy-data-map.md).
+
+Após o login, a tela mostra a sessão ativa e a opção de sair. A interface principal do KAZER ainda não existe; o ponto de navegação pós-login está marcado em `enterApp()` (`static/assets/app.js`).
+
 ## Variáveis de ambiente
 
-Copie `.env.example` para `.env` somente em ambiente local e preencha apenas credenciais necessárias, fora do controle de versão. Neste estágio as configurações são ilustrativas; nenhuma integração consome esses valores. Leia [SECURITY.md](SECURITY.md) antes de adicionar segredos.
+Copie `.env.example` para `.env` somente em ambiente local e preencha apenas credenciais necessárias, fora do controle de versão; `make web` carrega o `.env` se ele existir. A autenticação usa as variáveis `KAZER_*` e `SMTP_*`; a senha SMTP só é lida por `security/secrets.py`. As chaves de provedores de modelo e demais integrações continuam ilustrativas: nada as consome ainda. Leia [SECURITY.md](SECURITY.md) antes de adicionar segredos.
 
 ## Como adicionar ferramenta
 
@@ -56,7 +76,7 @@ Crie um adaptador específico em `kazer/integrations/`, sem misturar credenciais
 
 ## Roadmap inicial
 
-Consulte [ROADMAP.md](ROADMAP.md) para as sete fases, incluindo a maturação do núcleo antes de quaisquer interfaces visuais.
+Consulte [ROADMAP.md](ROADMAP.md) para as sete fases. A tela de entrada foi antecipada a pedido; a interface principal continua na fase 7.
 
 ## Pesquisa de referência
 

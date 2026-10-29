@@ -38,6 +38,21 @@ Isolar por usuário, sessão e projeto, com autorização em toda leitura/escrit
 
 A aprovação deve explicar a ação, alvo, dados, efeito e permissões; ser vinculada a uma chamada específica, expirar, permitir recusa e não ser reutilizável para outra ação. Em dúvida, falha de policy ou indisponibilidade do sistema de aprovação, bloquear.
 
+## Autenticação de contas
+
+Implementado em `kazer/auth` e `kazer/interfaces/web` (somente e-mail e senha; nenhum provedor social):
+
+- Senhas com Argon2id (`argon2-cffi`, parâmetros RFC 9106), rehash transparente; política de 10–128 caracteres com bloqueio de senhas óbvias, sem regras de composição.
+- Sessões opacas de 256 bits em cookie HttpOnly, SameSite=Lax e `Secure`/`__Host-` em produção; o banco guarda apenas SHA-256 do token. Login rotaciona a sessão; sair a revoga no servidor; redefinir senha revoga todas.
+- Links de confirmação (24 h) e redefinição (30 min) são de uso único, consumidos em transação, e trafegam no fragmento da URL para não aparecer em logs.
+- Sem enumeração de contas: registro, recuperação e reenvio respondem igual para e-mails cadastrados ou não; login usa erro genérico e verificação Argon2id descartável para igualar o tempo.
+- Limites por cliente (login, registro, envio de e-mail, uso de links) e bloqueio temporário por conta após 5 falhas em 15 min, com `Retry-After`.
+- CSRF: POST só com `Content-Type: application/json`, `Origin` da própria aplicação e `Sec-Fetch-Site` same-origin; corpo limitado a 4 KB.
+- Cabeçalhos: CSP sem origens externas e sem inline, `frame-ancestors 'none'`, `Referrer-Policy: no-referrer`, `nosniff`, COOP/CORP, `Permissions-Policy` restritiva, HSTS quando HTTPS; `Cache-Control: no-store` na API.
+- Produção falha fechada sem HTTPS, cookies seguros ou SMTP; a senha SMTP passa por `security/secrets.py`.
+
+Lacunas conhecidas: os limites de taxa vivem na memória de um único processo (várias instâncias exigem armazenamento compartilhado); não há MFA, CAPTCHA nem verificação contra bases de senhas vazadas; a exclusão de conta pelo próprio usuário depende da futura área logada; o IP usado nos limites vem do socket ou de `X-Forwarded-For` apenas de proxies confiáveis do uvicorn (`FORWARDED_ALLOW_IPS`). Dados coletados e retenção: [docs/privacy-data-map.md](docs/privacy-data-map.md).
+
 ## Resposta a incidentes e checklist antes de produção
 
 Revogar credenciais, isolar execução afetada, preservar logs redigidos, investigar impacto e notificar conforme obrigações aplicáveis. Antes de habilitar ferramentas reais: revisão de threat model, testes adversariais, avaliação de prompt injection, sandbox validada, testes de isolamento multiusuário, política de rede/egress, redaction verificada, dependências auditadas e plano de rollback.

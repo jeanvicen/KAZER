@@ -8,4 +8,4 @@ Cada fase exige testes, revisão de segurança e critério de saída explícito.
 4. **Integrações** — uma integração por vez, escopos mínimos, revogação, limites de taxa e testes com dados sintéticos.
 5. **Multiagente** — apenas se avaliações mostrarem ganho; delegação limitada, contexto mínimo, orçamento e auditabilidade.
 6. **Autonomia com aprovação humana** — autonomia gradual, autorização por ação, checkpoints, cancelamento e rollback quando viável.
-7. **Painéis e interfaces** — somente depois de o núcleo estar maduro. Esta arquitetura inicial não cria UI; qualquer interface futura será projeto separado, avaliado e aprovado.
+7. **Painéis e interfaces** — somente depois de o núcleo estar maduro. Exceção aprovada: a tela de entrada com autenticação própria foi antecipada; a interface principal, exclusão de conta pelo próprio usuário e páginas legais continuam pendentes.

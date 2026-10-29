@@ -1,15 +1,81 @@
-"""Ponto único futuro para carregar e validar configuração não secreta."""
+"""Ponto único para carregar e validar configuração não secreta."""
+
+import os
+from collections.abc import Mapping
+from pathlib import Path
+from typing import Literal
+from urllib.parse import urlsplit
+
+from pydantic import model_validator
 
 from kazer.config.models import StrictModel
+
+Environment = Literal["development", "test", "production"]
+MailBackend = Literal["smtp", "file"]
 
 
 class Settings(StrictModel):
     """Configuração operacional sem campos de credenciais."""
 
-    environment: str = "development"
+    environment: Environment = "development"
     log_level: str = "INFO"
+    public_url: str = "http://localhost:8000"
+    database_path: Path = Path("data/kazer.db")
+    mail_backend: MailBackend = "file"
+    mail_outbox_dir: Path = Path("data/outbox")
+    mail_from: str = "KAZER <no-reply@localhost>"
+    smtp_host: str = ""
+    smtp_port: int = 587
+    smtp_user: str = ""
+    cookie_secure: bool = True
+
+    @model_validator(mode="after")
+    def _fail_closed_in_production(self) -> "Settings":
+        """Produção exige HTTPS, cookies seguros e entrega real de e-mail."""
+        if self.environment != "production":
+            return self
+        problems: list[str] = []
+        if urlsplit(self.public_url).scheme != "https":
+            problems.append("KAZER_PUBLIC_URL deve usar https")
+        if not self.cookie_secure:
+            problems.append("KAZER_COOKIE_SECURE não pode ser desativado")
+        if self.mail_backend != "smtp":
+            problems.append("KAZER_MAIL_BACKEND deve ser smtp")
+        if not self.smtp_host:
+            problems.append("SMTP_HOST é obrigatório")
+        if problems:
+            raise ValueError("Configuração de produção inválida: " + "; ".join(problems))
+        return self
+
+    @property
+    def public_origin(self) -> str:
+        """Origem pública (esquema + host) usada em links enviados por e-mail."""
+        parts = urlsplit(self.public_url)
+        return f"{parts.scheme}://{parts.netloc}"
 
 
-def load_settings() -> Settings:
+def _flag(value: str | None, default: bool) -> bool:
+    if value is None or value.strip() == "":
+        return default
+    return value.strip().lower() in {"1", "true", "yes", "on"}
+
+
+def load_settings(environ: Mapping[str, str] | None = None) -> Settings:
     """Carrega configuração validada; leitura de segredos é proibida aqui."""
-    raise NotImplementedError("Carregamento de configuração ainda não implementado.")
+    env = os.environ if environ is None else environ
+    environment = env.get("KAZER_ENV", "development")
+    values: dict[str, object] = {
+        "environment": environment,
+        "log_level": env.get("KAZER_LOG_LEVEL", "INFO"),
+        "public_url": env.get("KAZER_PUBLIC_URL", "http://localhost:8000"),
+        "database_path": env.get("KAZER_DATABASE_PATH", "data/kazer.db"),
+        "mail_backend": env.get("KAZER_MAIL_BACKEND", "file"),
+        "mail_outbox_dir": env.get("KAZER_MAIL_OUTBOX_DIR", "data/outbox"),
+        "mail_from": env.get("KAZER_MAIL_FROM", "KAZER <no-reply@localhost>"),
+        "smtp_host": env.get("SMTP_HOST", ""),
+        "smtp_port": env.get("SMTP_PORT", "587"),
+        "smtp_user": env.get("SMTP_USER", ""),
+        # Cookies `Secure` por padrão; só o desenvolvimento local em http pode desligar.
+        "cookie_secure": _flag(env.get("KAZER_COOKIE_SECURE"), environment == "production"),
+    }
+    return Settings.model_validate(values)

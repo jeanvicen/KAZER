@@ -1,0 +1,629 @@
+/* KAZER — tela de entrada. Paleta estritamente monocromática. */
+
+@font-face {
+  font-family: "Grenze Gotisch";
+  src: url("fonts/grenze-gotisch-500.woff2") format("woff2");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root {
+  --black: #030303;
+  --black-2: #080808;
+  --surface: #0d0d0d;
+  --text: #f5f5f5;
+  --text-2: #929292;
+  --border: #242424;
+  --border-hover: #3a3a3a;
+  --invalid: #8a8a8a;
+
+  --font-display: "Grenze Gotisch", "Iowan Old Style", Georgia, serif;
+  --font-ui: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-mono: ui-monospace, "SFMono-Regular", Menlo, Consolas, "Liberation Mono", monospace;
+
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --column: 22.5rem;
+  color-scheme: dark;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  background: var(--black);
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  min-height: 100dvh;
+  background: var(--black);
+  color: var(--text);
+  font: 400 0.9375rem/1.5 var(--font-ui);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+button,
+input {
+  font: inherit;
+  color: inherit;
+}
+
+::selection {
+  background: var(--text);
+  color: var(--black);
+}
+
+/* ---------- Intro (partículas) ---------- */
+
+.intro {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 10;
+  pointer-events: none;
+  transition: opacity 180ms linear;
+}
+
+.intro.is-gone {
+  opacity: 0;
+}
+
+/* ---------- Composição ---------- */
+
+.stage {
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  gap: clamp(1.25rem, 4vh, 2.5rem);
+  padding:
+    max(env(safe-area-inset-top), clamp(2rem, 7vh, 4.5rem))
+    max(env(safe-area-inset-right), 1.25rem)
+    max(env(safe-area-inset-bottom), 1rem)
+    max(env(safe-area-inset-left), 1.25rem);
+}
+
+.auth {
+  width: 100%;
+  max-width: var(--column);
+  flex: 0 0 auto;
+}
+
+/* Revelação: o formulário existe desde o início, só fica invisível durante a intro. */
+.is-booting .auth,
+.is-booting .scene,
+.is-intro .auth,
+.is-intro .scene {
+  opacity: 0;
+  visibility: hidden;
+}
+
+.wordmark,
+.reveal,
+.scene {
+  transition:
+    opacity 520ms var(--ease-out),
+    transform 620ms var(--ease-out);
+}
+
+.is-intro .wordmark,
+.is-intro .reveal {
+  opacity: 0;
+  transform: translateY(0.75rem);
+}
+
+.is-revealed .reveal {
+  transition-delay: calc(var(--i, 0) * 55ms + 80ms);
+}
+
+.reveal[data-i="1"] { --i: 1; }
+.reveal[data-i="2"] { --i: 2; }
+.reveal[data-i="3"] { --i: 3; }
+.reveal[data-i="4"] { --i: 4; }
+.reveal[data-i="5"] { --i: 5; }
+
+.is-revealed .scene {
+  transition-delay: 380ms;
+  transition-duration: 900ms;
+}
+
+/* ---------- Wordmark ---------- */
+
+.wordmark {
+  position: relative;
+  margin: 0 0 clamp(1.5rem, 4.5vh, 2.25rem);
+  font: 500 clamp(2.4rem, 11vw, 3rem) / 1 var(--font-display);
+  letter-spacing: 0.14em;
+  text-indent: 0.14em; /* compensa o tracking para centralizar opticamente */
+  text-align: center;
+  color: var(--text);
+  user-select: none;
+}
+
+/* Fio de luz que atravessa uma única vez ao revelar. */
+.wordmark::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: -0.85rem;
+  width: 3.5rem;
+  height: 1px;
+  margin-left: -1.75rem;
+  background: linear-gradient(90deg, transparent, var(--text-2), transparent);
+  opacity: 0.55;
+}
+
+.is-revealed .wordmark::after {
+  animation: wire 1100ms var(--ease-out) both;
+}
+
+@keyframes wire {
+  0% { transform: scaleX(0); opacity: 0; }
+  35% { opacity: 1; background: linear-gradient(90deg, transparent, var(--text), transparent); }
+  100% { transform: scaleX(1); opacity: 0.55; }
+}
+
+/* Falha digital monocromática, uma vez, ao assentar. */
+.wordmark::before {
+  content: attr(data-text);
+  position: absolute;
+  inset: 0;
+  color: var(--text);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.is-revealed .wordmark::before {
+  animation: glitch 420ms steps(1, end) 140ms both;
+}
+
+@keyframes glitch {
+  0% { opacity: 0.9; clip-path: inset(18% 0 62% 0); transform: translateX(-4px); }
+  20% { opacity: 0.8; clip-path: inset(58% 0 22% 0); transform: translateX(5px); }
+  40% { opacity: 0.6; clip-path: inset(38% 0 48% 0); transform: translateX(-2px); }
+  60% { opacity: 0.5; clip-path: inset(72% 0 8% 0); transform: translateX(3px); }
+  80%, 100% { opacity: 0; clip-path: inset(50% 0 50% 0); transform: none; }
+}
+
+/* ---------- Alternância de modo ---------- */
+
+.modes {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  margin-bottom: 1.75rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.modes__tab {
+  min-height: 2.75rem;
+  padding: 0.5rem 0.25rem;
+  border: 0;
+  background: none;
+  color: var(--text-2);
+  font-size: 0.875rem;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  transition: color 200ms linear;
+}
+
+.modes__tab:hover,
+.modes__tab[aria-selected="true"] {
+  color: var(--text);
+}
+
+.modes__rail {
+  position: absolute;
+  left: 0;
+  bottom: -1px;
+  width: 50%;
+  height: 1px;
+  background: var(--text);
+  transition: transform 360ms var(--ease-out);
+}
+
+.modes[data-active="signup"] .modes__rail {
+  transform: translateX(100%);
+}
+
+/* ---------- Cabeçalho dos modos de recuperação ---------- */
+
+.heading {
+  margin-bottom: 1.5rem;
+  text-align: center;
+}
+
+.heading__title,
+.notice__title {
+  margin: 0 0 0.5rem;
+  font-size: 1.0625rem;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  outline: none;
+}
+
+.heading__lede,
+.notice__body {
+  margin: 0;
+  color: var(--text-2);
+  font-size: 0.875rem;
+}
+
+/* ---------- Campos ---------- */
+
+.form {
+  display: flex;
+  flex-direction: column;
+}
+
+.field {
+  margin-bottom: 1.125rem;
+}
+
+.field.is-entering {
+  animation: enter 360ms var(--ease-out) both;
+}
+
+@keyframes enter {
+  from { opacity: 0; transform: translateY(-0.375rem); }
+  to { opacity: 1; transform: none; }
+}
+
+.field__label {
+  display: block;
+  margin-bottom: 0.5rem;
+  color: var(--text-2);
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.field__input {
+  display: block;
+  width: 100%;
+  height: 3rem;
+  padding: 0 0.875rem;
+  border: 1px solid var(--border);
+  border-radius: 2px;
+  background: var(--black-2);
+  color: var(--text);
+  font-size: 1rem; /* 16px evita zoom automático no foco em navegadores móveis */
+  caret-color: var(--text);
+  transition: border-color 160ms linear, background-color 160ms linear, box-shadow 200ms linear;
+}
+
+.field__input:hover {
+  border-color: var(--border-hover);
+}
+
+.field__input:focus {
+  outline: none;
+  border-color: var(--text);
+  background: var(--surface);
+  box-shadow: 0 0 0 3px rgba(245, 245, 245, 0.07);
+}
+
+.field__input[aria-invalid="true"] {
+  border-color: var(--invalid);
+}
+
+.field__input[aria-invalid="true"]:focus {
+  border-color: var(--text);
+}
+
+.field__input:-webkit-autofill,
+.field__input:-webkit-autofill:hover,
+.field__input:-webkit-autofill:focus {
+  -webkit-text-fill-color: var(--text);
+  -webkit-box-shadow: 0 0 0 1000px var(--surface) inset;
+  transition: background-color 9999s linear;
+}
+
+.field__input[readonly] {
+  color: var(--text-2);
+}
+
+.field__hint {
+  margin: 0.5rem 0 0;
+  color: var(--text-2);
+  font-size: 0.8125rem;
+}
+
+.field__error {
+  margin: 0;
+  color: var(--text);
+  font-size: 0.8125rem;
+}
+
+.field__error:not(:empty) {
+  margin-top: 0.5rem;
+}
+
+.field__error:not(:empty)::before,
+.alert__text::before {
+  content: "";
+  display: inline-block;
+  width: 0.375rem;
+  height: 0.375rem;
+  margin-right: 0.5rem;
+  background: var(--text);
+  vertical-align: 0.1em;
+}
+
+/* ---------- Alerta do formulário ---------- */
+
+.alert {
+  margin: 0 0 1.125rem;
+  padding: 0.75rem 0.875rem;
+  border-left: 1px solid var(--text);
+  background: var(--black-2);
+  font-size: 0.875rem;
+  animation: enter 280ms var(--ease-out) both;
+}
+
+.alert__text {
+  margin: 0;
+}
+
+.alert__action {
+  margin-top: 0.375rem;
+  padding: 0;
+  min-height: 2.25rem;
+}
+
+/* ---------- Botão principal ---------- */
+
+.primary {
+  position: relative;
+  width: 100%;
+  height: 3rem;
+  margin-top: 0.375rem;
+  border: 0;
+  border-radius: 2px;
+  background: var(--text);
+  color: var(--black);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+  overflow: hidden;
+  transition: background-color 160ms linear, transform 120ms ease;
+}
+
+.primary:hover {
+  background: #ffffff;
+}
+
+.primary:active {
+  transform: translateY(1px);
+}
+
+.primary:disabled {
+  cursor: progress;
+}
+
+.primary__progress {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  height: 2px;
+  background: var(--black);
+  transform: scaleX(0);
+  transform-origin: left;
+  opacity: 0;
+}
+
+.primary[aria-busy="true"] .primary__label {
+  opacity: 0.45;
+}
+
+.primary[aria-busy="true"] .primary__progress {
+  opacity: 0.85;
+  animation: progress 1100ms cubic-bezier(0.65, 0, 0.35, 1) infinite;
+}
+
+@keyframes progress {
+  0% { transform: scaleX(0); transform-origin: left; }
+  50% { transform: scaleX(1); transform-origin: left; }
+  50.01% { transform: scaleX(1); transform-origin: right; }
+  100% { transform: scaleX(0); transform-origin: right; }
+}
+
+/* ---------- Links discretos ---------- */
+
+.links {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 0.25rem 1rem;
+  margin-top: 0.75rem;
+}
+
+.links.is-single {
+  justify-content: center;
+}
+
+.link {
+  min-height: 2.75rem;
+  padding: 0.5rem 0;
+  border: 0;
+  background: none;
+  color: var(--text-2);
+  font-size: 0.875rem;
+  text-decoration: underline;
+  text-decoration-color: transparent;
+  text-underline-offset: 0.25em;
+  cursor: pointer;
+  transition: color 160ms linear, text-decoration-color 160ms linear;
+}
+
+.link:hover {
+  color: var(--text);
+  text-decoration-color: currentColor;
+}
+
+.link strong {
+  color: var(--text);
+  font-weight: 500;
+}
+
+.note {
+  margin: 1rem 0 0;
+  color: var(--text-2);
+  font-size: 0.75rem;
+  text-align: center;
+}
+
+/* ---------- Avisos (confirmação, sessão ativa) ---------- */
+
+.notice {
+  text-align: center;
+  animation: enter 420ms var(--ease-out) both;
+}
+
+.notice__status {
+  min-height: 1.25rem;
+  margin: 1rem 0 0;
+  color: var(--text-2);
+  font-size: 0.8125rem;
+}
+
+.notice__status:empty {
+  min-height: 0;
+  margin: 0;
+}
+
+.notice__actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin-top: 1.5rem;
+}
+
+.notice__actions .primary {
+  margin-top: 0;
+}
+
+.notice__email {
+  color: var(--text);
+  overflow-wrap: anywhere;
+}
+
+/* ---------- Foco visível ---------- */
+
+.modes__tab:focus-visible,
+.link:focus-visible,
+.primary:focus-visible {
+  outline: 1px solid var(--text);
+  outline-offset: 3px;
+}
+
+/* ---------- Cena digital ---------- */
+
+.scene {
+  width: 100%;
+  max-width: 34rem;
+  flex: 1 1 10rem;
+  min-height: 8.5rem;
+  max-height: 18rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.scene__canvas {
+  display: block;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}
+
+/* Teclado virtual aberto: a cena sai de cena para manter os campos visíveis. */
+.kb-open .scene {
+  display: none;
+}
+
+.kb-open .stage {
+  padding-top: max(env(safe-area-inset-top), 1.25rem);
+}
+
+.kb-open .wordmark {
+  margin-bottom: 1rem;
+  font-size: 2rem;
+}
+
+/* ---------- Telas maiores ---------- */
+
+@media (min-width: 48rem) and (min-height: 40rem) {
+  .stage {
+    justify-content: center;
+    padding-top: 3rem;
+    padding-bottom: 3rem;
+  }
+
+  .scene {
+    flex: 0 1 18rem;
+  }
+}
+
+@media (max-height: 34rem) and (orientation: landscape) {
+  .scene {
+    display: none;
+  }
+}
+
+/* ---------- Movimento reduzido ---------- */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 1ms !important;
+    transition-delay: 0s !important;
+  }
+
+  /* Abertura simplificada: apenas um esmaecimento curto, sem deslocamento. */
+  .wordmark,
+  .reveal,
+  .scene {
+    transition: opacity 400ms linear !important;
+    transform: none !important;
+  }
+
+  .is-revealed .wordmark::before,
+  .is-revealed .wordmark::after {
+    animation: none;
+  }
+
+  .primary[aria-busy="true"] .primary__progress {
+    animation: none;
+    transform: scaleX(1);
+    opacity: 0.5;
+  }
+}
+
+.noscript {
+  position: fixed;
+  inset: auto 0 2rem;
+  margin: 0;
+  color: var(--text-2);
+  text-align: center;
+}

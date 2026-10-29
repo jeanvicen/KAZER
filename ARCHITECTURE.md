@@ -7,7 +7,7 @@
 3. **Permissões independentes do modelo**: saída do modelo é dado não confiável; política determinística decide autorização.
 4. **Falha fechada**: falta de identidade, escopo, permissão ou aprovação bloqueia execução.
 5. **Contexto seletivo**: recuperar o mínimo de informação relevante; separar conteúdo externo de instruções confiáveis.
-6. **Sem UI neste estágio**: CLI/API/webhook são stubs de interface, não telas.
+6. **UI restrita à entrada**: a única tela é a de autenticação (`interfaces/web`); CLI, API do agente e webhook continuam stubs. A interface principal segue no roadmap.
 
 ## Fluxo de tarefa
 
@@ -26,7 +26,8 @@ A ordem expressa o contrato pretendido, não uma implementação ativa. Entradas
 - `integrations`: adaptadores de serviços de terceiros sem acoplamento ao core.
 - `config`: esquemas e arquivos declarativos versionáveis sem credenciais.
 - `observability`: sinais operacionais redigidos e sem conteúdo sensível.
-- `interfaces`: entradas CLI/API/webhook, sem interface visual.
+- `interfaces`: entradas CLI/API/webhook (stubs) e `interfaces/web`, que serve a tela de entrada e a API JSON `/api/auth/*` (Starlette/ASGI, CSP sem origens externas, verificação de `Origin`).
+- `auth`: contas próprias por e-mail e senha — validação, armazenamento SQLite, sessões opacas, links de uso único e regras anti-enumeração. Depende de `security` (Argon2id, limites de taxa, segredos) e de `integrations/email` apenas por contratos.
 
 ## Fronteiras de confiança
 

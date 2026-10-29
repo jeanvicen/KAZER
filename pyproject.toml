@@ -8,16 +8,25 @@ version = "0.1.0"
 description = "Fundação modular e segura para um agente de IA extensível."
 readme = "README.md"
 requires-python = ">=3.11"
-dependencies = ["pydantic>=2.7,<3", "PyYAML>=6.0,<7"]
+dependencies = [
+    "pydantic>=2.7,<3",
+    "PyYAML>=6.0,<7",
+    "starlette>=1.0,<2",
+    "uvicorn>=0.30,<1",
+    "argon2-cffi>=23.1,<26",
+]
 
 [project.optional-dependencies]
-dev = ["pytest>=8,<9", "ruff>=0.6,<1", "mypy>=1.11,<2"]
+dev = ["pytest>=8,<9", "ruff>=0.6,<1", "mypy>=1.11,<2", "httpx2>=2,<3"]
 
 [project.scripts]
 kazer = "kazer.main:main"
 
 [tool.setuptools.packages.find]
 include = ["kazer*"]
+
+[tool.setuptools.package-data]
+"kazer.interfaces.web" = ["static/*.html", "static/assets/*", "static/assets/fonts/*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
