@@ -111,6 +111,19 @@ class SupabaseAuthService:
             return {}
         return value if isinstance(value, dict) else {}
 
+    @staticmethod
+    def _is_recovery_token(token: str) -> bool:
+        """Accept only the JWT type issued after a password-recovery link."""
+        try:
+            parts = token.split(".")
+            if len(parts) != 3:
+                return False
+            padded = parts[1] + "=" * (-len(parts[1]) % 4)
+            claims = json.loads(base64.urlsafe_b64decode(padded).decode())
+        except (ValueError, KeyError, TypeError, UnicodeDecodeError):
+            return False
+        return claims.get("type") == "recovery"
+
     def register(self, raw_email: str, password: str, client: str) -> None:
         self._limit(f"register:{client}", self._policy.register_per_client)
         email = self._email(raw_email)
@@ -206,6 +219,8 @@ class SupabaseAuthService:
         self._limit(f"token:{client}", self._policy.token_per_client)
         # In the Supabase implicit flow, token is the access token received after
         # the recovery link. The browser never sends an arbitrary email as proof.
+        if not self._is_recovery_token(token):
+            raise AuthError("invalid_token", 400)
         response = self._request("GET", "/user", headers={"Authorization": f"Bearer {token}"})
         user = self._json(response)
         email = user.get("email")
