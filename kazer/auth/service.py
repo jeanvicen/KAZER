@@ -15,7 +15,7 @@ from collections.abc import Callable
 from dataclasses import dataclass, field
 
 from kazer.auth import messages
-from kazer.auth.store import AuthStore, TokenPurpose
+from kazer.auth.store import AuthStore, TokenPurpose, User
 from kazer.auth.tokens import hash_token, new_token
 from kazer.auth.validation import ValidationError, validate_email, validate_password
 from kazer.integrations.email import MailDeliveryError, MailMessage, MailSender
@@ -182,12 +182,20 @@ class AuthService:
             return None
         return self._issue_verification(user.id, email, self._now())
 
-    def verify_email(self, token: str, client: str) -> None:
-        """Confirma o e-mail a partir do link recebido."""
+    def verify_email(self, token: str, client: str) -> SessionGrant:
+        """Confirma o e-mail e já abre a sessão: o link prova a posse do endereço."""
         self._limit(f"token:{client}", self._policy.token_per_client)
-        if not self._store.verify_email_with_token(self._check_token(token), self._now()):
+        user = self._store.verify_email_with_token(self._check_token(token), self._now())
+        if user is None:
             raise AuthError("invalid_token", 400)
         logger.info("auth.email_verified")
+        return self._open_session(user)
+
+    def _open_session(self, user: User) -> SessionGrant:
+        now = self._now()
+        token = new_token()
+        self._store.create_session(user.id, hash_token(token), now, now + self._policy.session_ttl)
+        return SessionGrant(token=token, email=user.email, max_age=self._policy.session_ttl)
 
     def login(self, raw_email: str, password: str, client: str) -> SessionGrant:
         """Valida credenciais; erros não distinguem e-mail inexistente de senha errada."""
@@ -220,19 +228,55 @@ class AuthService:
         if self._hashing.needs_rehash(user.password_hash):
             self._store.update_password_hash(user.id, self._hashing.hash(password))
 
-        now = self._now()
-        token = new_token()
-        self._store.create_session(user.id, hash_token(token), now, now + self._policy.session_ttl)
+        grant = self._open_session(user)
         self.purge()
         logger.info("auth.login.succeeded")
-        return SessionGrant(token=token, email=user.email, max_age=self._policy.session_ttl)
+        return grant
+
+    def session_user(self, token: str | None) -> User | None:
+        """Conta da sessão válida ou None; base de toda autorização do chat."""
+        if not token or len(token) > TOKEN_MAX_LENGTH:
+            return None
+        return self._store.find_session_user(hash_token(token), self._now())
 
     def session_email(self, token: str | None) -> str | None:
         """Retorna o e-mail da sessão válida ou None."""
-        if not token or len(token) > TOKEN_MAX_LENGTH:
-            return None
-        user = self._store.find_session_user(hash_token(token), self._now())
+        user = self.session_user(token)
         return None if user is None else user.email
+
+    def _confirm_password(self, user: User, password: str, client: str) -> None:
+        self._limit(f"confirm:{client}", self._policy.login_per_client)
+        account_key = _account_key("login-fail", user.email)
+        wait = self._limiter.retry_after(account_key, self._policy.login_failures_per_account)
+        if wait > 0:
+            raise AuthError("rate_limited", 429, retry_after=wait)
+        if len(password) > 1024 or not self._hashing.verify(user.password_hash, password):
+            self._limiter.hit(account_key, self._policy.login_failures_per_account)
+            raise AuthError("invalid_password", 403)
+
+    def change_password(
+        self, user: User, current: str, new: str, session_token: str, client: str
+    ) -> None:
+        """Troca a senha confirmando a atual; as outras sessões são encerradas."""
+        self._confirm_password(user, current, client)
+        try:
+            validate_password(new, user.email)
+        except ValidationError as exc:
+            raise AuthError(exc.code, 422) from None
+        self._store.update_password_keep_session(
+            user.id, self._hashing.hash(new), hash_token(session_token)
+        )
+        logger.info("auth.password_changed")
+
+    def revoke_other_sessions(self, user: User, session_token: str) -> int:
+        """Sai de todos os outros dispositivos."""
+        return self._store.delete_other_sessions(user.id, hash_token(session_token))
+
+    def delete_account(self, user: User, password: str, client: str) -> None:
+        """Exclui a conta e, em cascata, tudo o que ela guarda no banco."""
+        self._confirm_password(user, password, client)
+        self._store.delete_user(user.id)
+        logger.info("auth.account_deleted")
 
     def logout(self, token: str | None) -> None:
         """Encerra a sessão no servidor; o cookie é apagado pela interface."""

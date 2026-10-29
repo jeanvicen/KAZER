@@ -1,6 +1,6 @@
-# Mapa de dados da autenticação
+# Mapa de dados do KAZER
 
-Este documento descreve o que a autenticação própria do KAZER coleta, onde guarda, quem recebe e como apagar. Ele cobre **somente** a tela de entrada e a API `/api/auth/*`. Não cobre conversas, memória ou provedores de modelo, que ainda não existem neste repositório — autenticação própria remove a dependência de login social, mas não torna, por si só, os dados de IA privados.
+Este documento descreve o que o KAZER coleta, onde guarda, quem recebe e como apagar: tela de entrada e API `/api/auth/*`, e o chat (`/api/chat`, `/api/conversations`, `/api/attachments`, `/api/settings`, `/api/memories`, `/api/account/*`). Autenticação própria remove a dependência de login social, mas as mensagens do chat **são enviadas ao provedor de modelo configurado**: a privacidade delas depende também do contrato desse provedor.
 
 ## O que é coletado
 
@@ -13,6 +13,21 @@ Este documento descreve o que a autenticação própria do KAZER coleta, onde gu
 | Hash SHA-256 de links de confirmação/redefinição | Uso único dos links | SQLite `email_tokens` | 24 h (confirmação) / 30 min (redefinição) |
 | IP do cliente | Limite de tentativas | Somente memória do processo | Janela do limite (até 1 h); some ao reiniciar |
 
+### Chat
+
+| Dado | Por quê | Onde fica | Retenção |
+| --- | --- | --- | --- |
+| Conversas (título, datas) | Histórico da conta | SQLite `conversations` (dono = `user_id` da sessão) | Até apagar a conversa, o histórico ou a conta |
+| Mensagens e respostas (texto, resumo do raciocínio, estado, opções usadas) | Mostrar o histórico e montar o contexto | SQLite `messages` | Idem |
+| Anexos (bytes) | O modelo analisar o que você enviou | Disco privado `KAZER_UPLOAD_DIR/<user_id>/<id>` (diretório 0700, arquivo 0600, nome aleatório) | Idem; anexos nunca enviados somem em 24 h |
+| Metadados dos anexos (nome limpo, tipo detectado, tamanho) | Listar e servir só ao dono | SQLite `attachments` | Idem |
+| Memórias | Personalizar respostas quando a memória está ligada | SQLite `memories` | Até esquecer a memória ou excluir a conta |
+| Preferências (apelido, estilo, instruções, interface) | Ajustar o assistente e a interface | SQLite `preferences` | Até alterar ou excluir a conta |
+| Contagem de uso (unidades e horário, sem conteúdo) | Cota no servidor | SQLite `usage_events` | 2 dias |
+| Fuso horário do navegador | Informar a data ao modelo | Só na requisição | Não é guardado |
+
+Toda consulta do chat parte do `user_id` derivado do cookie de sessão; conversa, mensagem ou anexo de outra conta responde `404` igual a algo inexistente. O tipo dos anexos é detectado pelo conteúdo (PNG, JPEG, WebP, GIF, PDF ou texto UTF-8 com extensão permitida), nunca pelo que o navegador declara.
+
 Não são coletados: nome, telefone, data de nascimento, user agent, localização, identificadores de dispositivo ou dados de terceiros. A senha em claro existe apenas durante a requisição e nunca é registrada nem gravada. Tokens em claro existem só no cookie HttpOnly (sessão) ou no e-mail enviado (links).
 
 Contas que nunca confirmam o e-mail são apagadas automaticamente após 7 dias. Sessões e links vencidos são removidos na inicialização e a cada login.
@@ -20,7 +35,10 @@ Contas que nunca confirmam o e-mail são apagadas automaticamente após 7 dias. 
 ## Navegador
 
 - Cookie `__Host-kazer_session` (produção) / `kazer_session` (desenvolvimento local): HttpOnly, SameSite=Lax, Secure em produção. Inacessível a JavaScript.
-- Nada em `localStorage`, `sessionStorage` ou IndexedDB.
+- `localStorage`: só preferências visuais (`kazer:ui` com animações, tamanho do texto e fundo animado; `kazer:drawer` com a gaveta aberta ou fechada). Nenhum dado pessoal.
+- `sessionStorage`: rascunho da mensagem por conversa (`kazer:draft:*`), apagado ao sair da conta, e marcadores de navegação (`kazer:after`, `kazer:return`).
+- Cache do service worker (`kazer-shell-v1`): só HTML, CSS, JS, fonte e ícones do app. Nada de `/api/` (conversas, anexos, sessão) entra no cache.
+- Prévia local de anexos escolhidos via `blob:` URL, revogada depois do envio.
 - Links de e-mail carregam o token no fragmento (`#verify=…`, `#reset=…`). Navegadores não enviam fragmentos ao servidor, então tokens não aparecem em logs de acesso nem em `Referer`. A página remove o fragmento da barra de endereço assim que o lê.
 - Nenhum script, fonte, imagem ou folha de estilo externa. A fonte do logotipo (Grenze Gotisch, OFL) é servida localmente. A CSP bloqueia qualquer origem de terceiros.
 - Sem analytics, pixels de rastreamento ou SDKs de login social.
@@ -30,19 +48,24 @@ Contas que nunca confirmam o e-mail são apagadas automaticamente após 7 dias. 
 | Serviço | Recebe | Quando |
 | --- | --- | --- |
 | Servidor SMTP configurado (`SMTP_HOST`) | Endereço de e-mail do destinatário e o texto da mensagem (que inclui o link com token) | Registro, reenvio de confirmação e redefinição de senha |
+| Provedor de modelo (`KAZER_MODEL_PROVIDER`) | A mensagem, anexos recentes da conversa, o histórico recente, preferências de estilo, instruções pessoais e, se ligadas, as memórias. Nunca e-mail, senha ou tokens | Cada resposta pedida no chat |
 | Hospedagem (Vercel, no deploy de produção) | Dados técnicos de cada requisição, como IP e horário, processados pela plataforma | Toda visita ao site |
 
-Nenhum outro serviço recebe dados da aplicação. Os e-mails são texto puro, sem HTML, imagens remotas ou links rastreados. A escolha do provedor SMTP determina a política de retenção dele; documente-a ao configurar produção.
+Nenhum outro serviço recebe dados da aplicação. O provedor de modelo é escolhido por configuração; retenção e eventual uso para treinamento dependem do contrato dele e precisam ser publicados na Política antes de abrir o chat ao público. Os e-mails são texto puro, sem HTML, imagens remotas ou links rastreados. A escolha do provedor SMTP determina a política de retenção dele; documente-a ao configurar produção.
 
 Em desenvolvimento, o backend `file` grava as mensagens em `data/outbox/` (ignorado pelo git, permissão 0600) em vez de enviá-las. Produção recusa esse backend.
 
 ## Logs
 
-O servidor web roda sem log de acesso por padrão (sem IPs nem caminhos). Os eventos de autenticação registram apenas o tipo (`auth.login.failed`, `auth.rate_limited` com o escopo), nunca e-mail, IP, senha ou token.
+O servidor web roda sem log de acesso por padrão (sem IPs nem caminhos). Os eventos de autenticação registram apenas o tipo (`auth.login.failed`, `auth.rate_limited` com o escopo), nunca e-mail, IP, senha ou token. O chat registra só eventos (`chat.message_accepted` com as unidades, `chat.generation_finished` com o estado e o código de erro) e falhas do provedor com o status HTTP: nunca conteúdo de mensagens, anexos, chaves ou URLs com credenciais.
 
-## Exclusão de conta
+## Exclusão de conta e portabilidade
 
-O esquema já suporta exclusão completa: `AuthStore.delete_user()` remove a linha de `users` e, em cascata, todas as sessões e links. Não há outro lugar com dados da conta. **Ainda falta** a interface autenticada para o próprio usuário pedir a exclusão (com reautenticação), que depende da área logada do KAZER. Até lá, a exclusão é um procedimento administrativo sobre o banco.
+Em *Configurações › Dados e privacidade*, a própria pessoa:
+
+- baixa um JSON com conta, conversas (sem os bytes dos anexos, só nome, tipo e tamanho), memórias e preferências (`GET /api/account/export`);
+- apaga todas as conversas e seus anexos (`POST /api/conversations/clear`);
+- exclui a conta confirmando a senha (`POST /api/account/delete`): o banco apaga em cascata sessões, links, conversas, mensagens, anexos, memórias, preferências e contagem de uso, e o diretório de anexos da conta é removido do disco.
 
 ## Documentos legais
 
@@ -50,4 +73,5 @@ Os Termos de Uso (`/termos`) e a Política de Privacidade (`/privacidade`) refle
 
 - identificar o controlador (nome ou razão social, documento) e o canal do encarregado na seção 2 da Política;
 - nomear o provedor SMTP escolhido na seção 5;
+- nomear o provedor de modelo de IA, o país de processamento e as condições de retenção e treinamento na seção 5;
 - revisão jurídica, incluindo a aplicabilidade da guarda de registros de acesso do art. 15 do Marco Civil da Internet (Lei nº 12.965/2014), que hoje não é feita.

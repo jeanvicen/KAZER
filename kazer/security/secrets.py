@@ -7,6 +7,21 @@ from typing import Protocol
 # Allowlist por escopo: um adaptador só obtém os segredos do próprio escopo.
 _ALLOWED_SECRETS: Mapping[str, frozenset[str]] = {
     "email": frozenset({"SMTP_PASSWORD"}),
+    # Chaves do provedor de modelo: lidas só pelo adaptador, nunca expostas ao navegador.
+    "model": frozenset(
+        {
+            "XAI_API_KEY",
+            "OPENAI_API_KEY",
+            "ANTHROPIC_API_KEY",
+            "GEMINI_API_KEY",
+            "GROQ_API_KEY",
+            "DEEPSEEK_API_KEY",
+            "MISTRAL_API_KEY",
+            "OPENROUTER_API_KEY",
+            "TOGETHER_API_KEY",
+            "KAZER_MODEL_API_KEY",
+        }
+    ),
 }
 
 

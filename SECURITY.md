@@ -53,6 +53,17 @@ Implementado em `kazer/auth` e `kazer/interfaces/web` (somente e-mail e senha; n
 
 Lacunas conhecidas: os limites de taxa vivem na memória de um único processo (várias instâncias exigem armazenamento compartilhado); não há MFA, CAPTCHA nem verificação contra bases de senhas vazadas; a exclusão de conta pelo próprio usuário depende da futura área logada; o IP usado nos limites vem do socket ou de `X-Forwarded-For` apenas de proxies confiáveis do uvicorn (`FORWARDED_ALLOW_IPS`). Dados coletados e retenção: [docs/privacy-data-map.md](docs/privacy-data-map.md).
 
+## Chat e provedores de modelo
+
+- Identidade só pela sessão: toda rota do chat resolve o `user_id` pelo cookie HttpOnly e filtra por ele no SQL; IDs de outra conta respondem `404` idêntico a inexistente (testado em `tests/test_chat.py`).
+- CSRF: escrita só da própria origem (`Origin`/`Sec-Fetch-Site`), JSON com teto por rota (4 KB a 256 KB) e anexos por corpo bruto com teto de tamanho e tipo detectado pelo conteúdo.
+- Chaves de provedor só em variáveis do servidor, lidas por `security/secrets.py` com allowlist de escopo; nunca expostas ao navegador, a logs, a mensagens de erro ou ao `repr` dos adaptadores. A interface só vê "KAZ 1.1" e as capacidades reais.
+- Opções de execução (modelo, esforço, pensamento profundo, busca, pesquisa, memória) são validadas no servidor contra o que o adaptador suporta; nada é simulado. Provedor ausente responde `503 model_unavailable` sem gravar a mensagem.
+- Idempotência por `client_id`: reenvios não duplicam mensagens nem cobram cota de novo. Cota por conta no SQLite, sobrevive a reinícios.
+- Instruções pessoais entram delimitadas e sem autoridade sobre as regras do sistema; o Markdown das respostas é montado por `textContent`, com links restritos a http(s)/mailto.
+- Anexos fora da pasta pública, em diretórios por conta (0700/0600), servidos só ao dono com `nosniff`; arquivos que não são imagem vão como download.
+- Service worker nunca guarda `/api/`.
+
 ## Resposta a incidentes e checklist antes de produção
 
 Revogar credenciais, isolar execução afetada, preservar logs redigidos, investigar impacto e notificar conforme obrigações aplicáveis. Antes de habilitar ferramentas reais: revisão de threat model, testes adversariais, avaliação de prompt injection, sandbox validada, testes de isolamento multiusuário, política de rede/egress, redaction verificada, dependências auditadas e plano de rollback.

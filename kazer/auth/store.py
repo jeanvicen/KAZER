@@ -162,6 +162,26 @@ class AuthStore:
             ).fetchone()
         return _user(row)
 
+    def delete_other_sessions(self, user_id: str, keep_hash: str) -> int:
+        """Encerra todas as sessões da conta, menos a atual."""
+        with self._transaction() as conn:
+            cursor = conn.execute(
+                "DELETE FROM sessions WHERE user_id = ? AND token_hash != ?", (user_id, keep_hash)
+            )
+        return cursor.rowcount
+
+    def update_password_keep_session(
+        self, user_id: str, password_hash: str, keep_hash: str
+    ) -> None:
+        """Troca a senha e encerra as outras sessões numa única transação."""
+        with self._transaction() as conn:
+            conn.execute(
+                "UPDATE users SET password_hash = ? WHERE id = ?", (password_hash, user_id)
+            )
+            conn.execute(
+                "DELETE FROM sessions WHERE user_id = ? AND token_hash != ?", (user_id, keep_hash)
+            )
+
     def delete_session(self, token_hash: str) -> None:
         """Encerra uma sessão específica."""
         with self._transaction() as conn:
@@ -211,17 +231,18 @@ class AuthStore:
         )
         return user_id
 
-    def verify_email_with_token(self, token_hash: str, now: int) -> bool:
+    def verify_email_with_token(self, token_hash: str, now: int) -> User | None:
         """Consome o link de confirmação de forma atômica e de uso único."""
         with self._transaction() as conn:
             user_id = self._consume(conn, token_hash, TokenPurpose.VERIFY_EMAIL, now)
             if user_id is None:
-                return False
+                return None
             conn.execute(
                 "UPDATE users SET email_verified_at = COALESCE(email_verified_at, ?) WHERE id = ?",
                 (now, user_id),
             )
-        return True
+            row = conn.execute("SELECT * FROM users WHERE id = ?", (user_id,)).fetchone()
+        return _user(row)
 
     def reset_password_with_token(self, token_hash: str, password_hash: str, now: int) -> bool:
         """Troca a senha, confirma o e-mail e encerra todas as sessões da conta."""

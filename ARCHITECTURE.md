@@ -29,6 +29,15 @@ A ordem expressa o contrato pretendido, não uma implementação ativa. Entradas
 - `interfaces`: entradas CLI/API/webhook (stubs) e `interfaces/web`, que serve a tela de entrada e a API JSON `/api/auth/*` (Starlette/ASGI, CSP sem origens externas, verificação de `Origin`).
 - `auth`: contas próprias por e-mail e senha — validação, armazenamento SQLite, sessões opacas, links de uso único e regras anti-enumeração. Depende de `security` (Argon2id, limites de taxa, segredos) e de `integrations/email` apenas por contratos.
 
+## Chat (implementado)
+
+- `kazer/brain/model_provider.py`: contrato `ModelProvider` e adaptadores (compatível com OpenAI via biblioteca padrão; Anthropic via SDK oficial). Mapeia o nome público KAZ 1.1 para o provedor configurado.
+- `kazer/chat/store.py`: SQLite no mesmo banco das contas (conversas, mensagens, anexos, preferências, memórias, contagem de uso), sempre filtrado pelo dono.
+- `kazer/chat/service.py`: validação, posse, cota, idempotência, anexos, memória e preferências.
+- `kazer/chat/generation.py`: geração em thread própria, gravada aos poucos; a conexão HTTP só acompanha eventos e pode reatar depois de uma queda.
+- `kazer/chat/context.py`: instruções do KAZER, preferências, memórias e histórico enviados ao modelo.
+- `kazer/interfaces/web/chat_api.py`: rotas autenticadas; respostas em NDJSON.
+
 ## Fronteiras de confiança
 
 1. Usuário, conteúdo importado, páginas, e-mail, arquivos, memória recuperada e saídas do modelo são não confiáveis.

@@ -22,12 +22,14 @@
 
     <article>
       <h1>Política de Privacidade</h1>
-      <p class="meta">Versão 1.0 · Vigente desde 29 de outubro de 2026</p>
+      <p class="meta">Versão 1.1 · Vigente desde 29 de outubro de 2026</p>
 
       <section class="summary" aria-labelledby="resumo">
         <h2 id="resumo">Resumo</h2>
         <ul>
           <li>Para ter uma conta, guardamos apenas seu e-mail e um hash da sua senha.</li>
+          <li>Conversas, anexos e memórias ficam na sua conta até você apagar; dá para exportar e excluir tudo nas configurações.</li>
+          <li>Para gerar respostas, suas mensagens são enviadas ao provedor de modelo de IA configurado pelo KAZER.</li>
           <li>Usamos um único cookie, estritamente necessário para manter você conectado.</li>
           <li>Não usamos publicidade, analytics, pixels de rastreamento nem login social.</li>
           <li>Você pode pedir acesso, correção ou exclusão dos seus dados a qualquer momento.</li>
@@ -35,7 +37,7 @@
       </section>
 
       <h2 id="sobre">1. Sobre esta política</h2>
-      <p>Esta Política explica como o KAZER trata dados pessoais na tela de entrada e nas contas de usuário, em conformidade com a Lei Geral de Proteção de Dados Pessoais (Lei nº 13.709/2018 — LGPD). Ela descreve o que o sistema faz hoje. Antes de lançar novas funcionalidades que tratem outros dados, esta Política será atualizada.</p>
+      <p>Esta Política explica como o KAZER trata dados pessoais na tela de entrada, nas contas de usuário e no chat com o assistente, em conformidade com a Lei Geral de Proteção de Dados Pessoais (Lei nº 13.709/2018 — LGPD). Ela descreve o que o sistema faz hoje. Antes de lançar novas funcionalidades que tratem outros dados, esta Política será atualizada.</p>
 
       <h2 id="controlador">2. Quem é o controlador</h2>
       <p>O controlador dos dados pessoais é o responsável pelo projeto KAZER, que decide como e por que os dados são tratados.</p>
@@ -53,6 +55,12 @@
             <tr><td>Datas de criação e de confirmação da conta</td><td>Gerenciar o ciclo de vida da conta</td><td>Execução de contrato (art. 7º, V)</td><td>Enquanto a conta existir; contas não confirmadas são apagadas após 7 dias</td></tr>
             <tr><td>Identificador de sessão (somente o hash)</td><td>Manter você conectado</td><td>Execução de contrato (art. 7º, V)</td><td>Até 14 dias ou até você sair</td></tr>
             <tr><td>Links de confirmação e de redefinição (somente o hash)</td><td>Garantir uso único e expiração</td><td>Execução de contrato (art. 7º, V)</td><td>24 horas (confirmação) e 30 minutos (redefinição)</td></tr>
+            <tr><td>Conversas: mensagens, respostas e títulos</td><td>Prestar o chat e manter seu histórico</td><td>Execução de contrato (art. 7º, V)</td><td>Até você apagar a conversa, o histórico ou a conta</td></tr>
+            <tr><td>Anexos (imagens e arquivos enviados na conversa)</td><td>Permitir que o assistente analise o conteúdo que você enviou</td><td>Execução de contrato (art. 7º, V)</td><td>Até você apagar a conversa ou a conta; anexos nunca enviados são apagados em 24 horas</td></tr>
+            <tr><td>Memórias que você salva</td><td>Personalizar respostas, só quando a memória está ligada</td><td>Consentimento (art. 7º, I), revogável a qualquer momento</td><td>Até você apagar a memória ou a conta</td></tr>
+            <tr><td>Preferências (apelido, estilo, instruções pessoais e opções de interface)</td><td>Ajustar o assistente e a interface ao seu gosto</td><td>Execução de contrato (art. 7º, V)</td><td>Até você alterar ou excluir a conta</td></tr>
+            <tr><td>Contagem de uso (quantidade e horário dos pedidos, sem conteúdo)</td><td>Aplicar limites de uso justos e proteger o serviço</td><td>Legítimo interesse (art. 7º, IX)</td><td>2 dias</td></tr>
+            <tr><td>Fuso horário do navegador</td><td>Informar a data correta ao assistente</td><td>Execução de contrato (art. 7º, V)</td><td>Não é guardado: vai só junto do pedido</td></tr>
             <tr><td>Endereço IP</td><td>Limitar tentativas automatizadas e proteger contas contra fraude</td><td>Legítimo interesse (art. 7º, IX)</td><td>Apenas na memória do servidor, por até 1 hora</td></tr>
           </tbody>
         </table>
@@ -61,21 +69,24 @@
 
       <h2 id="cookies">4. Cookies e armazenamento no navegador</h2>
       <p>Usamos um único cookie, estritamente necessário: o cookie de sessão, marcado como <em>HttpOnly</em>, <em>Secure</em> e <em>SameSite=Lax</em>. Ele é criado quando você entra e apagado quando você sai ou quando a sessão expira. Por ser essencial ao funcionamento da conta, não depende de consentimento.</p>
-      <p>Não usamos cookies de publicidade ou de analytics, pixels de rastreamento, nem <em>localStorage</em> ou <em>sessionStorage</em> para dados pessoais. A página não carrega scripts, fontes ou imagens de terceiros.</p>
+      <p>Não usamos cookies de publicidade ou de analytics nem pixels de rastreamento. No navegador, o <em>localStorage</em> guarda só preferências visuais (animações, tamanho do texto, fundo animado e gaveta aberta) e o <em>sessionStorage</em> guarda o rascunho da mensagem que você está escrevendo nesta aba, apagado ao sair. Para a tela offline funcionar, o app guarda em cache apenas os arquivos da interface (HTML, CSS, scripts, fonte e ícones); conversas, anexos e dados da conta nunca entram nesse cache. A página não carrega scripts, fontes ou imagens de terceiros.</p>
 
       <h2 id="compartilhamento">5. Compartilhamento e operadores</h2>
       <p>Não vendemos dados pessoais nem os compartilhamos para publicidade. Alguns fornecedores tratam dados em nome do KAZER, como operadores:</p>
       <ul>
         <li><strong>Hospedagem — Vercel Inc.:</strong> infraestrutura em que o site funciona. Processa dados técnicos das requisições, como endereço IP e horário, para entregar e proteger o serviço, segundo as políticas da própria Vercel.</li>
+        <li><strong>Modelo de inteligência artificial — provedor configurado pelo KAZER:</strong> recebe, a cada pedido, a mensagem, os anexos enviados, o histórico recente da conversa, suas preferências de estilo e instruções pessoais e, se a memória estiver ligada, as memórias salvas, para gerar a resposta. Não recebe seu e-mail nem sua senha.</li>
         <li><strong>Envio de e-mail — provedor SMTP contratado pelo KAZER:</strong> recebe seu endereço de e-mail e o texto da mensagem, incluindo o link de confirmação ou de redefinição. O provedor será identificado nesta Política quando o envio estiver ativo no ambiente público.</li>
       </ul>
+      <p class="pending"><strong>Provedor de modelo em definição.</strong> O nome do provedor de IA, o país onde ele processa os dados e as condições de retenção e de uso para treinamento previstas no contrato serão publicados nesta seção antes da abertura do chat ao público.</p>
       <p>Também podemos fornecer dados quando houver obrigação legal ou ordem de autoridade competente, limitando-nos ao que for exigido.</p>
 
       <h2 id="transferencia">6. Transferência internacional</h2>
       <p>Os operadores acima podem tratar dados fora do Brasil, inclusive nos Estados Unidos. Essas transferências devem observar as hipóteses do art. 33 da LGPD.</p>
 
       <h2 id="ia">7. Funcionalidades de inteligência artificial</h2>
-      <p>As funcionalidades de assistente do KAZER ainda não estão disponíveis. Antes de lançá-las, esta Política será atualizada para informar quais dados das conversas serão tratados, por quais provedores de modelos, para quais finalidades e por quanto tempo. Não fazemos promessas sobre uso de dados para treinamento de modelos que não possam ser garantidas pelos contratos e configurações vigentes.</p>
+      <p>O chat do KAZER envia ao provedor de modelo descrito na seção 5 apenas o necessário para cada resposta. O KAZER não usa suas conversas para treinar modelos próprios. O que o provedor pode fazer com os dados recebidos (retenção e eventual uso para treinamento) depende do contrato e das configurações dele; não fazemos promessas que esses contratos não garantam, e essas condições serão publicadas na seção 5.</p>
+      <p>A busca na web, a pesquisa em várias etapas e os conectores só funcionam quando estão de fato disponíveis; a interface mostra quando não estão. Memórias são salvas apenas por você, nunca automaticamente, e você pode desligá-las ou apagá-las a qualquer momento. As respostas são geradas automaticamente e podem conter erros.</p>
 
       <h2 id="seguranca">8. Segurança</h2>
       <p>Adotamos medidas técnicas proporcionais ao risco, entre elas: senhas protegidas com Argon2id; sessões em cookie <em>HttpOnly</em> com o identificador guardado apenas como hash; links de uso único com expiração; HTTPS; limites contra tentativas automatizadas; e uma política de segurança de conteúdo que bloqueia recursos externos.</p>
@@ -92,7 +103,7 @@
         <li>informação sobre as entidades com as quais compartilhamos dados;</li>
         <li>oposição a tratamento baseado em legítimo interesse, quando cabível.</li>
       </ul>
-      <p>Ao excluir sua conta, apagamos o e-mail, o hash da senha, as sessões e os links associados. Enquanto a exclusão pelo próprio painel não estiver disponível, ela é feita mediante solicitação pelo canal do controlador (seção 2). Responderemos dentro dos prazos do art. 19 da LGPD. Você também pode apresentar reclamação à ANPD.</p>
+      <p>Em <em>Configurações › Dados e privacidade</em> você baixa uma cópia dos seus dados (portabilidade), apaga todas as conversas e exclui a conta. Ao excluir a conta, apagamos o e-mail, o hash da senha, as sessões, os links, as conversas, os anexos, as memórias e as preferências. Os demais pedidos podem ser feitos pelo canal do controlador (seção 2). Responderemos dentro dos prazos do art. 19 da LGPD. Você também pode apresentar reclamação à ANPD.</p>
 
       <h2 id="menores">10. Crianças e adolescentes</h2>
       <p>O KAZER não se destina a menores de 18 anos e não coleta intencionalmente dados de crianças e adolescentes. Se identificarmos uma conta nessa situação, ela será excluída.</p>

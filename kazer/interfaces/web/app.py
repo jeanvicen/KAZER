@@ -1,18 +1,15 @@
-"""Aplicação ASGI: serve a tela de entrada e a API `/api/auth/*`.
+"""Aplicação ASGI: tela de entrada, chat autenticado e as APIs `/api/*`.
 
 Defesas na borda: CSP sem origens externas, verificação de `Origin` contra CSRF,
-somente JSON com corpo limitado, cookie de sessão HttpOnly/SameSite e cabeçalhos
-que desligam cache, referer e APIs sensíveis do navegador.
+corpo limitado por rota, cookie de sessão HttpOnly/SameSite e cabeçalhos que
+desligam cache, referer e APIs sensíveis do navegador.
 """
 
-import json
 import logging
-import math
+import time
 from collections.abc import AsyncIterator, Awaitable, Callable
 from contextlib import asynccontextmanager
 from pathlib import Path
-from typing import Any
-from urllib.parse import urlsplit
 
 from starlette.applications import Starlette
 from starlette.background import BackgroundTask
@@ -25,28 +22,34 @@ from starlette.routing import Mount, Route
 from starlette.staticfiles import StaticFiles
 from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
-from kazer.auth.service import AuthError, AuthService
+from kazer.auth.service import AuthService
 from kazer.auth.store import AuthStore
+from kazer.brain.model_provider import ModelProvider, build_provider
+from kazer.chat.service import ChatService
+from kazer.chat.store import ChatStore
+from kazer.chat.uploads import UploadStorage
 from kazer.config.settings import Settings, load_settings
 from kazer.integrations.email import build_mail_sender
+from kazer.interfaces.web.chat_api import chat_routes
+from kazer.interfaces.web.common import WebContext, client_of, endpoint
 from kazer.security.passwords import PasswordHashing
 from kazer.security.rate_limiter import RateLimiter
 
 logger = logging.getLogger("kazer.web")
 
 STATIC_DIR = Path(__file__).parent / "static"
-MAX_BODY_BYTES = 4096
-FIELD_MAX_LENGTH = 1024
 
 _CSP = "; ".join(
     (
         "default-src 'none'",
         "script-src 'self'",
         "style-src 'self'",
-        "img-src 'self'",
+        # blob: só para a prévia local de anexos escolhidos antes do envio.
+        "img-src 'self' blob:",
         "font-src 'self'",
         "connect-src 'self'",
         "manifest-src 'self'",
+        "worker-src 'self'",
         "base-uri 'none'",
         "form-action 'none'",
         "frame-ancestors 'none'",
@@ -93,33 +96,6 @@ class SecurityHeaders:
         await self.app(scope, receive, send_with_headers)
 
 
-def _error(exc: AuthError) -> JSONResponse:
-    body: dict[str, Any] = {"error": exc.code}
-    headers: dict[str, str] = {}
-    if exc.retry_after > 0:
-        seconds = math.ceil(exc.retry_after)
-        body["retry_after"] = seconds
-        headers["Retry-After"] = str(seconds)
-    return JSONResponse(body, status_code=exc.status, headers=headers)
-
-
-Handler = Callable[[Request], Awaitable[Response]]
-
-
-def _endpoint(handler: Handler) -> Handler:
-    async def wrapped(request: Request) -> Response:
-        try:
-            return await handler(request)
-        except AuthError as exc:
-            return _error(exc)
-
-    return wrapped
-
-
-def _client(request: Request) -> str:
-    return request.client.host if request.client else "unknown"
-
-
 def _build_service(settings: Settings) -> AuthService | None:
     """Cria o serviço real ou None quando a configuração não permite operar com segurança."""
     blockers = settings.auth_blockers
@@ -141,67 +117,36 @@ def _build_service(settings: Settings) -> AuthService | None:
     return None
 
 
-def create_app(settings: Settings | None = None, service: AuthService | None = None) -> Starlette:
+def _build_chat(settings: Settings, provider: ModelProvider | None) -> ChatService:
+    return ChatService(
+        ChatStore(settings.database_path),
+        UploadStorage(settings.upload_dir),
+        provider,
+        hourly_units=settings.chat_hourly_units,
+        daily_units=settings.chat_daily_units,
+    )
+
+
+def create_app(
+    settings: Settings | None = None,
+    service: AuthService | None = None,
+    *,
+    provider: ModelProvider | None = None,
+    chat: ChatService | None = None,
+) -> Starlette:
     """Monta a aplicação com dependências reais ou injetadas (testes)."""
     settings = settings or load_settings()
     auth = service if service is not None else _build_service(settings)
     cookie_name = "__Host-kazer_session" if settings.cookie_secure else "kazer_session"
-    public_origin = settings.public_origin
-
-    def check_origin(request: Request) -> None:
-        # Defesa CSRF por cabeçalhos padrão (OWASP): POST só da própria origem.
-        origin = request.headers.get("origin", "")
-        same_host = urlsplit(origin).netloc == request.headers.get("host", "")
-        if not origin or not (origin == public_origin or same_host):
-            raise AuthError("forbidden_origin", 403)
-        fetch_site = request.headers.get("sec-fetch-site")
-        if fetch_site is not None and fetch_site != "same-origin":
-            raise AuthError("forbidden_origin", 403)
-
-    async def read_json(request: Request) -> dict[str, Any]:
-        check_origin(request)
-        media_type = request.headers.get("content-type", "").split(";", 1)[0].strip().lower()
-        if media_type != "application/json":
-            raise AuthError("unsupported_media_type", 415)
-        body = b""
-        async for chunk in request.stream():
-            body += chunk
-            if len(body) > MAX_BODY_BYTES:
-                raise AuthError("payload_too_large", 413)
-        try:
-            data = json.loads(body)
-        except ValueError:
-            raise AuthError("invalid_request", 400) from None
-        if not isinstance(data, dict):
-            raise AuthError("invalid_request", 400)
-        return data
-
-    def require_auth() -> AuthService:
-        if auth is None:
-            raise AuthError("auth_unavailable", 503)
-        return auth
-
-    def field(data: dict[str, Any], name: str) -> str:
-        value = data.get(name)
-        if not isinstance(value, str) or len(value) > FIELD_MAX_LENGTH:
-            raise AuthError("invalid_request", 400)
-        return value
-
-    def set_session_cookie(response: Response, token: str, max_age: int) -> None:
-        response.set_cookie(
-            cookie_name,
-            token,
-            max_age=max_age,
-            path="/",
-            secure=settings.cookie_secure,
-            httponly=True,
-            samesite="lax",
-        )
-
-    def clear_session_cookie(response: Response) -> None:
-        response.delete_cookie(
-            cookie_name, path="/", secure=settings.cookie_secure, httponly=True, samesite="lax"
-        )
+    ctx = WebContext(
+        auth=auth,
+        cookie_name=cookie_name,
+        public_origin=settings.public_origin,
+        secure=settings.cookie_secure,
+    )
+    # O chat depende de contas: sem armazenamento seguro, ele também fica fechado.
+    if chat is None and auth is not None:
+        chat = _build_chat(settings, provider if provider is not None else build_provider(settings))
 
     def page(name: str, media_type: str = "text/html") -> Callable[[Request], Awaitable[Response]]:
         async def serve(request: Request) -> Response:
@@ -211,7 +156,19 @@ def create_app(settings: Settings | None = None, service: AuthService | None = N
 
         return serve
 
-    @_endpoint
+    async def service_worker(request: Request) -> Response:
+        # Escopo na raiz para a tela offline funcionar em qualquer rota do app.
+        return FileResponse(
+            STATIC_DIR / "sw.js",
+            media_type="text/javascript",
+            headers={"Cache-Control": "no-cache", "Service-Worker-Allowed": "/"},
+        )
+
+    async def health(request: Request) -> Response:
+        # Sonda de conectividade do navegador: barata, sem banco e sem dados.
+        return JSONResponse({"ok": True, "time": int(time.time())})
+
+    @endpoint
     async def session(request: Request) -> Response:
         if auth is None:
             return JSONResponse({"authenticated": False, "available": False})
@@ -220,87 +177,103 @@ def create_app(settings: Settings | None = None, service: AuthService | None = N
         if email is None:
             response = JSONResponse({"authenticated": False})
             if token:
-                clear_session_cookie(response)
+                ctx.clear_session_cookie(response)
             return response
         return JSONResponse({"authenticated": True, "email": email})
 
-    @_endpoint
+    @endpoint
     async def register(request: Request) -> Response:
-        auth = require_auth()
-        data = await read_json(request)
-        email, password = field(data, "email"), field(data, "password")
-        await run_in_threadpool(auth.register, email, password, _client(request))
+        auth = ctx.require_auth()
+        data = await ctx.read_json(request)
+        email, password = ctx.field(data, "email"), ctx.field(data, "password")
+        await run_in_threadpool(auth.register, email, password, client_of(request))
         return JSONResponse({"status": "verification_sent"}, status_code=202)
 
-    @_endpoint
+    @endpoint
     async def resend_verification(request: Request) -> Response:
-        auth = require_auth()
-        data = await read_json(request)
+        auth = ctx.require_auth()
+        data = await ctx.read_json(request)
         message = await run_in_threadpool(
-            auth.resend_verification, field(data, "email"), _client(request)
+            auth.resend_verification, ctx.field(data, "email"), client_of(request)
         )
         task = BackgroundTask(auth.deliver, message) if message else None
         return JSONResponse({"status": "accepted"}, status_code=202, background=task)
 
-    @_endpoint
+    @endpoint
     async def verify_email(request: Request) -> Response:
-        auth = require_auth()
-        data = await read_json(request)
-        await run_in_threadpool(auth.verify_email, field(data, "token"), _client(request))
-        return JSONResponse({"status": "verified"})
+        auth = ctx.require_auth()
+        data = await ctx.read_json(request)
+        grant = await run_in_threadpool(
+            auth.verify_email, ctx.field(data, "token"), client_of(request)
+        )
+        # Confirmou pelo link: entra direto no chat, sem passar de novo pelo login.
+        await run_in_threadpool(auth.logout, request.cookies.get(cookie_name))
+        response = JSONResponse({"status": "verified", "authenticated": True, "email": grant.email})
+        ctx.set_session_cookie(response, grant.token, grant.max_age)
+        return response
 
-    @_endpoint
+    @endpoint
     async def login(request: Request) -> Response:
-        auth = require_auth()
-        data = await read_json(request)
-        email, password = field(data, "email"), field(data, "password")
-        grant = await run_in_threadpool(auth.login, email, password, _client(request))
+        auth = ctx.require_auth()
+        data = await ctx.read_json(request)
+        email, password = ctx.field(data, "email"), ctx.field(data, "password")
+        grant = await run_in_threadpool(auth.login, email, password, client_of(request))
         # Rotaciona: qualquer sessão anterior deste navegador é encerrada.
         await run_in_threadpool(auth.logout, request.cookies.get(cookie_name))
         response = JSONResponse({"authenticated": True, "email": grant.email})
-        set_session_cookie(response, grant.token, grant.max_age)
+        ctx.set_session_cookie(response, grant.token, grant.max_age)
         return response
 
-    @_endpoint
+    @endpoint
     async def logout(request: Request) -> Response:
-        auth = require_auth()
-        check_origin(request)
+        auth = ctx.require_auth()
+        ctx.check_origin(request)
         await run_in_threadpool(auth.logout, request.cookies.get(cookie_name))
         response = JSONResponse({"authenticated": False})
-        clear_session_cookie(response)
+        ctx.clear_session_cookie(response)
         return response
 
-    @_endpoint
+    @endpoint
     async def request_reset(request: Request) -> Response:
-        auth = require_auth()
-        data = await read_json(request)
+        auth = ctx.require_auth()
+        data = await ctx.read_json(request)
         message = await run_in_threadpool(
-            auth.request_password_reset, field(data, "email"), _client(request)
+            auth.request_password_reset, ctx.field(data, "email"), client_of(request)
         )
         task = BackgroundTask(auth.deliver, message) if message else None
         return JSONResponse({"status": "accepted"}, status_code=202, background=task)
 
-    @_endpoint
+    @endpoint
     async def confirm_reset(request: Request) -> Response:
-        auth = require_auth()
-        data = await read_json(request)
-        token, password = field(data, "token"), field(data, "password")
-        await run_in_threadpool(auth.reset_password, token, password, _client(request))
+        auth = ctx.require_auth()
+        data = await ctx.read_json(request)
+        token, password = ctx.field(data, "token"), ctx.field(data, "password")
+        await run_in_threadpool(auth.reset_password, token, password, client_of(request))
         response = JSONResponse({"status": "password_updated"})
-        clear_session_cookie(response)
+        ctx.clear_session_cookie(response)
         return response
 
     @asynccontextmanager
     async def lifespan(app: Starlette) -> AsyncIterator[None]:
         if auth is not None:
             await run_in_threadpool(auth.initialize)
-        yield
+            if chat is not None:
+                await run_in_threadpool(chat.initialize)
+        try:
+            yield
+        finally:
+            if chat is not None:
+                chat.shutdown()
 
     routes = [
         Route("/", page("index.html")),
+        # Links diretos para conversas abrem o mesmo app; a posse é checada na API.
+        Route("/c/{conversation_id}", page("index.html")),
         Route("/termos", page("termos.html")),
         Route("/privacidade", page("privacidade.html")),
         Route("/manifest.webmanifest", page("manifest.webmanifest", "application/manifest+json")),
+        Route("/sw.js", service_worker),
+        Route("/api/health", health, methods=["GET"]),
         Route("/api/auth/session", session, methods=["GET"]),
         Route("/api/auth/register", register, methods=["POST"]),
         Route("/api/auth/verify-email", verify_email, methods=["POST"]),
@@ -309,6 +282,7 @@ def create_app(settings: Settings | None = None, service: AuthService | None = N
         Route("/api/auth/logout", logout, methods=["POST"]),
         Route("/api/auth/password-reset", request_reset, methods=["POST"]),
         Route("/api/auth/password-reset/confirm", confirm_reset, methods=["POST"]),
+        *chat_routes(ctx, chat),
         Mount("/assets", app=StaticFiles(directory=STATIC_DIR / "assets"), name="assets"),
     ]
     return Starlette(

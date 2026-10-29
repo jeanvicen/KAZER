@@ -1,9 +1,11 @@
 // Tela de entrada do KAZER: abertura em partículas, início com a cena e as duas
 // entradas, e a vista de conta (entrar, criar, recuperar, redefinir). Toda
 // decisão de autenticação acontece no servidor; o navegador nunca guarda senha
-// nem token (o cookie de sessão é HttpOnly).
+// nem token (o cookie de sessão é HttpOnly). Com sessão válida, o chat abre direto.
 
+import { session as tabStore } from "./dom.js";
 import { playIntro } from "./intro.js";
+import { net, registerServiceWorker, startNetworkUi } from "./net.js";
 import { startScene } from "./scene.js";
 
 const root = document.documentElement;
@@ -115,6 +117,7 @@ function generalError(result) {
 // ---------- API ----------
 
 async function api(path, body, { timeout = 15000 } = {}) {
+  if (net.status === "offline") net.check();
   const controller = new AbortController();
   const timer = window.setTimeout(() => controller.abort(), timeout);
   const init = {
@@ -139,6 +142,7 @@ async function api(path, body, { timeout = 15000 } = {}) {
     if (!response.ok && !data.error) data.error = "server";
     return { ok: response.ok, status: response.status, data };
   } catch {
+    net.report();
     return { ok: false, status: 0, data: { error: "network" } };
   } finally {
     window.clearTimeout(timer);
@@ -179,7 +183,7 @@ async function mountScene() {
 }
 
 desktopQuery.addEventListener("change", () => {
-  if (revealed) mountScene();
+  if (revealed && state.view !== "chat") mountScene();
 });
 
 // Luz suave que acompanha o mouse no painel (só tem efeito no layout de desktop).
@@ -241,6 +245,7 @@ function goHome() {
 }
 
 window.addEventListener("popstate", (event) => {
+  if (state.view === "chat") return; // o chat cuida da própria navegação
   if (event.state?.view === "auth") showView("auth");
   else showView("home", { back: true });
 });
@@ -436,34 +441,41 @@ async function resend(email, button, report) {
 
 // ---------- Sessão autenticada ----------
 
-// Ponto de integração: quando a interface principal do KAZER existir, a
-// navegação pós-login acontece aqui (por exemplo, `location.assign("/app")`).
+let chatMounting = null;
+
+// Login, confirmação de e-mail ou sessão já válida: vai direto para o chat.
 function enterApp(session) {
   state.session = session;
-  showNotice({
-    title: "Sessão ativa",
-    body: ["Conectado como ", emailNode(session.email), "."],
-    actions: [
-      {
-        label: "Sair",
-        primary: true,
-        run: async (button) => {
-          button.disabled = true;
-          button.setAttribute("aria-busy", "true");
-          const result = await api("/api/auth/logout", {});
-          button.disabled = false;
-          button.removeAttribute("aria-busy");
-          if (!result.ok) {
-            ui.noticeStatus.textContent = generalError(result);
-            return;
-          }
-          state.session = null;
-          ui.password.value = "";
-          backToSignIn();
-        },
-      },
-    ],
-  });
+  if (chatMounting) return chatMounting;
+  state.view = "chat";
+  tagline.toggle(false);
+  scene?.destroy();
+  scene = null;
+  sceneKind = "none";
+  ui.intro.remove();
+  root.classList.remove("is-booting", "is-intro");
+  root.classList.add("is-revealed");
+  // Voltando de uma sessão expirada: reabre a conversa em que a pessoa estava.
+  const returnTo = tabStore.take("kazer:return");
+  if (returnTo && /^\/c\/[\w-]{16,64}$/.test(returnTo) && window.location.pathname === "/") {
+    window.history.replaceState(null, "", returnTo);
+  }
+  chatMounting = import("./chat.js")
+    .then(({ mountChat }) => mountChat({ email: session.email }))
+    .catch(() => {
+      // Sem o módulo (rede caiu no meio): mostra o aviso na própria tela de conta.
+      chatMounting = null;
+      state.view = "home";
+      document.getElementById("chat").hidden = true;
+      root.classList.remove("in-chat");
+      openAuth("signin", { focus: false });
+      showNotice({
+        title: "Não deu para abrir o chat",
+        body: ["Verifique a conexão e tente de novo."],
+        actions: [{ label: "Tentar de novo", primary: true, run: () => enterApp(session) }],
+      });
+    });
+  return chatMounting;
 }
 
 // ---------- Validação local (o servidor valida de novo) ----------
@@ -695,7 +707,10 @@ function handleLinkAction(action) {
   } else if (action.type === "verify") {
     showNotice({ title: "Confirmando seu e-mail", status: "Verificando o link…" });
     api("/api/auth/verify-email", { token: action.token }).then((result) => {
-      if (result.ok) {
+      if (result.ok && result.data.authenticated) {
+        // O link confirma e já abre a sessão: direto para o chat.
+        enterApp(result.data);
+      } else if (result.ok) {
         showNotice({
           title: "E-mail confirmado",
           body: ["Sua conta está ativa. Entre para continuar."],
@@ -740,33 +755,60 @@ function withTimeout(promise, ms, fallback) {
 }
 
 async function boot() {
+  registerServiceWorker();
+  startNetworkUi();
   const linkAction = takeLinkAction();
-  window.history.replaceState({ view: "home" }, "");
+  const after = tabStore.take("kazer:after");
+  window.history.replaceState({ view: "home" }, "", window.location.pathname);
   setMode("signin");
   watchKeyboard();
   // Link colado numa aba já aberta muda só o fragmento, sem recarregar.
   window.addEventListener("hashchange", () => handleLinkAction(takeLinkAction()));
 
+  const sessionCheck = api("/api/auth/session", undefined, { timeout: 8000 });
   const [session] = await Promise.all([
-    withTimeout(api("/api/auth/session", undefined, { timeout: 2000 }), 900, null),
+    withTimeout(sessionCheck, 900, null),
     withTimeout(document.fonts.load(`500 64px ${DISPLAY_FONT}`).catch(() => null), 700, null),
   ]);
 
   if (session?.ok && session.data.available === false) setUnavailable();
 
-  // Sessão válida: sem replay da abertura completa (links de e-mail têm prioridade).
+  // Sessão válida: direto para o chat, sem replay da abertura (links de e-mail têm prioridade).
   if (session?.ok && session.data.authenticated && !linkAction) {
-    ui.intro.remove();
-    openAuth("signin", { focus: false });
     enterApp(session.data);
-    revealInterface();
     return;
   }
 
+  // Rede lenta ou fora do ar na abertura: confere a sessão de novo quando der.
+  const lateSession = (result) => {
+    if (result?.ok && result.data.authenticated && state.view !== "chat" && !state.busy && !linkAction) {
+      enterApp(result.data);
+    }
+  };
+  if (!session) sessionCheck.then(lateSession);
+  const offNetwork = net.subscribe((status) => {
+    if (status === "online" && state.view !== "chat") {
+      api("/api/auth/session").then(lateSession);
+    }
+    if (state.view === "chat") offNetwork();
+  });
+
   handleLinkAction(linkAction);
-  if (reducedMotion || !ui.intro.getContext) {
+  // Saindo do chat (sair, sessão expirada, conta excluída): sem a abertura completa.
+  if (after || reducedMotion || !ui.intro.getContext) {
     ui.intro.remove();
     revealInterface();
+    if (after === "expired") {
+      openAuth("signin", { focus: false });
+      showAlert("Sua sessão expirou. Entre de novo para continuar.");
+    } else if (after === "deleted") {
+      openAuth("signin", { focus: false });
+      showNotice({
+        title: "Conta excluída",
+        body: ["Sua conta e tudo o que ela guardava foram apagados."],
+        actions: [{ label: "Voltar ao início", run: () => goHome() }],
+      });
+    }
     return;
   }
   root.classList.replace("is-booting", "is-intro");

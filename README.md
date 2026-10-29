@@ -57,13 +57,61 @@ Em desenvolvimento os e-mails são gravados em `data/outbox/*.eml`; abra o arqui
 
 Cada push na `main` gera um deploy de produção pela integração Git da Vercel. O `vercel.json` fixa o preset `python` e o `pyproject.toml` aponta a entrada ASGI (`kazer.interfaces.web.asgi:app`), então a configuração não depende do preset salvo no painel. Uma única função Python serve a tela, os assets e a API; arquivos do repositório não são publicados como estáticos.
 
-Funções serverless não têm disco persistente, e o SQLite local perderia contas entre execuções. Por isso, na Vercel a tela fica no ar com as contas **fechadas** (a API responde `503 auth_unavailable` e o botão aparece desativado com aviso) até existir um banco persistente e SMTP configurados. Nada de login simulado.
+Funções serverless não têm disco persistente, e o SQLite local perderia contas entre execuções. Por isso, na Vercel a tela fica no ar com as contas **fechadas** (a API responde `503 auth_unavailable` e o botão aparece desativado com aviso) até existir um banco persistente e SMTP configurados. Nada de login simulado. O chat depende das contas, então também fica fechado na Vercel até lá; as variáveis do modelo podem ser cadastradas antes e passam a valer quando o banco persistente existir.
 
-Após o login, a tela mostra a sessão ativa e a opção de sair. A interface principal do KAZER ainda não existe; o ponto de navegação pós-login está marcado em `enterApp()` (`static/assets/app.js`).
+## Chat do KAZER
+
+Login, confirmação de e-mail e sessão já válida levam **direto ao chat** (sem tela intermediária). O chat é HTML, CSS e módulos JavaScript sem build, carregado só depois do login (`chat.js`, `chat.css`):
+
+- **Conversa vazia:** a Fenda no centro, uma saudação pelo horário local ("Bom dia. O que vamos criar?", "Ainda por aqui? Vamos nessa.", com o apelido se você definir) e um campo sutil de quadradinhos brancos e cinza (`squares.js`). Na primeira mensagem **aceita pelo servidor** o campo some, o laço para e o canvas é liberado; se o envio falhar antes, o estado vazio continua.
+- **Caixa de escrita:** texto em cima; embaixo `+`, o pill **KAZ 1.1 Baixo** (modelo e esforço numa folha só), o botão de **pensamento profundo** (a Fenda) e enviar/parar. Enter envia no computador (Shift+Enter pula linha); no celular, Enter pula linha. O rascunho fica guardado na aba e volta se o envio falhar.
+- **`+` → Adicionar à conversa:** Câmera (celular), Fotos e Arquivos de verdade, com prévia, progresso e remoção. Fotos grandes são reduzidas no aparelho e regravadas sem metadados de localização. Pesquisa, Busca na web, Conectores ("Nenhum conector conectado.") e Memória mostram o estado real.
+- **Respostas em streaming** com Markdown seguro (sem HTML externo), código com botão copiar, tabelas, resumo do raciocínio quando o modelo devolve, parar no meio e "tentar de novo". Se a rede cair no meio, a geração continua no servidor e a interface **reata do ponto onde parou**.
+- **Gaveta:** nova conversa, busca, histórico por data (Hoje, Ontem, 7 e 30 dias), renomear, apagar com confirmação, configurações e sair. No computador ela fica fixa ao lado.
+- **Renderização progressiva:** 40 mensagens por vez (as anteriores carregam ao rolar), Markdown montado só quando a mensagem chega perto da tela, `content-visibility` para pular o que está fora dela e o streaming desenhado no máximo uma vez por quadro.
+- **Configurações** (`settings.js`, carregado sob demanda): Conta (trocar senha, sair dos outros dispositivos), Personalização (apelido com prévia da saudação, estilo das respostas com exemplo ao vivo, instruções pessoais), Memória (ligar/desligar, adicionar, esquecer), Interface (animações, tamanho do texto, fundo animado, Enter), Dados e privacidade (exportar JSON, apagar todas as conversas e excluir a conta segurando o botão), Conectores e Sobre. Tudo salva sozinho no servidor.
+- **Sem internet** (`net.js` + `offline.js`): pedidos com prazo, novas tentativas com espera crescente e uma sonda real (`/api/health`), porque o `navigator.onLine` sozinho mente. Quando a rede cai aparece a tela "Ops, parece que tamo sem internet, fi.", com o **Kazinho**, um personagem em pixel com a cabeça da Fenda, que varre a casa, cochila, brinca de bola, treina e mostra o muque. Quando a conexão volta ele comemora e a tela some. O service worker (`/sw.js`) guarda só a casca do app, nunca `/api/`, para essa tela abrir até sem rede.
+
+Sem um modelo configurado, o chat abre, mostra o histórico e explica que o KAZ 1.1 ainda não está conectado: **nenhuma resposta é inventada**.
+
+## Conectar um modelo (KAZ 1.1)
+
+O navegador só conhece o nome público **KAZ 1.1**. Qual provedor e qual modelo atendem esse nome é decisão do servidor, por variáveis de ambiente. As chaves são lidas apenas por `kazer/security/secrets.py` (allowlist do escopo `model`) e nunca vão para o navegador, para logs, para respostas de erro ou para o `repr` dos objetos.
+
+| `KAZER_MODEL_PROVIDER` | Chave (variável secreta) | Observação |
+| --- | --- | --- |
+| `xai` (Grok) | `XAI_API_KEY` | API compatível com OpenAI, imagens ligadas |
+| `openai` | `OPENAI_API_KEY` | imagens ligadas |
+| `gemini` | `GEMINI_API_KEY` | endpoint compatível com OpenAI |
+| `groq`, `deepseek`, `mistral`, `together` | `GROQ_API_KEY`, `DEEPSEEK_API_KEY`, `MISTRAL_API_KEY`, `TOGETHER_API_KEY` | só texto por padrão |
+| `openrouter` | `OPENROUTER_API_KEY` | vários modelos por uma chave |
+| `ollama` | (sem chave) | servidor local em `http://127.0.0.1:11434/v1` |
+| `custom` | `KAZER_MODEL_API_KEY` (opcional) | qualquer API compatível com OpenAI em `KAZER_MODEL_BASE_URL` |
+| `anthropic` (Claude) | `ANTHROPIC_API_KEY` | SDK oficial: `pip install "kazer[anthropic]"`; padrão `claude-opus-5-5` |
+
+Exemplo com o Grok, num `.env` local (nunca versionado):
+
+```bash
+KAZER_MODEL_PROVIDER=xai
+KAZER_MODEL=grok-4            # o identificador do modelo no painel do provedor
+XAI_API_KEY=...               # só no servidor
+```
+
+Na Vercel, cadastre as mesmas variáveis em *Settings → Environment Variables* (a chave como *Sensitive*). Opcionais:
+
+- `KAZER_MODEL_DEEP`: modelo usado quando **Pensamento profundo** está ligado (por exemplo, a versão "reasoning" do provedor). Sem ele, o botão aparece indisponível. `KAZER_MODEL_REASONING=effort` envia também `reasoning_effort` (`low` no esforço Baixo, `high` no profundo) para provedores que aceitam.
+- `KAZER_MODEL_VISION=true|false`: força o suporte a imagens.
+- `KAZER_MODEL_WEB_SEARCH=true`: liga a busca na web do servidor da Anthropic (só nesse provedor; tem custo).
+- `KAZER_MODEL_MAX_TOKENS`, `KAZER_MODEL_TIMEOUT`: limites da resposta.
+- `KAZER_CHAT_HOURLY_UNITS` (60) e `KAZER_CHAT_DAILY_UNITS` (300): cota por conta, contada no servidor (mensagem = 1, pensamento profundo +2, busca +1), com o horário exato de liberação mostrado quando acaba.
+
+Na Anthropic, o esforço **Baixo** vira `output_config.effort: "low"`, o pensamento profundo vira `"high"` com pensamento adaptativo e resumo do raciocínio, e as recusas usam o `fallbacks: "default"` do servidor nos modelos que suportam.
+
+Mais provedores: crie um adaptador em `kazer/brain/model_provider.py` que implemente `ModelProvider.stream()` e registre a chave na allowlist de `secrets.py`.
 
 ## Variáveis de ambiente
 
-Copie `.env.example` para `.env` somente em ambiente local e preencha apenas credenciais necessárias, fora do controle de versão; `make web` carrega o `.env` se ele existir. A autenticação usa as variáveis `KAZER_*` e `SMTP_*`; a senha SMTP só é lida por `security/secrets.py`. As chaves de provedores de modelo e demais integrações continuam ilustrativas: nada as consome ainda. Leia [SECURITY.md](SECURITY.md) antes de adicionar segredos.
+Copie `.env.example` para `.env` somente em ambiente local e preencha apenas credenciais necessárias, fora do controle de versão; `make web` carrega o `.env` se ele existir. A autenticação usa as variáveis `KAZER_*` e `SMTP_*`; a senha SMTP só é lida por `security/secrets.py`. As chaves de provedores de modelo (seção acima) também só são lidas por `security/secrets.py`, pelo adaptador do modelo; as das demais integrações continuam ilustrativas. Leia [SECURITY.md](SECURITY.md) antes de adicionar segredos.
 
 ## Como adicionar ferramenta
 
@@ -87,7 +135,7 @@ Crie um adaptador específico em `kazer/integrations/`, sem misturar credenciais
 
 ## Roadmap inicial
 
-Consulte [ROADMAP.md](ROADMAP.md) para as sete fases. A tela de entrada foi antecipada a pedido; a interface principal continua na fase 7.
+Consulte [ROADMAP.md](ROADMAP.md) para as sete fases. A tela de entrada e o chat principal foram antecipados a pedido (fase 7); pesquisa, conectores e voz seguem pendentes.
 
 ## Pesquisa de referência
 

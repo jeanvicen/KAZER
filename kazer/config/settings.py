@@ -6,10 +6,29 @@ from pathlib import Path
 from typing import Literal
 from urllib.parse import urlsplit
 
+from pydantic import Field
+
 from kazer.config.models import StrictModel
 
 Environment = Literal["development", "test", "production"]
 MailBackend = Literal["smtp", "file"]
+# Provedores aceitos para atender o "KAZ 1.1"; vazio = nenhum modelo conectado.
+ModelProviderName = Literal[
+    "",
+    "xai",
+    "openai",
+    "anthropic",
+    "gemini",
+    "groq",
+    "deepseek",
+    "mistral",
+    "openrouter",
+    "together",
+    "ollama",
+    "custom",
+]
+# auto: o adaptador decide; effort: envia nível de raciocínio; off: nunca envia.
+ModelReasoning = Literal["auto", "effort", "off"]
 
 
 class Settings(StrictModel):
@@ -27,6 +46,21 @@ class Settings(StrictModel):
     smtp_user: str = ""
     cookie_secure: bool = True
     serverless: bool = False
+    # Modelo por trás do "KAZ 1.1". Chaves NUNCA ficam aqui: só em kazer.security.secrets.
+    model_provider: ModelProviderName = ""
+    model_name: str = ""
+    model_deep_name: str = ""
+    model_base_url: str = ""
+    model_vision: bool | None = None
+    model_reasoning: ModelReasoning = "auto"
+    model_web_search: bool = False
+    model_max_output_tokens: int = Field(default=0, ge=0, le=128_000)
+    model_timeout_seconds: float = Field(default=120.0, ge=5.0, le=600.0)
+    # Anexos privados: fora da pasta pública, um diretório por conta.
+    upload_dir: Path = Path("data/uploads")
+    # Cota de uso no servidor, em unidades (mensagem = 1; pensamento profundo e busca somam).
+    chat_hourly_units: int = Field(default=60, ge=1)
+    chat_daily_units: int = Field(default=300, ge=1)
 
     @property
     def auth_blockers(self) -> list[str]:
@@ -52,6 +86,25 @@ class Settings(StrictModel):
         return problems
 
     @property
+    def model_blockers(self) -> list[str]:
+        """Problemas de configuração do modelo, sem nunca citar valores de chaves."""
+        problems: list[str] = []
+        if not self.model_provider:
+            return ["KAZER_MODEL_PROVIDER não definido"]
+        if self.model_provider != "anthropic" and not self.model_name:
+            problems.append("KAZER_MODEL não definido")
+        if self.model_provider == "custom" and not self.model_base_url:
+            problems.append("KAZER_MODEL_BASE_URL é obrigatório para o provedor custom")
+        if self.model_base_url:
+            parts = urlsplit(self.model_base_url)
+            local = parts.hostname in {"localhost", "127.0.0.1", "::1"}
+            if parts.scheme not in {"https", "http"} or not parts.netloc:
+                problems.append("KAZER_MODEL_BASE_URL inválida")
+            elif parts.scheme == "http" and not local and self.environment == "production":
+                problems.append("KAZER_MODEL_BASE_URL deve usar https fora do localhost")
+        return problems
+
+    @property
     def public_origin(self) -> str:
         """Origem pública (esquema + host) usada em links enviados por e-mail."""
         parts = urlsplit(self.public_url)
@@ -62,6 +115,12 @@ def _flag(value: str | None, default: bool) -> bool:
     if value is None or value.strip() == "":
         return default
     return value.strip().lower() in {"1", "true", "yes", "on"}
+
+
+def _optional_flag(value: str | None) -> bool | None:
+    if value is None or value.strip().lower() in {"", "auto"}:
+        return None
+    return _flag(value, False)
 
 
 def load_settings(environ: Mapping[str, str] | None = None) -> Settings:
@@ -86,5 +145,17 @@ def load_settings(environ: Mapping[str, str] | None = None) -> Settings:
             env.get("KAZER_COOKIE_SECURE"), environment == "production" or serverless
         ),
         "serverless": serverless,
+        "model_provider": env.get("KAZER_MODEL_PROVIDER", "").strip().lower(),
+        "model_name": env.get("KAZER_MODEL", "").strip(),
+        "model_deep_name": env.get("KAZER_MODEL_DEEP", "").strip(),
+        "model_base_url": env.get("KAZER_MODEL_BASE_URL", "").strip().rstrip("/"),
+        "model_vision": _optional_flag(env.get("KAZER_MODEL_VISION")),
+        "model_reasoning": env.get("KAZER_MODEL_REASONING", "auto").strip().lower() or "auto",
+        "model_web_search": _flag(env.get("KAZER_MODEL_WEB_SEARCH"), False),
+        "model_max_output_tokens": env.get("KAZER_MODEL_MAX_TOKENS", "0").strip() or "0",
+        "model_timeout_seconds": env.get("KAZER_MODEL_TIMEOUT", "120").strip() or "120",
+        "upload_dir": env.get("KAZER_UPLOAD_DIR", "data/uploads"),
+        "chat_hourly_units": env.get("KAZER_CHAT_HOURLY_UNITS", "60").strip() or "60",
+        "chat_daily_units": env.get("KAZER_CHAT_DAILY_UNITS", "300").strip() or "300",
     }
     return Settings.model_validate(values)

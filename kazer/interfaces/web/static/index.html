@@ -17,6 +17,7 @@
   <link rel="apple-touch-icon" href="/assets/brand/apple-touch-icon.png">
   <link rel="preload" href="/assets/fonts/grenze-gotisch-500.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="/assets/kazer.css">
+  <link rel="stylesheet" href="/assets/chat.css">
   <script type="module" src="/assets/app.js"></script>
 </head>
 <body>
@@ -127,6 +128,82 @@
       <p class="legal legal--auth">Ao continuar, você concorda com os <a href="/termos">Termos de Uso</a> e com a <a href="/privacidade">Política de Privacidade</a>.</p>
     </section>
   </main>
+
+  <!-- Chat: montado só com sessão válida (a API protege tudo do lado do servidor) -->
+  <div class="chat" id="chat" hidden></div>
+
+  <template id="tpl-chat">
+    <aside class="drawer" id="drawer" aria-label="Conversas">
+      <div class="drawer__head">
+        <span class="drawer__brand"><span data-mark class="drawer__mark"></span><span class="drawer__word">KAZER</span></span>
+        <button class="icon-button drawer__close" type="button" id="drawer-close" aria-label="Fechar conversas"><span data-icon="close"></span></button>
+      </div>
+      <button class="drawer__new" type="button" id="new-chat"><span data-icon="compose"></span><span>Nova conversa</span></button>
+      <label class="drawer__search">
+        <span data-icon="search"></span>
+        <input id="history-search" type="search" placeholder="Buscar conversas" aria-label="Buscar conversas" autocomplete="off" spellcheck="false" maxlength="80">
+      </label>
+      <nav class="history" id="history" aria-label="Conversas recentes">
+        <div class="history__list" id="history-list"></div>
+        <p class="history__empty" id="history-empty" hidden></p>
+        <div class="history__more" id="history-more" aria-hidden="true"></div>
+      </nav>
+      <div class="drawer__foot">
+        <button class="account" type="button" id="open-settings">
+          <span class="account__avatar" id="account-avatar" aria-hidden="true"></span>
+          <span class="account__text"><span class="account__label">Configurações</span><span class="account__mail" id="account-mail"></span></span>
+          <span data-icon="gear" class="account__icon"></span>
+        </button>
+        <button class="icon-button" type="button" id="sign-out" aria-label="Sair da conta"><span data-icon="sign-out"></span></button>
+      </div>
+    </aside>
+    <div class="drawer-scrim" id="drawer-scrim" hidden></div>
+
+    <section class="pane" id="pane">
+      <header class="topbar">
+        <button class="icon-button" type="button" id="menu" aria-label="Abrir conversas" aria-controls="drawer" aria-expanded="false"><span data-icon="menu"></span></button>
+        <p class="topbar__title" id="topbar-title"></p>
+        <button class="icon-button" type="button" id="new-chat-top" aria-label="Nova conversa"><span data-icon="compose"></span></button>
+      </header>
+
+      <canvas class="ambient" id="ambient" aria-hidden="true"></canvas>
+
+      <div class="empty" id="empty">
+        <span data-mark class="empty__mark"></span>
+        <h1 class="greeting" id="greeting"><span class="greeting__a" id="greeting-a"></span> <span class="greeting__b" id="greeting-b"></span></h1>
+        <p class="empty__note" id="empty-note" hidden></p>
+      </div>
+
+      <div class="thread" id="thread" hidden>
+        <div class="thread__inner" id="messages" role="log" aria-label="Mensagens da conversa">
+          <div class="thread__older" id="older" aria-hidden="true"></div>
+        </div>
+      </div>
+
+      <button class="to-bottom" type="button" id="to-bottom" aria-label="Ir para a última mensagem" hidden><span data-icon="down"></span></button>
+
+      <form class="composer" id="composer" novalidate>
+        <div class="composer__alert" id="composer-alert" role="alert" hidden>
+          <p class="composer__alert-text" id="composer-alert-text"></p>
+          <button class="icon-button composer__alert-close" type="button" id="composer-alert-close" aria-label="Dispensar aviso"><span data-icon="close"></span></button>
+        </div>
+        <div class="composer__box" id="composer-box">
+          <ul class="tray" id="tray" aria-label="Anexos" hidden></ul>
+          <label class="sr-only" for="prompt">Mensagem para o KAZER</label>
+          <textarea class="composer__input" id="prompt" rows="1" placeholder="Converse com o KAZER..." maxlength="32000" autocomplete="off" spellcheck="true"></textarea>
+          <div class="composer__bar">
+            <button class="tool" type="button" id="plus" aria-label="Adicionar à conversa" aria-haspopup="dialog"><span data-icon="plus"></span></button>
+            <button class="chip" type="button" id="model-chip" aria-haspopup="dialog" aria-label="Modelo KAZ 1.1, esforço Baixo"><span class="chip__model">KAZ 1.1</span><span class="chip__effort">Baixo</span></button>
+            <button class="tool tool--deep" type="button" id="deep" aria-pressed="false" aria-label="Pensamento profundo" title="Pensamento profundo"><span data-mark class="tool__mark"></span></button>
+            <button class="send" type="submit" id="send" aria-label="Enviar" disabled><span data-icon="arrow-up" class="send__go"></span><span data-icon="stop" class="send__stop"></span><span data-mark class="send__busy"></span></button>
+          </div>
+        </div>
+      </form>
+      <input class="sr-only" type="file" id="pick-camera" accept="image/*" capture="environment" tabindex="-1" aria-hidden="true">
+      <input class="sr-only" type="file" id="pick-photos" accept="image/*" multiple tabindex="-1" aria-hidden="true">
+      <input class="sr-only" type="file" id="pick-files" multiple tabindex="-1" aria-hidden="true">
+    </section>
+  </template>
 
   <noscript><p class="noscript">O KAZER precisa de JavaScript ativado para entrar.</p></noscript>
 </body>

@@ -100,7 +100,15 @@ def test_full_flow_over_http(client: TestClient, outbox: Outbox) -> None:
     assert (response.status_code, response.json()) == (403, {"error": "email_not_verified"})
 
     response = client.post("/api/auth/verify-email", json={"token": outbox.token("verify")})
-    assert response.json() == {"status": "verified"}
+    # Confirmar pelo link já abre a sessão: a pessoa entra direto no chat.
+    assert response.json() == {
+        "status": "verified",
+        "authenticated": True,
+        "email": "ana@example.com",
+    }
+    assert "httponly" in response.headers["set-cookie"].lower()
+    assert client.get("/api/auth/session").json()["authenticated"] is True
+    client.post("/api/auth/logout")
 
     response = client.post(
         "/api/auth/login", json={"email": "ana@example.com", "password": PASSWORD}

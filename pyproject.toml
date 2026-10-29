@@ -18,6 +18,8 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = ["pytest>=8,<9", "ruff>=0.6,<1", "mypy>=1.11,<2", "httpx2>=2,<3"]
+# Só para KAZER_MODEL_PROVIDER=anthropic (SDK oficial); os outros provedores usam a biblioteca padrão.
+anthropic = ["anthropic>=2,<3"]
 
 [project.scripts]
 kazer = "kazer.main:main"
@@ -32,6 +34,7 @@ entrypoint = "kazer.interfaces.web.asgi:app"
 [tool.setuptools.package-data]
 "kazer.interfaces.web" = [
     "static/*.html",
+    "static/*.js",
     "static/*.webmanifest",
     "static/assets/*",
     "static/assets/brand/*",
