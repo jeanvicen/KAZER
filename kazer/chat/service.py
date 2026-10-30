@@ -68,7 +68,6 @@ MAX_MEMORIES = 100
 LIBRARY_KINDS = frozenset({"tudo", "imagem", "documento", "artefato"})
 LIBRARY_PAGE = 30
 # Conectores por página do catálogo.
-CONNECTOR_PAGE = 60
 # Projetos e habilidades por conta, e tamanho de cada campo.
 MAX_SKILLS = 40
 MAX_SKILL_NAME = 60
@@ -517,28 +516,33 @@ class ChatService:
         return {"items": [item.public() for item in lister(user_id)]}
 
     def connect(self, user_id: str, data: dict[str, Any]) -> dict[str, Any]:
-        """Liga um conector por endereço MCP.
+        """Liga um conector do catálogo com a credencial que a pessoa fornece.
 
-        A ligação é conferida de verdade: o KAZER aperta a mão com o serviço e
-        lista as ferramentas antes de guardar qualquer coisa. Endereço que não
-        responde não vira conector "conectado".
+        O endereço vem do catálogo do servidor — a pessoa só escolhe qual
+        conector e entrega a credencial. A ligação é conferida de verdade: o
+        KAZER aperta a mão com o serviço e lista as ferramentas antes de
+        guardar qualquer coisa, então credencial errada nunca vira "conectado".
         """
-        url = _clean(data.get("url"), 500)
-        if not mcp.valid_endpoint(url):
-            raise ChatError("connector_invalid", 400, detail="O endereço precisa ser https.")
+        connector = connectors.BY_ID.get(_clean(data.get("connector_id"), 80))
+        if connector is None:
+            raise ChatError("connector_unknown", 404)
         token = data.get("token")
-        if token is not None and not isinstance(token, str):
+        if not isinstance(token, str):
             raise ChatError("invalid_request", 400)
-        connector_id = _clean(data.get("connector_id"), 80) or f"mcp-{_slugish(url)}"
-        catalog = connectors.BY_ID.get(connector_id)
-        name = _clean(data.get("name"), 80) or (catalog.name if catalog else "Conector")
+        token = token.strip()
+        # Credencial vai num cabeçalho HTTP: espaço, quebra de linha ou caractere
+        # de controle abriria injeção de cabeçalho. Token de verdade não tem isso.
+        if not token or len(token) > 4000 or not token.isprintable() or " " in token:
+            raise ChatError("connector_token_invalid", 400)
 
         features = self.usage_state(user_id).get("features") or {}
         limit = int(features.get("connector_limit") or 0)
         if limit <= 0:
             raise ChatError("plan_required", 402, feature="connectors", **self._offer(user_id))
+        if not mcp.valid_endpoint(connector.endpoint):
+            raise ChatError("connector_invalid", 400)
 
-        client = mcp.McpClient(url, (token or "")[:4000])
+        client = mcp.McpClient(connector.endpoint, token, extra_headers=connector.headers(features))
         try:
             tools = client.connect()
         except mcp.ConnectorError as exc:
@@ -551,10 +555,10 @@ class ChatService:
             raise ChatError("chat_unavailable", 503)
         saved = saver(
             user_id,
-            connector_id=connector_id,
-            name=name,
-            url=url,
-            token=(token or "")[:4000],
+            connector_id=connector.id,
+            name=connector.name,
+            url=connector.endpoint,
+            token=token,
             tools=[tool.public() for tool in tools],
             now=self._now(),
             max_count=limit,
@@ -583,10 +587,19 @@ class ChatService:
     def _tools_for(self, user_id: str) -> list[ToolSpec]:
         """Ferramentas dos conectores ligados, prontas para o modelo."""
         live = [item for item in self._connections(user_id) if item.enabled]
+        features = self.usage_state(user_id).get("features") or {}
         specs: list[ToolSpec] = []
         for connection in live:
             weight = connectors.BY_ID.get(connection.connector_id)
-            for tool in connection.tools[:MAX_TOOLS_PER_CONNECTOR]:
+            writes = weight is not None and weight.can_write(features)
+            offered = 0
+            for tool in connection.tools[: MAX_TOOLS_PER_CONNECTOR * 3]:
+                # Sem escrita no plano, só as ferramentas de leitura vão ao modelo.
+                if not writes and tool.get("read_only") is not True:
+                    continue
+                if offered >= MAX_TOOLS_PER_CONNECTOR:
+                    break
+                offered += 1
                 specs.append(
                     ToolSpec(
                         # O nome leva o conector junto: duas ferramentas com o
@@ -607,7 +620,19 @@ class ChatService:
         connection = None if reader is None else reader(user_id, spec.connection_id)
         if connection is None:
             return "Esse conector não está mais ligado nesta conta."
-        client = mcp.McpClient(connection.url, connection.token)
+        features = self.usage_state(user_id).get("features") or {}
+        catalog = connectors.BY_ID.get(connection.connector_id)
+        writes = catalog is not None and catalog.can_write(features)
+        known = next((t for t in connection.tools if t.get("name") == spec.tool_name), None)
+        # A trava de escrita é do servidor: mesmo que o modelo peça uma ferramenta
+        # que não lhe foi oferecida, no plano sem escrita ela não é chamada.
+        if not writes and (known is None or known.get("read_only") is not True):
+            return "Escrever nesse serviço entra com o plano Pro. Posso só ler."
+        client = mcp.McpClient(
+            connection.url,
+            connection.token,
+            extra_headers=catalog.headers(features) if catalog else None,
+        )
         try:
             return client.call(spec.tool_name, arguments)
         except mcp.ConnectorError as exc:
@@ -788,35 +813,21 @@ class ChatService:
 
     # ---------- Conectores ----------
 
-    def connectors(
-        self, user_id: str, *, query: str = "", category: str = "", page: int = 0
-    ) -> dict[str, Any]:
-        """Catálogo com o que o plano desta conta pode fazer em cada conector."""
-        if len(query) > 80 or (category and category not in connectors.CATEGORIES):
-            raise ChatError("invalid_request", 400)
-        page = max(page, 0)
+    def connectors(self, user_id: str) -> dict[str, Any]:
+        """Conectores disponíveis, já com o que o plano da conta pode fazer em cada um."""
         features = self.usage_state(user_id).get("features") or {}
-        found, total = connectors.search(
-            query, category, limit=CONNECTOR_PAGE, offset=page * CONNECTOR_PAGE
-        )
-        linked = {item.connector_id for item in self._connections(user_id)}
+        linked = {item.connector_id: item for item in self._connections(user_id)}
         items = []
-        for item in found:
+        for item in connectors.CATALOG:
             row = item.public(features)
-            # "Conectado" é estado real: só quem a conta ligou de verdade.
-            row["connected"] = item.id in linked
+            link = linked.get(item.id)
+            # "Conectado" é estado real: só o que a conta ligou de verdade.
+            row["connected"] = link is not None
+            row["enabled"] = bool(link and link.enabled)
+            row["connection_id"] = link.id if link else None
+            row["tools"] = [] if link is None else list(link.tools)
             items.append(row)
-        return {
-            "items": items,
-            "total": total,
-            "page": page,
-            "has_more": (page + 1) * CONNECTOR_PAGE < total,
-            "categories": list(connectors.CATEGORIES),
-            # Ligar um serviço do catálogo depende do endereço MCP dele, que a
-            # pessoa informa; por isso a porta aberta é a do conector próprio.
-            "connecting_open": True,
-            "limit": int(features.get("connector_limit") or 0),
-        }
+        return {"items": items, "limit": int(features.get("connector_limit") or 0)}
 
     def _connections(self, user_id: str) -> list[Any]:
         """Conexões da conta, sem derrubar a tela quando o banco falha."""

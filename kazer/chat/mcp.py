@@ -54,10 +54,16 @@ class Tool:
     name: str
     description: str
     schema: dict[str, Any]
+    # Dica do servidor (`annotations.readOnlyHint`): a ferramenta só lê? Vale só
+    # para escolher o que oferecer ao modelo — a trava de verdade é do servidor.
+    read_only: bool | None = None
 
     def public(self) -> dict[str, Any]:
         """Sem o esquema: a tela só mostra nome e para que serve."""
-        return {"name": self.name, "description": self.description}
+        out: dict[str, Any] = {"name": self.name, "description": self.description}
+        if self.read_only is not None:
+            out["read_only"] = self.read_only
+        return out
 
 
 def valid_endpoint(url: str) -> bool:
@@ -71,10 +77,21 @@ def valid_endpoint(url: str) -> bool:
 class McpClient:
     """Conversa JSON-RPC com um servidor MCP."""
 
-    def __init__(self, url: str, token: str = "", client: httpx.Client | None = None) -> None:
-        """`token` vira `Authorization: Bearer`, como manda o protocolo."""
+    def __init__(
+        self,
+        url: str,
+        token: str = "",
+        client: httpx.Client | None = None,
+        extra_headers: dict[str, str] | None = None,
+    ) -> None:
+        """`token` vira `Authorization: Bearer`, como manda o protocolo.
+
+        `extra_headers` vêm do catálogo do servidor (por exemplo, leitura
+        obrigatória) e nunca substituem os cabeçalhos do protocolo.
+        """
         self._url = url
         self._token = token
+        self._extra = dict(extra_headers or {})
         self._client = client or httpx.Client(timeout=CALL_TIMEOUT, follow_redirects=False)
         self._id = 0
 
@@ -85,6 +102,7 @@ class McpClient:
             "Accept": "application/json, text/event-stream",
             "MCP-Protocol-Version": PROTOCOL_VERSION,
         }
+        headers = {**self._extra, **headers}
         if self._token:
             headers["Authorization"] = f"Bearer {self._token}"
         return headers
@@ -132,11 +150,14 @@ class McpClient:
             if not name:
                 continue
             schema = item.get("inputSchema")
+            notes = item.get("annotations")
+            hint = notes.get("readOnlyHint") if isinstance(notes, dict) else None
             found.append(
                 Tool(
                     name=name[:64],
                     description=str(item.get("description", ""))[:400],
                     schema=schema if isinstance(schema, dict) else {"type": "object"},
+                    read_only=hint if isinstance(hint, bool) else None,
                 )
             )
         if not found:

@@ -357,20 +357,7 @@ def chat_routes(ctx: WebContext, chat: ChatService | None) -> list[Route]:
     @endpoint
     async def connector_catalog(request: Request) -> Response:
         user, _ = await account(request)
-        params = request.query_params
-        raw_page = params.get("page", "0")
-        if not raw_page.isdigit():
-            raise ChatError("invalid_request", 400)
-        page = await run_in_threadpool(
-            partial(
-                service().connectors,
-                user.id,
-                query=params.get("q", ""),
-                category=params.get("category", ""),
-                page=int(raw_page),
-            )
-        )
-        return JSONResponse(page)
+        return JSONResponse(await run_in_threadpool(service().connectors, user.id))
 
     @endpoint
     async def plans(request: Request) -> Response:

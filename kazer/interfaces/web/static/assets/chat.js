@@ -1724,68 +1724,32 @@ function connectorRow() {
     ),
     icon("chevron-right", "tool-row__go"),
   );
-  loadConnections().then((items) => {
+  request("/api/connectors").then((result) => {
     if (!row.isConnected) return;
-    const on = items.filter((item) => item.enabled !== false).length;
+    const items = result.ok && Array.isArray(result.data?.items) ? result.data.items : [];
+    const on = items.filter((item) => item.connected && item.enabled);
     const desc = row.querySelector(".tool-row__desc");
-    if (desc) {
-      desc.textContent = on
-        ? `${on} ligado${on > 1 ? "s" : ""}: as ferramentas entram nesta conversa.`
-        : "Nenhum conector ligado.";
-    }
+    if (!desc) return;
+    desc.textContent = on.length
+      ? `${on.map((item) => item.name).join(", ")} ligado: as ferramentas entram nesta conversa.`
+      : "GitHub disponível: toque para conectar.";
   });
   return row;
 }
 
-async function loadConnections() {
-  const result = await request("/api/connections");
-  S.connections = result.ok && Array.isArray(result.data?.items) ? result.data.items : [];
-  return S.connections;
-}
-
-function openConnectorsSheet() {
+async function openConnectorsSheet() {
   openSheet({
     title: "Conectores",
     opener: S.ui.plus,
     back: () => openPlusSheet(),
     content: () => {
-      const body = h("div.connectors", {}, h("p.connectors__text", { text: "Conferindo seus conectores…" }));
-      loadConnections().then((items) => {
-        if (!body.isConnected) return;
-        if (!items.length) {
-          body.replaceChildren(
-            h("span.connectors__icon", {}, icon("plug")),
-            h("p.connectors__title", { text: "Nenhum conector ligado." }),
-            h("p.connectors__text", {
-              text: "Conectores ligam o KAZER a outros serviços com a sua autorização. Ligue um em Configurações › Conectores e as ferramentas dele passam a valer nas conversas.",
-            }),
-          );
-          return;
-        }
-        body.replaceChildren(
-          h("div.tools", {},
-            items.map((item) => {
-              const count = Array.isArray(item.tools) ? item.tools.length : 0;
-              const ligado = item.enabled !== false;
-              return h(
-                "div.tool-row",
-                {},
-                h("span.tool-row__icon", {}, icon("plug")),
-                h(
-                  "span.tool-row__text",
-                  {},
-                  h("span.tool-row__title", { text: item.name || item.connector_id }),
-                  h("span.tool-row__desc", {
-                    text: `${count} ferramenta${count === 1 ? "" : "s"}${ligado ? "" : " · desligado"}`,
-                  }),
-                ),
-                ligado ? icon("check", "tool-row__go") : null,
-              );
-            }),
-          ),
-          h("p.connectors__text", { text: "Ligar, desligar e apagar fica em Configurações › Conectores." }),
-        );
-      });
+      const body = h("div.connectors", {}, h("p.connectors__text", { text: "Abrindo os conectores…" }));
+      import("./connectors-ui.js")
+        .then(({ createConnectors }) => {
+          if (!body.isConnected) return;
+          body.replaceChildren(createConnectors({ onChange: () => {} }).root);
+        })
+        .catch(() => body.replaceChildren(h("p.connectors__text", { text: "Não deu para abrir os conectores agora." })));
       return body;
     },
   });

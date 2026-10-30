@@ -1,7 +1,7 @@
-"""Catálogo de conectores: tamanho, regras de plano, peso e busca.
+"""Catálogo de conectores: só o GitHub, com endereço fixo e regra de plano.
 
-As regras que o produto promete ficam gravadas em teste: GitHub lê em qualquer
-plano e só escreve no pago; Canva entra no gratuito mas custa mais da franquia.
+A regra que o produto promete fica gravada em teste: o GitHub lê em qualquer
+plano e só escreve no pago.
 """
 
 from collections.abc import Callable
@@ -23,19 +23,15 @@ def make_env(tmp_path: Path) -> Callable[..., Env]:
     return build
 
 
-FREE = {"connector_limit": 3}
-PRO = {"connector_limit": 50}
-ULTRA = {"connector_limit": 500}
+FREE = {"connector_limit": 3, "github_write": False}
+PRO = {"connector_limit": 50, "github_write": True}
 
 
-def test_the_catalog_has_more_than_five_hundred_connectors() -> None:
-    assert len(connectors.CATALOG) > 500
-    assert len(connectors.CATEGORIES) >= 20
-    # Nenhum identificador repetido: o mesmo produto não entra duas vezes.
-    assert len({item.id for item in connectors.CATALOG}) == len(connectors.CATALOG)
-    # Toda categoria anunciada tem conector.
-    used = {item.category for item in connectors.CATALOG}
-    assert used == set(connectors.CATEGORIES)
+def test_the_catalog_is_github_only_for_now() -> None:
+    assert [item.id for item in connectors.CATALOG] == ["github"]
+    github = connectors.BY_ID["github"]
+    # Endereço fixo, https, e nunca dependente de entrada da pessoa.
+    assert github.endpoint == "https://api.githubcopilot.com/mcp/"
 
 
 def test_github_reads_for_everyone_and_writes_only_on_a_paid_plan() -> None:
@@ -43,46 +39,18 @@ def test_github_reads_for_everyone_and_writes_only_on_a_paid_plan() -> None:
     assert github.public(FREE)["can_read"] is True
     assert github.public(FREE)["can_write"] is False
     assert github.public(PRO)["can_write"] is True
-    assert github.public(ULTRA)["can_write"] is True
 
 
-def test_canva_is_open_to_everyone_but_costs_more() -> None:
-    canva = connectors.BY_ID["canva"]
-    assert canva.public(FREE)["can_write"] is True
-    # O limite acaba mais rápido conforme a tarefa, não conforme o relógio.
-    assert canva.weight == connectors.WEIGHT_HEAVY
-    assert canva.weight > connectors.BY_ID["trello"].weight
-    assert connectors.weight_of(["canva", "trello"]) == canva.weight + 1
+def test_the_free_plan_forces_read_only_at_the_service_too() -> None:
+    github = connectors.BY_ID["github"]
+    # O GitHub só serve ferramentas de leitura quando recebe este cabeçalho.
+    assert github.headers(FREE) == {"X-MCP-Readonly": "true"}
+    assert github.headers(PRO) == {}
 
 
-def test_nothing_is_connected_yet() -> None:
-    # Dizer o contrário seria mentira: não existe conexão nenhuma.
-    assert all(not item.public(ULTRA)["connected"] for item in connectors.CATALOG)
-
-
-def test_some_connectors_need_the_top_plan() -> None:
-    stripe = connectors.BY_ID["stripe"]
-    assert stripe.public(PRO)["can_write"] is False
-    assert stripe.public(ULTRA)["can_write"] is True
-
-
-def test_search_finds_by_name_and_category() -> None:
-    found, total = connectors.search("notion")
-    # O catálogo tem Notion, Notion Databases e Notion AI: a busca traz os três.
-    assert {"notion", "notion-databases", "notion-ai"} == {item.id for item in found}
-    assert total == 3
-
-    # Busca por pedaço do nome pega todos os que contêm o trecho.
-    found, _ = connectors.search("note")
-    names = {item.id for item in found}
-    assert {"evernote", "onenote", "apple-notes"} <= names
-
-    found, total = connectors.search("", "Bancos de dados", limit=5)
-    assert len(found) == 5 and total > 5
-    assert all(item.category == "Bancos de dados" for item in found)
-
-    # Busca sem resultado devolve vazio, não o catálogo inteiro.
-    assert connectors.search("servicoquenaoexiste") == ([], 0)
+def test_the_public_form_never_carries_the_address_or_a_credential() -> None:
+    row = connectors.BY_ID["github"].public(PRO)
+    assert "endpoint" not in row and "url" not in row and "token" not in row
 
 
 def test_the_catalog_reaches_the_browser_with_the_plan_rules(
@@ -91,35 +59,12 @@ def test_the_catalog_reaches_the_browser_with_the_plan_rules(
     env = make_env(FakeProvider())
     with env.client() as client:
         env.signed_in(client, "ana@example.com")
-        data = client.get("/api/connectors").json()
-        assert data["total"] > 500
-        assert len(data["items"]) == 60 and data["has_more"] is True
-        # Ligar um serviço depende do endereço MCP dele, que a pessoa informa:
-        # a porta existe, e é a do conector próprio.
-        assert data["connecting_open"] is True
-        # Nada ligado ainda nesta conta.
-        assert all(item["connected"] is False for item in data["items"])
-        assert len(data["categories"]) >= 20
-
-        github = client.get("/api/connectors?q=github").json()["items"][0]
-        assert github["name"] == "GitHub"
-        assert github["can_read"] is True and github["can_write"] is False
-        assert github["write_plan"] == "pro"
-
-        # Paginação anda.
-        second = client.get("/api/connectors?page=1").json()
-        assert second["page"] == 1
-        first_ids = {item["id"] for item in data["items"]}
-        assert not first_ids & {item["id"] for item in second["items"]}
-
-
-def test_a_bogus_filter_is_refused(make_env: Callable[..., Env]) -> None:
-    env = make_env(FakeProvider())
-    with env.client() as client:
-        env.signed_in(client, "ana@example.com")
-        bad = client.get("/api/connectors?category=Teletransporte")
-        assert (bad.status_code, bad.json()) == (400, {"error": "invalid_request"})
-        assert client.get("/api/connectors?page=-1").status_code == 400
+        body = client.get("/api/connectors").json()
+        assert [item["id"] for item in body["items"]] == ["github"]
+        github = body["items"][0]
+        # Nada conectado: o estado real, não um rótulo.
+        assert (github["connected"], github["can_write"], github["tools"]) == (False, False, [])
+        assert github["token_url"].startswith("https://github.com/")
 
 
 def test_the_catalog_needs_a_session(make_env: Callable[..., Env]) -> None:
