@@ -403,7 +403,15 @@ function newConversation({ push = true, focus = true } = {}) {
 
 // ---------- Abas da gaveta ----------
 
-const SCREENS = ["conversas", "projetos", "forja", "artefatos", "biblioteca", "habilidades"];
+const SCREENS = [
+  "conversas",
+  "projetos",
+  "forja",
+  "artefatos",
+  "biblioteca",
+  "habilidades",
+  "terminal",
+];
 
 async function showScreen(name) {
   if (!SCREENS.includes(name) || S.screen === name) {
@@ -438,6 +446,7 @@ async function showScreen(name) {
         const { openPlans } = await import("./plans.js");
         openPlans({ opener, highlight });
       },
+      onOpenSettings: (section) => openSettings(section),
     });
   }
   // A conversa some de vista, mas continua viva: voltar não recarrega nada.
@@ -1939,12 +1948,13 @@ async function deleteConversation(item, handle, opener) {
 
 // ---------- Configurações, sessão e rede ----------
 
-async function openSettings() {
+async function openSettings(section = "") {
   if (!desktopQuery.matches) closeDrawer({ focus: false });
   try {
     const { openSettingsPanel } = await import("./settings.js");
     openSettingsPanel({
       opener: S.ui.openSettings,
+      section,
       account: S.account,
       prefs: S.prefs,
       model: S.model,

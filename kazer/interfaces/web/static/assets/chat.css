@@ -249,6 +249,27 @@ html.in-chat .noscript {
     color 140ms linear;
 }
 
+/* Tela baixa (celular pequeno, janela curta): as seções ocupam menos para o
+   histórico não virar uma frestinha. Nada sai da gaveta. */
+@media (max-height: 40rem) {
+  .drawer__nav {
+    gap: 0;
+    padding-top: 0;
+  }
+
+  .drawer__item {
+    padding-top: 0.42rem;
+    padding-bottom: 0.42rem;
+  }
+
+  .drawer__new {
+    margin-top: 0.25rem;
+    margin-bottom: 0.25rem;
+    padding-top: 0.6rem;
+    padding-bottom: 0.6rem;
+  }
+}
+
 .drawer__item svg {
   width: 1.125rem;
   height: 1.125rem;

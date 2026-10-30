@@ -53,7 +53,7 @@ export function openSettingsPanel(options) {
 }
 
 class SettingsPanel {
-  constructor({ opener, account, prefs, model, memories, onPreferences, onMemories, onHistoryCleared, onSignOut, onAccountDeleted }) {
+  constructor({ opener, account, prefs, model, memories, section, onPreferences, onMemories, onHistoryCleared, onSignOut, onAccountDeleted }) {
     this.opener = opener;
     this.account = account || {};
     this.prefs = { ...prefs };
@@ -61,6 +61,9 @@ class SettingsPanel {
     this.usage = {};
     this.memories = [...memories];
     this.cb = { onPreferences, onMemories, onHistoryCleared, onSignOut, onAccountDeleted };
+    // Seção pedida por quem abriu (a tela Terminal manda para Conta);
+    // no celular ela entra de verdade, no computador só fica marcada.
+    this.start = SECTIONS.some(([key]) => key === section) ? section : "";
     this.saveTimer = 0;
     this.pending = {};
     this.wide = window.matchMedia("(min-width: 60rem)").matches;
@@ -132,7 +135,8 @@ class SettingsPanel {
     if (chat) chat.inert = true;
     window.requestAnimationFrame(() => {
       this.root.classList.add("is-open");
-      if (this.wide) this.show("conta", { focus: false });
+      if (this.start) this.show(this.start, { focus: !this.wide });
+      else if (this.wide) this.show("conta", { focus: false });
       this.title.focus({ preventScroll: true });
     });
   }
