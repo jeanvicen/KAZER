@@ -107,6 +107,8 @@ UNITS_IMAGE = 1
 UNITS_PDF = 2
 UNITS_LONG_PROMPT = 1
 UNITS_LONG_HISTORY = 1
+# Esforço maior usa um modelo maior no provedor, então pesa mais na franquia.
+EFFORT_UNITS = {"low": 0, "medium": 1, "high": 2, "xhigh": 3, "max": 4}
 LONG_PROMPT_CHARS = 2000
 LONG_HISTORY_MESSAGES = 20
 MAX_UNITS = 12
@@ -225,12 +227,16 @@ class SendOptions:
         """Custo na cota, proporcional ao trabalho que o pedido realmente dá."""
         units = UNITS_BASE
         units += UNITS_DEEP if self.deep else 0
+        units += EFFORT_UNITS.get(self.effort, 0)
         units += UNITS_WEB if self.web_search else 0
         units += UNITS_IMAGE * self.images
         units += UNITS_PDF * self.documents
         units += UNITS_LONG_PROMPT if self.long_prompt else 0
         units += UNITS_LONG_HISTORY if self.long_history else 0
         return min(units, MAX_UNITS)
+
+
+EFFORT_LABELS = {"baixo": "Baixo", "medio": "Médio", "alto": "Alto", "extra": "Extra", "max": "Máx"}
 
 
 def _title_from(content: str, attachments: list[Attachment]) -> str:
@@ -303,6 +309,11 @@ class ChatService:
 
     # ---------- Configuração pública ----------
 
+    def _efforts(self) -> tuple[str, ...]:
+        """Níveis de esforço que o modelo configurado diferencia (sempre o baixo)."""
+        caps = self._provider.capabilities if self._provider else None
+        return caps.efforts if caps and caps.efforts else ("baixo",)
+
     def config(self) -> dict[str, Any]:
         """O que a interface pode mostrar: só capacidades reais, nada do provedor."""
         caps = self._provider.capabilities if self._provider else None
@@ -317,7 +328,11 @@ class ChatService:
             "model": {"id": PUBLIC_MODEL_ID, "label": PUBLIC_MODEL_LABEL},
             "models": [{"id": PUBLIC_MODEL_ID, "label": PUBLIC_MODEL_LABEL}],
             "effort": "baixo",
-            "efforts": [{"id": "baixo", "label": "Baixo"}],
+            "efforts": [
+                {"id": key, "label": label}
+                for key, label in EFFORT_LABELS.items()
+                if key in self._efforts()
+            ],
             "features": {
                 "deep": bool(caps and caps.deep),
                 "images": bool(caps and caps.images),
@@ -1017,7 +1032,8 @@ class ChatService:
         if data.get("model", PUBLIC_MODEL_ID) != PUBLIC_MODEL_ID:
             raise ChatError("invalid_model", 400)
         effort = data.get("effort", "baixo")
-        if effort not in EFFORTS:
+        # Só vale o que o provedor realmente diferencia; o resto o servidor recusa.
+        if effort not in EFFORTS or effort not in self._efforts():
             raise ChatError("invalid_effort", 400)
         tools = data.get("tools", {})
         if not isinstance(tools, dict):

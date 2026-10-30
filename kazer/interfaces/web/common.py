@@ -48,9 +48,14 @@ def endpoint(handler: Handler) -> Handler:
             response = await handler(request)
         except (AuthError, ChatError) as exc:
             response = error_response(exc)
-        except StorageUnavailable:
-            # Banco ou armazenamento do chat fora do ar: a interface avisa.
-            response = error_response(ChatError("chat_unavailable", 503))
+        except StorageUnavailable as exc:
+            # Banco ou armazenamento do chat fora do ar: a interface avisa, e
+            # diz quando o que falta são as migrações (só o motivo, nunca o corpo).
+            response = error_response(
+                ChatError("chat_unavailable", 503, reason="not_migrated")
+                if exc.not_migrated
+                else ChatError("chat_unavailable", 503)
+            )
         renew = getattr(request.state, "renew_session", None)
         if renew is not None:
             renew(response)

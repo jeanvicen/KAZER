@@ -273,6 +273,47 @@ def test_unreachable_chat_database_is_reported_honestly() -> None:
         assert (response.status_code, response.json()) == (503, {"error": "chat_unavailable"})
 
 
+def test_database_without_migrations_says_so() -> None:
+    """Banco no ar, funções do KAZER ausentes (404): a tela diz que faltam as migrações."""
+    settings = Settings(
+        environment="test",
+        public_url=ORIGIN,
+        cookie_secure=False,
+        supabase_url="https://sem-migracao.invalid",
+        supabase_publishable_key="sb_publishable_test",
+    )
+    fake = FakeSupabase()
+    fake.add_user("ana@example.com", "correct horse battery")
+    auth = SupabaseAuthService(
+        settings.supabase_url, settings.supabase_publishable_key, ORIGIN, RateLimiter(),
+        client=fake,  # type: ignore[arg-type]
+    )
+    store = SupabaseChatStore(
+        settings.supabase_url,
+        settings.supabase_publishable_key,
+        client=NoFunctions(),  # type: ignore[arg-type]
+    )
+    chat = ChatService(store, UploadStorage(Path("/nonexistent")), Echo())
+    with TestClient(create_app(settings, auth, chat=chat), headers={"Origin": ORIGIN}) as client:
+        client.post(
+            "/api/auth/login",
+            json={"email": "ana@example.com", "password": "correct horse battery"},
+        )
+        body = client.get("/api/conversations").json()
+        assert body == {"error": "chat_unavailable", "reason": "not_migrated"}
+
+
+class NoFunctions:
+    """PostgREST sem as funções do KAZER: 404 com o código PGRST202."""
+
+    def post(self, url: str, *args: Any, **kwargs: Any) -> httpx.Response:
+        return httpx.Response(
+            404,
+            json={"code": "PGRST202", "message": "Could not find the function"},
+            request=httpx.Request("POST", url),
+        )
+
+
 class Unreachable:
     """Cliente HTTP que nunca conecta."""
 

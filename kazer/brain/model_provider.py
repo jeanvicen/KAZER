@@ -32,8 +32,10 @@ logger = logging.getLogger("kazer.model")
 
 PUBLIC_MODEL_ID = "kaz-1.1"
 PUBLIC_MODEL_LABEL = "KAZ 1.1"
-# Único esforço exposto nesta versão; o servidor rejeita qualquer outro valor.
-EFFORTS = {"baixo": "low"}
+# Níveis de esforço que o navegador pode pedir; o servidor rejeita qualquer outro
+# valor. Cada provedor decide o que cada nível significa (a Groq, por exemplo,
+# troca de modelo); quem não sabe diferenciar anuncia só o "baixo".
+EFFORTS = {"baixo": "low", "medio": "medium", "alto": "high", "extra": "xhigh", "max": "max"}
 
 
 @dataclass(frozen=True, slots=True)
@@ -44,6 +46,8 @@ class Capabilities:
     images: bool = False
     documents: bool = False
     web_search: bool = False
+    # Níveis de esforço que este provedor realmente diferencia.
+    efforts: tuple[str, ...] = ("baixo",)
 
 
 @dataclass(frozen=True, slots=True)
@@ -196,6 +200,28 @@ _PRESETS: dict[str, _Preset] = {
 _FINISH = {"stop": "end", "length": "length", "content_filter": "refusal"}
 
 
+class ModelGone(ProviderError):
+    """O modelo pedido não existe mais no provedor (aposentado ou renomeado)."""
+
+
+_GONE_CODES = {"model_decommissioned", "model_not_found", "model_not_active"}
+
+
+def _model_gone(exc: urllib.error.HTTPError) -> bool:
+    """O erro diz que o modelo sumiu? Lê só o código; o corpo nunca vai ao log."""
+    if exc.code == 404:
+        return True
+    if exc.code != 400:
+        return False
+    try:
+        body = json.loads(exc.read(4096))
+    except (OSError, ValueError):
+        return False
+    error = body.get("error") if isinstance(body, dict) else None
+    code = error.get("code") if isinstance(error, dict) else None
+    return isinstance(code, str) and code in _GONE_CODES
+
+
 def _status_error(status: int, retry_after: str | None) -> ProviderError:
     if status in (401, 403):
         return ProviderError("model_auth")
@@ -303,16 +329,29 @@ class OpenAICompatibleProvider:
         )
         return out
 
-    def stream(self, request: GenerationRequest, cancel: CancelToken) -> Iterator[StreamEvent]:
-        """Abre o stream e repassa texto e raciocínio conforme chegam."""
+    def _attempts(self, request: GenerationRequest) -> list[tuple[str, dict[str, Any]]]:
+        """Modelos a tentar, em ordem, com os parâmetros próprios de cada um.
+
+        Aqui é só um: o configurado. Quem troca de modelo por esforço (Groq)
+        sobrescreve este método e devolve uma cadeia com reserva.
+        """
         model = self._deep_model if request.deep and self._deep_model else self._model
+        extra: dict[str, Any] = {}
+        if self._send_effort:
+            # A API da OpenAI só conhece low/medium/high.
+            level = "high" if request.deep else request.effort
+            extra["reasoning_effort"] = level if level in {"low", "medium", "high"} else "high"
+        return [(model, extra)]
+
+    def _body(
+        self, request: GenerationRequest, model: str, extra: dict[str, Any]
+    ) -> dict[str, Any]:
         body: dict[str, Any] = {
             "model": model,
             "messages": self._messages(request),
             "stream": True,
+            **extra,
         }
-        if self._send_effort:
-            body["reasoning_effort"] = "high" if request.deep else request.effort
         if self._max_tokens:
             body["max_tokens"] = self._max_tokens
         if request.tools:
@@ -327,6 +366,10 @@ class OpenAICompatibleProvider:
                 }
                 for tool in request.tools
             ]
+        return body
+
+    def _open(self, body: dict[str, Any]) -> Any:
+        """Abre a conexão; falha com código estável e sem vazar corpo nem chave."""
         headers = {
             "Content-Type": "application/json",
             "Accept": "text/event-stream",
@@ -338,16 +381,37 @@ class OpenAICompatibleProvider:
             self._url, data=json.dumps(body).encode("utf-8"), headers=headers, method="POST"
         )
         try:
-            response = urllib.request.urlopen(http_request, timeout=self._timeout)  # noqa: S310
+            return urllib.request.urlopen(http_request, timeout=self._timeout)  # noqa: S310
         except urllib.error.HTTPError as exc:
+            gone = _model_gone(exc)
             exc.close()
-            logger.warning("model.http_error", extra={"provider": self._name, "status": exc.code})
-            raise _status_error(exc.code, exc.headers.get("retry-after")) from None
+            logger.warning(
+                "model.http_error",
+                extra={"provider": self._name, "status": exc.code, "model_gone": gone},
+            )
+            error = _status_error(exc.code, exc.headers.get("retry-after"))
+            raise ModelGone(error.code, error.retry_after) if gone else error from None
         except TimeoutError:
             raise ProviderError("model_timeout") from None
         except (urllib.error.URLError, ssl.SSLError, OSError):
             logger.warning("model.unreachable", extra={"provider": self._name})
             raise ProviderError("model_unreachable") from None
+
+    def stream(self, request: GenerationRequest, cancel: CancelToken) -> Iterator[StreamEvent]:
+        """Abre o stream e repassa texto e raciocínio conforme chegam."""
+        response = None
+        last: ProviderError | None = None
+        for model, extra in self._attempts(request):
+            try:
+                response = self._open(self._body(request, model, extra))
+                break
+            except ModelGone as gone:
+                # Modelo aposentado ou inexistente: passa para o próximo da cadeia.
+                last = gone
+        if response is None:
+            # Toda a cadeia sumiu do provedor: é erro do servidor, não da pessoa.
+            logger.error("model.chain_exhausted", extra={"provider": self._name})
+            raise ProviderError("model_error") from last
 
         cancel.on_cancel(response.close)
         stop = "end"
@@ -413,6 +477,106 @@ class OpenAICompatibleProvider:
             yield StreamEvent("stop", "tool")
             return
         yield StreamEvent("stop", stop)
+
+
+# ---------------------------------------------------------------------------
+# Groq: o esforço escolhido troca o modelo
+# ---------------------------------------------------------------------------
+
+# Cada nível aponta para uma cadeia "modelo[:raciocínio]" separada por vírgula:
+# o primeiro que existir responde, e os seguintes são reserva caso a Groq
+# aposente um modelo. Os IDs mudam com o tempo; por isso cada nível tem uma
+# variável de ambiente própria (KAZER_GROQ_MODEL_<NÍVEL>) que vence o padrão.
+GROQ_DEFAULT_TIERS = {
+    "baixo": "llama-3.1-8b-instant,openai/gpt-oss-20b:low",
+    "medio": "openai/gpt-oss-20b:medium,llama-3.1-8b-instant",
+    "alto": "llama-3.3-70b-versatile,openai/gpt-oss-120b:medium",
+    "extra": "openai/gpt-oss-120b:medium,llama-3.3-70b-versatile",
+    "max": "openai/gpt-oss-120b:high,openai/gpt-oss-120b:medium",
+}
+_GROQ_REASONING = {"low", "medium", "high"}
+
+
+def parse_tier(spec: str) -> list[tuple[str, dict[str, Any]]]:
+    """"modelo:raciocínio,reserva" vira a lista de tentativas; lixo é ignorado."""
+    attempts: list[tuple[str, dict[str, Any]]] = []
+    for piece in spec.split(","):
+        model, _, reasoning = piece.strip().partition(":")
+        model, reasoning = model.strip(), reasoning.strip().lower()
+        if not model or any(ch.isspace() for ch in model) or len(model) > 120:
+            continue
+        extra: dict[str, Any] = {}
+        if reasoning in _GROQ_REASONING:
+            # O raciocínio cru do modelo nunca chega à tela: só o resultado.
+            extra = {"reasoning_effort": reasoning, "include_reasoning": False}
+        attempts.append((model, extra))
+    return attempts
+
+
+class GroqProvider(OpenAICompatibleProvider):
+    """KAZ 1.1 na Groq: o nível de esforço decide o modelo, só no servidor.
+
+    O navegador manda `baixo`..`max`; nunca um ID de modelo. Quem mapeia é a
+    tabela abaixo, que vem do ambiente, então ninguém escolhe o próprio modelo
+    por fora do que o servidor liberou.
+    """
+
+    def __init__(
+        self,
+        *,
+        base_url: str,
+        api_key: str,
+        tiers: dict[str, str],
+        vision_model: str,
+        max_tokens: int,
+        timeout: float,
+    ) -> None:
+        """`tiers` já traz o padrão misturado com o ambiente."""
+        self._tiers = {
+            level: chain
+            for level, spec in tiers.items()
+            if level in EFFORTS and (chain := parse_tier(spec))
+        }
+        self._vision_model = vision_model
+        super().__init__(
+            name="groq",
+            base_url=base_url,
+            api_key=api_key,
+            model="",
+            deep_model="",
+            capabilities=Capabilities(
+                images=bool(vision_model),
+                efforts=tuple(level for level in EFFORTS if level in self._tiers),
+            ),
+            send_effort=False,
+            max_tokens=max_tokens,
+            timeout=timeout,
+        )
+
+    def __repr__(self) -> str:
+        """Sem chave."""
+        return "GroqProvider()"
+
+    def stream(self, request: GenerationRequest, cancel: CancelToken) -> Iterator[StreamEvent]:
+        """Igual ao padrão, mas o raciocínio cru nunca sai daqui.
+
+        Mesmo pedindo ao provedor que o esconda, se ele vier assim mesmo o
+        KAZER o descarta: a tela mostra a resposta, não o rascunho do modelo.
+        """
+        for event in super().stream(request, cancel):
+            if event.kind != "thinking":
+                yield event
+
+    def _attempts(self, request: GenerationRequest) -> list[tuple[str, dict[str, Any]]]:
+        has_image = any(
+            part.kind == "image" for turn in request.turns for part in turn.parts
+        )
+        if has_image and self._vision_model:
+            return [(self._vision_model, {})]
+        # Esforço de fora da tabela (ou desligado pelo ambiente) cai no mais baixo.
+        wanted = next((name for name, value in EFFORTS.items() if value == request.effort), "baixo")
+        chain = self._tiers.get(wanted) or next(iter(self._tiers.values()), [])
+        return list(chain)
 
 
 # ---------------------------------------------------------------------------
@@ -660,6 +824,39 @@ def _seen(block: Any) -> str:
 # ---------------------------------------------------------------------------
 
 
+def _build_groq(
+    settings: Settings, secrets: SecretProvider, base_url: str, max_tokens: int, timeout: float
+) -> ModelProvider | None:
+    """Groq com o esforço trocando de modelo; sem GROQ_API_KEY não há modelo."""
+    try:
+        key = secrets.get_secret("GROQ_API_KEY", scope="model")
+    except LookupError:
+        logger.warning("model.unavailable: GROQ_API_KEY não configurada")
+        return None
+    tiers = {**GROQ_DEFAULT_TIERS, **settings.groq_tiers}
+    # KAZER_MODEL (se alguém definir) vira o nível mais baixo: compatível com
+    # quem já configurou um modelo único.
+    if settings.model_name and "baixo" not in settings.groq_tiers:
+        tiers["baixo"] = settings.model_name
+    provider = GroqProvider(
+        base_url=base_url,
+        api_key=key,
+        tiers=tiers,
+        vision_model=settings.groq_vision_model,
+        max_tokens=max_tokens,
+        timeout=timeout,
+    )
+    logger.info(
+        "model.ready",
+        extra={
+            "provider": "groq",
+            "host": urlsplit(base_url).hostname,
+            "efforts": ",".join(provider.capabilities.efforts),
+        },
+    )
+    return provider
+
+
 def build_provider(
     settings: Settings, secrets: SecretProvider | None = None
 ) -> ModelProvider | None:
@@ -708,6 +905,8 @@ def build_provider(
 
     preset = _PRESETS[name]
     base_url = settings.model_base_url or preset.base_url
+    if name == "groq":
+        return _build_groq(settings, secrets, base_url, max_tokens, timeout)
     key: str | None = None
     if preset.secret:
         try:

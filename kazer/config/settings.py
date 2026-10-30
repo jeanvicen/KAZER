@@ -57,6 +57,10 @@ class Settings(StrictModel):
     model_vision: bool | None = None
     model_reasoning: ModelReasoning = "auto"
     model_web_search: bool = False
+    # Groq: modelo por nível de esforço (vazio = padrão do adaptador) e, se houver,
+    # um modelo com visão para pedidos com imagem. Só nomes de modelo, nunca chaves.
+    groq_tiers: dict[str, str] = Field(default_factory=dict)
+    groq_vision_model: str = ""
     model_max_output_tokens: int = Field(default=0, ge=0, le=128_000)
     model_timeout_seconds: float = Field(default=120.0, ge=5.0, le=600.0)
     # Anexos privados: fora da pasta pública, um diretório por conta.
@@ -96,7 +100,8 @@ class Settings(StrictModel):
         problems: list[str] = []
         if not self.model_provider:
             return ["KAZER_MODEL_PROVIDER não definido"]
-        if self.model_provider != "anthropic" and not self.model_name:
+        # Anthropic e Groq têm padrão próprio; os demais precisam do nome do modelo.
+        if self.model_provider not in {"anthropic", "groq"} and not self.model_name:
             problems.append("KAZER_MODEL não definido")
         if self.model_provider == "custom" and not self.model_base_url:
             problems.append("KAZER_MODEL_BASE_URL é obrigatório para o provedor custom")
@@ -164,6 +169,12 @@ def load_settings(environ: Mapping[str, str] | None = None) -> Settings:
         "model_name": env.get("KAZER_MODEL", "").strip(),
         "model_deep_name": env.get("KAZER_MODEL_DEEP", "").strip(),
         "model_base_url": env.get("KAZER_MODEL_BASE_URL", "").strip().rstrip("/"),
+        "groq_tiers": {
+            level: value
+            for level in ("baixo", "medio", "alto", "extra", "max")
+            if (value := env.get(f"KAZER_GROQ_MODEL_{level.upper()}", "").strip())
+        },
+        "groq_vision_model": env.get("KAZER_GROQ_VISION_MODEL", "").strip(),
         "model_vision": _optional_flag(env.get("KAZER_MODEL_VISION")),
         "model_reasoning": env.get("KAZER_MODEL_REASONING", "auto").strip().lower() or "auto",
         "model_web_search": _flag(env.get("KAZER_MODEL_WEB_SEARCH"), False),

@@ -129,11 +129,28 @@ O navegador só conhece o nome público **KAZ 1.1**. Qual provedor e qual modelo
 | `xai` (Grok) | `XAI_API_KEY` | API compatível com OpenAI, imagens ligadas |
 | `openai` | `OPENAI_API_KEY` | imagens ligadas |
 | `gemini` | `GEMINI_API_KEY` | endpoint compatível com OpenAI |
-| `groq`, `deepseek`, `mistral`, `together` | `GROQ_API_KEY`, `DEEPSEEK_API_KEY`, `MISTRAL_API_KEY`, `TOGETHER_API_KEY` | só texto por padrão |
+| `groq` | `GROQ_API_KEY` | **o esforço escolhido troca o modelo** (ver abaixo); sem `KAZER_MODEL` |
+| `deepseek`, `mistral`, `together` | `DEEPSEEK_API_KEY`, `MISTRAL_API_KEY`, `TOGETHER_API_KEY` | só texto por padrão |
 | `openrouter` | `OPENROUTER_API_KEY` | vários modelos por uma chave |
 | `ollama` | (sem chave) | servidor local em `http://127.0.0.1:11434/v1` |
 | `custom` | `KAZER_MODEL_API_KEY` (opcional) | qualquer API compatível com OpenAI em `KAZER_MODEL_BASE_URL` |
 | `anthropic` (Claude) | `ANTHROPIC_API_KEY` | SDK oficial: `pip install "kazer[anthropic]"`; padrão `claude-opus-5-5` |
+
+### Groq: o esforço troca o modelo
+
+Com `KAZER_MODEL_PROVIDER=groq` e a `GROQ_API_KEY` no servidor, o KAZ 1.1 roda na API da Groq e **cada nível de esforço aponta para um modelo diferente**. O navegador manda só `baixo`, `medio`, `alto`, `extra` ou `max` — nunca um ID de modelo: quem mapeia é o servidor, e esforço fora da oferta é recusado (`invalid_effort`), não só escondido.
+
+| Esforço | Cadeia padrão (o primeiro que existir responde; os seguintes são reserva) |
+| --- | --- |
+| Baixo | `llama-3.1-8b-instant`, `openai/gpt-oss-20b:low` |
+| Médio | `openai/gpt-oss-20b:medium`, `llama-3.1-8b-instant` |
+| Alto | `llama-3.3-70b-versatile`, `openai/gpt-oss-120b:medium` |
+| Extra | `openai/gpt-oss-120b:medium`, `llama-3.3-70b-versatile` |
+| Máx | `openai/gpt-oss-120b:high`, `openai/gpt-oss-120b:medium` |
+
+O que vem depois dos dois-pontos é o `reasoning_effort` do modelo. **Os IDs da Groq mudam com o tempo** (modelos são aposentados e renomeados) e este ambiente não alcança a documentação deles, então confira a lista em console.groq.com e, se precisar, troque um nível sem mexer no código: `KAZER_GROQ_MODEL_BAIXO`, `_MEDIO`, `_ALTO`, `_EXTRA`, `_MAX` (mesmo formato `modelo:raciocínio,reserva`). Se a Groq responder que um modelo foi aposentado ou não existe, o KAZER passa sozinho para o próximo da cadeia; se a cadeia inteira sumir, a resposta falha com o erro genérico e o log diz `model.chain_exhausted`.
+
+Segurança: a chave só é lida por `secrets.py` e só vai no cabeçalho `Authorization` — nunca no corpo, no log, no `repr` nem em erro. A URL base é a da Groq, fixa. O raciocínio cru do modelo é pedido escondido (`include_reasoning: false`) **e descartado no servidor** mesmo se vier. Esforço maior pesa mais na franquia (Baixo +0, Médio +1, Alto +2, Extra +3, Máx +4 unidades). Para aceitar imagens, defina `KAZER_GROQ_VISION_MODEL` com um modelo com visão da Groq; sem ele, imagens ficam desligadas.
 
 Exemplo com o Grok, num `.env` local (nunca versionado):
 

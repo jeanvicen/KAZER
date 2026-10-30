@@ -101,7 +101,16 @@ TIMEOUT = 15.0
 
 
 class StorageUnavailable(RuntimeError):
-    """Banco ou armazenamento do chat fora do ar; a interface avisa com honestidade."""
+    """Banco ou armazenamento do chat fora do ar; a interface avisa com honestidade.
+
+    `not_migrated` separa dois problemas que a pessoa resolve de jeitos
+    diferentes: o banco está no ar mas ainda não recebeu as migrações (a função
+    chamada não existe) ou ele está fora do ar de verdade.
+    """
+
+    def __init__(self, message: str, *, not_migrated: bool = False) -> None:
+        super().__init__(message)
+        self.not_migrated = not_migrated
 
 
 def _conversation(data: dict[str, Any]) -> Conversation:
@@ -198,7 +207,11 @@ class SupabaseChatStore:
         if response.status_code >= 400:
             # O corpo pode conter o texto da mensagem: nunca vai para o log.
             logger.warning("chat.store_error", extra={"rpc": name, "status": response.status_code})
-            raise StorageUnavailable(f"banco do chat recusou {name}")
+            # PostgREST responde 404 (PGRST202) quando a função não existe: o
+            # projeto está no ar, mas as migrações do KAZER ainda não foram aplicadas.
+            raise StorageUnavailable(
+                f"banco do chat recusou {name}", not_migrated=response.status_code == 404
+            )
         try:
             return response.json()
         except ValueError:

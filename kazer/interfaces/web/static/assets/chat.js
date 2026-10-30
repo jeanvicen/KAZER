@@ -192,7 +192,7 @@ async function loadSettings() {
   if (!result.ok) {
     if (result.data.error !== "unauthenticated") {
       // Sem configuração não dá para saber o que o modelo suporta: tudo fica desligado.
-      S.model = { available: false, features: {}, chatUnavailable: result.data.error === "chat_unavailable" };
+      S.model = { available: false, features: {}, chatUnavailable: result.data.error === "chat_unavailable", notMigrated: result.data.reason === "not_migrated" };
       applyModel();
     }
     return;
@@ -239,7 +239,9 @@ function applyModel() {
   S.ui.deep.classList.toggle("is-unavailable", !features.deep);
   if (!features.deep && S.options.deep) setDeep(false);
   S.ui.emptyNote.hidden = !unavailable;
-  S.ui.emptyNote.textContent = model.chatUnavailable
+  S.ui.emptyNote.textContent = model.notMigrated
+    ? "O banco do KAZER está no ar, mas ainda não recebeu as migrações do chat. Sua conta está ativa; quem administra o servidor precisa aplicá-las."
+    : model.chatUnavailable
     ? "O chat ainda não está disponível neste ambiente: falta configurar o banco das conversas. Sua conta está ativa."
     : unavailable
       ? "O KAZ 1.1 ainda não foi conectado a um modelo neste servidor. Seu histórico continua disponível."
