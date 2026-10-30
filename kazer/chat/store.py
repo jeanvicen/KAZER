@@ -1060,10 +1060,17 @@ class ChatStore:
             ).fetchall()
         return [_project(row) for row in rows]
 
-    def create_project(self, user_id: str, name: str, goal: str, now: int) -> Project:
-        """Cria o projeto e devolve já com a contagem zerada."""
+    def create_project(
+        self, user_id: str, name: str, goal: str, now: int, max_count: int = 60
+    ) -> Project | None:
+        """Cria o projeto; None quando a conta já chegou ao limite."""
         project = Project(new_id(), name, goal, False, 0, now, now)
         with self._transaction() as conn:
+            (count,) = conn.execute(
+                "SELECT COUNT(*) FROM projects WHERE user_id = ? AND archived = 0", (user_id,)
+            ).fetchone()
+            if count >= max_count:
+                return None
             conn.execute(
                 "INSERT INTO projects (id, user_id, name, goal, archived, created_at, updated_at)"
                 " VALUES (?, ?, ?, ?, 0, ?, ?)",

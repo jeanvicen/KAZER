@@ -17,6 +17,8 @@ from kazer.chat.store import (
     Exchange,
     Memory,
     Message,
+    Project,
+    Skill,
     UsageWindow,
 )
 
@@ -107,6 +109,68 @@ class ChatStorage(Protocol):
     def purge_orphan_attachments(self, older_than: int) -> list[tuple[str, str]]: ...
 
     def purge_usage(self, older_than: int) -> None: ...
+
+    # Projetos
+    def list_projects(
+        self, user_id: str, *, archived: bool, query: str = ...
+    ) -> list[Project]: ...
+
+    def create_project(
+        self, user_id: str, name: str, goal: str, now: int, max_count: int = ...
+    ) -> Project | None: ...
+
+    def get_project(self, user_id: str, project_id: str) -> Project | None: ...
+
+    def update_project(
+        self,
+        user_id: str,
+        project_id: str,
+        now: int,
+        *,
+        name: str | None = ...,
+        goal: str | None = ...,
+        archived: bool | None = ...,
+    ) -> bool: ...
+
+    def delete_project(self, user_id: str, project_id: str) -> bool: ...
+
+    def set_conversation_project(
+        self, user_id: str, conversation_id: str, project_id: str | None
+    ) -> bool: ...
+
+    # Habilidades
+    def list_skills(self, user_id: str) -> list[Skill]: ...
+
+    def list_shared_skills(self, *, query: str = ..., limit: int = ...) -> list[Skill]: ...
+
+    def get_skill(self, skill_id: str, user_id: str | None = ...) -> Skill | None: ...
+
+    def create_skill(
+        self,
+        user_id: str,
+        *,
+        name: str,
+        description: str,
+        instructions: str,
+        origin: str,
+        now: int,
+        max_count: int,
+    ) -> Skill | None: ...
+
+    def update_skill(
+        self,
+        user_id: str,
+        skill_id: str,
+        now: int,
+        *,
+        name: str | None = ...,
+        description: str | None = ...,
+        instructions: str | None = ...,
+        enabled: bool | None = ...,
+        shared: bool | None = ...,
+    ) -> bool: ...
+
+    def delete_skill(self, user_id: str, skill_id: str) -> bool: ...
 
     # Biblioteca e artefatos
     def save_artifacts(

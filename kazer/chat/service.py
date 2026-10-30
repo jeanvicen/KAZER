@@ -454,12 +454,12 @@ class ChatService:
             raise ChatError("invalid_request", 400)
         goal = _clean(data.get("goal"), 2000, lines=True)
         creator = getattr(self._store, "create_project", None)
-        lister = getattr(self._store, "list_projects", None)
-        if creator is None or lister is None:
+        if creator is None:
             raise ChatError("chat_unavailable", 503)
-        if len(lister(user_id, archived=False)) >= MAX_PROJECTS:
+        # O teto é conferido junto da escrita, para duas abas não furarem o limite.
+        project = creator(user_id, name, goal, self._now(), MAX_PROJECTS)
+        if project is None:
             raise ChatError("project_limit", 409, limit=MAX_PROJECTS)
-        project = creator(user_id, name, goal, self._now())
         data_out: dict[str, Any] = project.public()
         return data_out
 
