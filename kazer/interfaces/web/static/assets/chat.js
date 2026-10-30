@@ -156,6 +156,7 @@ export async function mountChat({ email, onSignedOut }) {
     "menu", "topbar-title", "new-chat-top", "ambient", "empty", "greeting", "greeting-a", "greeting-b",
     "empty-note", "thread", "messages", "older", "to-bottom", "composer", "composer-alert",
     "composer-alert-text", "composer-alert-close", "composer-box", "tray", "prompt", "plus", "model-chip",
+    "open-palette",
     "deep", "forja-chip", "mic", "send", "pick-camera", "pick-photos", "pick-files",
   ];
   for (const id of ids) S.ui[id.replace(/-(\w)/g, (_, c) => c.toUpperCase())] = byId(root, id);
@@ -165,6 +166,7 @@ export async function mountChat({ email, onSignedOut }) {
   bindDrawer();
   bindComposer();
   bindThread();
+  bindShortcuts();
   window.addEventListener("popstate", onPopState);
   window.addEventListener("kazer:unauthenticated", onExpired);
   net.subscribe(onNetwork);
@@ -412,6 +414,26 @@ const SCREENS = [
   "habilidades",
   "terminal",
 ];
+
+const SCREEN_LABELS = {
+  conversas: "Conversas",
+  projetos: "Projetos",
+  forja: "Forja",
+  artefatos: "Artefatos",
+  biblioteca: "Biblioteca",
+  habilidades: "Habilidades",
+  terminal: "Terminal",
+};
+
+const SCREEN_GLYPHS = {
+  conversas: "chat",
+  projetos: "project",
+  forja: "code",
+  artefatos: "layers",
+  biblioteca: "book",
+  habilidades: "sparkle",
+  terminal: "terminal",
+};
 
 async function showScreen(name) {
   if (!SCREENS.includes(name) || S.screen === name) {
@@ -1717,6 +1739,117 @@ function openConnectorsSheet() {
   });
 }
 
+// ---------- Atalhos de teclado (computador) ----------
+//
+// O computador ganha o que o celular não tem como ter: comando pelo teclado.
+// Nada aqui some do celular — são habilidades a mais, não um caminho
+// diferente. Os atalhos só respondem em tela de computador e nunca quando a
+// pessoa está escrevendo num campo.
+
+const SHORTCUTS = [
+  { keys: "Ctrl K", mac: "⌘K", about: "Paleta de comandos" },
+  { keys: "Ctrl B", mac: "⌘B", about: "Abrir e fechar a gaveta" },
+  { keys: "Ctrl Shift O", mac: "⌘⇧O", about: "Nova conversa" },
+  { keys: "Ctrl Shift F", mac: "⌘⇧F", about: "Nova conversa na Forja" },
+  { keys: "Esc", mac: "Esc", about: "Fechar o que estiver aberto" },
+];
+
+const onMac = () => /mac/i.test(navigator.platform || navigator.userAgent || "");
+const keyLabel = (item) => (onMac() ? item.mac : item.keys);
+
+// Digitando num campo, o atalho é do campo, não do app.
+function typing(target) {
+  if (!(target instanceof HTMLElement)) return false;
+  return target.isContentEditable || ["INPUT", "TEXTAREA", "SELECT"].includes(target.tagName);
+}
+
+function bindShortcuts() {
+  document.addEventListener("keydown", (event) => {
+    if (!desktopQuery.matches || !(event.ctrlKey || event.metaKey) || event.altKey) return;
+    const key = event.key.toLowerCase();
+    if (key === "k") {
+      event.preventDefault();
+      openPalette();
+    } else if (key === "b") {
+      event.preventDefault();
+      if (S.root.classList.contains("drawer-open")) closeDrawer();
+      else openDrawer({ focus: false });
+    } else if (event.shiftKey && key === "o") {
+      event.preventDefault();
+      newConversation({ push: true, focus: true });
+    } else if (event.shiftKey && key === "f") {
+      event.preventDefault();
+      startForja();
+    } else if (key === "k" || key === "b") {
+      event.preventDefault();
+    }
+    // Campo de texto: Ctrl+K e Ctrl+B do navegador não valem mais aqui, mas
+    // tudo o que não está na lista continua passando direto.
+  });
+}
+
+// Grupos da paleta: ações primeiro, depois as seções, como numa paleta de
+// editor. Quem executa é o app; a paleta só mostra e chama.
+function paletteGroups() {
+  const go = (name) => () => showScreen(name);
+  return [
+    {
+      label: "Ações",
+      items: [
+        {
+          label: "Nova conversa",
+          glyph: "plus",
+          hint: keyLabel(SHORTCUTS[2]),
+          run: () => newConversation({ push: true, focus: true }),
+        },
+        { label: "Nova conversa na Forja", glyph: "code", hint: keyLabel(SHORTCUTS[3]), run: startForja },
+        { label: "Configurações", glyph: "gear", run: () => openSettings() },
+        { label: "Planos", glyph: "bolt", run: () => offerPlans({}) },
+        {
+          label: "Gaveta",
+          glyph: "menu",
+          hint: keyLabel(SHORTCUTS[1]),
+          run: () => (S.root.classList.contains("drawer-open") ? closeDrawer() : openDrawer({ focus: false })),
+        },
+      ],
+    },
+    {
+      label: "Ir para",
+      items: SCREENS.map((name) => ({
+        label: SCREEN_LABELS[name] || name,
+        glyph: SCREEN_GLYPHS[name] || "chevron-right",
+        run: go(name),
+      })),
+    },
+    {
+      label: "Atalhos",
+      items: SHORTCUTS.map((item) => ({
+        label: item.about,
+        glyph: "info",
+        hint: keyLabel(item),
+        about: "atalho teclado",
+        run: () => {},
+      })),
+    },
+  ];
+}
+
+async function openPalette() {
+  try {
+    const { openPalette: show, paletteOpen } = await import("./palette.js");
+    if (paletteOpen()) return;
+    await show({
+      groups: paletteGroups(),
+      onOpenConversation: (id) => {
+        showScreen("conversas");
+        openConversation(id);
+      },
+    });
+  } catch {
+    toast("Não deu para abrir os comandos agora.");
+  }
+}
+
 // ---------- Gaveta e histórico ----------
 
 function bindDrawer() {
@@ -1737,6 +1870,9 @@ function bindDrawer() {
     if (item) showScreen(item.dataset.screen);
   });
   S.ui.forjaChip.addEventListener("click", () => setForja(false));
+  // O atalho fica à vista para quem nunca leu atalho nenhum.
+  S.ui.openPalette.addEventListener("click", () => openPalette());
+  if (onMac()) S.ui.openPalette.querySelector("kbd").textContent = "⌘K";
   S.ui.historySearch.addEventListener("input", () => {
     window.clearTimeout(timer);
     timer = window.setTimeout(() => loadHistory({ query: S.ui.historySearch.value.trim() }), 260);

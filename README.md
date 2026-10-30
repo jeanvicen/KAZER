@@ -82,6 +82,14 @@ Login, confirmação de e-mail e sessão já válida levam **direto ao chat** (s
 - **Configurações** (`settings.js`, carregado sob demanda): Conta (trocar senha, sair dos outros dispositivos), Personalização (apelido com prévia da saudação, estilo das respostas com exemplo ao vivo, instruções pessoais), Memória (ligar/desligar, adicionar, esquecer), Interface (animações, tamanho do texto, fundo animado, Enter), Dados e privacidade (exportar JSON, apagar todas as conversas e excluir a conta segurando o botão), Conectores e Sobre. Tudo salva sozinho no servidor.
 - **Sem internet** (`net.js` + `offline.js`): pedidos com prazo, novas tentativas com espera crescente e uma sonda real (`/api/health`), porque o `navigator.onLine` sozinho mente. Quando a rede cai aparece a tela "Ops, parece que tamo sem internet, fi.", com o **Kazinho**, um personagem em pixel com a cabeça da Fenda, que varre a casa, cochila, brinca de bola, treina e mostra o muque. Quando a conexão volta ele comemora e a tela some. O service worker (`/sw.js`) guarda só a casca do app, nunca `/api/`, para essa tela abrir até sem rede.
 
+No **computador** o KAZER faz o que o celular não tem como fazer, sem tirar nada de lá:
+
+- **Paleta de comandos** (`palette.js`, baixada no primeiro atalho): `Ctrl K` (`⌘K` no Mac) abre uma caixa que faz tudo pelo teclado — ir para qualquer seção, começar conversa, abrir a Forja, os planos ou as configurações, e buscar entre as conversas pelo servidor. Setas navegam, Enter executa, Esc fecha. O atalho fica à vista, dentro da busca da gaveta.
+- **Atalhos:** `Ctrl K` paleta, `Ctrl B` gaveta, `Ctrl Shift O` nova conversa, `Ctrl Shift F` nova conversa na Forja, `Esc` fecha o que estiver aberto. Enquanto você escreve num campo, o atalho é do campo — o app não rouba a tecla.
+- **Gaveta fixa** ao lado da conversa, telas cheias em várias colunas (passos do Terminal em três, comandos em duas, Biblioteca e Artefatos em grade) e **arrastar arquivos** para dentro da conversa.
+
+No celular nada disso aparece: não há teclado físico, a gaveta está a um toque e a paleta nunca é baixada.
+
 Sem um modelo configurado, o chat abre, mostra o histórico e explica que o KAZ 1.1 ainda não está conectado: **nenhuma resposta é inventada**.
 
 ## KAZER no terminal

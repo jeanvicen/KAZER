@@ -1,0 +1,181 @@
+/* Paleta de comandos (Ctrl+K). Só no computador: ela nasce de um atalho de
+   teclado, e o celular não tem teclado físico nem precisa — lá a gaveta está
+   a um toque. */
+
+.pal__layer {
+  position: fixed;
+  inset: 0;
+  z-index: 78;
+  display: grid;
+  justify-items: center;
+  align-content: start;
+  padding: 10vh 1rem 1rem;
+}
+
+.pal__scrim {
+  position: fixed;
+  inset: 0;
+  background: rgb(0 0 0 / 0.55);
+  opacity: 0;
+  transition: opacity 180ms ease-out;
+}
+
+.pal__layer.is-open .pal__scrim {
+  opacity: 1;
+}
+
+.pal {
+  position: relative;
+  width: min(36rem, 100%);
+  max-height: min(70vh, 34rem);
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  overflow: hidden;
+  border: 1px solid var(--c-border-2);
+  border-radius: 0.9rem;
+  background: var(--c-surface);
+  box-shadow: 0 1.5rem 3rem rgb(0 0 0 / 0.55);
+  opacity: 0;
+  transform: translateY(-0.5rem) scale(0.985);
+  transition:
+    opacity 180ms ease-out,
+    transform 180ms var(--ease-out, ease-out);
+}
+
+.pal__layer.is-open .pal {
+  opacity: 1;
+  transform: none;
+}
+
+.pal__field {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.85rem 1rem;
+  border-bottom: 1px solid var(--c-border);
+}
+
+.pal__glyph {
+  width: 1.05rem;
+  height: 1.05rem;
+  flex: none;
+  color: var(--c-text-3);
+}
+
+.pal__input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  color: var(--c-text);
+  font: inherit;
+  font-size: 1rem;
+  outline: none;
+}
+
+.pal__input::placeholder {
+  color: var(--c-text-3);
+}
+
+.pal__list {
+  overflow-y: auto;
+  padding: 0.4rem;
+  scrollbar-width: thin;
+}
+
+.pal__label {
+  margin: 0.5rem 0 0.25rem;
+  padding: 0 0.6rem;
+  color: var(--c-text-3);
+  font-size: 0.6875rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.pal__row {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  width: 100%;
+  padding: 0.5rem 0.6rem;
+  border: 0;
+  border-radius: 0.5rem;
+  background: transparent;
+  color: var(--c-text-2);
+  font: inherit;
+  font-size: 0.9375rem;
+  text-align: left;
+  cursor: pointer;
+}
+
+/* O destaque segue o teclado; o mouse só move o cursor, não rouba a seleção. */
+.pal__row.is-on {
+  background: rgb(255 255 255 / 0.07);
+  color: var(--c-text);
+}
+
+.pal__row-glyph {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 1.25rem;
+  color: var(--c-text-3);
+}
+
+.pal__row.is-on .pal__row-glyph {
+  color: var(--c-text-2);
+}
+
+.pal__row-glyph svg {
+  width: 1.05rem;
+  height: 1.05rem;
+}
+
+.pal__row-label {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pal__row-hint,
+.pal__hint kbd {
+  flex: none;
+  padding: 0.1rem 0.4rem;
+  border: 1px solid var(--c-border-2);
+  border-radius: 0.3rem;
+  color: var(--c-text-3);
+  font: inherit;
+  font-size: 0.6875rem;
+}
+
+.pal__none {
+  margin: 0;
+  padding: 1.25rem 0.75rem;
+  color: var(--c-text-3);
+  font-size: 0.9375rem;
+  text-align: center;
+}
+
+.pal__foot {
+  display: flex;
+  gap: 1rem;
+  padding: 0.55rem 1rem;
+  border-top: 1px solid var(--c-border);
+  color: var(--c-text-3);
+  font-size: 0.75rem;
+}
+
+.pal__hint {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pal,
+  .pal__scrim {
+    transition: none;
+  }
+}
