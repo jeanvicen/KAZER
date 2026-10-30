@@ -684,9 +684,10 @@ function assistantElement(model) {
   const notice = h("div.msg__notice", { hidden: true });
   const actions = h("div.msg__actions", {}, actionButton("copy", "Copiar resposta", () => model.content));
   const made = h("div.msg__made", { hidden: true });
-  const el = h("article.msg.msg--kazer", { dataset: { id: model.id } }, head, thinking, body, made, notice, actions);
+  const steps = h("ol.msg__steps", { hidden: true, "aria-label": "O que o KAZER está fazendo" });
+  const el = h("article.msg.msg--kazer", { dataset: { id: model.id } }, head, steps, thinking, body, made, notice, actions);
   model.el = el;
-  model.parts = { head, thinking, body, made, notice, actions, state: head.lastChild, thinkBody: thinking.lastChild };
+  model.parts = { head, steps, thinking, body, made, notice, actions, state: head.lastChild, thinkBody: thinking.lastChild };
   model.view = new MarkdownView(body);
   applyStatus(model);
   return el;
@@ -696,11 +697,34 @@ function paintBody(model) {
   if (model.role !== "assistant") return;
   model.painted = true;
   model.view.update(model.content || "");
+  paintSteps(model);
   paintArtifacts(model);
   if (model.thinking) {
     model.parts.thinking.hidden = false;
     model.parts.thinkBody.replaceChildren(renderMarkdown(model.thinking));
   }
+}
+
+function paintSteps(model) {
+  const list = model.parts?.steps;
+  if (!list) return;
+  const steps = model.steps || [];
+  if (!steps.length) {
+    list.hidden = true;
+    list.replaceChildren();
+    return;
+  }
+  list.hidden = false;
+  list.replaceChildren(
+    ...steps.map((label, index) =>
+      h(
+        `li.msg__step${index === steps.length - 1 && model.status === "streaming" ? ".is-now" : ""}`,
+        {},
+        h("span.msg__step-dot", { "aria-hidden": "true" }),
+        h("span", { text: label }),
+      ),
+    ),
+  );
 }
 
 function paintArtifacts(model) {
@@ -811,6 +835,10 @@ function handleEvent(model, event) {
     queueRender(model);
   } else if (event.type === "title") {
     applyTitle(event.conversation_id, event.title);
+  } else if (event.type === "step") {
+    // O KAZER conta o que está fazendo enquanto faz.
+    model.steps = [...(model.steps || []), event.label].slice(-6);
+    paintSteps(model);
   } else if (event.type === "artifacts") {
     // A resposta rendeu peças para a Biblioteca.
     model.artifacts = event.items;

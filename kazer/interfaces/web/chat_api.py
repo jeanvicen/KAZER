@@ -275,6 +275,24 @@ def chat_routes(ctx: WebContext, chat: ChatService | None) -> list[Route]:
         return JSONResponse(await run_in_threadpool(chat_service.artifact, user.id, artifact_id))
 
     @endpoint
+    async def connector_catalog(request: Request) -> Response:
+        user, _ = await account(request)
+        params = request.query_params
+        raw_page = params.get("page", "0")
+        if not raw_page.isdigit():
+            raise ChatError("invalid_request", 400)
+        page = await run_in_threadpool(
+            partial(
+                service().connectors,
+                user.id,
+                query=params.get("q", ""),
+                category=params.get("category", ""),
+                page=int(raw_page),
+            )
+        )
+        return JSONResponse(page)
+
+    @endpoint
     async def plans(request: Request) -> Response:
         user, _ = await account(request)
         return JSONResponse(await run_in_threadpool(service().plans, user.id))
@@ -371,6 +389,7 @@ def chat_routes(ctx: WebContext, chat: ChatService | None) -> list[Route]:
         Route("/api/attachments/{attachment_id}", attachment, methods=["GET", "DELETE"]),
         Route("/api/settings", settings, methods=["GET", "POST"]),
         Route("/api/plans", plans, methods=["GET"]),
+        Route("/api/connectors", connector_catalog, methods=["GET"]),
         Route("/api/library", library, methods=["GET"]),
         Route("/api/artifacts/{artifact_id}", artifact, methods=["GET", "DELETE"]),
         Route("/api/memories", memories, methods=["POST"]),

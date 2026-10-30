@@ -830,17 +830,127 @@ class SettingsPanel {
     );
   }
 
+  // Catálogo de conectores: busca, categorias e o que o plano desta conta
+  // libera em cada um. A lista vem do servidor, uma página por vez.
   section_conectores() {
-    return h(
-      "div.set-section",
-      {},
-      h(
-        "div.connectors.connectors--wide",
+    const state = { q: "", category: "", page: 0, loading: false, done: false };
+    const list = h("div.conns__list");
+    const count = h("p.conns__count", { text: "Carregando o catálogo…" });
+    const more = h("button.conns__more", { type: "button", hidden: true, text: "Ver mais" });
+    const search = h("input.set-field__input", {
+      type: "search",
+      placeholder: "Buscar conector",
+      "aria-label": "Buscar conector",
+      autocomplete: "off",
+      spellcheck: "false",
+      maxlength: "80",
+    });
+    const chips = h("div.conns__cats", { role: "tablist", "aria-label": "Categorias" });
+
+    const load = async ({ reset = false } = {}) => {
+      if (state.loading) return;
+      state.loading = true;
+      more.disabled = true;
+      if (reset) {
+        state.page = 0;
+        state.done = false;
+        list.replaceChildren();
+      }
+      const query = new URLSearchParams({ page: String(state.page) });
+      if (state.q) query.set("q", state.q);
+      if (state.category) query.set("category", state.category);
+      const result = await request(`/api/connectors?${query}`);
+      state.loading = false;
+      if (!result.ok) {
+        count.textContent = "Não deu para carregar o catálogo agora.";
+        return;
+      }
+      const data = result.data;
+      if (!chips.children.length) buildChips(data.categories);
+      for (const item of data.items) list.append(card(item));
+      count.textContent = describe(data);
+      state.done = !data.has_more;
+      more.hidden = state.done;
+      more.disabled = false;
+      state.page += 1;
+    };
+
+    const describe = (data) => {
+      const n = data.total;
+      const base = `${num(n)} conector${n === 1 ? "" : "es"} no catálogo`;
+      return state.q || state.category ? `${base} nesta busca.` : `${base}.`;
+    };
+
+    const buildChips = (categories) => {
+      const make = (value, label) =>
+        h(
+          "button.conns__cat",
+          {
+            type: "button",
+            role: "tab",
+            "aria-selected": String(state.category === value),
+            onclick: () => {
+              state.category = value;
+              for (const chip of chips.children) chip.setAttribute("aria-selected", String(chip.dataset.value === value));
+              load({ reset: true });
+            },
+            dataset: { value },
+          },
+          h("span", { text: label }),
+        );
+      chips.append(make("", "Todas"), ...categories.map((name) => make(name, name)));
+    };
+
+    const card = (item) => {
+      const tag = (text, kind) => h(`span.conn__tag${kind ? `.is-${kind}` : ""}`, { text });
+      return h(
+        "article.conn",
         {},
-        h("span.connectors__icon", {}, icon("plug")),
-        h("p.connectors__title", { text: "Nenhum conector conectado." }),
-        h("p.connectors__text", { text: "Conectores ligam o KAZER a outros serviços, sempre com a sua autorização e com as credenciais guardadas só no servidor. Nenhuma integração está disponível ainda." }),
+        h(
+          "div.conn__head",
+          {},
+          h("span.conn__name", { text: item.name }),
+          h("span.conn__cat", { text: item.category }),
+        ),
+        h(
+          "div.conn__tags",
+          {},
+          item.can_read ? tag("Leitura", "read") : tag("Sem leitura neste plano", "off"),
+          item.can_write
+            ? tag("Escrita", "write")
+            : tag(item.write_plan ? `Escrita no ${item.write_plan === "ultra" ? "Ultra" : "Pro"}` : "Só leitura", "off"),
+          item.weight > 1 ? tag(`Usa ${item.weight}× o limite`, "cost") : null,
+        ),
+      );
+    };
+
+    let timer = 0;
+    search.addEventListener("input", () => {
+      window.clearTimeout(timer);
+      timer = window.setTimeout(() => {
+        state.q = search.value.trim();
+        load({ reset: true });
+      }, 260);
+    });
+    more.addEventListener("click", () => load());
+    load();
+
+    return h(
+      "div",
+      {},
+      this.group(
+        "Conectar",
+        h(
+          "div.connectors.connectors--wide",
+          {},
+          h("span.connectors__icon", {}, icon("plug")),
+          h("p.connectors__title", { text: "Nenhum conector conectado." }),
+          h("p.connectors__text", {
+            text: "O KAZER reconhece os serviços abaixo e já publica o que cada plano vai poder fazer em cada um. Ligar uma conta ainda não está aberto; quando abrir, as credenciais ficam só no servidor e nada é usado sem a sua autorização.",
+          }),
+        ),
       ),
+      this.group("Catálogo", h("label.set-field", {}, h("span.set-field__label", { text: "Buscar" }), search), chips, count, list, more),
     );
   }
 

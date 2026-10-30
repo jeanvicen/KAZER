@@ -3681,3 +3681,189 @@ html[data-motion="reduzido"] .offline-bar * {
     transform: none;
   }
 }
+
+/* ---------- O que o KAZER está fazendo (narração) ---------- */
+
+.msg__steps {
+  display: grid;
+  gap: 0.3rem;
+  margin: 0 0 0.6rem;
+  padding: 0;
+  list-style: none;
+}
+
+.msg__steps[hidden] {
+  display: none;
+}
+
+.msg__step {
+  display: grid;
+  grid-template-columns: 0.75rem 1fr;
+  gap: 0.45rem;
+  align-items: center;
+  color: var(--c-text-3);
+  font-size: 0.8125rem;
+  animation: step-in 0.3s ease-out both;
+}
+
+.msg__step-dot {
+  width: 0.35rem;
+  height: 0.35rem;
+  margin-inline: 0.2rem;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+/* O passo em andamento pulsa; os anteriores ficam quietos. */
+.msg__step.is-now {
+  color: var(--c-text-2);
+}
+
+.msg__step.is-now .msg__step-dot {
+  background: #8ab0ff;
+  animation: step-pulse 1.3s ease-in-out infinite;
+}
+
+@keyframes step-in {
+  from {
+    opacity: 0;
+    transform: translateX(-0.3rem);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes step-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 0.6;
+  }
+  50% {
+    transform: scale(1.6);
+    opacity: 1;
+  }
+}
+
+/* ---------- Catálogo de conectores ---------- */
+
+.conns__cats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  margin-top: 0.6rem;
+}
+
+.conns__cat {
+  padding: 0.3rem 0.6rem;
+  border: 1px solid var(--c-border);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--c-text-2);
+  font: inherit;
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition:
+    background 0.18s ease,
+    color 0.18s ease,
+    border-color 0.18s ease;
+}
+
+.conns__cat[aria-selected="true"] {
+  border-color: transparent;
+  background: var(--c-text);
+  color: var(--c-bg);
+}
+
+.conns__count {
+  margin: 0.75rem 0 0.4rem;
+  color: var(--c-text-3);
+  font-size: 0.8125rem;
+}
+
+.conns__list {
+  display: grid;
+  gap: 0.4rem;
+}
+
+.conn {
+  display: grid;
+  gap: 0.35rem;
+  padding: 0.65rem 0.75rem;
+  border: 1px solid var(--c-border);
+  border-radius: 0.7rem;
+  background: var(--c-surface);
+}
+
+.conn__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.conn__name {
+  font-size: 0.9375rem;
+  font-weight: 500;
+}
+
+.conn__cat {
+  flex: none;
+  color: var(--c-text-3);
+  font-size: 0.6875rem;
+}
+
+.conn__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+}
+
+.conn__tag {
+  padding: 0.1rem 0.45rem;
+  border-radius: 999px;
+  font-size: 0.6875rem;
+  background: rgb(255 255 255 / 0.06);
+  color: var(--c-text-2);
+}
+
+.conn__tag.is-read {
+  background: rgb(74 222 128 / 0.14);
+  color: #7ee2a8;
+}
+
+.conn__tag.is-write {
+  background: rgb(91 140 255 / 0.16);
+  color: #8ab0ff;
+}
+
+.conn__tag.is-cost {
+  background: rgb(255 149 64 / 0.16);
+  color: #ffb066;
+}
+
+.conn__tag.is-off {
+  color: var(--c-text-3);
+}
+
+.conns__more {
+  margin-top: 0.6rem;
+  padding: 0.6rem 1rem;
+  border: 1px solid var(--c-border);
+  border-radius: 0.7rem;
+  background: transparent;
+  color: var(--c-text);
+  font: inherit;
+  font-size: 0.875rem;
+  cursor: pointer;
+}
+
+.conns__more:hover {
+  background: var(--c-surface);
+}
+
+.conns__more[hidden] {
+  display: none;
+}

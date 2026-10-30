@@ -215,6 +215,10 @@ class GenerationHub:
                     live.push({"type": "thinking", "text": event.text})
                 elif event.kind == "searching":
                     live.push({"type": "searching"})
+                elif event.kind == "activity":
+                    # Narração do que está acontecendo: rótulo curto do servidor,
+                    # nunca conteúdo externo colado direto.
+                    live.push({"type": "step", "label": event.text})
                 elif event.kind == "stop":
                     stop = event.text
                 if time.monotonic() - last_save >= self._persist_every:

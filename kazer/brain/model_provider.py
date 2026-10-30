@@ -79,7 +79,7 @@ class GenerationRequest:
 class StreamEvent:
     """Evento incremental: texto, resumo de raciocínio, busca ou fim (com motivo)."""
 
-    kind: Literal["text", "thinking", "searching", "stop"]
+    kind: Literal["text", "thinking", "searching", "activity", "stop"]
     text: str = ""
 
 
@@ -463,7 +463,12 @@ class AnthropicProvider:
                             return
                         if event.type == "content_block_start":
                             if event.content_block.type == "server_tool_use":
+                                tool = str(getattr(event.content_block, "name", "") or "")
                                 yield StreamEvent("searching")
+                                label = _ACTIVITY.get(tool, "Usando uma ferramenta")
+                                yield StreamEvent("activity", label)
+                            elif event.content_block.type == "web_search_tool_result":
+                                yield StreamEvent("activity", _seen(event.content_block))
                         elif event.type == "content_block_delta":
                             if event.delta.type == "text_delta":
                                 yield StreamEvent("text", event.delta.text)
@@ -485,6 +490,24 @@ class AnthropicProvider:
             if cancel.cancelled():
                 return
             raise ProviderError("model_unreachable") from None
+
+
+# O que a interface mostra enquanto cada ferramenta do servidor roda.
+_ACTIVITY = {
+    "web_search": "Buscando na web",
+    "web_fetch": "Abrindo uma página",
+    "code_execution": "Rodando o código",
+}
+
+
+def _seen(block: Any) -> str:
+    """Resume o que a ferramenta devolveu, sem copiar conteúdo externo."""
+    content = getattr(block, "content", None)
+    if isinstance(content, list):
+        total = len(content)
+        if total:
+            return f"Li {total} resultado{'s' if total > 1 else ''}"
+    return "Resultado recebido"
 
 
 # ---------------------------------------------------------------------------

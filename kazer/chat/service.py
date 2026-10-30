@@ -27,7 +27,7 @@ from kazer.brain.model_provider import (
     ProviderError,
     Turn,
 )
-from kazer.chat import artifacts, context, plans
+from kazer.chat import artifacts, connectors, context, plans
 from kazer.chat.generation import GenerationHub, LiveGeneration
 from kazer.chat.identity import current_access_token
 from kazer.chat.protocols import AttachmentStorage, ChatStorage
@@ -64,6 +64,8 @@ MAX_MEMORIES = 100
 # Biblioteca: filtros aceitos e itens por página.
 LIBRARY_KINDS = frozenset({"tudo", "imagem", "documento", "artefato"})
 LIBRARY_PAGE = 30
+# Conectores por página do catálogo.
+CONNECTOR_PAGE = 60
 MAX_MEMORY_CHARS = 500
 PAGE_MESSAGES = 40
 # Título gerado pelo modelo a partir da primeira troca.
@@ -411,6 +413,31 @@ class ChatService:
                 f"{items[-1]['created_at']}.{items[-1]['id']}" if has_more and items else None
             ),
             "kinds": sorted(LIBRARY_KINDS),
+        }
+
+    # ---------- Conectores ----------
+
+    def connectors(
+        self, user_id: str, *, query: str = "", category: str = "", page: int = 0
+    ) -> dict[str, Any]:
+        """Catálogo com o que o plano desta conta pode fazer em cada conector."""
+        if len(query) > 80 or (category and category not in connectors.CATEGORIES):
+            raise ChatError("invalid_request", 400)
+        page = max(page, 0)
+        features = self.usage_state(user_id).get("features") or {}
+        found, total = connectors.search(
+            query, category, limit=CONNECTOR_PAGE, offset=page * CONNECTOR_PAGE
+        )
+        return {
+            "items": [item.public(features) for item in found],
+            "total": total,
+            "page": page,
+            "has_more": (page + 1) * CONNECTOR_PAGE < total,
+            "categories": list(connectors.CATEGORIES),
+            # Nenhuma conexão existe ainda; a interface diz isso em vez de
+            # oferecer um botão que não liga nada.
+            "connecting_open": False,
+            "limit": int(features.get("connector_limit") or 0),
         }
 
     def artifact(self, user_id: str, artifact_id: str) -> dict[str, Any]:
