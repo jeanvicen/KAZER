@@ -72,7 +72,7 @@ Login, confirmação de e-mail e sessão já válida levam **direto ao chat** (s
 - **Biblioteca** (`library.js` + `library.css`, baixados quando a aba abre): a gaveta tem duas abas, **Conversas** e **Biblioteca**. A Biblioteca reúne o que você enviou (fotos, documentos, arquivos) e o que o KAZER produziu, com filtros (Tudo, Do KAZER, Imagens, Docs), uma página por vez ao rolar e miniatura carregada só quando o item chega perto da tela.
 - **Artefatos:** quando a resposta traz uma página, um componente, um SVG, um diagrama ou um arquivo de dados inteiro, esse bloco vira artefato: aparece numa faixa embaixo da resposta, abre num painel com copiar e baixar, e fica na Biblioteca. O reconhecimento é do servidor (`kazer/chat/artifacts.py`), então funciona com qualquer modelo configurado; trecho curto continua sendo trecho de código na conversa.
 - **Forja** (`forja.js` + `forja.css`): a oficina de código, na terceira aba da gaveta. Nela o modelo recebe instruções para entregar **arquivos inteiros**, com nome na própria cerca, em vez de trechos — o que alimenta a Biblioteca com artefatos de verdade. A Fenda bate o martelo de tempos em tempos na aba. **Só nos planos pagos:** quem está no gratuito vê o que a Forja faz e o caminho para destravar; a trava é do servidor (`402 plan_required`), não da interface.
-- **Conectores:** *Configurações › Conectores* traz o catálogo com **980 serviços** em 30 categorias, com busca e filtro. Cada um já publica o que cada plano vai poder fazer nele e quanto custa da franquia: o GitHub lê em qualquer plano e só escreve no Pro; o Canva escreve no gratuito mas gasta 4× o limite, porque o limite acaba conforme a tarefa, não conforme o relógio. **Nada está conectado ainda** — ligar uma conta não está aberto, e a tela diz isso.
+- **Conectores:** *Configurações › Conectores* traz o catálogo com **980 serviços** em 30 categorias, com busca e filtro. Cada um já publica o que cada plano vai poder fazer nele e quanto custa da franquia: o GitHub lê em qualquer plano e só escreve no Pro; o Canva escreve no gratuito mas gasta 4× o limite, porque o limite acaba conforme a tarefa, não conforme o relógio. **Ligar funciona de verdade, por MCP** (`kazer/chat/mcp.py`): você dá o endereço do servidor MCP do serviço (e a credencial, quando ele pede), o KAZER aperta a mão, lista as ferramentas e só então grava — "conectado" é estado real, não rótulo. Na conversa, essas ferramentas vão ao modelo e o resultado volta como **resultado de ferramenta**, nunca como instrução do sistema. A credencial fica só no servidor: a listagem devolve nome, ferramentas e estado, e `select` direto na tabela é negado — o único caminho até o segredo é `kazer_connection_secret()`, que exige `auth.uid()`. Só HTTPS, com prazo curto e resposta limitada.
 - **O KAZER conta o que está fazendo:** enquanto usa uma ferramenta, aparecem os passos acima da resposta ("Buscando na web", "Li 3 resultados"), com o último pulsando. Os rótulos são escritos pelo servidor: conteúdo de terceiros não entra na narração.
 - **Gaveta:** nova conversa, busca, histórico por data (Hoje, Ontem, 7 e 30 dias), renomear, apagar com confirmação, configurações e sair. No computador ela fica fixa ao lado.
 - **Enquanto o KAZER trabalha:** a Fenda ganha uma aura que pulsa, o estado ("Pensando…") recebe um brilho que atravessa o texto **no computador** (no celular fica só a respiração, que é bem mais barata de repintar) e, enquanto só há raciocínio, uma barra marca que a resposta está sendo construída, sem fingir que já há texto.
@@ -83,6 +83,34 @@ Login, confirmação de e-mail e sessão já válida levam **direto ao chat** (s
 - **Sem internet** (`net.js` + `offline.js`): pedidos com prazo, novas tentativas com espera crescente e uma sonda real (`/api/health`), porque o `navigator.onLine` sozinho mente. Quando a rede cai aparece a tela "Ops, parece que tamo sem internet, fi.", com o **Kazinho**, um personagem em pixel com a cabeça da Fenda, que varre a casa, cochila, brinca de bola, treina e mostra o muque. Quando a conexão volta ele comemora e a tela some. O service worker (`/sw.js`) guarda só a casca do app, nunca `/api/`, para essa tela abrir até sem rede.
 
 Sem um modelo configurado, o chat abre, mostra o histórico e explica que o KAZ 1.1 ainda não está conectado: **nenhuma resposta é inventada**.
+
+## KAZER no terminal
+
+O comando `kazer` abre o KAZER no terminal (`kazer/interfaces/terminal/`). Não é um KAZER paralelo: ele fala com o **mesmo servidor** pela **mesma API** do site, então as conversas são as mesmas, as habilidades instaladas entram no contexto, os conectores ligados viram ferramentas, o plano limita e a memória lembra. Quando o servidor ganha um recurso, o terminal ganha junto — e não tem como divergir.
+
+```
+kazer entrar                  entra com a conta do site (a senha não aparece nem fica no histórico)
+kazer                         abre uma conversa
+kazer "sua pergunta"          responde e sai
+cat erro.log | kazer          a pergunta (ou o contexto) vem pelo cano
+kazer conversas [busca]       lista as conversas; `kazer continuar 2` volta para uma
+kazer habilidades             o que está instalado na conta
+kazer conectores              o que está ligado, e quantas ferramentas cada um trouxe
+kazer status                  conta, plano e quanto resta da janela
+kazer servidor https://…      troca de servidor (ou a variável `KAZER_URL`)
+kazer sair                    encerra a sessão deste computador
+```
+
+Na conversa: `/nova`, `/conversas`, `/continuar <n>`, `/habilidades`, `/conectores`, `/projetos`, `/biblioteca`, `/status`, `/forja`, `/pensamento`, `/sair`. A resposta chega em streaming, os passos das ferramentas aparecem enquanto acontecem, e **Ctrl-C interrompe no servidor**, não só na tela.
+
+Decisões que valem explicar:
+
+- **A credencial é o cookie de sessão do site**, guardado em `~/.kazer/sessao.json` com permissão `600` dentro de uma pasta `700`. Ela nunca entra em argumento de linha de comando (que o `ps` de qualquer um mostra), nunca é impressa e nunca aparece em erro. A senha só existe durante o `kazer entrar`: ela não é guardada em lugar nenhum. Quando o servidor renova a sessão, o arquivo é regravado — e sessão inválida é apagada em vez de ficar para trás.
+- **Fora de `localhost`, só `https`.** Em `http` o cookie iria em claro, então o terminal recusa o endereço.
+- **Saída limpa quando não é terminal.** `kazer "pergunta" > resposta.txt` grava a resposta, sem moldura, sem recuo e sem cor — dá para usar em script e em atalho de editor. Com `NO_COLOR=1` ou num terminal sem cor, tudo continua legível.
+- **A marca no terminal é a Fenda** de [docs/brand.md](docs/brand.md), construída pela mesma geometria em blocos; em terminal que não fala UTF-8 ela simplesmente não aparece.
+
+`KAZER_HOME` muda a pasta de configuração (útil em máquina compartilhada e em teste). O servidor padrão é `http://localhost:8000`, o mesmo padrão do app.
 
 ## Conectar um modelo (KAZ 1.1)
 

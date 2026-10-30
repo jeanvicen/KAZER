@@ -32,8 +32,18 @@ Aplicar **em ordem**, depois das duas migrações de fundação que já existem:
    operações dos artefatos, a listagem que junta enviados e produzidos, e as
    duas funções que ganham um campo novo (`kazer_message_json` passa a dizer o
    que a resposta rendeu; `kazer_export` leva os artefatos junto).
+4. `supabase/migrations/20261030160000_kazer_projects_skills.sql` — projetos
+   (nome e objetivo, com a conversa apontando para um) e habilidades (formato
+   `SKILL.md`: nome, descrição e instruções), incluindo o catálogo do que foi
+   publicado e a instalação na própria conta.
+5. `supabase/migrations/20261030190000_kazer_connections.sql` — os conectores
+   ligados. **A credencial é o ponto sensível**: a tabela não tem política de
+   leitura e `revoke all ... from anon, authenticated` fecha o acesso direto,
+   então `kazer_connections()` devolve nome, ferramentas e estado, e o único
+   caminho até o segredo é `kazer_connection_secret()`, `security definer` e
+   presa a `auth.uid()`.
 
-As duas são **aditivas**: só criam colunas (`add column if not exists`), tabelas,
+Todas são **aditivas**: só criam colunas (`add column if not exists`), tabelas,
 índices e funções novas. Nenhuma tabela, política, dado ou migração anterior é
 alterada ou removida.
 
@@ -146,10 +156,23 @@ psql -f supabase/migrations/20261029132400_fix_auth_signup_provisioning.sql
 psql -f supabase/migrations/20261029180000_kazer_chat_storage.sql
 psql -f supabase/migrations/20261029181000_kazer_chat_operations.sql
 psql -f supabase/migrations/20261030120000_kazer_library.sql
-psql -f supabase/tests/chat_storage_test.sql   # cenário completo
-psql -f supabase/tests/rls_test.sql            # isolamento entre contas
-psql -f supabase/tests/library_test.sql        # Biblioteca e artefatos
+psql -f supabase/migrations/20261030160000_kazer_projects_skills.sql
+psql -f supabase/migrations/20261030190000_kazer_connections.sql
+psql -f supabase/tests/chat_storage_test.sql     # cenário completo
+psql -f supabase/tests/rls_test.sql              # isolamento entre contas
+psql -f supabase/tests/library_test.sql          # Biblioteca e artefatos
+psql -f supabase/tests/projects_skills_test.sql  # projetos e habilidades
+psql -f supabase/tests/connections_test.sql      # conectores e a credencial
 ```
+
+`connections_test.sql` prende o que mais importa nos conectores: a credencial
+não sai em listagem, outra conta não a lê nem desliga nem apaga o conector,
+religar o mesmo serviço atualiza em vez de duplicar, o teto do plano é
+respeitado, e desligar mantém a credencial enquanto apagar leva tudo.
+
+`projects_skills_test.sql` cobre projetos e habilidades: criar, renomear,
+apagar (a conversa fica, sem projeto), o teto de cada um, publicar e instalar
+uma habilidade de outra pessoa, e o isolamento entre contas.
 
 `library_test.sql` cobre a Biblioteca: gravar os artefatos de uma resposta,
 substituí-los quando ela é gerada de novo, juntar as duas origens na listagem,

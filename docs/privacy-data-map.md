@@ -27,10 +27,17 @@ Onde o chat guarda depende do ambiente: com o Supabase configurado (produção),
 | Preferências (apelido, estilo, instruções, interface) | Ajustar o assistente e a interface | `preferences` / `kazer_preferences` | Até alterar ou excluir a conta |
 | Plano da conta (`free`, `pro`, `ultra`) | Saber a franquia de uso | `kazer_plans` (só leitura para o dono) | Enquanto a conta existir |
 | Artefatos (páginas, componentes, SVG, diagramas e dados que o KAZER produziu) | Guardar na Biblioteca o que foi feito | `artifacts` / `kazer_artifacts` | Até apagar o artefato, a conversa ou a conta |
+| Projetos (nome, objetivo) e a qual projeto a conversa pertence | Agrupar conversas por assunto | `projects` / `kazer_projects`, `conversations.project_id` | Até apagar o projeto ou a conta |
+| Habilidades (nome, descrição, instruções, se está ligada, se foi publicada) | Entrar no contexto quando a descrição casa com o pedido | `skills` / `kazer_skills` | Até apagar a habilidade ou a conta |
+| Conectores ligados: endereço do servidor MCP, **credencial do serviço**, ferramentas anunciadas e estado | Executar a ferramenta do serviço em nome da conta | `connections` / `kazer_connections` | Até desligar o conector ou excluir a conta |
 | Contagem de uso (unidades e horário, sem conteúdo) | Cota no servidor | `usage_events`, `usage_windows` | 2 dias |
 | Fuso horário do navegador | Informar a data ao modelo | Só na requisição | Não é guardado |
 
 O **título** de cada conversa passa a ser escrito pelo modelo: depois da primeira resposta, a pergunta e a resposta vão ao provedor configurado mais uma vez, só para resumir o assunto em poucas palavras. É o mesmo provedor que já recebeu a conversa; nenhum destino novo entra em cena.
+
+A **credencial de um conector** é o dado mais sensível que o chat guarda, porque é a chave de um serviço de terceiro. Ela fica no servidor e só lá: `kazer_connections()` devolve nome, ferramentas e estado, e nada mais; `select` direto na tabela é negado a `authenticated`, então um `GET` no PostgREST não a alcança; o único caminho até ela é `kazer_connection_secret()`, que é `security definer`, exige `auth.uid()` e só devolve a credencial da própria conta. Ela nunca volta ao navegador — nem em listagem, nem em erro — e nunca entra em log. Quando o KAZER usa a ferramenta, a credencial vai no cabeçalho da chamada ao servidor MCP do serviço, e o que ele responde volta como **resultado de ferramenta**: dado vindo de fora, nunca instrução do sistema. Desligar o conector mantém a credencial guardada; apagar o conector leva tudo.
+
+As **habilidades publicadas** (quando a pessoa marca "compartilhar") passam a ser legíveis por qualquer conta, por decisão de quem publicou: nome, descrição e instruções. As não publicadas só o dono lê.
 
 O **microfone** usa o reconhecimento de fala do próprio navegador. Em alguns navegadores (Chrome, por exemplo) o áudio é enviado ao serviço do fabricante para virar texto — esse trecho não passa pelo KAZER, que recebe só o texto pronto e nunca grava nem guarda áudio. A interface avisa isso na primeira vez que o botão é usado.
 
@@ -50,6 +57,19 @@ Contas que nunca confirmam o e-mail são apagadas automaticamente após 7 dias. 
 - Links de e-mail carregam o token no fragmento (`#verify=…`, `#reset=…`). Navegadores não enviam fragmentos ao servidor, então tokens não aparecem em logs de acesso nem em `Referer`. A página remove o fragmento da barra de endereço assim que o lê.
 - Nenhum script, fonte, imagem ou folha de estilo externa. A fonte do logotipo (Grenze Gotisch, OFL) é servida localmente. A CSP bloqueia qualquer origem de terceiros.
 - Sem analytics, pixels de rastreamento ou SDKs de login social.
+
+## Terminal (`kazer`)
+
+O KAZER no terminal usa a **mesma API e a mesma sessão** do site, então nada novo é coletado no servidor. O que muda é que um pedaço da credencial passa a existir na máquina da pessoa:
+
+| Dado | Onde fica | Proteção | Retenção |
+| --- | --- | --- | --- |
+| Cookie de sessão, endereço do servidor e e-mail da conta | `~/.kazer/sessao.json` (`KAZER_HOME` muda a pasta) | Arquivo `600` dentro de pasta `700`, criado com `O_EXCL` e já no modo certo; gravação atômica | Até `kazer sair`, até a sessão expirar (o terminal apaga o arquivo) ou até a pessoa apagar o arquivo |
+
+- A **senha** só existe durante o `kazer entrar`: é lida por `getpass` (não aparece na tela nem no histórico do shell), vai na requisição e não é guardada em lugar nenhum.
+- A credencial **nunca** entra em argumento de linha de comando (visível no `ps` de qualquer usuário da máquina), nunca é impressa e nunca aparece em mensagem de erro.
+- Fora de `localhost`, o terminal só aceita `https`: em `http` o cookie iria em claro.
+- O histórico de comandos do shell (`~/.bash_history` e afins) guarda o que foi digitado — inclusive a pergunta de um `kazer "…"`. Isso é do shell, não do KAZER; quem não quiser isso usa `kazer` interativo, onde a pergunta não passa pela linha de comando.
 
 ## Serviços externos
 
