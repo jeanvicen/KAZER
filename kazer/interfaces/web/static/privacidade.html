@@ -22,14 +22,15 @@
 
     <article>
       <h1>Política de Privacidade</h1>
-      <p class="meta">Versão 1.1 · Vigente desde 29 de outubro de 2026</p>
+      <p class="meta">Versão 1.2 · Vigente desde 30 de outubro de 2026</p>
 
       <section class="summary" aria-labelledby="resumo">
         <h2 id="resumo">Resumo</h2>
         <ul>
           <li>Para ter uma conta, guardamos apenas seu e-mail e um hash da sua senha.</li>
-          <li>Conversas, anexos e memórias ficam na sua conta até você apagar; dá para exportar e excluir tudo nas configurações.</li>
+          <li>Conversas, anexos e memórias ficam na sua conta até você apagar; dá para exportar e excluir tudo nas configurações. Para o histórico não crescer sem fim, guardamos as suas 100 conversas mais recentes.</li>
           <li>Para gerar respostas, suas mensagens são enviadas ao provedor de modelo de IA configurado pelo KAZER.</li>
+          <li>O microfone usa o reconhecimento de fala do seu navegador: o áudio vai para o fabricante dele, não para o KAZER, que recebe só o texto.</li>
           <li>Usamos um único cookie, estritamente necessário para manter você conectado.</li>
           <li>Não usamos publicidade, analytics, pixels de rastreamento nem login social.</li>
           <li>Você pode pedir acesso, correção ou exclusão dos seus dados a qualquer momento.</li>
@@ -55,10 +56,11 @@
             <tr><td>Datas de criação e de confirmação da conta</td><td>Gerenciar o ciclo de vida da conta</td><td>Execução de contrato (art. 7º, V)</td><td>Enquanto a conta existir; contas não confirmadas são apagadas após 7 dias</td></tr>
             <tr><td>Identificador de sessão (somente o hash)</td><td>Manter você conectado</td><td>Execução de contrato (art. 7º, V)</td><td>Até 14 dias ou até você sair</td></tr>
             <tr><td>Links de confirmação e de redefinição (somente o hash)</td><td>Garantir uso único e expiração</td><td>Execução de contrato (art. 7º, V)</td><td>24 horas (confirmação) e 30 minutos (redefinição)</td></tr>
-            <tr><td>Conversas: mensagens, respostas e títulos</td><td>Prestar o chat e manter seu histórico</td><td>Execução de contrato (art. 7º, V)</td><td>Até você apagar a conversa, o histórico ou a conta</td></tr>
+            <tr><td>Conversas: mensagens, respostas e títulos</td><td>Prestar o chat e manter seu histórico</td><td>Execução de contrato (art. 7º, V)</td><td>Até você apagar a conversa, o histórico ou a conta; acima de 100 conversas guardadas, a mais antiga é apagada automaticamente quando uma nova começa</td></tr>
             <tr><td>Anexos (imagens e arquivos enviados na conversa)</td><td>Permitir que o assistente analise o conteúdo que você enviou</td><td>Execução de contrato (art. 7º, V)</td><td>Até você apagar a conversa ou a conta; anexos nunca enviados são apagados em 24 horas</td></tr>
             <tr><td>Memórias que você salva</td><td>Personalizar respostas, só quando a memória está ligada</td><td>Consentimento (art. 7º, I), revogável a qualquer momento</td><td>Até você apagar a memória ou a conta</td></tr>
             <tr><td>Preferências (apelido, estilo, instruções pessoais e opções de interface)</td><td>Ajustar o assistente e a interface ao seu gosto</td><td>Execução de contrato (art. 7º, V)</td><td>Até você alterar ou excluir a conta</td></tr>
+            <tr><td>Plano da conta (gratuito ou pago)</td><td>Saber a franquia de uso a que você tem direito</td><td>Execução de contrato (art. 7º, V)</td><td>Enquanto a conta existir</td></tr>
             <tr><td>Contagem de uso (quantidade e horário dos pedidos, sem conteúdo)</td><td>Aplicar limites de uso justos e proteger o serviço</td><td>Legítimo interesse (art. 7º, IX)</td><td>2 dias</td></tr>
             <tr><td>Fuso horário do navegador</td><td>Informar a data correta ao assistente</td><td>Execução de contrato (art. 7º, V)</td><td>Não é guardado: vai só junto do pedido</td></tr>
             <tr><td>Endereço IP</td><td>Limitar tentativas automatizadas e proteger contas contra fraude</td><td>Legítimo interesse (art. 7º, IX)</td><td>Apenas na memória do servidor, por até 1 hora</td></tr>
@@ -75,7 +77,9 @@
       <p>Não vendemos dados pessoais nem os compartilhamos para publicidade. Alguns fornecedores tratam dados em nome do KAZER, como operadores:</p>
       <ul>
         <li><strong>Hospedagem — Vercel Inc.:</strong> infraestrutura em que o site funciona. Processa dados técnicos das requisições, como endereço IP e horário, para entregar e proteger o serviço, segundo as políticas da própria Vercel.</li>
+        <li><strong>Banco de dados e armazenamento — Supabase, Inc.:</strong> guarda a conta, as conversas, as mensagens, os anexos, as memórias e as preferências, em servidores nos Estados Unidos. O acesso é isolado por conta no próprio banco, de modo que uma conta não alcança os dados de outra.</li>
         <li><strong>Modelo de inteligência artificial — provedor configurado pelo KAZER:</strong> recebe, a cada pedido, a mensagem, os anexos enviados, o histórico recente da conversa, suas preferências de estilo e instruções pessoais e, se a memória estiver ligada, as memórias salvas, para gerar a resposta. Não recebe seu e-mail nem sua senha.</li>
+        <li><strong>Reconhecimento de fala — fabricante do seu navegador:</strong> só quando você aperta o microfone. Em alguns navegadores, o áudio captado é enviado ao serviço de reconhecimento do próprio fabricante (Google, Apple ou Microsoft, conforme o navegador) para virar texto. Esse trecho acontece no seu navegador, sob a política dele: o KAZER não grava nem recebe o áudio, apenas o texto já transcrito, e avisa isso na primeira vez que você usa o recurso.</li>
         <li><strong>Envio de e-mail — provedor SMTP contratado pelo KAZER:</strong> recebe seu endereço de e-mail e o texto da mensagem, incluindo o link de confirmação ou de redefinição. O provedor será identificado nesta Política quando o envio estiver ativo no ambiente público.</li>
       </ul>
       <p class="pending"><strong>Provedor de modelo em definição.</strong> O nome do provedor de IA, o país onde ele processa os dados e as condições de retenção e de uso para treinamento previstas no contrato serão publicados nesta seção antes da abertura do chat ao público.</p>
@@ -86,6 +90,7 @@
 
       <h2 id="ia">7. Funcionalidades de inteligência artificial</h2>
       <p>O chat do KAZER envia ao provedor de modelo descrito na seção 5 apenas o necessário para cada resposta. O KAZER não usa suas conversas para treinar modelos próprios. O que o provedor pode fazer com os dados recebidos (retenção e eventual uso para treinamento) depende do contrato e das configurações dele; não fazemos promessas que esses contratos não garantam, e essas condições serão publicadas na seção 5.</p>
+      <p>Depois da primeira resposta de cada conversa, o KAZER pede ao mesmo provedor um título curto que resuma o assunto, e é esse título que aparece no seu histórico. Nenhum destino novo recebe a conversa por causa disso. O ditado por voz, quando você usa o microfone, é descrito na seção 5.</p>
       <p>A busca na web, a pesquisa em várias etapas e os conectores só funcionam quando estão de fato disponíveis; a interface mostra quando não estão. Memórias são salvas apenas por você, nunca automaticamente, e você pode desligá-las ou apagá-las a qualquer momento. As respostas são geradas automaticamente e podem conter erros.</p>
 
       <h2 id="seguranca">8. Segurança</h2>

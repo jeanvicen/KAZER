@@ -19,9 +19,10 @@ from kazer.auth.supabase_service import SupabaseAuthService, SupabaseSession
 from kazer.brain.model_provider import CancelToken, Capabilities, GenerationRequest, StreamEvent
 from kazer.chat.service import ChatService
 from kazer.chat.store import ChatStore
+from kazer.chat.supabase_store import SupabaseChatStore
 from kazer.chat.uploads import UploadStorage
 from kazer.config.settings import Settings
-from kazer.interfaces.web.app import create_app
+from kazer.interfaces.web.app import _build_chat, create_app
 from kazer.security.rate_limiter import RateLimiter
 
 ORIGIN = "http://testserver"
@@ -205,7 +206,9 @@ def test_account_deletion_needs_the_service_key(
     assert wrong.json()["error"] == "invalid_password"
 
 
-def test_serverless_with_supabase_keeps_chat_closed_honestly() -> None:
+def test_serverless_with_supabase_opens_the_chat() -> None:
+    """Com o Supabase configurado, as conversas vão para o Postgres e o chat abre
+    mesmo em função serverless (o disco efêmero deixa de ser o problema)."""
     settings = Settings(
         environment="test",
         public_url=ORIGIN,
@@ -214,13 +217,21 @@ def test_serverless_with_supabase_keeps_chat_closed_honestly() -> None:
         supabase_url="https://example.supabase.co",
         supabase_publishable_key="sb_publishable_test",
     )
+    chat = _build_chat(settings, None)
+    assert type(chat._store).__name__ == "SupabaseChatStore"
+    assert type(chat._uploads).__name__ == "SupabaseUploadStorage"
+    # Sem Supabase, o mesmo builder cai no SQLite local.
+    local = _build_chat(Settings(environment="test", public_url=ORIGIN), None)
+    assert type(local._store).__name__ == "ChatStore"
+
+
+def test_chat_without_supabase_stays_closed_on_serverless() -> None:
+    """Sem Supabase, o SQLite não sobrevive à função: o chat fica fechado."""
+    settings = Settings(environment="test", public_url=ORIGIN, cookie_secure=False, serverless=True)
     fake = FakeSupabase()
     fake.add_user("ana@example.com", "correct horse battery")
     auth = SupabaseAuthService(
-        settings.supabase_url,
-        settings.supabase_publishable_key,
-        ORIGIN,
-        RateLimiter(),
+        "https://example.supabase.co", "sb_publishable_test", ORIGIN, RateLimiter(),
         client=fake,  # type: ignore[arg-type]
     )
     with TestClient(create_app(settings, auth), headers={"Origin": ORIGIN}) as client:
@@ -230,3 +241,51 @@ def test_serverless_with_supabase_keeps_chat_closed_honestly() -> None:
         )
         response = client.get("/api/settings")
         assert (response.status_code, response.json()) == (503, {"error": "chat_unavailable"})
+
+
+def test_unreachable_chat_database_is_reported_honestly() -> None:
+    """Postgres fora do ar não derruba o servidor: vira `chat_unavailable`."""
+    settings = Settings(
+        environment="test",
+        public_url=ORIGIN,
+        cookie_secure=False,
+        supabase_url="https://offline.invalid",
+        supabase_publishable_key="sb_publishable_test",
+    )
+    fake = FakeSupabase()
+    fake.add_user("ana@example.com", "correct horse battery")
+    auth = SupabaseAuthService(
+        settings.supabase_url, settings.supabase_publishable_key, ORIGIN, RateLimiter(),
+        client=fake,  # type: ignore[arg-type]
+    )
+    broken = SupabaseChatStore(
+        settings.supabase_url,
+        settings.supabase_publishable_key,
+        client=Unreachable(),  # type: ignore[arg-type]
+    )
+    chat = ChatService(broken, UploadStorage(Path("/nonexistent")), Echo())
+    with TestClient(create_app(settings, auth, chat=chat), headers={"Origin": ORIGIN}) as client:
+        client.post(
+            "/api/auth/login",
+            json={"email": "ana@example.com", "password": "correct horse battery"},
+        )
+        response = client.get("/api/conversations")
+        assert (response.status_code, response.json()) == (503, {"error": "chat_unavailable"})
+
+
+class Unreachable:
+    """Cliente HTTP que nunca conecta."""
+
+    def post(self, *args: Any, **kwargs: Any) -> httpx.Response:
+        raise httpx.ConnectError("sem rota")
+
+    def request(self, *args: Any, **kwargs: Any) -> httpx.Response:
+        raise httpx.ConnectError("sem rota")
+
+
+def _auth_for(settings: Settings) -> SupabaseAuthService:
+    fake = FakeSupabase()
+    return SupabaseAuthService(
+        settings.supabase_url, settings.supabase_publishable_key, ORIGIN, RateLimiter(),
+        client=fake,  # type: ignore[arg-type]
+    )

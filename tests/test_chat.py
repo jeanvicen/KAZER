@@ -114,6 +114,11 @@ class Env:
         return client
 
 
+def chat_requests(provider: FakeProvider) -> list[GenerationRequest]:
+    """Só os pedidos de conversa: o título usa o mesmo provedor com outro prompt."""
+    return [item for item in provider.requests if not item.system.startswith("Dê um título")]
+
+
 def events(response: Any) -> list[dict[str, Any]]:
     assert response.headers["content-type"].startswith("application/x-ndjson")
     return [json.loads(line) for line in response.text.splitlines() if line]
@@ -163,7 +168,9 @@ def test_send_streams_and_persists(make_env: Callable[..., Env]) -> None:
         assert "anthropic" not in json.dumps(config).lower()
 
         stream = send(client, "Quero criar um app de receitas", timezone="America/Sao_Paulo")
-        assert [event["type"] for event in stream] == ["start", "delta", "delta", "done"]
+        # O título vem do próprio modelo quando a primeira resposta fica pronta.
+        assert [event["type"] for event in stream] == ["start", "delta", "delta", "title", "done"]
+        assert stream[-2]["title"]
         start, done = stream[0], stream[-1]
         assert start["conversation"]["title"] == "Quero criar um app de receitas"
         assert done["reply"]["status"] == "complete"
@@ -178,9 +185,61 @@ def test_send_streams_and_persists(make_env: Callable[..., Env]) -> None:
 
         # Segunda mensagem leva o histórico completo ao modelo.
         send(client, "E o nome?", conversation_id=conversation_id)
-        last = provider.requests[-1]
+        last = chat_requests(provider)[-1]
         assert [turn.role for turn in last.turns] == ["user", "assistant", "user"]
         assert "KAZER" in last.system and "America/Sao_Paulo" in last.system
+
+
+def test_the_model_names_the_conversation(make_env: Callable[..., Env]) -> None:
+    """A primeira resposta pronta rende um título curto, vindo do próprio modelo."""
+    provider = FakeProvider(chunks=("Plano de estudos de violão em 4 semanas",))
+    env = make_env(provider)
+    with env.client() as client:
+        env.signed_in(client, "ana@example.com")
+        stream = send(client, "quero aprender violão, me monta um plano")
+        title_events = [event for event in stream if event["type"] == "title"]
+        assert len(title_events) == 1, "a conversa nova recebe um título"
+        title = title_events[0]["title"]
+        assert title and len(title.split(" ")) <= 7, title
+        # O título pedido ao modelo leva a pergunta e a resposta, e nada mais.
+        ask = [item for item in provider.requests if item.system.startswith("Dê um título")]
+        assert len(ask) == 1
+        assert "violão" in ask[0].turns[0].parts[0].text
+
+        conversation_id = stream[0]["conversation"]["id"]
+        saved = client.get(f"/api/conversations/{conversation_id}").json()
+        assert saved["conversation"]["title"] == title
+
+        # Mensagens seguintes não renomeiam a conversa.
+        send(client, "e o que eu compro primeiro?", conversation_id=conversation_id)
+        again = [item for item in provider.requests if item.system.startswith("Dê um título")]
+        assert len(again) == 1
+
+
+def test_a_failed_reply_keeps_the_fallback_title(make_env: Callable[..., Env]) -> None:
+    """Resposta que falhou não rende título: fica o começo da pergunta."""
+    env = make_env(FakeProvider(error="model_timeout"))
+    with env.client() as client:
+        env.signed_in(client, "ana@example.com")
+        stream = send(client, "uma pergunta que vai falhar")
+        assert not [event for event in stream if event["type"] == "title"]
+        assert stream[0]["conversation"]["title"] == "uma pergunta que vai falhar"
+
+
+def test_usage_grows_with_the_complexity_of_the_request(make_env: Callable[..., Env]) -> None:
+    """Imagem, pergunta longa e histórico grande custam mais cota que um 'oi'."""
+    env = make_env(FakeProvider(), hourly=1000)
+    with env.client() as client:
+        env.signed_in(client, "ana@example.com")
+        simple = send(client, "oi")
+        assert simple[0]["message"]["options"]["units"] == 1
+
+        image = client.post(
+            "/api/attachments", content=PNG, headers={"Content-Type": "image/png"}
+        ).json()["attachment"]
+        heavy = send(client, "x" * 2500, attachments=[image["id"]])
+        # base 1 + imagem 1 + pergunta longa 1
+        assert heavy[0]["message"]["options"]["units"] == 3
 
 
 def test_no_provider_is_honest_and_stores_nothing(make_env: Callable[..., Env]) -> None:
@@ -203,7 +262,7 @@ def test_resending_the_same_client_id_is_idempotent(make_env: Callable[..., Env]
         assert again[0]["duplicate"] is True
         assert again[0]["reply"]["id"] == first[0]["reply"]["id"]
         assert again[-1]["type"] == "done" and again[-1]["reply"]["content"] == "Olá, tudo certo?"
-        assert len(provider.requests) == 1
+        assert len(chat_requests(provider)) == 1
         conversation_id = first[0]["conversation"]["id"]
         items = client.get(f"/api/conversations/{conversation_id}").json()["messages"]["items"]
         assert len(items) == 2
@@ -316,7 +375,7 @@ def test_attachments_are_validated_private_and_sent(make_env: Callable[..., Env]
 
         stream = send(client, "Olha isso", attachments=[image["id"], notes["id"]])
         assert len(stream[0]["message"]["attachments"]) == 2
-        parts = provider.requests[-1].turns[-1].parts
+        parts = chat_requests(provider)[-1].turns[-1].parts
         assert [part.kind for part in parts] == ["image", "text", "text"]
         assert parts[0].data == PNG and "ideias.md" in parts[1].text
         assert parts[2].text == "Olha isso"
@@ -406,14 +465,14 @@ def test_settings_memories_and_prompt(make_env: Callable[..., Env]) -> None:
 
         memory = client.post("/api/memories", json={"content": "Trabalho com Python"}).json()
         send(client, "Oi")
-        assert "Trabalho com Python" in provider.requests[-1].system
-        assert "Aninha" in provider.requests[-1].system
+        assert "Trabalho com Python" in chat_requests(provider)[-1].system
+        assert "Aninha" in chat_requests(provider)[-1].system
         send(client, "Sem memória", tools={"memory": False})
-        assert "Trabalho com Python" not in provider.requests[-1].system
+        assert "Trabalho com Python" not in chat_requests(provider)[-1].system
 
         client.post("/api/settings", json={"preferences": {"memory_enabled": False}})
         send(client, "Oi de novo")
-        assert "Trabalho com Python" not in provider.requests[-1].system
+        assert "Trabalho com Python" not in chat_requests(provider)[-1].system
 
         assert client.delete(f"/api/memories/{memory['memory']['id']}").status_code == 200
         assert client.get("/api/settings").json()["memories"] == []

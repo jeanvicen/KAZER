@@ -140,7 +140,7 @@ export async function mountChat({ email, onSignedOut }) {
     "menu", "topbar-title", "new-chat-top", "ambient", "empty", "greeting", "greeting-a", "greeting-b",
     "empty-note", "thread", "messages", "older", "to-bottom", "composer", "composer-alert",
     "composer-alert-text", "composer-alert-close", "composer-box", "tray", "prompt", "plus", "model-chip",
-    "deep", "send", "pick-camera", "pick-photos", "pick-files",
+    "deep", "mic", "send", "pick-camera", "pick-photos", "pick-files",
   ];
   for (const id of ids) S.ui[id.replace(/-(\w)/g, (_, c) => c.toUpperCase())] = byId(root, id);
   setSheetBackground(root);
@@ -414,6 +414,20 @@ async function openConversation(id, { push = true } = {}) {
   if (streaming) resume(streaming.id, -1);
 }
 
+// O KAZER nomeia a conversa quando a primeira resposta fica pronta.
+function applyTitle(conversationId, title) {
+  if (!title) return;
+  if (S.conversation?.id === conversationId) {
+    S.conversation.title = title;
+    setTitle(title);
+  }
+  const item = S.history.items.find((entry) => entry.id === conversationId);
+  if (item && item.title !== title) {
+    item.title = title;
+    if (S.history.loaded) renderHistory();
+  }
+}
+
 function setTitle(title) {
   S.ui.topbarTitle.textContent = title || "";
   document.title = title ? `${title} · KAZER` : "KAZER";
@@ -682,6 +696,8 @@ function handleEvent(model, event) {
   } else if (event.type === "searching") {
     model.searching = true;
     queueRender(model);
+  } else if (event.type === "title") {
+    applyTitle(event.conversation_id, event.title);
   } else if (event.type === "done") {
     finish(model, event.reply);
     return "done";
@@ -811,6 +827,7 @@ async function send() {
     return;
   }
   if (!canSend()) return;
+  if (dictation?.listening) dictation.stop();
   hideAlert();
   const content = S.ui.prompt.value.trim();
   const files = readyAttachments();
@@ -1046,6 +1063,7 @@ function bindComposer() {
   });
   S.ui.composerAlertClose.addEventListener("click", hideAlert);
   S.ui.plus.addEventListener("click", () => openPlusSheet());
+  S.ui.mic.addEventListener("click", () => toggleDictation());
   S.ui.modelChip.addEventListener("click", () => openModelSheet());
   S.ui.deep.addEventListener("click", () => {
     if (S.ui.deep.getAttribute("aria-disabled") === "true") {
@@ -1091,6 +1109,52 @@ function bindComposer() {
     addFiles([...event.dataTransfer.files], "drop");
   });
   restoreDraft();
+}
+
+let dictation = null;
+
+async function toggleDictation() {
+  const { createDictation, dictationSupported, DICTATION_ERRORS } = await import("./voice.js");
+  if (!dictationSupported) {
+    toast("Este navegador não tem reconhecimento de fala. No celular, o teclado costuma ter um microfone.", {
+      duration: 5200,
+    });
+    return;
+  }
+  if (dictation?.listening) {
+    dictation.stop();
+    return;
+  }
+  if (!dictation) {
+    dictation = createDictation({
+      onText: (text, interim) => {
+        S.ui.prompt.value = text;
+        S.ui.composerBox.classList.toggle("is-hearing", interim);
+        autosize();
+        updateSendState();
+        S.ui.empty.classList.toggle("is-typing", Boolean(text));
+      },
+      onState: (state) => {
+        const on = state !== "idle";
+        S.ui.mic.setAttribute("aria-pressed", String(on));
+        S.ui.mic.classList.toggle("is-listening", state === "listening");
+        S.ui.mic.setAttribute("aria-label", on ? "Parar de ditar" : "Ditar por voz");
+        S.ui.composerBox.classList.toggle("is-dictating", on);
+        if (!on) {
+          S.ui.composerBox.classList.remove("is-hearing");
+          saveDraft();
+        }
+      },
+      onError: (code) => toast(DICTATION_ERRORS[code] || "O ditado parou. Tente de novo.", { duration: 4200 }),
+    });
+  }
+  // Uma vez por navegador: o áudio é transcrito pelo serviço do navegador.
+  if (!store.get("kazer:voice-note", false)) {
+    store.set("kazer:voice-note", true);
+    toast("Seu navegador transcreve a fala; o KAZER recebe só o texto.", { duration: 5000 });
+  }
+  const current = S.ui.prompt.value.trim();
+  dictation.start(current ? current + " " : "");
 }
 
 function setDeep(on) {

@@ -14,8 +14,10 @@ from starlette.responses import JSONResponse, Response
 
 from kazer.auth.service import AuthError, AuthService
 from kazer.auth.store import User
-from kazer.auth.supabase_service import SupabaseAuthService
+from kazer.auth.supabase_service import SupabaseAuthService, SupabaseSession
+from kazer.chat.identity import set_access_token
 from kazer.chat.service import ChatError
+from kazer.chat.supabase_store import StorageUnavailable
 
 MAX_BODY_BYTES = 4096
 FIELD_MAX_LENGTH = 1024
@@ -46,6 +48,9 @@ def endpoint(handler: Handler) -> Handler:
             response = await handler(request)
         except (AuthError, ChatError) as exc:
             response = error_response(exc)
+        except StorageUnavailable:
+            # Banco ou armazenamento do chat fora do ar: a interface avisa.
+            response = error_response(ChatError("chat_unavailable", 503))
         renew = getattr(request.state, "renew_session", None)
         if renew is not None:
             renew(response)
@@ -134,8 +139,16 @@ class WebContext:
             request.state.renew_session = lambda response: self.set_session_cookie(
                 response, grant.token, grant.max_age
             )
-            return user, grant.token
+            token = grant.token
+        # O store do chat no Supabase fala como a própria pessoa (RLS no banco).
+        set_access_token(self.access_token(token))
         return user, token
+
+    @staticmethod
+    def access_token(cookie_token: str) -> str | None:
+        """Access token de dentro do cookie de sessão (só o Supabase tem um)."""
+        decoded = SupabaseSession.decode(cookie_token)
+        return None if decoded is None else decoded[0]
 
     @staticmethod
     def field(data: dict[str, Any], name: str, max_length: int = FIELD_MAX_LENGTH) -> str:

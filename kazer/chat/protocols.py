@@ -1,0 +1,130 @@
+"""Contrato que o chat espera do armazenamento.
+
+Duas implementações atendem: `ChatStore` (SQLite local) e `SupabaseChatStore`
+(Postgres do Supabase). O serviço fala só com estes protocolos, então trocar de
+banco não mexe nas regras do chat.
+"""
+
+from __future__ import annotations
+
+from collections.abc import Sequence
+from typing import Any, Protocol
+
+from kazer.chat.store import Attachment, Conversation, Exchange, Memory, Message, UsageWindow
+
+
+class ChatStorage(Protocol):
+    """Conversas, mensagens, anexos, preferências e memórias de uma conta."""
+
+    def initialize(self, now: int) -> None: ...
+
+    def ensure_owner(self, user_id: str, email: str, created_at: int) -> None: ...
+
+    def delete_owner(self, user_id: str) -> None: ...
+
+    # Conversas
+    def get_conversation(self, user_id: str, conversation_id: str) -> Conversation | None: ...
+
+    def list_conversations(
+        self,
+        user_id: str,
+        *,
+        limit: int,
+        before: tuple[int, str] | None = ...,
+        query: str = ...,
+    ) -> list[Conversation]: ...
+
+    def rename_conversation(self, user_id: str, conversation_id: str, title: str) -> bool: ...
+
+    def delete_conversation(self, user_id: str, conversation_id: str) -> list[str] | None: ...
+
+    def delete_all_conversations(self, user_id: str) -> list[str]: ...
+
+    # Mensagens
+    def list_messages(
+        self, user_id: str, conversation_id: str, *, limit: int, before_seq: int | None = ...
+    ) -> tuple[list[Message], bool] | None: ...
+
+    def context_messages(
+        self, conversation_id: str, up_to_seq: int, limit: int
+    ) -> list[Message]: ...
+
+    def get_message(self, user_id: str, message_id: str) -> Message | None: ...
+
+    def find_exchange(self, user_id: str, client_id: str) -> Exchange | None: ...
+
+    def begin_exchange(
+        self,
+        user_id: str,
+        *,
+        conversation_id: str | None,
+        title: str,
+        content: str,
+        client_id: str,
+        attachment_ids: Sequence[str],
+        options: dict[str, Any],
+        units: int,
+        windows: Sequence[UsageWindow],
+        now: int,
+    ) -> Exchange: ...
+
+    def restart_reply(
+        self, user_id: str, reply_id: str, *, units: int, windows: Sequence[UsageWindow], now: int
+    ) -> tuple[Message, Message] | None: ...
+
+    def update_reply(
+        self,
+        reply_id: str,
+        *,
+        content: str,
+        thinking: str,
+        status: str | None = ...,
+        error_code: str | None = ...,
+        stop_reason: str | None = ...,
+        finished_at: int | None = ...,
+        user_id: str | None = ...,
+    ) -> None: ...
+
+    # Anexos
+    def new_attachment_id(self) -> str: ...
+
+    def create_attachment(self, attachment: Attachment) -> None: ...
+
+    def get_attachment(self, user_id: str, attachment_id: str) -> Attachment | None: ...
+
+    def delete_pending_attachment(self, user_id: str, attachment_id: str) -> bool: ...
+
+    def storage_used(self, user_id: str) -> tuple[int, int]: ...
+
+    def purge_orphan_attachments(self, older_than: int) -> list[tuple[str, str]]: ...
+
+    def purge_usage(self, older_than: int) -> None: ...
+
+    # Preferências, memórias e exportação
+    def get_preferences(self, user_id: str) -> dict[str, Any]: ...
+
+    def save_preferences(self, user_id: str, data: dict[str, Any], now: int) -> None: ...
+
+    def list_memories(self, user_id: str) -> list[Memory]: ...
+
+    def add_memory(
+        self, user_id: str, content: str, now: int, max_count: int
+    ) -> Memory | None: ...
+
+    def delete_memory(self, user_id: str, memory_id: str) -> bool: ...
+
+    def delete_all_memories(self, user_id: str) -> None: ...
+
+    def export(self, user_id: str) -> dict[str, Any]: ...
+
+
+class AttachmentStorage(Protocol):
+    """Bytes dos anexos, sempre separados por conta."""
+
+    def save(self, user_id: str, attachment_id: str, data: bytes) -> None: ...
+
+    def read(self, user_id: str, attachment_id: str) -> bytes | None: ...
+
+    def delete(self, user_id: str, attachment_id: str) -> None: ...
+
+    def delete_user(self, user_id: str) -> None: ...

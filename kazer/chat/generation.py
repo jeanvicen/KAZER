@@ -21,7 +21,8 @@ from kazer.brain.model_provider import (
     ModelProvider,
     ProviderError,
 )
-from kazer.chat.store import ChatStore
+from kazer.chat.identity import bind_access_token
+from kazer.chat.protocols import ChatStorage
 
 logger = logging.getLogger("kazer.chat")
 
@@ -39,6 +40,8 @@ class LiveGeneration:
     events: list[dict[str, Any]] = field(default_factory=list)
     done: bool = False
     timed_out: bool = False
+    # Chamado depois da resposta pronta (por exemplo, para dar nome à conversa).
+    on_complete: Callable[[LiveGeneration, str], None] | None = None
     _lock: threading.Lock = field(default_factory=threading.Lock)
     _waiters: set[tuple[asyncio.AbstractEventLoop, asyncio.Event]] = field(default_factory=set)
 
@@ -89,7 +92,7 @@ class GenerationHub:
 
     def __init__(
         self,
-        store: ChatStore,
+        store: ChatStorage,
         provider: ModelProvider,
         *,
         max_concurrent: int = 16,
@@ -141,15 +144,25 @@ class GenerationHub:
         self._slots.release()
 
     def start(
-        self, user_id: str, conversation_id: str, reply_id: str, request: GenerationRequest
+        self,
+        user_id: str,
+        conversation_id: str,
+        reply_id: str,
+        request: GenerationRequest,
+        access_token: str | None = None,
+        on_complete: Callable[[LiveGeneration, str], None] | None = None,
     ) -> LiveGeneration:
         """Inicia a geração numa vaga já reservada com `try_reserve()`."""
         live = LiveGeneration(reply_id, user_id, conversation_id)
+        live.on_complete = on_complete
         with self._lock:
             self._evict()
             self._live[reply_id] = live
         thread = threading.Thread(
-            target=self._run, args=(live, request), name="kazer-generation", daemon=True
+            target=self._run,
+            args=(live, request, access_token),
+            name="kazer-generation",
+            daemon=True,
         )
         thread.start()
         return live
@@ -169,7 +182,15 @@ class GenerationHub:
         for live in lives:
             live.cancel.cancel()
 
-    def _run(self, live: LiveGeneration, request: GenerationRequest) -> None:
+    def _run(
+        self, live: LiveGeneration, request: GenerationRequest, access_token: str | None = None
+    ) -> None:
+        # A thread roda fora da requisição: o token vai explícito (uma thread
+        # nova não herda o contexto da requisição).
+        with bind_access_token(access_token):
+            self._generate(live, request)
+
+    def _generate(self, live: LiveGeneration, request: GenerationRequest) -> None:
         text: list[str] = []
         thinking: list[str] = []
         status, error, stop = "complete", None, "end"
@@ -199,7 +220,10 @@ class GenerationHub:
                 if time.monotonic() - last_save >= self._persist_every:
                     last_save = time.monotonic()
                     self._store.update_reply(
-                        live.reply_id, content="".join(text), thinking="".join(thinking)
+                        live.reply_id,
+                        content="".join(text),
+                        thinking="".join(thinking),
+                        user_id=live.user_id,
                     )
             if live.timed_out:
                 status, error = "error", "model_timeout"
@@ -228,6 +252,7 @@ class GenerationHub:
                     error_code=error,
                     stop_reason=stop if status == "complete" else None,
                     finished_at=finished,
+                    user_id=live.user_id,
                 )
             except Exception:  # noqa: BLE001
                 logger.exception("chat.persist_failed")
@@ -240,6 +265,11 @@ class GenerationHub:
                 "thinking": reasoning,
                 "finished_at": finished,
             }
+            if status == "complete" and content and live.on_complete is not None:
+                try:
+                    live.on_complete(live, content)
+                except Exception:  # noqa: BLE001 - trabalho extra não derruba a resposta
+                    logger.exception("chat.on_complete_failed")
             live.push({"type": "done", "reply": reply}, final=True)
             with self._lock:
                 self._finished_at[live.reply_id] = time.monotonic()

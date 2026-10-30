@@ -1281,6 +1281,54 @@ html.in-chat .noscript {
   color: #5c5c5c;
 }
 
+/* Microfone: ondas que pulsam só enquanto está ouvindo de verdade. */
+.tool--mic.is-listening {
+  background: var(--c-text);
+  color: var(--c-bg);
+}
+
+.mic__wave {
+  position: absolute;
+  inset: 0;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+}
+
+.tool--mic.is-listening .icon {
+  display: none;
+}
+
+.tool--mic.is-listening .mic__wave {
+  display: flex;
+}
+
+.mic__wave i {
+  width: 2px;
+  height: 0.5rem;
+  border-radius: 1px;
+  background: currentColor;
+  animation: mic-wave 900ms ease-in-out infinite;
+}
+
+.mic__wave i:nth-child(2) { animation-delay: 150ms; }
+.mic__wave i:nth-child(3) { animation-delay: 300ms; }
+
+@keyframes mic-wave {
+  0%, 100% { transform: scaleY(0.45); opacity: 0.6; }
+  50% { transform: scaleY(1.5); opacity: 1; }
+}
+
+/* Enquanto dita, a caixa respira de leve e o texto provisório fica mais claro. */
+.composer__box.is-dictating {
+  border-color: #4a4a4a;
+}
+
+.composer__box.is-hearing .composer__input {
+  color: #cfcfcf;
+}
+
 .chip {
   display: inline-flex;
   align-items: center;
@@ -1388,10 +1436,12 @@ html.in-chat .noscript {
   animation: mark-r 1.2s cubic-bezier(0.65, 0, 0.35, 1) infinite;
 }
 
-@media (max-width: 22rem) {
-  .composer__bar { gap: 0.4rem; }
+@media (max-width: 24rem) {
+  .composer__bar { gap: 0.35rem; }
   .tool, .send { width: 2.5rem; height: 2.5rem; }
-  .chip { height: 2.5rem; padding: 0 0.9rem; font-size: 0.9375rem; }
+  .tool .icon { width: 1.25rem; height: 1.25rem; }
+  .chip { height: 2.5rem; padding: 0 0.8rem; font-size: 0.9375rem; }
+  .chip__effort { display: none; }
 }
 
 /* Anexos escolhidos antes do envio */

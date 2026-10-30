@@ -26,8 +26,10 @@ from kazer.auth.service import AuthError, AuthService
 from kazer.auth.store import AuthStore
 from kazer.auth.supabase_service import SupabaseAuthService
 from kazer.brain.model_provider import ModelProvider, build_provider
+from kazer.chat.protocols import AttachmentStorage, ChatStorage
 from kazer.chat.service import ChatService
 from kazer.chat.store import ChatStore
+from kazer.chat.supabase_store import SupabaseChatStore, SupabaseUploadStorage
 from kazer.chat.uploads import UploadStorage
 from kazer.config.settings import Settings, load_settings
 from kazer.integrations.email import build_mail_sender
@@ -135,12 +137,31 @@ def _service_role_key() -> str | None:
 
 
 def _build_chat(settings: Settings, provider: ModelProvider | None) -> ChatService:
+    """Conversas no Postgres do Supabase quando ele está configurado; senão, SQLite local."""
+    if settings.supabase_configured:
+        service_key = _service_role_key()
+        store: ChatStorage = SupabaseChatStore(
+            settings.supabase_url,
+            settings.supabase_publishable_key,
+            service_role_key=service_key,
+            max_conversations=settings.chat_max_conversations,
+        )
+        uploads: AttachmentStorage = SupabaseUploadStorage(
+            settings.supabase_url,
+            settings.supabase_publishable_key,
+            service_role_key=service_key,
+        )
+        logger.info("chat.store", extra={"backend": "supabase"})
+    else:
+        store = ChatStore(settings.database_path)
+        uploads = UploadStorage(settings.upload_dir)
     return ChatService(
-        ChatStore(settings.database_path),
-        UploadStorage(settings.upload_dir),
+        store,
+        uploads,
         provider,
         hourly_units=settings.chat_hourly_units,
         daily_units=settings.chat_daily_units,
+        max_conversations=settings.chat_max_conversations,
     )
 
 
@@ -161,9 +182,10 @@ def create_app(
         public_origin=settings.public_origin,
         secure=settings.cookie_secure,
     )
-    # O chat depende de contas e de disco persistente (SQLite). Em funções serverless
-    # (mesmo com o Supabase Auth ligado) ele fica fechado até existir um banco do chat.
-    if chat is None and auth is not None and not settings.serverless:
+    # O chat precisa de contas e de um banco que sobreviva ao fim da requisição:
+    # Postgres do Supabase, ou SQLite local fora de funções serverless.
+    chat_possible = settings.supabase_configured or not settings.serverless
+    if chat is None and auth is not None and chat_possible:
         chat = _build_chat(settings, provider if provider is not None else build_provider(settings))
 
     def page(name: str, media_type: str = "text/html") -> Callable[[Request], Awaitable[Response]]:

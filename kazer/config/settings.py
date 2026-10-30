@@ -64,6 +64,8 @@ class Settings(StrictModel):
     # Cota de uso no servidor, em unidades (mensagem = 1; pensamento profundo e busca somam).
     chat_hourly_units: int = Field(default=60, ge=1)
     chat_daily_units: int = Field(default=300, ge=1)
+    # Histórico leve: a conversa mais antiga sai quando uma nova entra.
+    chat_max_conversations: int = Field(default=100, ge=5, le=1000)
 
     @property
     def auth_blockers(self) -> list[str]:
@@ -170,5 +172,6 @@ def load_settings(environ: Mapping[str, str] | None = None) -> Settings:
         "upload_dir": env.get("KAZER_UPLOAD_DIR", "data/uploads"),
         "chat_hourly_units": env.get("KAZER_CHAT_HOURLY_UNITS", "60").strip() or "60",
         "chat_daily_units": env.get("KAZER_CHAT_DAILY_UNITS", "300").strip() or "300",
+        "chat_max_conversations": env.get("KAZER_CHAT_MAX_CONVERSATIONS", "100").strip() or "100",
     }
     return Settings.model_validate(values)

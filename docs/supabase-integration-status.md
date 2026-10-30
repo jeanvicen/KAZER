@@ -16,6 +16,24 @@
 
 A migração usa `auth.users.id` como proprietário e inclui índices, chaves estrangeiras com `on delete cascade`, janela de uso de cinco horas, registro operacional de exclusões e políticas RLS para isolamento por usuário. Os grants para `anon` e `authenticated` foram reduzidos; operações de exclusão automática devem usar backend confiável/service role.
 
+## Armazenamento do chat (migrações 20261029180000 e 20261029181000)
+
+Duas migrações novas levam as conversas para o Postgres: colunas e cota em
+`20261029180000_kazer_chat_storage.sql`, operações do chat e bucket de anexos em
+`20261029181000_kazer_chat_operations.sql`. São aditivas e foram validadas num
+Postgres 16 local, com as duas suítes de `supabase/tests/` passando a partir de
+um banco limpo. Detalhes, aplicação e reversão: [supabase-chat-storage.md](supabase-chat-storage.md).
+
+**Ainda não foram aplicadas ao projeto real**: o conector Supabase desta sessão
+não tem permissão de escrita em `Kazer`. Enquanto não forem aplicadas, o chat em
+produção continua respondendo `chat_unavailable`.
+
+Uma falha de privilégio foi encontrada e corrigida durante a validação: o plano
+da conta tinha ficado em `public.profiles`, que já concede `UPDATE` ao dono, e
+qualquer conta conseguia se promover para `ultra`. O plano passou para
+`public.kazer_plans`, sem grant de escrita para `authenticated`, e o teste de RLS
+cobre a tentativa.
+
 ## O que ainda falta para o deploy de produção
 
 O código está conectado ao Supabase Auth quando as variáveis são fornecidas. Ainda faltam os valores de ambiente e a configuração de produção:

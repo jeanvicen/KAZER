@@ -11,23 +11,29 @@ from __future__ import annotations
 import logging
 import re
 import time
-from collections.abc import Callable
+from collections.abc import Callable, Sequence
 from dataclasses import dataclass
+from functools import partial
 from typing import Any
 
 from kazer.brain.model_provider import (
     EFFORTS,
     PUBLIC_MODEL_ID,
     PUBLIC_MODEL_LABEL,
+    CancelToken,
     GenerationRequest,
     ModelProvider,
+    Part,
+    ProviderError,
+    Turn,
 )
 from kazer.chat import context
 from kazer.chat.generation import GenerationHub, LiveGeneration
+from kazer.chat.identity import current_access_token
+from kazer.chat.protocols import AttachmentStorage, ChatStorage
 from kazer.chat.store import (
     Attachment,
     AttachmentUnavailable,
-    ChatStore,
     Conversation,
     ConversationMissing,
     Exchange,
@@ -43,7 +49,6 @@ from kazer.chat.uploads import (
     MAX_TEXT_BYTES,
     TEXT_EXTENSIONS,
     UploadRejected,
-    UploadStorage,
     clean_name,
     detect,
     valid_id,
@@ -58,15 +63,31 @@ MAX_TITLE_CHARS = 80
 MAX_MEMORIES = 100
 MAX_MEMORY_CHARS = 500
 PAGE_MESSAGES = 40
+# Título gerado pelo modelo a partir da primeira troca.
+TITLE_MAX_WORDS = 7
+TITLE_SOURCE_CHARS = 700
+_TITLE_PROMPT = (
+    "Dê um título curto para esta conversa, em português do Brasil: no máximo "
+    f"{TITLE_MAX_WORDS} palavras, sem aspas, sem ponto final, sem emoji e sem a palavra "
+    '"conversa". Responda só com o título.'
+)
 PAGE_CONVERSATIONS = 30
 CONTEXT_MESSAGES = 60
 ORPHAN_TTL = 24 * 3600
 USAGE_TTL = 2 * 24 * 3600
 
-# Pensamento profundo e busca consomem mais do provedor; a cota reflete isso.
+# O consumo acompanha o trabalho real: pensar mais, ler imagem, pesquisar na web
+# e arrastar um histórico longo custam mais ao provedor do que um "oi".
 UNITS_BASE = 1
 UNITS_DEEP = 2
 UNITS_WEB = 1
+UNITS_IMAGE = 1
+UNITS_PDF = 2
+UNITS_LONG_PROMPT = 1
+UNITS_LONG_HISTORY = 1
+LONG_PROMPT_CHARS = 2000
+LONG_HISTORY_MESSAGES = 20
+MAX_UNITS = 12
 
 PREFERENCE_DEFAULTS: dict[str, Any] = {
     "nickname": "",
@@ -111,6 +132,10 @@ class SendOptions:
     deep: bool
     web_search: bool
     memory: bool
+    images: int = 0
+    documents: int = 0
+    long_prompt: bool = False
+    long_history: bool = False
 
     def as_dict(self) -> dict[str, Any]:
         """Gravado junto da mensagem para auditoria de uso."""
@@ -120,12 +145,21 @@ class SendOptions:
             "deep": self.deep,
             "web_search": self.web_search,
             "memory": self.memory,
+            # Guardado com a mensagem para o consumo ser auditável depois.
+            "units": self.units,
         }
 
     @property
     def units(self) -> int:
-        """Custo na cota do servidor."""
-        return UNITS_BASE + (UNITS_DEEP if self.deep else 0) + (UNITS_WEB if self.web_search else 0)
+        """Custo na cota, proporcional ao trabalho que o pedido realmente dá."""
+        units = UNITS_BASE
+        units += UNITS_DEEP if self.deep else 0
+        units += UNITS_WEB if self.web_search else 0
+        units += UNITS_IMAGE * self.images
+        units += UNITS_PDF * self.documents
+        units += UNITS_LONG_PROMPT if self.long_prompt else 0
+        units += UNITS_LONG_HISTORY if self.long_history else 0
+        return min(units, MAX_UNITS)
 
 
 def _title_from(content: str, attachments: list[Attachment]) -> str:
@@ -143,12 +177,13 @@ class ChatService:
 
     def __init__(
         self,
-        store: ChatStore,
-        uploads: UploadStorage,
+        store: ChatStorage,
+        uploads: AttachmentStorage,
         provider: ModelProvider | None,
         *,
         hourly_units: int = 60,
         daily_units: int = 300,
+        max_conversations: int = 100,
         limiter: RateLimiter | None = None,
         clock: Callable[[], float] = time.time,
         hub: GenerationHub | None = None,
@@ -160,6 +195,7 @@ class ChatService:
         self._clock = clock
         self._limiter = limiter or RateLimiter()
         self._windows = (UsageWindow(3600, hourly_units), UsageWindow(86400, daily_units))
+        self._max_conversations = max_conversations
         self._hub = hub or (GenerationHub(store, provider, clock=clock) if provider else None)
         self._last_purge = 0
         self._owners: set[str] = set()
@@ -168,9 +204,12 @@ class ChatService:
         return int(self._clock())
 
     def initialize(self) -> None:
-        """Cria as tabelas e limpa anexos órfãos."""
-        self._store.initialize(self._now())
-        self.purge()
+        """Prepara o armazenamento e limpa anexos órfãos (sem derrubar a subida)."""
+        try:
+            self._store.initialize(self._now())
+            self.purge()
+        except Exception:  # noqa: BLE001 - o chat avisa sozinho quando o banco volta
+            logger.warning("chat.initialize_failed")
 
     def purge(self) -> None:
         """Retenção: anexos nunca enviados somem em 1 dia; contagem de uso, em 2."""
@@ -226,6 +265,17 @@ class ChatService:
             },
             "accept": accept,
         }
+
+    def usage_state(self, user_id: str) -> dict[str, Any]:
+        """Plano, franquia e horário real de renovação, quando o banco informa."""
+        reader = getattr(self._store, "usage_state", None)
+        if reader is None:
+            return {"plan": "free"}
+        try:
+            return reader(user_id) or {"plan": "free"}
+        except Exception:  # noqa: BLE001 - uso é informativo; não derruba o chat
+            logger.warning("chat.usage_state_failed")
+            return {"plan": "free"}
 
     # ---------- Preferências ----------
 
@@ -414,6 +464,40 @@ class ChatService:
             effort=EFFORTS[effort], deep=deep, web_search=web, memory=memory and memory_enabled
         )
 
+    def _weigh(
+        self,
+        options: SendOptions,
+        user_id: str,
+        content: str,
+        attachment_ids: Sequence[str],
+        conversation_id: str | None,
+    ) -> SendOptions:
+        """Mede a complexidade do pedido para a cota acompanhar o trabalho real."""
+        images = documents = 0
+        for attachment_id in attachment_ids:
+            attachment = self._store.get_attachment(user_id, attachment_id)
+            if attachment is None:
+                continue
+            if attachment.kind == "image":
+                images += 1
+            elif attachment.kind == "pdf":
+                documents += 1
+        long_history = False
+        if conversation_id:
+            page = self._store.list_messages(user_id, conversation_id, limit=1)
+            if page is not None and page[0]:
+                long_history = page[0][-1].seq >= LONG_HISTORY_MESSAGES
+        return SendOptions(
+            effort=options.effort,
+            deep=options.deep,
+            web_search=options.web_search,
+            memory=options.memory,
+            images=images,
+            documents=documents,
+            long_prompt=len(content) >= LONG_PROMPT_CHARS,
+            long_history=long_history,
+        )
+
     def _check_attachments(self, user_id: str, ids: Any) -> list[str]:
         if not isinstance(ids, list) or len(ids) > MAX_ATTACHMENTS:
             raise ChatError("invalid_request", 400)
@@ -462,7 +546,10 @@ class ChatService:
         if duplicate is not None:
             return duplicate, self._hub.get(user_id, duplicate.reply.id)
         prefs = self.preferences(user_id)
-        options = self._options(data, prefs["memory_enabled"])
+        options = self._weigh(
+            self._options(data, prefs["memory_enabled"]), user_id, content, attachment_ids,
+            conversation_id,
+        )
         if conversation_id and self._hub.busy(conversation_id):
             raise ChatError("busy", 409)
         wait = self._limiter.hit(f"send:{user_id}", RateLimit(20, 60))
@@ -507,7 +594,20 @@ class ChatService:
             self._hub.release()
             return exchange, self._hub.get(user_id, exchange.reply.id)
         request = self._request(user_id, exchange.user_message, options, prefs, timezone)
-        live = self._hub.start(user_id, exchange.conversation.id, exchange.reply.id, request)
+        # Conversa recém-criada ganha um título do próprio modelo quando a
+        # primeira resposta fica pronta.
+        on_complete = None
+        if exchange.user_message.seq == 1:
+            asked = content or (pending[0].name if pending else "")
+            on_complete = partial(self._name_conversation, question=asked)
+        live = self._hub.start(
+            user_id,
+            exchange.conversation.id,
+            exchange.reply.id,
+            request,
+            access_token=current_access_token(),
+            on_complete=on_complete,
+        )
         logger.info("chat.message_accepted", extra={"units": options.units})
         return exchange, live
 
@@ -532,8 +632,12 @@ class ChatService:
         )
         caps = self._provider.capabilities
         if (options.deep and not caps.deep) or (options.web_search and not caps.web_search):
-            options = SendOptions(options.effort, options.deep and caps.deep,
-                                  options.web_search and caps.web_search, options.memory)
+            options = SendOptions(
+                effort=options.effort,
+                deep=options.deep and caps.deep,
+                web_search=options.web_search and caps.web_search,
+                memory=options.memory,
+            )
         if not self._hub.try_reserve():
             raise ChatError("capacity", 503, retry_after=10)
         try:
@@ -553,14 +657,64 @@ class ChatService:
         question, reply = restarted
         prefs = self.preferences(user_id)
         options = SendOptions(
-            options.effort,
-            options.deep,
-            options.web_search,
-            options.memory and prefs["memory_enabled"],
+            effort=options.effort,
+            deep=options.deep,
+            web_search=options.web_search,
+            memory=options.memory and prefs["memory_enabled"],
         )
         request = self._request(user_id, question, options, prefs, timezone)
-        live = self._hub.start(user_id, reply.conversation_id, reply.id, request)
+        live = self._hub.start(
+            user_id,
+            reply.conversation_id,
+            reply.id,
+            request,
+            access_token=current_access_token(),
+        )
         return reply, live
+
+    def _title_from_model(self, question: str, answer: str) -> str | None:
+        """Pede ao modelo um título curto; None se não der (nunca trava o chat)."""
+        provider = self._provider
+        if provider is None:
+            return None
+        turn = Turn(
+            "user",
+            (
+                Part(
+                    "text",
+                    text=f"Pergunta:\n{question[:TITLE_SOURCE_CHARS]}\n\n"
+                    f"Resposta:\n{answer[:TITLE_SOURCE_CHARS]}",
+                ),
+            ),
+        )
+        pieces: list[str] = []
+        try:
+            for event in provider.stream(
+                GenerationRequest(system=_TITLE_PROMPT, turns=(turn,), effort="low"),
+                CancelToken(),
+            ):
+                if event.kind == "text":
+                    pieces.append(event.text)
+                if sum(len(piece) for piece in pieces) > 200:
+                    break
+        except ProviderError:
+            return None
+        title = " ".join("".join(pieces).split()).strip(" \"'`.:-—")
+        if not title:
+            return None
+        words = title.split(" ")
+        if len(words) > TITLE_MAX_WORDS:
+            title = " ".join(words[:TITLE_MAX_WORDS])
+        return title[:MAX_TITLE_CHARS]
+
+    def _name_conversation(self, live: Any, answer: str, question: str) -> None:
+        """Renomeia a conversa com o título do modelo e avisa quem está ouvindo."""
+        title = self._title_from_model(question, answer)
+        if not title:
+            return
+        if not self._store.rename_conversation(live.user_id, live.conversation_id, title):
+            return
+        live.push({"type": "title", "conversation_id": live.conversation_id, "title": title})
 
     def _request(
         self,

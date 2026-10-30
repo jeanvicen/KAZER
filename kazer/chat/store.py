@@ -681,6 +681,7 @@ class ChatStore:
         error_code: str | None = None,
         stop_reason: str | None = None,
         finished_at: int | None = None,
+        user_id: str | None = None,
     ) -> None:
         """Grava o progresso da resposta (parcial ou final)."""
         with self._transaction() as conn:
@@ -698,6 +699,11 @@ class ChatStore:
                 )
 
     # ---------- Anexos ----------
+
+    @staticmethod
+    def new_attachment_id() -> str:
+        """Identificador do anexo (o do Supabase é uuid)."""
+        return new_id()
 
     def create_attachment(self, attachment: Attachment) -> None:
         """Registra anexo ainda não enviado (sem mensagem)."""
