@@ -3867,3 +3867,116 @@ html[data-motion="reduzido"] .offline-bar * {
 .conns__more[hidden] {
   display: none;
 }
+
+/* ---------- Carregando: o Kazinho levantando peso ---------- */
+
+.loader {
+  display: grid;
+  justify-items: center;
+  gap: 0.5rem;
+  padding: 2rem 1rem;
+  animation: loader-in 0.3s ease-out both;
+}
+
+.loader__canvas {
+  /* 40×34 lógicos, ampliados sem suavização: o pixel fica pixel. */
+  width: 5rem;
+  height: 4.25rem;
+  image-rendering: pixelated;
+}
+
+.loader__text {
+  margin: 0;
+  color: var(--c-text-3);
+  font-size: 0.8125rem;
+}
+
+@keyframes loader-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* ---------- Geração: o KAZER trabalhando ---------- */
+
+/* Uma aura atrás da Fenda enquanto a resposta vem. */
+.msg__head.is-generating .msg__mark {
+  position: relative;
+}
+
+.msg__head.is-generating .msg__mark::after {
+  content: "";
+  position: absolute;
+  inset: -0.6rem;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgb(138 176 255 / 0.22), transparent 68%);
+  animation: aura 1.6s ease-in-out infinite;
+  pointer-events: none;
+}
+
+/* O texto do estado some e volta com um brilho que atravessa. Repintar texto a
+ * cada quadro custa caro em aparelho modesto, então o brilho fica para telas
+ * grandes; no celular vale a respiração, que já existia e é barata. */
+@media (min-width: 60rem) {
+  .msg__head.is-generating .msg__state:not(:empty) {
+    background: linear-gradient(90deg, var(--c-text-3) 20%, var(--c-text) 50%, var(--c-text-3) 80%);
+    background-size: 220% 100%;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    animation: sheen 2.2s linear infinite;
+  }
+}
+
+/* Enquanto só há raciocínio, a resposta ainda não começou: a barra de leitura
+ * mostra que algo está sendo construído sem fingir que há texto. */
+.msg.is-streaming .msg__body:empty::after {
+  content: "";
+  display: block;
+  width: 7rem;
+  height: 0.6rem;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--c-border) 20%, var(--c-border-2) 50%, var(--c-border) 80%);
+  background-size: 220% 100%;
+  animation: sheen 1.6s linear infinite;
+}
+
+@keyframes aura {
+  0%,
+  100% {
+    opacity: 0.45;
+    transform: scale(0.92);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.08);
+  }
+}
+
+@keyframes sheen {
+  from {
+    background-position: 160% 0;
+  }
+  to {
+    background-position: -60% 0;
+  }
+}
+
+/* Na tela cheia o boneco tem espaço: ampliar o pixel é de graça. */
+.loader--full .loader__canvas {
+  width: 10rem;
+  height: 8.5rem;
+}
+
+/* Carregador de tela cheia: cobre tudo enquanto a tela seguinte não chega. */
+.loader--full {
+  position: fixed;
+  inset: 0;
+  z-index: 95;
+  align-content: center;
+  background: rgb(3 3 3 / 0.88);
+  backdrop-filter: blur(6px);
+}

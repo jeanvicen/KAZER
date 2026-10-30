@@ -847,10 +847,16 @@ class SettingsPanel {
     });
     const chips = h("div.conns__cats", { role: "tablist", "aria-label": "Categorias" });
 
+    let heavy = null;
     const load = async ({ reset = false } = {}) => {
       if (state.loading) return;
       state.loading = true;
       more.disabled = true;
+      if (!list.children.length) {
+        const { createLoader } = await import("./loader.js");
+        heavy = heavy || createLoader(count, { label: "Abrindo o catálogo…" });
+        heavy.start();
+      }
       if (reset) {
         state.page = 0;
         state.done = false;
@@ -861,6 +867,7 @@ class SettingsPanel {
       if (state.category) query.set("category", state.category);
       const result = await request(`/api/connectors?${query}`);
       state.loading = false;
+      heavy?.stop();
       if (!result.ok) {
         count.textContent = "Não deu para carregar o catálogo agora.";
         return;

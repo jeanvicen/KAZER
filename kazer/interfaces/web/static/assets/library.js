@@ -67,6 +67,8 @@ export function createLibrary({ onOpenConversation } = {}) {
   const more = h("div.library__more", { "aria-hidden": "true" });
   const spinner = h("div.library__loading", { hidden: true }, mark("library__mark"));
   root.append(chips, grid, empty, spinner, more);
+  // Espera longa: o Kazinho entra levantando peso (só depois do atraso).
+  let heavy = null;
 
   // Carrega a próxima página quando o fim da lista entra na tela.
   const sentinel = new IntersectionObserver((entries) => {
@@ -109,11 +111,17 @@ export function createLibrary({ onOpenConversation } = {}) {
     if (state.loading || state.done) return;
     state.loading = true;
     spinner.hidden = false;
+    if (!grid.children.length) {
+      const { createLoader } = await import("./loader.js");
+      heavy = heavy || createLoader(spinner, { label: "Montando sua biblioteca…" });
+      heavy.start();
+    }
     const query = new URLSearchParams({ kind: state.filter });
     if (state.next) query.set("before", state.next);
     const result = await request(`/api/library?${query}`);
     state.loading = false;
     spinner.hidden = true;
+    heavy?.stop();
     if (!result.ok) {
       state.done = true;
       if (!grid.children.length) showEmpty("Não deu para abrir a biblioteca agora.");

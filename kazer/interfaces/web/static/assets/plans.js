@@ -22,8 +22,13 @@ const num = (value) => Number(value || 0).toLocaleString("pt-BR");
 
 export async function openPlans({ opener, highlight } = {}) {
   if (open) return open;
-  // Estilo e dados juntos: a tela só aparece quando os dois chegam.
+  // Estilo e dados juntos: a tela só aparece quando os dois chegam. Enquanto
+  // isso, o Kazinho segura a espera (e some sozinho se ela for curta).
+  const { createLoader } = await import("./loader.js");
+  const waiting = createLoader(document.body, { label: "Preparando os planos…", full: true });
+  waiting.start();
   const [result] = await Promise.all([request("/api/plans"), loadStyle("/assets/plans.css")]);
+  waiting.stop();
   if (!result.ok) {
     toast("Não deu para carregar os planos agora.");
     return null;
