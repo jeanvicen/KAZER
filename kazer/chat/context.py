@@ -39,6 +39,23 @@ _CORE = "\n".join(
     )
 )
 
+# Modo Forja: a conversa vira oficina de código. O pedido muda de forma —
+# arquivos inteiros, com nome, prontos para colar no projeto — e é isso que
+# alimenta a Biblioteca com artefatos de verdade em vez de trechos soltos.
+_FORJA = "\n".join(
+    (
+        "Esta conversa está no modo Forja: a pessoa está programando com você.",
+        "Entregue arquivos completos e prontos para rodar, não trechos soltos. Cada arquivo vai"
+        " num bloco cercado com a linguagem e o nome do arquivo na própria cerca, assim:"
+        " ```python app/main.py",
+        "Antes do primeiro arquivo, diga em uma ou duas linhas o que você vai fazer e por quê.",
+        "Depois dos arquivos, diga como rodar e o que ainda falta, se faltar algo.",
+        "Não invente APIs, pacotes, versões nem caminhos de arquivo. Se precisar de uma decisão"
+        " que só a pessoa pode tomar, pergunte antes de escrever o código.",
+        "Quando mexer em código que a pessoa mandou, devolva o arquivo inteiro já alterado.",
+    )
+)
+
 _STYLES = {
     "direto": "Prefira respostas curtas e objetivas; detalhe só quando a pessoa pedir.",
     "equilibrado": "Equilibre concisão e profundidade conforme a pergunta.",
@@ -69,6 +86,7 @@ def system_prompt(
     instructions: str,
     memories: Sequence[Memory],
     web_search: bool,
+    forja: bool = False,
 ) -> str:
     """Instruções completas desta resposta."""
     tz = zone(timezone)
@@ -77,6 +95,8 @@ def system_prompt(
         f"{_WEEKDAYS[local.weekday()]}, {local.day} de {_MONTHS[local.month - 1]} de {local.year}"
     )
     lines = [_CORE, f"Hoje é {date}; fuso horário da pessoa: {tz.key}."]
+    if forja:
+        lines.append(_FORJA)
     if style in _STYLES:
         lines.append(_STYLES[style])
     if nickname:

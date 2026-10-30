@@ -12,7 +12,7 @@ import logging
 import re
 import time
 from collections.abc import Callable, Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from functools import partial
 from typing import Any
 
@@ -152,6 +152,8 @@ class SendOptions:
     documents: int = 0
     long_prompt: bool = False
     long_history: bool = False
+    # Modo Forja: oficina de código, só nos planos pagos.
+    forja: bool = False
 
     def as_dict(self) -> dict[str, Any]:
         """Gravado junto da mensagem para auditoria de uso."""
@@ -161,6 +163,7 @@ class SendOptions:
             "deep": self.deep,
             "web_search": self.web_search,
             "memory": self.memory,
+            "forja": self.forja,
             # Guardado com a mensagem para o consumo ser auditável depois.
             "units": self.units,
         }
@@ -557,7 +560,9 @@ class ChatService:
 
     # ---------- Envio ----------
 
-    def _options(self, data: dict[str, Any], memory_enabled: bool) -> SendOptions:
+    def _options(
+        self, data: dict[str, Any], memory_enabled: bool, user_id: str = ""
+    ) -> SendOptions:
         if data.get("model", PUBLIC_MODEL_ID) != PUBLIC_MODEL_ID:
             raise ChatError("invalid_model", 400)
         effort = data.get("effort", "baixo")
@@ -579,9 +584,23 @@ class ChatService:
             raise ChatError("web_search_unavailable", 400)
         if research:
             raise ChatError("research_unavailable", 400)
+        forja = data.get("forja", False)
+        if not isinstance(forja, bool):
+            raise ChatError("invalid_request", 400)
+        if forja and user_id and not self._allows(user_id, "coder"):
+            raise ChatError("plan_required", 402, feature="forja", **self._offer(user_id))
         return SendOptions(
-            effort=EFFORTS[effort], deep=deep, web_search=web, memory=memory and memory_enabled
+            effort=EFFORTS[effort],
+            deep=deep,
+            web_search=web,
+            memory=memory and memory_enabled,
+            forja=forja,
         )
+
+    def _allows(self, user_id: str, feature: str) -> bool:
+        """O plano da conta libera este recurso?"""
+        features = self.usage_state(user_id).get("features") or {}
+        return bool(features.get(feature))
 
     def _weigh(
         self,
@@ -606,11 +625,8 @@ class ChatService:
             page = self._store.list_messages(user_id, conversation_id, limit=1)
             if page is not None and page[0]:
                 long_history = page[0][-1].seq >= LONG_HISTORY_MESSAGES
-        return SendOptions(
-            effort=options.effort,
-            deep=options.deep,
-            web_search=options.web_search,
-            memory=options.memory,
+        return replace(
+            options,
             images=images,
             documents=documents,
             long_prompt=len(content) >= LONG_PROMPT_CHARS,
@@ -666,7 +682,10 @@ class ChatService:
             return duplicate, self._hub.get(user_id, duplicate.reply.id)
         prefs = self.preferences(user_id)
         options = self._weigh(
-            self._options(data, prefs["memory_enabled"]), user_id, content, attachment_ids,
+            self._options(data, prefs["memory_enabled"], user_id),
+            user_id,
+            content,
+            attachment_ids,
             conversation_id,
         )
         if conversation_id and self._hub.busy(conversation_id):
@@ -750,14 +769,14 @@ class ChatService:
             deep=bool(current.options.get("deep", False)),
             web_search=bool(current.options.get("web_search", False)),
             memory=bool(current.options.get("memory", True)),
+            forja=bool(current.options.get("forja", False)),
         )
         caps = self._provider.capabilities
         if (options.deep and not caps.deep) or (options.web_search and not caps.web_search):
-            options = SendOptions(
-                effort=options.effort,
+            options = replace(
+                options,
                 deep=options.deep and caps.deep,
                 web_search=options.web_search and caps.web_search,
-                memory=options.memory,
             )
         if not self._hub.try_reserve():
             raise ChatError("capacity", 503, retry_after=10)
@@ -779,12 +798,7 @@ class ChatService:
             raise ChatError("not_retryable", 409)
         question, reply = restarted
         prefs = self.preferences(user_id)
-        options = SendOptions(
-            effort=options.effort,
-            deep=options.deep,
-            web_search=options.web_search,
-            memory=options.memory and prefs["memory_enabled"],
-        )
+        options = replace(options, memory=options.memory and prefs["memory_enabled"])
         request = self._request(user_id, question, options, prefs, timezone)
         live = self._hub.start(
             user_id,
@@ -899,6 +913,7 @@ class ChatService:
             instructions=str(prefs["instructions"]),
             memories=self._store.list_memories(user_id) if options.memory else [],
             web_search=options.web_search,
+            forja=options.forja,
         )
         return GenerationRequest(
             system=system,

@@ -3553,7 +3553,7 @@ html[data-motion="reduzido"] .offline-bar * {
   align-items: center;
   justify-content: center;
   gap: 0.35rem;
-  padding: 0.45rem 0.5rem;
+  padding: 0.45rem 0.4rem;
   border: 0;
   border-radius: 0.5rem;
   background: transparent;
@@ -3564,31 +3564,42 @@ html[data-motion="reduzido"] .offline-bar * {
   transition: color 0.2s ease;
 }
 
+/* Três rótulos numa gaveta de 17.5rem: sem ícone, "Conversas" e "Biblioteca"
+ * cabem inteiros; com ícone, viram "Conv…" e "Bibli…". */
 .drawer__tab svg {
-  width: 0.95rem;
-  height: 0.95rem;
+  display: none;
 }
 
 .drawer__tab.is-active {
   color: var(--c-text);
 }
 
-/* O realce desliza entre as abas em vez de piscar. */
+/* O realce desliza entre as abas em vez de piscar. `--tab` é o índice da aba
+ * ativa, escrito pelo chat.js (a CSP bloqueia `style` em atributo). */
 .drawer__tab-glider {
   position: absolute;
   z-index: 0;
   top: 0.2rem;
   bottom: 0.2rem;
   left: 0.2rem;
-  width: calc(50% - 0.275rem);
+  width: calc((100% - 0.4rem - 0.3rem) / 3);
   border-radius: 0.5rem;
   background: var(--c-bg-2);
+  transform: translateX(calc(var(--tab, 0) * (100% + 0.15rem)));
   transition: transform 0.28s var(--spring);
 }
 
-.drawer__tabs:has(#tab-biblioteca.is-active) .drawer__tab-glider {
-  transform: translateX(calc(100% + 0.15rem));
+.drawer__tab {
+  min-width: 0;
 }
+
+.drawer__tab > span:last-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+
 
 .drawer__panel {
   display: flex;

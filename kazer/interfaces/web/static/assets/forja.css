@@ -1,0 +1,281 @@
+/* Forja: a oficina de código do KAZER.
+ *
+ * Carregada só quando a aba abre. A animação da Fenda batendo o martelo
+ * aparece de vez em quando — a cada poucos segundos, não o tempo todo: pesa
+ * pouco e não cansa quem está lendo a lista ao lado.
+ */
+
+.forja {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  padding: 0.5rem 0.75rem 1rem;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: #2a2a2a transparent;
+}
+
+.forja__ready,
+.forja__locked {
+  display: grid;
+  gap: 0.6rem;
+  animation: forja-in 0.4s ease-out both;
+}
+
+/* ---------- A Fenda na bigorna ---------- */
+
+.forja__stage {
+  position: relative;
+  display: grid;
+  place-items: center;
+  height: 5.5rem;
+  margin-bottom: 0.25rem;
+  overflow: hidden;
+}
+
+/* O clarão da bigorna: acende no instante da martelada. */
+.forja__anvil {
+  position: absolute;
+  bottom: 1.1rem;
+  width: 4.5rem;
+  height: 1.5rem;
+  border-radius: 50%;
+  background: radial-gradient(ellipse, rgb(255 149 64 / 0.45), transparent 70%);
+  opacity: 0;
+  animation: forja-glow 5.2s ease-out infinite;
+}
+
+.forja__mark {
+  position: relative;
+  width: 2rem;
+  height: 2rem;
+  color: var(--c-text);
+  transform-origin: 50% 90%;
+  animation: forja-strike 5.2s cubic-bezier(0.3, 0, 0.2, 1) infinite;
+}
+
+.forja__mark .mark__l,
+.forja__mark .mark__r {
+  fill: currentColor;
+}
+
+.forja__spark {
+  position: absolute;
+  bottom: 1.5rem;
+  width: 0.2rem;
+  height: 0.2rem;
+  border-radius: 50%;
+  background: #ffb066;
+  opacity: 0;
+  animation: forja-spark 5.2s ease-out infinite;
+}
+
+.forja__spark--b {
+  animation-delay: 0.06s;
+  --dx: -1.6rem;
+  --dy: -1.5rem;
+}
+
+.forja__spark--c {
+  animation-delay: 0.12s;
+  --dx: 1.9rem;
+  --dy: -0.9rem;
+}
+
+@keyframes forja-strike {
+  /* Quase todo o ciclo é descanso; a martelada é o instante no meio. */
+  0%,
+  60% {
+    transform: rotate(0deg);
+  }
+  66% {
+    transform: rotate(-26deg);
+  }
+  70% {
+    transform: rotate(8deg) translateY(0.15rem);
+  }
+  74% {
+    transform: rotate(-4deg);
+  }
+  78%,
+  100% {
+    transform: rotate(0deg);
+  }
+}
+
+@keyframes forja-glow {
+  0%,
+  68% {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  71% {
+    opacity: 1;
+    transform: scale(1.15);
+  }
+  85%,
+  100% {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+}
+
+@keyframes forja-spark {
+  0%,
+  69% {
+    opacity: 0;
+    transform: none;
+  }
+  71% {
+    opacity: 1;
+    transform: none;
+  }
+  86%,
+  100% {
+    opacity: 0;
+    transform: translate(var(--dx, 1.4rem), var(--dy, -1.7rem));
+  }
+}
+
+/* ---------- Texto ---------- */
+
+.forja__title {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.forja__lock {
+  display: inline-grid;
+  place-items: center;
+  width: 1.25rem;
+  height: 1.25rem;
+  border-radius: 50%;
+  background: rgb(255 255 255 / 0.07);
+  color: var(--c-text-3);
+}
+
+.forja__lock svg {
+  width: 0.75rem;
+  height: 0.75rem;
+}
+
+.forja__lede {
+  margin: 0;
+  color: var(--c-text-2);
+  font-size: 0.8125rem;
+  line-height: 1.5;
+}
+
+.forja__list {
+  display: grid;
+  gap: 0.5rem;
+  margin: 0.25rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.forja__item {
+  display: grid;
+  grid-template-columns: 0.9rem 1fr;
+  gap: 0.45rem;
+  align-items: start;
+  color: var(--c-text-2);
+  font-size: 0.78125rem;
+  line-height: 1.45;
+}
+
+.forja__item strong {
+  color: var(--c-text);
+  font-weight: 500;
+}
+
+.forja__check {
+  width: 0.9rem;
+  height: 0.9rem;
+  margin-top: 0.15rem;
+  color: #ffb066;
+}
+
+.forja__start {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  width: 100%;
+  margin-top: 0.25rem;
+  padding: 0.7rem 1rem;
+  border: 0;
+  border-radius: 0.7rem;
+  background: linear-gradient(135deg, #ff9540, #ff6b3d);
+  color: #140a04;
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.14s ease, filter 0.2s ease;
+}
+
+.forja__start:hover {
+  filter: brightness(1.08);
+}
+
+.forja__start:active {
+  transform: scale(0.985);
+}
+
+.forja__start svg {
+  width: 1rem;
+  height: 1rem;
+}
+
+.forja__note {
+  margin: 0;
+  color: var(--c-text-3);
+  font-size: 0.75rem;
+  text-align: center;
+}
+
+/* ---------- O chip no campo de escrita ---------- */
+
+.composer__box.is-forja {
+  border-color: rgb(255 149 64 / 0.45);
+}
+
+.tool--forja.is-on {
+  background: linear-gradient(135deg, #ff9540, #ff6b3d);
+  color: #140a04;
+}
+
+@keyframes forja-in {
+  from {
+    opacity: 0;
+    transform: translateY(0.5rem);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* ---------- Menos movimento ---------- */
+
+@media (prefers-reduced-motion: reduce) {
+  html:not([data-motion="completo"]) .forja * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+html[data-motion="reduzido"] .forja * {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+}

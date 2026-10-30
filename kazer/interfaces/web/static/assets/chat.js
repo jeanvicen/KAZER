@@ -69,6 +69,7 @@ const SEND_ERRORS = {
   unauthenticated: "Sua sessão expirou.",
   auth_unavailable: "As contas estão fechadas neste ambiente.",
   chat_unavailable: "O chat ainda não está disponível neste ambiente.",
+  plan_required: "A Forja entra com os planos pagos.",
 };
 
 const UPLOAD_ERRORS = {
@@ -87,6 +88,12 @@ const UPLOAD_ERRORS = {
 async function offerPlans(data) {
   const { limitReached } = await import("./plans.js");
   limitReached(data, { opener: S.ui.prompt });
+}
+
+// O plano atual não libera o recurso pedido: a tela explica e oferece.
+async function offerFeature(data) {
+  const { openPlans } = await import("./plans.js");
+  openPlans({ opener: S.ui.prompt, highlight: data.upgrade?.id });
 }
 
 function sendError(data) {
@@ -109,6 +116,8 @@ const S = {
   conversation: null, // { id, title } | null (nova)
   drawerTab: "conversas",
   library: null,
+  forjaPanel: null,
+  forja: false,
   models: new Map(), // id -> mensagem (estado de interface)
   oldestSeq: null,
   hasMore: false,
@@ -143,12 +152,13 @@ export async function mountChat({ email, onSignedOut }) {
   S.onSignedOut = onSignedOut;
   const ids = [
     "drawer", "drawer-close", "new-chat", "history-search", "history", "history-list", "history-empty",
-    "history-more", "tab-conversas", "tab-biblioteca", "panel-conversas", "panel-biblioteca",
+    "history-more", "tab-conversas", "tab-biblioteca", "tab-forja",
+    "panel-conversas", "panel-biblioteca", "panel-forja",
     "open-settings", "account-avatar", "account-mail", "sign-out", "drawer-scrim", "pane",
     "menu", "topbar-title", "new-chat-top", "ambient", "empty", "greeting", "greeting-a", "greeting-b",
     "empty-note", "thread", "messages", "older", "to-bottom", "composer", "composer-alert",
     "composer-alert-text", "composer-alert-close", "composer-box", "tray", "prompt", "plus", "model-chip",
-    "deep", "mic", "send", "pick-camera", "pick-photos", "pick-files",
+    "deep", "forja-chip", "mic", "send", "pick-camera", "pick-photos", "pick-files",
   ];
   for (const id of ids) S.ui[id.replace(/-(\w)/g, (_, c) => c.toUpperCase())] = byId(root, id);
   setSheetBackground(root);
@@ -378,6 +388,7 @@ function detachLive() {
 }
 
 function newConversation({ push = true, focus = true } = {}) {
+  setForja(false);
   S.navToken += 1;
   detachLive();
   S.conversation = null;
@@ -393,29 +404,68 @@ function newConversation({ push = true, focus = true } = {}) {
 
 // ---------- Abas da gaveta ----------
 
+const DRAWER_TABS = ["conversas", "biblioteca", "forja"];
+
 async function showDrawerTab(name) {
   if (S.drawerTab === name) return;
   S.drawerTab = name;
-  const library = name === "biblioteca";
-  S.ui.tabConversas.classList.toggle("is-active", !library);
-  S.ui.tabBiblioteca.classList.toggle("is-active", library);
-  S.ui.tabConversas.setAttribute("aria-selected", String(!library));
-  S.ui.tabBiblioteca.setAttribute("aria-selected", String(library));
-  S.ui.panelConversas.hidden = library;
-  S.ui.panelBiblioteca.hidden = !library;
-  if (!library) {
-    S.library?.hide();
-    return;
+  const tabs = { conversas: S.ui.tabConversas, biblioteca: S.ui.tabBiblioteca, forja: S.ui.tabForja };
+  const panels = { conversas: S.ui.panelConversas, biblioteca: S.ui.panelBiblioteca, forja: S.ui.panelForja };
+  for (const key of DRAWER_TABS) {
+    const on = key === name;
+    tabs[key].classList.toggle("is-active", on);
+    tabs[key].setAttribute("aria-selected", String(on));
+    panels[key].hidden = !on;
   }
-  if (!S.library) {
-    const { createLibrary } = await import("./library.js");
-    S.library = createLibrary({ onOpenConversation: (id) => openConversation(id) });
-    S.ui.panelBiblioteca.append(S.library.root);
+  // O realce desliza pela posição da aba ativa.
+  S.ui.tabConversas.parentElement.style.setProperty("--tab", String(DRAWER_TABS.indexOf(name)));
+
+  if (name !== "biblioteca") S.library?.hide();
+  if (name !== "forja") S.forjaPanel?.hide();
+
+  if (name === "biblioteca") {
+    if (!S.library) {
+      const { createLibrary } = await import("./library.js");
+      S.library = createLibrary({ onOpenConversation: (id) => openConversation(id) });
+      S.ui.panelBiblioteca.append(S.library.root);
+    }
+    S.library.show();
+  } else if (name === "forja") {
+    if (!S.forjaPanel) {
+      const { createForja } = await import("./forja.js");
+      S.forjaPanel = createForja({
+        onStart: () => startForja(),
+        onOpenPlans: async (opener, highlight) => {
+          const { openPlans } = await import("./plans.js");
+          openPlans({ opener, highlight });
+        },
+      });
+      S.ui.panelForja.append(S.forjaPanel.root);
+    }
+    S.forjaPanel.show();
   }
-  S.library.show();
+}
+
+// Abre uma conversa nova já no modo Forja.
+function startForja() {
+  newConversation({ push: true, focus: true });
+  setForja(true);
+  if (!desktopQuery.matches) closeDrawer();
+}
+
+function setForja(on) {
+  S.forja = on;
+  S.ui.composerBox.classList.toggle("is-forja", on);
+  S.ui.forjaChip.hidden = !on;
+  S.ui.forjaChip.classList.toggle("is-on", on);
+  S.ui.forjaChip.setAttribute("aria-pressed", String(on));
+  if (S.ui.prompt) {
+    S.ui.prompt.placeholder = on ? "O que vamos construir?" : "Converse com o KAZER...";
+  }
 }
 
 async function openConversation(id, { push = true } = {}) {
+  setForja(false);
   const token = (S.navToken += 1);
   detachLive();
   if (push) window.history.pushState({ chat: id }, "", `/c/${id}`);
@@ -928,6 +978,7 @@ async function send() {
         effort: "baixo",
         deep: S.options.deep,
         tools: { web_search: S.options.web, research: false, memory: S.options.memory },
+        forja: S.forja,
         timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
       }),
       signal: controller.signal,
@@ -1003,6 +1054,7 @@ function failSend(data) {
   if (data.error === "unauthenticated") return;
   showAlert(sendError(data));
   if (data.error === "usage_limit") offerPlans(data);
+  if (data.error === "plan_required") offerFeature(data);
   if (data.error === "not_found") {
     newConversation({ push: true, focus: false });
   }
@@ -1643,9 +1695,10 @@ function bindDrawer() {
     else if (!desktopQuery.matches && S.root.classList.contains("drawer-open")) trapFocus(S.ui.drawer, event);
   });
   let timer = 0;
-  for (const tab of [S.ui.tabConversas, S.ui.tabBiblioteca]) {
+  for (const tab of [S.ui.tabConversas, S.ui.tabBiblioteca, S.ui.tabForja]) {
     tab.addEventListener("click", () => showDrawerTab(tab.dataset.tab));
   }
+  S.ui.forjaChip.addEventListener("click", () => setForja(false));
   S.ui.historySearch.addEventListener("input", () => {
     window.clearTimeout(timer);
     timer = window.setTimeout(() => loadHistory({ query: S.ui.historySearch.value.trim() }), 260);
