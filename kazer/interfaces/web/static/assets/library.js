@@ -202,6 +202,17 @@ export function createLibrary({ onOpenConversation } = {}) {
 
   const openArtifact = (item) => openArtifactById(item.id, { onOpenConversation });
 
+  // Resposta nova com artefatos: a lista se atualiza sozinha.
+  window.addEventListener("kazer:artifacts", () => {
+    if (!state.started) return;
+    if (root.hidden) {
+      state.stale = true;
+      return;
+    }
+    reset();
+    load();
+  });
+
   return {
     root,
     // A primeira abertura é quem paga o custo do estilo e da primeira página.

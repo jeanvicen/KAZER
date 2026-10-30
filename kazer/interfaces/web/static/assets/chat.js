@@ -114,9 +114,8 @@ const S = {
   prefs: {},
   model: null,
   conversation: null, // { id, title } | null (nova)
-  drawerTab: "conversas",
-  library: null,
-  forjaPanel: null,
+  screen: "conversas",
+  screens: null,
   forja: false,
   models: new Map(), // id -> mensagem (estado de interface)
   oldestSeq: null,
@@ -152,8 +151,7 @@ export async function mountChat({ email, onSignedOut }) {
   S.onSignedOut = onSignedOut;
   const ids = [
     "drawer", "drawer-close", "new-chat", "history-search", "history", "history-list", "history-empty",
-    "history-more", "tab-conversas", "tab-biblioteca", "tab-forja",
-    "panel-conversas", "panel-biblioteca", "panel-forja",
+    "history-more", "drawer-nav", "panel-conversas", "screen",
     "open-settings", "account-avatar", "account-mail", "sign-out", "drawer-scrim", "pane",
     "menu", "topbar-title", "new-chat-top", "ambient", "empty", "greeting", "greeting-a", "greeting-b",
     "empty-note", "thread", "messages", "older", "to-bottom", "composer", "composer-alert",
@@ -388,6 +386,7 @@ function detachLive() {
 }
 
 function newConversation({ push = true, focus = true } = {}) {
+  if (S.screen !== "conversas") showScreen("conversas");
   setForja(false);
   S.navToken += 1;
   detachLive();
@@ -404,46 +403,46 @@ function newConversation({ push = true, focus = true } = {}) {
 
 // ---------- Abas da gaveta ----------
 
-const DRAWER_TABS = ["conversas", "biblioteca", "forja"];
+const SCREENS = ["conversas", "projetos", "forja", "artefatos", "biblioteca", "habilidades"];
 
-async function showDrawerTab(name) {
-  if (S.drawerTab === name) return;
-  S.drawerTab = name;
-  const tabs = { conversas: S.ui.tabConversas, biblioteca: S.ui.tabBiblioteca, forja: S.ui.tabForja };
-  const panels = { conversas: S.ui.panelConversas, biblioteca: S.ui.panelBiblioteca, forja: S.ui.panelForja };
-  for (const key of DRAWER_TABS) {
-    const on = key === name;
-    tabs[key].classList.toggle("is-active", on);
-    tabs[key].setAttribute("aria-selected", String(on));
-    panels[key].hidden = !on;
+async function showScreen(name) {
+  if (!SCREENS.includes(name) || S.screen === name) {
+    if (!desktopQuery.matches) closeDrawer();
+    return;
   }
-  // O realce desliza pela posição da aba ativa.
-  S.ui.tabConversas.parentElement.style.setProperty("--tab", String(DRAWER_TABS.indexOf(name)));
-
-  if (name !== "biblioteca") S.library?.hide();
-  if (name !== "forja") S.forjaPanel?.hide();
-
-  if (name === "biblioteca") {
-    if (!S.library) {
-      const { createLibrary } = await import("./library.js");
-      S.library = createLibrary({ onOpenConversation: (id) => openConversation(id) });
-      S.ui.panelBiblioteca.append(S.library.root);
-    }
-    S.library.show();
-  } else if (name === "forja") {
-    if (!S.forjaPanel) {
-      const { createForja } = await import("./forja.js");
-      S.forjaPanel = createForja({
-        onStart: () => startForja(),
-        onOpenPlans: async (opener, highlight) => {
-          const { openPlans } = await import("./plans.js");
-          openPlans({ opener, highlight });
-        },
-      });
-      S.ui.panelForja.append(S.forjaPanel.root);
-    }
-    S.forjaPanel.show();
+  S.screen = name;
+  for (const item of S.ui.drawerNav.children) {
+    item.classList.toggle("is-active", item.dataset.screen === name);
   }
+  if (!desktopQuery.matches) closeDrawer();
+
+  if (name === "conversas") {
+    S.screens?.close();
+    S.ui.pane.hidden = false;
+    return;
+  }
+  if (!S.screens) {
+    const { createScreens } = await import("./screens.js");
+    S.screens = createScreens({
+      host: S.ui.screen,
+      onMenu: () => openDrawer(),
+      onOpenConversation: (id) => {
+        showScreen("conversas");
+        openConversation(id);
+      },
+      onStartForja: () => {
+        showScreen("conversas");
+        startForja();
+      },
+      onOpenPlans: async (opener, highlight) => {
+        const { openPlans } = await import("./plans.js");
+        openPlans({ opener, highlight });
+      },
+    });
+  }
+  // A conversa some de vista, mas continua viva: voltar não recarrega nada.
+  S.ui.pane.hidden = true;
+  await S.screens.open(name);
 }
 
 // Abre uma conversa nova já no modo Forja.
@@ -465,6 +464,7 @@ function setForja(on) {
 }
 
 async function openConversation(id, { push = true } = {}) {
+  if (S.screen !== "conversas") showScreen("conversas");
   setForja(false);
   const token = (S.navToken += 1);
   detachLive();
@@ -842,7 +842,7 @@ function handleEvent(model, event) {
   } else if (event.type === "artifacts") {
     // A resposta rendeu peças para a Biblioteca.
     model.artifacts = event.items;
-    S.library?.refresh();
+    window.dispatchEvent(new CustomEvent("kazer:artifacts"));
     paintArtifacts(model);
   } else if (event.type === "done") {
     finish(model, event.reply);
@@ -1723,9 +1723,10 @@ function bindDrawer() {
     else if (!desktopQuery.matches && S.root.classList.contains("drawer-open")) trapFocus(S.ui.drawer, event);
   });
   let timer = 0;
-  for (const tab of [S.ui.tabConversas, S.ui.tabBiblioteca, S.ui.tabForja]) {
-    tab.addEventListener("click", () => showDrawerTab(tab.dataset.tab));
-  }
+  S.ui.drawerNav.addEventListener("click", (event) => {
+    const item = event.target.closest("[data-screen]");
+    if (item) showScreen(item.dataset.screen);
+  });
   S.ui.forjaChip.addEventListener("click", () => setForja(false));
   S.ui.historySearch.addEventListener("input", () => {
     window.clearTimeout(timer);

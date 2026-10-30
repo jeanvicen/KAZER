@@ -33,6 +33,7 @@ CREATE TABLE IF NOT EXISTS conversations (
     id TEXT PRIMARY KEY,
     user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     title TEXT NOT NULL,
+    project_id TEXT,
     created_at INTEGER NOT NULL,
     updated_at INTEGER NOT NULL
 );
@@ -99,6 +100,30 @@ CREATE TABLE IF NOT EXISTS artifacts (
 );
 CREATE INDEX IF NOT EXISTS artifacts_user ON artifacts(user_id, created_at);
 CREATE INDEX IF NOT EXISTS artifacts_message ON artifacts(message_id);
+CREATE TABLE IF NOT EXISTS projects (
+    id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    name TEXT NOT NULL,
+    goal TEXT NOT NULL DEFAULT '',
+    archived INTEGER NOT NULL DEFAULT 0,
+    created_at INTEGER NOT NULL,
+    updated_at INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS projects_user ON projects(user_id, updated_at);
+CREATE TABLE IF NOT EXISTS skills (
+    id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    name TEXT NOT NULL,
+    description TEXT NOT NULL,
+    instructions TEXT NOT NULL,
+    enabled INTEGER NOT NULL DEFAULT 1,
+    shared INTEGER NOT NULL DEFAULT 0,
+    origin TEXT NOT NULL DEFAULT 'propria',
+    created_at INTEGER NOT NULL,
+    updated_at INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS skills_user ON skills(user_id, created_at);
+CREATE INDEX IF NOT EXISTS skills_shared ON skills(shared, updated_at);
 """
 
 
@@ -115,12 +140,14 @@ class Conversation:
     title: str
     created_at: int
     updated_at: int
+    project_id: str | None = None
 
     def public(self) -> dict[str, Any]:
         """Formato enviado ao navegador."""
         return {
             "id": self.id,
             "title": self.title,
+            "project_id": self.project_id,
             "created_at": self.created_at,
             "updated_at": self.updated_at,
         }
@@ -204,6 +231,62 @@ class Memory:
 
 
 @dataclass(frozen=True, slots=True)
+class Project:
+    """Pasta de conversas em torno de um assunto."""
+
+    id: str
+    name: str
+    goal: str
+    archived: bool
+    conversations: int
+    created_at: int
+    updated_at: int
+
+    def public(self) -> dict[str, Any]:
+        """Formato enviado ao navegador."""
+        return {
+            "id": self.id,
+            "name": self.name,
+            "goal": self.goal,
+            "archived": self.archived,
+            "conversations": self.conversations,
+            "created_at": self.created_at,
+            "updated_at": self.updated_at,
+        }
+
+
+@dataclass(frozen=True, slots=True)
+class Skill:
+    """Habilidade: instruções que a pessoa escreve e o KAZER segue."""
+
+    id: str
+    name: str
+    description: str
+    instructions: str
+    enabled: bool
+    shared: bool
+    origin: str
+    created_at: int
+    updated_at: int
+
+    def public(self, *, body: bool = True) -> dict[str, Any]:
+        """Formato enviado ao navegador; a listagem vai sem as instruções."""
+        data: dict[str, Any] = {
+            "id": self.id,
+            "name": self.name,
+            "description": self.description,
+            "enabled": self.enabled,
+            "shared": self.shared,
+            "origin": self.origin,
+            "created_at": self.created_at,
+            "updated_at": self.updated_at,
+        }
+        if body:
+            data["instructions"] = self.instructions
+        return data
+
+
+@dataclass(frozen=True, slots=True)
 class Artifact:
     """Peça que o KAZER produziu e que vive fora da conversa."""
 
@@ -283,6 +366,32 @@ def _library_row(item: Attachment) -> dict[str, Any]:
     }
 
 
+def _project(row: sqlite3.Row) -> Project:
+    return Project(
+        row["id"],
+        row["name"],
+        row["goal"],
+        bool(row["archived"]),
+        int(row["total"]),
+        row["created_at"],
+        row["updated_at"],
+    )
+
+
+def _skill(row: sqlite3.Row) -> Skill:
+    return Skill(
+        row["id"],
+        row["name"],
+        row["description"],
+        row["instructions"],
+        bool(row["enabled"]),
+        bool(row["shared"]),
+        row["origin"],
+        row["created_at"],
+        row["updated_at"],
+    )
+
+
 def _artifact(row: sqlite3.Row) -> Artifact:
     return Artifact(
         row["id"],
@@ -298,7 +407,14 @@ def _artifact(row: sqlite3.Row) -> Artifact:
 
 
 def _conversation(row: sqlite3.Row) -> Conversation:
-    return Conversation(row["id"], row["title"], row["created_at"], row["updated_at"])
+    keys = row.keys()
+    return Conversation(
+        row["id"],
+        row["title"],
+        row["created_at"],
+        row["updated_at"],
+        row["project_id"] if "project_id" in keys else None,
+    )
 
 
 def _attachment(row: sqlite3.Row) -> Attachment:
@@ -369,6 +485,16 @@ class ChatStore:
         conn = sqlite3.connect(self._path, isolation_level=None)
         try:
             conn.executescript(_SCHEMA)
+            # Banco criado antes dos projetos: a coluna entra agora, sem perder
+            # nada. O índice vem depois dela, nunca dentro do script — um erro
+            # no meio do script abortaria a criação de todo o resto.
+            columns = {row[1] for row in conn.execute("PRAGMA table_info(conversations)")}
+            if "project_id" not in columns:
+                conn.execute("ALTER TABLE conversations ADD COLUMN project_id TEXT")
+            conn.execute(
+                "CREATE INDEX IF NOT EXISTS conversations_project"
+                " ON conversations(project_id)"
+            )
         finally:
             conn.close()
         with self._transaction() as conn:
@@ -917,6 +1043,206 @@ class ChatStore:
                 " updated_at = excluded.updated_at",
                 (user_id, json.dumps(data, separators=(",", ":")), now),
             )
+
+    # ---------- Projetos ----------
+
+    def list_projects(self, user_id: str, *, archived: bool, query: str = "") -> list[Project]:
+        """Projetos da conta, com quantas conversas cada um guarda."""
+        like = f"%{query.lower()}%"
+        with self._transaction() as conn:
+            rows = conn.execute(
+                "SELECT p.*, (SELECT COUNT(*) FROM conversations c"
+                "   WHERE c.project_id = p.id) AS total"
+                " FROM projects p WHERE p.user_id = ? AND p.archived = ?"
+                " AND (? = '' OR LOWER(p.name) LIKE ? OR LOWER(p.goal) LIKE ?)"
+                " ORDER BY p.updated_at DESC, p.id DESC",
+                (user_id, int(archived), query.lower(), like, like),
+            ).fetchall()
+        return [_project(row) for row in rows]
+
+    def create_project(self, user_id: str, name: str, goal: str, now: int) -> Project:
+        """Cria o projeto e devolve já com a contagem zerada."""
+        project = Project(new_id(), name, goal, False, 0, now, now)
+        with self._transaction() as conn:
+            conn.execute(
+                "INSERT INTO projects (id, user_id, name, goal, archived, created_at, updated_at)"
+                " VALUES (?, ?, ?, ?, 0, ?, ?)",
+                (project.id, user_id, name, goal, now, now),
+            )
+        return project
+
+    def get_project(self, user_id: str, project_id: str) -> Project | None:
+        """Projeto da própria conta."""
+        with self._transaction() as conn:
+            row = conn.execute(
+                "SELECT p.*, (SELECT COUNT(*) FROM conversations c"
+                "   WHERE c.project_id = p.id) AS total"
+                " FROM projects p WHERE p.id = ? AND p.user_id = ?",
+                (project_id, user_id),
+            ).fetchone()
+        return None if row is None else _project(row)
+
+    def update_project(
+        self,
+        user_id: str,
+        project_id: str,
+        now: int,
+        *,
+        name: str | None = None,
+        goal: str | None = None,
+        archived: bool | None = None,
+    ) -> bool:
+        """Altera só os campos informados."""
+        sets: list[str] = ["updated_at = ?"]
+        args: list[Any] = [now]
+        for column, value in (("name", name), ("goal", goal)):
+            if value is not None:
+                sets.append(f"{column} = ?")
+                args.append(value)
+        if archived is not None:
+            sets.append("archived = ?")
+            args.append(int(archived))
+        with self._transaction() as conn:
+            changed = conn.execute(
+                f"UPDATE projects SET {', '.join(sets)} WHERE id = ? AND user_id = ?",  # noqa: S608
+                (*args, project_id, user_id),
+            ).rowcount
+        return changed > 0
+
+    def delete_project(self, user_id: str, project_id: str) -> bool:
+        """Apaga o projeto; as conversas dele continuam, soltas."""
+        with self._transaction() as conn:
+            conn.execute(
+                "UPDATE conversations SET project_id = NULL"
+                " WHERE project_id = ? AND user_id = ?",
+                (project_id, user_id),
+            )
+            changed = conn.execute(
+                "DELETE FROM projects WHERE id = ? AND user_id = ?", (project_id, user_id)
+            ).rowcount
+        return changed > 0
+
+    def set_conversation_project(
+        self, user_id: str, conversation_id: str, project_id: str | None
+    ) -> bool:
+        """Põe (ou tira) a conversa de um projeto."""
+        with self._transaction() as conn:
+            if project_id is not None:
+                owns = conn.execute(
+                    "SELECT 1 FROM projects WHERE id = ? AND user_id = ?", (project_id, user_id)
+                ).fetchone()
+                if owns is None:
+                    return False
+            changed = conn.execute(
+                "UPDATE conversations SET project_id = ? WHERE id = ? AND user_id = ?",
+                (project_id, conversation_id, user_id),
+            ).rowcount
+        return changed > 0
+
+    # ---------- Habilidades ----------
+
+    def list_skills(self, user_id: str) -> list[Skill]:
+        """Habilidades da conta, mais recentes primeiro."""
+        with self._transaction() as conn:
+            rows = conn.execute(
+                "SELECT * FROM skills WHERE user_id = ? ORDER BY created_at DESC, id DESC",
+                (user_id,),
+            ).fetchall()
+        return [_skill(row) for row in rows]
+
+    def list_shared_skills(self, *, query: str = "", limit: int = 40) -> list[Skill]:
+        """Catálogo: habilidades que qualquer pessoa publicou."""
+        like = f"%{query.lower()}%"
+        with self._transaction() as conn:
+            rows = conn.execute(
+                "SELECT * FROM skills WHERE shared = 1"
+                " AND (? = '' OR LOWER(name) LIKE ? OR LOWER(description) LIKE ?)"
+                " ORDER BY updated_at DESC, id DESC LIMIT ?",
+                (query.lower(), like, like, limit),
+            ).fetchall()
+        return [_skill(row) for row in rows]
+
+    def get_skill(self, skill_id: str, user_id: str | None = None) -> Skill | None:
+        """Habilidade por id; sem `user_id`, só se ela for pública."""
+        with self._transaction() as conn:
+            row = (
+                conn.execute(
+                    "SELECT * FROM skills WHERE id = ? AND user_id = ?", (skill_id, user_id)
+                ).fetchone()
+                if user_id
+                else conn.execute(
+                    "SELECT * FROM skills WHERE id = ? AND shared = 1", (skill_id,)
+                ).fetchone()
+            )
+        return None if row is None else _skill(row)
+
+    def create_skill(
+        self,
+        user_id: str,
+        *,
+        name: str,
+        description: str,
+        instructions: str,
+        origin: str,
+        now: int,
+        max_count: int,
+    ) -> Skill | None:
+        """Cria a habilidade; None quando a conta já chegou ao limite."""
+        skill = Skill(new_id(), name, description, instructions, True, False, origin, now, now)
+        with self._transaction() as conn:
+            (count,) = conn.execute(
+                "SELECT COUNT(*) FROM skills WHERE user_id = ?", (user_id,)
+            ).fetchone()
+            if count >= max_count:
+                return None
+            conn.execute(
+                "INSERT INTO skills (id, user_id, name, description, instructions, enabled,"
+                " shared, origin, created_at, updated_at) VALUES (?, ?, ?, ?, ?, 1, 0, ?, ?, ?)",
+                (skill.id, user_id, name, description, instructions, origin, now, now),
+            )
+        return skill
+
+    def update_skill(
+        self,
+        user_id: str,
+        skill_id: str,
+        now: int,
+        *,
+        name: str | None = None,
+        description: str | None = None,
+        instructions: str | None = None,
+        enabled: bool | None = None,
+        shared: bool | None = None,
+    ) -> bool:
+        """Altera só os campos informados."""
+        sets: list[str] = ["updated_at = ?"]
+        args: list[Any] = [now]
+        for column, value in (
+            ("name", name),
+            ("description", description),
+            ("instructions", instructions),
+        ):
+            if value is not None:
+                sets.append(f"{column} = ?")
+                args.append(value)
+        for column, flag in (("enabled", enabled), ("shared", shared)):
+            if flag is not None:
+                sets.append(f"{column} = ?")
+                args.append(int(flag))
+        with self._transaction() as conn:
+            changed = conn.execute(
+                f"UPDATE skills SET {', '.join(sets)} WHERE id = ? AND user_id = ?",  # noqa: S608
+                (*args, skill_id, user_id),
+            ).rowcount
+        return changed > 0
+
+    def delete_skill(self, user_id: str, skill_id: str) -> bool:
+        """Apaga uma habilidade da própria conta."""
+        with self._transaction() as conn:
+            changed = conn.execute(
+                "DELETE FROM skills WHERE id = ? AND user_id = ?", (skill_id, user_id)
+            ).rowcount
+        return changed > 0
 
     # ---------- Biblioteca e artefatos ----------
 

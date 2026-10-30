@@ -66,6 +66,14 @@ LIBRARY_KINDS = frozenset({"tudo", "imagem", "documento", "artefato"})
 LIBRARY_PAGE = 30
 # Conectores por página do catálogo.
 CONNECTOR_PAGE = 60
+# Projetos e habilidades por conta, e tamanho de cada campo.
+MAX_PROJECTS = 60
+MAX_SKILLS = 40
+MAX_SKILL_NAME = 60
+MAX_SKILL_DESCRIPTION = 300
+MAX_SKILL_INSTRUCTIONS = 20_000
+# Quantas habilidades entram por completo numa resposta.
+SKILLS_IN_CONTEXT = 4
 MAX_MEMORY_CHARS = 500
 PAGE_MESSAGES = 40
 # Título gerado pelo modelo a partir da primeira troca.
@@ -116,6 +124,20 @@ _TEXT_LIMITS = {"nickname": 40, "instructions": 1500}
 _BOOLS = {"memory_enabled", "send_on_enter", "ambient"}
 
 _CLIENT_ID = re.compile(r"^[A-Za-z0-9_-]{8,64}$")
+
+
+def _clean(value: Any, limit: int, *, lines: bool = False) -> str:
+    """Texto do navegador: tipo conferido, espaços normalizados e tamanho limitado."""
+    if value is None:
+        return ""
+    if not isinstance(value, str):
+        raise ChatError("invalid_request", 400)
+    if lines:
+        # Instruções e objetivos podem ter parágrafos; o resto vira uma linha.
+        clean = "\n".join(line.rstrip() for line in value.strip().splitlines())
+    else:
+        clean = " ".join(value.split())
+    return clean[:limit]
 
 
 def _cursor(value: str | None) -> tuple[int, str] | None:
@@ -414,6 +436,235 @@ class ChatService:
             ),
             "kinds": sorted(LIBRARY_KINDS),
         }
+
+    # ---------- Projetos ----------
+
+    def projects(self, user_id: str, *, archived: bool, query: str) -> dict[str, Any]:
+        """Projetos da conta, ativos ou arquivados."""
+        lister = getattr(self._store, "list_projects", None)
+        if lister is None:
+            return {"items": [], "max": MAX_PROJECTS}
+        items = lister(user_id, archived=archived, query=query[:80])
+        return {"items": [item.public() for item in items], "max": MAX_PROJECTS}
+
+    def create_project(self, user_id: str, data: dict[str, Any]) -> dict[str, Any]:
+        """Cria um projeto com nome obrigatório e objetivo opcional."""
+        name = _clean(data.get("name"), MAX_TITLE_CHARS)
+        if not name:
+            raise ChatError("invalid_request", 400)
+        goal = _clean(data.get("goal"), 2000, lines=True)
+        creator = getattr(self._store, "create_project", None)
+        lister = getattr(self._store, "list_projects", None)
+        if creator is None or lister is None:
+            raise ChatError("chat_unavailable", 503)
+        if len(lister(user_id, archived=False)) >= MAX_PROJECTS:
+            raise ChatError("project_limit", 409, limit=MAX_PROJECTS)
+        project = creator(user_id, name, goal, self._now())
+        data_out: dict[str, Any] = project.public()
+        return data_out
+
+    def update_project(
+        self, user_id: str, project_id: str, data: dict[str, Any]
+    ) -> dict[str, Any]:
+        """Renomeia, muda o objetivo ou arquiva."""
+        if not valid_id(project_id):
+            raise ChatError("not_found", 404)
+        changes: dict[str, Any] = {}
+        if "name" in data:
+            name = _clean(data.get("name"), MAX_TITLE_CHARS)
+            if not name:
+                raise ChatError("invalid_request", 400)
+            changes["name"] = name
+        if "goal" in data:
+            changes["goal"] = _clean(data.get("goal"), 2000, lines=True)
+        if "archived" in data:
+            if not isinstance(data["archived"], bool):
+                raise ChatError("invalid_request", 400)
+            changes["archived"] = data["archived"]
+        updater = getattr(self._store, "update_project", None)
+        reader = getattr(self._store, "get_project", None)
+        if updater is None or reader is None:
+            raise ChatError("chat_unavailable", 503)
+        if changes and not updater(user_id, project_id, self._now(), **changes):
+            raise ChatError("not_found", 404)
+        project = reader(user_id, project_id)
+        if project is None:
+            raise ChatError("not_found", 404)
+        out: dict[str, Any] = project.public()
+        return out
+
+    def delete_project(self, user_id: str, project_id: str) -> None:
+        """Apaga o projeto; as conversas dele continuam, soltas."""
+        if not valid_id(project_id):
+            raise ChatError("not_found", 404)
+        remover = getattr(self._store, "delete_project", None)
+        if remover is None or not remover(user_id, project_id):
+            raise ChatError("not_found", 404)
+
+    def set_conversation_project(
+        self, user_id: str, conversation_id: str, project_id: Any
+    ) -> None:
+        """Põe a conversa num projeto, ou tira dela o projeto (`None`)."""
+        if project_id is not None and (
+            not isinstance(project_id, str) or not valid_id(project_id)
+        ):
+            raise ChatError("invalid_request", 400)
+        setter = getattr(self._store, "set_conversation_project", None)
+        if setter is None or not setter(user_id, conversation_id, project_id):
+            raise ChatError("not_found", 404)
+
+    # ---------- Habilidades ----------
+
+    def skills(self, user_id: str) -> dict[str, Any]:
+        """Habilidades instaladas nesta conta."""
+        lister = getattr(self._store, "list_skills", None)
+        if lister is None:
+            return {"items": [], "max": MAX_SKILLS}
+        return {
+            "items": [item.public(body=False) for item in lister(user_id)],
+            "max": MAX_SKILLS,
+        }
+
+    def skill(self, user_id: str, skill_id: str) -> dict[str, Any]:
+        """Uma habilidade da conta, com as instruções."""
+        if not valid_id(skill_id):
+            raise ChatError("not_found", 404)
+        reader = getattr(self._store, "get_skill", None)
+        item = None if reader is None else reader(skill_id, user_id)
+        if item is None:
+            raise ChatError("not_found", 404)
+        out: dict[str, Any] = item.public()
+        return out
+
+    def shared_skills(self, query: str) -> dict[str, Any]:
+        """Catálogo aberto: habilidades que qualquer pessoa publicou."""
+        lister = getattr(self._store, "list_shared_skills", None)
+        if lister is None:
+            return {"items": []}
+        return {"items": [item.public(body=False) for item in lister(query=query[:80])]}
+
+    def create_skill(self, user_id: str, data: dict[str, Any]) -> dict[str, Any]:
+        """Cria uma habilidade escrita pela própria pessoa."""
+        fields = self._skill_fields(data, required=True)
+        creator = getattr(self._store, "create_skill", None)
+        if creator is None:
+            raise ChatError("chat_unavailable", 503)
+        skill = creator(
+            user_id,
+            name=fields["name"],
+            description=fields["description"],
+            instructions=fields["instructions"],
+            origin="propria",
+            now=self._now(),
+            max_count=MAX_SKILLS,
+        )
+        if skill is None:
+            raise ChatError("skill_limit", 409, limit=MAX_SKILLS)
+        out: dict[str, Any] = skill.public()
+        return out
+
+    def install_skill(self, user_id: str, skill_id: str) -> dict[str, Any]:
+        """Copia para a conta uma habilidade publicada por outra pessoa."""
+        if not valid_id(skill_id):
+            raise ChatError("not_found", 404)
+        reader = getattr(self._store, "get_skill", None)
+        creator = getattr(self._store, "create_skill", None)
+        source = None if reader is None else reader(skill_id)
+        if source is None or creator is None:
+            raise ChatError("not_found", 404)
+        # Instalar é copiar: mexer na sua cópia não altera a de ninguém.
+        skill = creator(
+            user_id,
+            name=source.name,
+            description=source.description,
+            instructions=source.instructions,
+            origin="catalogo",
+            now=self._now(),
+            max_count=MAX_SKILLS,
+        )
+        if skill is None:
+            raise ChatError("skill_limit", 409, limit=MAX_SKILLS)
+        out: dict[str, Any] = skill.public()
+        return out
+
+    def update_skill(self, user_id: str, skill_id: str, data: dict[str, Any]) -> dict[str, Any]:
+        """Altera, liga/desliga ou publica uma habilidade da conta."""
+        if not valid_id(skill_id):
+            raise ChatError("not_found", 404)
+        changes = self._skill_fields(data, required=False)
+        for flag in ("enabled", "shared"):
+            if flag in data:
+                if not isinstance(data[flag], bool):
+                    raise ChatError("invalid_request", 400)
+                changes[flag] = data[flag]
+        updater = getattr(self._store, "update_skill", None)
+        reader = getattr(self._store, "get_skill", None)
+        if updater is None or reader is None:
+            raise ChatError("chat_unavailable", 503)
+        if changes and not updater(user_id, skill_id, self._now(), **changes):
+            raise ChatError("not_found", 404)
+        skill = reader(skill_id, user_id)
+        if skill is None:
+            raise ChatError("not_found", 404)
+        out: dict[str, Any] = skill.public()
+        return out
+
+    def delete_skill(self, user_id: str, skill_id: str) -> None:
+        """Apaga uma habilidade da conta."""
+        if not valid_id(skill_id):
+            raise ChatError("not_found", 404)
+        remover = getattr(self._store, "delete_skill", None)
+        if remover is None or not remover(user_id, skill_id):
+            raise ChatError("not_found", 404)
+
+    def _skills_for(self, user_id: str, question: str) -> list[tuple[str, str, str]]:
+        """Habilidades ligadas que combinam com o pedido.
+
+        A escolha é por palavra: as da descrição e do nome que aparecem no que a
+        pessoa escreveu. Sem palavra em comum, a habilidade fica de fora — não
+        adianta encher o contexto com instrução que não vem ao caso.
+        """
+        lister = getattr(self._store, "list_skills", None)
+        if lister is None:
+            return []
+        try:
+            installed = [item for item in lister(user_id) if item.enabled]
+        except Exception:  # noqa: BLE001 - habilidade não derruba a resposta
+            logger.warning("chat.skills_failed")
+            return []
+        if not installed:
+            return []
+        asked = {word for word in re.findall(r"\w{4,}", question.lower())}
+        scored: list[tuple[int, Any]] = []
+        for skill in installed:
+            words = set(re.findall(r"\w{4,}", f"{skill.name} {skill.description}".lower()))
+            hits = len(words & asked)
+            if hits:
+                scored.append((hits, skill))
+        scored.sort(key=lambda pair: pair[0], reverse=True)
+        return [
+            (skill.name, skill.description, skill.instructions)
+            for _, skill in scored[:SKILLS_IN_CONTEXT]
+        ]
+
+    def _skill_fields(self, data: dict[str, Any], *, required: bool) -> dict[str, Any]:
+        """Valida nome, descrição e instruções no formato SKILL.md."""
+        out: dict[str, Any] = {}
+        limits = (
+            ("name", MAX_SKILL_NAME, False),
+            ("description", MAX_SKILL_DESCRIPTION, False),
+            ("instructions", MAX_SKILL_INSTRUCTIONS, True),
+        )
+        for field_name, limit, lines in limits:
+            if field_name not in data:
+                if required:
+                    raise ChatError("invalid_request", 400)
+                continue
+            value = _clean(data.get(field_name), limit, lines=lines)
+            if not value:
+                raise ChatError("invalid_request", 400)
+            out[field_name] = value
+        return out
 
     # ---------- Conectores ----------
 
@@ -941,6 +1192,7 @@ class ChatService:
             memories=self._store.list_memories(user_id) if options.memory else [],
             web_search=options.web_search,
             forja=options.forja,
+            skills=self._skills_for(user_id, question.content),
         )
         return GenerationRequest(
             system=system,

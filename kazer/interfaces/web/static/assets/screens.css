@@ -1,0 +1,415 @@
+/* Telas cheias do KAZER: Projetos, Forja, Artefatos, Biblioteca, Habilidades.
+ *
+ * Mesmo esqueleto em todas: cabeçalho com menu, título e ação; busca; conteúdo
+ * que rola; botão flutuante quando há algo para criar. No computador a gaveta
+ * fica fixa ao lado e a tela ocupa o resto.
+ *
+ * Carregada só quando a pessoa sai das Conversas.
+ */
+
+.screen {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  height: 100%;
+  background: var(--c-bg);
+}
+
+.screen[hidden] {
+  display: none;
+}
+
+.sc {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  height: 100%;
+}
+
+/* ---------- Cabeçalho ---------- */
+
+.sc__head {
+  display: grid;
+  grid-template-columns: 2.5rem 1fr 2.5rem;
+  align-items: center;
+  gap: 0.5rem;
+  flex: none;
+  padding: max(env(safe-area-inset-top), 0.5rem) 0.75rem 0.5rem;
+}
+
+.sc__title {
+  margin: 0;
+  font: 500 1.25rem / 1.2 var(--font-display);
+  letter-spacing: 0.02em;
+  text-align: center;
+  outline: none;
+}
+
+.sc__slot {
+  width: 2.5rem;
+  height: 2.5rem;
+}
+
+/* ---------- Busca ---------- */
+
+.sc__search {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex: none;
+  margin: 0.25rem 1rem 0.75rem;
+  padding: 0.7rem 1rem;
+  border: 1px solid var(--c-border);
+  border-radius: 999px;
+  color: var(--c-text-3);
+}
+
+.sc__search:focus-within {
+  border-color: var(--c-border-2);
+}
+
+.sc__search svg {
+  width: 1.125rem;
+  height: 1.125rem;
+  flex: none;
+}
+
+.sc__search-input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  color: var(--c-text);
+  font: inherit;
+  font-size: 1rem;
+  outline: none;
+}
+
+.sc__search-input::placeholder {
+  color: var(--c-text-3);
+}
+
+/* O X nativo do campo de busca destoa do resto. */
+.sc__search-input::-webkit-search-cancel-button {
+  appearance: none;
+}
+
+/* ---------- Conteúdo ---------- */
+
+.sc__body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 0 1rem calc(5.5rem + env(safe-area-inset-bottom));
+  scrollbar-width: thin;
+  scrollbar-color: #2a2a2a transparent;
+}
+
+/* A Biblioteca e a Forja trazem o próprio rolar: aqui elas só preenchem. */
+.sc__body > .library,
+.sc__body > .forja {
+  padding-inline: 0;
+}
+
+/* ---------- Estado vazio ---------- */
+
+.sc__empty {
+  display: grid;
+  justify-items: center;
+  gap: 1rem;
+  margin: auto;
+  padding: 4rem 1.5rem;
+  text-align: center;
+  animation: sc-in 0.4s ease-out both;
+}
+
+.sc__empty-glyph {
+  display: grid;
+  place-items: center;
+  color: var(--c-text-3);
+}
+
+.sc__empty-glyph svg {
+  width: 3.5rem;
+  height: 3.5rem;
+  stroke-width: 1.2;
+}
+
+.sc__empty-text {
+  max-width: 22rem;
+  margin: 0;
+  color: var(--c-text-2);
+  font-size: 1rem;
+  line-height: 1.5;
+}
+
+/* ---------- Botão flutuante ---------- */
+
+.sc__fab {
+  position: absolute;
+  right: 1rem;
+  bottom: calc(1.25rem + env(safe-area-inset-bottom));
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.85rem 1.4rem;
+  border: 0;
+  border-radius: 999px;
+  background: var(--c-text);
+  color: var(--c-bg);
+  font: inherit;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  box-shadow: 0 0.75rem 1.75rem rgb(0 0 0 / 0.45);
+  cursor: pointer;
+  transition: transform 0.16s var(--spring);
+}
+
+.sc__fab:hover {
+  transform: translateY(-0.1rem);
+}
+
+.sc__fab:active {
+  transform: scale(0.98);
+}
+
+.sc__fab svg {
+  width: 1.125rem;
+  height: 1.125rem;
+}
+
+/* ---------- Listas das telas ---------- */
+
+.sc__list {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.sc__card {
+  display: grid;
+  gap: 0.3rem;
+  width: 100%;
+  padding: 0.9rem 1rem;
+  border: 1px solid var(--c-border);
+  border-radius: 0.85rem;
+  background: var(--c-surface);
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  animation: sc-in 0.32s ease-out both;
+  transition:
+    border-color 0.18s ease,
+    transform 0.14s ease;
+}
+
+.sc__card:hover {
+  border-color: var(--c-border-2);
+}
+
+.sc__card:active {
+  transform: scale(0.995);
+}
+
+.sc__card-title {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.9375rem;
+  font-weight: 500;
+}
+
+.sc__card-title svg {
+  width: 1rem;
+  height: 1rem;
+  flex: none;
+  color: var(--c-text-3);
+}
+
+.sc__card-text {
+  color: var(--c-text-2);
+  font-size: 0.8125rem;
+  line-height: 1.45;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.sc__card-meta {
+  color: var(--c-text-3);
+  font-size: 0.75rem;
+}
+
+/* ---------- Filtros em pílula ---------- */
+
+.sc__tabs {
+  display: flex;
+  gap: 0.4rem;
+  margin-bottom: 0.75rem;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.sc__tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.sc__tab {
+  flex: none;
+  padding: 0.45rem 0.9rem;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--c-text-2);
+  font: inherit;
+  font-size: 0.875rem;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    background 0.18s ease,
+    color 0.18s ease;
+}
+
+.sc__tab[aria-selected="true"] {
+  background: var(--c-text);
+  color: var(--c-bg);
+}
+
+@keyframes sc-in {
+  from {
+    opacity: 0;
+    transform: translateY(0.4rem);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* ---------- Computador: a gaveta fica fixa, a tela ocupa o resto ---------- */
+
+@media (min-width: 60rem) {
+  .sc__head {
+    grid-template-columns: 1fr auto;
+    padding: 1.25rem 1.75rem 0.75rem;
+  }
+
+  .sc__menu {
+    display: none;
+  }
+
+  .sc__title {
+    font-size: 1.75rem;
+    text-align: left;
+  }
+
+  .sc__search,
+  .sc__body {
+    max-width: 56rem;
+    margin-inline: auto;
+    width: 100%;
+  }
+
+  .sc__search {
+    margin-inline: auto;
+  }
+
+  .sc__body {
+    padding-inline: 1.75rem;
+  }
+
+  .sc__list {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .sc__fab {
+    right: 2rem;
+    bottom: 2rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html:not([data-motion="completo"]) .sc * {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+html[data-motion="reduzido"] .sc * {
+  animation-duration: 0.01ms !important;
+  transition-duration: 0.01ms !important;
+}
+
+/* ---------- Projetos e habilidades ---------- */
+
+.sc__more {
+  height: 1px;
+}
+
+.pr__detail,
+.sk__form {
+  display: grid;
+  gap: 0.9rem;
+}
+
+.pr__actions,
+.sk__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.sk__note,
+.sk__hint {
+  margin: 0 0 0.75rem;
+  color: var(--c-text-3);
+  font-size: 0.8125rem;
+  line-height: 1.5;
+}
+
+.sk__hint {
+  margin-bottom: 0;
+}
+
+/* O cartão da habilidade tem o botão de ligar à direita. */
+.sk__card {
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.sk__open {
+  display: grid;
+  gap: 0.25rem;
+  min-width: 0;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.sk__tag {
+  padding: 0.1rem 0.45rem;
+  border-radius: 999px;
+  background: rgb(91 140 255 / 0.16);
+  color: #8ab0ff;
+  font-size: 0.6875rem;
+  font-weight: 400;
+}
+
+/* Campo de várias linhas nas folhas (projeto e habilidade). */
+.set-field__input--area {
+  min-height: 5rem;
+  padding: 0.7rem 0.85rem;
+  line-height: 1.5;
+  resize: vertical;
+}

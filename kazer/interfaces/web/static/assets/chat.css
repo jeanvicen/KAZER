@@ -96,6 +96,17 @@ html.in-chat .noscript {
   overflow: hidden;
 }
 
+/* A tela de seção ocupa o mesmo lugar da conversa: uma aparece, a outra some,
+ * e a conversa continua viva por trás (voltar não recarrega nada). */
+.screen {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.pane[hidden] {
+  display: none;
+}
+
 .pane {
   position: relative;
   flex: 1 1 auto;
@@ -193,15 +204,73 @@ html.in-chat .noscript {
 .drawer__new {
   display: flex;
   align-items: center;
-  gap: 0.65rem;
-  margin: 0.25rem 0.75rem 0;
-  padding: 0.7rem 0.85rem;
-  border: 1px solid var(--c-border);
-  border-radius: 0.85rem;
-  background: transparent;
+  justify-content: center;
+  gap: 0.45rem;
+  flex: none;
+  margin: 0.5rem 0.75rem;
+  padding: 0.8rem 1rem;
+  border: 0;
+  border-radius: 999px;
+  background: var(--c-text);
+  color: var(--c-bg);
   font-weight: 500;
+  transition: transform 140ms var(--spring);
+}
+
+.drawer__new:active {
+  transform: scale(0.985);
+}
+
+/* ---------- Navegação da gaveta ---------- */
+
+.drawer__nav {
+  display: grid;
+  gap: 0.1rem;
+  flex: none;
+  padding: 0.25rem 0.5rem 0.5rem;
+}
+
+.drawer__item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  padding: 0.6rem 0.65rem;
+  border: 0;
+  border-radius: 0.6rem;
+  background: transparent;
+  color: var(--c-text-2);
+  font: inherit;
+  font-size: 0.9375rem;
   text-align: left;
-  transition: background-color 140ms linear, border-color 140ms linear;
+  cursor: pointer;
+  transition:
+    background-color 140ms linear,
+    color 140ms linear;
+}
+
+.drawer__item svg {
+  width: 1.125rem;
+  height: 1.125rem;
+  flex: none;
+}
+
+.drawer__item:hover {
+  background: var(--c-surface);
+  color: var(--c-text);
+}
+
+.drawer__item.is-active {
+  background: var(--c-surface);
+  color: var(--c-text);
+}
+
+.drawer__section {
+  margin: 0.25rem 1rem 0.35rem;
+  color: var(--c-text-3);
+  font-size: 0.75rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
 }
 
 .drawer__new:hover {

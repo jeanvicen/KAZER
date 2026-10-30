@@ -27,6 +27,8 @@ from kazer.chat.uploads import MAX_UPLOAD_BYTES
 from kazer.interfaces.web.common import WebContext, client_of, endpoint
 
 SEND_BODY_BYTES = 256 * 1024
+# Instruções de habilidade podem ser longas.
+SKILL_BODY_BYTES = 64 * 1024
 SETTINGS_BODY_BYTES = 16 * 1024
 _STREAM_HEADERS = {"X-Accel-Buffering": "no"}
 
@@ -174,8 +176,22 @@ def chat_routes(ctx: WebContext, chat: ChatService | None) -> list[Route]:
             return JSONResponse({"status": "deleted"})
         if request.method == "POST":
             data = await ctx.read_json(request)
+            chat_service = service()
+            # Mesma rota para renomear e para trocar de projeto.
+            if "project_id" in data:
+                await run_in_threadpool(
+                    chat_service.set_conversation_project,
+                    user.id,
+                    conversation_id,
+                    data["project_id"],
+                )
+            if "title" not in data:
+                found = await run_in_threadpool(
+                    chat_service.conversation, user.id, conversation_id
+                )
+                return JSONResponse({"conversation": found.public()})
             renamed = await run_in_threadpool(
-                service().rename, user.id, conversation_id, data.get("title")
+                chat_service.rename, user.id, conversation_id, data.get("title")
             )
             return JSONResponse({"conversation": renamed.public()})
         found = await run_in_threadpool(service().conversation, user.id, conversation_id)
@@ -273,6 +289,84 @@ def chat_routes(ctx: WebContext, chat: ChatService | None) -> list[Route]:
             await run_in_threadpool(chat_service.delete_artifact, user.id, artifact_id)
             return JSONResponse({"deleted": True})
         return JSONResponse(await run_in_threadpool(chat_service.artifact, user.id, artifact_id))
+
+    @endpoint
+    async def projects(request: Request) -> Response:
+        user, _ = await account(request)
+        chat_service = service()
+        if request.method == "POST":
+            data = await ctx.read_json(request, SETTINGS_BODY_BYTES)
+            created = await run_in_threadpool(chat_service.create_project, user.id, data)
+            return JSONResponse(created, status_code=201)
+        archived = request.query_params.get("archived") == "1"
+        page = await run_in_threadpool(
+            partial(
+                chat_service.projects,
+                user.id,
+                archived=archived,
+                query=request.query_params.get("q", ""),
+            )
+        )
+        return JSONResponse(page)
+
+    @endpoint
+    async def project(request: Request) -> Response:
+        user, _ = await account(request)
+        chat_service = service()
+        project_id = request.path_params["project_id"]
+        if request.method == "DELETE":
+            ctx.check_origin(request)
+            await run_in_threadpool(chat_service.delete_project, user.id, project_id)
+            return JSONResponse({"deleted": True})
+        data = await ctx.read_json(request, SETTINGS_BODY_BYTES)
+        updated = await run_in_threadpool(
+            chat_service.update_project, user.id, project_id, data
+        )
+        return JSONResponse(updated)
+
+    @endpoint
+    async def skills(request: Request) -> Response:
+        user, _ = await account(request)
+        chat_service = service()
+        if request.method == "POST":
+            data = await ctx.read_json(request, SKILL_BODY_BYTES)
+            created = await run_in_threadpool(chat_service.create_skill, user.id, data)
+            return JSONResponse(created, status_code=201)
+        return JSONResponse(await run_in_threadpool(chat_service.skills, user.id))
+
+    @endpoint
+    async def shared_skills(request: Request) -> Response:
+        await account(request)
+        page = await run_in_threadpool(
+            service().shared_skills, request.query_params.get("q", "")
+        )
+        return JSONResponse(page)
+
+    @endpoint
+    async def skill(request: Request) -> Response:
+        user, _ = await account(request)
+        chat_service = service()
+        skill_id = request.path_params["skill_id"]
+        if request.method == "DELETE":
+            ctx.check_origin(request)
+            await run_in_threadpool(chat_service.delete_skill, user.id, skill_id)
+            return JSONResponse({"deleted": True})
+        if request.method == "POST":
+            data = await ctx.read_json(request, SKILL_BODY_BYTES)
+            updated = await run_in_threadpool(
+                chat_service.update_skill, user.id, skill_id, data
+            )
+            return JSONResponse(updated)
+        return JSONResponse(await run_in_threadpool(chat_service.skill, user.id, skill_id))
+
+    @endpoint
+    async def install_skill(request: Request) -> Response:
+        user, _ = await account(request)
+        ctx.check_origin(request)
+        installed = await run_in_threadpool(
+            service().install_skill, user.id, request.path_params["skill_id"]
+        )
+        return JSONResponse(installed, status_code=201)
 
     @endpoint
     async def connector_catalog(request: Request) -> Response:
@@ -390,6 +484,12 @@ def chat_routes(ctx: WebContext, chat: ChatService | None) -> list[Route]:
         Route("/api/settings", settings, methods=["GET", "POST"]),
         Route("/api/plans", plans, methods=["GET"]),
         Route("/api/connectors", connector_catalog, methods=["GET"]),
+        Route("/api/projects", projects, methods=["GET", "POST"]),
+        Route("/api/projects/{project_id}", project, methods=["POST", "DELETE"]),
+        Route("/api/skills", skills, methods=["GET", "POST"]),
+        Route("/api/skills/shared", shared_skills, methods=["GET"]),
+        Route("/api/skills/{skill_id}", skill, methods=["GET", "POST", "DELETE"]),
+        Route("/api/skills/{skill_id}/install", install_skill, methods=["POST"]),
         Route("/api/library", library, methods=["GET"]),
         Route("/api/artifacts/{artifact_id}", artifact, methods=["GET", "DELETE"]),
         Route("/api/memories", memories, methods=["POST"]),
