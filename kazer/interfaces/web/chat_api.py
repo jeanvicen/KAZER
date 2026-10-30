@@ -291,6 +291,29 @@ def chat_routes(ctx: WebContext, chat: ChatService | None) -> list[Route]:
         return JSONResponse(await run_in_threadpool(chat_service.artifact, user.id, artifact_id))
 
     @endpoint
+    async def connections(request: Request) -> Response:
+        user, _ = await account(request)
+        chat_service = service()
+        if request.method == "POST":
+            data = await ctx.read_json(request, SETTINGS_BODY_BYTES)
+            linked = await run_in_threadpool(chat_service.connect, user.id, data)
+            return JSONResponse(linked, status_code=201)
+        return JSONResponse(await run_in_threadpool(chat_service.connections, user.id))
+
+    @endpoint
+    async def connection(request: Request) -> Response:
+        user, _ = await account(request)
+        chat_service = service()
+        connection_id = request.path_params["connection_id"]
+        ctx.check_origin(request)
+        if request.method == "DELETE":
+            await run_in_threadpool(chat_service.disconnect, user.id, connection_id)
+            return JSONResponse({"deleted": True})
+        data = await ctx.read_json(request, SETTINGS_BODY_BYTES)
+        await run_in_threadpool(chat_service.set_connection, user.id, connection_id, data)
+        return JSONResponse({"status": "ok"})
+
+    @endpoint
     async def projects(request: Request) -> Response:
         user, _ = await account(request)
         chat_service = service()
@@ -484,6 +507,8 @@ def chat_routes(ctx: WebContext, chat: ChatService | None) -> list[Route]:
         Route("/api/settings", settings, methods=["GET", "POST"]),
         Route("/api/plans", plans, methods=["GET"]),
         Route("/api/connectors", connector_catalog, methods=["GET"]),
+        Route("/api/connections", connections, methods=["GET", "POST"]),
+        Route("/api/connections/{connection_id}", connection, methods=["POST", "DELETE"]),
         Route("/api/projects", projects, methods=["GET", "POST"]),
         Route("/api/projects/{project_id}", project, methods=["POST", "DELETE"]),
         Route("/api/skills", skills, methods=["GET", "POST"]),

@@ -4049,3 +4049,36 @@ html[data-motion="reduzido"] .offline-bar * {
   background: rgb(3 3 3 / 0.88);
   backdrop-filter: blur(6px);
 }
+
+/* Conector ligado de verdade. */
+.conn.is-on {
+  border-color: rgb(74 222 128 / 0.3);
+}
+
+.conn__state {
+  flex: none;
+  color: #7ee2a8;
+  font-size: 0.75rem;
+}
+
+.conn__link {
+  flex: none;
+  padding: 0.25rem 0.7rem;
+  border: 1px solid var(--c-border-2);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--c-text);
+  font: inherit;
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: background 0.18s ease;
+}
+
+.conn__link:hover {
+  background: var(--c-bg-2);
+}
+
+.conn__form {
+  display: grid;
+  gap: 0.9rem;
+}

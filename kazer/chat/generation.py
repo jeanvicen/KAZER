@@ -12,14 +12,17 @@ import logging
 import threading
 import time
 from collections.abc import AsyncIterator, Callable
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from typing import Any
 
 from kazer.brain.model_provider import (
     CancelToken,
     GenerationRequest,
     ModelProvider,
+    Part,
     ProviderError,
+    ToolCall,
+    Turn,
 )
 from kazer.chat.identity import bind_access_token
 from kazer.chat.protocols import ChatStorage
@@ -27,6 +30,9 @@ from kazer.chat.protocols import ChatStorage
 logger = logging.getLogger("kazer.chat")
 
 HEARTBEAT_SECONDS = 15.0
+# Quantas rodadas de ferramenta uma resposta pode dar antes de parar.
+# Sem teto, um modelo preso num laço gastaria a cota da pessoa à toa.
+MAX_TOOL_ROUNDS = 6
 
 
 @dataclass
@@ -42,6 +48,8 @@ class LiveGeneration:
     timed_out: bool = False
     # Chamado depois da resposta pronta (por exemplo, para dar nome à conversa).
     on_complete: Callable[[LiveGeneration, str], None] | None = None
+    # Executa uma ferramenta de conector; devolve (rótulo, texto do resultado).
+    on_tool: Callable[[ToolCall], tuple[str, str]] | None = None
     _lock: threading.Lock = field(default_factory=threading.Lock)
     _waiters: set[tuple[asyncio.AbstractEventLoop, asyncio.Event]] = field(default_factory=set)
 
@@ -151,10 +159,15 @@ class GenerationHub:
         request: GenerationRequest,
         access_token: str | None = None,
         on_complete: Callable[[LiveGeneration, str], None] | None = None,
+        on_tool: Callable[[ToolCall], tuple[str, str]] | None = None,
     ) -> LiveGeneration:
-        """Inicia a geração numa vaga já reservada com `try_reserve()`."""
+        """Inicia a geração numa vaga já reservada com `try_reserve()`.
+
+        `on_tool` executa uma ferramenta de conector e devolve (rótulo, texto).
+        """
         live = LiveGeneration(reply_id, user_id, conversation_id)
         live.on_complete = on_complete
+        live.on_tool = on_tool
         with self._lock:
             self._evict()
             self._live[reply_id] = live
@@ -190,11 +203,65 @@ class GenerationHub:
         with bind_access_token(access_token):
             self._generate(live, request)
 
+    @staticmethod
+    def _relay(
+        live: LiveGeneration,
+        event: Any,
+        text: list[str],
+        thinking: list[str],
+    ) -> None:
+        """Um evento do modelo vira um evento da conversa."""
+        if event.kind == "text":
+            text.append(event.text)
+            live.push({"type": "delta", "text": event.text})
+        elif event.kind == "thinking":
+            thinking.append(event.text)
+            live.push({"type": "thinking", "text": event.text})
+        elif event.kind == "searching":
+            live.push({"type": "searching"})
+        elif event.kind == "activity":
+            # Narração do que está acontecendo: rótulo curto do servidor,
+            # nunca conteúdo externo colado direto.
+            live.push({"type": "step", "label": event.text})
+
+    def _after_tools(
+        self,
+        live: LiveGeneration,
+        request: GenerationRequest,
+        calls: list[ToolCall],
+        round_text: list[str],
+    ) -> GenerationRequest:
+        """Executa as ferramentas pedidas e devolve o pedido da rodada seguinte.
+
+        O resultado volta ao modelo como resultado de ferramenta — dado vindo de
+        fora, nunca instrução do sistema. O histórico só cresce: o pedido e o
+        resultado entram no fim, sem reescrever nada do que já foi.
+        """
+        assert live.on_tool is not None
+        results: list[tuple[str, str]] = []
+        for call in calls:
+            label, output = live.on_tool(call)
+            live.push({"type": "step", "label": label})
+            results.append((call.id, output))
+        return replace(
+            request,
+            turns=(
+                *request.turns,
+                Turn(
+                    role="assistant",
+                    parts=(Part("text", "".join(round_text)),) if round_text else (),
+                    calls=tuple(calls),
+                ),
+                Turn(role="user", parts=(), results=tuple(results)),
+            ),
+        )
+
     def _generate(self, live: LiveGeneration, request: GenerationRequest) -> None:
         text: list[str] = []
         thinking: list[str] = []
         status, error, stop = "complete", None, "end"
         last_save = time.monotonic()
+        rounds = 0
 
         def expire() -> None:
             live.timed_out = True
@@ -204,31 +271,35 @@ class GenerationHub:
         watchdog.daemon = True
         watchdog.start()
         try:
-            for event in self._provider.stream(request, live.cancel):
-                if live.cancel.cancelled():
+            while True:
+                calls: list[ToolCall] = []
+                round_text: list[str] = []
+                for event in self._provider.stream(request, live.cancel):
+                    if live.cancel.cancelled():
+                        break
+                    if event.kind == "tool" and event.call is not None:
+                        calls.append(event.call)
+                        continue
+                    if event.kind == "text":
+                        round_text.append(event.text)
+                    self._relay(live, event, text, thinking)
+                    if time.monotonic() - last_save >= self._persist_every:
+                        last_save = time.monotonic()
+                        self._store.update_reply(
+                            live.reply_id,
+                            content="".join(text),
+                            thinking="".join(thinking),
+                            user_id=live.user_id,
+                        )
+                    if event.kind == "stop":
+                        stop = event.text
+                if not calls or live.cancel.cancelled() or live.on_tool is None:
                     break
-                if event.kind == "text":
-                    text.append(event.text)
-                    live.push({"type": "delta", "text": event.text})
-                elif event.kind == "thinking":
-                    thinking.append(event.text)
-                    live.push({"type": "thinking", "text": event.text})
-                elif event.kind == "searching":
-                    live.push({"type": "searching"})
-                elif event.kind == "activity":
-                    # Narração do que está acontecendo: rótulo curto do servidor,
-                    # nunca conteúdo externo colado direto.
-                    live.push({"type": "step", "label": event.text})
-                elif event.kind == "stop":
-                    stop = event.text
-                if time.monotonic() - last_save >= self._persist_every:
-                    last_save = time.monotonic()
-                    self._store.update_reply(
-                        live.reply_id,
-                        content="".join(text),
-                        thinking="".join(thinking),
-                        user_id=live.user_id,
-                    )
+                rounds += 1
+                if rounds > MAX_TOOL_ROUNDS:
+                    live.push({"type": "step", "label": "Parei: ferramentas demais numa resposta"})
+                    break
+                request = self._after_tools(live, request, calls, round_text)
             if live.timed_out:
                 status, error = "error", "model_timeout"
             elif live.cancel.cancelled():

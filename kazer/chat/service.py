@@ -15,6 +15,7 @@ from collections.abc import Callable, Sequence
 from dataclasses import dataclass, replace
 from functools import partial
 from typing import Any
+from urllib.parse import urlsplit
 
 from kazer.brain.model_provider import (
     EFFORTS,
@@ -25,9 +26,11 @@ from kazer.brain.model_provider import (
     ModelProvider,
     Part,
     ProviderError,
+    ToolCall,
+    ToolDef,
     Turn,
 )
-from kazer.chat import artifacts, connectors, context, plans
+from kazer.chat import artifacts, connectors, context, mcp, plans
 from kazer.chat.generation import GenerationHub, LiveGeneration
 from kazer.chat.identity import current_access_token
 from kazer.chat.protocols import AttachmentStorage, ChatStorage
@@ -74,6 +77,12 @@ MAX_SKILL_DESCRIPTION = 300
 MAX_SKILL_INSTRUCTIONS = 20_000
 # Quantas habilidades entram por completo numa resposta.
 SKILLS_IN_CONTEXT = 4
+# Quantas ferramentas de conector o modelo vê por vez.
+MAX_TOOLS_PER_CONNECTOR = 20
+MAX_TOOLS_TOTAL = 60
+# O esquema real de cada ferramenta vem do servidor MCP; aqui o modelo
+# recebe um objeto aberto, e o próprio servidor valida o que recebeu.
+_OPEN_SCHEMA: dict[str, Any] = {"type": "object", "additionalProperties": True}
 MAX_MEMORY_CHARS = 500
 PAGE_MESSAGES = 40
 # Título gerado pelo modelo a partir da primeira troca.
@@ -124,6 +133,25 @@ _TEXT_LIMITS = {"nickname": 40, "instructions": 1500}
 _BOOLS = {"memory_enabled", "send_on_enter", "ambient"}
 
 _CLIENT_ID = re.compile(r"^[A-Za-z0-9_-]{8,64}$")
+
+
+@dataclass(frozen=True, slots=True)
+class ToolSpec:
+    """Uma ferramenta de conector, do jeito que o modelo e o serviço precisam."""
+
+    name: str
+    description: str
+    connection_id: str
+    tool_name: str
+    label: str
+    units: int
+
+
+def _slugish(value: str) -> str:
+    """Identificador estável a partir do endereço, sem expor a credencial."""
+    host = urlsplit(value).netloc.split(":", 1)[0]
+    clean = "".join(char if char.isalnum() else "-" for char in host.lower())
+    return "-".join(part for part in clean.split("-") if part)[:60] or "servico"
 
 
 def _clean(value: Any, limit: int, *, lines: bool = False) -> str:
@@ -437,6 +465,114 @@ class ChatService:
             "kinds": sorted(LIBRARY_KINDS),
         }
 
+    # ---------- Conectores ligados ----------
+
+    def connections(self, user_id: str) -> dict[str, Any]:
+        """Conectores que esta conta ligou, sem credencial nenhuma."""
+        lister = getattr(self._store, "list_connections", None)
+        if lister is None:
+            return {"items": []}
+        return {"items": [item.public() for item in lister(user_id)]}
+
+    def connect(self, user_id: str, data: dict[str, Any]) -> dict[str, Any]:
+        """Liga um conector por endereço MCP.
+
+        A ligação é conferida de verdade: o KAZER aperta a mão com o serviço e
+        lista as ferramentas antes de guardar qualquer coisa. Endereço que não
+        responde não vira conector "conectado".
+        """
+        url = _clean(data.get("url"), 500)
+        if not mcp.valid_endpoint(url):
+            raise ChatError("connector_invalid", 400, detail="O endereço precisa ser https.")
+        token = data.get("token")
+        if token is not None and not isinstance(token, str):
+            raise ChatError("invalid_request", 400)
+        connector_id = _clean(data.get("connector_id"), 80) or f"mcp-{_slugish(url)}"
+        catalog = connectors.BY_ID.get(connector_id)
+        name = _clean(data.get("name"), 80) or (catalog.name if catalog else "Conector")
+
+        features = self.usage_state(user_id).get("features") or {}
+        limit = int(features.get("connector_limit") or 0)
+        if limit <= 0:
+            raise ChatError("plan_required", 402, feature="connectors", **self._offer(user_id))
+
+        client = mcp.McpClient(url, (token or "")[:4000])
+        try:
+            tools = client.connect()
+        except mcp.ConnectorError as exc:
+            raise ChatError(exc.code, 502, detail=exc.detail) from None
+        finally:
+            client.close()
+
+        saver = getattr(self._store, "save_connection", None)
+        if saver is None:
+            raise ChatError("chat_unavailable", 503)
+        saved = saver(
+            user_id,
+            connector_id=connector_id,
+            name=name,
+            url=url,
+            token=(token or "")[:4000],
+            tools=[tool.public() for tool in tools],
+            now=self._now(),
+            max_count=limit,
+        )
+        if saved is None:
+            raise ChatError("connector_limit", 409, limit=limit, **self._offer(user_id))
+        out: dict[str, Any] = saved.public()
+        return out
+
+    def set_connection(self, user_id: str, connection_id: str, data: dict[str, Any]) -> None:
+        """Liga ou desliga um conector já ligado."""
+        if not valid_id(connection_id) or not isinstance(data.get("enabled"), bool):
+            raise ChatError("invalid_request", 400)
+        setter = getattr(self._store, "set_connection_enabled", None)
+        if setter is None or not setter(user_id, connection_id, data["enabled"]):
+            raise ChatError("not_found", 404)
+
+    def disconnect(self, user_id: str, connection_id: str) -> None:
+        """Desliga o conector e apaga a credencial dele."""
+        if not valid_id(connection_id):
+            raise ChatError("not_found", 404)
+        remover = getattr(self._store, "delete_connection", None)
+        if remover is None or not remover(user_id, connection_id):
+            raise ChatError("not_found", 404)
+
+    def _tools_for(self, user_id: str) -> list[ToolSpec]:
+        """Ferramentas dos conectores ligados, prontas para o modelo."""
+        live = [item for item in self._connections(user_id) if item.enabled]
+        specs: list[ToolSpec] = []
+        for connection in live:
+            weight = connectors.BY_ID.get(connection.connector_id)
+            for tool in connection.tools[:MAX_TOOLS_PER_CONNECTOR]:
+                specs.append(
+                    ToolSpec(
+                        # O nome leva o conector junto: duas ferramentas com o
+                        # mesmo nome em serviços diferentes não se confundem.
+                        name=f"{connection.connector_id}__{tool['name']}"[:120],
+                        description=f"{connection.name}: {tool.get('description', '')}"[:400],
+                        connection_id=connection.id,
+                        tool_name=str(tool["name"]),
+                        label=connection.name,
+                        units=weight.weight if weight else connectors.WEIGHT_LIGHT,
+                    )
+                )
+        return specs[:MAX_TOOLS_TOTAL]
+
+    def run_tool(self, user_id: str, spec: ToolSpec, arguments: dict[str, Any]) -> str:
+        """Executa uma ferramenta de conector e devolve o texto do resultado."""
+        reader = getattr(self._store, "get_connection", None)
+        connection = None if reader is None else reader(user_id, spec.connection_id)
+        if connection is None:
+            return "Esse conector não está mais ligado nesta conta."
+        client = mcp.McpClient(connection.url, connection.token)
+        try:
+            return client.call(spec.tool_name, arguments)
+        except mcp.ConnectorError as exc:
+            return f"O conector não respondeu ({exc.code})."
+        finally:
+            client.close()
+
     # ---------- Projetos ----------
 
     def projects(self, user_id: str, *, archived: bool, query: str) -> dict[str, Any]:
@@ -617,6 +753,24 @@ class ChatService:
         if remover is None or not remover(user_id, skill_id):
             raise ChatError("not_found", 404)
 
+    def _tool_runner(self, user_id: str) -> Callable[[ToolCall], tuple[str, str]]:
+        """Fecha o ciclo: o modelo pede, o KAZER executa, o resultado volta."""
+        by_name = {spec.name: spec for spec in self._tools_for(user_id)}
+
+        def run(call: ToolCall) -> tuple[str, str]:
+            spec = by_name.get(call.name)
+            if spec is None:
+                return ("Ferramenta indisponível", "Essa ferramenta não está ligada nesta conta.")
+            # O rótulo é escrito aqui; nada do outro lado entra na narração.
+            label = f"{spec.label}: {spec.tool_name}"
+            try:
+                return (label, self.run_tool(user_id, spec, call.arguments))
+            except Exception:  # noqa: BLE001 - conector não derruba a resposta
+                logger.warning("chat.tool_failed")
+                return (label, "A ferramenta falhou.")
+
+        return run
+
     def _skills_for(self, user_id: str, question: str) -> list[tuple[str, str, str]]:
         """Habilidades ligadas que combinam com o pedido.
 
@@ -679,17 +833,36 @@ class ChatService:
         found, total = connectors.search(
             query, category, limit=CONNECTOR_PAGE, offset=page * CONNECTOR_PAGE
         )
+        linked = {item.connector_id for item in self._connections(user_id)}
+        items = []
+        for item in found:
+            row = item.public(features)
+            # "Conectado" é estado real: só quem a conta ligou de verdade.
+            row["connected"] = item.id in linked
+            items.append(row)
         return {
-            "items": [item.public(features) for item in found],
+            "items": items,
             "total": total,
             "page": page,
             "has_more": (page + 1) * CONNECTOR_PAGE < total,
             "categories": list(connectors.CATEGORIES),
-            # Nenhuma conexão existe ainda; a interface diz isso em vez de
-            # oferecer um botão que não liga nada.
-            "connecting_open": False,
+            # Ligar um serviço do catálogo depende do endereço MCP dele, que a
+            # pessoa informa; por isso a porta aberta é a do conector próprio.
+            "connecting_open": True,
             "limit": int(features.get("connector_limit") or 0),
         }
+
+    def _connections(self, user_id: str) -> list[Any]:
+        """Conexões da conta, sem derrubar a tela quando o banco falha."""
+        lister = getattr(self._store, "list_connections", None)
+        if lister is None:
+            return []
+        try:
+            found: list[Any] = lister(user_id)
+            return found
+        except Exception:  # noqa: BLE001 - catálogo é informativo
+            logger.warning("chat.connections_failed")
+            return []
 
     def artifact(self, user_id: str, artifact_id: str) -> dict[str, Any]:
         """Conteúdo de um artefato da própria conta."""
@@ -1025,6 +1198,7 @@ class ChatService:
             request,
             access_token=current_access_token(),
             on_complete=on_complete,
+            on_tool=self._tool_runner(user_id),
         )
         logger.info("chat.message_accepted", extra={"units": options.units})
         return exchange, live
@@ -1084,6 +1258,7 @@ class ChatService:
             reply.id,
             request,
             access_token=current_access_token(),
+            on_tool=self._tool_runner(user_id),
         )
         return reply, live
 
@@ -1194,12 +1369,17 @@ class ChatService:
             forja=options.forja,
             skills=self._skills_for(user_id, question.content),
         )
+        specs = self._tools_for(user_id)
         return GenerationRequest(
             system=system,
             turns=turns,
             effort=options.effort,
             deep=options.deep,
             web_search=options.web_search,
+            tools=tuple(
+                ToolDef(name=spec.name, description=spec.description, schema=_OPEN_SCHEMA)
+                for spec in specs
+            ),
         )
 
     def live(self, user_id: str, reply_id: str) -> LiveGeneration | None:

@@ -57,11 +57,35 @@ class Part:
 
 
 @dataclass(frozen=True, slots=True)
+class ToolDef:
+    """Ferramenta de conector oferecida ao modelo nesta resposta."""
+
+    name: str
+    description: str
+    schema: dict[str, Any]
+
+
+@dataclass(frozen=True, slots=True)
+class ToolCall:
+    """Pedido do modelo para usar uma ferramenta."""
+
+    id: str
+    name: str
+    arguments: dict[str, Any]
+
+
+@dataclass(frozen=True, slots=True)
 class Turn:
-    """Uma fala do histórico, já filtrada e pertencente ao dono da conversa."""
+    """Uma fala do histórico, já filtrada e pertencente ao dono da conversa.
+
+    `calls` e `results` só existem no meio de um ciclo de ferramentas: o modelo
+    pede, o KAZER executa, e a volta carrega o resultado.
+    """
 
     role: Literal["user", "assistant"]
     parts: tuple[Part, ...]
+    calls: tuple[ToolCall, ...] = ()
+    results: tuple[tuple[str, str], ...] = ()
 
 
 @dataclass(frozen=True, slots=True)
@@ -73,14 +97,17 @@ class GenerationRequest:
     effort: str = "low"
     deep: bool = False
     web_search: bool = False
+    tools: tuple[ToolDef, ...] = ()
 
 
 @dataclass(frozen=True, slots=True)
 class StreamEvent:
     """Evento incremental: texto, resumo de raciocínio, busca ou fim (com motivo)."""
 
-    kind: Literal["text", "thinking", "searching", "activity", "stop"]
+    kind: Literal["text", "thinking", "searching", "activity", "tool", "stop"]
     text: str = ""
+    # Só no evento "tool": o que o modelo quer executar.
+    call: ToolCall | None = None
 
 
 class ProviderError(Exception):
@@ -225,6 +252,9 @@ class OpenAICompatibleProvider:
     def _messages(self, request: GenerationRequest) -> list[dict[str, Any]]:
         messages: list[dict[str, Any]] = [{"role": "system", "content": request.system}]
         for turn in request.turns:
+            if turn.calls or turn.results:
+                messages.extend(self._tool_messages(turn))
+                continue
             images = [part for part in turn.parts if part.kind == "image"]
             text = _text_of(turn)
             if not images:
@@ -245,6 +275,34 @@ class OpenAICompatibleProvider:
             messages.append({"role": turn.role, "content": content})
         return messages
 
+    @staticmethod
+    def _tool_messages(turn: Turn) -> list[dict[str, Any]]:
+        """Pedido e resultado de ferramenta, no formato das Chat Completions."""
+        out: list[dict[str, Any]] = []
+        if turn.calls:
+            out.append(
+                {
+                    "role": "assistant",
+                    "content": _text_of(turn) or None,
+                    "tool_calls": [
+                        {
+                            "id": call.id,
+                            "type": "function",
+                            "function": {
+                                "name": call.name,
+                                "arguments": json.dumps(call.arguments, ensure_ascii=False),
+                            },
+                        }
+                        for call in turn.calls
+                    ],
+                }
+            )
+        out.extend(
+            {"role": "tool", "tool_call_id": call_id, "content": output}
+            for call_id, output in turn.results
+        )
+        return out
+
     def stream(self, request: GenerationRequest, cancel: CancelToken) -> Iterator[StreamEvent]:
         """Abre o stream e repassa texto e raciocínio conforme chegam."""
         model = self._deep_model if request.deep and self._deep_model else self._model
@@ -257,6 +315,18 @@ class OpenAICompatibleProvider:
             body["reasoning_effort"] = "high" if request.deep else request.effort
         if self._max_tokens:
             body["max_tokens"] = self._max_tokens
+        if request.tools:
+            body["tools"] = [
+                {
+                    "type": "function",
+                    "function": {
+                        "name": tool.name,
+                        "description": tool.description,
+                        "parameters": tool.schema,
+                    },
+                }
+                for tool in request.tools
+            ]
         headers = {
             "Content-Type": "application/json",
             "Accept": "text/event-stream",
@@ -281,6 +351,8 @@ class OpenAICompatibleProvider:
 
         cancel.on_cancel(response.close)
         stop = "end"
+        # Os pedidos de ferramenta chegam fatiados: `index` diz a qual pertencem.
+        pending: dict[int, dict[str, str]] = {}
         try:
             with response:
                 for raw in response:
@@ -309,6 +381,17 @@ class OpenAICompatibleProvider:
                         content = delta.get("content")
                         if isinstance(content, str) and content:
                             yield StreamEvent("text", content)
+                        for piece in delta.get("tool_calls") or ():
+                            slot = pending.setdefault(
+                                int(piece.get("index", 0)), {"id": "", "name": "", "args": ""}
+                            )
+                            if piece.get("id"):
+                                slot["id"] = str(piece["id"])
+                            function = piece.get("function") or {}
+                            if function.get("name"):
+                                slot["name"] = str(function["name"])
+                            if function.get("arguments"):
+                                slot["args"] += str(function["arguments"])
                         finish = choice.get("finish_reason")
                         if finish:
                             stop = _FINISH.get(str(finish), "end")
@@ -321,6 +404,14 @@ class OpenAICompatibleProvider:
             if cancel.cancelled():
                 return
             raise ProviderError("model_unreachable") from None
+        if pending:
+            # O KAZER executa e volta: quem fecha o ciclo é o hub.
+            for slot in pending.values():
+                if not slot["name"]:
+                    continue
+                yield StreamEvent("tool", call=_openai_call(slot))
+            yield StreamEvent("stop", "tool")
+            return
         yield StreamEvent("stop", stop)
 
 
@@ -407,6 +498,16 @@ class AnthropicProvider:
             text = _text_of(turn)
             if text:
                 blocks.append({"type": "text", "text": text})
+            # Ciclo de ferramenta: o pedido vai na fala do modelo e o resultado
+            # volta na fala seguinte, como manda o formato.
+            blocks.extend(
+                {"type": "tool_use", "id": call.id, "name": call.name, "input": call.arguments}
+                for call in turn.calls
+            )
+            blocks.extend(
+                {"type": "tool_result", "tool_use_id": call_id, "content": output}
+                for call_id, output in turn.results
+            )
             if blocks:
                 messages.append({"role": turn.role, "content": blocks})
         return messages
@@ -443,8 +544,15 @@ class AnthropicProvider:
         if self._adaptive:
             params["thinking"] = {"type": "adaptive", "display": "summarized"}
             params["output_config"] = {"effort": "high" if request.deep else request.effort}
+        tools: list[dict[str, Any]] = []
         if request.web_search:
-            params["tools"] = [{"type": "web_search_20260209", "name": "web_search", "max_uses": 5}]
+            tools.append({"type": "web_search_20260209", "name": "web_search", "max_uses": 5})
+        tools.extend(
+            {"name": tool.name, "description": tool.description, "input_schema": tool.schema}
+            for tool in request.tools
+        )
+        if tools:
+            params["tools"] = tools
         if self._fallbacks:
             params["betas"] = [_FALLBACK_BETA]
             params["fallbacks"] = "default"
@@ -475,6 +583,13 @@ class AnthropicProvider:
                             elif event.delta.type == "thinking_delta" and event.delta.thinking:
                                 yield StreamEvent("thinking", event.delta.thinking)
                     final = stream.get_final_message()
+                calls = _anthropic_calls(final)
+                if calls:
+                    # O KAZER executa e volta: quem fecha o ciclo é o hub.
+                    for call in calls:
+                        yield StreamEvent("tool", call=call)
+                    yield StreamEvent("stop", "tool")
+                    return
                 if final.stop_reason != "pause_turn":
                     yield StreamEvent("stop", _ANTHROPIC_STOP.get(str(final.stop_reason), "end"))
                     return
@@ -498,6 +613,36 @@ _ACTIVITY = {
     "web_fetch": "Abrindo uma página",
     "code_execution": "Rodando o código",
 }
+
+
+def _openai_call(slot: dict[str, str]) -> ToolCall:
+    """Pedaços juntados viram um pedido de ferramenta."""
+    try:
+        arguments = json.loads(slot["args"] or "{}")
+    except ValueError:
+        arguments = {}
+    return ToolCall(
+        id=slot["id"] or slot["name"],
+        name=slot["name"],
+        arguments=arguments if isinstance(arguments, dict) else {},
+    )
+
+
+def _anthropic_calls(final: Any) -> list[ToolCall]:
+    """Pedidos de ferramenta do cliente na resposta final."""
+    found: list[ToolCall] = []
+    for block in getattr(final, "content", []) or []:
+        if getattr(block, "type", "") != "tool_use":
+            continue
+        arguments = getattr(block, "input", None)
+        found.append(
+            ToolCall(
+                id=str(getattr(block, "id", "")),
+                name=str(getattr(block, "name", "")),
+                arguments=arguments if isinstance(arguments, dict) else {},
+            )
+        )
+    return found
 
 
 def _seen(block: Any) -> str:

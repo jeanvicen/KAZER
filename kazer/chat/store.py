@@ -124,6 +124,20 @@ CREATE TABLE IF NOT EXISTS skills (
 );
 CREATE INDEX IF NOT EXISTS skills_user ON skills(user_id, created_at);
 CREATE INDEX IF NOT EXISTS skills_shared ON skills(shared, updated_at);
+CREATE TABLE IF NOT EXISTS connections (
+    id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    connector_id TEXT NOT NULL,
+    name TEXT NOT NULL,
+    url TEXT NOT NULL,
+    token TEXT NOT NULL DEFAULT '',
+    tools TEXT NOT NULL DEFAULT '[]',
+    enabled INTEGER NOT NULL DEFAULT 1,
+    created_at INTEGER NOT NULL,
+    updated_at INTEGER NOT NULL
+);
+CREATE UNIQUE INDEX IF NOT EXISTS connections_user_connector
+    ON connections(user_id, connector_id);
 """
 
 
@@ -228,6 +242,37 @@ class Memory:
     def public(self) -> dict[str, Any]:
         """Formato enviado ao navegador."""
         return {"id": self.id, "content": self.content, "created_at": self.created_at}
+
+
+@dataclass(frozen=True, slots=True)
+class Connection:
+    """Conector ligado a uma conta.
+
+    `token` existe só no servidor: `public()` nunca o devolve, nem o endereço,
+    que pode carregar credencial na própria URL.
+    """
+
+    id: str
+    connector_id: str
+    name: str
+    url: str
+    token: str
+    tools: list[dict[str, Any]]
+    enabled: bool
+    created_at: int
+    updated_at: int
+
+    def public(self) -> dict[str, Any]:
+        """Formato enviado ao navegador: sem credencial e sem endereço."""
+        return {
+            "id": self.id,
+            "connector_id": self.connector_id,
+            "name": self.name,
+            "connected": True,
+            "enabled": self.enabled,
+            "tools": self.tools,
+            "created_at": self.created_at,
+        }
 
 
 @dataclass(frozen=True, slots=True)
@@ -364,6 +409,24 @@ def _library_row(item: Attachment) -> dict[str, Any]:
         "message_id": item.message_id,
         "created_at": item.created_at,
     }
+
+
+def _connection(row: sqlite3.Row) -> Connection:
+    try:
+        tools = json.loads(row["tools"] or "[]")
+    except ValueError:
+        tools = []
+    return Connection(
+        row["id"],
+        row["connector_id"],
+        row["name"],
+        row["url"],
+        row["token"],
+        tools if isinstance(tools, list) else [],
+        bool(row["enabled"]),
+        row["created_at"],
+        row["updated_at"],
+    )
 
 
 def _project(row: sqlite3.Row) -> Project:
@@ -1043,6 +1106,98 @@ class ChatStore:
                 " updated_at = excluded.updated_at",
                 (user_id, json.dumps(data, separators=(",", ":")), now),
             )
+
+    # ---------- Conectores ligados ----------
+
+    def list_connections(self, user_id: str) -> list[Connection]:
+        """Conectores que esta conta ligou."""
+        with self._transaction() as conn:
+            rows = conn.execute(
+                "SELECT * FROM connections WHERE user_id = ? ORDER BY created_at, id",
+                (user_id,),
+            ).fetchall()
+        return [_connection(row) for row in rows]
+
+    def get_connection(self, user_id: str, connection_id: str) -> Connection | None:
+        """Conexão da própria conta, com credencial (uso interno)."""
+        with self._transaction() as conn:
+            row = conn.execute(
+                "SELECT * FROM connections WHERE id = ? AND user_id = ?",
+                (connection_id, user_id),
+            ).fetchone()
+        return None if row is None else _connection(row)
+
+    def save_connection(
+        self,
+        user_id: str,
+        *,
+        connector_id: str,
+        name: str,
+        url: str,
+        token: str,
+        tools: list[dict[str, Any]],
+        now: int,
+        max_count: int,
+    ) -> Connection | None:
+        """Liga (ou religa) um conector; None quando o plano não permite mais."""
+        with self._transaction() as conn:
+            existing = conn.execute(
+                "SELECT id FROM connections WHERE user_id = ? AND connector_id = ?",
+                (user_id, connector_id),
+            ).fetchone()
+            if existing is None:
+                (count,) = conn.execute(
+                    "SELECT COUNT(*) FROM connections WHERE user_id = ?", (user_id,)
+                ).fetchone()
+                if count >= max_count:
+                    return None
+            item = Connection(
+                existing["id"] if existing else new_id(),
+                connector_id,
+                name,
+                url,
+                token,
+                tools,
+                True,
+                now,
+                now,
+            )
+            conn.execute(
+                "INSERT INTO connections (id, user_id, connector_id, name, url, token, tools,"
+                " enabled, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, 1, ?, ?)"
+                " ON CONFLICT(id) DO UPDATE SET name = excluded.name, url = excluded.url,"
+                " token = excluded.token, tools = excluded.tools, enabled = 1,"
+                " updated_at = excluded.updated_at",
+                (
+                    item.id,
+                    user_id,
+                    connector_id,
+                    name,
+                    url,
+                    token,
+                    json.dumps(tools),
+                    now,
+                    now,
+                ),
+            )
+        return item
+
+    def set_connection_enabled(self, user_id: str, connection_id: str, enabled: bool) -> bool:
+        """Liga ou desliga um conector sem perder a credencial."""
+        with self._transaction() as conn:
+            changed = conn.execute(
+                "UPDATE connections SET enabled = ? WHERE id = ? AND user_id = ?",
+                (int(enabled), connection_id, user_id),
+            ).rowcount
+        return changed > 0
+
+    def delete_connection(self, user_id: str, connection_id: str) -> bool:
+        """Desliga o conector e apaga a credencial."""
+        with self._transaction() as conn:
+            changed = conn.execute(
+                "DELETE FROM connections WHERE id = ? AND user_id = ?", (connection_id, user_id)
+            ).rowcount
+        return changed > 0
 
     # ---------- Projetos ----------
 

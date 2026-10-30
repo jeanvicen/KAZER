@@ -23,6 +23,7 @@ from kazer.chat.store import (
     Artifact,
     Attachment,
     AttachmentUnavailable,
+    Connection,
     Conversation,
     ConversationMissing,
     Exchange,
@@ -35,6 +36,22 @@ from kazer.chat.store import (
 )
 
 logger = logging.getLogger("kazer.chat.supabase")
+
+
+def _connection(row: dict[str, Any]) -> Connection:
+    """Linha do Postgres para o modelo; url e token só vêm na função do segredo."""
+    tools = row.get("tools")
+    return Connection(
+        str(row["id"]),
+        str(row["connector_id"]),
+        str(row["name"]),
+        str(row.get("url") or ""),
+        str(row.get("token") or ""),
+        tools if isinstance(tools, list) else [],
+        bool(row.get("enabled")),
+        int(row.get("created_at") or 0),
+        int(row.get("created_at") or 0),
+    )
 
 
 def _project(row: dict[str, Any]) -> Project:
@@ -469,6 +486,54 @@ class SupabaseChatStore:
     def save_preferences(self, user_id: str, data: dict[str, Any], now: int) -> None:
         """Substitui as preferências."""
         self._rpc("kazer_save_preferences", {"p_data": data})
+
+    # ---------- Conectores ligados ----------
+
+    def list_connections(self, user_id: str) -> list[Connection]:
+        """Conectores ligados; sem endereço nem credencial (a função não devolve)."""
+        rows = self._rpc("kazer_connections") or []
+        return [_connection(row) for row in rows]
+
+    def get_connection(self, user_id: str, connection_id: str) -> Connection | None:
+        """Conexão com credencial: o único caminho até ela, e só da própria conta."""
+        data = self._rpc("kazer_connection_secret", {"p_id": connection_id})
+        return None if not data else _connection(data)
+
+    def save_connection(
+        self,
+        user_id: str,
+        *,
+        connector_id: str,
+        name: str,
+        url: str,
+        token: str,
+        tools: list[dict[str, Any]],
+        now: int,
+        max_count: int,
+    ) -> Connection | None:
+        """Liga (ou religa) um conector; None quando o plano não permite mais."""
+        data = self._rpc(
+            "kazer_save_connection",
+            {
+                "p_connector_id": connector_id,
+                "p_name": name,
+                "p_url": url,
+                "p_token": token,
+                "p_tools": tools,
+                "p_max": max_count,
+            },
+        )
+        return None if not data else _connection(data)
+
+    def set_connection_enabled(self, user_id: str, connection_id: str, enabled: bool) -> bool:
+        """Liga ou desliga sem perder a credencial."""
+        return bool(
+            self._rpc("kazer_set_connection", {"p_id": connection_id, "p_enabled": enabled})
+        )
+
+    def delete_connection(self, user_id: str, connection_id: str) -> bool:
+        """Desliga o conector e apaga a credencial."""
+        return bool(self._rpc("kazer_delete_connection", {"p_id": connection_id}))
 
     # ---------- Projetos ----------
 

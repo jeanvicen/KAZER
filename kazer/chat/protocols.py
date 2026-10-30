@@ -13,6 +13,7 @@ from typing import Any, Protocol
 from kazer.chat.store import (
     Artifact,
     Attachment,
+    Connection,
     Conversation,
     Exchange,
     Memory,
@@ -109,6 +110,30 @@ class ChatStorage(Protocol):
     def purge_orphan_attachments(self, older_than: int) -> list[tuple[str, str]]: ...
 
     def purge_usage(self, older_than: int) -> None: ...
+
+    # Conectores ligados
+    def list_connections(self, user_id: str) -> list[Connection]: ...
+
+    def get_connection(self, user_id: str, connection_id: str) -> Connection | None: ...
+
+    def save_connection(
+        self,
+        user_id: str,
+        *,
+        connector_id: str,
+        name: str,
+        url: str,
+        token: str,
+        tools: list[dict[str, Any]],
+        now: int,
+        max_count: int,
+    ) -> Connection | None: ...
+
+    def set_connection_enabled(
+        self, user_id: str, connection_id: str, enabled: bool
+    ) -> bool: ...
+
+    def delete_connection(self, user_id: str, connection_id: str) -> bool: ...
 
     # Projetos
     def list_projects(

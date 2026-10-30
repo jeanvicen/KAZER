@@ -4,7 +4,7 @@
 
 import { announce, finePointer, formatDate, formatReset, h, icon, mark, reducedMotion, trapFocus } from "./dom.js";
 import { request } from "./net.js";
-import { confirmDialog, toast } from "./sheets.js";
+import { confirmDialog, openSheet, toast } from "./sheets.js";
 
 const SECTIONS = [
   ["conta", "Conta", "user"],
@@ -36,6 +36,14 @@ const PASSWORD_ERRORS = {
 
 // Milhar com ponto, como se escreve em português.
 const num = (value) => Number(value || 0).toLocaleString("pt-BR");
+
+const CONNECT_ERRORS = {
+  connector_invalid: "Endereço inválido: precisa ser https e falar MCP.",
+  connector_unreachable: "O serviço não respondeu.",
+  connector_rejected: "O serviço recusou: confira a credencial.",
+  connector_limit: "Você chegou ao limite de conectores do seu plano.",
+  plan_required: "Conectores entram com os planos pagos.",
+};
 
 let open = null;
 
@@ -848,6 +856,7 @@ class SettingsPanel {
     const chips = h("div.conns__cats", { role: "tablist", "aria-label": "Categorias" });
 
     let heavy = null;
+    const root = this.viewBody;
     const load = async ({ reset = false } = {}) => {
       if (state.loading) return;
       state.loading = true;
@@ -873,6 +882,13 @@ class SettingsPanel {
         return;
       }
       const data = result.data;
+      const head = root.querySelector("#conn-count");
+      if (head) {
+        const on = data.items.filter((item) => item.connected).length;
+        head.textContent = on
+          ? `${on} conector${on === 1 ? "" : "es"} conectado${on === 1 ? "" : "s"} nesta página.`
+          : "Nenhum conector conectado.";
+      }
       if (!chips.children.length) buildChips(data.categories);
       for (const item of data.items) list.append(card(item));
       count.textContent = describe(data);
@@ -911,17 +927,23 @@ class SettingsPanel {
     const card = (item) => {
       const tag = (text, kind) => h(`span.conn__tag${kind ? `.is-${kind}` : ""}`, { text });
       return h(
-        "article.conn",
+        `article.conn${item.connected ? ".is-on" : ""}`,
         {},
         h(
           "div.conn__head",
           {},
           h("span.conn__name", { text: item.name }),
-          h("span.conn__cat", { text: item.category }),
+          item.connected
+            ? h("span.conn__state", { text: "Conectado" })
+            : h(
+                "button.conn__link",
+                { type: "button", onclick: () => linkConnector(item), text: "Conectar" },
+              ),
         ),
         h(
           "div.conn__tags",
           {},
+          h("span.conn__cat", { text: item.category }),
           item.can_read ? tag("Leitura", "read") : tag("Sem leitura neste plano", "off"),
           item.can_write
             ? tag("Escrita", "write")
@@ -929,6 +951,64 @@ class SettingsPanel {
           item.weight > 1 ? tag(`Usa ${item.weight}× o limite`, "cost") : null,
         ),
       );
+    };
+
+    // Ligar é informar o endereço MCP do serviço: o KAZER aperta a mão com ele
+    // e só então guarda. Sem endereço que responda, não vira "Conectado".
+    const linkConnector = (item) => {
+      const url = h("input.set-field__input", {
+        type: "url",
+        placeholder: "https://… endereço MCP do serviço",
+        "aria-label": "Endereço MCP",
+        maxlength: "500",
+      });
+      const token = h("input.set-field__input", {
+        type: "password",
+        placeholder: "Opcional",
+        "aria-label": "Credencial",
+        autocomplete: "off",
+        maxlength: "4000",
+      });
+      const status = h("p.set-note");
+      const submit = h("button.pill-button.pill-button--solid", { type: "button", text: "Conectar" });
+      submit.addEventListener("click", async () => {
+        submit.disabled = true;
+        status.textContent = "Falando com o serviço…";
+        const result = await request("/api/connections", {
+          method: "POST",
+          body: {
+            url: url.value.trim(),
+            token: token.value,
+            connector_id: item?.id,
+            name: item?.name,
+          },
+        });
+        submit.disabled = false;
+        if (!result.ok) {
+          status.textContent = CONNECT_ERRORS[result.data?.error] || result.data?.detail || "Não deu para conectar.";
+          return;
+        }
+        const { closeSheet } = await import("./sheets.js");
+        await closeSheet();
+        toast(`${result.data.name} conectado: ${result.data.tools.length} ferramenta${result.data.tools.length === 1 ? "" : "s"}.`);
+        load({ reset: true });
+      });
+
+      openSheet({
+        title: item ? `Conectar ${item.name}` : "Conector personalizado",
+        content: h(
+          "div.conn__form",
+          {},
+          h("p.set-note", {
+            text: "O KAZER fala com o serviço pelo protocolo MCP. A credencial fica só no servidor e nunca volta para o navegador.",
+          }),
+          h("label.set-field", {}, h("span.set-field__label", { text: "Endereço" }), url),
+          h("label.set-field", {}, h("span.set-field__label", { text: "Credencial" }), token),
+          status,
+          h("div.pr__actions", {}, submit),
+        ),
+      });
+      window.setTimeout(() => url.focus(), 120);
     };
 
     let timer = 0;
@@ -948,12 +1028,19 @@ class SettingsPanel {
       this.group(
         "Conectar",
         h(
+          "button.set-action.set-action--accent",
+          { type: "button", onclick: () => linkConnector(null) },
+          icon("plug"),
+          h("span", { text: "Adicionar conector personalizado" }),
+          icon("chevron-right"),
+        ),
+        h(
           "div.connectors.connectors--wide",
           {},
           h("span.connectors__icon", {}, icon("plug")),
-          h("p.connectors__title", { text: "Nenhum conector conectado." }),
+          h("p.connectors__title", { id: "conn-count", text: "Nenhum conector conectado." }),
           h("p.connectors__text", {
-            text: "O KAZER reconhece os serviços abaixo e já publica o que cada plano vai poder fazer em cada um. Ligar uma conta ainda não está aberto; quando abrir, as credenciais ficam só no servidor e nada é usado sem a sua autorização.",
+            text: "O KAZER fala com qualquer serviço que tenha endereço MCP. Informe o endereço (e a credencial, se o serviço pedir) e as ferramentas dele passam a valer nas suas conversas. A credencial fica só no servidor.",
           }),
         ),
       ),

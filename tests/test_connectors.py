@@ -94,7 +94,11 @@ def test_the_catalog_reaches_the_browser_with_the_plan_rules(
         data = client.get("/api/connectors").json()
         assert data["total"] > 500
         assert len(data["items"]) == 60 and data["has_more"] is True
-        assert data["connecting_open"] is False
+        # Ligar um serviço depende do endereço MCP dele, que a pessoa informa:
+        # a porta existe, e é a do conector próprio.
+        assert data["connecting_open"] is True
+        # Nada ligado ainda nesta conta.
+        assert all(item["connected"] is False for item in data["items"])
         assert len(data["categories"]) >= 20
 
         github = client.get("/api/connectors?q=github").json()["items"][0]
