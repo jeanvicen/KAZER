@@ -26,6 +26,7 @@ Onde o chat guarda depende do ambiente: com o Supabase configurado (produção),
 | Memórias | Personalizar respostas quando a memória está ligada | `memories` / `kazer_memories` | Até esquecer a memória ou excluir a conta |
 | Preferências (apelido, estilo, instruções, interface) | Ajustar o assistente e a interface | `preferences` / `kazer_preferences` | Até alterar ou excluir a conta |
 | Plano da conta (`free`, `pro`, `ultra`) | Saber a franquia de uso | `kazer_plans` (só leitura para o dono) | Enquanto a conta existir |
+| Artefatos (páginas, componentes, SVG, diagramas e dados que o KAZER produziu) | Guardar na Biblioteca o que foi feito | `artifacts` / `kazer_artifacts` | Até apagar o artefato, a conversa ou a conta |
 | Contagem de uso (unidades e horário, sem conteúdo) | Cota no servidor | `usage_events`, `usage_windows` | 2 dias |
 | Fuso horário do navegador | Informar a data ao modelo | Só na requisição | Não é guardado |
 

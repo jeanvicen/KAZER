@@ -10,7 +10,15 @@ from __future__ import annotations
 from collections.abc import Sequence
 from typing import Any, Protocol
 
-from kazer.chat.store import Attachment, Conversation, Exchange, Memory, Message, UsageWindow
+from kazer.chat.store import (
+    Artifact,
+    Attachment,
+    Conversation,
+    Exchange,
+    Memory,
+    Message,
+    UsageWindow,
+)
 
 
 class ChatStorage(Protocol):
@@ -99,6 +107,24 @@ class ChatStorage(Protocol):
     def purge_orphan_attachments(self, older_than: int) -> list[tuple[str, str]]: ...
 
     def purge_usage(self, older_than: int) -> None: ...
+
+    # Biblioteca e artefatos
+    def save_artifacts(
+        self,
+        user_id: str,
+        conversation_id: str,
+        message_id: str,
+        drafts: Sequence[tuple[str, str, str, str]],
+        now: int,
+    ) -> list[Artifact]: ...
+
+    def get_artifact(self, user_id: str, artifact_id: str) -> Artifact | None: ...
+
+    def delete_artifact(self, user_id: str, artifact_id: str) -> bool: ...
+
+    def list_library(
+        self, user_id: str, *, kind: str, limit: int, before: tuple[int, str] | None = ...
+    ) -> list[dict[str, Any]]: ...
 
     # Preferências, memórias e exportação
     def get_preferences(self, user_id: str) -> dict[str, Any]: ...

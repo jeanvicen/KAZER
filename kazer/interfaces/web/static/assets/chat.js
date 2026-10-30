@@ -107,6 +107,8 @@ const S = {
   prefs: {},
   model: null,
   conversation: null, // { id, title } | null (nova)
+  drawerTab: "conversas",
+  library: null,
   models: new Map(), // id -> mensagem (estado de interface)
   oldestSeq: null,
   hasMore: false,
@@ -141,7 +143,8 @@ export async function mountChat({ email, onSignedOut }) {
   S.onSignedOut = onSignedOut;
   const ids = [
     "drawer", "drawer-close", "new-chat", "history-search", "history", "history-list", "history-empty",
-    "history-more", "open-settings", "account-avatar", "account-mail", "sign-out", "drawer-scrim", "pane",
+    "history-more", "tab-conversas", "tab-biblioteca", "panel-conversas", "panel-biblioteca",
+    "open-settings", "account-avatar", "account-mail", "sign-out", "drawer-scrim", "pane",
     "menu", "topbar-title", "new-chat-top", "ambient", "empty", "greeting", "greeting-a", "greeting-b",
     "empty-note", "thread", "messages", "older", "to-bottom", "composer", "composer-alert",
     "composer-alert-text", "composer-alert-close", "composer-box", "tray", "prompt", "plus", "model-chip",
@@ -388,6 +391,30 @@ function newConversation({ push = true, focus = true } = {}) {
   if (focus && finePointer()) S.ui.prompt.focus();
 }
 
+// ---------- Abas da gaveta ----------
+
+async function showDrawerTab(name) {
+  if (S.drawerTab === name) return;
+  S.drawerTab = name;
+  const library = name === "biblioteca";
+  S.ui.tabConversas.classList.toggle("is-active", !library);
+  S.ui.tabBiblioteca.classList.toggle("is-active", library);
+  S.ui.tabConversas.setAttribute("aria-selected", String(!library));
+  S.ui.tabBiblioteca.setAttribute("aria-selected", String(library));
+  S.ui.panelConversas.hidden = library;
+  S.ui.panelBiblioteca.hidden = !library;
+  if (!library) {
+    S.library?.hide();
+    return;
+  }
+  if (!S.library) {
+    const { createLibrary } = await import("./library.js");
+    S.library = createLibrary({ onOpenConversation: (id) => openConversation(id) });
+    S.ui.panelBiblioteca.append(S.library.root);
+  }
+  S.library.show();
+}
+
 async function openConversation(id, { push = true } = {}) {
   const token = (S.navToken += 1);
   detachLive();
@@ -606,9 +633,10 @@ function assistantElement(model) {
   const body = h("div.msg__body.md");
   const notice = h("div.msg__notice", { hidden: true });
   const actions = h("div.msg__actions", {}, actionButton("copy", "Copiar resposta", () => model.content));
-  const el = h("article.msg.msg--kazer", { dataset: { id: model.id } }, head, thinking, body, notice, actions);
+  const made = h("div.msg__made", { hidden: true });
+  const el = h("article.msg.msg--kazer", { dataset: { id: model.id } }, head, thinking, body, made, notice, actions);
   model.el = el;
-  model.parts = { head, thinking, body, notice, actions, state: head.lastChild, thinkBody: thinking.lastChild };
+  model.parts = { head, thinking, body, made, notice, actions, state: head.lastChild, thinkBody: thinking.lastChild };
   model.view = new MarkdownView(body);
   applyStatus(model);
   return el;
@@ -618,10 +646,40 @@ function paintBody(model) {
   if (model.role !== "assistant") return;
   model.painted = true;
   model.view.update(model.content || "");
+  paintArtifacts(model);
   if (model.thinking) {
     model.parts.thinking.hidden = false;
     model.parts.thinkBody.replaceChildren(renderMarkdown(model.thinking));
   }
+}
+
+function paintArtifacts(model) {
+  const strip = model.parts?.made;
+  const items = model.artifacts;
+  if (!strip) return;
+  if (!items?.length) {
+    strip.hidden = true;
+    strip.replaceChildren();
+    return;
+  }
+  strip.hidden = false;
+  strip.replaceChildren(
+    h("span.msg__made-label", { text: items.length === 1 ? "Na sua Biblioteca:" : `${items.length} peças na sua Biblioteca:` }),
+    ...items.map((item) =>
+      h(
+        "button.made-chip",
+        {
+          type: "button",
+          onclick: async () => {
+            const { openArtifactById } = await import("./library.js");
+            openArtifactById(item.id);
+          },
+        },
+        icon("book"),
+        h("span", { text: item.title }),
+      ),
+    ),
+  );
 }
 
 function applyStatus(model) {
@@ -703,6 +761,11 @@ function handleEvent(model, event) {
     queueRender(model);
   } else if (event.type === "title") {
     applyTitle(event.conversation_id, event.title);
+  } else if (event.type === "artifacts") {
+    // A resposta rendeu peças para a Biblioteca.
+    model.artifacts = event.items;
+    S.library?.refresh();
+    paintArtifacts(model);
   } else if (event.type === "done") {
     finish(model, event.reply);
     return "done";
@@ -1580,6 +1643,9 @@ function bindDrawer() {
     else if (!desktopQuery.matches && S.root.classList.contains("drawer-open")) trapFocus(S.ui.drawer, event);
   });
   let timer = 0;
+  for (const tab of [S.ui.tabConversas, S.ui.tabBiblioteca]) {
+    tab.addEventListener("click", () => showDrawerTab(tab.dataset.tab));
+  }
   S.ui.historySearch.addEventListener("input", () => {
     window.clearTimeout(timer);
     timer = window.setTimeout(() => loadHistory({ query: S.ui.historySearch.value.trim() }), 260);

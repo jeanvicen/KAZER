@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import json
 from collections.abc import AsyncIterator
+from functools import partial
 from typing import Any
 from urllib.parse import quote, unquote
 
@@ -253,6 +254,27 @@ def chat_routes(ctx: WebContext, chat: ChatService | None) -> list[Route]:
         )
 
     @endpoint
+    async def library(request: Request) -> Response:
+        user, _ = await account(request)
+        kind = request.query_params.get("kind", "tudo")
+        before = request.query_params.get("before")
+        page = await run_in_threadpool(
+            partial(service().library, user.id, kind=kind, before=before)
+        )
+        return JSONResponse(page)
+
+    @endpoint
+    async def artifact(request: Request) -> Response:
+        user, _ = await account(request)
+        chat_service = service()
+        artifact_id = request.path_params["artifact_id"]
+        if request.method == "DELETE":
+            ctx.check_origin(request)
+            await run_in_threadpool(chat_service.delete_artifact, user.id, artifact_id)
+            return JSONResponse({"deleted": True})
+        return JSONResponse(await run_in_threadpool(chat_service.artifact, user.id, artifact_id))
+
+    @endpoint
     async def plans(request: Request) -> Response:
         user, _ = await account(request)
         return JSONResponse(await run_in_threadpool(service().plans, user.id))
@@ -349,6 +371,8 @@ def chat_routes(ctx: WebContext, chat: ChatService | None) -> list[Route]:
         Route("/api/attachments/{attachment_id}", attachment, methods=["GET", "DELETE"]),
         Route("/api/settings", settings, methods=["GET", "POST"]),
         Route("/api/plans", plans, methods=["GET"]),
+        Route("/api/library", library, methods=["GET"]),
+        Route("/api/artifacts/{artifact_id}", artifact, methods=["GET", "DELETE"]),
         Route("/api/memories", memories, methods=["POST"]),
         Route("/api/memories/clear", clear_memories, methods=["POST"]),
         Route("/api/memories/{memory_id}", memory, methods=["DELETE"]),

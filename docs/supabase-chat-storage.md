@@ -28,6 +28,10 @@ Aplicar **em ordem**, depois das duas migrações de fundação que já existem:
    tabelas, índices e cota.
 2. `supabase/migrations/20261029181000_kazer_chat_operations.sql` — as operações
    do chat como funções, o bucket de anexos e os grants.
+3. `supabase/migrations/20261030120000_kazer_library.sql` — a Biblioteca: as
+   operações dos artefatos, a listagem que junta enviados e produzidos, e as
+   duas funções que ganham um campo novo (`kazer_message_json` passa a dizer o
+   que a resposta rendeu; `kazer_export` leva os artefatos junto).
 
 As duas são **aditivas**: só criam colunas (`add column if not exists`), tabelas,
 índices e funções novas. Nenhuma tabela, política, dado ou migração anterior é
@@ -85,7 +89,7 @@ reenviado pelo navegador não vira mensagem duplicada).
 | `kazer_plans` | plano da conta (`free`, `pro`, `ultra`) |
 | `kazer_preferences` | preferências da interface por conta |
 | `kazer_memories` | memória por usuário, escrita e apagável por ele |
-| `kazer_artifacts` | artefatos gerados, para a biblioteca |
+| `kazer_artifacts` | artefatos gerados, para a Biblioteca |
 
 `kazer_plans` é **somente leitura** para o dono: o grant de `UPDATE`/`INSERT` não
 existe para `authenticated`. Isso é deliberado — numa versão anterior o plano
@@ -141,9 +145,16 @@ psql -f supabase/migrations/20261029131800_kazer_supabase_foundation.sql
 psql -f supabase/migrations/20261029132400_fix_auth_signup_provisioning.sql
 psql -f supabase/migrations/20261029180000_kazer_chat_storage.sql
 psql -f supabase/migrations/20261029181000_kazer_chat_operations.sql
+psql -f supabase/migrations/20261030120000_kazer_library.sql
 psql -f supabase/tests/chat_storage_test.sql   # cenário completo
 psql -f supabase/tests/rls_test.sql            # isolamento entre contas
+psql -f supabase/tests/library_test.sql        # Biblioteca e artefatos
 ```
+
+`library_test.sql` cobre a Biblioteca: gravar os artefatos de uma resposta,
+substituí-los quando ela é gerada de novo, juntar as duas origens na listagem,
+os filtros, o limite da página e o isolamento entre contas (ler, apagar e
+gravar na resposta de outra pessoa).
 
 `chat_storage_test.sql` percorre o caminho real: criar conversa, paginar
 mensagens, reenviar o mesmo `client_id`, estourar a cota, devolver o que sobrou,

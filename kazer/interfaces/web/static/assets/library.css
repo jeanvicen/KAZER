@@ -1,0 +1,317 @@
+/* Biblioteca do KAZER.
+ *
+ * Carregada só quando a aba abre (library.js injeta o <link>). Grade de
+ * cartões que se adapta à largura da gaveta: uma coluna no celular, duas no
+ * computador.
+ */
+
+.library {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  /* Ocupa o que sobra da gaveta e rola por dentro. */
+  flex: 1 1 auto;
+  min-height: 0;
+  padding: 0 0.75rem 1rem;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: #2a2a2a transparent;
+}
+
+/* ---------- Filtros ---------- */
+
+.library__filters {
+  display: flex;
+  gap: 0.35rem;
+  padding: 0.25rem 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+  /* Fica no topo enquanto a grade rola. */
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: linear-gradient(var(--c-bg-2) 70%, transparent);
+}
+
+.library__filters::-webkit-scrollbar {
+  display: none;
+}
+
+.library__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex: none;
+  padding: 0.35rem 0.65rem;
+  border: 1px solid var(--c-border);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--c-text-2);
+  font: inherit;
+  font-size: 0.8125rem;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    background 0.2s ease,
+    color 0.2s ease,
+    border-color 0.2s ease;
+}
+
+.library__chip svg {
+  /* A gaveta é estreita: os quatro filtros só cabem sem ícone. */
+  display: none;
+}
+
+.library__chip[aria-selected="true"] {
+  border-color: transparent;
+  background: var(--c-text);
+  color: var(--c-bg);
+}
+
+/* ---------- Lista ----------
+ *
+ * A gaveta tem pouco mais de 17rem: cartão em grade vira selo ilegível. A lista
+ * dá ao nome a largura inteira, na mesma densidade do histórico logo acima.
+ */
+
+.library__grid {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.library__card {
+  border-radius: 0.6rem;
+  overflow: hidden;
+  animation: library-in 0.3s ease-out both;
+}
+
+.library__open {
+  display: grid;
+  grid-template-columns: 2.75rem 1fr;
+  gap: 0.6rem;
+  align-items: center;
+  width: 100%;
+  padding: 0.45rem 0.5rem;
+  border: 0;
+  border-radius: inherit;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.18s ease;
+}
+
+.library__open:hover {
+  background: var(--c-surface);
+}
+
+.library__media {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: 0.5rem;
+  background: var(--c-bg);
+  overflow: hidden;
+}
+
+.is-made .library__media {
+  background: rgb(91 140 255 / 0.12);
+}
+
+.library__thumb {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.library__glyph {
+  display: grid;
+  place-items: center;
+  color: var(--c-text-2);
+}
+
+.is-made .library__glyph {
+  color: #8ab0ff;
+}
+
+.library__glyph svg {
+  width: 1.05rem;
+  height: 1.05rem;
+}
+
+/* Na lista, a origem já se lê pela cor do quadrado. */
+.library__badge {
+  display: none;
+}
+
+.library__text {
+  display: grid;
+  gap: 0.1rem;
+  min-width: 0;
+}
+
+.library__name {
+  font-size: 0.8125rem;
+  line-height: 1.3;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.library__meta {
+  color: var(--c-text-3);
+  font-size: 0.6875rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.library__empty {
+  margin: 1.5rem 0.5rem;
+  color: var(--c-text-3);
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  text-align: center;
+}
+
+.library__loading {
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+}
+
+.library__mark {
+  width: 1.25rem;
+  height: 1.25rem;
+  color: var(--c-text-3);
+  animation: library-pulse 1.4s ease-in-out infinite;
+}
+
+.library__mark .mark__l,
+.library__mark .mark__r {
+  fill: currentColor;
+}
+
+.library__more {
+  height: 1px;
+}
+
+@keyframes library-in {
+  from {
+    opacity: 0;
+    transform: translateY(0.35rem);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes library-pulse {
+  0%,
+  100% {
+    opacity: 0.35;
+    transform: scale(0.92);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.08);
+  }
+}
+
+/* ---------- Abrir um item ---------- */
+
+.library__view {
+  display: grid;
+  gap: 0.6rem;
+}
+
+.library__kind {
+  margin: 0;
+  color: var(--c-text-2);
+  font-size: 0.75rem;
+  letter-spacing: 0.02em;
+  text-transform: lowercase;
+}
+
+.library__full {
+  width: 100%;
+  max-height: 60dvh;
+  object-fit: contain;
+  border-radius: 0.6rem;
+  background: var(--c-bg);
+}
+
+.library__code {
+  max-height: 50dvh;
+  margin: 0;
+  padding: 0.75rem;
+  border: 1px solid var(--c-border);
+  border-radius: 0.6rem;
+  background: var(--c-bg);
+  overflow: auto;
+  font-size: 0.75rem;
+  line-height: 1.55;
+  tab-size: 2;
+}
+
+.library__code code {
+  font: inherit;
+  white-space: pre;
+}
+
+.library__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.library__action {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.5rem 0.8rem;
+  border: 1px solid var(--c-border);
+  border-radius: 0.6rem;
+  background: transparent;
+  color: var(--c-text);
+  font: inherit;
+  font-size: 0.8125rem;
+  text-decoration: none;
+  cursor: pointer;
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease;
+}
+
+.library__action:hover {
+  border-color: var(--c-border-2);
+  background: var(--c-surface);
+}
+
+.library__action svg {
+  width: 0.95rem;
+  height: 0.95rem;
+}
+
+/* ---------- Menos movimento ---------- */
+
+@media (prefers-reduced-motion: reduce) {
+  html:not([data-motion="completo"]) .library * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+html[data-motion="reduzido"] .library * {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+}

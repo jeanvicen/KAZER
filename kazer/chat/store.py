@@ -86,6 +86,19 @@ CREATE TABLE IF NOT EXISTS usage_events (
     created_at INTEGER NOT NULL
 );
 CREATE INDEX IF NOT EXISTS usage_user ON usage_events(user_id, created_at);
+CREATE TABLE IF NOT EXISTS artifacts (
+    id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    conversation_id TEXT REFERENCES conversations(id) ON DELETE CASCADE,
+    message_id TEXT REFERENCES messages(id) ON DELETE CASCADE,
+    kind TEXT NOT NULL CHECK (kind IN ('code', 'document', 'diagram', 'image', 'data')),
+    title TEXT NOT NULL,
+    language TEXT,
+    content TEXT NOT NULL,
+    created_at INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS artifacts_user ON artifacts(user_id, created_at);
+CREATE INDEX IF NOT EXISTS artifacts_message ON artifacts(message_id);
 """
 
 
@@ -154,6 +167,8 @@ class Message:
     created_at: int
     finished_at: int | None
     attachments: tuple[Attachment, ...] = field(default=())
+    # O que esta resposta rendeu para a Biblioteca (sem o conteúdo).
+    artifacts: tuple[Artifact, ...] = field(default=())
 
     def public(self) -> dict[str, Any]:
         """Formato enviado ao navegador."""
@@ -171,6 +186,7 @@ class Message:
             "created_at": self.created_at,
             "finished_at": self.finished_at,
             "attachments": [attachment.public() for attachment in self.attachments],
+            "artifacts": [item.public(body=False) for item in self.artifacts],
         }
 
 
@@ -185,6 +201,40 @@ class Memory:
     def public(self) -> dict[str, Any]:
         """Formato enviado ao navegador."""
         return {"id": self.id, "content": self.content, "created_at": self.created_at}
+
+
+@dataclass(frozen=True, slots=True)
+class Artifact:
+    """Peça que o KAZER produziu e que vive fora da conversa."""
+
+    id: str
+    kind: str
+    title: str
+    language: str
+    content: str
+    conversation_id: str | None
+    message_id: str | None
+    created_at: int
+    # Tamanho do conteúdo inteiro: a listagem vem sem o conteúdo, então ele não
+    # pode ser deduzido do que está em mãos.
+    size: int = 0
+
+    def public(self, *, body: bool = True) -> dict[str, Any]:
+        """Formato enviado ao navegador; a listagem vai sem o conteúdo."""
+        data: dict[str, Any] = {
+            "id": self.id,
+            "source": "kazer",
+            "kind": self.kind,
+            "title": self.title,
+            "language": self.language,
+            "size": self.size or len(self.content),
+            "conversation_id": self.conversation_id,
+            "message_id": self.message_id,
+            "created_at": self.created_at,
+        }
+        if body:
+            data["content"] = self.content
+        return data
 
 
 @dataclass(frozen=True, slots=True)
@@ -222,6 +272,31 @@ class UsageWindow:
     units: int
 
 
+def _library_row(item: Attachment) -> dict[str, Any]:
+    """Anexo como item de biblioteca (o `public()` do anexo serve ao compositor)."""
+    return {
+        **item.public(),
+        "source": "pessoa",
+        "title": item.name,
+        "message_id": item.message_id,
+        "created_at": item.created_at,
+    }
+
+
+def _artifact(row: sqlite3.Row) -> Artifact:
+    return Artifact(
+        row["id"],
+        row["kind"],
+        row["title"],
+        row["language"] or "",
+        row["content"],
+        row["conversation_id"],
+        row["message_id"],
+        row["created_at"],
+        len(row["content"]),
+    )
+
+
 def _conversation(row: sqlite3.Row) -> Conversation:
     return Conversation(row["id"], row["title"], row["created_at"], row["updated_at"])
 
@@ -239,7 +314,11 @@ def _attachment(row: sqlite3.Row) -> Attachment:
     )
 
 
-def _message(row: sqlite3.Row, attachments: Sequence[Attachment] = ()) -> Message:
+def _message(
+    row: sqlite3.Row,
+    attachments: Sequence[Attachment] = (),
+    artifacts: Sequence[Artifact] = (),
+) -> Message:
     try:
         options = json.loads(row["options"] or "{}")
     except ValueError:
@@ -258,6 +337,7 @@ def _message(row: sqlite3.Row, attachments: Sequence[Attachment] = ()) -> Messag
         created_at=row["created_at"],
         finished_at=row["finished_at"],
         attachments=tuple(attachments),
+        artifacts=tuple(artifacts),
     )
 
 
@@ -410,6 +490,36 @@ class ChatStore:
             grouped.setdefault(row["message_id"], []).append(_attachment(row))
         return grouped
 
+    def _artifacts_for(
+        self, conn: sqlite3.Connection, message_ids: Sequence[str]
+    ) -> dict[str, list[Artifact]]:
+        """Artefatos por mensagem, sem o conteúdo (a listagem não precisa dele)."""
+        grouped: dict[str, list[Artifact]] = {}
+        if not message_ids:
+            return grouped
+        marks = ",".join("?" for _ in message_ids)
+        rows = conn.execute(
+            "SELECT id, kind, title, language, LENGTH(content) AS size, conversation_id,"
+            f" message_id, created_at FROM artifacts WHERE message_id IN ({marks})"  # noqa: S608
+            " ORDER BY created_at, id",
+            list(message_ids),
+        ).fetchall()
+        for row in rows:
+            grouped.setdefault(row["message_id"], []).append(
+                Artifact(
+                    row["id"],
+                    row["kind"],
+                    row["title"],
+                    row["language"] or "",
+                    "",
+                    row["conversation_id"],
+                    row["message_id"],
+                    row["created_at"],
+                    row["size"],
+                )
+            )
+        return grouped
+
     def list_messages(
         self, user_id: str, conversation_id: str, *, limit: int, before_seq: int | None = None
     ) -> tuple[list[Message], bool] | None:
@@ -431,8 +541,13 @@ class ChatStore:
             rows = conn.execute(sql, params).fetchall()
             has_more = len(rows) > limit
             rows = list(reversed(rows[:limit]))
-            attachments = self._attachments_for(conn, [row["id"] for row in rows])
-        return [_message(row, attachments.get(row["id"], ())) for row in rows], has_more
+            ids = [row["id"] for row in rows]
+            attachments = self._attachments_for(conn, ids)
+            made = self._artifacts_for(conn, ids)
+        return [
+            _message(row, attachments.get(row["id"], ()), made.get(row["id"], ()))
+            for row in rows
+        ], has_more
 
     def context_messages(self, conversation_id: str, up_to_seq: int, limit: int) -> list[Message]:
         """Últimas mensagens até `up_to_seq` (inclusive), para montar o contexto do modelo."""
@@ -803,6 +918,109 @@ class ChatStore:
                 (user_id, json.dumps(data, separators=(",", ":")), now),
             )
 
+    # ---------- Biblioteca e artefatos ----------
+
+    def save_artifacts(
+        self,
+        user_id: str,
+        conversation_id: str,
+        message_id: str,
+        drafts: Sequence[tuple[str, str, str, str]],
+        now: int,
+    ) -> list[Artifact]:
+        """Grava os artefatos de uma resposta; repetir a mesma resposta não duplica."""
+        saved: list[Artifact] = []
+        with self._transaction() as conn:
+            # A resposta pode ser gerada de novo: os artefatos antigos dela saem.
+            conn.execute("DELETE FROM artifacts WHERE message_id = ?", (message_id,))
+            for kind, title, language, content in drafts:
+                artifact = Artifact(
+                    new_id(),
+                    kind,
+                    title,
+                    language,
+                    content,
+                    conversation_id,
+                    message_id,
+                    now,
+                    len(content),
+                )
+                conn.execute(
+                    "INSERT INTO artifacts"
+                    " (id, user_id, conversation_id, message_id, kind, title, language,"
+                    "  content, created_at)"
+                    " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                    (
+                        artifact.id,
+                        user_id,
+                        conversation_id,
+                        message_id,
+                        kind,
+                        title,
+                        language,
+                        content,
+                        now,
+                    ),
+                )
+                saved.append(artifact)
+        return saved
+
+    def get_artifact(self, user_id: str, artifact_id: str) -> Artifact | None:
+        """Artefato da própria conta, com o conteúdo."""
+        with self._transaction() as conn:
+            row = conn.execute(
+                "SELECT * FROM artifacts WHERE id = ? AND user_id = ?", (artifact_id, user_id)
+            ).fetchone()
+        return None if row is None else _artifact(row)
+
+    def delete_artifact(self, user_id: str, artifact_id: str) -> bool:
+        """Apaga um artefato da própria conta."""
+        with self._transaction() as conn:
+            changed = conn.execute(
+                "DELETE FROM artifacts WHERE id = ? AND user_id = ?", (artifact_id, user_id)
+            ).rowcount
+        return changed > 0
+
+    def list_library(
+        self, user_id: str, *, kind: str, limit: int, before: tuple[int, str] | None = None
+    ) -> list[dict[str, Any]]:
+        """Biblioteca da conta: o que a pessoa enviou e o que o KAZER produziu.
+
+        As duas origens vêm da mesma ordenação (mais recente primeiro), com
+        paginação por `(created_at, id)` para não repetir nem pular item quando
+        dois nascem no mesmo segundo.
+        """
+        rows: list[dict[str, Any]] = []
+        # `kind` já chegou validado pelo serviço.
+        want_sent = kind in {"tudo", "imagem", "documento"}
+        want_made = kind in {"tudo", "artefato"}
+        cut = "" if before is None else " AND (created_at, id) < (?, ?)"
+        args: list[Any] = [user_id, *([] if before is None else [before[0], before[1]])]
+
+        with self._transaction() as conn:
+            if want_sent:
+                kinds = {"imagem": ("image",), "documento": ("text", "pdf")}.get(
+                    kind, ("image", "text", "pdf")
+                )
+                marks = ", ".join("?" * len(kinds))
+                sent = conn.execute(
+                    "SELECT * FROM attachments WHERE user_id = ?"
+                    f" AND message_id IS NOT NULL AND kind IN ({marks}){cut}"
+                    " ORDER BY created_at DESC, id DESC LIMIT ?",
+                    (args[0], *kinds, *args[1:], limit),
+                ).fetchall()
+                rows += [_library_row(_attachment(row)) for row in sent]
+            if want_made:
+                made = conn.execute(
+                    f"SELECT * FROM artifacts WHERE user_id = ?{cut}"
+                    " ORDER BY created_at DESC, id DESC LIMIT ?",
+                    (*args, limit),
+                ).fetchall()
+                rows += [_artifact(row).public(body=False) for row in made]
+
+        rows.sort(key=lambda item: (item["created_at"], item["id"]), reverse=True)
+        return rows[:limit]
+
     def list_memories(self, user_id: str) -> list[Memory]:
         """Memórias da conta, mais antigas primeiro."""
         with self._transaction() as conn:
@@ -877,8 +1095,13 @@ class ChatStore:
                 "SELECT content, created_at FROM memories WHERE user_id = ? ORDER BY created_at",
                 (user_id,),
             ).fetchall()
+            # Portabilidade é de tudo: os artefatos vão com o conteúdo inteiro.
+            made = conn.execute(
+                "SELECT * FROM artifacts WHERE user_id = ? ORDER BY created_at", (user_id,)
+            ).fetchall()
         return {
             "conversations": exported,
             "memories": [dict(row) for row in memories],
+            "artifacts": [_artifact(row).public() for row in made],
             "preferences": self.get_preferences(user_id),
         }

@@ -20,6 +20,7 @@ import httpx
 
 from kazer.chat.identity import current_access_token
 from kazer.chat.store import (
+    Artifact,
     Attachment,
     AttachmentUnavailable,
     Conversation,
@@ -32,6 +33,21 @@ from kazer.chat.store import (
 )
 
 logger = logging.getLogger("kazer.chat.supabase")
+
+
+def _artifact(row: dict[str, Any]) -> Artifact:
+    """Linha do Postgres (já em JSON) para o modelo do chat."""
+    return Artifact(
+        str(row["id"]),
+        str(row["kind"]),
+        str(row["title"]),
+        str(row.get("language") or ""),
+        str(row.get("content") or ""),
+        row.get("conversation_id"),
+        row.get("message_id"),
+        int(row.get("created_at") or 0),
+        int(row.get("size") or 0),
+    )
 
 BUCKET = "kazer-anexos"
 MAX_CONVERSATIONS = 100
@@ -81,6 +97,7 @@ def _message(data: dict[str, Any], user_id: str) -> Message:
         attachments=tuple(
             _attachment(item, user_id, str(data["id"])) for item in data.get("attachments") or []
         ),
+        artifacts=tuple(_artifact(item) for item in data.get("artifacts") or []),
     )
 
 
@@ -423,6 +440,58 @@ class SupabaseChatStore:
     def save_preferences(self, user_id: str, data: dict[str, Any], now: int) -> None:
         """Substitui as preferências."""
         self._rpc("kazer_save_preferences", {"p_data": data})
+
+    # ---------- Biblioteca e artefatos ----------
+
+    def save_artifacts(
+        self,
+        user_id: str,
+        conversation_id: str,
+        message_id: str,
+        drafts: Sequence[tuple[str, str, str, str]],
+        now: int,
+    ) -> list[Artifact]:
+        """Grava os artefatos de uma resposta (a gravação pode vir da thread)."""
+        rows = (
+            self._rpc(
+                "kazer_save_artifacts",
+                {
+                    "p_conversation_id": conversation_id,
+                    "p_message_id": message_id,
+                    "p_items": [
+                        {"kind": kind, "title": title, "language": language, "content": content}
+                        for kind, title, language, content in drafts
+                    ],
+                    "p_user_id": user_id,
+                },
+            )
+            or []
+        )
+        return [_artifact(row) for row in rows]
+
+    def get_artifact(self, user_id: str, artifact_id: str) -> Artifact | None:
+        """Artefato da própria conta, com o conteúdo."""
+        data = self._rpc("kazer_artifact", {"p_id": artifact_id})
+        return None if not data else _artifact(data)
+
+    def delete_artifact(self, user_id: str, artifact_id: str) -> bool:
+        """Apaga um artefato da própria conta."""
+        return bool(self._rpc("kazer_delete_artifact", {"p_id": artifact_id}))
+
+    def list_library(
+        self, user_id: str, *, kind: str, limit: int, before: tuple[int, str] | None = None
+    ) -> list[dict[str, Any]]:
+        """Página da biblioteca: enviados e produzidos, mais recentes primeiro."""
+        rows = self._rpc(
+            "kazer_library",
+            {
+                "p_kind": kind,
+                "p_limit": limit,
+                "p_before_at": None if before is None else before[0],
+                "p_before_id": None if before is None else before[1],
+            },
+        )
+        return list(rows or [])
 
     def list_memories(self, user_id: str) -> list[Memory]:
         """Memórias da conta."""

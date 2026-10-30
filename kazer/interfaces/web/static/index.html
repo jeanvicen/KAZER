@@ -148,15 +148,23 @@
         <button class="icon-button drawer__close" type="button" id="drawer-close" aria-label="Fechar conversas"><span data-icon="close"></span></button>
       </div>
       <button class="drawer__new" type="button" id="new-chat"><span data-icon="compose"></span><span>Nova conversa</span></button>
-      <label class="drawer__search">
-        <span data-icon="search"></span>
-        <input id="history-search" type="search" placeholder="Buscar conversas" aria-label="Buscar conversas" autocomplete="off" spellcheck="false" maxlength="80">
-      </label>
-      <nav class="history" id="history" aria-label="Conversas recentes">
-        <div class="history__list" id="history-list"></div>
-        <p class="history__empty" id="history-empty" hidden></p>
-        <div class="history__more" id="history-more" aria-hidden="true"></div>
-      </nav>
+      <div class="drawer__tabs" role="tablist" aria-label="Conversas e biblioteca">
+        <button class="drawer__tab is-active" type="button" role="tab" id="tab-conversas" aria-selected="true" aria-controls="panel-conversas" data-tab="conversas"><span data-icon="menu"></span><span>Conversas</span></button>
+        <button class="drawer__tab" type="button" role="tab" id="tab-biblioteca" aria-selected="false" aria-controls="panel-biblioteca" data-tab="biblioteca"><span data-icon="book"></span><span>Biblioteca</span></button>
+        <span class="drawer__tab-glider" aria-hidden="true"></span>
+      </div>
+      <div class="drawer__panel" id="panel-conversas" role="tabpanel" aria-labelledby="tab-conversas">
+        <label class="drawer__search">
+          <span data-icon="search"></span>
+          <input id="history-search" type="search" placeholder="Buscar conversas" aria-label="Buscar conversas" autocomplete="off" spellcheck="false" maxlength="80">
+        </label>
+        <nav class="history" id="history" aria-label="Conversas recentes">
+          <div class="history__list" id="history-list"></div>
+          <p class="history__empty" id="history-empty" hidden></p>
+          <div class="history__more" id="history-more" aria-hidden="true"></div>
+        </nav>
+      </div>
+      <div class="drawer__panel" id="panel-biblioteca" role="tabpanel" aria-labelledby="tab-biblioteca" hidden></div>
       <div class="drawer__foot">
         <button class="account" type="button" id="open-settings">
           <span class="account__avatar" id="account-avatar" aria-hidden="true"></span>

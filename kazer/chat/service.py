@@ -27,7 +27,7 @@ from kazer.brain.model_provider import (
     ProviderError,
     Turn,
 )
-from kazer.chat import context, plans
+from kazer.chat import artifacts, context, plans
 from kazer.chat.generation import GenerationHub, LiveGeneration
 from kazer.chat.identity import current_access_token
 from kazer.chat.protocols import AttachmentStorage, ChatStorage
@@ -61,6 +61,9 @@ MAX_MESSAGE_CHARS = 32_000
 MAX_ATTACHMENTS = 6
 MAX_TITLE_CHARS = 80
 MAX_MEMORIES = 100
+# Biblioteca: filtros aceitos e itens por página.
+LIBRARY_KINDS = frozenset({"tudo", "imagem", "documento", "artefato"})
+LIBRARY_PAGE = 30
 MAX_MEMORY_CHARS = 500
 PAGE_MESSAGES = 40
 # Título gerado pelo modelo a partir da primeira troca.
@@ -111,6 +114,16 @@ _TEXT_LIMITS = {"nickname": 40, "instructions": 1500}
 _BOOLS = {"memory_enabled", "send_on_enter", "ambient"}
 
 _CLIENT_ID = re.compile(r"^[A-Za-z0-9_-]{8,64}$")
+
+
+def _cursor(value: str | None) -> tuple[int, str] | None:
+    """`"1730300000.abc123"` vira `(1730300000, "abc123")`; lixo vira None."""
+    if not value or "." not in value:
+        return None
+    stamp, _, item = value.partition(".")
+    if not stamp.isdigit() or not valid_id(item):
+        return None
+    return int(stamp), item
 
 
 class ChatError(Exception):
@@ -371,6 +384,50 @@ class ChatService:
         return current
 
     # ---------- Memórias ----------
+
+    # ---------- Biblioteca ----------
+
+    def library(
+        self, user_id: str, *, kind: str, before: str | None, limit: int = LIBRARY_PAGE
+    ) -> dict[str, Any]:
+        """Página da biblioteca: o que a pessoa enviou e o que o KAZER produziu."""
+        if kind not in LIBRARY_KINDS:
+            raise ChatError("invalid_request", 400)
+        cursor = _cursor(before)
+        lister = getattr(self._store, "list_library", None)
+        if lister is None:
+            return {"items": [], "has_more": False, "kinds": sorted(LIBRARY_KINDS)}
+        # Pede um a mais para saber se existe próxima página sem contar tudo.
+        items = lister(user_id, kind=kind, limit=limit + 1, before=cursor)
+        has_more = len(items) > limit
+        items = items[:limit]
+        return {
+            "items": items,
+            "has_more": has_more,
+            "next": (
+                f"{items[-1]['created_at']}.{items[-1]['id']}" if has_more and items else None
+            ),
+            "kinds": sorted(LIBRARY_KINDS),
+        }
+
+    def artifact(self, user_id: str, artifact_id: str) -> dict[str, Any]:
+        """Conteúdo de um artefato da própria conta."""
+        if not valid_id(artifact_id):
+            raise ChatError("not_found", 404)
+        reader = getattr(self._store, "get_artifact", None)
+        item = None if reader is None else reader(user_id, artifact_id)
+        if item is None:
+            raise ChatError("not_found", 404)
+        data: dict[str, Any] = item.public()
+        return data
+
+    def delete_artifact(self, user_id: str, artifact_id: str) -> None:
+        """Apaga um artefato da própria conta."""
+        if not valid_id(artifact_id):
+            raise ChatError("not_found", 404)
+        remover = getattr(self._store, "delete_artifact", None)
+        if remover is None or not remover(user_id, artifact_id):
+            raise ChatError("not_found", 404)
 
     def memories(self, user_id: str) -> list[Memory]:
         """Memórias que a pessoa salvou."""
@@ -658,12 +715,12 @@ class ChatService:
             self._hub.release()
             return exchange, self._hub.get(user_id, exchange.reply.id)
         request = self._request(user_id, exchange.user_message, options, prefs, timezone)
-        # Conversa recém-criada ganha um título do próprio modelo quando a
-        # primeira resposta fica pronta.
-        on_complete = None
-        if exchange.user_message.seq == 1:
-            asked = content or (pending[0].name if pending else "")
-            on_complete = partial(self._name_conversation, question=asked)
+        # Resposta pronta: os artefatos entram na Biblioteca e, se a conversa
+        # acabou de nascer, o próprio modelo dá nome a ela.
+        asked = content or (pending[0].name if pending else "")
+        on_complete = partial(
+            self._finish_reply, question=asked, name_it=exchange.user_message.seq == 1
+        )
         live = self._hub.start(
             user_id,
             exchange.conversation.id,
@@ -772,6 +829,39 @@ class ChatService:
         if len(words) > TITLE_MAX_WORDS:
             title = " ".join(words[:TITLE_MAX_WORDS])
         return title[:MAX_TITLE_CHARS]
+
+    def _finish_reply(self, live: Any, answer: str, question: str, name_it: bool) -> None:
+        """Depois da resposta pronta: guarda os artefatos e dá nome à conversa."""
+        self._save_artifacts(live, answer)
+        if name_it:
+            self._name_conversation(live, answer, question)
+
+    def _save_artifacts(self, live: Any, answer: str) -> None:
+        """Extrai os artefatos da resposta e avisa a interface do que apareceu."""
+        drafts = artifacts.extract(answer)
+        if not drafts:
+            return
+        saver = getattr(self._store, "save_artifacts", None)
+        if saver is None:
+            return
+        try:
+            saved = saver(
+                live.user_id,
+                live.conversation_id,
+                live.reply_id,
+                [(d.kind, d.title, d.language, d.content) for d in drafts],
+                self._now(),
+            )
+        except Exception:  # noqa: BLE001 - biblioteca não pode derrubar a resposta
+            logger.exception("chat.artifacts_failed")
+            return
+        live.push(
+            {
+                "type": "artifacts",
+                "reply_id": live.reply_id,
+                "items": [item.public(body=False) for item in saved],
+            }
+        )
 
     def _name_conversation(self, live: Any, answer: str, question: str) -> None:
         """Renomeia a conversa com o título do modelo e avisa quem está ouvindo."""
