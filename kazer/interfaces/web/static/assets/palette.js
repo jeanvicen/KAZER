@@ -1,7 +1,7 @@
 // Paleta de comandos: a habilidade que só o computador tem.
 //
 // Ctrl+K (⌘K no Mac) abre uma caixa que faz tudo pelo teclado — ir para uma
-// seção, começar uma conversa, abrir a Forja ou as configurações, e buscar
+// seção, começar uma conversa, abrir o KZ Code ou as configurações, e buscar
 // entre as conversas sem tirar a mão do teclado. No celular ela não existe:
 // lá a gaveta já está a um toque e não há teclado físico para atalho.
 //

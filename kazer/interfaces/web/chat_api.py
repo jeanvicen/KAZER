@@ -306,6 +306,11 @@ def chat_routes(ctx: WebContext, chat: ChatService | None) -> list[Route]:
         return JSONResponse({"status": "ok"})
 
     @endpoint
+    async def code_sessions(request: Request) -> Response:
+        user, _ = await account(request)
+        return JSONResponse(await run_in_threadpool(service().code_sessions, user.id))
+
+    @endpoint
     async def skills(request: Request) -> Response:
         user, _ = await account(request)
         chat_service = service()
@@ -467,6 +472,7 @@ def chat_routes(ctx: WebContext, chat: ChatService | None) -> list[Route]:
         Route("/api/connectors", connector_catalog, methods=["GET"]),
         Route("/api/connections", connections, methods=["GET", "POST"]),
         Route("/api/connections/{connection_id}", connection, methods=["POST", "DELETE"]),
+        Route("/api/code/sessions", code_sessions, methods=["GET"]),
         Route("/api/skills", skills, methods=["GET", "POST"]),
         Route("/api/skills/shared", shared_skills, methods=["GET"]),
         Route("/api/skills/{skill_id}", skill, methods=["GET", "POST", "DELETE"]),

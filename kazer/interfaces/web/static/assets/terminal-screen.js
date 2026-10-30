@@ -23,7 +23,7 @@ const COMMANDS = [
 const INSIDE = [
   ["/nova", "começa outra conversa"],
   ["/continuar <n>", "volta para uma da lista"],
-  ["/forja", "liga a Forja (planos pagos)"],
+  ["/code", "liga o KZ Code (planos pagos)"],
   ["/pensamento", "mostra o raciocínio enquanto chega"],
   ["/ajuda", "todos os comandos"],
 ];

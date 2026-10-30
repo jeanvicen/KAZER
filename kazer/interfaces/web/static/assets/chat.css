@@ -4129,3 +4129,54 @@ html[data-motion="reduzido"] .offline-bar * {
 .tool-row.is-on .tool-row__title {
   color: var(--c-text);
 }
+
+/* ---------- Letreiro em pixel (KZ Code) ---------- */
+
+/* Do tamanho do texto ao redor, cor suave: discreto, mas com cara de pixel. */
+.pxword {
+  display: inline-block;
+  height: 0.8em;
+  width: auto;
+  vertical-align: -0.06em;
+  fill: currentColor;
+  overflow: visible;
+}
+
+.pxword__still {
+  opacity: 0.92;
+}
+
+/* Um ou dois pixels piscam bem de vez em quando; sem movimento, ficam fixos. */
+.pxword__blink {
+  opacity: 0.92;
+  animation: pxword-blink 9s steps(1, end) infinite;
+  animation-delay: var(--d, 0s);
+}
+
+@keyframes pxword-blink {
+  0%,
+  88%,
+  100% {
+    opacity: 0.92;
+  }
+  90%,
+  94% {
+    opacity: 0.15;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html:not([data-motion="completo"]) .pxword__blink {
+    animation: none;
+  }
+}
+
+html[data-motion="reduzido"] .pxword__blink {
+  animation: none;
+}
+
+.drawer__item .pxword {
+  /* Vence `.drawer__item svg` (tamanho de ícone): o letreiro tem largura própria. */
+  width: auto;
+  height: 0.66em;
+}

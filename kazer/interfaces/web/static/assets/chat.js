@@ -2,6 +2,7 @@
 // aqui só há estado de interface. Respostas chegam em streaming (NDJSON) e,
 // se a rede cair no meio, a interface reata do último evento recebido.
 
+import { hydratePixelWords } from "./pixel.js";
 import {
   announce,
   byId,
@@ -69,7 +70,7 @@ const SEND_ERRORS = {
   unauthenticated: "Sua sessão expirou.",
   auth_unavailable: "As contas estão fechadas neste ambiente.",
   chat_unavailable: "O chat ainda não está disponível neste ambiente.",
-  plan_required: "A Forja entra com os planos pagos.",
+  plan_required: "O KZ Code entra com os planos pagos.",
   invalid_effort: "Esse esforço não está disponível agora. Voltei para o Baixo; é só enviar de novo.",
 };
 
@@ -146,6 +147,7 @@ export async function mountChat({ email, onSignedOut }) {
   const template = document.getElementById("tpl-chat");
   root.replaceChildren(template.content.cloneNode(true));
   hydrateIcons(root);
+  hydratePixelWords(root);
   root.hidden = false;
   document.documentElement.classList.add("in-chat");
   S.root = root;
@@ -445,13 +447,16 @@ async function showScreen(name) {
     S.screens = createScreens({
       host: S.ui.screen,
       onMenu: () => openDrawer(),
-      onOpenConversation: (id) => {
+      onOpenConversation: (id, options = {}) => {
         showScreen("conversas");
         openConversation(id);
+        // Sessão aberta pelo KZ Code continua no modo KZ Code.
+        if (options.code) setForja(true);
       },
-      onStartForja: () => {
+      onOpenSettings: (section) => openSettings(section),
+      onStartForja: (prompt) => {
         showScreen("conversas");
-        startForja();
+        startForja(prompt);
       },
       onOpenPlans: async (opener, highlight) => {
         const { openPlans } = await import("./plans.js");
@@ -464,11 +469,17 @@ async function showScreen(name) {
   await S.screens.open(name);
 }
 
-// Abre uma conversa nova já no modo Forja.
-function startForja() {
+// Abre uma conversa nova já no modo KZ Code; com um pedido, já envia.
+function startForja(prompt = "") {
   newConversation({ push: true, focus: true });
   setForja(true);
   if (!desktopQuery.matches) closeDrawer();
+  if (prompt) {
+    S.ui.prompt.value = prompt;
+    autosize();
+    updateSendState();
+    send();
+  }
 }
 
 function setForja(on) {
@@ -484,7 +495,8 @@ function setForja(on) {
 
 async function openConversation(id, { push = true } = {}) {
   if (S.screen !== "conversas") showScreen("conversas");
-  setForja(false);
+  // Conversa aberta no KZ Code volta no KZ Code (a lista vem do servidor).
+  setForja(Boolean(S.prefs?.code_sessions?.includes(id)));
   const token = (S.navToken += 1);
   detachLive();
   if (push) window.history.pushState({ chat: id }, "", `/c/${id}`);
@@ -1117,6 +1129,9 @@ function commitSend(event) {
   }
   setTitle(event.conversation.title);
   upsertHistory(event.conversation);
+  if (S.forja && S.prefs && !S.prefs.code_sessions?.includes(event.conversation.id)) {
+    S.prefs.code_sessions = [event.conversation.id, ...(S.prefs.code_sessions || [])].slice(0, 30);
+  }
   // Limpa o composer só agora: a mensagem já está salva no servidor.
   S.ui.prompt.value = "";
   saveDraft();
@@ -1787,7 +1802,7 @@ const SHORTCUTS = [
   { keys: "Ctrl K", mac: "⌘K", about: "Paleta de comandos" },
   { keys: "Ctrl B", mac: "⌘B", about: "Abrir e fechar a gaveta" },
   { keys: "Ctrl Shift O", mac: "⌘⇧O", about: "Nova conversa" },
-  { keys: "Ctrl Shift F", mac: "⌘⇧F", about: "Nova conversa na Forja" },
+  { keys: "Ctrl Shift F", mac: "⌘⇧F", about: "Nova conversa no KZ Code" },
   { keys: "Esc", mac: "Esc", about: "Fechar o que estiver aberto" },
 ];
 
@@ -1839,7 +1854,7 @@ function paletteGroups() {
           hint: keyLabel(SHORTCUTS[2]),
           run: () => newConversation({ push: true, focus: true }),
         },
-        { label: "Nova conversa na Forja", glyph: "code", hint: keyLabel(SHORTCUTS[3]), run: startForja },
+        { label: "Nova conversa no KZ Code", glyph: "code", hint: keyLabel(SHORTCUTS[3]), run: startForja },
         { label: "Configurações", glyph: "gear", run: () => openSettings() },
         { label: "Skills", glyph: "sparkle", run: () => openSettings("skills") },
         { label: "Terminal", glyph: "terminal", run: () => openSettings("terminal") },

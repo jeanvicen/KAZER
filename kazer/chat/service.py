@@ -111,6 +111,7 @@ EFFORT_UNITS = {"low": 0, "medium": 1, "high": 2, "xhigh": 3, "max": 4}
 LONG_PROMPT_CHARS = 2000
 LONG_HISTORY_MESSAGES = 20
 MAX_UNITS = 12
+MAX_CODE_SESSIONS = 30
 
 PREFERENCE_DEFAULTS: dict[str, Any] = {
     "nickname": "",
@@ -123,7 +124,11 @@ PREFERENCE_DEFAULTS: dict[str, Any] = {
     "ambient": True,
     # Plano que a pessoa quis enquanto a cobrança não abre (não dá acesso a nada).
     "wants_plan": "",
+    # Conversas abertas no KZ Code, mais recente primeiro. Quem escreve aqui é só
+    # o servidor (ver `_remember_code_session`): a pessoa não edita esta lista.
+    "code_sessions": [],
 }
+_SERVER_ONLY_PREFERENCES = {"code_sessions"}
 _CHOICES = {
     "style": {"direto", "equilibrado", "detalhado"},
     "motion": {"sistema", "reduzido", "completo"},
@@ -426,7 +431,8 @@ class ChatService:
     def preferences(self, user_id: str) -> dict[str, Any]:
         """Preferências com padrões aplicados (valores inválidos antigos são ignorados)."""
         stored = self._store.get_preferences(user_id)
-        merged = dict(PREFERENCE_DEFAULTS)
+        # Listas são copiadas: o padrão compartilhado nunca pode ser alterado por fora.
+        merged = {k: list(v) if isinstance(v, list) else v for k, v in PREFERENCE_DEFAULTS.items()}
         for key, value in stored.items():
             if key in merged and type(value) is type(merged[key]):
                 merged[key] = value
@@ -436,7 +442,7 @@ class ChatService:
         """Aplica mudanças parciais validadas campo a campo."""
         current = self.preferences(user_id)
         for key, value in changes.items():
-            if key not in PREFERENCE_DEFAULTS:
+            if key not in PREFERENCE_DEFAULTS or key in _SERVER_ONLY_PREFERENCES:
                 raise ChatError("invalid_request", 400)
             if key in _BOOLS:
                 if not isinstance(value, bool):
@@ -452,7 +458,29 @@ class ChatService:
         self._store.save_preferences(user_id, current, self._now())
         return current
 
-    # ---------- Memórias ----------
+    # ---------- KZ Code ----------
+
+    def _remember_code_session(
+        self, user_id: str, conversation_id: str, prefs: dict[str, Any]
+    ) -> None:
+        """Anota a conversa como sessão do KZ Code (não derruba o envio se falhar)."""
+        try:
+            ids = [item for item in prefs.get("code_sessions", []) if item != conversation_id]
+            ids.insert(0, conversation_id)
+            saved = {**prefs, "code_sessions": ids[:MAX_CODE_SESSIONS]}
+            self._store.save_preferences(user_id, saved, self._now())
+        except Exception:  # noqa: BLE001 - a lista é conveniência, o envio já foi aceito
+            logger.warning("chat.code_session_failed")
+
+    def code_sessions(self, user_id: str) -> dict[str, Any]:
+        """Sessões recentes do KZ Code: as conversas abertas nesse modo, ainda existentes."""
+        wanted = list(self.preferences(user_id)["code_sessions"])
+        if not wanted:
+            return {"items": []}
+        recent = self.list_conversations(user_id, cursor=None, query=None)["items"]
+        order = {item: index for index, item in enumerate(wanted)}
+        mine = sorted((c for c in recent if c["id"] in order), key=lambda c: order[c["id"]])
+        return {"items": mine}
 
     # ---------- Biblioteca ----------
 
@@ -1123,6 +1151,8 @@ class ChatService:
         if exchange.duplicate:
             self._hub.release()
             return exchange, self._hub.get(user_id, exchange.reply.id)
+        if options.forja:
+            self._remember_code_session(user_id, exchange.conversation.id, prefs)
         request = self._request(user_id, exchange.user_message, options, prefs, timezone)
         # Resposta pronta: os artefatos entram na Biblioteca e, se a conversa
         # acabou de nascer, o próprio modelo dá nome a ela.

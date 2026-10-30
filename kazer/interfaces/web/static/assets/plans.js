@@ -115,7 +115,7 @@ class PlansScreen {
 
   lede() {
     const current = this.plans.find((plan) => plan.id === this.usage.plan);
-    if (!current) return "Mais uso, modo Forja e artefatos quando você precisar.";
+    if (!current) return "Mais uso, KZ Code e artefatos quando você precisar.";
     if (current.id === "free") return "Você está no plano gratuito. Veja o que muda quando o KAZER destrava.";
     return `Você está no ${current.name}. Veja tudo o que ele já te dá.`;
   }
@@ -351,7 +351,7 @@ export async function limitReached(data, { opener } = {}) {
         "div.limit__offer",
         {},
         h("p.limit__offer-title", { text: `No ${upgrade.name} você teria ${upgrade.times}× esse limite.` }),
-        h("p.limit__offer-text", { text: `${upgrade.price} por mês. Modo Forja, artefatos e pesquisa profunda junto.` }),
+        h("p.limit__offer-text", { text: `${upgrade.price} por mês. KZ Code, artefatos e pesquisa profunda junto.` }),
         h(
           "button.limit__cta",
           {

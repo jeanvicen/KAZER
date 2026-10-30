@@ -52,7 +52,7 @@ Contas que nunca confirmam o e-mail são apagadas automaticamente após 7 dias. 
 - Cookie `__Host-kazer_session` (produção) / `kazer_session` (desenvolvimento local): HttpOnly, SameSite=Lax, Secure em produção. Inacessível a JavaScript.
 - `localStorage`: só preferências visuais (`kazer:ui` com animações, tamanho do texto e fundo animado; `kazer:drawer` com a gaveta aberta ou fechada). Nenhum dado pessoal.
 - `sessionStorage`: rascunho da mensagem por conversa (`kazer:draft:*`), apagado ao sair da conta, e marcadores de navegação (`kazer:after`, `kazer:return`).
-- Cache do service worker (`kazer-shell-v2`): só HTML, CSS, JS, fonte e ícones do app. Nada de `/api/` (conversas, anexos, sessão) entra no cache.
+- Cache do service worker (`kazer-shell-v3`): só HTML, CSS, JS, fonte e ícones do app. Nada de `/api/` (conversas, anexos, sessão) entra no cache.
 - Prévia local de anexos escolhidos via `blob:` URL, revogada depois do envio.
 - Links de e-mail carregam o token no fragmento (`#verify=…`, `#reset=…`). Navegadores não enviam fragmentos ao servidor, então tokens não aparecem em logs de acesso nem em `Referer`. A página remove o fragmento da barra de endereço assim que o lê.
 - Nenhum script, fonte, imagem ou folha de estilo externa. A fonte do logotipo (Grenze Gotisch, OFL) é servida localmente. A CSP bloqueia qualquer origem de terceiros.

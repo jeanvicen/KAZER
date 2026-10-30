@@ -1,8 +1,7 @@
-/* Forja: a oficina de código do KAZER.
+/* KZ Code: a oficina de código do KAZER.
  *
- * Carregada só quando a aba abre. A animação da Fenda batendo o martelo
- * aparece de vez em quando — a cada poucos segundos, não o tempo todo: pesa
- * pouco e não cansa quem está lendo a lista ao lado.
+ * Carregada só quando a aba abre. Duas caras: a tela de trabalho (plano pago)
+ * e a tela de compra (plano gratuito).
  */
 
 .forja {
@@ -20,123 +19,11 @@
 .forja__ready,
 .forja__locked {
   display: grid;
-  gap: 0.6rem;
+  gap: 0.9rem;
+  width: 100%;
+  max-width: 44rem;
+  margin-inline: auto;
   animation: forja-in 0.4s ease-out both;
-}
-
-/* ---------- A Fenda na bigorna ---------- */
-
-.forja__stage {
-  position: relative;
-  display: grid;
-  place-items: center;
-  height: 5.5rem;
-  margin-bottom: 0.25rem;
-  overflow: hidden;
-}
-
-/* O clarão da bigorna: acende no instante da martelada. */
-.forja__anvil {
-  position: absolute;
-  bottom: 1.1rem;
-  width: 4.5rem;
-  height: 1.5rem;
-  border-radius: 50%;
-  background: radial-gradient(ellipse, rgb(255 149 64 / 0.45), transparent 70%);
-  opacity: 0;
-  animation: forja-glow 5.2s ease-out infinite;
-}
-
-.forja__mark {
-  position: relative;
-  width: 2rem;
-  height: 2rem;
-  color: var(--c-text);
-  transform-origin: 50% 90%;
-  animation: forja-strike 5.2s cubic-bezier(0.3, 0, 0.2, 1) infinite;
-}
-
-.forja__mark .mark__l,
-.forja__mark .mark__r {
-  fill: currentColor;
-}
-
-.forja__spark {
-  position: absolute;
-  bottom: 1.5rem;
-  width: 0.2rem;
-  height: 0.2rem;
-  border-radius: 50%;
-  background: #ffb066;
-  opacity: 0;
-  animation: forja-spark 5.2s ease-out infinite;
-}
-
-.forja__spark--b {
-  animation-delay: 0.06s;
-  --dx: -1.6rem;
-  --dy: -1.5rem;
-}
-
-.forja__spark--c {
-  animation-delay: 0.12s;
-  --dx: 1.9rem;
-  --dy: -0.9rem;
-}
-
-@keyframes forja-strike {
-  /* Quase todo o ciclo é descanso; a martelada é o instante no meio. */
-  0%,
-  60% {
-    transform: rotate(0deg);
-  }
-  66% {
-    transform: rotate(-26deg);
-  }
-  70% {
-    transform: rotate(8deg) translateY(0.15rem);
-  }
-  74% {
-    transform: rotate(-4deg);
-  }
-  78%,
-  100% {
-    transform: rotate(0deg);
-  }
-}
-
-@keyframes forja-glow {
-  0%,
-  68% {
-    opacity: 0;
-    transform: scale(0.8);
-  }
-  71% {
-    opacity: 1;
-    transform: scale(1.15);
-  }
-  85%,
-  100% {
-    opacity: 0;
-    transform: scale(0.9);
-  }
-}
-
-@keyframes forja-spark {
-  0%,
-  69% {
-    opacity: 0;
-    transform: none;
-  }
-  71% {
-    opacity: 1;
-    transform: none;
-  }
-  86%,
-  100% {
-    opacity: 0;
-    transform: translate(var(--dx, 1.4rem), var(--dy, -1.7rem));
-  }
 }
 
 /* ---------- Texto ---------- */
@@ -239,6 +126,230 @@
   margin: 0;
   color: var(--c-text-3);
   font-size: 0.75rem;
+  text-align: center;
+}
+
+/* ---------- Tela de trabalho ---------- */
+
+.forja__hero {
+  display: grid;
+  justify-items: center;
+  gap: 0.6rem;
+  padding: 1.25rem 0 0.25rem;
+  text-align: center;
+}
+
+/* O letreiro em pixel: grande aqui, suave, com um ou dois pixels que piscam. */
+.forja__word {
+  margin: 0;
+  color: var(--c-text);
+  font-size: 2.6rem;
+  line-height: 1;
+}
+
+.forja__word .pxword {
+  height: 1em;
+  opacity: 0.95;
+}
+
+.forja__hero .forja__lede {
+  max-width: 34ch;
+  font-size: 0.9375rem;
+}
+
+.forja__compose {
+  position: relative;
+  border: 1px solid var(--c-border-2);
+  border-radius: 1rem;
+  background: var(--c-surface);
+  transition: border-color 160ms ease-out;
+}
+
+.forja__compose:focus-within {
+  border-color: rgb(255 149 64 / 0.55);
+}
+
+.forja__input {
+  display: block;
+  width: 100%;
+  min-height: 5.25rem;
+  padding: 0.9rem 3.4rem 0.9rem 1rem;
+  border: 0;
+  border-radius: inherit;
+  background: transparent;
+  color: var(--c-text);
+  font: inherit;
+  font-size: 1rem;
+  line-height: 1.5;
+  resize: none;
+  outline: none;
+}
+
+.forja__input::placeholder {
+  color: var(--c-text-3);
+}
+
+.forja__go {
+  position: absolute;
+  right: 0.6rem;
+  bottom: 0.6rem;
+  display: grid;
+  place-items: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border: 0;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #ff9540, #ff6b3d);
+  color: #140a04;
+  cursor: pointer;
+  transition:
+    transform 140ms var(--spring, ease-out),
+    opacity 140ms linear;
+}
+
+.forja__go:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.forja__go:not(:disabled):active {
+  transform: scale(0.93);
+}
+
+.forja__go svg {
+  width: 1.1rem;
+  height: 1.1rem;
+}
+
+.forja__ideas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.forja__idea {
+  padding: 0.4rem 0.75rem;
+  border: 1px solid var(--c-border);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--c-text-2);
+  font: inherit;
+  font-size: 0.8125rem;
+  text-align: left;
+  cursor: pointer;
+}
+
+.forja__idea:hover {
+  border-color: var(--c-border-2);
+  color: var(--c-text);
+}
+
+.forja__block {
+  display: grid;
+  gap: 0.55rem;
+}
+
+.forja__h {
+  margin: 0;
+  color: var(--c-text-3);
+  font-size: 0.6875rem;
+  font-weight: 400;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.forja__muted {
+  margin: 0;
+  color: var(--c-text-3);
+  font-size: 0.875rem;
+}
+
+.forja__sessions {
+  display: grid;
+  gap: 0.4rem;
+}
+
+.forja__session,
+.forja__computer {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  padding: 0.75rem 0.9rem;
+  border: 1px solid var(--c-border);
+  border-radius: 0.8rem;
+  background: var(--c-surface);
+  color: inherit;
+  font: inherit;
+  text-align: left;
+}
+
+.forja__session {
+  cursor: pointer;
+}
+
+.forja__session:hover {
+  border-color: var(--c-border-2);
+}
+
+.forja__session-glyph,
+.forja__computer-glyph {
+  flex: none;
+  width: 1.15rem;
+  height: 1.15rem;
+  color: var(--c-text-3);
+}
+
+.forja__session-go {
+  flex: none;
+  width: 1rem;
+  height: 1rem;
+  color: var(--c-text-3);
+}
+
+.forja__session-text,
+.forja__computer-text {
+  display: grid;
+  flex: 1;
+  min-width: 0;
+  gap: 0.15rem;
+}
+
+.forja__session-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.9375rem;
+}
+
+.forja__session-when,
+.forja__computer-text span {
+  color: var(--c-text-3);
+  font-size: 0.8125rem;
+  line-height: 1.4;
+}
+
+.forja__computer-text strong {
+  font-size: 0.9375rem;
+  font-weight: 500;
+}
+
+.forja__link {
+  flex: none;
+  border: 0;
+  padding: 0.25rem 0;
+  background: transparent;
+  color: #ffb066;
+  font: inherit;
+  font-size: 0.875rem;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.forja__price {
+  margin: 0;
+  color: var(--c-text-2);
+  font-size: 0.8125rem;
   text-align: center;
 }
 

@@ -8,9 +8,10 @@
 // nada disto.
 
 import { h, icon, loadStyle } from "./dom.js";
+import { pixelWord } from "./pixel.js";
 
 const TITLES = {
-  forja: "Forja",
+  forja: "KZ Code",
   artefatos: "Artefatos",
   biblioteca: "Biblioteca",
 };
@@ -21,6 +22,7 @@ export function createScreens({
   onOpenConversation,
   onStartForja,
   onOpenPlans,
+  onOpenSettings,
 }) {
   const current = { name: "", view: null };
   const cache = new Map();
@@ -37,7 +39,9 @@ export function createScreens({
           { type: "button", "aria-label": "Abrir menu", onclick: () => onMenu?.() },
           icon("menu"),
         ),
-        h("h2.sc__title", { text: TITLES[name] || name }),
+        name === "forja"
+          ? h("h2.sc__title", { "aria-label": "KZ Code", tabindex: "-1" }, pixelWord("KZ CODE", { label: "KZ Code", blink: 2 }))
+          : h("h2.sc__title", { text: TITLES[name] || name }),
         action || h("span.sc__slot", { "aria-hidden": "true" }),
       ),
       search,
@@ -56,10 +60,17 @@ export function createScreens({
     }
     if (name === "forja") {
       const { createForja } = await import("./forja.js");
-      const forja = createForja({ onStart: onStartForja, onOpenPlans });
+      const forja = createForja({
+        onStart: onStartForja,
+        onOpenPlans,
+        onOpenConversation: (id) => onOpenConversation?.(id, { code: true }),
+        onOpenSettings,
+      });
       forja.root.hidden = false;
       forja.show();
-      return shell(name, { body: forja.root });
+      // `open()` clica em `.sc__refresh` ao voltar para uma tela guardada.
+      const refresh = h("button.sc__refresh", { type: "button", hidden: true, tabindex: "-1", "aria-hidden": "true", onclick: () => forja.refresh() });
+      return shell(name, { body: [forja.root, refresh] });
     }
     if (name === "artefatos") {
       const { createArtifacts } = await import("./artifacts-screen.js");

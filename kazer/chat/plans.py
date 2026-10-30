@@ -151,7 +151,7 @@ PLANS: tuple[Plan, ...] = (
             "Tudo do Pro",
             "25 vezes o uso do plano gratuito",
             "Pensamento profundo sem contar o dobro",
-            "Sessões longas de Forja sem interrupção",
+            "Sessões longas de KZ Code sem interrupção",
             "Todos os conectores do catálogo",
         ],
         extras=["Novidades antes de todo mundo", "Suporte direto com o time"],

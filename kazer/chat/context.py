@@ -44,7 +44,7 @@ _CORE = "\n".join(
 # alimenta a Biblioteca com artefatos de verdade em vez de trechos soltos.
 _FORJA = "\n".join(
     (
-        "Esta conversa está no modo Forja: a pessoa está programando com você.",
+        "Esta conversa está no modo KZ Code: a pessoa está programando com você.",
         "Entregue arquivos completos e prontos para rodar, não trechos soltos. Cada arquivo vai"
         " num bloco cercado com a linguagem e o nome do arquivo na própria cerca, assim:"
         " ```python app/main.py",
