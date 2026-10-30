@@ -84,6 +84,11 @@ const UPLOAD_ERRORS = {
   payload_too_large: "Arquivo grande demais.",
 };
 
+async function offerPlans(data) {
+  const { limitReached } = await import("./plans.js");
+  limitReached(data, { opener: S.ui.prompt });
+}
+
 function sendError(data) {
   if (data.error === "usage_limit") {
     return data.reset_at
@@ -934,6 +939,7 @@ function failSend(data) {
   updateSendState();
   if (data.error === "unauthenticated") return;
   showAlert(sendError(data));
+  if (data.error === "usage_limit") offerPlans(data);
   if (data.error === "not_found") {
     newConversation({ push: true, focus: false });
   }
@@ -999,6 +1005,7 @@ async function retry(model) {
       data = {};
     }
     toast(sendError(data));
+    if (data.error === "usage_limit") offerPlans(data);
     return;
   }
   Object.assign(model, { status: "streaming", content: "", thinking: "", error: null, stop: null });

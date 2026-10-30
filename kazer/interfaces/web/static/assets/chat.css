@@ -1615,10 +1615,12 @@ html.in-chat .noscript {
 
 /* ---------- Folhas, diálogos e avisos ---------- */
 
+/* Acima do painel de configurações e da tela de planos (70): uma folha é
+ * modal e precisa ficar na frente do que a abriu. Abaixo dos avisos (80). */
 .layer {
   position: fixed;
   inset: 0;
-  z-index: 60;
+  z-index: 75;
   display: flex;
   align-items: flex-end;
   justify-content: center;
@@ -3412,4 +3414,120 @@ html[data-motion="reduzido"] .offline-bar * {
   animation-duration: 0.01ms !important;
   animation-iteration-count: 1 !important;
   transition-duration: 0.01ms !important;
+}
+
+/* ---------- Planos dentro das configurações ---------- */
+
+.use-card {
+  display: grid;
+  gap: 0.75rem;
+  padding: 1rem;
+  border: 1px solid var(--c-border);
+  border-radius: 0.9rem;
+  background: var(--c-surface);
+}
+
+.use-card__head {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.use-card__name {
+  font-size: 1.05rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.use-card__tag {
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  background: rgb(74 222 128 / 0.16);
+  color: #4ade80;
+  font-size: 0.7rem;
+}
+
+.use-card__meter {
+  display: grid;
+  gap: 0.4rem;
+}
+
+.use-bar {
+  height: 0.375rem;
+  border-radius: 999px;
+  background: var(--c-border);
+  overflow: hidden;
+}
+
+.use-bar__fill {
+  --pct: 0%;
+  display: block;
+  height: 100%;
+  width: var(--pct);
+  border-radius: inherit;
+  background: linear-gradient(90deg, #5b8cff, #8ab0ff);
+  transition: width 0.8s var(--spring);
+}
+
+.use-card__text,
+.use-card__reset {
+  color: var(--c-text-2);
+  font-size: 0.8125rem;
+}
+
+.set-note {
+  margin: 0.5rem 0 0;
+  color: var(--c-text-3);
+  font-size: 0.8125rem;
+  line-height: 1.5;
+}
+
+.set-action {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  width: 100%;
+  padding: 0.85rem 1rem;
+  border: 1px solid var(--c-border);
+  border-radius: 0.8rem;
+  background: var(--c-surface);
+  color: var(--c-text);
+  font: inherit;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    border-color 0.2s ease,
+    background 0.2s ease,
+    transform 0.14s ease;
+}
+
+.set-action:hover {
+  border-color: var(--c-border-2);
+  background: var(--c-bg-2);
+}
+
+.set-action:active {
+  transform: scale(0.99);
+}
+
+.set-action svg {
+  width: 1.125rem;
+  height: 1.125rem;
+  flex: none;
+}
+
+/* A seta fica colada na direita; o texto ocupa o meio. */
+.set-action > span {
+  flex: 1;
+}
+
+.set-action--accent {
+  border-color: rgb(91 140 255 / 0.35);
+  background: linear-gradient(180deg, rgb(91 140 255 / 0.12), transparent);
+}
+
+.set-action--accent svg:first-of-type {
+  color: #8ab0ff;
 }

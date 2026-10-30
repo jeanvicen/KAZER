@@ -492,6 +492,16 @@ class ChatStore:
                     break
             raise LimitReached(reset_at)
 
+    def used_units(self, user_id: str, since: int) -> int:
+        """Unidades gastas pela conta desde `since` (base do painel de uso)."""
+        with self._transaction() as conn:
+            used = conn.execute(
+                "SELECT COALESCE(SUM(units), 0) FROM usage_events"
+                " WHERE user_id = ? AND created_at > ?",
+                (user_id, since),
+            ).fetchone()[0]
+        return int(used)
+
     def _find_duplicate(
         self, conn: sqlite3.Connection, user_id: str, client_id: str
     ) -> Exchange | None:

@@ -27,7 +27,7 @@ from kazer.brain.model_provider import (
     ProviderError,
     Turn,
 )
-from kazer.chat import context
+from kazer.chat import context, plans
 from kazer.chat.generation import GenerationHub, LiveGeneration
 from kazer.chat.identity import current_access_token
 from kazer.chat.protocols import AttachmentStorage, ChatStorage
@@ -98,11 +98,14 @@ PREFERENCE_DEFAULTS: dict[str, Any] = {
     "motion": "sistema",
     "text_size": "m",
     "ambient": True,
+    # Plano que a pessoa quis enquanto a cobrança não abre (não dá acesso a nada).
+    "wants_plan": "",
 }
 _CHOICES = {
     "style": {"direto", "equilibrado", "detalhado"},
     "motion": {"sistema", "reduzido", "completo"},
     "text_size": {"p", "m", "g"},
+    "wants_plan": {"", "free", "pro", "ultra"},
 }
 _TEXT_LIMITS = {"nickname": 40, "instructions": 1500}
 _BOOLS = {"memory_enabled", "send_on_enter", "ambient"}
@@ -269,13 +272,72 @@ class ChatService:
     def usage_state(self, user_id: str) -> dict[str, Any]:
         """Plano, franquia e horário real de renovação, quando o banco informa."""
         reader = getattr(self._store, "usage_state", None)
-        if reader is None:
-            return {"plan": "free"}
-        try:
-            return reader(user_id) or {"plan": "free"}
-        except Exception:  # noqa: BLE001 - uso é informativo; não derruba o chat
-            logger.warning("chat.usage_state_failed")
-            return {"plan": "free"}
+        raw: dict[str, Any] = {}
+        if reader is not None:
+            try:
+                raw = reader(user_id) or {}
+            except Exception:  # noqa: BLE001 - uso é informativo; não derruba o chat
+                logger.warning("chat.usage_state_failed")
+        plan = plans.plan_of(raw.get("plan"))
+        if not raw:
+            # Sem banco com planos (desenvolvimento local): o limite real é a
+            # janela configurada no servidor, então é ela que a tela mostra.
+            window = self._windows[0]
+            counter = getattr(self._store, "used_units", None)
+            used = 0
+            if counter is not None:
+                try:
+                    used = counter(user_id, self._now() - window.seconds)
+                except Exception:  # noqa: BLE001 - uso é informativo
+                    logger.warning("chat.usage_state_failed")
+            return {
+                "plan": plan.id,
+                "plan_name": plan.name,
+                "allowance": window.units,
+                "consumed": min(used, window.units),
+                "window_hours": max(round(window.seconds / 3600), 1),
+                "features": plan.public()["features"],
+            }
+        state: dict[str, Any] = {
+            "plan": plan.id,
+            "plan_name": plan.name,
+            "allowance": (
+                int(raw["allowance"]) if raw.get("allowance") is not None else plan.allowance
+            ),
+            "consumed": int(raw.get("consumed") or 0),
+            "window_hours": plans.WINDOW_HOURS,
+            "features": plan.public()["features"],
+        }
+        # Horários só aparecem quando o banco realmente sabe deles.
+        for key in ("reset_at", "renews_at"):
+            if raw.get(key):
+                state[key] = raw[key]
+        return state
+
+    def _offer(self, user_id: str) -> dict[str, Any]:
+        """Dados do plano para a tela de limite oferecer o upgrade certo."""
+        plan = plans.plan_of(self.usage_state(user_id).get("plan"))
+        nxt = plans.BY_ID.get("pro") if plan.id == "free" else plans.BY_ID.get("ultra")
+        offer: dict[str, Any] = {"plan": plan.id, "plan_name": plan.name}
+        if nxt is not None and nxt.id != plan.id:
+            offer["upgrade"] = {
+                "id": nxt.id,
+                "name": nxt.name,
+                "price": nxt.monthly_price,
+                # Quantas vezes mais uso a pessoa teria no plano de cima,
+                # já com a vírgula decimal do português.
+                "times": f"{nxt.allowance / plan.allowance:.1f}".replace(".", ","),
+            }
+        return offer
+
+    def plans(self, user_id: str) -> dict[str, Any]:
+        """Catálogo de planos mais o estado de uso de quem está perguntando."""
+        return {
+            "plans": plans.catalog(),
+            "usage": self.usage_state(user_id),
+            # Sem cobrança ligada, a interface oferece sem fingir que vende.
+            "checkout": False,
+        }
 
     # ---------- Preferências ----------
 
@@ -579,7 +641,9 @@ class ChatService:
         except LimitReached as exc:
             self._hub.release()
             wait = max(exc.reset_at - self._now(), 1)
-            raise ChatError("usage_limit", 429, retry_after=wait, reset_at=exc.reset_at) from None
+            raise ChatError(
+                "usage_limit", 429, retry_after=wait, reset_at=exc.reset_at, **self._offer(user_id)
+            ) from None
         except ConversationMissing:
             self._hub.release()
             raise ChatError("not_found", 404) from None
@@ -647,7 +711,9 @@ class ChatService:
         except LimitReached as exc:
             self._hub.release()
             wait = max(exc.reset_at - self._now(), 1)
-            raise ChatError("usage_limit", 429, retry_after=wait, reset_at=exc.reset_at) from None
+            raise ChatError(
+                "usage_limit", 429, retry_after=wait, reset_at=exc.reset_at, **self._offer(user_id)
+            ) from None
         except BaseException:
             self._hub.release()
             raise

@@ -69,6 +69,9 @@ const PATHS = {
   mic: ["M12 15.5a3.5 3.5 0 0 0 3.5-3.5V6.5a3.5 3.5 0 1 0-7 0V12a3.5 3.5 0 0 0 3.5 3.5z", "M5.5 11.5a6.5 6.5 0 0 0 13 0", "M12 18.5v3"],
   lock: ["M8 10.5V8a4 4 0 0 1 8 0v2.5", "M6 10.5h12v9.5H6z", "M12 14.5v2"],
   sparkle: ["M12 3.5l1.8 5.2 5.2 1.8-5.2 1.8L12 17.5l-1.8-5.2-5.2-1.8 5.2-1.8z", "M18.5 16v4", "M16.5 18h4"],
+  bolt: ["M13 3.5L6 13.5h5l-1 7 7-10h-5z"],
+  crown: ["M4 17.5h16", "M4.5 7.5l3.5 4 4-6 4 6 3.5-4-1.5 7h-12z"],
+  book: ["M5 5a1.5 1.5 0 0 1 1.5-1.5H18v17H6.5A1.5 1.5 0 0 1 5 19z", "M5 16.5h13"],
 };
 
 export function icon(name, cls = "") {
@@ -112,6 +115,26 @@ export function hydrateIcons(root) {
   for (const slot of root.querySelectorAll("[data-mark]")) {
     slot.replaceWith(mark(slot.className));
   }
+}
+
+// Folha de estilo carregada só quando a tela que precisa dela abre: o celular
+// não baixa o CSS de telas que ninguém usou ainda.
+const styles = new Map();
+
+export function loadStyle(href) {
+  const cached = styles.get(href);
+  if (cached) return cached;
+  const promise = new Promise((resolve) => {
+    const link = document.createElement("link");
+    link.rel = "stylesheet";
+    link.href = href;
+    // Um erro aqui não pode travar a tela: ela abre sem o estilo extra.
+    link.onload = () => resolve(true);
+    link.onerror = () => resolve(false);
+    document.head.append(link);
+  });
+  styles.set(href, promise);
+  return promise;
 }
 
 export function byId(root, id) {

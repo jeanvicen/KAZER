@@ -1,0 +1,783 @@
+/* Tela de planos do KAZER.
+ *
+ * Carregada só quando a pessoa abre os planos (plans.js injeta o <link>), para
+ * o celular não baixar isto no caminho da conversa.
+ *
+ * As animações usam só `transform` e `opacity`, que o navegador compõe na GPU:
+ * é o que deixa a entrada cinematográfica sem travar em aparelho modesto. Tudo
+ * some quando a pessoa pede menos movimento.
+ */
+
+.plans {
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+  display: grid;
+  place-items: center;
+}
+
+.plans__scrim {
+  position: absolute;
+  inset: 0;
+  background: rgb(0 0 0 / 0.72);
+  backdrop-filter: blur(14px);
+  opacity: 0;
+  transition: opacity 0.32s ease;
+}
+
+.plans.is-open .plans__scrim {
+  opacity: 1;
+}
+
+.plans__panel {
+  position: relative;
+  width: min(100%, 76rem);
+  max-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  background: var(--c-bg-2);
+  color: var(--c-text);
+  overflow: hidden;
+  opacity: 0;
+  transform: translateY(2rem) scale(0.98);
+  transition:
+    opacity 0.34s ease,
+    transform 0.34s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@media (min-width: 60rem) {
+  .plans__panel {
+    max-height: min(94dvh, 58rem);
+    border-radius: 1.5rem;
+    border: 1px solid var(--c-border);
+    box-shadow: 0 2.5rem 6rem rgb(0 0 0 / 0.6);
+  }
+}
+
+.plans.is-open .plans__panel {
+  opacity: 1;
+  transform: none;
+}
+
+.plans__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid var(--c-border);
+  flex: none;
+}
+
+.plans__title {
+  margin: 0;
+  /* Recebe foco só para o leitor de tela anunciar a tela: sem contorno. */
+  outline: none;
+  font-size: 1.05rem;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  color: var(--c-text-2);
+}
+
+.plans .plans__title:focus-visible {
+  outline: none;
+}
+
+.plans__title strong {
+  color: var(--c-text);
+  font-weight: 600;
+}
+
+.plans__body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 0 1.25rem 2.5rem;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* ---------- Abertura: a Fenda e a luz ---------- */
+
+.plans__stage {
+  position: relative;
+  display: grid;
+  place-items: center;
+  height: 10rem;
+  margin-inline: -1.25rem;
+  overflow: hidden;
+}
+
+.plans__glow {
+  position: absolute;
+  width: 26rem;
+  height: 26rem;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgb(91 140 255 / 0.26), transparent 62%);
+  filter: blur(16px);
+  animation: plans-breathe 7s ease-in-out infinite;
+}
+
+.plans__ring {
+  position: absolute;
+  width: 9rem;
+  height: 9rem;
+  border-radius: 50%;
+  border: 1px solid rgb(255 255 255 / 0.12);
+  animation: plans-ring 4.5s ease-out infinite;
+}
+
+.plans__ring--slow {
+  animation-duration: 6.5s;
+  animation-delay: 1.4s;
+}
+
+.plans__mark {
+  position: relative;
+  width: 3.25rem;
+  height: 3.25rem;
+  animation: plans-mark-in 1s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.plans__mark .mark__l,
+.plans__mark .mark__r {
+  fill: currentColor;
+}
+
+.plans__mark .mark__l {
+  animation: plans-blade-l 5s ease-in-out infinite;
+}
+
+.plans__mark .mark__r {
+  animation: plans-blade-r 5s ease-in-out infinite;
+}
+
+@keyframes plans-breathe {
+  0%,
+  100% {
+    opacity: 0.55;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.08);
+  }
+}
+
+@keyframes plans-ring {
+  0% {
+    opacity: 0;
+    transform: scale(0.55);
+  }
+  25% {
+    opacity: 0.5;
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.9);
+  }
+}
+
+@keyframes plans-mark-in {
+  from {
+    opacity: 0;
+    transform: scale(0.6) rotate(-8deg);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes plans-blade-l {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  50% {
+    transform: translateX(-0.12rem);
+  }
+}
+
+@keyframes plans-blade-r {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  50% {
+    transform: translateX(0.12rem);
+  }
+}
+
+.plans__lede {
+  margin: 0 auto 1.5rem;
+  max-width: 34rem;
+  text-align: center;
+  color: var(--c-text-2);
+  font-size: 0.95rem;
+  line-height: 1.5;
+  animation: plans-rise 0.5s 0.1s ease-out both;
+}
+
+/* ---------- Mensal / anual ---------- */
+
+.plans__cycle {
+  display: flex;
+  gap: 0.25rem;
+  width: fit-content;
+  margin: 0 auto 1.75rem;
+  padding: 0.25rem;
+  border-radius: 999px;
+  background: rgb(255 255 255 / 0.05);
+  animation: plans-rise 0.5s 0.16s ease-out both;
+}
+
+.plans__cycle-option {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.5rem 1rem;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--c-text-2);
+  font: inherit;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition:
+    background 0.22s ease,
+    color 0.22s ease;
+}
+
+.plans__cycle-option[aria-checked="true"] {
+  background: rgb(255 255 255 / 0.1);
+  color: var(--c-text);
+}
+
+.plans__save {
+  padding: 0.1rem 0.45rem;
+  border-radius: 999px;
+  background: rgb(91 140 255 / 0.18);
+  color: #9dbcff;
+  font-size: 0.7rem;
+  letter-spacing: 0.01em;
+}
+
+/* ---------- Os três cartões ---------- */
+
+.plans__grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: 1fr;
+  max-width: 68rem;
+  margin-inline: auto;
+}
+
+@media (min-width: 56rem) {
+  .plans__grid {
+    grid-template-columns: repeat(3, 1fr);
+    align-items: start;
+  }
+}
+
+.plan {
+  --accent: #8a8f98;
+  --tilt-x: 0deg;
+  --tilt-y: 0deg;
+  --shine-x: 50%;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  padding: 1.4rem;
+  border-radius: 1.1rem;
+  border: 1px solid var(--c-border);
+  background: linear-gradient(180deg, rgb(255 255 255 / 0.045), rgb(255 255 255 / 0.015));
+  overflow: hidden;
+  transform-style: preserve-3d;
+  animation: plans-card-in 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation-delay: calc(0.22s + var(--i, 0) * 0.09s);
+  transition:
+    transform 0.3s ease,
+    border-color 0.3s ease,
+    box-shadow 0.3s ease;
+}
+
+@media (pointer: fine) {
+  .plan:hover {
+    transform: perspective(900px) rotateX(var(--tilt-x)) rotateY(var(--tilt-y)) translateY(-0.25rem);
+    border-color: color-mix(in srgb, var(--accent) 45%, transparent);
+    box-shadow: 0 1.5rem 3rem rgb(0 0 0 / 0.45);
+  }
+}
+
+.plan.is-featured {
+  border-color: color-mix(in srgb, var(--accent) 40%, transparent);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--accent) 12%, transparent), rgb(255 255 255 / 0.02));
+}
+
+.plan.is-wanted {
+  animation:
+    plans-card-in 0.6s cubic-bezier(0.22, 1, 0.36, 1) both,
+    plans-wanted 1.6s 0.7s ease-out 2;
+}
+
+/* A luz que varre o cartão em destaque. */
+.plan__sheen {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(105deg, transparent 38%, rgb(255 255 255 / 0.1) 50%, transparent 62%);
+  transform: translateX(-120%);
+}
+
+.plan.is-featured .plan__sheen {
+  animation: plans-sheen 5.5s 1.2s ease-in-out infinite;
+}
+
+.plan__badge {
+  position: absolute;
+  top: 1.1rem;
+  right: 1.1rem;
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--accent) 24%, transparent);
+  color: color-mix(in srgb, var(--accent) 80%, white);
+  font-size: 0.68rem;
+  letter-spacing: 0.02em;
+}
+
+.plan__head {
+  display: grid;
+  gap: 0.3rem;
+}
+
+.plan__icon {
+  display: grid;
+  place-items: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  margin-bottom: 0.35rem;
+  border-radius: 0.7rem;
+  background: color-mix(in srgb, var(--accent) 18%, transparent);
+  color: color-mix(in srgb, var(--accent) 85%, white);
+}
+
+.plan__icon svg {
+  width: 1.15rem;
+  height: 1.15rem;
+}
+
+.plan__name {
+  margin: 0;
+  font-size: 1.15rem;
+  font-weight: 600;
+  letter-spacing: -0.015em;
+}
+
+.plan__tagline {
+  margin: 0;
+  color: var(--c-text-2);
+  font-size: 0.85rem;
+  line-height: 1.45;
+}
+
+.plan__pricing {
+  display: flex;
+  align-items: baseline;
+  gap: 0.35rem;
+  margin: 0.35rem 0 0;
+}
+
+.plan__price {
+  font-size: 1.85rem;
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
+}
+
+.plan__price.is-swapping {
+  animation: plans-price 0.36s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.plan__per {
+  color: var(--c-text-2);
+  font-size: 0.85rem;
+}
+
+.plan__hint {
+  display: block;
+  min-height: 1rem;
+  color: var(--c-text-2);
+  font-size: 0.75rem;
+}
+
+.plan__meter {
+  display: flex;
+  align-items: baseline;
+  gap: 0.4rem;
+  margin: 0;
+  padding: 0.6rem 0.75rem;
+  border-radius: 0.7rem;
+  background: rgb(255 255 255 / 0.04);
+}
+
+.plan__units {
+  font-size: 1.15rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: color-mix(in srgb, var(--accent) 80%, white);
+}
+
+.plan__meter-label {
+  color: var(--c-text-2);
+  font-size: 0.78rem;
+}
+
+.plan__usage {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.plan__bar {
+  height: 0.375rem;
+  border-radius: 999px;
+  background: var(--c-border);
+  overflow: hidden;
+}
+
+.plan__bar-fill {
+  --pct: 0%;
+  display: block;
+  height: 100%;
+  width: var(--pct);
+  border-radius: inherit;
+  background: linear-gradient(90deg, color-mix(in srgb, var(--accent) 70%, white), var(--accent));
+  transition: width 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.plan__usage-text {
+  color: var(--c-text-2);
+  font-size: 0.75rem;
+}
+
+.plan__list,
+.plan__extras {
+  display: grid;
+  gap: 0.5rem;
+  margin: 0.25rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.plan__extras {
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--c-border);
+}
+
+.plan__item,
+.plan__extras li {
+  display: grid;
+  grid-template-columns: 1rem 1fr;
+  gap: 0.5rem;
+  align-items: start;
+  font-size: 0.85rem;
+  line-height: 1.4;
+}
+
+.plan__item {
+  animation: plans-item-in 0.4s ease-out both;
+  animation-delay: calc(0.5s + var(--i, 0) * 0.05s);
+}
+
+.plan__extras li {
+  color: var(--c-text-2);
+}
+
+.plan__check {
+  width: 1rem;
+  height: 1rem;
+  margin-top: 0.15rem;
+  color: color-mix(in srgb, var(--accent) 85%, white);
+}
+
+.plan__plus {
+  width: 0.9rem;
+  height: 0.9rem;
+  margin-top: 0.2rem;
+  opacity: 0.6;
+}
+
+.plan__cta,
+.plan__current {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  margin-top: auto;
+  padding: 0.75rem 1rem;
+  border: 0;
+  border-radius: 0.75rem;
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.plan__cta {
+  background: var(--c-border);
+  color: var(--c-text);
+  cursor: pointer;
+  transition:
+    background 0.22s ease,
+    transform 0.16s ease;
+}
+
+.plan.is-featured .plan__cta {
+  background: color-mix(in srgb, var(--accent) 85%, black);
+  color: #fff;
+}
+
+.plan__cta:hover {
+  background: color-mix(in srgb, var(--accent) 65%, transparent);
+}
+
+.plan__cta:active {
+  transform: scale(0.985);
+}
+
+.plan__cta svg {
+  width: 1rem;
+  height: 1rem;
+}
+
+.plan__current {
+  background: rgb(255 255 255 / 0.04);
+  color: var(--c-text-2);
+}
+
+.plan__current svg {
+  width: 1rem;
+  height: 1rem;
+  color: #4ade80;
+}
+
+.plans__foot {
+  max-width: 34rem;
+  margin: 1.75rem auto 0;
+  text-align: center;
+}
+
+.plans__note {
+  margin: 0;
+  color: var(--c-text-2);
+  font-size: 0.8rem;
+  line-height: 1.5;
+}
+
+@keyframes plans-rise {
+  from {
+    opacity: 0;
+    transform: translateY(0.75rem);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes plans-card-in {
+  from {
+    opacity: 0;
+    transform: translateY(1.5rem) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes plans-item-in {
+  from {
+    opacity: 0;
+    transform: translateX(-0.4rem);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes plans-sheen {
+  0%,
+  72% {
+    transform: translateX(-120%);
+  }
+  100% {
+    transform: translateX(120%);
+  }
+}
+
+@keyframes plans-price {
+  from {
+    opacity: 0;
+    transform: translateY(0.4rem);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes plans-wanted {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 transparent;
+  }
+  40% {
+    box-shadow: 0 0 0 0.3rem color-mix(in srgb, var(--accent) 30%, transparent);
+  }
+}
+
+/* ---------- Limite acabou ---------- */
+
+.limit {
+  display: grid;
+  gap: 0.6rem;
+  text-align: center;
+}
+
+.limit__art {
+  position: relative;
+  display: grid;
+  place-items: center;
+  height: 5rem;
+}
+
+.limit__pulse {
+  position: absolute;
+  width: 4.5rem;
+  height: 4.5rem;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgb(248 113 113 / 0.26), transparent 65%);
+  animation: plans-breathe 3.2s ease-in-out infinite;
+}
+
+.limit__mark {
+  position: relative;
+  width: 2.25rem;
+  height: 2.25rem;
+  color: #f87171;
+}
+
+.limit__mark .mark__l,
+.limit__mark .mark__r {
+  fill: currentColor;
+}
+
+.limit__lead {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 500;
+}
+
+.limit__reset {
+  margin: 0;
+  color: var(--c-text-2);
+  font-size: 0.875rem;
+}
+
+.limit__offer {
+  display: grid;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+  padding: 1rem;
+  border-radius: 0.9rem;
+  border: 1px solid rgb(91 140 255 / 0.3);
+  background: linear-gradient(180deg, rgb(91 140 255 / 0.12), transparent);
+  animation: plans-rise 0.45s 0.12s ease-out both;
+}
+
+.limit__offer-title {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.limit__offer-text {
+  margin: 0;
+  color: var(--c-text-2);
+  font-size: 0.825rem;
+  line-height: 1.45;
+}
+
+.limit__cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  margin-top: 0.25rem;
+  padding: 0.7rem 1rem;
+  border: 0;
+  border-radius: 0.7rem;
+  background: #5b8cff;
+  color: #fff;
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: transform 0.16s ease, background 0.2s ease;
+}
+
+.limit__cta:hover {
+  background: #6f9bff;
+}
+
+.limit__cta:active {
+  transform: scale(0.985);
+}
+
+.limit__cta svg {
+  width: 1rem;
+  height: 1rem;
+}
+
+.offer {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.offer__lead {
+  margin: 0;
+  font-weight: 500;
+}
+
+.offer__text {
+  margin: 0;
+  color: var(--c-text-2);
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+/* ---------- Menos movimento ----------
+ * Mesma convenção do chat.css: a preferência do sistema vale, a menos que a
+ * pessoa tenha pedido animação completa nas configurações. O `.limit` mora
+ * dentro de `.layer`, que o chat.css já cobre.
+ */
+
+@media (prefers-reduced-motion: reduce) {
+  html:not([data-motion="completo"]) .plans *,
+  html:not([data-motion="completo"]) .plans *::before,
+  html:not([data-motion="completo"]) .plans *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+html[data-motion="reduzido"] .plans *,
+html[data-motion="reduzido"] .plans *::before,
+html[data-motion="reduzido"] .plans *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+}

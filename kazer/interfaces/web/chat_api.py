@@ -248,8 +248,14 @@ def chat_routes(ctx: WebContext, chat: ChatService | None) -> list[Route]:
                     "verified_at": user.email_verified_at,
                 },
                 "model": chat_service.config(),
+                "usage": await run_in_threadpool(chat_service.usage_state, user.id),
             }
         )
+
+    @endpoint
+    async def plans(request: Request) -> Response:
+        user, _ = await account(request)
+        return JSONResponse(await run_in_threadpool(service().plans, user.id))
 
     @endpoint
     async def memories(request: Request) -> Response:
@@ -342,6 +348,7 @@ def chat_routes(ctx: WebContext, chat: ChatService | None) -> list[Route]:
         Route("/api/attachments", upload, methods=["POST"]),
         Route("/api/attachments/{attachment_id}", attachment, methods=["GET", "DELETE"]),
         Route("/api/settings", settings, methods=["GET", "POST"]),
+        Route("/api/plans", plans, methods=["GET"]),
         Route("/api/memories", memories, methods=["POST"]),
         Route("/api/memories/clear", clear_memories, methods=["POST"]),
         Route("/api/memories/{memory_id}", memory, methods=["DELETE"]),

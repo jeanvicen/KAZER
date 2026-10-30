@@ -2,12 +2,13 @@
 // interface) e salva sozinho. No celular é uma pilha de telas; no computador,
 // navegação à esquerda e conteúdo à direita.
 
-import { announce, finePointer, formatDate, h, icon, mark, reducedMotion, trapFocus } from "./dom.js";
+import { announce, finePointer, formatDate, formatReset, h, icon, mark, reducedMotion, trapFocus } from "./dom.js";
 import { request } from "./net.js";
 import { confirmDialog, toast } from "./sheets.js";
 
 const SECTIONS = [
   ["conta", "Conta", "user"],
+  ["planos", "Planos", "bolt"],
   ["personalizacao", "Personalização", "sparkle"],
   ["memoria", "Memória", "memory"],
   ["interface", "Interface", "sliders"],
@@ -33,6 +34,9 @@ const PASSWORD_ERRORS = {
   password_change_failed: "O servidor de contas não aceitou a troca agora. Tente de novo em instantes.",
 };
 
+// Milhar com ponto, como se escreve em português.
+const num = (value) => Number(value || 0).toLocaleString("pt-BR");
+
 let open = null;
 
 export function openSettingsPanel(options) {
@@ -46,6 +50,7 @@ class SettingsPanel {
     this.account = account || {};
     this.prefs = { ...prefs };
     this.model = model || { available: false, features: {} };
+    this.usage = {};
     this.memories = [...memories];
     this.cb = { onPreferences, onMemories, onHistoryCleared, onSignOut, onAccountDeleted };
     this.saveTimer = 0;
@@ -143,6 +148,7 @@ class SettingsPanel {
     this.memories = result.data.memories;
     this.account = { ...this.account, ...result.data.account };
     this.model = result.data.model;
+    this.usage = result.data.usage || this.usage;
     this.profile.querySelector(".settings__since").textContent = this.account.created_at ? `Desde ${formatDate(this.account.created_at)}` : "";
     if (this.current) this.show(this.current, { focus: false, animate: false });
   }
@@ -315,6 +321,77 @@ class SettingsPanel {
   }
 
   // ---------- Seções ----------
+
+  // Resumo do plano aqui dentro; a tela cheia, com os três planos e as
+  // animações, abre sob demanda (plans.js e plans.css só baixam no clique).
+  section_planos() {
+    const usage = this.usage || {};
+    const allowance = usage.allowance || 0;
+    const used = Math.min(usage.consumed || 0, allowance);
+    const left = Math.max(allowance - used, 0);
+    const pct = allowance ? Math.round((used / allowance) * 100) : 0;
+
+    const fill = h("span.use-bar__fill");
+    window.requestAnimationFrame(() => fill.style.setProperty("--pct", `${pct}%`));
+
+    const open = h(
+      "button.set-action.set-action--accent",
+      {
+        type: "button",
+        onclick: async (event) => {
+          const { openPlans } = await import("./plans.js");
+          openPlans({ opener: event.currentTarget });
+        },
+      },
+      icon("bolt"),
+      h("span", { text: usage.plan === "free" ? "Ver os planos do KAZER" : "Ver todos os planos" }),
+      icon("chevron-right"),
+    );
+
+    return h(
+      "div",
+      {},
+      this.group(
+        "Seu plano",
+        h(
+          "div.use-card",
+          {},
+          h(
+            "div.use-card__head",
+            {},
+            h("span.use-card__name", { text: usage.plan_name || "KAZER" }),
+            usage.plan && usage.plan !== "free" ? h("span.use-card__tag", { text: "Ativo" }) : null,
+          ),
+          allowance
+            ? h(
+                "div.use-card__meter",
+                {},
+                h(
+                  "div.use-bar",
+                  {
+                    role: "progressbar",
+                    "aria-valuemin": "0",
+                    "aria-valuemax": String(allowance),
+                    "aria-valuenow": String(used),
+                    "aria-label": "Uso da janela atual",
+                  },
+                  fill,
+                ),
+                h("span.use-card__text", {
+                  text: `${num(left)} de ${num(allowance)} unidades restantes${
+                    usage.window_hours ? ` nesta janela de ${usage.window_hours} h` : ""
+                  }.`,
+                }),
+                usage.reset_at
+                  ? h("span.use-card__reset", { text: `Renova ${formatReset(usage.reset_at)}.` })
+                  : null,
+              )
+            : h("p.set-note", { text: "O uso desta conta aparece aqui assim que o servidor informar." }),
+        ),
+      ),
+      this.group("Mais uso", open, h("p.set-note", { text: "A assinatura ainda não abriu: dá para ver os planos e deixar seu interesse, sem cobrança." })),
+    );
+  }
 
   section_conta() {
     const verified = this.account.verified_at;
