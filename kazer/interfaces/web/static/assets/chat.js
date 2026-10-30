@@ -1694,16 +1694,8 @@ function openPlusSheet() {
             S.ui.plus.classList.toggle("is-active", on);
           },
         }),
-        h(
-          "button.tool-row.tool-row--link",
-          {
-            type: "button",
-            onclick: () => openConnectorsSheet(),
-          },
-          h("span.tool-row__icon", {}, icon("plug")),
-          h("span.tool-row__text", {}, h("span.tool-row__title", { text: "Conectores" }), h("span.tool-row__desc", { text: "Nenhum conector conectado." })),
-          icon("chevron-right", "tool-row__go"),
-        ),
+        projectRow(),
+        connectorRow(),
         toggleRow({
           id: "tool-memory",
           icon: "memory",
@@ -1721,21 +1713,183 @@ function openPlusSheet() {
   });
 }
 
+// Linha de projeto: põe esta conversa num projeto, sem sair da conversa.
+// Sem conversa gravada ainda não há o que mover, e a linha diz isso.
+function projectRow() {
+  const saved = Boolean(S.conversation?.id);
+  const current = S.conversation?.project_name || "";
+  const row = h(
+    `button.tool-row.tool-row--link${saved ? "" : ".is-disabled"}`,
+    { type: "button", disabled: !saved, onclick: () => openProjectSheet() },
+    h("span.tool-row__icon", {}, icon("project")),
+    h(
+      "span.tool-row__text",
+      {},
+      h("span.tool-row__title", { text: "Adicionar ao projeto" }),
+      h("span.tool-row__desc", {
+        text: saved ? current || "Esta conversa não está em nenhum projeto." : "Comece a conversa para escolher um projeto.",
+      }),
+    ),
+    icon("chevron-right", "tool-row__go"),
+  );
+  if (saved && !current && S.conversation?.project_id) nameProject(row, S.conversation.project_id);
+  return row;
+}
+
+// O nome do projeto não vem junto da conversa: busca uma vez e guarda.
+async function nameProject(row, projectId) {
+  const projects = await loadProjects();
+  const found = projects.find((item) => item.id === projectId);
+  if (!found || !row.isConnected) return;
+  if (S.conversation) S.conversation.project_name = found.name;
+  const desc = row.querySelector(".tool-row__desc");
+  if (desc) desc.textContent = found.name;
+}
+
+async function loadProjects() {
+  const result = await request("/api/projects");
+  return result.ok && Array.isArray(result.data?.items) ? result.data.items : [];
+}
+
+function openProjectSheet() {
+  openSheet({
+    title: "Adicionar ao projeto",
+    opener: S.ui.plus,
+    back: () => openPlusSheet(),
+    content: (handle) => {
+      const list = h("div.tools", {}, h("p.connectors__text", { text: "Carregando seus projetos…" }));
+      const pick = async (projectId, name) => {
+        handle.close({ restore: false });
+        const result = await request(`/api/conversations/${S.conversation.id}`, {
+          method: "POST",
+          body: { project_id: projectId },
+        });
+        if (!result.ok) {
+          toast("Não deu para mudar o projeto agora.");
+          return;
+        }
+        S.conversation.project_id = projectId;
+        S.conversation.project_name = name;
+        toast(projectId ? `Na pasta ${name}.` : "Fora de projetos.");
+      };
+      loadProjects().then((projects) => {
+        if (!list.isConnected) return;
+        const rows = projects.map((item) =>
+          h(
+            `button.tool-row.tool-row--link${item.id === S.conversation?.project_id ? ".is-on" : ""}`,
+            { type: "button", onclick: () => pick(item.id, item.name) },
+            h("span.tool-row__icon", {}, icon("project")),
+            h(
+              "span.tool-row__text",
+              {},
+              h("span.tool-row__title", { text: item.name }),
+              h("span.tool-row__desc", { text: (item.goal || "").split("\n")[0] || "Sem objetivo escrito." }),
+            ),
+            item.id === S.conversation?.project_id ? icon("check", "tool-row__go") : null,
+          ),
+        );
+        if (S.conversation?.project_id) {
+          rows.unshift(
+            h(
+              "button.tool-row.tool-row--link",
+              { type: "button", onclick: () => pick("", "") },
+              h("span.tool-row__icon", {}, icon("close")),
+              h("span.tool-row__text", {}, h("span.tool-row__title", { text: "Tirar do projeto" })),
+            ),
+          );
+        }
+        list.replaceChildren(
+          ...(rows.length
+            ? rows
+            : [
+                h("p.connectors__title", { text: "Nenhum projeto ainda." }),
+                h("p.connectors__text", { text: "Crie um em Projetos, na gaveta, e ele aparece aqui." }),
+              ]),
+        );
+      });
+      return list;
+    },
+  });
+}
+
+// Linha de conectores: mostra o estado real da conta, não um texto fixo.
+function connectorRow() {
+  const row = h(
+    "button.tool-row.tool-row--link",
+    { type: "button", onclick: () => openConnectorsSheet() },
+    h("span.tool-row__icon", {}, icon("plug")),
+    h(
+      "span.tool-row__text",
+      {},
+      h("span.tool-row__title", { text: "Conectores" }),
+      h("span.tool-row__desc", { text: "Conferindo…" }),
+    ),
+    icon("chevron-right", "tool-row__go"),
+  );
+  loadConnections().then((items) => {
+    if (!row.isConnected) return;
+    const on = items.filter((item) => item.enabled !== false).length;
+    const desc = row.querySelector(".tool-row__desc");
+    if (desc) {
+      desc.textContent = on
+        ? `${on} ligado${on > 1 ? "s" : ""}: as ferramentas entram nesta conversa.`
+        : "Nenhum conector ligado.";
+    }
+  });
+  return row;
+}
+
+async function loadConnections() {
+  const result = await request("/api/connections");
+  S.connections = result.ok && Array.isArray(result.data?.items) ? result.data.items : [];
+  return S.connections;
+}
+
 function openConnectorsSheet() {
   openSheet({
     title: "Conectores",
     opener: S.ui.plus,
     back: () => openPlusSheet(),
-    content: () =>
-      h(
-        "div.connectors",
-        {},
-        h("span.connectors__icon", {}, icon("plug")),
-        h("p.connectors__title", { text: "Nenhum conector conectado." }),
-        h("p.connectors__text", {
-          text: "Conectores ligam o KAZER a outros serviços com a sua autorização. Quando houver integrações disponíveis, elas aparecem aqui.",
-        }),
-      ),
+    content: () => {
+      const body = h("div.connectors", {}, h("p.connectors__text", { text: "Conferindo seus conectores…" }));
+      loadConnections().then((items) => {
+        if (!body.isConnected) return;
+        if (!items.length) {
+          body.replaceChildren(
+            h("span.connectors__icon", {}, icon("plug")),
+            h("p.connectors__title", { text: "Nenhum conector ligado." }),
+            h("p.connectors__text", {
+              text: "Conectores ligam o KAZER a outros serviços com a sua autorização. Ligue um em Configurações › Conectores e as ferramentas dele passam a valer nas conversas.",
+            }),
+          );
+          return;
+        }
+        body.replaceChildren(
+          h("div.tools", {},
+            items.map((item) => {
+              const count = Array.isArray(item.tools) ? item.tools.length : 0;
+              const ligado = item.enabled !== false;
+              return h(
+                "div.tool-row",
+                {},
+                h("span.tool-row__icon", {}, icon("plug")),
+                h(
+                  "span.tool-row__text",
+                  {},
+                  h("span.tool-row__title", { text: item.name || item.connector_id }),
+                  h("span.tool-row__desc", {
+                    text: `${count} ferramenta${count === 1 ? "" : "s"}${ligado ? "" : " · desligado"}`,
+                  }),
+                ),
+                ligado ? icon("check", "tool-row__go") : null,
+              );
+            }),
+          ),
+          h("p.connectors__text", { text: "Ligar, desligar e apagar fica em Configurações › Conectores." }),
+        );
+      });
+      return body;
+    },
   });
 }
 

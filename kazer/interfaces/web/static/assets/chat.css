@@ -4133,3 +4133,8 @@ html[data-motion="reduzido"] .offline-bar * {
     display: inline-flex;
   }
 }
+
+/* Linha já escolhida (o projeto desta conversa). */
+.tool-row.is-on .tool-row__title {
+  color: var(--c-text);
+}
