@@ -70,7 +70,6 @@ LIBRARY_PAGE = 30
 # Conectores por página do catálogo.
 CONNECTOR_PAGE = 60
 # Projetos e habilidades por conta, e tamanho de cada campo.
-MAX_PROJECTS = 60
 MAX_SKILLS = 40
 MAX_SKILL_NAME = 60
 MAX_SKILL_DESCRIPTION = 300
@@ -589,82 +588,6 @@ class ChatService:
             client.close()
 
     # ---------- Projetos ----------
-
-    def projects(self, user_id: str, *, archived: bool, query: str) -> dict[str, Any]:
-        """Projetos da conta, ativos ou arquivados."""
-        lister = getattr(self._store, "list_projects", None)
-        if lister is None:
-            return {"items": [], "max": MAX_PROJECTS}
-        items = lister(user_id, archived=archived, query=query[:80])
-        return {"items": [item.public() for item in items], "max": MAX_PROJECTS}
-
-    def create_project(self, user_id: str, data: dict[str, Any]) -> dict[str, Any]:
-        """Cria um projeto com nome obrigatório e objetivo opcional."""
-        name = _clean(data.get("name"), MAX_TITLE_CHARS)
-        if not name:
-            raise ChatError("invalid_request", 400)
-        goal = _clean(data.get("goal"), 2000, lines=True)
-        creator = getattr(self._store, "create_project", None)
-        if creator is None:
-            raise ChatError("chat_unavailable", 503)
-        # O teto é conferido junto da escrita, para duas abas não furarem o limite.
-        project = creator(user_id, name, goal, self._now(), MAX_PROJECTS)
-        if project is None:
-            raise ChatError("project_limit", 409, limit=MAX_PROJECTS)
-        data_out: dict[str, Any] = project.public()
-        return data_out
-
-    def update_project(
-        self, user_id: str, project_id: str, data: dict[str, Any]
-    ) -> dict[str, Any]:
-        """Renomeia, muda o objetivo ou arquiva."""
-        if not valid_id(project_id):
-            raise ChatError("not_found", 404)
-        changes: dict[str, Any] = {}
-        if "name" in data:
-            name = _clean(data.get("name"), MAX_TITLE_CHARS)
-            if not name:
-                raise ChatError("invalid_request", 400)
-            changes["name"] = name
-        if "goal" in data:
-            changes["goal"] = _clean(data.get("goal"), 2000, lines=True)
-        if "archived" in data:
-            if not isinstance(data["archived"], bool):
-                raise ChatError("invalid_request", 400)
-            changes["archived"] = data["archived"]
-        updater = getattr(self._store, "update_project", None)
-        reader = getattr(self._store, "get_project", None)
-        if updater is None or reader is None:
-            raise ChatError("chat_unavailable", 503)
-        if changes and not updater(user_id, project_id, self._now(), **changes):
-            raise ChatError("not_found", 404)
-        project = reader(user_id, project_id)
-        if project is None:
-            raise ChatError("not_found", 404)
-        out: dict[str, Any] = project.public()
-        return out
-
-    def delete_project(self, user_id: str, project_id: str) -> None:
-        """Apaga o projeto; as conversas dele continuam, soltas."""
-        if not valid_id(project_id):
-            raise ChatError("not_found", 404)
-        remover = getattr(self._store, "delete_project", None)
-        if remover is None or not remover(user_id, project_id):
-            raise ChatError("not_found", 404)
-
-    def set_conversation_project(
-        self, user_id: str, conversation_id: str, project_id: Any
-    ) -> None:
-        """Põe a conversa num projeto, ou tira dela o projeto (`None`)."""
-        if project_id is not None and (
-            not isinstance(project_id, str) or not valid_id(project_id)
-        ):
-            raise ChatError("invalid_request", 400)
-        setter = getattr(self._store, "set_conversation_project", None)
-        if setter is None or not setter(user_id, conversation_id, project_id):
-            raise ChatError("not_found", 404)
-
-    # ---------- Habilidades ----------
 
     def skills(self, user_id: str) -> dict[str, Any]:
         """Habilidades instaladas nesta conta."""

@@ -615,3 +615,28 @@ html[data-motion="reduzido"] .sc * {
     font-size: 1rem;
   }
 }
+
+
+/* ---------- Dentro das Configurações ---------- */
+
+/* Skills e Terminal moram numa seção das Configurações: a tela cheia vira um
+   bloco que rola com o resto, e o botão flutuante fica preso ao bloco. */
+.settings__embed {
+  position: relative;
+}
+
+.sc--embedded {
+  position: relative;
+  height: auto;
+  min-height: 0;
+}
+
+.sc--embedded .sc__body {
+  overflow: visible;
+  padding-inline: 0;
+  padding-bottom: 4.5rem;
+}
+
+.sc--embedded .sc__search {
+  margin-inline: 0;
+}

@@ -1,6 +1,6 @@
 """Cliente do terminal: fala com o KAZER pela mesma API do site.
 
-Nenhuma lógica de produto vive aqui. Habilidades, conectores, projetos, planos,
+Nenhuma lógica de produto vive aqui. Habilidades, conectores, planos,
 limite e memória valem no terminal porque o pedido passa pelo mesmo servidor —
 o terminal é outra janela da mesma conta, não um KAZER paralelo. Quando o
 servidor ganha um recurso, o terminal ganha junto.
@@ -214,10 +214,6 @@ class ApiClient:
     def connections(self) -> dict[str, Any]:
         """Conectores ligados na conta."""
         return self.get("/api/connections")
-
-    def projects(self) -> dict[str, Any]:
-        """Projetos da conta."""
-        return self.get("/api/projects")
 
     def library(self) -> dict[str, Any]:
         """Itens da Biblioteca."""

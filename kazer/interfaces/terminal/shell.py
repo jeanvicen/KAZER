@@ -70,14 +70,13 @@ HELP = """
   kazer continuar [n]         volta para uma conversa
   kazer habilidades           habilidades instaladas na conta
   kazer conectores            conectores ligados na conta
-  kazer projetos              seus projetos
   kazer biblioteca            o que já passou pelas conversas
   kazer status                conta, plano e uso
   kazer servidor [endereço]   mostra ou troca o servidor
   kazer versao                versão do terminal
 
   Na conversa: /nova  /conversas  /continuar <n>  /habilidades  /conectores
-               /projetos  /biblioteca  /status  /forja  /pensamento  /sair
+               /biblioteca  /status  /code  /pensamento  /sair
 """
 
 
@@ -166,22 +165,6 @@ class Shell:
                 f"  {self.screen.paint(name, BOLD)}{self.screen.paint(state, DIM)}"
                 f"  {self.screen.paint(detail, DIM)}"
             )
-        self.screen.write()
-
-    def projects(self) -> None:
-        """Projetos da conta."""
-        items = self.api.projects().get("items")
-        rows = [item for item in items if isinstance(item, dict)] if isinstance(items, list) else []
-        if not rows:
-            self.screen.note("  Nenhum projeto ainda.")
-            return
-        self.screen.write()
-        for item in rows:
-            name = str(item.get("name") or "sem nome")
-            goal = str(item.get("goal") or "")
-            self.screen.write(f"  {self.screen.paint(name, BOLD)}")
-            if goal:
-                self.screen.write("     " + self.screen.paint(goal.splitlines()[0][:88], DIM))
         self.screen.write()
 
     def library(self) -> None:
@@ -399,15 +382,13 @@ class Shell:
             self.skills()
         elif name in {"conectores", "k"}:
             self.connectors()
-        elif name in {"projetos", "p"}:
-            self.projects()
         elif name in {"biblioteca", "b"}:
             self.library()
         elif name in {"status", "s"}:
             self.status()
-        elif name == "forja":
+        elif name in {"code", "forja"}:
             self.forja = not self.forja
-            self.screen.note(f"  Forja {'ligada' if self.forja else 'desligada'}.")
+            self.screen.note(f"  KZ Code {'ligado' if self.forja else 'desligado'}.")
         elif name in {"pensamento", "pensar"}:
             self.thinking = not self.thinking
             self.screen.note(f"  Pensamento {'visível' if self.thinking else 'escondido'}.")
@@ -622,9 +603,6 @@ def _run(screen: Screen, shell: Shell, command: str, rest: str, args: list[str])
             return 0
         if command == "conectores":
             shell.connectors()
-            return 0
-        if command == "projetos":
-            shell.projects()
             return 0
         if command == "biblioteca":
             shell.library()

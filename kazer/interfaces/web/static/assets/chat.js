@@ -70,6 +70,7 @@ const SEND_ERRORS = {
   auth_unavailable: "As contas estão fechadas neste ambiente.",
   chat_unavailable: "O chat ainda não está disponível neste ambiente.",
   plan_required: "A Forja entra com os planos pagos.",
+  invalid_effort: "Esse esforço não está disponível agora. Voltei para o Baixo; é só enviar de novo.",
 };
 
 const UPLOAD_ERRORS = {
@@ -126,7 +127,7 @@ const S = {
   sending: false,
   live: null, // { replyId, lastIndex, controller }
   attachments: [],
-  options: { deep: false, web: false, memory: true },
+  options: { effort: store.get("kazer:effort", "baixo"), web: false, memory: true },
   pinned: true,
   history: { items: [], next: null, query: "", loaded: false, loading: false },
   lastAttempt: null,
@@ -157,7 +158,7 @@ export async function mountChat({ email, onSignedOut }) {
     "empty-note", "thread", "messages", "older", "to-bottom", "composer", "composer-alert",
     "composer-alert-text", "composer-alert-close", "composer-box", "tray", "prompt", "plus", "model-chip",
     "open-palette",
-    "deep", "forja-chip", "mic", "send", "pick-camera", "pick-photos", "pick-files",
+    "forja-chip", "mic", "send", "pick-camera", "pick-photos", "pick-files",
   ];
   for (const id of ids) S.ui[id.replace(/-(\w)/g, (_, c) => c.toUpperCase())] = byId(root, id);
   setSheetBackground(root);
@@ -235,9 +236,9 @@ function applyModel() {
   const features = model.features || {};
   const unavailable = !model.available;
   S.ui.modelChip.classList.toggle("is-off", unavailable);
-  S.ui.deep.setAttribute("aria-disabled", String(!features.deep));
-  S.ui.deep.classList.toggle("is-unavailable", !features.deep);
-  if (!features.deep && S.options.deep) setDeep(false);
+  // Só vale o esforço que o servidor oferece; o resto volta para o Baixo.
+  if (!offeredEfforts().some((item) => item.id === S.options.effort)) setEffort("baixo", { quiet: true });
+  paintEffort();
   S.ui.emptyNote.hidden = !unavailable;
   S.ui.emptyNote.textContent = model.notMigrated
     ? "O banco do KAZER está no ar, mas ainda não recebeu as migrações do chat. Sua conta está ativa; quem administra o servidor precisa aplicá-las."
@@ -407,34 +408,20 @@ function newConversation({ push = true, focus = true } = {}) {
 
 // ---------- Abas da gaveta ----------
 
-const SCREENS = [
-  "conversas",
-  "projetos",
-  "forja",
-  "artefatos",
-  "biblioteca",
-  "habilidades",
-  "terminal",
-];
+const SCREENS = ["conversas", "forja", "artefatos", "biblioteca"];
 
 const SCREEN_LABELS = {
   conversas: "Conversas",
-  projetos: "Projetos",
-  forja: "Forja",
+  forja: "KZ Code",
   artefatos: "Artefatos",
   biblioteca: "Biblioteca",
-  habilidades: "Habilidades",
-  terminal: "Terminal",
 };
 
 const SCREEN_GLYPHS = {
   conversas: "chat",
-  projetos: "project",
   forja: "code",
   artefatos: "layers",
   biblioteca: "book",
-  habilidades: "sparkle",
-  terminal: "terminal",
 };
 
 async function showScreen(name) {
@@ -470,7 +457,6 @@ async function showScreen(name) {
         const { openPlans } = await import("./plans.js");
         openPlans({ opener, highlight });
       },
-      onOpenSettings: (section) => openSettings(section),
     });
   }
   // A conversa some de vista, mas continua viva: voltar não recarrega nada.
@@ -1036,8 +1022,7 @@ async function send() {
         content,
         attachments: attachmentIds,
         model: "kaz-1.1",
-        effort: "baixo",
-        deep: S.options.deep,
+        effort: S.options.effort,
         tools: { web_search: S.options.web, research: false, memory: S.options.memory },
         forja: S.forja,
         timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
@@ -1119,6 +1104,8 @@ function failSend(data) {
   if (data.error === "not_found") {
     newConversation({ push: true, focus: false });
   }
+  // O servidor mudou a oferta de esforços: volta ao Baixo em vez de travar o envio.
+  if (data.error === "invalid_effort") setEffort("baixo", { quiet: true });
 }
 
 function commitSend(event) {
@@ -1248,13 +1235,6 @@ function bindComposer() {
   S.ui.plus.addEventListener("click", () => openPlusSheet());
   S.ui.mic.addEventListener("click", () => toggleDictation());
   S.ui.modelChip.addEventListener("click", () => openModelSheet());
-  S.ui.deep.addEventListener("click", () => {
-    if (S.ui.deep.getAttribute("aria-disabled") === "true") {
-      toast(SEND_ERRORS.deep_unavailable);
-      return;
-    }
-    setDeep(!S.options.deep);
-  });
   for (const [input, source] of [
     [S.ui.pickCamera, "camera"],
     [S.ui.pickPhotos, "photos"],
@@ -1340,16 +1320,40 @@ async function toggleDictation() {
   dictation.start(current ? current + " " : "");
 }
 
-function setDeep(on) {
-  S.options.deep = on;
-  S.ui.deep.setAttribute("aria-pressed", String(on));
-  S.ui.deep.classList.toggle("is-on", on);
-  const deepMark = S.ui.deep.querySelector(".tool__mark");
-  if (on && deepMark && !reducedMotion()) {
-    deepMark.classList.add("is-generating");
-    window.setTimeout(() => deepMark.classList.remove("is-generating"), 1600);
-  }
-  toast(on ? "Pensamento profundo ligado." : "Pensamento profundo desligado.", { duration: 1800 });
+// ---------- Esforço ----------
+
+const EFFORT_LEVELS = [
+  ["baixo", "Baixo", "Respostas rápidas, para o dia a dia."],
+  ["medio", "Médio", "Equilíbrio entre velocidade e capricho."],
+  ["alto", "Alto", "Mais completo; leva um pouco mais de tempo."],
+  ["extra", "Extra", "Para tarefas difíceis e raciocínio longo."],
+  ["max", "Máx", "O mais fundo que o KAZ 1.1 alcança."],
+];
+
+// Os níveis que o servidor realmente diferencia (nunca uma lista inventada aqui).
+function offeredEfforts() {
+  const offered = S.model?.efforts;
+  const known = new Map(EFFORT_LEVELS.map(([id, label, about]) => [id, { id, label, about }]));
+  if (!Array.isArray(offered) || !offered.length) return [known.get("baixo")];
+  return offered.map((item) => known.get(item.id)).filter(Boolean);
+}
+
+function effortLabel() {
+  return offeredEfforts().find((item) => item.id === S.options.effort)?.label || "Baixo";
+}
+
+function paintEffort() {
+  const label = effortLabel();
+  const chip = S.ui.modelChip.querySelector(".chip__effort");
+  if (chip) chip.textContent = label;
+  S.ui.modelChip.setAttribute("aria-label", `Modelo KAZ 1.1, esforço ${label}`);
+}
+
+function setEffort(id, { quiet = false } = {}) {
+  S.options.effort = id;
+  store.set("kazer:effort", id);
+  paintEffort();
+  if (!quiet) toast(`Esforço ${effortLabel()}.`, { duration: 1600 });
 }
 
 // ---------- Anexos ----------
@@ -1517,13 +1521,6 @@ function clearTray({ keepServer = false } = {}) {
 
 // Níveis de esforço: só o Baixo está liberado; os outros aparecem bloqueados
 // até a decisão de liberar (o servidor também só aceita "baixo").
-const EFFORT_LEVELS = [
-  ["baixo", "Baixo", true],
-  ["medio", "Médio", false],
-  ["alto", "Alto", false],
-  ["extra", "Extra", false],
-  ["max", "Máx", false],
-];
 
 function pressable(row, run) {
   row.addEventListener("click", run);
@@ -1563,7 +1560,7 @@ function openModelSheet() {
         "button.pick-row.pick-row--link",
         { type: "button", onclick: () => openEffortSheet() },
         h("span.pick-row__title", { text: "Esforço" }),
-        h("span.pick-row__value", { text: "Baixo" }),
+        h("span.pick-row__value", { text: effortLabel() }),
         icon("chevron-right", "pick-row__go"),
       );
       return h(
@@ -1577,50 +1574,34 @@ function openModelSheet() {
 }
 
 function openEffortSheet() {
-  const features = S.model?.features || {};
   openSheet({
     title: "Esforço",
     opener: S.ui.modelChip,
     back: () => openModelSheet(),
     content: (handle) => {
-      const rows = EFFORT_LEVELS.map(([key, label, open]) => {
+      const rows = offeredEfforts().map(({ id, label, about }) => {
+        const on = id === S.options.effort;
         const row = h(
-          `div.pick-row${open ? "" : ".is-locked"}`,
-          { role: "radio", "aria-checked": String(key === "baixo"), "aria-disabled": String(!open), tabindex: "0", dataset: { effort: key } },
-          h("span.pick-row__title", { text: label }),
-          open ? icon("check", "pick-row__check") : h("span.pick-row__lock", {}, icon("lock"), h("span", { text: "Bloqueado" })),
+          "div.pick-row",
+          { role: "radio", "aria-checked": String(on), tabindex: "0", dataset: { effort: id } },
+          h("span.pick-row__text", {}, h("span.pick-row__title", { text: label }), h("span.pick-row__desc", { text: about })),
+          on ? icon("check", "pick-row__check") : null,
         );
         return pressable(row, () => {
-          if (open) handle.close();
-          else toast(`O esforço ${label} ainda está bloqueado. Por enquanto, só o Baixo.`, { duration: 2600 });
+          setEffort(id);
+          handle.close();
         });
       });
-      const deepInput = h("input.switch__input", {
-        type: "checkbox",
-        role: "switch",
-        id: "sheet-deep",
-        checked: S.options.deep,
-        disabled: !features.deep,
-      });
-      deepInput.addEventListener("change", () => setDeep(deepInput.checked));
+      const many = rows.length > 1;
       return h(
         "div.model-sheet",
         {},
         h("div.pick-group", { role: "radiogroup", "aria-label": "Esforço" }, rows),
         h("p.sheet__note", {
-          text: "Mais esforço significa respostas mais completas, mas leva mais tempo e consome seus limites mais rápido. Por enquanto, só o Baixo está liberado.",
+          text: many
+            ? "Cada nível usa um modelo diferente: mais esforço dá respostas mais completas, mas leva mais tempo e gasta mais do seu limite."
+            : "Este servidor só oferece o esforço Baixo.",
         }),
-        h(
-          "label.pick-group.pick-row.pick-row--switch",
-          { for: "sheet-deep" },
-          h(
-            "span.pick-row__text",
-            {},
-            h("span.pick-row__title", { text: "Pensamento profundo" }),
-            h("span.pick-row__desc", { text: features.deep ? "Pensa mais antes de responder, para tarefas complexas." : "Indisponível com o modelo atual." }),
-          ),
-          h("span.switch", {}, deepInput, h("span.switch__track", { "aria-hidden": "true" }, h("span.switch__thumb"))),
-        ),
       );
     },
   });
@@ -1696,7 +1677,6 @@ function openPlusSheet() {
             S.ui.plus.classList.toggle("is-active", on);
           },
         }),
-        projectRow(),
         connectorRow(),
         toggleRow({
           id: "tool-memory",
@@ -1711,105 +1691,6 @@ function openPlusSheet() {
         }),
       );
       return h("div.plus", {}, tiles, list);
-    },
-  });
-}
-
-// Linha de projeto: põe esta conversa num projeto, sem sair da conversa.
-// Sem conversa gravada ainda não há o que mover, e a linha diz isso.
-function projectRow() {
-  const saved = Boolean(S.conversation?.id);
-  const current = S.conversation?.project_name || "";
-  const row = h(
-    `button.tool-row.tool-row--link${saved ? "" : ".is-disabled"}`,
-    { type: "button", disabled: !saved, onclick: () => openProjectSheet() },
-    h("span.tool-row__icon", {}, icon("project")),
-    h(
-      "span.tool-row__text",
-      {},
-      h("span.tool-row__title", { text: "Adicionar ao projeto" }),
-      h("span.tool-row__desc", {
-        text: saved ? current || "Esta conversa não está em nenhum projeto." : "Comece a conversa para escolher um projeto.",
-      }),
-    ),
-    icon("chevron-right", "tool-row__go"),
-  );
-  if (saved && !current && S.conversation?.project_id) nameProject(row, S.conversation.project_id);
-  return row;
-}
-
-// O nome do projeto não vem junto da conversa: busca uma vez e guarda.
-async function nameProject(row, projectId) {
-  const projects = await loadProjects();
-  const found = projects.find((item) => item.id === projectId);
-  if (!found || !row.isConnected) return;
-  if (S.conversation) S.conversation.project_name = found.name;
-  const desc = row.querySelector(".tool-row__desc");
-  if (desc) desc.textContent = found.name;
-}
-
-async function loadProjects() {
-  const result = await request("/api/projects");
-  return result.ok && Array.isArray(result.data?.items) ? result.data.items : [];
-}
-
-function openProjectSheet() {
-  openSheet({
-    title: "Adicionar ao projeto",
-    opener: S.ui.plus,
-    back: () => openPlusSheet(),
-    content: (handle) => {
-      const list = h("div.tools", {}, h("p.connectors__text", { text: "Carregando seus projetos…" }));
-      const pick = async (projectId, name) => {
-        handle.close({ restore: false });
-        const result = await request(`/api/conversations/${S.conversation.id}`, {
-          method: "POST",
-          body: { project_id: projectId },
-        });
-        if (!result.ok) {
-          toast("Não deu para mudar o projeto agora.");
-          return;
-        }
-        S.conversation.project_id = projectId;
-        S.conversation.project_name = name;
-        toast(projectId ? `Na pasta ${name}.` : "Fora de projetos.");
-      };
-      loadProjects().then((projects) => {
-        if (!list.isConnected) return;
-        const rows = projects.map((item) =>
-          h(
-            `button.tool-row.tool-row--link${item.id === S.conversation?.project_id ? ".is-on" : ""}`,
-            { type: "button", onclick: () => pick(item.id, item.name) },
-            h("span.tool-row__icon", {}, icon("project")),
-            h(
-              "span.tool-row__text",
-              {},
-              h("span.tool-row__title", { text: item.name }),
-              h("span.tool-row__desc", { text: (item.goal || "").split("\n")[0] || "Sem objetivo escrito." }),
-            ),
-            item.id === S.conversation?.project_id ? icon("check", "tool-row__go") : null,
-          ),
-        );
-        if (S.conversation?.project_id) {
-          rows.unshift(
-            h(
-              "button.tool-row.tool-row--link",
-              { type: "button", onclick: () => pick("", "") },
-              h("span.tool-row__icon", {}, icon("close")),
-              h("span.tool-row__text", {}, h("span.tool-row__title", { text: "Tirar do projeto" })),
-            ),
-          );
-        }
-        list.replaceChildren(
-          ...(rows.length
-            ? rows
-            : [
-                h("p.connectors__title", { text: "Nenhum projeto ainda." }),
-                h("p.connectors__text", { text: "Crie um em Projetos, na gaveta, e ele aparece aqui." }),
-              ]),
-        );
-      });
-      return list;
     },
   });
 }
@@ -1960,6 +1841,8 @@ function paletteGroups() {
         },
         { label: "Nova conversa na Forja", glyph: "code", hint: keyLabel(SHORTCUTS[3]), run: startForja },
         { label: "Configurações", glyph: "gear", run: () => openSettings() },
+        { label: "Skills", glyph: "sparkle", run: () => openSettings("skills") },
+        { label: "Terminal", glyph: "terminal", run: () => openSettings("terminal") },
         { label: "Planos", glyph: "bolt", run: () => offerPlans({}) },
         {
           label: "Gaveta",

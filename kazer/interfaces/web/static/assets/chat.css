@@ -1362,15 +1362,6 @@ html.in-chat .noscript {
   animation: mark-r 0.8s cubic-bezier(0.65, 0, 0.35, 1) 2;
 }
 
-.tool--deep[aria-pressed="true"] {
-  background: var(--c-text);
-  color: var(--c-bg);
-}
-
-.tool--deep.is-unavailable {
-  color: #5c5c5c;
-}
-
 /* Microfone: ondas que pulsam só enquanto está ouvindo de verdade. */
 .tool--mic.is-listening {
   background: var(--c-text);

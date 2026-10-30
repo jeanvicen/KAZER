@@ -30,7 +30,6 @@ from kazer.chat.store import (
     LimitReached,
     Memory,
     Message,
-    Project,
     Skill,
     UsageWindow,
 )
@@ -51,19 +50,6 @@ def _connection(row: dict[str, Any]) -> Connection:
         bool(row.get("enabled")),
         int(row.get("created_at") or 0),
         int(row.get("created_at") or 0),
-    )
-
-
-def _project(row: dict[str, Any]) -> Project:
-    """Linha do Postgres (já em JSON) para o modelo do chat."""
-    return Project(
-        str(row["id"]),
-        str(row["name"]),
-        str(row.get("goal") or ""),
-        bool(row.get("archived")),
-        int(row.get("conversations") or 0),
-        int(row.get("created_at") or 0),
-        int(row.get("updated_at") or 0),
     )
 
 
@@ -549,65 +535,6 @@ class SupabaseChatStore:
         return bool(self._rpc("kazer_delete_connection", {"p_id": connection_id}))
 
     # ---------- Projetos ----------
-
-    def list_projects(self, user_id: str, *, archived: bool, query: str = "") -> list[Project]:
-        """Projetos da conta, com quantas conversas cada um guarda."""
-        rows = self._rpc("kazer_projects", {"p_archived": archived, "p_query": query}) or []
-        return [_project(row) for row in rows]
-
-    def create_project(
-        self, user_id: str, name: str, goal: str, now: int, max_count: int = 60
-    ) -> Project | None:
-        """Cria o projeto; None quando a conta chegou ao limite."""
-        data = self._rpc(
-            "kazer_create_project", {"p_name": name, "p_goal": goal, "p_max": max_count}
-        )
-        return None if not data else _project(data)
-
-    def get_project(self, user_id: str, project_id: str) -> Project | None:
-        """Projeto da própria conta."""
-        data = self._rpc("kazer_project", {"p_id": project_id})
-        return None if not data else _project(data)
-
-    def update_project(
-        self,
-        user_id: str,
-        project_id: str,
-        now: int,
-        *,
-        name: str | None = None,
-        goal: str | None = None,
-        archived: bool | None = None,
-    ) -> bool:
-        """Altera só os campos informados."""
-        return bool(
-            self._rpc(
-                "kazer_update_project",
-                {
-                    "p_id": project_id,
-                    "p_name": name,
-                    "p_goal": goal,
-                    "p_archived": archived,
-                },
-            )
-        )
-
-    def delete_project(self, user_id: str, project_id: str) -> bool:
-        """Apaga o projeto; as conversas dele continuam, soltas."""
-        return bool(self._rpc("kazer_delete_project", {"p_id": project_id}))
-
-    def set_conversation_project(
-        self, user_id: str, conversation_id: str, project_id: str | None
-    ) -> bool:
-        """Põe (ou tira) a conversa de um projeto."""
-        return bool(
-            self._rpc(
-                "kazer_set_conversation_project",
-                {"p_conversation_id": conversation_id, "p_project_id": project_id},
-            )
-        )
-
-    # ---------- Habilidades ----------
 
     def list_skills(self, user_id: str) -> list[Skill]:
         """Habilidades da conta, com as instruções (o chat precisa delas)."""

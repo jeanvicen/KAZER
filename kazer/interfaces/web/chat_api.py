@@ -177,14 +177,6 @@ def chat_routes(ctx: WebContext, chat: ChatService | None) -> list[Route]:
         if request.method == "POST":
             data = await ctx.read_json(request)
             chat_service = service()
-            # Mesma rota para renomear e para trocar de projeto.
-            if "project_id" in data:
-                await run_in_threadpool(
-                    chat_service.set_conversation_project,
-                    user.id,
-                    conversation_id,
-                    data["project_id"],
-                )
             if "title" not in data:
                 found = await run_in_threadpool(
                     chat_service.conversation, user.id, conversation_id
@@ -312,40 +304,6 @@ def chat_routes(ctx: WebContext, chat: ChatService | None) -> list[Route]:
         data = await ctx.read_json(request, SETTINGS_BODY_BYTES)
         await run_in_threadpool(chat_service.set_connection, user.id, connection_id, data)
         return JSONResponse({"status": "ok"})
-
-    @endpoint
-    async def projects(request: Request) -> Response:
-        user, _ = await account(request)
-        chat_service = service()
-        if request.method == "POST":
-            data = await ctx.read_json(request, SETTINGS_BODY_BYTES)
-            created = await run_in_threadpool(chat_service.create_project, user.id, data)
-            return JSONResponse(created, status_code=201)
-        archived = request.query_params.get("archived") == "1"
-        page = await run_in_threadpool(
-            partial(
-                chat_service.projects,
-                user.id,
-                archived=archived,
-                query=request.query_params.get("q", ""),
-            )
-        )
-        return JSONResponse(page)
-
-    @endpoint
-    async def project(request: Request) -> Response:
-        user, _ = await account(request)
-        chat_service = service()
-        project_id = request.path_params["project_id"]
-        if request.method == "DELETE":
-            ctx.check_origin(request)
-            await run_in_threadpool(chat_service.delete_project, user.id, project_id)
-            return JSONResponse({"deleted": True})
-        data = await ctx.read_json(request, SETTINGS_BODY_BYTES)
-        updated = await run_in_threadpool(
-            chat_service.update_project, user.id, project_id, data
-        )
-        return JSONResponse(updated)
 
     @endpoint
     async def skills(request: Request) -> Response:
@@ -509,8 +467,6 @@ def chat_routes(ctx: WebContext, chat: ChatService | None) -> list[Route]:
         Route("/api/connectors", connector_catalog, methods=["GET"]),
         Route("/api/connections", connections, methods=["GET", "POST"]),
         Route("/api/connections/{connection_id}", connection, methods=["POST", "DELETE"]),
-        Route("/api/projects", projects, methods=["GET", "POST"]),
-        Route("/api/projects/{project_id}", project, methods=["POST", "DELETE"]),
         Route("/api/skills", skills, methods=["GET", "POST"]),
         Route("/api/skills/shared", shared_skills, methods=["GET"]),
         Route("/api/skills/{skill_id}", skill, methods=["GET", "POST", "DELETE"]),

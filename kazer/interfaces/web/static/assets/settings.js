@@ -2,7 +2,7 @@
 // interface) e salva sozinho. No celular é uma pilha de telas; no computador,
 // navegação à esquerda e conteúdo à direita.
 
-import { announce, finePointer, formatDate, formatReset, h, icon, mark, reducedMotion, trapFocus } from "./dom.js";
+import { announce, finePointer, formatDate, formatReset, h, icon, loadStyle, mark, reducedMotion, trapFocus } from "./dom.js";
 import { request } from "./net.js";
 import { confirmDialog, openSheet, toast } from "./sheets.js";
 
@@ -14,6 +14,8 @@ const SECTIONS = [
   ["interface", "Interface", "sliders"],
   ["dados", "Dados e privacidade", "shield"],
   ["conectores", "Conectores", "plug"],
+  ["skills", "Skills", "sparkle"],
+  ["terminal", "Terminal", "terminal"],
   ["sobre", "Sobre", "info"],
 ];
 
@@ -844,6 +846,34 @@ class SettingsPanel {
 
   // Catálogo de conectores: busca, categorias e o que o plano desta conta
   // libera em cada um. A lista vem do servidor, uma página por vez.
+  // Skills e Terminal moraram na gaveta; agora são seções daqui e reaproveitam
+  // os mesmos módulos, carregados só quando a pessoa abre a seção.
+  section_skills() {
+    const holder = h("div.settings__embed");
+    (async () => {
+      await loadStyle("/assets/screens.css");
+      const { createSkills } = await import("./skills.js");
+      const view = await createSkills();
+      if (!holder.isConnected && this.current !== "skills") return;
+      holder.replaceChildren(
+        h("div.sc.sc--embedded", {}, view.search, h("div.sc__body", {}, view.body), view.fab),
+      );
+    })().catch(() => holder.replaceChildren(h("p.set-note", { text: "Não deu para abrir as Skills agora." })));
+    return holder;
+  }
+
+  section_terminal() {
+    const holder = h("div.settings__embed");
+    (async () => {
+      await loadStyle("/assets/screens.css");
+      const { createTerminal } = await import("./terminal-screen.js");
+      const view = await createTerminal({ onOpenSettings: (key) => this.show(key, { focus: true }) });
+      if (!holder.isConnected && this.current !== "terminal") return;
+      holder.replaceChildren(h("div.sc.sc--embedded", {}, h("div.sc__body", {}, view.body)));
+    })().catch(() => holder.replaceChildren(h("p.set-note", { text: "Não deu para abrir o Terminal agora." })));
+    return holder;
+  }
+
   section_conectores() {
     const state = { q: "", category: "", page: 0, loading: false, done: false };
     const list = h("div.conns__list");

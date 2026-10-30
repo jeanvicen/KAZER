@@ -1,5 +1,4 @@
-// Telas cheias do KAZER: Projetos, Forja, Artefatos, Biblioteca, Habilidades
-// e Terminal.
+// Telas cheias do KAZER: KZ Code, Artefatos e Biblioteca.
 //
 // Cada seção da gaveta abre uma tela própria, com o mesmo esqueleto: cabeçalho
 // com o menu à esquerda, título no meio e a ação da tela à direita; busca;
@@ -11,12 +10,9 @@
 import { h, icon, loadStyle } from "./dom.js";
 
 const TITLES = {
-  projetos: "Projetos",
   forja: "Forja",
   artefatos: "Artefatos",
   biblioteca: "Biblioteca",
-  habilidades: "Habilidades",
-  terminal: "Terminal",
 };
 
 export function createScreens({
@@ -25,7 +21,6 @@ export function createScreens({
   onOpenConversation,
   onStartForja,
   onOpenPlans,
-  onOpenSettings,
 }) {
   const current = { name: "", view: null };
   const cache = new Map();
@@ -69,18 +64,6 @@ export function createScreens({
     if (name === "artefatos") {
       const { createArtifacts } = await import("./artifacts-screen.js");
       return shell(name, await createArtifacts({ onOpenConversation }));
-    }
-    if (name === "projetos") {
-      const { createProjects } = await import("./projects.js");
-      return shell(name, await createProjects({ onOpenConversation }));
-    }
-    if (name === "terminal") {
-      const { createTerminal } = await import("./terminal-screen.js");
-      return shell(name, await createTerminal({ onOpenSettings }));
-    }
-    if (name === "habilidades") {
-      const { createSkills } = await import("./skills.js");
-      return shell(name, await createSkills());
     }
     return shell(name, { body: h("p.sc__empty", { text: "Em breve." }) });
   }

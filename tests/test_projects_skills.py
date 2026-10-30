@@ -32,87 +32,17 @@ def make_env(tmp_path: Path) -> Callable[..., Env]:
 # ---------- Projetos ----------
 
 
-def test_a_project_holds_conversations(make_env: Callable[..., Env]) -> None:
+def test_projects_are_gone_from_the_api(make_env: Callable[..., Env]) -> None:
+    """Projetos foram tirados do produto: nenhuma rota responde por eles."""
     env = make_env(FakeProvider())
     with env.client() as client:
         env.signed_in(client, "ana@example.com")
-        created = client.post(
-            "/api/projects", json={"name": "Lançamento", "goal": "Organizar tudo."}
-        )
-        assert created.status_code == 201
-        project = created.json()
-        assert project["conversations"] == 0
-
-        stream = send(client, "primeira ideia")
-        conversation = stream[0]["conversation"]["id"]
-        moved = client.post(
-            f"/api/conversations/{conversation}", json={"project_id": project["id"]}
-        )
-        assert moved.status_code == 200
-        assert moved.json()["conversation"]["project_id"] == project["id"]
-
-        items = client.get("/api/projects").json()["items"]
-        assert items[0]["conversations"] == 1
-
-
-def test_archiving_moves_the_project_out_of_the_way(make_env: Callable[..., Env]) -> None:
-    env = make_env(FakeProvider())
-    with env.client() as client:
-        env.signed_in(client, "ana@example.com")
-        project = client.post("/api/projects", json={"name": "Antigo"}).json()
-
-        client.post(f"/api/projects/{project['id']}", json={"archived": True})
-        assert client.get("/api/projects").json()["items"] == []
-        archived = client.get("/api/projects?archived=1").json()["items"]
-        assert [item["name"] for item in archived] == ["Antigo"]
-
-
-def test_deleting_a_project_keeps_its_conversations(make_env: Callable[..., Env]) -> None:
-    env = make_env(FakeProvider())
-    with env.client() as client:
-        env.signed_in(client, "ana@example.com")
-        project = client.post("/api/projects", json={"name": "Some"}).json()
-        stream = send(client, "oi")
-        conversation = stream[0]["conversation"]["id"]
-        client.post(f"/api/conversations/{conversation}", json={"project_id": project["id"]})
-
-        gone = client.delete(f"/api/projects/{project['id']}")
-        assert gone.status_code == 200
-        # A conversa continua; só ficou sem projeto.
+        assert client.get("/api/projects").status_code == 404
+        assert client.post("/api/projects", json={"name": "X"}).status_code == 404
+        conversation = send(client, "oi")[0]["conversation"]["id"]
+        # A conversa não carrega mais campo de projeto.
         found = client.get(f"/api/conversations/{conversation}").json()["conversation"]
-        assert found["project_id"] is None
-
-
-def test_projects_are_private(make_env: Callable[..., Env]) -> None:
-    env = make_env(FakeProvider())
-    with env.client() as ana, env.client() as bia:
-        env.signed_in(ana, "ana@example.com")
-        env.signed_in(bia, "bia@example.com")
-        project = ana.post("/api/projects", json={"name": "Meu"}).json()
-
-        assert bia.get("/api/projects").json()["items"] == []
-        theft_name = bia.post(f"/api/projects/{project['id']}", json={"name": "Roubado"})
-        assert theft_name.status_code == 404
-        assert bia.delete(f"/api/projects/{project['id']}").status_code == 404
-        # E a conversa da Bia não entra no projeto da Ana.
-        stream = send(bia, "oi")
-        theft = bia.post(
-            f"/api/conversations/{stream[0]['conversation']['id']}",
-            json={"project_id": project["id"]},
-        )
-        assert theft.status_code == 404
-
-
-def test_a_project_needs_a_name(make_env: Callable[..., Env]) -> None:
-    env = make_env(FakeProvider())
-    with env.client() as client:
-        env.signed_in(client, "ana@example.com")
-        for body in ({}, {"name": "   "}, {"name": 7}):
-            response = client.post("/api/projects", json=body)
-            assert (response.status_code, response.json()) == (400, {"error": "invalid_request"})
-
-
-# ---------- Habilidades ----------
+        assert "project_id" not in found
 
 
 def test_the_skill_instructions_are_delimited_and_powerless() -> None:
