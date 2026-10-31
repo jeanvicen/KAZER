@@ -122,6 +122,9 @@ PREFERENCE_DEFAULTS: dict[str, Any] = {
     "motion": "sistema",
     "text_size": "m",
     "ambient": True,
+    # Aparência e idioma da interface. O idioma também vai ao modelo.
+    "theme": "escuro",
+    "language": "pt",
     # Plano que a pessoa quis enquanto a cobrança não abre (não dá acesso a nada).
     "wants_plan": "",
     # Conversas abertas no KZ Code, mais recente primeiro. Quem escreve aqui é só
@@ -133,6 +136,8 @@ _CHOICES = {
     "style": {"direto", "equilibrado", "detalhado"},
     "motion": {"sistema", "reduzido", "completo"},
     "text_size": {"p", "m", "g"},
+    "theme": {"escuro", "claro", "sistema"},
+    "language": {"pt", "en"},
     "wants_plan": {"", "free", "pro", "ultra"},
 }
 _TEXT_LIMITS = {"nickname": 40, "instructions": 1500}
@@ -1482,6 +1487,7 @@ class ChatService:
             timezone=timezone,
             nickname=str(prefs["nickname"]),
             style=str(prefs["style"]),
+            language=str(prefs["language"]),
             instructions=str(prefs["instructions"]),
             memories=self._store.list_memories(user_id) if options.memory else [],
             web_search=options.web_search,

@@ -3,6 +3,8 @@
 // se a rede cair no meio, a interface reata do último evento recebido.
 
 import { hydratePixelWords } from "./pixel.js";
+import { initLanguage, locale } from "./i18n.js";
+import { applyTheme } from "./theme.js";
 import {
   announce,
   byId,
@@ -145,6 +147,11 @@ let historyObserver = null;
 // ---------- Montagem ----------
 
 export async function mountChat({ email, onSignedOut }) {
+  // Idioma e tema primeiro, com a cópia do aparelho: a conta ainda não respondeu e
+  // a tela não pode piscar em português (ou em escuro) antes de acertar.
+  const local = store.get("kazer:ui", {});
+  applyTheme(local.theme);
+  await initLanguage(local.language);
   const root = document.getElementById("chat");
   const template = document.getElementById("tpl-chat");
   root.replaceChildren(template.content.cloneNode(true));
@@ -209,7 +216,7 @@ async function loadSettings() {
   S.account.created_at = result.data.account.created_at;
   S.account.verified_at = result.data.account.verified_at;
   S.options.memory = S.prefs.memory_enabled;
-  store.set("kazer:ui", { motion: S.prefs.motion, text_size: S.prefs.text_size, ambient: S.prefs.ambient });
+  store.set("kazer:ui", { motion: S.prefs.motion, text_size: S.prefs.text_size, ambient: S.prefs.ambient, theme: S.prefs.theme, language: S.prefs.language });
   applyLocalPrefs();
   applyModel();
   if (S.empty) setGreeting(true);
@@ -217,8 +224,15 @@ async function loadSettings() {
 
 // Preferências visuais aplicadas antes da resposta do servidor (sem "pulo").
 function applyLocalPrefs() {
-  const ui = { motion: "sistema", text_size: "m", ambient: true, ...store.get("kazer:ui", {}), ...pick(S.prefs, ["motion", "text_size", "ambient"]) };
+  const ui = { motion: "sistema", text_size: "m", ambient: true, theme: "escuro", language: "pt", ...store.get("kazer:ui", {}), ...pick(S.prefs, ["motion", "text_size", "ambient", "theme", "language"]) };
   setMotionPreference(ui.motion);
+  applyTheme(ui.theme);
+  // Idioma trocado em outro aparelho: este recarrega para falar a mesma língua.
+  if (document.documentElement.lang !== (ui.language === "en" ? "en" : "pt-BR") && S.prefs?.language) {
+    store.set("kazer:ui", { ...store.get("kazer:ui", {}), language: ui.language });
+    window.location.reload();
+    return;
+  }
   document.documentElement.dataset.textSize = ui.text_size;
   S.ambientEnabled = ui.ambient;
   if (S.empty) {
@@ -259,7 +273,7 @@ function applyModel() {
 export function onPreferencesChanged(prefs) {
   S.prefs = { ...S.prefs, ...prefs };
   S.options.memory = S.prefs.memory_enabled;
-  store.set("kazer:ui", { motion: S.prefs.motion, text_size: S.prefs.text_size, ambient: S.prefs.ambient });
+  store.set("kazer:ui", { motion: S.prefs.motion, text_size: S.prefs.text_size, ambient: S.prefs.ambient, theme: S.prefs.theme, language: S.prefs.language });
   applyLocalPrefs();
   if (S.empty) setGreeting(false);
 }
@@ -1379,6 +1393,7 @@ async function toggleDictation() {
   }
   if (!dictation) {
     dictation = createDictation({
+      lang: locale(),
       onText: (text, interim) => {
         S.ui.prompt.value = text;
         S.ui.composerBox.classList.toggle("is-hearing", interim);

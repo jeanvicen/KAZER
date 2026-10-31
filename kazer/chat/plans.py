@@ -107,7 +107,7 @@ PLANS: tuple[Plan, ...] = (
             "Biblioteca com o que você enviou",
             "Histórico das 100 conversas mais recentes",
         ],
-        extras=["Conectores de leitura (até 3)"],
+        extras=["GitHub conectado, só para leitura"],
         connector_limit=3,
     ),
     Plan(
@@ -127,12 +127,12 @@ PLANS: tuple[Plan, ...] = (
         highlights=[
             "Tudo do plano gratuito",
             "Mais de 6 vezes o uso por janela",
-            "Modo Forja: programar de verdade",
+            "KZ Code: programar de verdade",
             "Artefatos: páginas, componentes e documentos",
             "Pesquisa profunda em várias etapas",
             "GitHub com escrita, não só leitura",
         ],
-        extras=["Até 50 conectores", "Fila de prioridade quando o servidor lota"],
+        extras=["Fila de prioridade quando o servidor lota"],
     ),
     Plan(
         id="ultra",
@@ -152,7 +152,7 @@ PLANS: tuple[Plan, ...] = (
             "25 vezes o uso do plano gratuito",
             "Pensamento profundo sem contar o dobro",
             "Sessões longas de KZ Code sem interrupção",
-            "Todos os conectores do catálogo",
+            "GitHub com leitura e escrita, com o limite mais alto",
         ],
         extras=["Novidades antes de todo mundo", "Suporte direto com o time"],
     ),

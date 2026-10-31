@@ -16,7 +16,7 @@
   overflow-y: auto;
   overscroll-behavior: contain;
   scrollbar-width: thin;
-  scrollbar-color: #2a2a2a transparent;
+  scrollbar-color: var(--n-2a2a2a) transparent;
 }
 
 /* ---------- Filtros ---------- */
@@ -135,7 +135,7 @@
 }
 
 .is-made .library__glyph {
-  color: #8ab0ff;
+  color: var(--link);
 }
 
 .library__glyph svg {

@@ -40,7 +40,7 @@ _CORE = "\n".join(
     )
 )
 
-# Modo Forja: a conversa vira oficina de código. O pedido muda de forma —
+# Modo KZ Code: a conversa vira oficina de código. O pedido muda de forma —
 # arquivos inteiros, com nome, prontos para colar no projeto — e é isso que
 # alimenta a Biblioteca com artefatos de verdade em vez de trechos soltos.
 _FORJA = "\n".join(
@@ -100,6 +100,7 @@ def system_prompt(
     instructions: str,
     memories: Sequence[Memory],
     web_search: bool,
+    language: str = "pt",
     forja: bool = False,
     skills: Sequence[SkillUse] = (),
 ) -> str:
@@ -112,6 +113,13 @@ def system_prompt(
     lines = [_CORE, f"Hoje é {date}; fuso horário da pessoa: {tz.key}."]
     if forja:
         lines.append(_FORJA)
+    if language == "en":
+        # A interface da pessoa está em inglês: é a língua em que ela espera a resposta,
+        # a menos que escreva em outra.
+        lines.append(
+            "The person uses KAZER in English. Reply in English unless they write to you"
+            " in another language."
+        )
     if style in _STYLES:
         lines.append(_STYLES[style])
     if nickname:

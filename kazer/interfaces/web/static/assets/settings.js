@@ -713,11 +713,45 @@ class SettingsPanel {
     return section;
   }
 
+  // Idioma: grava no servidor, guarda uma cópia no aparelho e recarrega, para tudo
+  // mudar junto (o dicionário só é baixado em inglês).
+  async changeLanguage(value) {
+    if (value === (this.prefs.language || "pt")) return;
+    const result = await request("/api/settings", { method: "POST", body: { preferences: { language: value } } });
+    if (!result.ok) {
+      toast("Não deu para mudar o idioma agora.");
+      return;
+    }
+    const ui = JSON.parse(window.localStorage.getItem("kazer:ui") || "{}");
+    window.localStorage.setItem("kazer:ui", JSON.stringify({ ...ui, language: value }));
+    window.location.reload();
+  }
+
   section_interface() {
     const sizePreview = h("p.size-preview", { text: "O KAZER responde aqui, neste tamanho." });
     return h(
       "div.set-section",
       {},
+      this.group(
+        "Tema",
+        this.segmented({
+          label: "Tema",
+          options: [["escuro", "Escuro"], ["claro", "Claro"], ["sistema", "Sistema"]],
+          value: this.prefs.theme || "escuro",
+          onChange: (value) => this.savePrefs({ theme: value }, { immediate: true }),
+        }),
+        h("p.set-group__desc", { text: "“Sistema” segue o tema do seu aparelho. A tela de entrada continua escura." }),
+      ),
+      this.group(
+        "Idioma",
+        this.segmented({
+          label: "Idioma",
+          options: [["pt", "Português"], ["en", "English"]],
+          value: this.prefs.language || "pt",
+          onChange: (value) => this.changeLanguage(value),
+        }),
+        h("p.set-group__desc", { text: "A página recarrega ao trocar. O KAZER também passa a responder no idioma escolhido, a menos que você escreva em outro." }),
+      ),
       this.group(
         "Animações",
         this.segmented({

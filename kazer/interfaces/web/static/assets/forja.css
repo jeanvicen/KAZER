@@ -13,7 +13,7 @@
   overflow-y: auto;
   overscroll-behavior: contain;
   scrollbar-width: thin;
-  scrollbar-color: #2a2a2a transparent;
+  scrollbar-color: var(--n-2a2a2a) transparent;
 }
 
 .forja__ready,
@@ -44,7 +44,7 @@
   width: 1.25rem;
   height: 1.25rem;
   border-radius: 50%;
-  background: rgb(255 255 255 / 0.07);
+  background: rgb(var(--ov) / 0.07);
   color: var(--c-text-3);
 }
 
@@ -87,7 +87,7 @@
   width: 0.9rem;
   height: 0.9rem;
   margin-top: 0.15rem;
-  color: #ffb066;
+  color: var(--accent-text);
 }
 
 .forja__start {
@@ -339,7 +339,7 @@
   border: 0;
   padding: 0.25rem 0;
   background: transparent;
-  color: #ffb066;
+  color: var(--accent-text);
   font: inherit;
   font-size: 0.875rem;
   text-decoration: underline;

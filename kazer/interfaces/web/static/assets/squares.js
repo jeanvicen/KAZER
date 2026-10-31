@@ -96,8 +96,9 @@ export function startAmbient(canvas, { reducedMotion = false } = {}) {
       const y = Math.round(tile.gy * CELL + tile.vy * seconds);
       if (x < -4 || y < -4 || x > width + 4 || y > height + 4) continue;
       const alpha = tile.peak * envelope * calm(x, y) * intro;
+      const light = document.documentElement.dataset.theme === "light";
       if (alpha < 0.01) continue;
-      ctx.fillStyle = tile.white ? `rgba(245,245,245,${alpha})` : `rgba(146,146,146,${alpha})`;
+      ctx.fillStyle = light ? (tile.white ? `rgba(20,20,20,${alpha})` : `rgba(110,110,110,${alpha})`) : tile.white ? `rgba(245,245,245,${alpha})` : `rgba(146,146,146,${alpha})`;
       const s = tile.size;
       ctx.fillRect(x, y, s, s);
       if (tile.twin) ctx.fillRect(x + tile.twin[0] * (s + 2), y + tile.twin[1] * (s + 2), s, s);

@@ -172,9 +172,11 @@ export function formatBytes(bytes) {
   return `${(bytes / (1024 * 1024)).toFixed(1).replace(".", ",")} MB`;
 }
 
-const timeFmt = new Intl.DateTimeFormat("pt-BR", { hour: "2-digit", minute: "2-digit" });
-const dateFmt = new Intl.DateTimeFormat("pt-BR", { day: "numeric", month: "long", year: "numeric" });
-const dayFmt = new Intl.DateTimeFormat("pt-BR", { weekday: "long", hour: "2-digit", minute: "2-digit" });
+// Datas seguem o idioma escolhido (`<html lang>`), lido na hora de formatar.
+const lang = () => document.documentElement.lang || "pt-BR";
+const timeFmt = { format: (d) => new Intl.DateTimeFormat(lang(), { hour: "2-digit", minute: "2-digit" }).format(d) };
+const dateFmt = { format: (d) => new Intl.DateTimeFormat(lang(), { day: "numeric", month: "long", year: "numeric" }).format(d) };
+const dayFmt = { format: (d) => new Intl.DateTimeFormat(lang(), { weekday: "long", hour: "2-digit", minute: "2-digit" }).format(d) };
 
 export function formatTime(seconds) {
   return timeFmt.format(new Date(seconds * 1000));

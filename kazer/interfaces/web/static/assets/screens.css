@@ -105,7 +105,7 @@
   overscroll-behavior: contain;
   padding: 0 1rem calc(5.5rem + env(safe-area-inset-bottom));
   scrollbar-width: thin;
-  scrollbar-color: #2a2a2a transparent;
+  scrollbar-color: var(--n-2a2a2a) transparent;
 }
 
 /* A Biblioteca e a Forja trazem o próprio rolar: aqui elas só preenchem. */
@@ -401,7 +401,7 @@ html[data-motion="reduzido"] .sc * {
   padding: 0.1rem 0.45rem;
   border-radius: 999px;
   background: rgb(91 140 255 / 0.16);
-  color: #8ab0ff;
+  color: var(--link);
   font-size: 0.6875rem;
   font-weight: 400;
 }
@@ -593,7 +593,7 @@ html[data-motion="reduzido"] .sc * {
   border: 0;
   padding: 0;
   background: transparent;
-  color: #8ab0ff;
+  color: var(--link);
   font: inherit;
   text-decoration: underline;
   cursor: pointer;
@@ -651,11 +651,11 @@ html[data-motion="reduzido"] .sc * {
 
 .sk__tag--official {
   background: rgb(255 149 64 / 0.16);
-  color: #ffb066;
+  color: var(--accent-text);
 }
 
 .sk__tag--community {
-  background: rgb(255 255 255 / 0.08);
+  background: rgb(var(--ov) / 0.08);
   color: var(--c-text-2);
 }
 
@@ -676,7 +676,7 @@ html[data-motion="reduzido"] .sc * {
   border: 1px solid rgb(255 149 64 / 0.35);
   border-radius: 0.65rem;
   background: rgb(255 149 64 / 0.07);
-  color: #ffc58e;
+  color: var(--accent-text);
 }
 
 .sk__text {
@@ -709,7 +709,7 @@ html[data-motion="reduzido"] .sc * {
 
 .sk__refusal-title {
   margin: 0 0 0.35rem;
-  color: #ff8a80;
+  color: var(--danger-text);
   font-weight: 500;
 }
 
