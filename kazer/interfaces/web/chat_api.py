@@ -321,6 +321,12 @@ def chat_routes(ctx: WebContext, chat: ChatService | None) -> list[Route]:
         return JSONResponse(await run_in_threadpool(chat_service.skills, user.id))
 
     @endpoint
+    async def shared_skill(request: Request) -> Response:
+        await account(request)
+        found = await run_in_threadpool(service().shared_skill, request.path_params["skill_id"])
+        return JSONResponse(found)
+
+    @endpoint
     async def shared_skills(request: Request) -> Response:
         await account(request)
         page = await run_in_threadpool(
@@ -462,6 +468,7 @@ def chat_routes(ctx: WebContext, chat: ChatService | None) -> list[Route]:
         Route("/api/code/sessions", code_sessions, methods=["GET"]),
         Route("/api/skills", skills, methods=["GET", "POST"]),
         Route("/api/skills/shared", shared_skills, methods=["GET"]),
+        Route("/api/skills/shared/{skill_id}", shared_skill, methods=["GET"]),
         Route("/api/skills/{skill_id}", skill, methods=["GET", "POST", "DELETE"]),
         Route("/api/skills/{skill_id}/install", install_skill, methods=["POST"]),
         Route("/api/library", library, methods=["GET"]),

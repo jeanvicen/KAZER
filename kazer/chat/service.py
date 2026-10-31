@@ -30,7 +30,7 @@ from kazer.brain.model_provider import (
     ToolDef,
     Turn,
 )
-from kazer.chat import artifacts, connectors, context, mcp, plans
+from kazer.chat import artifacts, connectors, context, mcp, official_skills, plans, skill_guard
 from kazer.chat.generation import GenerationHub, LiveGeneration
 from kazer.chat.identity import current_access_token
 from kazer.chat.protocols import AttachmentStorage, ChatStorage
@@ -75,6 +75,7 @@ MAX_SKILL_DESCRIPTION = 300
 MAX_SKILL_INSTRUCTIONS = 20_000
 # Quantas habilidades entram por completo numa resposta.
 SKILLS_IN_CONTEXT = 4
+MAX_CALLED_SKILLS = 3
 # Quantas ferramentas de conector o modelo vê por vez.
 MAX_TOOLS_PER_CONNECTOR = 20
 MAX_TOOLS_TOTAL = 60
@@ -209,8 +210,10 @@ class SendOptions:
     documents: int = 0
     long_prompt: bool = False
     long_history: bool = False
-    # Modo Forja: oficina de código, só nos planos pagos.
+    # Modo KZ Code: oficina de código, só nos planos pagos.
     forja: bool = False
+    # Skills que a pessoa chamou com "/" nesta mensagem (ids, no máximo MAX_CALLED_SKILLS).
+    skills: tuple[str, ...] = ()
 
     def as_dict(self) -> dict[str, Any]:
         """Gravado junto da mensagem para auditoria de uso."""
@@ -221,6 +224,7 @@ class SendOptions:
             "web_search": self.web_search,
             "memory": self.memory,
             "forja": self.forja,
+            "skills": list(self.skills),
             # Guardado com a mensagem para o consumo ser auditável depois.
             "units": self.units,
         }
@@ -584,14 +588,15 @@ class ChatService:
         if remover is None or not remover(user_id, connection_id):
             raise ChatError("not_found", 404)
 
-    def _tools_for(self, user_id: str) -> list[ToolSpec]:
+    def _tools_for(self, user_id: str, *, read_only: bool = False) -> list[ToolSpec]:
         """Ferramentas dos conectores ligados, prontas para o modelo."""
         live = [item for item in self._connections(user_id) if item.enabled]
         features = self.usage_state(user_id).get("features") or {}
         specs: list[ToolSpec] = []
         for connection in live:
             weight = connectors.BY_ID.get(connection.connector_id)
-            writes = weight is not None and weight.can_write(features)
+            # Com Skill de terceiros na resposta, nada de escrita nos conectores.
+            writes = weight is not None and weight.can_write(features) and not read_only
             offered = 0
             for tool in connection.tools[: MAX_TOOLS_PER_CONNECTOR * 3]:
                 # Sem escrita no plano, só as ferramentas de leitura vão ao modelo.
@@ -614,7 +619,9 @@ class ChatService:
                 )
         return specs[:MAX_TOOLS_TOTAL]
 
-    def run_tool(self, user_id: str, spec: ToolSpec, arguments: dict[str, Any]) -> str:
+    def run_tool(
+        self, user_id: str, spec: ToolSpec, arguments: dict[str, Any], *, read_only: bool = False
+    ) -> str:
         """Executa uma ferramenta de conector e devolve o texto do resultado."""
         reader = getattr(self._store, "get_connection", None)
         connection = None if reader is None else reader(user_id, spec.connection_id)
@@ -622,12 +629,15 @@ class ChatService:
             return "Esse conector não está mais ligado nesta conta."
         features = self.usage_state(user_id).get("features") or {}
         catalog = connectors.BY_ID.get(connection.connector_id)
-        writes = catalog is not None and catalog.can_write(features)
+        writes = catalog is not None and catalog.can_write(features) and not read_only
         known = next((t for t in connection.tools if t.get("name") == spec.tool_name), None)
         # A trava de escrita é do servidor: mesmo que o modelo peça uma ferramenta
         # que não lhe foi oferecida, no plano sem escrita ela não é chamada.
         if not writes and (known is None or known.get("read_only") is not True):
-            return "Escrever nesse serviço entra com o plano Pro. Posso só ler."
+            return (
+                "Nesta resposta só posso ler nesse serviço: escrever entra com o plano Pro"
+                " e não vale quando há uma Skill de terceiros em uso."
+            )
         client = mcp.McpClient(
             connection.url,
             connection.token,
@@ -664,11 +674,51 @@ class ChatService:
         return out
 
     def shared_skills(self, query: str) -> dict[str, Any]:
-        """Catálogo aberto: habilidades que qualquer pessoa publicou."""
+        """Catálogo: as oficiais primeiro, depois o que a comunidade publicou."""
+        needle = " ".join(query.lower().split())[:80]
+        official = [
+            {
+                "id": item.id,
+                "name": item.name,
+                "slug": skill_guard.slugify(item.name),
+                "description": item.description,
+                "origin": "oficial",
+            }
+            for item in official_skills.CATALOG
+            if not needle or needle in f"{item.name} {item.description}".lower()
+        ]
         lister = getattr(self._store, "list_shared_skills", None)
-        if lister is None:
-            return {"items": []}
-        return {"items": [item.public(body=False) for item in lister(query=query[:80])]}
+        community = []
+        if lister is not None:
+            for item in lister(query=needle):
+                # Publicada antes da guarda existir, ou depois de a guarda ficar
+                # mais exigente: se não passa hoje, não aparece.
+                if skill_guard.scan(item.name, item.description, item.instructions, shared=True):
+                    continue
+                community.append({**item.public(body=False), "origin": "comunidade"})
+        return {"items": official + community}
+
+    def shared_skill(self, skill_id: str) -> dict[str, Any]:
+        """Uma Skill do catálogo, com o texto inteiro, para ler antes de instalar."""
+        official = official_skills.BY_ID.get(skill_id)
+        if official is not None:
+            return {
+                "id": official.id,
+                "name": official.name,
+                "slug": skill_guard.slugify(official.name),
+                "description": official.description,
+                "instructions": official.instructions,
+                "origin": "oficial",
+            }
+        if not valid_id(skill_id):
+            raise ChatError("not_found", 404)
+        reader = getattr(self._store, "get_skill", None)
+        item = None if reader is None else reader(skill_id)
+        if item is None:
+            raise ChatError("not_found", 404)
+        if skill_guard.scan(item.name, item.description, item.instructions, shared=True):
+            raise ChatError("not_found", 404)
+        return {**item.public(), "origin": "comunidade"}
 
     def create_skill(self, user_id: str, data: dict[str, Any]) -> dict[str, Any]:
         """Cria uma habilidade escrita pela própria pessoa."""
@@ -691,21 +741,37 @@ class ChatService:
         return out
 
     def install_skill(self, user_id: str, skill_id: str) -> dict[str, Any]:
-        """Copia para a conta uma habilidade publicada por outra pessoa."""
-        if not valid_id(skill_id):
-            raise ChatError("not_found", 404)
-        reader = getattr(self._store, "get_skill", None)
+        """Copia uma Skill do catálogo para a conta.
+
+        Instalar é copiar: a cópia fica congelada, então o autor não consegue
+        trocar o texto depois do "instalar". A da comunidade é conferida de novo
+        agora, e entra marcada como de terceiros (`catalogo`); a oficial é texto
+        da equipe e entra como da própria conta.
+        """
         creator = getattr(self._store, "create_skill", None)
-        source = None if reader is None else reader(skill_id)
-        if source is None or creator is None:
+        if creator is None:
             raise ChatError("not_found", 404)
-        # Instalar é copiar: mexer na sua cópia não altera a de ninguém.
+        official = official_skills.BY_ID.get(skill_id)
+        if official is not None:
+            name, description = official.name, official.description
+            instructions = official.instructions
+            origin = "propria"
+        else:
+            if not valid_id(skill_id):
+                raise ChatError("not_found", 404)
+            reader = getattr(self._store, "get_skill", None)
+            source = None if reader is None else reader(skill_id)
+            if source is None:
+                raise ChatError("not_found", 404)
+            self._refuse_unsafe(source.name, source.description, source.instructions)
+            name, description, instructions = source.name, source.description, source.instructions
+            origin = "catalogo"
         skill = creator(
             user_id,
-            name=source.name,
-            description=source.description,
-            instructions=source.instructions,
-            origin="catalogo",
+            name=name,
+            description=description,
+            instructions=instructions,
+            origin=origin,
             now=self._now(),
             max_count=MAX_SKILLS,
         )
@@ -728,6 +794,23 @@ class ChatService:
         reader = getattr(self._store, "get_skill", None)
         if updater is None or reader is None:
             raise ChatError("chat_unavailable", 503)
+        current = reader(skill_id, user_id)
+        if current is None:
+            raise ChatError("not_found", 404)
+        # Skill publicada (ou sendo publicada) é lida por outras contas: o texto
+        # final passa pela guarda a cada mudança, não só na primeira vez.
+        will_share = bool(changes.get("shared", current.shared))
+        content_keys = ("name", "description", "instructions", "shared")
+        if will_share and any(key in changes for key in content_keys):
+            self._refuse_unsafe(
+                str(changes.get("name", current.name)),
+                str(changes.get("description", current.description)),
+                str(changes.get("instructions", current.instructions)),
+            )
+            if changes.get("shared") and not current.shared:
+                wait = self._limiter.hit(f"publish:{user_id}", RateLimit(5, 3600))
+                if wait > 0:
+                    raise ChatError("rate_limited", 429, retry_after=wait)
         if changes and not updater(user_id, skill_id, self._now(), **changes):
             raise ChatError("not_found", 404)
         skill = reader(skill_id, user_id)
@@ -744,9 +827,11 @@ class ChatService:
         if remover is None or not remover(user_id, skill_id):
             raise ChatError("not_found", 404)
 
-    def _tool_runner(self, user_id: str) -> Callable[[ToolCall], tuple[str, str]]:
+    def _tool_runner(
+        self, user_id: str, *, read_only: bool = False
+    ) -> Callable[[ToolCall], tuple[str, str]]:
         """Fecha o ciclo: o modelo pede, o KAZER executa, o resultado volta."""
-        by_name = {spec.name: spec for spec in self._tools_for(user_id)}
+        by_name = {spec.name: spec for spec in self._tools_for(user_id, read_only=read_only)}
 
         def run(call: ToolCall) -> tuple[str, str]:
             spec = by_name.get(call.name)
@@ -755,42 +840,64 @@ class ChatService:
             # O rótulo é escrito aqui; nada do outro lado entra na narração.
             label = f"{spec.label}: {spec.tool_name}"
             try:
-                return (label, self.run_tool(user_id, spec, call.arguments))
+                return (label, self.run_tool(user_id, spec, call.arguments, read_only=read_only))
             except Exception:  # noqa: BLE001 - conector não derruba a resposta
                 logger.warning("chat.tool_failed")
                 return (label, "A ferramenta falhou.")
 
         return run
 
-    def _skills_for(self, user_id: str, question: str) -> list[tuple[str, str, str]]:
-        """Habilidades ligadas que combinam com o pedido.
+    def _skills_for(
+        self, user_id: str, question: str, called: Sequence[str] = ()
+    ) -> list[context.SkillUse]:
+        """Skills desta resposta: as que a pessoa chamou com "/" e as que combinam com o pedido.
 
-        A escolha é por palavra: as da descrição e do nome que aparecem no que a
-        pessoa escreveu. Sem palavra em comum, a habilidade fica de fora — não
-        adianta encher o contexto com instrução que não vem ao caso.
+        As chamadas entram sempre (só se forem da própria conta e estiverem
+        ligadas — o id vem do navegador, então a posse é conferida aqui). As
+        outras entram por palavra: as da descrição e do nome que aparecem no que a
+        pessoa escreveu; sem palavra em comum ficam de fora, não adianta encher o
+        contexto com instrução que não vem ao caso.
         """
         lister = getattr(self._store, "list_skills", None)
         if lister is None:
             return []
         try:
             installed = [item for item in lister(user_id) if item.enabled]
-        except Exception:  # noqa: BLE001 - habilidade não derruba a resposta
+        except Exception:  # noqa: BLE001 - Skill não derruba a resposta
             logger.warning("chat.skills_failed")
             return []
         if not installed:
             return []
+
+        def use(skill: Any, *, explicit: bool) -> context.SkillUse:
+            return context.SkillUse(
+                skill.name,
+                skill.description,
+                skill.instructions,
+                # `catalogo` = veio da comunidade: texto de terceiros, sem confiança.
+                trusted=skill.origin != "catalogo",
+                explicit=explicit,
+            )
+
+        chosen: list[context.SkillUse] = []
+        taken: set[str] = set()
+        for skill in installed:
+            if skill.id in called:
+                chosen.append(use(skill, explicit=True))
+                taken.add(skill.id)
         asked = {word for word in re.findall(r"\w{4,}", question.lower())}
         scored: list[tuple[int, Any]] = []
         for skill in installed:
+            if skill.id in taken:
+                continue
             words = set(re.findall(r"\w{4,}", f"{skill.name} {skill.description}".lower()))
             hits = len(words & asked)
             if hits:
                 scored.append((hits, skill))
         scored.sort(key=lambda pair: pair[0], reverse=True)
-        return [
-            (skill.name, skill.description, skill.instructions)
-            for _, skill in scored[:SKILLS_IN_CONTEXT]
-        ]
+        room = max(SKILLS_IN_CONTEXT - len(chosen), 0)
+        chosen.extend(use(skill, explicit=False) for _, skill in scored[:room])
+        return chosen
 
     def _skill_fields(self, data: dict[str, Any], *, required: bool) -> dict[str, Any]:
         """Valida nome, descrição e instruções no formato SKILL.md."""
@@ -805,11 +912,27 @@ class ChatService:
                 if required:
                     raise ChatError("invalid_request", 400)
                 continue
-            value = _clean(data.get(field_name), limit, lines=lines)
+            raw = data.get(field_name)
+            # Texto invisível não tem uso numa Skill e é o jeito de esconder
+            # instrução: recusado antes de qualquer limpeza, que o apagaria em silêncio.
+            if isinstance(raw, str) and skill_guard.has_hidden_characters(raw):
+                raise ChatError("skill_hidden_chars", 400)
+            value = _clean(raw, limit, lines=lines)
             if not value:
                 raise ChatError("invalid_request", 400)
             out[field_name] = value
+        # O nome vira o comando "/nome": precisa ter ao menos uma letra ou número.
+        if "name" in out and not skill_guard.slugify(out["name"]):
+            raise ChatError("invalid_request", 400)
         return out
+
+    def _refuse_unsafe(self, name: str, description: str, instructions: str) -> None:
+        """Skill que vai para a comunidade passa pela guarda; os motivos voltam, o trecho não."""
+        findings = skill_guard.scan(name, description, instructions, shared=True)
+        if findings:
+            raise ChatError(
+                "skill_unsafe", 400, reasons=[finding.reason for finding in findings]
+            )
 
     # ---------- Conectores ----------
 
@@ -1016,6 +1139,13 @@ class ChatService:
         forja = data.get("forja", False)
         if not isinstance(forja, bool):
             raise ChatError("invalid_request", 400)
+        called = data.get("skills", [])
+        if (
+            not isinstance(called, list)
+            or len(called) > MAX_CALLED_SKILLS
+            or not all(isinstance(item, str) and valid_id(item) for item in called)
+        ):
+            raise ChatError("invalid_request", 400)
         if forja and user_id and not self._allows(user_id, "coder"):
             raise ChatError("plan_required", 402, feature="forja", **self._offer(user_id))
         return SendOptions(
@@ -1024,6 +1154,7 @@ class ChatService:
             web_search=web,
             memory=memory and memory_enabled,
             forja=forja,
+            skills=tuple(dict.fromkeys(called)),
         )
 
     def _allows(self, user_id: str, feature: str) -> bool:
@@ -1164,7 +1295,9 @@ class ChatService:
             return exchange, self._hub.get(user_id, exchange.reply.id)
         if options.forja:
             self._remember_code_session(user_id, exchange.conversation.id, prefs)
-        request = self._request(user_id, exchange.user_message, options, prefs, timezone)
+        request, restricted = self._request(
+            user_id, exchange.user_message, options, prefs, timezone
+        )
         # Resposta pronta: os artefatos entram na Biblioteca e, se a conversa
         # acabou de nascer, o próprio modelo dá nome a ela.
         asked = content or (pending[0].name if pending else "")
@@ -1178,7 +1311,7 @@ class ChatService:
             request,
             access_token=current_access_token(),
             on_complete=on_complete,
-            on_tool=self._tool_runner(user_id),
+            on_tool=self._tool_runner(user_id, read_only=restricted),
         )
         logger.info("chat.message_accepted", extra={"units": options.units})
         return exchange, live
@@ -1201,6 +1334,9 @@ class ChatService:
             deep=bool(current.options.get("deep", False)),
             web_search=bool(current.options.get("web_search", False)),
             memory=bool(current.options.get("memory", True)),
+            skills=tuple(
+                item for item in current.options.get("skills", []) if isinstance(item, str)
+            ),
             forja=bool(current.options.get("forja", False)),
         )
         caps = self._provider.capabilities
@@ -1231,14 +1367,14 @@ class ChatService:
         question, reply = restarted
         prefs = self.preferences(user_id)
         options = replace(options, memory=options.memory and prefs["memory_enabled"])
-        request = self._request(user_id, question, options, prefs, timezone)
+        request, restricted = self._request(user_id, question, options, prefs, timezone)
         live = self._hub.start(
             user_id,
             reply.conversation_id,
             reply.id,
             request,
             access_token=current_access_token(),
-            on_tool=self._tool_runner(user_id),
+            on_tool=self._tool_runner(user_id, read_only=restricted),
         )
         return reply, live
 
@@ -1326,7 +1462,8 @@ class ChatService:
         options: SendOptions,
         prefs: dict[str, Any],
         timezone: str | None,
-    ) -> GenerationRequest:
+    ) -> tuple[GenerationRequest, bool]:
+        """O pedido ao modelo e se esta resposta é restrita (Skill de terceiros em uso)."""
         provider = self._provider
         assert provider is not None
         history = self._store.context_messages(
@@ -1338,6 +1475,8 @@ class ChatService:
             images=provider.capabilities.images,
             documents=provider.capabilities.documents,
         )
+        uses = self._skills_for(user_id, question.content, options.skills)
+        restricted = any(not skill.trusted for skill in uses)
         system = context.system_prompt(
             now=self._clock(),
             timezone=timezone,
@@ -1347,10 +1486,10 @@ class ChatService:
             memories=self._store.list_memories(user_id) if options.memory else [],
             web_search=options.web_search,
             forja=options.forja,
-            skills=self._skills_for(user_id, question.content),
+            skills=uses,
         )
-        specs = self._tools_for(user_id)
-        return GenerationRequest(
+        specs = self._tools_for(user_id, read_only=restricted)
+        request = GenerationRequest(
             system=system,
             turns=turns,
             effort=options.effort,
@@ -1361,6 +1500,7 @@ class ChatService:
                 for spec in specs
             ),
         )
+        return request, restricted
 
     def live(self, user_id: str, reply_id: str) -> LiveGeneration | None:
         """Geração ainda acompanhável (para reconectar depois de queda de rede)."""

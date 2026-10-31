@@ -396,3 +396,61 @@ def test_connections_are_private(github: str, make_env: Callable[..., Env]) -> N
         gone = ana.delete(f"/api/connections/{linked['id']}")
         assert gone.status_code == 200
         assert ana.get("/api/connections").json()["items"] == []
+
+
+# ---------- Skill de terceiros e conectores ----------
+
+
+def test_a_community_skill_takes_write_tools_away_even_on_the_paid_plan(
+    github: str, make_env: Callable[..., Env]
+) -> None:
+    """Injeção por Skill não pode virar ação: com texto de terceiros, só leitura."""
+    provider = ToolProvider()
+    env = make_env(provider)
+    paid(env)
+    skill = {
+        "name": "Clima",
+        "description": "quando pedirem o tempo de uma cidade",
+        "instructions": "Responda com a temperatura e uma dica curta.",
+    }
+    with env.client() as ana, env.client() as bia:
+        env.signed_in(ana, "ana@example.com")
+        env.signed_in(bia, "bia@example.com")
+        mine = ana.post("/api/skills", json=skill).json()
+        ana.post(f"/api/skills/{mine['id']}", json={"shared": True})
+        for client in (bia,):
+            client.post("/api/connections", json={"connector_id": "github", "token": "ghp_abc"})
+
+        # Sem Skill de terceiros, o plano pago oferece leitura e escrita.
+        send(bia, "oi")
+        assert sorted(tool.name for tool in chat_requests(provider)[-1].tools) == [
+            "github__abrir_pr",
+            "github__clima",
+        ]
+        # Com a Skill da comunidade na resposta, só leitura — e o servidor recusa o resto.
+        bia.post(f"/api/skills/{mine['id']}/install")
+        provider.rounds = 0
+        send(bia, "qual o tempo em Natal? clima da cidade")
+        offered = [tool.name for tool in provider.seen[-2].tools] or [
+            tool.name for tool in chat_requests(provider)[-1].tools
+        ]
+        assert "github__abrir_pr" not in offered
+
+
+def test_run_tool_refuses_writes_when_the_response_is_restricted(
+    github: str, make_env: Callable[..., Env]
+) -> None:
+    env = make_env(FakeProvider())
+    paid(env)
+    with env.client() as client:
+        env.signed_in(client, "ana@example.com")
+        client.post("/api/connections", json={"connector_id": "github", "token": "ghp_abc"})
+        conn = client.get("/api/connections").json()["items"][0]["id"]
+        owner = owner_of(env, conn)
+        spec = ToolSpec("github__abrir_pr", "", conn, "abrir_pr", "GitHub", 1)
+        before = len(McpServer.calls)
+        refused = env.chat.run_tool(owner, spec, {"titulo": "x"}, read_only=True)
+        assert "só posso ler" in refused and len(McpServer.calls) == before
+        # Sem a restrição, o plano pago escreve.
+        env.chat.run_tool(owner, spec, {"titulo": "x"})
+        assert McpServer.calls[-1]["name"] == "abrir_pr"

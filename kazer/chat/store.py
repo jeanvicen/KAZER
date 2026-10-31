@@ -16,6 +16,8 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
+from kazer.chat.skill_guard import slugify
+
 # Mesma tabela do AuthStore. Com o Supabase Auth, cada conta ganha aqui uma linha
 # "sombra" (sem senha) só para a posse e a exclusão em cascata do chat local.
 _OWNERS = """
@@ -284,6 +286,7 @@ class Skill:
         data: dict[str, Any] = {
             "id": self.id,
             "name": self.name,
+            "slug": slugify(self.name),
             "description": self.description,
             "enabled": self.enabled,
             "shared": self.shared,
