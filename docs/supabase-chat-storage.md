@@ -36,6 +36,10 @@ Aplicar **em ordem**, depois das duas migrações de fundação que já existem:
    (nome e objetivo, com a conversa apontando para um) e habilidades (formato
    `SKILL.md`: nome, descrição e instruções), incluindo o catálogo do que foi
    publicado e a instalação na própria conta.
+   > Os **projetos** criados por essa migração deixaram de ter uso na interface
+   > (o recurso foi retirado do produto). As tabelas, funções e políticas
+   > continuam como estão, sem apagar nada: dados e migrações são preservados.
+
 5. `supabase/migrations/20261030190000_kazer_connections.sql` — os conectores
    ligados. **A credencial é o ponto sensível**: a tabela não tem política de
    leitura e `revoke all ... from anon, authenticated` fecha o acesso direto,
