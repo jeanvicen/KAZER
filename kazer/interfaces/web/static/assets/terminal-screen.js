@@ -9,7 +9,7 @@ import { h, icon, mark } from "./dom.js";
 import { copyText } from "./markdown.js";
 
 const COMMANDS = [
-  ["kazer", "abre uma conversa"],
+  ["kazer", "abre uma conversa (e entra, se for a primeira vez)"],
   ['kazer "sua pergunta"', "responde e sai"],
   ["cat erro.log | kazer", "a pergunta vem pelo cano"],
   ["kazer conversas", "lista suas conversas"],
@@ -17,6 +17,7 @@ const COMMANDS = [
   ["kazer habilidades", "habilidades instaladas na conta"],
   ["kazer conectores", "conectores ligados na conta"],
   ["kazer status", "conta, plano e quanto resta da janela"],
+  ["kazer entrar <endereço>", "entra e guarda o servidor"],
   ["kazer sair", "encerra a sessão deste computador"],
 ];
 
@@ -33,21 +34,21 @@ export async function createTerminal({ onOpenSettings }) {
   const steps = [
     {
       title: "Instale o comando",
-      body: "Na pasta do KAZER, com Python 3.11 ou mais novo.",
-      code: "pip install -e .",
-      note: "Ainda não está publicado num repositório de pacotes: a instalação é a partir do projeto.",
+      body: "Com Python 3.11 ou mais novo. O pipx deixa o comando isolado e disponível em qualquer pasta.",
+      code: "pipx install git+https://github.com/jeanvicen/KAZER",
+      note: "Ainda não está num repositório de pacotes: a instalação vem direto do projeto. Dentro da pasta do projeto, pip install -e . também serve.",
     },
     {
-      title: "Aponte para este servidor",
-      body: "Guarde no seu shell para não repetir a cada vez.",
-      code: `export KAZER_URL="${origin}"`,
-      note: `Fora de localhost o terminal só fala https. Este servidor: ${origin}`,
+      title: "Entre — o endereço já vai junto",
+      body: "Um comando só: ele guarda este servidor e pede e-mail e senha da mesma conta deste navegador.",
+      code: `kazer entrar ${origin}`,
+      note: "A senha não aparece na tela nem fica no histórico do shell. A sessão fica em ~/.kazer/sessao.json, legível só pelo seu usuário. Fora de localhost o terminal só fala https.",
     },
     {
-      title: "Entre com a sua conta",
-      body: "A mesma deste navegador. A senha não aparece na tela nem fica no histórico do shell.",
-      code: "kazer entrar",
-      note: "A sessão fica em ~/.kazer/sessao.json, legível só pelo seu usuário.",
+      title: "Pronto: é só digitar kazer",
+      body: "Abre a conversa. Na primeira vez em outro computador, o próprio kazer pergunta o login.",
+      code: "kazer",
+      note: "Para uma pergunta rápida: kazer \"sua pergunta\". Para encerrar: kazer sair.",
     },
   ];
 

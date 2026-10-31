@@ -64,7 +64,7 @@ HELP = """
   kazer                       abre uma conversa nova
   kazer "sua pergunta"        responde e sai
   cat erro.log | kazer        a pergunta (ou o contexto) vem pelo cano
-  kazer entrar                entra com a conta do site
+  kazer entrar [endereço]     entra com a conta do site (e já guarda o servidor)
   kazer sair                  encerra a sessão deste computador
   kazer conversas [busca]     lista suas conversas
   kazer continuar [n]         volta para uma conversa
@@ -449,16 +449,20 @@ def _server() -> str:
     return credentials.DEFAULT_SERVER
 
 
-def enter(screen: Screen, email: str = "") -> int:
-    """`kazer entrar`: pede e-mail e senha e guarda a sessão."""
-    server = _server()
+def enter(screen: Screen, email: str = "", server: str = "") -> int:
+    """`kazer entrar [endereço]`: pede e-mail e senha e guarda a sessão.
+
+    Com o endereço na própria linha (`kazer entrar https://…`) instalar e conectar
+    são dois comandos, sem variável de ambiente nem passo extra.
+    """
+    server = server.rstrip("/") or _server()
     if not valid_server(server):
         screen.fail(f"  Endereço inválido: {server}")
         screen.note("  Fora de localhost o KAZER só fala https.")
         return 2
     screen.write()
     screen.write("  Entrando em " + screen.paint(server, BOLD))
-    screen.note("  Use a mesma conta do site. Para trocar de servidor: kazer servidor <url>")
+    screen.note("  Use a mesma conta do site.")
     screen.write()
     try:
         address = email or input("  e-mail  ").strip()
@@ -525,12 +529,26 @@ def show_server(screen: Screen, address: str = "") -> int:
     return 0
 
 
+def _interactive() -> bool:
+    """Há uma pessoa digitando (entrada e saída são terminais)?"""
+    return bool(sys.stdin and sys.stdin.isatty() and sys.stdout.isatty())
+
+
 def _connect(screen: Screen) -> Shell | None:
     """Abre o cliente com a sessão salva, ou explica o que falta."""
     saved = credentials.load()
     if saved is None:
-        screen.note("  Nenhuma sessão neste computador. Rode: kazer entrar")
-        return None
+        # Primeira vez com terminal na mão: entra aqui mesmo e segue o comando
+        # que a pessoa pediu, sem mandá-la rodar outro comando antes.
+        if not _interactive():
+            screen.note("  Nenhuma sessão neste computador. Rode: kazer entrar")
+            return None
+        screen.note("  Você ainda não entrou neste computador.")
+        if enter(screen) != 0:
+            return None
+        saved = credentials.load()
+        if saved is None:
+            return None
     api = ApiClient(saved.server, saved.cookie_name, saved.cookie)
     try:
         body = api.session()
@@ -576,6 +594,10 @@ def main(argv: Sequence[str] | None = None) -> int:
         screen.write(f"KAZER no terminal {VERSION}")
         return 0
     if command == "entrar":
+        # `kazer entrar https://meu.kazer` ou `kazer entrar ana@exemplo.com`.
+        if rest.startswith(("http://", "https://")):
+            address, _, mail = rest.partition(" ")
+            return enter(screen, mail.strip(), address)
         return enter(screen, rest)
     if command == "sair":
         return leave(screen)

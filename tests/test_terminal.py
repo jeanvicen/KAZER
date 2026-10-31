@@ -341,3 +341,53 @@ def test_no_colour_outside_a_terminal(monkeypatch: pytest.MonkeyPatch) -> None:
     assert plain.paint("KAZER", render.BOLD) == "KAZER"
     monkeypatch.setenv("NO_COLOR", "1")
     assert render.colors_on() is False
+
+
+# ---------- Conectar rápido ----------
+
+
+def test_one_command_connects_and_remembers_the_server(
+    live: Live, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """`kazer entrar <endereço>`: nada de variável de ambiente antes."""
+    monkeypatch.delenv(credentials.SERVER_ENV)
+    monkeypatch.setattr("builtins.input", lambda *_: EMAIL)
+    monkeypatch.setattr("getpass.getpass", lambda *_: PASSWORD)
+    assert main(["entrar", live.url]) == 0
+    saved = credentials.load()
+    assert saved is not None and saved.server == live.url and saved.email == EMAIL
+    # E a partir daí os comandos já sabem onde estão.
+    assert main(["status"]) == 0
+
+
+def test_the_email_can_come_with_the_address(
+    live: Live, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.delenv(credentials.SERVER_ENV)
+    asked: list[str] = []
+    monkeypatch.setattr("builtins.input", lambda *args: asked.append("e-mail") or "outra@x.com")
+    monkeypatch.setattr("getpass.getpass", lambda *_: PASSWORD)
+    assert main(["entrar", live.url, EMAIL]) == 0
+    assert asked == [], "o e-mail veio na linha de comando: não perguntou de novo"
+
+
+def test_the_first_run_logs_in_on_the_spot_and_runs_the_command(
+    live: Live, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    monkeypatch.setattr("kazer.interfaces.terminal.shell._interactive", lambda: True)
+    monkeypatch.setattr("builtins.input", lambda *_: EMAIL)
+    monkeypatch.setattr("getpass.getpass", lambda *_: PASSWORD)
+    assert credentials.load() is None
+    # Sem ter rodado `entrar` antes: pergunta o login e responde na sequência.
+    assert main(["pergunta de estreia"]) == 0
+    out = capsys.readouterr().out
+    assert "ainda não entrou" in out and "Olá, tudo certo?" in out
+    assert credentials.load() is not None
+
+
+def test_a_script_never_waits_for_a_login_prompt(
+    live: Live, capsys: pytest.CaptureFixture[str]
+) -> None:
+    # Sem terminal (cano, cron, CI) não há quem digite: avisa e sai, sem travar.
+    assert main(["pergunta"]) == 1
+    assert "kazer entrar" in capsys.readouterr().out
