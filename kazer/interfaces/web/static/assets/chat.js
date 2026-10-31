@@ -129,6 +129,8 @@ const S = {
   live: null, // { replyId, lastIndex, controller }
   attachments: [],
   options: { effort: store.get("kazer:effort", "baixo"), web: false, memory: true },
+  // Skills chamadas com "/" nesta mensagem.
+  skillsPicked: [],
   pinned: true,
   history: { items: [], next: null, query: "", loaded: false, loading: false },
   lastAttempt: null,
@@ -158,7 +160,7 @@ export async function mountChat({ email, onSignedOut }) {
     "open-settings", "account-avatar", "account-mail", "sign-out", "drawer-scrim", "pane",
     "menu", "topbar-title", "new-chat-top", "ambient", "empty", "greeting", "greeting-a", "greeting-b",
     "empty-note", "thread", "messages", "older", "to-bottom", "composer", "composer-alert",
-    "composer-alert-text", "composer-alert-close", "composer-box", "tray", "prompt", "plus", "model-chip",
+    "composer-alert-text", "composer-alert-close", "composer-box", "tray", "skill-chips", "prompt", "plus", "model-chip",
     "open-palette",
     "forja-chip", "mic", "send", "pick-camera", "pick-photos", "pick-files",
   ];
@@ -1035,6 +1037,7 @@ async function send() {
         attachments: attachmentIds,
         model: "kaz-1.1",
         effort: S.options.effort,
+        skills: S.skillsPicked.map((item) => item.id),
         tools: { web_search: S.options.web, research: false, memory: S.options.memory },
         forja: S.forja,
         timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
@@ -1134,6 +1137,7 @@ function commitSend(event) {
   }
   // Limpa o composer só agora: a mensagem já está salva no servidor.
   S.ui.prompt.value = "";
+  clearSkills();
   saveDraft();
   autosize();
   clearTray({ keepServer: true });
@@ -1225,8 +1229,78 @@ function autosize() {
   area.classList.toggle("is-scrolling", area.scrollHeight > max);
 }
 
+// ---------- Skills com "/" ----------
+
+const MAX_PICKED = 3;
+
+function renderSkillChips() {
+  const box = S.ui.skillChips;
+  box.hidden = !S.skillsPicked.length;
+  box.replaceChildren(
+    ...S.skillsPicked.map((skill) =>
+      h(
+        "li.skill-chip",
+        {},
+        icon("sparkle", "skill-chip__glyph"),
+        h("span.skill-chip__name", { text: skill.name }),
+        h(
+          "button.skill-chip__x",
+          {
+            type: "button",
+            "aria-label": `Tirar a Skill ${skill.name}`,
+            onclick: () => {
+              S.skillsPicked = S.skillsPicked.filter((item) => item.id !== skill.id);
+              renderSkillChips();
+              S.ui.prompt.focus();
+            },
+          },
+          icon("close"),
+        ),
+      ),
+    ),
+  );
+}
+
+function pickSkill(skill) {
+  if (S.skillsPicked.some((item) => item.id === skill.id)) return;
+  if (S.skillsPicked.length >= MAX_PICKED) {
+    toast(`No máximo ${MAX_PICKED} Skills por mensagem.`);
+    return;
+  }
+  S.skillsPicked = [...S.skillsPicked, { id: skill.id, name: skill.name, slug: skill.slug }];
+  renderSkillChips();
+}
+
+function clearSkills() {
+  if (!S.skillsPicked.length) return;
+  S.skillsPicked = [];
+  renderSkillChips();
+}
+
+// O menu só é baixado na primeira barra digitada.
+function bindSlash() {
+  let started = false;
+  const start = async () => {
+    if (started) return;
+    started = true;
+    const { createSlash } = await import("./slash.js");
+    S.slash = createSlash({
+      textarea: S.ui.prompt,
+      host: S.ui.composerBox,
+      onPick: pickSkill,
+      onBrowse: () => openSettings("skills"),
+    });
+    // O primeiro "/" já foi digitado: repassa o evento para o menu recém-criado.
+    S.ui.prompt.dispatchEvent(new Event("input"));
+  };
+  S.ui.prompt.addEventListener("input", () => {
+    if (!started && /(^|\s)\/[a-z0-9-]*$/i.test(S.ui.prompt.value.slice(0, S.ui.prompt.selectionStart ?? 0))) start();
+  });
+}
+
 function bindComposer() {
   const { prompt, composer } = S.ui;
+  bindSlash();
   prompt.addEventListener("input", () => {
     autosize();
     saveDraft();

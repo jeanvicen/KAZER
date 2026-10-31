@@ -640,3 +640,87 @@ html[data-motion="reduzido"] .sc * {
 .sc--embedded .sc__search {
   margin-inline: 0;
 }
+
+/* ---------- Skills: origem, aviso e a recusa da guarda ---------- */
+
+.sk__slug {
+  color: var(--c-text-3);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.75rem;
+}
+
+.sk__tag--official {
+  background: rgb(255 149 64 / 0.16);
+  color: #ffb066;
+}
+
+.sk__tag--community {
+  background: rgb(255 255 255 / 0.08);
+  color: var(--c-text-2);
+}
+
+.sk__lead,
+.sk__warn {
+  margin: 0;
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+.sk__lead {
+  color: var(--c-text-2);
+}
+
+/* O aviso de terceiros: visível, sem gritar. */
+.sk__warn {
+  padding: 0.65rem 0.8rem;
+  border: 1px solid rgb(255 149 64 / 0.35);
+  border-radius: 0.65rem;
+  background: rgb(255 149 64 / 0.07);
+  color: #ffc58e;
+}
+
+.sk__text {
+  max-height: 16rem;
+  margin: 0;
+  padding: 0.8rem;
+  overflow: auto;
+  border: 1px solid var(--c-border);
+  border-radius: 0.65rem;
+  background: var(--c-bg-2);
+  color: var(--c-text);
+  font-size: 0.8125rem;
+  line-height: 1.55;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.sk__slot:empty {
+  display: none;
+}
+
+.sk__refusal {
+  padding: 0.75rem 0.9rem;
+  border: 1px solid rgb(255 138 128 / 0.45);
+  border-radius: 0.65rem;
+  background: rgb(255 138 128 / 0.07);
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+.sk__refusal-title {
+  margin: 0 0 0.35rem;
+  color: #ff8a80;
+  font-weight: 500;
+}
+
+.sk__refusal ul {
+  margin: 0;
+  padding-left: 1.1rem;
+  color: var(--c-text-2);
+}
+
+.sk__refusal-note {
+  margin: 0.5rem 0 0;
+  color: var(--c-text-3);
+  font-size: 0.8125rem;
+}

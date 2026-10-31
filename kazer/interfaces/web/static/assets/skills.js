@@ -1,16 +1,51 @@
-// Tela Habilidades: o que você ensina ao KAZER.
+// Skills: o que você ensina ao KAZER, e o que a comunidade ensina.
 //
-// Uma habilidade é nome, descrição e instruções — o mesmo formato de um
-// SKILL.md. A descrição é o que decide quando ela entra: o KAZER compara as
-// palavras dela com o que você escreveu e, quando batem, segue as instruções.
+// Uma Skill é nome, descrição e instruções — o mesmo formato de um SKILL.md. A
+// descrição diz *quando* ela vale; as instruções, *como* responder. Chame uma
+// Skill digitando "/" no campo de escrita.
 //
-// Qualquer pessoa cria a sua e pode publicar no catálogo; instalar é copiar,
-// então mexer na sua cópia não altera a de ninguém.
+// Três origens, e a tela diz qual é qual:
+//   * Oficial: escrita pela equipe do KAZER, igual para todo mundo;
+//   * Comunidade: publicada por outra pessoa. Passa por uma guarda de segurança,
+//     entra no contexto como texto de terceiros e, quando está em uso, o KAZER
+//     não escreve em nenhum serviço conectado;
+//   * Sua: escrita por você.
+//
+// Instalar é copiar: a cópia fica congelada, então quem publicou não consegue
+// trocar o texto depois do seu "instalar". Leia antes de instalar — a tela
+// mostra o texto inteiro.
 
 import { h, icon } from "./dom.js";
 import { request } from "./net.js";
 import { confirmDialog, openSheet, toast } from "./sheets.js";
 import { emptyState, fab, headAction, searchField } from "./screens.js";
+
+const ERRORS = {
+  skill_hidden_chars: "O texto tem caracteres invisíveis escondidos. Apague e digite de novo.",
+  skill_limit: "Você chegou ao limite de Skills.",
+  rate_limited: "Muitas publicações seguidas. Tente de novo daqui a pouco.",
+  invalid_request: "Preencha nome, quando usar e instruções. O nome precisa ter letra ou número.",
+  not_found: "Essa Skill não está mais aqui.",
+  network: "Sem conexão. Tente de novo.",
+};
+
+// Motivos da guarda: a tela lista cada um, sem repetir o trecho que disparou.
+function refusal(data) {
+  if (data?.error === "skill_unsafe" && Array.isArray(data.reasons)) {
+    return h(
+      "div.sk__refusal",
+      { role: "alert" },
+      h("p.sk__refusal-title", { text: "Esta Skill não pode circular assim:" }),
+      h("ul", {}, data.reasons.map((reason) => h("li", { text: reason }))),
+      h("p.sk__refusal-note", {
+        text: "Ela continua sua, para uso pessoal. Para publicar, tire esses trechos.",
+      }),
+    );
+  }
+  return null;
+}
+
+const messageFor = (data) => ERRORS[data?.error] || "Não deu para concluir agora.";
 
 export async function createSkills() {
   const state = { tab: "minhas", query: "" };
@@ -36,7 +71,7 @@ export async function createSkills() {
         },
         h("span", { text: label }),
       );
-    const row = h("div.sc__tabs", { role: "tablist", "aria-label": "Habilidades" }, make("minhas", "Suas"), make("catalogo", "Catálogo"));
+    const row = h("div.sc__tabs", { role: "tablist", "aria-label": "Skills" }, make("minhas", "Suas"), make("catalogo", "Catálogo"));
     return row;
   }
 
@@ -46,7 +81,7 @@ export async function createSkills() {
     if (state.query) query.set("q", state.query);
     const result = await request(mine ? "/api/skills" : `/api/skills/shared?${query}`);
     if (!result.ok) {
-      list.replaceChildren(emptyState({ glyph: "sparkle", text: "Não deu para abrir as habilidades agora." }));
+      list.replaceChildren(emptyState({ glyph: "sparkle", text: "Não deu para abrir as Skills agora." }));
       return;
     }
     let items = result.data.items;
@@ -55,21 +90,28 @@ export async function createSkills() {
       items = items.filter((item) => `${item.name} ${item.description}`.toLowerCase().includes(needle));
     }
     note.textContent = mine
-      ? "O KAZER usa uma habilidade quando as palavras da descrição aparecem no que você pede."
-      : "Habilidades publicadas por quem usa o KAZER. Instalar faz uma cópia sua.";
+      ? 'Chame uma Skill digitando "/" no campo de escrita. O KAZER também usa uma quando as palavras da descrição aparecem no que você pede.'
+      : "Skills oficiais e da comunidade. Leia o texto antes de instalar: instalar faz uma cópia sua, que ninguém altera depois.";
     if (!items.length) {
       list.replaceChildren(
         emptyState({
           glyph: "sparkle",
           text: mine
-            ? "Nenhuma habilidade ainda. Crie uma: dê um nome, diga quando ela vale e escreva as instruções."
-            : "Nada publicado no catálogo ainda. Publique a sua e ela aparece aqui para todo mundo.",
+            ? "Nenhuma Skill ainda. Instale uma do catálogo ou crie a sua: dê um nome, diga quando ela vale e escreva as instruções."
+            : "Nada no catálogo ainda.",
         }),
       );
       return;
     }
     list.replaceChildren(...items.map((item) => (mine ? ownCard(item) : sharedCard(item))));
   }
+
+  const origin = (item) =>
+    item.origin === "oficial"
+      ? h("span.sk__tag.sk__tag--official", { text: "Oficial" })
+      : item.origin === "comunidade"
+        ? h("span.sk__tag.sk__tag--community", { text: "Comunidade" })
+        : null;
 
   function ownCard(item) {
     const toggle = h("input.switch__input", {
@@ -98,9 +140,10 @@ export async function createSkills() {
           icon("sparkle"),
           h("span", { text: item.name }),
           item.shared ? h("span.sk__tag", { text: "Publicada" }) : null,
-          item.origin === "catalogo" ? h("span.sk__tag", { text: "Do catálogo" }) : null,
+          item.origin === "catalogo" ? h("span.sk__tag.sk__tag--community", { text: "Da comunidade" }) : null,
         ),
         h("span.sc__card-text", { text: item.description }),
+        h("span.sk__slug", { text: `/${item.slug}` }),
       ),
       h("span.switch", {}, toggle, h("span.switch__track", { "aria-hidden": "true" }, h("span.switch__thumb"))),
     );
@@ -111,31 +154,57 @@ export async function createSkills() {
       "div.sc__card.sk__card",
       {},
       h(
-        "span.sk__open",
-        {},
-        h("span.sc__card-title", {}, icon("sparkle"), h("span", { text: item.name })),
+        "button.sk__open",
+        { type: "button", onclick: () => preview(item) },
+        h("span.sc__card-title", {}, icon("sparkle"), h("span", { text: item.name }), origin(item)),
         h("span.sc__card-text", { text: item.description }),
       ),
-      h(
-        "button.pill-button",
-        {
-          type: "button",
-          text: "Instalar",
-          onclick: async (event) => {
-            const button = event.currentTarget;
-            button.disabled = true;
-            const result = await request(`/api/skills/${item.id}/install`, { method: "POST" });
-            button.disabled = false;
-            if (!result.ok) {
-              toast(result.data?.error === "skill_limit" ? "Você chegou ao limite de habilidades." : "Não deu para instalar agora.");
-              return;
-            }
-            toast(`${item.name} instalada.`);
-          },
-        },
-      ),
+      h("button.pill-button", { type: "button", text: "Ver", onclick: () => preview(item) }),
     );
   }
+
+  // ---------- Ler antes de instalar ----------
+
+  async function preview(item) {
+    const full = await request(`/api/skills/shared/${item.id}`);
+    if (!full.ok) {
+      toast(messageFor(full.data));
+      load();
+      return;
+    }
+    const skill = full.data;
+    const community = skill.origin === "comunidade";
+    const install = h("button.pill-button.pill-button--solid", { type: "button", text: "Instalar" });
+    install.addEventListener("click", async () => {
+      install.disabled = true;
+      const result = await request(`/api/skills/${item.id}/install`, { method: "POST" });
+      install.disabled = false;
+      if (!result.ok) {
+        toast(messageFor(result.data));
+        return;
+      }
+      const { closeSheet } = await import("./sheets.js");
+      await closeSheet();
+      toast(`${skill.name} instalada. Chame com /${result.data.slug}.`);
+    });
+    openSheet({
+      title: skill.name,
+      content: h(
+        "div.sk__form",
+        {},
+        h("p.sk__lead", { text: skill.description }),
+        community
+          ? h("p.sk__warn", {
+              text: "Escrita por outra pessoa. O KAZER trata como texto de terceiros e, com ela em uso, não escreve em serviços conectados. Mesmo assim, leia antes de instalar.",
+            })
+          : h("p.sk__lead", { text: "Escrita pela equipe do KAZER." }),
+        h("pre.sk__text", { tabindex: "0" }, h("code", { text: skill.instructions })),
+        h("div.sk__actions", {}, install),
+      ),
+    });
+  }
+
+  // ---------- Formulário ----------
 
   function form(item) {
     const name = h("input.set-field__input", { type: "text", maxlength: "60", placeholder: "Ex.: Revisor de contratos", "aria-label": "Nome" });
@@ -162,13 +231,15 @@ export async function createSkills() {
   async function edit(item) {
     const full = await request(`/api/skills/${item.id}`);
     if (!full.ok) {
-      toast("Essa habilidade não está mais aqui.");
+      toast(messageFor(full.data));
       return;
     }
     const fields = form(full.data);
+    const slot = h("div.sk__slot");
     const save = h("button.pill-button.pill-button--solid", { type: "button", text: "Salvar" });
     save.addEventListener("click", async () => {
       save.disabled = true;
+      slot.replaceChildren();
       const result = await request(`/api/skills/${item.id}`, {
         method: "POST",
         body: {
@@ -179,7 +250,7 @@ export async function createSkills() {
       });
       save.disabled = false;
       if (!result.ok) {
-        toast("Preencha nome, descrição e instruções.");
+        slot.replaceChildren(refusal(result.data) || h("p.sk__warn", { text: messageFor(result.data) }));
         return;
       }
       const { closeSheet } = await import("./sheets.js");
@@ -187,34 +258,45 @@ export async function createSkills() {
       load();
     });
 
-    const publish = h("button.pill-button", { type: "button", text: full.data.shared ? "Despublicar" : "Publicar no catálogo" });
+    const publish = h("button.pill-button", { type: "button", text: full.data.shared ? "Despublicar" : "Publicar para a comunidade" });
     publish.addEventListener("click", async () => {
-      await request(`/api/skills/${item.id}`, { method: "POST", body: { shared: !full.data.shared } });
+      slot.replaceChildren();
+      publish.disabled = true;
+      const result = await request(`/api/skills/${item.id}`, { method: "POST", body: { shared: !full.data.shared } });
+      publish.disabled = false;
+      if (!result.ok) {
+        slot.replaceChildren(refusal(result.data) || h("p.sk__warn", { text: messageFor(result.data) }));
+        return;
+      }
       const { closeSheet } = await import("./sheets.js");
       await closeSheet();
+      toast(full.data.shared ? "Skill despublicada." : "Skill publicada para a comunidade.");
       load();
     });
 
+    const community = full.data.origin === "catalogo";
     openSheet({
       title: item.name,
       content: h(
         "div.sk__form",
         {},
+        community ? h("p.sk__warn", { text: "Veio da comunidade: o KAZER a trata como texto de terceiros." }) : null,
         field("Nome", fields.name),
         field("Quando usar", fields.description),
         field("Instruções", fields.instructions),
+        slot,
         h(
           "div.sk__actions",
           {},
           save,
-          publish,
+          community ? null : publish,
           h(
             "button.set-link.set-link--quiet",
             {
               type: "button",
               onclick: async (event) => {
                 const sure = await confirmDialog({
-                  title: "Apagar a habilidade?",
+                  title: "Apagar a Skill?",
                   body: "O KAZER para de usá-la nesta conta.",
                   confirm: "Apagar",
                   danger: true,
@@ -237,13 +319,15 @@ export async function createSkills() {
 
   function create() {
     const fields = form(null);
-    const submit = h("button.pill-button.pill-button--solid", { type: "button", text: "Criar habilidade", disabled: true });
+    const slot = h("div.sk__slot");
+    const submit = h("button.pill-button.pill-button--solid", { type: "button", text: "Criar Skill", disabled: true });
     const check = () => {
       submit.disabled = !(fields.name.value.trim() && fields.description.value.trim() && fields.instructions.value.trim());
     };
     for (const input of Object.values(fields)) input.addEventListener("input", check);
     submit.addEventListener("click", async () => {
       submit.disabled = true;
+      slot.replaceChildren();
       const result = await request("/api/skills", {
         method: "POST",
         body: {
@@ -253,7 +337,7 @@ export async function createSkills() {
         },
       });
       if (!result.ok) {
-        toast(result.data?.error === "skill_limit" ? "Você chegou ao limite de habilidades." : "Não deu para criar agora.");
+        slot.replaceChildren(h("p.sk__warn", { text: messageFor(result.data) }));
         submit.disabled = false;
         return;
       }
@@ -262,16 +346,16 @@ export async function createSkills() {
       state.tab = "minhas";
       load();
     });
-
     openSheet({
-      title: "Nova habilidade",
+      title: "Nova Skill",
       content: h(
         "div.sk__form",
         {},
-        h("p.sk__hint", { text: "A descrição decide quando ela vale: escreva as palavras que você usaria ao pedir." }),
+        h("p.sk__lead", { text: "Dê um nome, diga quando ela vale e escreva como o KAZER deve responder. O nome vira o comando: /nome." }),
         field("Nome", fields.name),
         field("Quando usar", fields.description),
         field("Instruções", fields.instructions),
+        slot,
         h("div.sk__actions", {}, submit),
       ),
     });
@@ -285,7 +369,7 @@ export async function createSkills() {
   await load();
   return {
     search: searchField({
-      placeholder: "Pesquisar habilidades",
+      placeholder: "Pesquisar Skills",
       onInput: (value) => {
         state.query = value;
         load();
@@ -293,6 +377,6 @@ export async function createSkills() {
     }),
     action: headAction({ label: "Recarregar", glyph: "retry", onClick: load }),
     body,
-    fab: fab({ label: "Nova habilidade", onClick: create }),
+    fab: fab({ label: "Nova Skill", onClick: create }),
   };
 }

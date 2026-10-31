@@ -210,8 +210,9 @@
         </div>
         <div class="composer__box" id="composer-box">
           <ul class="tray" id="tray" aria-label="Anexos" hidden></ul>
+          <ul class="skill-chips" id="skill-chips" aria-label="Skills desta mensagem" hidden></ul>
           <label class="sr-only" for="prompt">Mensagem para o KAZER</label>
-          <textarea class="composer__input" id="prompt" rows="1" placeholder="Converse com o KAZER..." maxlength="32000" autocomplete="off" spellcheck="true"></textarea>
+          <textarea class="composer__input" id="prompt" rows="1" placeholder="Converse com o KAZER..." maxlength="32000" autocomplete="off" spellcheck="true" aria-autocomplete="list" aria-expanded="false"></textarea>
           <div class="composer__bar">
             <button class="tool" type="button" id="plus" aria-label="Adicionar à conversa" aria-haspopup="dialog"><span data-icon="plus"></span></button>
             <button class="chip" type="button" id="model-chip" aria-haspopup="dialog" aria-label="Modelo KAZ 1.1, esforço Baixo"><span class="chip__model">KAZ 1.1</span><span class="chip__effort">Baixo</span></button>

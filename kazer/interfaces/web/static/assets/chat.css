@@ -4340,3 +4340,184 @@ html[data-motion="reduzido"] .pxword__blink {
   color: var(--c-text-2);
   font-weight: 500;
 }
+
+/* ---------- Menu "/" e etiquetas de Skill ---------- */
+
+/* A caixa de escrita é o ponto de ancoragem: o menu abre logo acima dela. */
+.composer__box {
+  position: relative;
+}
+
+.slash {
+  position: absolute;
+  right: 0;
+  bottom: calc(100% + 0.5rem);
+  left: 0;
+  z-index: 20;
+  max-height: min(18rem, 50dvh);
+  overflow-y: auto;
+  border: 1px solid var(--c-border-2);
+  border-radius: 0.9rem;
+  background: var(--c-surface);
+  box-shadow: 0 0.75rem 2rem rgb(0 0 0 / 0.5);
+  animation: slash-in 140ms ease-out both;
+}
+
+@keyframes slash-in {
+  from {
+    opacity: 0;
+    transform: translateY(0.35rem);
+  }
+}
+
+.slash__list {
+  display: grid;
+  padding: 0.3rem;
+}
+
+.slash__row {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.65rem;
+  width: 100%;
+  padding: 0.55rem 0.6rem;
+  border: 0;
+  border-radius: 0.6rem;
+  background: transparent;
+  color: var(--c-text-2);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.slash__row.is-on {
+  background: rgb(255 255 255 / 0.07);
+  color: var(--c-text);
+}
+
+.slash__glyph {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 1.25rem;
+  height: 1.25rem;
+  margin-top: 0.1rem;
+  color: var(--c-text-3);
+}
+
+.slash__glyph svg {
+  width: 1.05rem;
+  height: 1.05rem;
+}
+
+.slash__text {
+  display: grid;
+  flex: 1;
+  min-width: 0;
+  gap: 0.1rem;
+}
+
+.slash__name {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  font-size: 0.9375rem;
+}
+
+.slash__slug {
+  color: var(--c-text-3);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.75rem;
+}
+
+.slash__desc {
+  overflow: hidden;
+  color: var(--c-text-3);
+  font-size: 0.8125rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.slash__none {
+  display: grid;
+  gap: 0.4rem;
+  margin: 0;
+  padding: 0.9rem;
+  color: var(--c-text-3);
+  font-size: 0.875rem;
+}
+
+.slash__none p {
+  margin: 0;
+}
+
+.slash__link {
+  justify-self: start;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: #8ab0ff;
+  font: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.skill-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin: 0;
+  padding: 0.7rem 0.9rem 0;
+  list-style: none;
+}
+
+.skill-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  max-width: 100%;
+  padding: 0.25rem 0.3rem 0.25rem 0.6rem;
+  border: 1px solid rgb(255 149 64 / 0.4);
+  border-radius: 999px;
+  background: rgb(255 149 64 / 0.09);
+  color: #ffc58e;
+  font-size: 0.8125rem;
+}
+
+.skill-chip__glyph {
+  width: 0.85rem;
+  height: 0.85rem;
+}
+
+.skill-chip__name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.skill-chip__x {
+  display: grid;
+  place-items: center;
+  width: 1.3rem;
+  height: 1.3rem;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+
+.skill-chip__x:hover {
+  background: rgb(255 255 255 / 0.1);
+}
+
+.skill-chip__x svg {
+  width: 0.75rem;
+  height: 0.75rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html:not([data-motion="completo"]) .slash {
+    animation: none;
+  }
+}
