@@ -14,6 +14,17 @@
 // recarrega a página: é o jeito mais simples de garantir que tudo muda junto.
 
 const LANGS = ["pt", "en"];
+
+// Compatibilidade: o chat ainda registra esse controle mesmo sem atalho visível.
+// Ele fica no template, invisível, e só evita que a montagem da conversa pare.
+const chatTemplate = document.getElementById("tpl-chat");
+if (chatTemplate && !chatTemplate.content.querySelector("#sign-out")) {
+  const hiddenSignOut = document.createElement("button");
+  hiddenSignOut.id = "sign-out";
+  hiddenSignOut.type = "button";
+  hiddenSignOut.hidden = true;
+  chatTemplate.content.append(hiddenSignOut);
+}
 // Áreas de conteúdo (da pessoa ou do modelo) e de código: ficam como estão.
 const SKIP =
   "[data-no-i18n], .msg, .markdown, .code, pre, code, textarea, input, script, style, " +
