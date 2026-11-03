@@ -724,3 +724,67 @@ html[data-motion="reduzido"] .sc * {
   color: var(--c-text-3);
   font-size: 0.8125rem;
 }
+
+/* ---------- Catálogo de Skills ---------- */
+
+.sk__list {
+  gap: 0.6rem;
+}
+
+.sk__catalog-card {
+  position: relative;
+  min-height: 6.4rem;
+  padding: 0.95rem;
+  border-radius: 1rem;
+  background: linear-gradient(135deg, var(--c-surface), var(--c-bg-2));
+  transition: opacity 0.28s ease, transform 0.28s ease, max-height 0.28s ease, margin 0.28s ease, padding 0.28s ease;
+}
+
+.sk__catalog-card .pill-button {
+  align-self: center;
+  min-width: 5.75rem;
+}
+
+.sk__source {
+  display: block;
+  margin-top: 0.25rem;
+  overflow: hidden;
+  color: var(--c-text-3);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.6875rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sk__tag--repo {
+  background: rgb(105 212 176 / 0.14);
+  color: #64d9b2;
+}
+
+.sk__card--installed {
+  overflow: hidden;
+  max-height: 0;
+  margin-block: -0.3rem;
+  padding-block: 0;
+  border-width: 0;
+  opacity: 0;
+  transform: scale(0.96);
+}
+
+.sk__card--installed::after {
+  content: "Instalada";
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: var(--c-surface);
+  color: #64d9b2;
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sk__catalog-card {
+    transition: none;
+  }
+}
