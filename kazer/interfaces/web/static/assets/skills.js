@@ -18,7 +18,7 @@
 import { h, icon } from "./dom.js";
 import { request } from "./net.js";
 import { confirmDialog, openSheet, toast } from "./sheets.js";
-import { emptyState, fab, headAction, searchField } from "./screens.js";
+import { emptyState, headAction, searchField } from "./screens.js";
 
 const ERRORS = {
   skill_hidden_chars: "O texto tem caracteres invisíveis escondidos. Apague e digite de novo.",
@@ -48,8 +48,8 @@ function refusal(data) {
 const messageFor = (data) => ERRORS[data?.error] || "Não deu para concluir agora.";
 
 export async function createSkills() {
-  const state = { tab: "minhas", query: "" };
-  const list = h("div.sc__list");
+  const state = { tab: "minhas", query: "", installed: new Set() };
+  const list = h("div.sc__list.sk__list");
   const note = h("p.sk__note");
   const body = h("div.sk", {}, tabs(), note, list);
 
@@ -71,7 +71,7 @@ export async function createSkills() {
         },
         h("span", { text: label }),
       );
-    const row = h("div.sc__tabs", { role: "tablist", "aria-label": "Skills" }, make("minhas", "Suas"), make("catalogo", "Catálogo"));
+    const row = h("div.sc__tabs", { role: "tablist", "aria-label": "Skills" }, make("minhas", "Suas"), make("catalogo", "Explorar"));
     return row;
   }
 
@@ -89,9 +89,10 @@ export async function createSkills() {
       const needle = state.query.toLowerCase();
       items = items.filter((item) => `${item.name} ${item.description}`.toLowerCase().includes(needle));
     }
+    if (!mine) items = items.filter((item) => !state.installed.has(item.id));
     note.textContent = mine
-      ? 'Chame uma Skill digitando "/" no campo de escrita. O KAZER também usa uma quando as palavras da descrição aparecem no que você pede.'
-      : "Skills oficiais e da comunidade. Leia o texto antes de instalar: instalar faz uma cópia sua, que ninguém altera depois.";
+      ? 'Suas Skills ficam prontas para usar no chat com "/".'
+      : "100 Skills reais de repositórios públicos. Abra, leia e instale só as que servem para você.";
     if (!items.length) {
       list.replaceChildren(
         emptyState({
@@ -109,9 +110,11 @@ export async function createSkills() {
   const origin = (item) =>
     item.origin === "oficial"
       ? h("span.sk__tag.sk__tag--official", { text: "Oficial" })
-      : item.origin === "comunidade"
-        ? h("span.sk__tag.sk__tag--community", { text: "Comunidade" })
-        : null;
+      : item.origin === "repositorio"
+        ? h("span.sk__tag.sk__tag--repo", { text: item.category || "Repositório" })
+        : item.origin === "comunidade"
+          ? h("span.sk__tag.sk__tag--community", { text: "Comunidade" })
+          : null;
 
   function ownCard(item) {
     const toggle = h("input.switch__input", {
@@ -150,16 +153,20 @@ export async function createSkills() {
   }
 
   function sharedCard(item) {
+    const meta = item.source
+      ? h("span.sk__source", { text: item.source })
+      : h("span.sk__source", { text: item.origin === "oficial" ? "KAZER" : "Comunidade" });
     return h(
-      "div.sc__card.sk__card",
-      {},
+      "div.sc__card.sk__card.sk__catalog-card",
+      { dataset: { skillId: item.id } },
       h(
         "button.sk__open",
         { type: "button", onclick: () => preview(item) },
         h("span.sc__card-title", {}, icon("sparkle"), h("span", { text: item.name }), origin(item)),
         h("span.sc__card-text", { text: item.description }),
+        meta,
       ),
-      h("button.pill-button", { type: "button", text: "Ver", onclick: () => preview(item) }),
+      h("button.pill-button", { type: "button", text: "Explorar", onclick: () => preview(item) }),
     );
   }
 
@@ -183,9 +190,14 @@ export async function createSkills() {
         toast(messageFor(result.data));
         return;
       }
+      const card = list.querySelector(`[data-skill-id="${CSS.escape(item.id)}"]`);
+      card?.classList.add("sk__card--installed");
+      await new Promise((resolve) => window.setTimeout(resolve, 360));
+      state.installed.add(item.id);
       const { closeSheet } = await import("./sheets.js");
       await closeSheet();
-      toast(`${skill.name} instalada. Chame com /${result.data.slug}.`);
+      card?.remove();
+      toast(`${skill.name} instalada. Já foi para Suas Skills.`);
     });
     openSheet({
       title: skill.name,
@@ -377,6 +389,6 @@ export async function createSkills() {
     }),
     action: headAction({ label: "Recarregar", glyph: "retry", onClick: load }),
     body,
-    fab: fab({ label: "Nova Skill", onClick: create }),
+    fab: null,
   };
 }
