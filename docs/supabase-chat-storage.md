@@ -194,6 +194,7 @@ rodar quantas vezes for preciso no mesmo banco.
 
 ## O que ainda depende de configuração
 
-As migrações precisam ser aplicadas ao projeto real; o conector Supabase desta
-sessão não tem permissão de escrita no projeto `Kazer`, então elas foram escritas
-e validadas contra um Postgres local, mas **não** aplicadas em produção.
+As migrações foram aplicadas ao projeto real `Kazer` em 03/11/2026, incluindo o
+endurecimento das RPCs. O banco passou a disponibilizar as funções usadas pelo
+`SupabaseChatStore`; a configuração dos segredos e Redirect URLs de produção
+continua sendo responsabilidade do ambiente de deploy, nunca do Git.

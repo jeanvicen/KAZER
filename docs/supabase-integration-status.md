@@ -24,9 +24,10 @@ Duas migrações novas levam as conversas para o Postgres: colunas e cota em
 Postgres 16 local, com as duas suítes de `supabase/tests/` passando a partir de
 um banco limpo. Detalhes, aplicação e reversão: [supabase-chat-storage.md](supabase-chat-storage.md).
 
-**Ainda não foram aplicadas ao projeto real**: o conector Supabase desta sessão
-não tem permissão de escrita em `Kazer`. Enquanto não forem aplicadas, o chat em
-produção continua respondendo `chat_unavailable`.
+**Aplicadas ao projeto real em 03/11/2026**: as migrações de armazenamento,
+operações do chat, Biblioteca, projetos/habilidades, conectores e endurecimento
+das RPCs foram aplicadas ao projeto `Kazer`. O histórico de chats, preferências,
+memórias, anexos, cotas e artefatos agora usam o backend persistente do Supabase.
 
 Uma falha de privilégio foi encontrada e corrigida durante a validação: o plano
 da conta tinha ficado em `public.profiles`, que já concede `UPDATE` ao dono, e
@@ -62,9 +63,18 @@ A documentação oficial do Supabase confirma que email/password e redirects pre
 - **Identidade:** com o Supabase Auth configurado, o chat usa a conta do Supabase (`auth.users.id`) resolvida no servidor a partir do cookie HttpOnly (`SupabaseAuthService.resolve_session`). O access token vencido é renovado com o refresh token e o cookie novo volta na mesma resposta, então ninguém é deslogado a cada hora.
 - **Link de confirmação:** quando o link do Supabase traz `access_token` e `refresh_token`, a confirmação já abre a sessão e leva direto ao chat; sem o refresh token, confirma e pede o login.
 - **Conta:** trocar senha (confere a atual entrando de novo e usa `PUT /user`), sair dos outros dispositivos (`/logout?scope=others`) e excluir a conta pela API admin, que só funciona com `SUPABASE_SERVICE_ROLE_KEY` no servidor (lida por `security/secrets.py`, escopo `supabase_admin`). Sem a chave, a exclusão responde `503 account_delete_unavailable` e a interface explica.
-- **Onde ficam as conversas hoje:** no SQLite local do servidor (`KAZER_DATABASE_PATH`), com uma linha "sombra" por conta do Supabase só para posse e exclusão em cascata. As tabelas `conversations`, `messages`, `attachments` e `usage_*` criadas no Supabase pela migração `20261029131800` **ainda não são usadas pelo chat**.
-- **Vercel:** funções serverless não têm disco persistente. Lá o login pelo Supabase funciona (quando as variáveis estiverem cadastradas), mas o chat responde `503 chat_unavailable` e a interface diz que o banco das conversas ainda não foi configurado. Nada de histórico que some.
+- **Onde ficam as conversas hoje:** no Postgres do Supabase, por meio de
+  `SupabaseChatStore`, com RLS e RPCs transacionais. O SQLite permanece apenas
+  como fallback local fora de ambientes serverless.
+- **Vercel:** com `SUPABASE_URL` e `SUPABASE_PUBLISHABLE_KEY` configurados, o
+  login e o chat usam o banco persistente; o histórico não depende do disco
+  efêmero da função serverless.
 
-### Próximo passo para o chat na Vercel
+### Estado da conexão do chat na Vercel
 
-Levar o armazenamento do chat para o Postgres do Supabase. A migração atual não cobre o que o chat já usa (estado da resposta, resumo do raciocínio, `client_id` para idempotência, ordem das mensagens, preferências, memórias, cota em unidades e anexos no Storage privado). Isso pede uma migração nova e funções transacionais (por exemplo, registrar pergunta, reservar resposta e debitar a cota numa única chamada), aplicadas ao projeto `Kazer` só com autorização explícita.
+O armazenamento do chat já foi levado para o Postgres do Supabase. A aplicação
+usa as funções transacionais para registrar a pergunta, reservar a resposta,
+debitar a cota, manter a ordem das mensagens e podar o histórico; preferências,
+memórias, Biblioteca, projetos, habilidades e conectores também estão ligados.
+Ainda dependem de configuração de ambiente os segredos de produção descritos
+acima, em especial a chave publicável e a service role somente no backend.
