@@ -284,9 +284,15 @@ function bindViewport() {
   const viewport = window.visualViewport;
   const root = document.documentElement;
   // Altura real do composer: posiciona "ir para o fim" e os avisos logo acima dele.
-  new ResizeObserver(([entry]) => {
-    root.style.setProperty("--composer-h", `${Math.round(entry.target.offsetHeight)}px`);
-  }).observe(S.ui.composer);
+  const syncComposer = () => root.style.setProperty("--composer-h", `${Math.round(S.ui.composer.offsetHeight)}px`);
+  if (typeof ResizeObserver === "function") {
+    new ResizeObserver(([entry]) => {
+      root.style.setProperty("--composer-h", `${Math.round(entry.target.offsetHeight)}px`);
+    }).observe(S.ui.composer);
+  } else {
+    window.addEventListener("resize", syncComposer, { passive: true });
+    syncComposer();
+  }
   if (!viewport) return;
   const sync = () => {
     root.style.setProperty("--app-h", `${Math.round(viewport.height)}px`);
@@ -578,7 +584,7 @@ function bindThread() {
   S.ui.toBottom.addEventListener("click", () => scrollToBottom(true));
   // Markdown só é montado quando a mensagem chega perto da tela.
   lazyObserver = createLazyObserver();
-  olderObserver = new IntersectionObserver(
+  olderObserver = createIntersectionObserver(
     (entries) => {
       if (entries.some((entry) => entry.isIntersecting)) loadOlder();
     },
@@ -588,7 +594,7 @@ function bindThread() {
 }
 
 function createLazyObserver() {
-  return new IntersectionObserver(
+  return createIntersectionObserver(
     (entries) => {
       for (const entry of entries) {
         if (!entry.isIntersecting) continue;
@@ -599,6 +605,19 @@ function createLazyObserver() {
     },
     { root: S.ui.thread, rootMargin: "1200px 0px" },
   );
+}
+
+// WebViews antigos não têm IntersectionObserver. Nesse caso, renderiza o que
+// já está na tela e deixa o carregamento incremental para o botão/scroll normal.
+function createIntersectionObserver(callback, options) {
+  if (typeof IntersectionObserver === "function") return new IntersectionObserver(callback, options);
+  return {
+    observe(target) {
+      callback([{ target, isIntersecting: true }]);
+    },
+    unobserve() {},
+    disconnect() {},
+  };
 }
 
 function scrollToBottom(smooth) {

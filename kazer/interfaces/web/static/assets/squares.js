@@ -125,8 +125,9 @@ export function startAmbient(canvas, { reducedMotion = false } = {}) {
   }
 
   const onVisibility = () => (document.hidden ? pause() : play());
-  const observer = new ResizeObserver(() => resize());
-  observer.observe(canvas);
+  const observer = typeof ResizeObserver === "function" ? new ResizeObserver(() => resize()) : null;
+  if (observer) observer.observe(canvas);
+  else window.addEventListener("resize", resize, { passive: true });
   document.addEventListener("visibilitychange", onVisibility);
   if (reducedMotion) origin = performance.now() - 5000; // quadro estático, já assentado
   resize();
@@ -150,7 +151,8 @@ export function startAmbient(canvas, { reducedMotion = false } = {}) {
       if (!alive) return;
       alive = false;
       pause();
-      observer.disconnect();
+      observer?.disconnect();
+      if (!observer) window.removeEventListener("resize", resize);
       document.removeEventListener("visibilitychange", onVisibility);
       tiles = [];
       if (owners.get(canvas) === owner) {
