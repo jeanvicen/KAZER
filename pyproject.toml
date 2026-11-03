@@ -30,7 +30,7 @@ include = ["kazer*"]
 
 # Vercel: o preset "python" (vercel.json) carrega esta app ASGI como função.
 [tool.vercel]
-entrypoint = "kazer.interfaces.web.asgi:app"
+entrypoint = "interfaces.web.asgi:app"
 
 [tool.setuptools.package-data]
 "kazer.interfaces.web" = [
