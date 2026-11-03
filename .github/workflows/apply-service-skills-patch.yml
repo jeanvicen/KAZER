@@ -1,0 +1,25 @@
+name: Apply Skills service update
+
+on:
+  push:
+    paths:
+      - "kazer/chat/.service_skills.patch"
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Apply the reviewed patch
+        run: |
+          git apply --check kazer/chat/.service_skills.patch
+          git apply kazer/chat/.service_skills.patch
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git rm kazer/chat/.service_skills.patch .github/workflows/apply-service-skills-patch.yml
+          git add kazer/chat/service.py
+          git commit -m "feat: integrar catálogo público de Skills"
+          git push
