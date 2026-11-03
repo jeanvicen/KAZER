@@ -1,4 +1,4 @@
-// Paleta de comandos: a habilidade que só o computador tem.
+// Paleta de comandos: o recurso que só o computador tem.
 //
 // Ctrl+K (⌘K no Mac) abre uma caixa que faz tudo pelo teclado — ir para uma
 // seção, começar uma conversa, abrir o KZ Code ou as configurações, e buscar

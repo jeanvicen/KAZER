@@ -25,7 +25,6 @@ Postgres 16 local, com as duas suítes de `supabase/tests/` passando a partir de
 um banco limpo. Detalhes, aplicação e reversão: [supabase-chat-storage.md](supabase-chat-storage.md).
 
 **Aplicadas ao projeto real em 03/11/2026**: as migrações de armazenamento,
-operações do chat, Biblioteca, projetos/habilidades, conectores e endurecimento
 das RPCs foram aplicadas ao projeto `Kazer`. O histórico de chats, preferências,
 memórias, anexos, cotas e artefatos agora usam o backend persistente do Supabase.
 
@@ -75,6 +74,5 @@ A documentação oficial do Supabase confirma que email/password e redirects pre
 O armazenamento do chat já foi levado para o Postgres do Supabase. A aplicação
 usa as funções transacionais para registrar a pergunta, reservar a resposta,
 debitar a cota, manter a ordem das mensagens e podar o histórico; preferências,
-memórias, Biblioteca, projetos, habilidades e conectores também estão ligados.
 Ainda dependem de configuração de ambiente os segredos de produção descritos
 acima, em especial a chave publicável e a service role somente no backend.

@@ -14,7 +14,6 @@ const SECTIONS = [
   ["interface", "Interface", "sliders"],
   ["dados", "Dados e privacidade", "shield"],
   ["conectores", "Conectores", "plug"],
-  ["skills", "Skills", "sparkle"],
   ["terminal", "Terminal", "terminal"],
   ["sobre", "Sobre", "info"],
 ];
@@ -880,22 +879,7 @@ class SettingsPanel {
 
   // Catálogo de conectores: busca, categorias e o que o plano desta conta
   // libera em cada um. A lista vem do servidor, uma página por vez.
-  // Skills e Terminal moraram na gaveta; agora são seções daqui e reaproveitam
-  // os mesmos módulos, carregados só quando a pessoa abre a seção.
-  section_skills() {
-    const holder = h("div.settings__embed");
-    (async () => {
-      await loadStyle("/assets/screens.css");
-      const { createSkills } = await import("./skills.js");
-      const view = await createSkills();
-      if (!holder.isConnected && this.current !== "skills") return;
-      holder.replaceChildren(
-        h("div.sc.sc--embedded", {}, view.search, h("div.sc__body", {}, view.body), view.fab),
-      );
-    })().catch(() => holder.replaceChildren(h("p.set-note", { text: "Não deu para abrir as Skills agora." })));
-    return holder;
-  }
-
+  // Terminal é carregado só quando a pessoa abre a seção.
   section_terminal() {
     const holder = h("div.settings__embed");
     (async () => {

@@ -30,7 +30,6 @@ from kazer.chat.store import (
     LimitReached,
     Memory,
     Message,
-    Skill,
     UsageWindow,
 )
 
@@ -52,19 +51,6 @@ def _connection(row: dict[str, Any]) -> Connection:
         int(row.get("created_at") or 0),
     )
 
-
-def _skill(row: dict[str, Any]) -> Skill:
-    return Skill(
-        str(row["id"]),
-        str(row["name"]),
-        str(row["description"]),
-        str(row.get("instructions") or ""),
-        bool(row.get("enabled")),
-        bool(row.get("shared")),
-        str(row.get("origin") or "propria"),
-        int(row.get("created_at") or 0),
-        int(row.get("updated_at") or 0),
-    )
 
 
 def _artifact(row: dict[str, Any]) -> Artifact:
@@ -533,77 +519,6 @@ class SupabaseChatStore:
     def delete_connection(self, user_id: str, connection_id: str) -> bool:
         """Desliga o conector e apaga a credencial."""
         return bool(self._rpc("kazer_delete_connection", {"p_id": connection_id}))
-
-    # ---------- Projetos ----------
-
-    def list_skills(self, user_id: str) -> list[Skill]:
-        """Habilidades da conta, com as instruções (o chat precisa delas)."""
-        return [_skill(row) for row in self._rpc("kazer_skills") or []]
-
-    def list_shared_skills(self, *, query: str = "", limit: int = 40) -> list[Skill]:
-        """Catálogo aberto: o que qualquer pessoa publicou."""
-        rows = self._rpc("kazer_shared_skills", {"p_query": query, "p_limit": limit}) or []
-        return [_skill(row) for row in rows]
-
-    def get_skill(self, skill_id: str, user_id: str | None = None) -> Skill | None:
-        """Habilidade por id; sem `user_id`, só se ela for pública."""
-        data = self._rpc("kazer_skill", {"p_id": skill_id, "p_mine": bool(user_id)})
-        return None if not data else _skill(data)
-
-    def create_skill(
-        self,
-        user_id: str,
-        *,
-        name: str,
-        description: str,
-        instructions: str,
-        origin: str,
-        now: int,
-        max_count: int,
-    ) -> Skill | None:
-        """Cria a habilidade; None quando a conta chegou ao limite."""
-        data = self._rpc(
-            "kazer_create_skill",
-            {
-                "p_name": name,
-                "p_description": description,
-                "p_instructions": instructions,
-                "p_origin": origin,
-                "p_max": max_count,
-            },
-        )
-        return None if not data else _skill(data)
-
-    def update_skill(
-        self,
-        user_id: str,
-        skill_id: str,
-        now: int,
-        *,
-        name: str | None = None,
-        description: str | None = None,
-        instructions: str | None = None,
-        enabled: bool | None = None,
-        shared: bool | None = None,
-    ) -> bool:
-        """Altera só os campos informados."""
-        return bool(
-            self._rpc(
-                "kazer_update_skill",
-                {
-                    "p_id": skill_id,
-                    "p_name": name,
-                    "p_description": description,
-                    "p_instructions": instructions,
-                    "p_enabled": enabled,
-                    "p_shared": shared,
-                },
-            )
-        )
-
-    def delete_skill(self, user_id: str, skill_id: str) -> bool:
-        """Apaga uma habilidade da própria conta."""
-        return bool(self._rpc("kazer_delete_skill", {"p_id": skill_id}))
 
     # ---------- Biblioteca e artefatos ----------
 

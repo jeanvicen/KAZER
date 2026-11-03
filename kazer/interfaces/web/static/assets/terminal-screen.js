@@ -14,7 +14,6 @@ const COMMANDS = [
   ["cat erro.log | kazer", "a pergunta vem pelo cano"],
   ["kazer conversas", "lista suas conversas"],
   ["kazer continuar 2", "volta para uma conversa"],
-  ["kazer habilidades", "habilidades instaladas na conta"],
   ["kazer conectores", "conectores ligados na conta"],
   ["kazer status", "conta, plano e quanto resta da janela"],
   ["kazer entrar <endereço>", "entra e guarda o servidor"],
@@ -63,8 +62,8 @@ export async function createTerminal({ onOpenSettings }) {
         h("h3.tm__title", { text: "KAZER no terminal" }),
         h("p.tm__lead", {
           text:
-            "A mesma conta e as mesmas conversas, sem navegador. As habilidades instaladas" +
-            " entram no contexto, os conectores ligados viram ferramentas, o plano limita e a" +
+            "A mesma conta e as mesmas conversas, sem navegador. Os conectores ligados" +
+            " viram ferramentas, o plano limita e a" +
             " memória lembra — porque é o mesmo servidor respondendo.",
         }),
       ),

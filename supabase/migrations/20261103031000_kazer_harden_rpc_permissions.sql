@@ -22,7 +22,6 @@ end $$;
 alter function public.kazer_plan_quota(text) set search_path = public;
 alter function public.kazer_artifact_json(public.kazer_artifacts, boolean) set search_path = public;
 alter function public.kazer_project_json(public.kazer_projects, bigint) set search_path = public;
-alter function public.kazer_skill_json(public.kazer_skills, boolean) set search_path = public;
 alter function public.kazer_connection_json(public.kazer_connections) set search_path = public;
 
 commit;

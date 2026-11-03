@@ -131,8 +131,6 @@ const S = {
   live: null, // { replyId, lastIndex, controller }
   attachments: [],
   options: { effort: store.get("kazer:effort", "baixo"), web: false, memory: true },
-  // Skills chamadas com "/" nesta mensagem.
-  skillsPicked: [],
   pinned: true,
   history: { items: [], next: null, query: "", loaded: false, loading: false },
   lastAttempt: null,
@@ -167,7 +165,7 @@ export async function mountChat({ email, onSignedOut }) {
     "open-settings", "account-avatar", "account-mail", "sign-out", "drawer-scrim", "pane",
     "menu", "topbar-title", "new-chat-top", "ambient", "empty", "greeting", "greeting-a", "greeting-b",
     "empty-note", "thread", "messages", "older", "to-bottom", "composer", "composer-alert",
-    "composer-alert-text", "composer-alert-close", "composer-box", "tray", "skill-chips", "prompt", "plus", "model-chip",
+    "composer-alert-text", "composer-alert-close", "composer-box", "tray", "prompt", "plus", "model-chip",
     "open-palette",
     "forja-chip", "mic", "send", "pick-camera", "pick-photos", "pick-files",
   ];
@@ -1070,7 +1068,6 @@ async function send() {
         attachments: attachmentIds,
         model: "kaz-1.1",
         effort: S.options.effort,
-        skills: S.skillsPicked.map((item) => item.id),
         tools: { web_search: S.options.web, research: false, memory: S.options.memory },
         forja: S.forja,
         timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
@@ -1170,7 +1167,6 @@ function commitSend(event) {
   }
   // Limpa o composer só agora: a mensagem já está salva no servidor.
   S.ui.prompt.value = "";
-  clearSkills();
   saveDraft();
   autosize();
   clearTray({ keepServer: true });
@@ -1260,187 +1256,6 @@ function autosize() {
   const max = Math.max(120, Math.round(window.innerHeight * 0.36));
   area.style.height = `${Math.min(area.scrollHeight, max)}px`;
   area.classList.toggle("is-scrolling", area.scrollHeight > max);
-}
-
-// ---------- Skills com "/" ----------
-
-const MAX_PICKED = 3;
-
-function renderSkillChips() {
-  const box = S.ui.skillChips;
-  box.hidden = !S.skillsPicked.length;
-  box.replaceChildren(
-    ...S.skillsPicked.map((skill) =>
-      h(
-        "li.skill-chip",
-        {},
-        icon("sparkle", "skill-chip__glyph"),
-        h("span.skill-chip__name", { text: skill.name }),
-        h(
-          "button.skill-chip__x",
-          {
-            type: "button",
-            "aria-label": `Tirar a Skill ${skill.name}`,
-            onclick: () => {
-              S.skillsPicked = S.skillsPicked.filter((item) => item.id !== skill.id);
-              renderSkillChips();
-              S.ui.prompt.focus();
-            },
-          },
-          icon("close"),
-        ),
-      ),
-    ),
-  );
-}
-
-function pickSkill(skill) {
-  if (S.skillsPicked.some((item) => item.id === skill.id)) return;
-  if (S.skillsPicked.length >= MAX_PICKED) {
-    toast(`No máximo ${MAX_PICKED} Skills por mensagem.`);
-    return;
-  }
-  S.skillsPicked = [...S.skillsPicked, { id: skill.id, name: skill.name, slug: skill.slug }];
-  renderSkillChips();
-}
-
-function clearSkills() {
-  if (!S.skillsPicked.length) return;
-  S.skillsPicked = [];
-  renderSkillChips();
-}
-
-// O menu só é baixado na primeira barra digitada.
-function bindSlash() {
-  let started = false;
-  const start = async () => {
-    if (started) return;
-    started = true;
-    const { createSlash } = await import("./slash.js");
-    S.slash = createSlash({
-      textarea: S.ui.prompt,
-      host: S.ui.composerBox,
-      onPick: pickSkill,
-      onBrowse: () => openSettings("skills"),
-    });
-    // O primeiro "/" já foi digitado: repassa o evento para o menu recém-criado.
-    S.ui.prompt.dispatchEvent(new Event("input"));
-  };
-  S.ui.prompt.addEventListener("input", () => {
-    if (!started && /(^|\s)\/[a-z0-9-]*$/i.test(S.ui.prompt.value.slice(0, S.ui.prompt.selectionStart ?? 0))) start();
-  });
-}
-
-function bindComposer() {
-  const { prompt, composer } = S.ui;
-  bindSlash();
-  prompt.addEventListener("input", () => {
-    autosize();
-    saveDraft();
-    updateSendState();
-    S.ui.empty.classList.toggle("is-typing", Boolean(prompt.value));
-  });
-  prompt.addEventListener("keydown", (event) => {
-    if (event.key !== "Enter" || event.isComposing) return;
-    const force = event.ctrlKey || event.metaKey;
-    const enterSends = !coarse.matches && S.prefs.send_on_enter !== false;
-    if (force || (enterSends && !event.shiftKey)) {
-      event.preventDefault();
-      send();
-    }
-  });
-  composer.addEventListener("submit", (event) => {
-    event.preventDefault();
-    send();
-  });
-  S.ui.composerAlertClose.addEventListener("click", hideAlert);
-  S.ui.plus.addEventListener("click", () => openPlusSheet());
-  S.ui.mic.addEventListener("click", () => toggleDictation());
-  S.ui.modelChip.addEventListener("click", () => openModelSheet());
-  for (const [input, source] of [
-    [S.ui.pickCamera, "camera"],
-    [S.ui.pickPhotos, "photos"],
-    [S.ui.pickFiles, "files"],
-  ]) {
-    input.addEventListener("change", () => {
-      const files = [...input.files];
-      input.value = "";
-      addFiles(files, source);
-      prompt.focus({ preventScroll: true });
-    });
-  }
-  // Colar imagem direto no campo.
-  prompt.addEventListener("paste", (event) => {
-    const files = [...(event.clipboardData?.files || [])];
-    if (files.length) {
-      event.preventDefault();
-      addFiles(files, "paste");
-    }
-  });
-  // Arrastar arquivos para a conversa (desktop).
-  S.ui.pane.addEventListener("dragover", (event) => {
-    if (event.dataTransfer?.types?.includes("Files")) {
-      event.preventDefault();
-      S.ui.pane.classList.add("is-dropping");
-    }
-  });
-  S.ui.pane.addEventListener("dragleave", (event) => {
-    if (event.target === S.ui.pane || !S.ui.pane.contains(event.relatedTarget)) S.ui.pane.classList.remove("is-dropping");
-  });
-  S.ui.pane.addEventListener("drop", (event) => {
-    if (!event.dataTransfer?.files?.length) return;
-    event.preventDefault();
-    S.ui.pane.classList.remove("is-dropping");
-    addFiles([...event.dataTransfer.files], "drop");
-  });
-  restoreDraft();
-}
-
-let dictation = null;
-
-async function toggleDictation() {
-  const { createDictation, dictationSupported, DICTATION_ERRORS } = await import("./voice.js");
-  if (!dictationSupported) {
-    toast("Este navegador não tem reconhecimento de fala. No celular, o teclado costuma ter um microfone.", {
-      duration: 5200,
-    });
-    return;
-  }
-  if (dictation?.listening) {
-    dictation.stop();
-    return;
-  }
-  if (!dictation) {
-    dictation = createDictation({
-      lang: locale(),
-      onText: (text, interim) => {
-        S.ui.prompt.value = text;
-        S.ui.composerBox.classList.toggle("is-hearing", interim);
-        autosize();
-        updateSendState();
-        S.ui.empty.classList.toggle("is-typing", Boolean(text));
-      },
-      onState: (state) => {
-        const on = state !== "idle";
-        S.ui.mic.setAttribute("aria-pressed", String(on));
-        S.ui.mic.classList.toggle("is-listening", state === "listening");
-        S.ui.mic.setAttribute("aria-label", on ? "Parar de ditar" : "Ditar por voz");
-        S.ui.composerBox.classList.toggle("is-dictating", on);
-        if (!on) {
-          S.ui.composerBox.classList.remove("is-hearing");
-          saveDraft();
-        }
-      },
-      onError: (code) => toast(DICTATION_ERRORS[code] || "O ditado parou. Tente de novo.", { duration: 4200 }),
-    });
-  }
-  // Uma vez por navegador: o áudio é transcrito pelo serviço do navegador.
-  if (!store.get("kazer:voice-note", false)) {
-    store.set("kazer:voice-note", true);
-    toast("Seu navegador transcreve a fala; o KAZER recebe só o texto.", { duration: 5000 });
-  }
-  const current = S.ui.prompt.value.trim();
-  dictation.start(current ? current + " " : "");
 }
 
 // ---------- Esforço ----------
@@ -1866,7 +1681,7 @@ async function openConnectorsSheet() {
 // ---------- Atalhos de teclado (computador) ----------
 //
 // O computador ganha o que o celular não tem como ter: comando pelo teclado.
-// Nada aqui some do celular — são habilidades a mais, não um caminho
+// Nada aqui some do celular — são recursos extras, não um caminho
 // diferente. Os atalhos só respondem em tela de computador e nunca quando a
 // pessoa está escrevendo num campo.
 
@@ -1928,7 +1743,6 @@ function paletteGroups() {
         },
         { label: "Nova conversa no KZ Code", glyph: "code", hint: keyLabel(SHORTCUTS[3]), run: startForja },
         { label: "Configurações", glyph: "gear", run: () => openSettings() },
-        { label: "Skills", glyph: "sparkle", run: () => openSettings("skills") },
         { label: "Terminal", glyph: "terminal", run: () => openSettings("terminal") },
         { label: "Planos", glyph: "bolt", run: () => offerPlans({}) },
         {

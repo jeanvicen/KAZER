@@ -27,7 +27,6 @@ Onde o chat guarda depende do ambiente: com o Supabase configurado (produção),
 | Preferências (apelido, estilo, instruções, interface) | Ajustar o assistente e a interface | `preferences` / `kazer_preferences` | Até alterar ou excluir a conta |
 | Plano da conta (`free`, `pro`, `ultra`) | Saber a franquia de uso | `kazer_plans` (só leitura para o dono) | Enquanto a conta existir |
 | Artefatos (páginas, componentes, SVG, diagramas e dados que o KAZER produziu) | Guardar na Biblioteca o que foi feito | `artifacts` / `kazer_artifacts` | Até apagar o artefato, a conversa ou a conta |
-| Skills (nome, descrição, instruções, se está ligada, se foi publicada para a comunidade; instalar faz uma cópia da conta) | Entrar no contexto quando a pessoa chama `/skill` ou a descrição casa com o pedido | `skills` / `kazer_skills` | Até apagar a Skill ou a conta |
 | Conector **GitHub**: **token de acesso** que a pessoa cola, ferramentas anunciadas e estado (o endereço é fixo no servidor, não é dado da pessoa) | Ler e, no plano que permite, escrever no GitHub em nome da conta | `connections` / `kazer_connections` | Até desligar o conector ou excluir a conta |
 | Contagem de uso (unidades e horário, sem conteúdo) | Cota no servidor | `usage_events`, `usage_windows` | 2 dias |
 | Fuso horário do navegador | Informar a data ao modelo | Só na requisição | Não é guardado |
@@ -36,7 +35,6 @@ O **título** de cada conversa passa a ser escrito pelo modelo: depois da primei
 
 A **credencial do conector** (o token do GitHub) é o dado mais sensível que o chat guarda, porque é a chave de um serviço de terceiro. Ela fica no servidor e só lá: `kazer_connections()` devolve nome, ferramentas e estado, e nada mais; `select` direto na tabela é negado a `authenticated`, então um `GET` no PostgREST não a alcança; o único caminho até ela é `kazer_connection_secret()`, que é `security definer`, exige `auth.uid()` e só devolve a credencial da própria conta. Ela nunca volta ao navegador — nem em listagem, nem em erro — e nunca entra em log. Quando o KAZER usa a ferramenta, a credencial vai no cabeçalho da chamada ao servidor MCP do serviço, e o que ele responde volta como **resultado de ferramenta**: dado vindo de fora, nunca instrução do sistema. Desligar o conector mantém a credencial guardada; apagar o conector leva tudo.
 
-As **Skills publicadas** para a comunidade passam a ser legíveis por qualquer conta, por decisão de quem publicou: nome, descrição e instruções. As não publicadas só o dono lê. Antes de publicar, instalar ou usar, o servidor passa o texto pela guarda de segurança (`skill_guard.py`); Skill da comunidade em uso entra no contexto como texto de terceiros e deixa os conectores só em leitura.
 
 **Preferências no servidor** incluem tema (`escuro`, `claro`, `sistema`), idioma (`pt`, `en`) e as **sessões do KZ Code** (`code_sessions`: só identificadores de conversa e o horário, nunca devolvidas ao navegador além da lista própria). **Projetos** deixaram de existir na interface; as tabelas do esquema anterior ficam sem uso, e nenhuma delas foi apagada.
 

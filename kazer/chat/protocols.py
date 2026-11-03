@@ -18,7 +18,6 @@ from kazer.chat.store import (
     Exchange,
     Memory,
     Message,
-    Skill,
     UsageWindow,
 )
 
@@ -133,40 +132,6 @@ class ChatStorage(Protocol):
     ) -> bool: ...
 
     def delete_connection(self, user_id: str, connection_id: str) -> bool: ...
-
-    # Projetos
-    def list_skills(self, user_id: str) -> list[Skill]: ...
-
-    def list_shared_skills(self, *, query: str = ..., limit: int = ...) -> list[Skill]: ...
-
-    def get_skill(self, skill_id: str, user_id: str | None = ...) -> Skill | None: ...
-
-    def create_skill(
-        self,
-        user_id: str,
-        *,
-        name: str,
-        description: str,
-        instructions: str,
-        origin: str,
-        now: int,
-        max_count: int,
-    ) -> Skill | None: ...
-
-    def update_skill(
-        self,
-        user_id: str,
-        skill_id: str,
-        now: int,
-        *,
-        name: str | None = ...,
-        description: str | None = ...,
-        instructions: str | None = ...,
-        enabled: bool | None = ...,
-        shared: bool | None = ...,
-    ) -> bool: ...
-
-    def delete_skill(self, user_id: str, skill_id: str) -> bool: ...
 
     # Biblioteca e artefatos
     def save_artifacts(

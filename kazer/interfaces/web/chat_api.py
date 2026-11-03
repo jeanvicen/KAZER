@@ -27,8 +27,6 @@ from kazer.chat.uploads import MAX_UPLOAD_BYTES
 from kazer.interfaces.web.common import WebContext, client_of, endpoint
 
 SEND_BODY_BYTES = 256 * 1024
-# Instruções de habilidade podem ser longas.
-SKILL_BODY_BYTES = 64 * 1024
 SETTINGS_BODY_BYTES = 16 * 1024
 _STREAM_HEADERS = {"X-Accel-Buffering": "no"}
 
@@ -311,56 +309,6 @@ def chat_routes(ctx: WebContext, chat: ChatService | None) -> list[Route]:
         return JSONResponse(await run_in_threadpool(service().code_sessions, user.id))
 
     @endpoint
-    async def skills(request: Request) -> Response:
-        user, _ = await account(request)
-        chat_service = service()
-        if request.method == "POST":
-            data = await ctx.read_json(request, SKILL_BODY_BYTES)
-            created = await run_in_threadpool(chat_service.create_skill, user.id, data)
-            return JSONResponse(created, status_code=201)
-        return JSONResponse(await run_in_threadpool(chat_service.skills, user.id))
-
-    @endpoint
-    async def shared_skill(request: Request) -> Response:
-        await account(request)
-        found = await run_in_threadpool(service().shared_skill, request.path_params["skill_id"])
-        return JSONResponse(found)
-
-    @endpoint
-    async def shared_skills(request: Request) -> Response:
-        await account(request)
-        page = await run_in_threadpool(
-            service().shared_skills, request.query_params.get("q", "")
-        )
-        return JSONResponse(page)
-
-    @endpoint
-    async def skill(request: Request) -> Response:
-        user, _ = await account(request)
-        chat_service = service()
-        skill_id = request.path_params["skill_id"]
-        if request.method == "DELETE":
-            ctx.check_origin(request)
-            await run_in_threadpool(chat_service.delete_skill, user.id, skill_id)
-            return JSONResponse({"deleted": True})
-        if request.method == "POST":
-            data = await ctx.read_json(request, SKILL_BODY_BYTES)
-            updated = await run_in_threadpool(
-                chat_service.update_skill, user.id, skill_id, data
-            )
-            return JSONResponse(updated)
-        return JSONResponse(await run_in_threadpool(chat_service.skill, user.id, skill_id))
-
-    @endpoint
-    async def install_skill(request: Request) -> Response:
-        user, _ = await account(request)
-        ctx.check_origin(request)
-        installed = await run_in_threadpool(
-            service().install_skill, user.id, request.path_params["skill_id"]
-        )
-        return JSONResponse(installed, status_code=201)
-
-    @endpoint
     async def connector_catalog(request: Request) -> Response:
         user, _ = await account(request)
         return JSONResponse(await run_in_threadpool(service().connectors, user.id))
@@ -466,11 +414,6 @@ def chat_routes(ctx: WebContext, chat: ChatService | None) -> list[Route]:
         Route("/api/connections", connections, methods=["GET", "POST"]),
         Route("/api/connections/{connection_id}", connection, methods=["POST", "DELETE"]),
         Route("/api/code/sessions", code_sessions, methods=["GET"]),
-        Route("/api/skills", skills, methods=["GET", "POST"]),
-        Route("/api/skills/shared", shared_skills, methods=["GET"]),
-        Route("/api/skills/shared/{skill_id}", shared_skill, methods=["GET"]),
-        Route("/api/skills/{skill_id}", skill, methods=["GET", "POST", "DELETE"]),
-        Route("/api/skills/{skill_id}/install", install_skill, methods=["POST"]),
         Route("/api/library", library, methods=["GET"]),
         Route("/api/artifacts/{artifact_id}", artifact, methods=["GET", "DELETE"]),
         Route("/api/memories", memories, methods=["POST"]),

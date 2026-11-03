@@ -6,7 +6,7 @@
 // Sem tradução no dicionário, o texto fica em português: nunca some nem quebra.
 //
 // O que NUNCA é traduzido: o que a pessoa escreveu e o que o modelo respondeu
-// (mensagens, títulos de conversa, texto de Skill, código). Essas áreas são
+// (mensagens, títulos de conversa, código). Essas áreas são
 // puladas por seletor, e a tradução só vale para texto exato, então uma conversa
 // que por acaso diga "Conversas" continua dizendo "Conversas".
 //
