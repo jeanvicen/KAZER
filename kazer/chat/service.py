@@ -30,7 +30,7 @@ from kazer.brain.model_provider import (
     ToolDef,
     Turn,
 )
-from kazer.chat import artifacts, connectors, context, mcp, official_skills, plans, skill_guard
+from kazer.chat import artifacts, connectors, context, external_skills, mcp, official_skills, plans, skill_guard
 from kazer.chat.generation import GenerationHub, LiveGeneration
 from kazer.chat.identity import current_access_token
 from kazer.chat.protocols import AttachmentStorage, ChatStorage
@@ -692,6 +692,14 @@ class ChatService:
             for item in official_skills.CATALOG
             if not needle or needle in f"{item.name} {item.description}".lower()
         ]
+        # O catálogo também mostra 100 Skills abertas e rastreáveis a repositórios
+        # públicos. O conteúdo só é baixado ao abrir a Skill e passa pela guarda
+        # antes de qualquer cópia entrar na conta.
+        repository = [
+            item.public
+            for item in external_skills.catalog()
+            if not needle or needle in f"{item.name} {item.category} {item.source}".lower()
+        ]
         lister = getattr(self._store, "list_shared_skills", None)
         community = []
         if lister is not None:
@@ -701,7 +709,7 @@ class ChatService:
                 if skill_guard.scan(item.name, item.description, item.instructions, shared=True):
                     continue
                 community.append({**item.public(body=False), "origin": "comunidade"})
-        return {"items": official + community}
+        return {"items": official + repository + community}
 
     def shared_skill(self, skill_id: str) -> dict[str, Any]:
         """Uma Skill do catálogo, com o texto inteiro, para ler antes de instalar."""
@@ -715,6 +723,17 @@ class ChatService:
                 "instructions": official.instructions,
                 "origin": "oficial",
             }
+        remote = external_skills.get(skill_id)
+        if remote is not None:
+            instructions = external_skills.instructions(remote)
+            if instructions is None:
+                raise ChatError("not_found", 404)
+            name = remote.public["name"]
+            description = remote.public["description"]
+            # Não se confia no registro externo: mostrar também passa pela guarda.
+            if skill_guard.scan(name, description, instructions, shared=True):
+                raise ChatError("not_found", 404)
+            return {**remote.public, "instructions": instructions}
         if not valid_id(skill_id):
             raise ChatError("not_found", 404)
         reader = getattr(self._store, "get_skill", None)
@@ -757,10 +776,18 @@ class ChatService:
         if creator is None:
             raise ChatError("not_found", 404)
         official = official_skills.BY_ID.get(skill_id)
+        remote = external_skills.get(skill_id)
         if official is not None:
             name, description = official.name, official.description
             instructions = official.instructions
             origin = "propria"
+        elif remote is not None:
+            instructions = external_skills.instructions(remote)
+            if instructions is None:
+                raise ChatError("not_found", 404)
+            name, description = remote.public["name"], remote.public["description"]
+            self._refuse_unsafe(name, description, instructions)
+            origin = "catalogo"
         else:
             if not valid_id(skill_id):
                 raise ChatError("not_found", 404)
