@@ -223,7 +223,7 @@ def test_build_provider_needs_the_key_not_a_model_name() -> None:
     assert build_provider(settings, Env2()) is None
     built = build_provider(settings, Env2(GROQ_API_KEY=KEY))
     assert isinstance(built, GroqProvider)
-    assert built.capabilities.efforts == ("baixo", "medio", "alto", "extra", "max")
+    assert built.capabilities.efforts == ("baixo",)
     assert KEY not in repr(built)
 
 
@@ -257,11 +257,11 @@ def test_the_browser_only_sees_the_efforts_the_server_offers(
     with env.client() as client:
         env.signed_in(client, "ana@example.com")
         config = client.get("/api/chat/config").json()
-        assert [e["id"] for e in config["efforts"]] == ["baixo", "medio", "alto", "max"]
+        assert [e["id"] for e in config["efforts"]] == ["baixo"]
 
         # Esforço fora da oferta é recusado no servidor, não só escondido.
         bad = client.post(
-            "/api/chat", json={"client_id": "abcdefgh1", "content": "oi", "effort": "extra"}
+            "/api/chat", json={"client_id": "abcdefgh1", "content": "oi", "effort": "medio"}
         )
         assert (bad.status_code, bad.json()["error"]) == (400, "invalid_effort")
         # E o navegador nunca escolhe um modelo por fora.
@@ -272,21 +272,13 @@ def test_the_browser_only_sees_the_efforts_the_server_offers(
         assert sneaky.json()["error"] == "invalid_model"
 
 
-def test_chosen_effort_reaches_the_matching_model_and_weighs_more(
+def test_kaz_1_1_uses_only_the_low_effort_model(
     groq_url: str, make_env: Callable[..., Env]
 ) -> None:
     env = make_env(provider(groq_url))
     with env.client() as client:
         env.signed_in(client, "ana@example.com")
-        usage_before = client.get("/api/settings").json()["usage"]["consumed"]
         stream = send(client, "pergunta leve", effort="baixo")
         assert stream[-1]["reply"]["content"] == "resposta de small-model"
-        light = client.get("/api/settings").json()["usage"]["consumed"] - usage_before
-
-        mid = client.get("/api/settings").json()["usage"]["consumed"]
-        stream = send(client, "pergunta pesada", effort="max")
-        assert stream[-1]["reply"]["content"] == "resposta de huge-model"
-        heavy = client.get("/api/settings").json()["usage"]["consumed"] - mid
-        assert heavy > light, (light, heavy)
         # O raciocínio cru nunca chegou à tela.
         assert "segredo do raciocínio" not in json.dumps(stream)

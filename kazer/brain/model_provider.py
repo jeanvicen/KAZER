@@ -546,7 +546,8 @@ class GroqProvider(OpenAICompatibleProvider):
             deep_model="",
             capabilities=Capabilities(
                 images=bool(vision_model),
-                efforts=tuple(level for level in EFFORTS if level in self._tiers),
+                # O KAZ 1.1 público oferece somente o modo Baixo.
+                efforts=("baixo",),
             ),
             send_effort=False,
             max_tokens=max_tokens,
