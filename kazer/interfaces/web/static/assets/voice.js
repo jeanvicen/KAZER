@@ -7,24 +7,10 @@
 // botão explica em vez de fingir que funciona.
 
 const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-const mediaDevices = navigator.mediaDevices;
 
-// O pedido explícito garante que o navegador mostre a permissão nativa antes
-// de iniciar o reconhecimento de fala.
-export const dictationSupported = Boolean(Recognition && mediaDevices?.getUserMedia);
-
-function microphoneError(error) {
-  if (error?.name === "NotFoundError" || error?.name === "NotReadableError") return "audio-capture";
-  if (error?.name === "NotAllowedError" || error?.name === "SecurityError") return "not-allowed";
-  return "not-allowed";
-}
-
-async function requestMicrophone() {
-  const stream = await mediaDevices.getUserMedia({ audio: true });
-  // A permissão continua concedida, mas o ditado usa o próprio microfone do
-  // navegador. Assim não ficam duas capturas de áudio abertas ao mesmo tempo.
-  stream.getTracks().forEach((track) => track.stop());
-}
+// O próprio SpeechRecognition pede a permissão nativa ao começar. Não abrir
+// uma segunda captura com getUserMedia evita o NotAllowedError em PWAs Android.
+export const dictationSupported = Boolean(Recognition);
 
 // Um toque inicia uma única fala. O texto só entra no campo depois que o
 // navegador termina de reconhecer a fala, nunca enquanto a pessoa está falando.
@@ -80,7 +66,7 @@ export function createDictation({ onText, onState, onError, lang = "pt-BR" }) {
     get listening() {
       return listening || wanted;
     },
-    async start(initial = "") {
+    start(initial = "") {
       if (wanted) return;
       wanted = true;
       prefix = initial;
@@ -88,15 +74,12 @@ export function createDictation({ onText, onState, onError, lang = "pt-BR" }) {
       hasFinalResult = false;
       onState?.("starting");
       try {
-        await requestMicrophone();
-        // A pessoa pode ter cancelado enquanto escolhia a permissão.
-        if (!wanted) return;
         recognition.start();
-      } catch (error) {
+      } catch {
         wanted = false;
         listening = false;
         onState?.("idle");
-        onError?.(microphoneError(error));
+        onError?.("not-allowed");
       }
     },
     stop() {
