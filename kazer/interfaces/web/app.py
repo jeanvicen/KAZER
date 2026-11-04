@@ -74,8 +74,10 @@ class SecurityHeaders:
             "X-Frame-Options": "DENY",
             "Cross-Origin-Opener-Policy": "same-origin",
             "Cross-Origin-Resource-Policy": "same-origin",
+            # O ditado pede a permissão nativa quando a pessoa toca no microfone.
+            # Mantém câmera e as demais APIs sensíveis bloqueadas.
             "Permissions-Policy": (
-                "camera=(), microphone=(), geolocation=(), payment=(), usb=(), browsing-topics=()"
+                "camera=(), microphone=(self), geolocation=(), payment=(), usb=(), browsing-topics=()"
             ),
         }
         if hsts:
