@@ -340,7 +340,7 @@ class Exchange:
     conversation: Conversation
     user_message: Message
     reply: Message
-    duplicate: bool = False
+    duplicate: bool = False    request_id: str | None = None
 
 
 class LimitReached(Exception):
