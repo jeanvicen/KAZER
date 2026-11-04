@@ -7,38 +7,51 @@
 // botão explica em vez de fingir que funciona.
 
 const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+const mediaDevices = navigator.mediaDevices;
 
-export const dictationSupported = Boolean(Recognition);
+// O pedido explícito garante que o navegador mostre a permissão nativa antes
+// de iniciar o reconhecimento de fala.
+export const dictationSupported = Boolean(Recognition && mediaDevices?.getUserMedia);
 
-// Alguns navegadores encerram sozinhos depois de um silêncio; enquanto a pessoa
-// não mandar parar, a sessão é reaberta para a fala não ser cortada no meio.
+function microphoneError(error) {
+  if (error?.name === "NotFoundError" || error?.name === "NotReadableError") return "audio-capture";
+  if (error?.name === "NotAllowedError" || error?.name === "SecurityError") return "not-allowed";
+  return "not-allowed";
+}
+
+async function requestMicrophone() {
+  const stream = await mediaDevices.getUserMedia({ audio: true });
+  // A permissão continua concedida, mas o ditado usa o próprio microfone do
+  // navegador. Assim não ficam duas capturas de áudio abertas ao mesmo tempo.
+  stream.getTracks().forEach((track) => track.stop());
+}
+
+// Um toque inicia uma única fala. O texto só entra no campo depois que o
+// navegador termina de reconhecer a fala, nunca enquanto a pessoa está falando.
 export function createDictation({ onText, onState, onError, lang = "pt-BR" }) {
-  if (!Recognition) return null;
+  if (!dictationSupported) return null;
 
   const recognition = new Recognition();
   recognition.lang = lang;
-  recognition.continuous = true;
-  recognition.interimResults = true;
+  recognition.continuous = false;
+  recognition.interimResults = false;
   recognition.maxAlternatives = 1;
 
   let listening = false;
   let wanted = false;
-  let settled = "";
-  let restartTimer = 0;
-
-  function emit(interim) {
-    onText(settled + interim, Boolean(interim));
-  }
+  let prefix = "";
+  let transcript = "";
+  let hasFinalResult = false;
 
   recognition.addEventListener("result", (event) => {
-    let interim = "";
     for (let i = event.resultIndex; i < event.results.length; i += 1) {
       const result = event.results[i];
-      const text = result[0]?.transcript || "";
-      if (result.isFinal) settled += (settled && !/\s$/.test(settled) ? " " : "") + text.trim();
-      else interim += text;
+      if (!result.isFinal) continue;
+      const text = result[0]?.transcript?.trim();
+      if (!text) continue;
+      transcript += (transcript ? " " : "") + text;
+      hasFinalResult = true;
     }
-    emit(interim.trim());
   });
 
   recognition.addEventListener("start", () => {
@@ -48,25 +61,15 @@ export function createDictation({ onText, onState, onError, lang = "pt-BR" }) {
 
   recognition.addEventListener("end", () => {
     listening = false;
-    if (wanted) {
-      // Silêncio não encerra o ditado: reabre e segue ouvindo.
-      restartTimer = window.setTimeout(() => {
-        if (!wanted) return;
-        try {
-          recognition.start();
-        } catch {
-          wanted = false;
-          onState?.("idle");
-        }
-      }, 180);
-      return;
-    }
+    const shouldApply = wanted && hasFinalResult;
+    wanted = false;
+    if (shouldApply) onText(prefix + transcript, false);
     onState?.("idle");
   });
 
   recognition.addEventListener("error", (event) => {
     const code = event.error;
-    // "no-speech" e "aborted" são rotina: não viram erro para a pessoa.
+    // Silêncio e cancelamento manual não são falhas visíveis para a pessoa.
     if (code === "no-speech" || code === "aborted") return;
     wanted = false;
     onState?.("idle");
@@ -77,30 +80,42 @@ export function createDictation({ onText, onState, onError, lang = "pt-BR" }) {
     get listening() {
       return listening || wanted;
     },
-    start(initial = "") {
+    async start(initial = "") {
       if (wanted) return;
-      settled = initial;
       wanted = true;
+      prefix = initial;
+      transcript = "";
+      hasFinalResult = false;
       onState?.("starting");
       try {
+        await requestMicrophone();
+        // A pessoa pode ter cancelado enquanto escolhia a permissão.
+        if (!wanted) return;
         recognition.start();
-      } catch {
-        // Já estava ativo: o evento "start" resolve.
+      } catch (error) {
+        wanted = false;
+        listening = false;
+        onState?.("idle");
+        onError?.(microphoneError(error));
       }
     },
     stop() {
-      wanted = false;
-      window.clearTimeout(restartTimer);
-      try {
-        recognition.stop();
-      } catch {
-        /* já parado */
+      // Se já está ouvindo, deixa o navegador fechar e entregar o último
+      // resultado final. Durante o pedido de permissão, aí sim cancela.
+      if (listening) {
+        try {
+          recognition.stop();
+        } catch {
+          /* já parado */
+        }
+        return;
       }
+      wanted = false;
       onState?.("idle");
     },
     toggle(initial = "") {
       if (this.listening) this.stop();
-      else this.start(initial);
+      else void this.start(initial);
     },
   };
 }
