@@ -1,0 +1,32 @@
+name: Preserve Settings Formatting
+
+on:
+  push:
+    branches:
+      - fix/remove-skills-tab
+    paths:
+      - ".github/workflows/fix-skills-tab-format.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  fix-format:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: |
+          python - <<"PY"
+          from pathlib import Path
+          path = Path("kazer/interfaces/web/static/assets/settings.js")
+          text = path.read_text()
+          target = "   [\"terminal\", \"Terminal\", \"terminal\"],"
+          assert text.count(target) == 1
+          path.write_text(text.replace(target, "  [\"terminal\", \"Terminal\", \"terminal\"],"))
+          PY
+          rm .github/workflows/fix-skills-tab-format.yml
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -A
+          git commit -m "Preserve settings formatting"
+          git push
