@@ -61,6 +61,9 @@ def test_index_has_strict_headers(client: TestClient) -> None:
     assert "default-src 'none'" in csp and "script-src 'self'" in csp
     assert response.headers["referrer-policy"] == "no-referrer"
     assert response.headers["x-frame-options"] == "DENY"
+    permissions = response.headers["permissions-policy"]
+    assert "microphone=(self)" in permissions
+    assert "camera=()" in permissions
     body = response.text.lower()
     social = ("google", "facebook", "appleid", "twitter", "github", "oauth", "continuar com")
     trackers = ("analytics", "gtag", "pixel", "segment")
