@@ -1,0 +1,32 @@
+name: Remove Skills tab
+
+on:
+  push:
+    branches:
+      - fix/remove-skills-tab
+    paths:
+      - ".github/workflows/remove-skills-tab.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  remove-tab:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: |
+          python - <<"PY"
+          from pathlib import Path
+          path = Path("kazer/interfaces/web/static/assets/settings.js")
+          text = path.read_text()
+          target = " [\"skills\", \"Skills\", \"sparkle\"],\n"
+          assert text.count(target) == 1
+          path.write_text(text.replace(target, ""))
+          PY
+          rm .github/workflows/remove-skills-tab.yml
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -A
+          git commit -m "Remove Skills tab from settings"
+          git push
