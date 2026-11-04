@@ -14,7 +14,7 @@ const SECTIONS = [
   ["interface", "Interface", "sliders"],
   ["dados", "Dados e privacidade", "shield"],
   ["conectores", "Conectores", "plug"],
-   ["terminal", "Terminal", "terminal"],
+  ["terminal", "Terminal", "terminal"],
   ["sobre", "Sobre", "info"],
 ];
 
