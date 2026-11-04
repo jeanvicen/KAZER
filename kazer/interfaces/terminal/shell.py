@@ -6,7 +6,7 @@ que você começa aqui aparece lá, e o contrário também, porque é o mesmo
 servidor e a mesma conta.
 
 O que vale aqui vale porque vale no servidor: habilidades instaladas entram no
-contexto, conectores ligados viram ferramentas, o plano limita, a memória
+contexto, o plano limita, a memória
 lembra. O terminal não tem regra própria — e por isso não tem como divergir.
 """
 
@@ -69,13 +69,12 @@ HELP = """
   kazer conversas [busca]     lista suas conversas
   kazer continuar [n]         volta para uma conversa
   kazer habilidades           habilidades instaladas na conta
-  kazer conectores            conectores ligados na conta
   kazer biblioteca            o que já passou pelas conversas
   kazer status                conta, plano e uso
   kazer servidor [endereço]   mostra ou troca o servidor
   kazer versao                versão do terminal
 
-  Na conversa: /nova  /conversas  /continuar <n>  /habilidades  /conectores
+  Na conversa: /nova  /conversas  /continuar <n>  /habilidades
                /biblioteca  /status  /code  /pensamento  /sair
 """
 
@@ -144,41 +143,6 @@ class Shell:
             self.screen.write(f"  {self.screen.paint(name, BOLD)}{self.screen.paint(state, DIM)}")
             if about:
                 self.screen.write("     " + self.screen.paint(about[:88], DIM))
-        self.screen.write()
-
-    def connectors(self) -> None:
-        """Conectores ligados e quantas ferramentas cada um trouxe."""
-        items = self.api.connections().get("items")
-        rows = [item for item in items if isinstance(item, dict)] if isinstance(items, list) else []
-        if not rows:
-            self.screen.note("  Nenhum conector ligado.")
-            self.screen.note("  Ligue um no site, em Configurações › Conectores.")
-            return
-        self.screen.write()
-        for item in rows:
-            tools = item.get("tools")
-            count = len(tools) if isinstance(tools, list) else 0
-            name = str(item.get("name") or item.get("connector_id") or "conector")
-            state = "" if item.get("enabled", True) else " (desligado)"
-            detail = f"{count} ferramenta{'s' if count != 1 else ''}"
-            self.screen.write(
-                f"  {self.screen.paint(name, BOLD)}{self.screen.paint(state, DIM)}"
-                f"  {self.screen.paint(detail, DIM)}"
-            )
-        self.screen.write()
-
-    def library(self) -> None:
-        """Biblioteca: o que já passou pelas conversas."""
-        items = self.api.library().get("items")
-        rows = [item for item in items if isinstance(item, dict)] if isinstance(items, list) else []
-        if not rows:
-            self.screen.note("  A Biblioteca está vazia.")
-            return
-        self.screen.write()
-        for item in rows:
-            kind = str(item.get("kind") or item.get("type") or "item")
-            title = str(item.get("title") or item.get("name") or "sem título")
-            self.screen.write(f"  {self.screen.paint(f'[{kind}]', DIM)} {title[:80]}")
         self.screen.write()
 
     def status(self) -> None:
@@ -380,8 +344,6 @@ class Shell:
             self.resume(argument)
         elif name in {"habilidades", "h"}:
             self.skills()
-        elif name in {"conectores", "k"}:
-            self.connectors()
         elif name in {"biblioteca", "b"}:
             self.library()
         elif name in {"status", "s"}:
@@ -622,9 +584,6 @@ def _run(screen: Screen, shell: Shell, command: str, rest: str, args: list[str])
             return 0
         if command == "habilidades":
             shell.skills()
-            return 0
-        if command == "conectores":
-            shell.connectors()
             return 0
         if command == "biblioteca":
             shell.library()

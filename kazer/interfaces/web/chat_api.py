@@ -284,26 +284,11 @@ def chat_routes(ctx: WebContext, chat: ChatService | None) -> list[Route]:
 
     @endpoint
     async def connections(request: Request) -> Response:
-        user, _ = await account(request)
-        chat_service = service()
-        if request.method == "POST":
-            data = await ctx.read_json(request, SETTINGS_BODY_BYTES)
-            linked = await run_in_threadpool(chat_service.connect, user.id, data)
-            return JSONResponse(linked, status_code=201)
-        return JSONResponse(await run_in_threadpool(chat_service.connections, user.id))
+        raise ChatError("not_found", 404)
 
     @endpoint
     async def connection(request: Request) -> Response:
-        user, _ = await account(request)
-        chat_service = service()
-        connection_id = request.path_params["connection_id"]
-        ctx.check_origin(request)
-        if request.method == "DELETE":
-            await run_in_threadpool(chat_service.disconnect, user.id, connection_id)
-            return JSONResponse({"deleted": True})
-        data = await ctx.read_json(request, SETTINGS_BODY_BYTES)
-        await run_in_threadpool(chat_service.set_connection, user.id, connection_id, data)
-        return JSONResponse({"status": "ok"})
+        raise ChatError("not_found", 404)
 
     @endpoint
     async def code_sessions(request: Request) -> Response:
@@ -362,8 +347,7 @@ def chat_routes(ctx: WebContext, chat: ChatService | None) -> list[Route]:
 
     @endpoint
     async def connector_catalog(request: Request) -> Response:
-        user, _ = await account(request)
-        return JSONResponse(await run_in_threadpool(service().connectors, user.id))
+        raise ChatError("not_found", 404)
 
     @endpoint
     async def plans(request: Request) -> Response:
@@ -462,9 +446,6 @@ def chat_routes(ctx: WebContext, chat: ChatService | None) -> list[Route]:
         Route("/api/attachments/{attachment_id}", attachment, methods=["GET", "DELETE"]),
         Route("/api/settings", settings, methods=["GET", "POST"]),
         Route("/api/plans", plans, methods=["GET"]),
-        Route("/api/connectors", connector_catalog, methods=["GET"]),
-        Route("/api/connections", connections, methods=["GET", "POST"]),
-        Route("/api/connections/{connection_id}", connection, methods=["POST", "DELETE"]),
         Route("/api/code/sessions", code_sessions, methods=["GET"]),
         Route("/api/skills", skills, methods=["GET", "POST"]),
         Route("/api/skills/shared", shared_skills, methods=["GET"]),

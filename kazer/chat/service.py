@@ -67,7 +67,6 @@ MAX_MEMORIES = 100
 # Biblioteca: filtros aceitos e itens por página.
 LIBRARY_KINDS = frozenset({"tudo", "imagem", "documento", "artefato"})
 LIBRARY_PAGE = 30
-# Conectores por página do catálogo.
 # Projetos e habilidades por conta, e tamanho de cada campo.
 MAX_SKILLS = 40
 MAX_SKILL_NAME = 60
@@ -77,8 +76,6 @@ MAX_SKILL_INSTRUCTIONS = 20_000
 SKILLS_IN_CONTEXT = 4
 MAX_CALLED_SKILLS = 3
 # Quantas ferramentas de conector o modelo vê por vez.
-MAX_TOOLS_PER_CONNECTOR = 20
-MAX_TOOLS_TOTAL = 60
 # O esquema real de cada ferramenta vem do servidor MCP; aqui o modelo
 # recebe um objeto aberto, e o próprio servidor valida o que recebeu.
 _OPEN_SCHEMA: dict[str, Any] = {"type": "object", "additionalProperties": True}
@@ -354,7 +351,6 @@ class ChatService:
                 "research": False,
                 "memory": True,
                 "voice": False,
-                "connectors": [],
             },
             "limits": {
                 "max_chars": MAX_MESSAGE_CHARS,
@@ -594,35 +590,8 @@ class ChatService:
             raise ChatError("not_found", 404)
 
     def _tools_for(self, user_id: str, *, read_only: bool = False) -> list[ToolSpec]:
-        """Ferramentas dos conectores ligados, prontas para o modelo."""
-        live = [item for item in self._connections(user_id) if item.enabled]
-        features = self.usage_state(user_id).get("features") or {}
-        specs: list[ToolSpec] = []
-        for connection in live:
-            weight = connectors.BY_ID.get(connection.connector_id)
-            # Com Skill de terceiros na resposta, nada de escrita nos conectores.
-            writes = weight is not None and weight.can_write(features) and not read_only
-            offered = 0
-            for tool in connection.tools[: MAX_TOOLS_PER_CONNECTOR * 3]:
-                # Sem escrita no plano, só as ferramentas de leitura vão ao modelo.
-                if not writes and tool.get("read_only") is not True:
-                    continue
-                if offered >= MAX_TOOLS_PER_CONNECTOR:
-                    break
-                offered += 1
-                specs.append(
-                    ToolSpec(
-                        # O nome leva o conector junto: duas ferramentas com o
-                        # mesmo nome em serviços diferentes não se confundem.
-                        name=f"{connection.connector_id}__{tool['name']}"[:120],
-                        description=f"{connection.name}: {tool.get('description', '')}"[:400],
-                        connection_id=connection.id,
-                        tool_name=str(tool["name"]),
-                        label=connection.name,
-                        units=weight.weight if weight else connectors.WEIGHT_LIGHT,
-                    )
-                )
-        return specs[:MAX_TOOLS_TOTAL]
+        """Conectores estão pausados: nenhum serviço externo entra no modelo."""
+        return []
 
     def run_tool(
         self, user_id: str, spec: ToolSpec, arguments: dict[str, Any], *, read_only: bool = False

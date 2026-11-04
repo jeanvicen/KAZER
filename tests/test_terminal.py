@@ -216,7 +216,7 @@ def test_a_conversation_started_on_the_site_opens_in_the_terminal(
     shell.api.close()
 
 
-def test_skills_and_connectors_of_the_account_reach_the_terminal(
+def test_skills_of_the_account_reach_the_terminal(
     live: Live, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:
     sign_in(live, monkeypatch)
@@ -236,8 +236,6 @@ def test_skills_and_connectors_of_the_account_reach_the_terminal(
     shown = capsys.readouterr().out
     assert "Resumir reunião" in shown and "Resume atas de reunião" in shown
 
-    shell.connectors()
-    assert "Nenhum conector ligado" in capsys.readouterr().out
     shell.api.close()
 
 

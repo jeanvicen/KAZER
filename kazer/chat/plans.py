@@ -37,7 +37,7 @@ class Plan:
     artifacts: bool = False
     research: bool = False
     github_write: bool = False
-    connector_limit: int = 3
+    connector_limit: int = 0
     accent: str = "#8a8f98"
     featured: bool = False
     extras: list[str] = field(default_factory=list)
@@ -73,8 +73,6 @@ class Plan:
                 "coder": self.coder,
                 "artifacts": self.artifacts,
                 "research": self.research,
-                "github_write": self.github_write,
-                "connector_limit": self.connector_limit,
             },
         }
 
@@ -107,8 +105,7 @@ PLANS: tuple[Plan, ...] = (
             "Biblioteca com o que você enviou",
             "Histórico das 100 conversas mais recentes",
         ],
-        extras=["GitHub conectado, só para leitura"],
-        connector_limit=3,
+        connector_limit=0,
     ),
     Plan(
         id="pro",
@@ -122,15 +119,14 @@ PLANS: tuple[Plan, ...] = (
         coder=True,
         artifacts=True,
         research=True,
-        github_write=True,
-        connector_limit=50,
+        github_write=False,
+        connector_limit=0,
         highlights=[
             "Tudo do plano gratuito",
             "Mais de 6 vezes o uso por janela",
             "KZ Code: programar de verdade",
             "Artefatos: páginas, componentes e documentos",
             "Pesquisa profunda em várias etapas",
-            "GitHub com escrita, não só leitura",
         ],
         extras=["Fila de prioridade quando o servidor lota"],
     ),
@@ -145,14 +141,13 @@ PLANS: tuple[Plan, ...] = (
         coder=True,
         artifacts=True,
         research=True,
-        github_write=True,
-        connector_limit=500,
+        github_write=False,
+        connector_limit=0,
         highlights=[
             "Tudo do Pro",
             "25 vezes o uso do plano gratuito",
             "Pensamento profundo sem contar o dobro",
             "Sessões longas de KZ Code sem interrupção",
-            "GitHub com leitura e escrita, com o limite mais alto",
         ],
         extras=["Novidades antes de todo mundo", "Suporte direto com o time"],
     ),

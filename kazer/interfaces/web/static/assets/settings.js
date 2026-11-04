@@ -13,7 +13,6 @@ const SECTIONS = [
   ["memoria", "Memória", "memory"],
   ["interface", "Interface", "sliders"],
   ["dados", "Dados e privacidade", "shield"],
-  ["conectores", "Conectores", "plug"],
   ["terminal", "Terminal", "terminal"],
   ["sobre", "Sobre", "info"],
 ];
@@ -37,14 +36,6 @@ const PASSWORD_ERRORS = {
 
 // Milhar com ponto, como se escreve em português.
 const num = (value) => Number(value || 0).toLocaleString("pt-BR");
-
-const CONNECT_ERRORS = {
-  connector_invalid: "Endereço inválido: precisa ser https e falar MCP.",
-  connector_unreachable: "O serviço não respondeu.",
-  connector_rejected: "O serviço recusou: confira a credencial.",
-  connector_limit: "Você chegou ao limite de conectores do seu plano.",
-  plan_required: "Conectores entram com os planos pagos.",
-};
 
 let open = null;
 
@@ -877,10 +868,6 @@ class SettingsPanel {
     );
   }
 
-  // Catálogo de conectores: busca, categorias e o que o plano desta conta
-  // libera em cada um. A lista vem do servidor, uma página por vez.
-  // Skills e Terminal moraram na gaveta; agora são seções daqui e reaproveitam
-  // os mesmos módulos, carregados só quando a pessoa abre a seção.
   section_skills() {
     const holder = h("div.settings__embed");
     (async () => {
@@ -904,20 +891,6 @@ class SettingsPanel {
       if (!holder.isConnected && this.current !== "terminal") return;
       holder.replaceChildren(h("div.sc.sc--embedded", {}, h("div.sc__body", {}, view.body)));
     })().catch(() => holder.replaceChildren(h("p.set-note", { text: "Não deu para abrir o Terminal agora." })));
-    return holder;
-  }
-
-  section_conectores() {
-    const holder = h("div.settings__embed");
-    (async () => {
-      await loadStyle("/assets/screens.css");
-      const { createConnectors } = await import("./connectors-ui.js");
-      const view = createConnectors();
-      holder.replaceChildren(
-        h("p.set-note", { text: "Ligue serviços para o KAZER ler e agir por você. Cada um usa só a credencial que você entregar, guardada no servidor." }),
-        view.root,
-      );
-    })().catch(() => holder.replaceChildren(h("p.set-note", { text: "Não deu para abrir os conectores agora." })));
     return holder;
   }
 

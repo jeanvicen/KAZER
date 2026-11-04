@@ -63,7 +63,6 @@
             <tr><td>Plano da conta (gratuito ou pago)</td><td>Saber a franquia de uso a que você tem direito</td><td>Execução de contrato (art. 7º, V)</td><td>Enquanto a conta existir</td></tr>
             <tr><td>Artefatos que o assistente produziu (páginas, componentes, imagens vetoriais, diagramas e arquivos de dados)</td><td>Guardar na Biblioteca o que foi feito nas conversas</td><td>Execução de contrato (art. 7º, V)</td><td>Até você apagar o artefato, a conversa ou a conta</td></tr>
             <tr><td>Skills que você instala ou cria (nome, descrição e instruções) e, se você optar, publica para a comunidade</td><td>Entrar no contexto quando você chama a Skill ou o pedido combina com a descrição</td><td>Execução de contrato (art. 7º, V)</td><td>Até você apagar a Skill ou a conta</td></tr>
-            <tr><td>Conector do GitHub: o <strong>token de acesso</strong> que você fornece</td><td>Executar, em seu nome, as ferramentas do serviço que você conectou</td><td>Consentimento (art. 7º, I), revogável a qualquer momento</td><td>Até você desligar o conector ou excluir a conta</td></tr>
             <tr><td>Contagem de uso (quantidade e horário dos pedidos, sem conteúdo)</td><td>Aplicar limites de uso justos e proteger o serviço</td><td>Legítimo interesse (art. 7º, IX)</td><td>2 dias</td></tr>
             <tr><td>Fuso horário do navegador</td><td>Informar a data correta ao assistente</td><td>Execução de contrato (art. 7º, V)</td><td>Não é guardado: vai só junto do pedido</td></tr>
             <tr><td>Endereço IP</td><td>Limitar tentativas automatizadas e proteger contas contra fraude</td><td>Legítimo interesse (art. 7º, IX)</td><td>Apenas na memória do servidor, por até 1 hora</td></tr>
@@ -71,7 +70,8 @@
         </table>
       </div>
       <p>Não coletamos nome, telefone, data de nascimento, localização, dados de pagamento, identificadores de dispositivo nem dados de redes sociais. A senha em texto puro nunca é gravada nem registrada em logs. Os registros de eventos de segurança do KAZER não contêm e-mail, IP, senha ou tokens.</p>
-      <p><strong>Credencial do conector.</strong> Quando você liga o GitHub, o token que você fornece fica guardada apenas no servidor e só é usada para chamar aquele serviço em seu nome. Ela nunca é devolvida ao navegador — nem na lista de conectores, nem em mensagem de erro — e nunca entra em registros. Nenhuma outra conta alcança a sua credencial, e desligar ou apagar o conector encerra esse uso. O que o serviço conectado devolve é tratado como informação, nunca como instrução para o assistente.</p>
+
+      <p><strong>Conectores.</strong> Os conectores estão temporariamente indisponíveis e não são usados pelo KAZER. Credenciais vinculadas anteriormente permanecem guardadas no servidor, sem uso, até a exclusão dos dados da conta.</p>
       <p><strong>KAZER no terminal.</strong> O comando <code>kazer</code> usa a mesma conta e a mesma API do site, então não coletamos nada a mais por causa dele. A diferença é que a sessão fica guardada num arquivo no seu computador (<code>~/.kazer/sessao.json</code>), legível só pelo seu usuário, e sai dali quando você roda <code>kazer sair</code>, quando a sessão expira ou quando você apaga o arquivo. Sua senha não é guardada: ela existe só no momento em que você entra.</p>
 
       <h2 id="cookies">4. Cookies e armazenamento no navegador</h2>
@@ -96,7 +96,7 @@
       <h2 id="ia">7. Funcionalidades de inteligência artificial</h2>
       <p>O chat do KAZER envia ao provedor de modelo descrito na seção 5 apenas o necessário para cada resposta. O KAZER não usa suas conversas para treinar modelos próprios. O que o provedor pode fazer com os dados recebidos (retenção e eventual uso para treinamento) depende do contrato e das configurações dele; não fazemos promessas que esses contratos não garantam, e essas condições serão publicadas na seção 5.</p>
       <p>Depois da primeira resposta de cada conversa, o KAZER pede ao mesmo provedor um título curto que resuma o assunto, e é esse título que aparece no seu histórico. Nenhum destino novo recebe a conversa por causa disso. O ditado por voz, quando você usa o microfone, é descrito na seção 5.</p>
-      <p>A busca na web, a pesquisa em várias etapas e os conectores só funcionam quando estão de fato disponíveis; a interface mostra quando não estão. Memórias são salvas apenas por você, nunca automaticamente, e você pode desligá-las ou apagá-las a qualquer momento. As respostas são geradas automaticamente e podem conter erros.</p>
+      <p>A busca na web e a pesquisa em várias etapas só funcionam quando estão de fato disponíveis; a interface mostra quando não estão. Memórias são salvas apenas por você, nunca automaticamente, e você pode desligá-las ou apagá-las a qualquer momento. As respostas são geradas automaticamente e podem conter erros.</p>
 
       <h2 id="seguranca">8. Segurança</h2>
       <p>Adotamos medidas técnicas proporcionais ao risco, entre elas: senhas protegidas com Argon2id; sessões em cookie <em>HttpOnly</em> com o identificador guardado apenas como hash; links de uso único com expiração; HTTPS; limites contra tentativas automatizadas; e uma política de segurança de conteúdo que bloqueia recursos externos.</p>

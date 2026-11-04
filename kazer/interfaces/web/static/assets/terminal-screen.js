@@ -15,7 +15,6 @@ const COMMANDS = [
   ["kazer conversas", "lista suas conversas"],
   ["kazer continuar 2", "volta para uma conversa"],
   ["kazer habilidades", "habilidades instaladas na conta"],
-  ["kazer conectores", "conectores ligados na conta"],
   ["kazer status", "conta, plano e quanto resta da janela"],
   ["kazer entrar <endereço>", "entra e guarda o servidor"],
   ["kazer sair", "encerra a sessão deste computador"],
@@ -64,7 +63,6 @@ export async function createTerminal({ onOpenSettings }) {
         h("p.tm__lead", {
           text:
             "A mesma conta e as mesmas conversas, sem navegador. As habilidades instaladas" +
-            " entram no contexto, os conectores ligados viram ferramentas, o plano limita e a" +
             " memória lembra — porque é o mesmo servidor respondendo.",
         }),
       ),

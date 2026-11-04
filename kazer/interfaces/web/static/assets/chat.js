@@ -1640,7 +1640,7 @@ function clearTray({ keepServer = false } = {}) {
   renderTray();
 }
 
-// ---------- Folhas: modelo, esforço, + e conectores ----------
+// ---------- Folhas: modelo, esforço e + ----------
 
 // Níveis de esforço: só o Baixo está liberado; os outros aparecem bloqueados
 // até a decisão de liberar (o servidor também só aceita "baixo").
@@ -1800,7 +1800,6 @@ function openPlusSheet() {
             S.ui.plus.classList.toggle("is-active", on);
           },
         }),
-        connectorRow(),
         toggleRow({
           id: "tool-memory",
           icon: "memory",
@@ -1814,51 +1813,6 @@ function openPlusSheet() {
         }),
       );
       return h("div.plus", {}, tiles, list);
-    },
-  });
-}
-
-// Linha de conectores: mostra o estado real da conta, não um texto fixo.
-function connectorRow() {
-  const row = h(
-    "button.tool-row.tool-row--link",
-    { type: "button", onclick: () => openConnectorsSheet() },
-    h("span.tool-row__icon", {}, icon("plug")),
-    h(
-      "span.tool-row__text",
-      {},
-      h("span.tool-row__title", { text: "Conectores" }),
-      h("span.tool-row__desc", { text: "Conferindo…" }),
-    ),
-    icon("chevron-right", "tool-row__go"),
-  );
-  request("/api/connectors").then((result) => {
-    if (!row.isConnected) return;
-    const items = result.ok && Array.isArray(result.data?.items) ? result.data.items : [];
-    const on = items.filter((item) => item.connected && item.enabled);
-    const desc = row.querySelector(".tool-row__desc");
-    if (!desc) return;
-    desc.textContent = on.length
-      ? `${on.map((item) => item.name).join(", ")} ligado: as ferramentas entram nesta conversa.`
-      : "GitHub disponível: toque para conectar.";
-  });
-  return row;
-}
-
-async function openConnectorsSheet() {
-  openSheet({
-    title: "Conectores",
-    opener: S.ui.plus,
-    back: () => openPlusSheet(),
-    content: () => {
-      const body = h("div.connectors", {}, h("p.connectors__text", { text: "Abrindo os conectores…" }));
-      import("./connectors-ui.js")
-        .then(({ createConnectors }) => {
-          if (!body.isConnected) return;
-          body.replaceChildren(createConnectors({ onChange: () => {} }).root);
-        })
-        .catch(() => body.replaceChildren(h("p.connectors__text", { text: "Não deu para abrir os conectores agora." })));
-      return body;
     },
   });
 }
