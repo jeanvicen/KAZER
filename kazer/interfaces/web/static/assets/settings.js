@@ -8,10 +8,10 @@ import { confirmDialog, openSheet, toast } from "./sheets.js";
 
 const SECTIONS = [
   ["conta", "Conta", "user"],
-  ["planos", "Planos", "bolt"],
+  ["planos", "Uso e plano", "bolt"],
   ["personalizacao", "Personalização", "sparkle"],
   ["memoria", "Memória", "memory"],
-  ["interface", "Interface", "sliders"],
+  ["interface", "Aparência", "sliders"],
   ["dados", "Dados e privacidade", "shield"],
   ["terminal", "Terminal", "terminal"],
   ["sobre", "Sobre", "info"],
@@ -100,26 +100,26 @@ class SettingsPanel {
     this.rows = [];
     this.groups = GROUPS.map(([label, items]) => {
       const rows = items.map(([key, text, iconName, words]) => {
-        const value = h("span.set-row__value");
+        const value = h("span.nav-row__value");
         this.values[key] = value;
         const row = h(
-          `button.settings__nav-item.set-row${key === "upgrade" ? ".set-row--accent" : ""}`,
+          `button.settings__nav-item.nav-row${key === "upgrade" ? ".nav-row--accent" : ""}`,
           {
             type: "button",
             dataset: { section: key },
             onclick: (event) => (key === "upgrade" ? this.openUpgrade(event.currentTarget) : this.show(key, { focus: true })),
           },
-          h("span.set-row__icon", {}, icon(iconName)),
-          h("span.set-row__label", { text }),
+          h("span.nav-row__icon", {}, icon(iconName)),
+          h("span.nav-row__label", { text }),
           value,
-          key === "upgrade" ? null : icon("chevron-right", "set-row__go"),
+          key === "upgrade" ? null : icon("chevron-right", "nav-row__go"),
         );
         row.searchText = `${text} ${words}`.toLowerCase();
         this.rows.push(row);
         return row;
       });
-      const list = h("div.set-list", {}, rows);
-      const group = h("section.set-group", {}, label ? h("h3.set-group__title", { text: label }) : null, list);
+      const list = h("div.nav-list", {}, rows);
+      const group = h("section.nav-group", {}, label ? h("h3.nav-group__title", { text: label }) : null, list);
       group.rowsIn = rows;
       return group;
     });
@@ -567,7 +567,7 @@ class SettingsPanel {
       card,
       this.group(
         "Segurança",
-        h("div.set-row", {}, h("div.set-row__text", {}, h("span.set-row__title", { text: "Senha" }), h("span.set-row__desc", { text: "Guardada só como hash Argon2id. Ao trocar, os outros dispositivos saem." })), toggle),
+        h("div.set-row", {}, h("div.set-row__text", {}, h("span.set-row__title", { text: "Senha" }), h("span.set-row__desc", { text: "Ao trocar, você sai dos outros dispositivos." })), toggle),
         form,
         h("div.set-row", {}, h("div.set-row__text", {}, h("span.set-row__title", { text: "Dispositivos" }), sessionsStatus), revoke),
       ),
@@ -834,7 +834,7 @@ class SettingsPanel {
   }
 
   section_interface() {
-    const sizePreview = h("p.size-preview", { text: "O KAZER responde aqui, neste tamanho." });
+    const sizePreview = h("p.size-preview", { text: "Exemplo de resposta neste tamanho." });
     return h(
       "div.set-section",
       {},
@@ -846,7 +846,7 @@ class SettingsPanel {
           value: this.prefs.theme || "escuro",
           onChange: (value) => this.savePrefs({ theme: value }, { immediate: true }),
         }),
-        h("p.set-group__desc", { text: "“Sistema” segue o tema do seu aparelho. A tela de entrada continua escura." }),
+        h("p.set-group__desc", { text: "Sistema acompanha o tema do aparelho." }),
       ),
       this.group(
         "Idioma",
@@ -856,7 +856,7 @@ class SettingsPanel {
           value: this.prefs.language || "pt",
           onChange: (value) => this.changeLanguage(value),
         }),
-        h("p.set-group__desc", { text: "A página recarrega ao trocar. O KAZER também passa a responder no idioma escolhido, a menos que você escreva em outro." }),
+        h("p.set-group__desc", { text: "O KAZER responde no idioma escolhido. A página recarrega ao trocar." }),
       ),
       this.group(
         "Animações",
@@ -866,7 +866,7 @@ class SettingsPanel {
           value: this.prefs.motion || "sistema",
           onChange: (value) => this.savePrefs({ motion: value }, { immediate: true }),
         }),
-        h("p.set-group__desc", { text: "“Sistema” segue a preferência de movimento do seu aparelho." }),
+        h("p.set-group__desc", { text: "Sistema acompanha a preferência de movimento do aparelho." }),
       ),
       this.group(
         "Tamanho do texto",
@@ -882,7 +882,7 @@ class SettingsPanel {
         null,
         this.row({
           title: "Fundo animado",
-          description: "Os quadradinhos da conversa vazia. Somem sozinhos depois da primeira mensagem.",
+          description: "Animação de fundo na tela de nova conversa.",
           id: "pref-ambient",
           control: this.toggle({ id: "pref-ambient", checked: this.prefs.ambient !== false, label: "Fundo animado", onChange: (on) => this.savePrefs({ ambient: on }, { immediate: true }) }),
         }),
@@ -920,7 +920,7 @@ class SettingsPanel {
 
     const clearHistory = this.holdButton({
       label: "Apagar todas as conversas",
-      hint: "Segure o botão para confirmar. Não dá para desfazer.",
+      hint: "Segure para confirmar. Esta ação não pode ser desfeita.",
       run: async (button) => {
         const result = await request("/api/conversations/clear", { body: { confirm: true } });
         button.reset();
@@ -980,7 +980,7 @@ class SettingsPanel {
       ),
       this.group("Portabilidade", h("div.set-row", {}, h("div.set-row__text", {}, h("span.set-row__title", { text: "Exportar dados" }), h("span.set-row__desc", { text: "Um arquivo JSON com conta, conversas, memórias e preferências." })), exportButton)),
       this.group("Histórico", clearHistory),
-      this.group("Zona de exclusão", h("div.set-field", {}, h("label.set-field__label", { for: "delete-password", text: "Confirme com sua senha" }), password), deleteStatus, deleteAccount),
+      this.group("Excluir conta", h("div.set-field", {}, h("label.set-field__label", { for: "delete-password", text: "Confirme com sua senha" }), password), deleteStatus, deleteAccount),
     );
   }
 

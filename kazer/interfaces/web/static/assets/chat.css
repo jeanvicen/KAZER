@@ -2722,12 +2722,10 @@ html.in-chat .noscript {
 }
 
 .set-group__title {
-  margin: 0 0 0.7rem;
+  margin: 0 0 0.6rem 0.25rem;
   color: var(--c-text-2);
-  font-size: 0.72rem;
+  font-size: 0.95rem;
   font-weight: 600;
-  letter-spacing: 0.09em;
-  text-transform: uppercase;
 }
 
 .set-group__desc {
@@ -5614,21 +5612,23 @@ html[data-motion="reduzido"] .pxword__blink {
   gap: 1.5rem;
 }
 
-.set-group__title {
+.nav-group__title {
   margin: 0 0 0.5rem 1rem;
   color: var(--c-text-2);
   font-size: 0.95rem;
   font-weight: 600;
+  letter-spacing: 0;
+  text-transform: none;
 }
 
-.set-list {
+.nav-list {
   overflow: hidden;
   border: 1px solid var(--c-border);
   border-radius: 1.25rem;
   background: var(--c-surface);
 }
 
-.set-row {
+.nav-row {
   display: flex;
   align-items: center;
   gap: 0.9rem;
@@ -5645,21 +5645,21 @@ html[data-motion="reduzido"] .pxword__blink {
   cursor: pointer;
 }
 
-.set-row + .set-row {
+.nav-row + .nav-row {
   border-top: 1px solid var(--c-border);
 }
 
-.set-row[hidden],
-.set-row.is-filtered {
+.nav-row[hidden],
+.nav-row.is-filtered {
   display: none;
 }
 
-.set-row:hover,
-.set-row.is-active {
+.nav-row:hover,
+.nav-row.is-active {
   background: rgb(255 255 255 / 0.04);
 }
 
-.set-row__icon {
+.nav-row__icon {
   display: grid;
   place-items: center;
   flex: none;
@@ -5667,17 +5667,17 @@ html[data-motion="reduzido"] .pxword__blink {
   color: var(--c-text);
 }
 
-.set-row__icon .icon {
+.nav-row__icon .icon {
   width: 1.4rem;
   height: 1.4rem;
 }
 
-.set-row__label {
+.nav-row__label {
   flex: 1;
   min-width: 0;
 }
 
-.set-row__value {
+.nav-row__value {
   max-width: 45%;
   overflow: hidden;
   color: var(--c-text-2);
@@ -5685,15 +5685,15 @@ html[data-motion="reduzido"] .pxword__blink {
   white-space: nowrap;
 }
 
-.set-row__go {
+.nav-row__go {
   flex: none;
   width: 1.1rem;
   height: 1.1rem;
   color: var(--c-text-3);
 }
 
-.set-row--accent,
-.set-row--accent .set-row__icon {
+.nav-row--accent,
+.nav-row--accent .nav-row__icon {
   color: #f3c565;
 }
 
@@ -5768,12 +5768,12 @@ html[data-motion="reduzido"] .pxword__blink {
   filter: grayscale(1);
 }
 
-.settings.is-open .set-group {
+.settings.is-open .nav-group {
   animation: rise 520ms var(--ease-out) both;
   animation-delay: calc(var(--i, 0) * 50ms + 100ms);
 }
 
-.settings.is-open .set-row {
+.settings.is-open .nav-row {
   animation: none;
 }
 
@@ -5792,7 +5792,7 @@ html[data-motion="reduzido"] .pxword__blink {
     gap: 1.1rem;
   }
 
-  .set-row {
+  .nav-row {
     min-height: 3rem;
     font-size: 0.925rem;
   }
@@ -5816,7 +5816,7 @@ html[data-motion="reduzido"] .pxword__blink {
     border-radius: 0.8rem;
   }
 
-  .set-row {
+  .nav-row {
     white-space: nowrap;
   }
 
