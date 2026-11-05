@@ -8,6 +8,8 @@ não existe. Respostas do modelo chegam em NDJSON (uma linha JSON por evento).
 from __future__ import annotations
 
 import json
+import logging
+import re
 from collections.abc import AsyncIterator
 from functools import partial
 from typing import Any
@@ -20,11 +22,15 @@ from starlette.routing import Route
 
 from kazer.auth.service import AuthError
 from kazer.auth.store import User
+from kazer.chat import documents
 from kazer.chat.generation import LiveGeneration
 from kazer.chat.service import ChatError, ChatService
 from kazer.chat.store import Message
 from kazer.chat.uploads import MAX_UPLOAD_BYTES
 from kazer.interfaces.web.common import WebContext, client_of, endpoint
+from kazer.security.rate_limiter import RateLimit
+
+logger = logging.getLogger("kazer.web")
 
 SEND_BODY_BYTES = 256 * 1024
 # Instruções de habilidade podem ser longas.
@@ -363,6 +369,31 @@ def chat_routes(ctx: WebContext, chat: ChatService | None) -> list[Route]:
         )
 
     @endpoint
+    async def render_document(request: Request) -> Response:
+        """PDF de verdade a partir do bloco ```pdf ou ```slides de uma resposta."""
+        user, _ = await account(request)
+        data = await ctx.read_json(request, limit=documents.MAX_SOURCE + 4096)
+        kind, source, name = data.get("kind"), data.get("source"), data.get("name", "")
+        if kind not in ("pdf", "slides") or not isinstance(source, str) or not source.strip():
+            raise ChatError("invalid_request", 400)
+        if not isinstance(name, str):
+            name = ""
+        wait = service()._limiter.hit(f"pdf:{user.id}", RateLimit(30, 600))
+        if wait > 0:
+            raise ChatError("rate_limited", 429, retry_after=wait)
+        try:
+            pdf = await run_in_threadpool(documents.render, kind, source)
+        except Exception:  # noqa: BLE001 - conteúdo estranho não derruba o servidor
+            logger.exception("chat.pdf_failed")
+            raise ChatError("pdf_failed", 422) from None
+        stem = re.sub(r"[^\w.-]+", "-", name.rsplit(".", 1)[0]).strip("-.")[:80] or "kazer"
+        return Response(
+            pdf,
+            media_type="application/pdf",
+            headers={"Content-Disposition": f'attachment; filename="{stem}.pdf"'},
+        )
+
+    @endpoint
     async def memories(request: Request) -> Response:
         user, _ = await account(request)
         data = await ctx.read_json(request)
@@ -455,6 +486,7 @@ def chat_routes(ctx: WebContext, chat: ChatService | None) -> list[Route]:
         Route("/api/settings", settings, methods=["GET", "POST"]),
         Route("/api/plans", plans, methods=["GET"]),
         Route("/api/checkout", checkout, methods=["POST"]),
+        Route("/api/documents/render", render_document, methods=["POST"]),
         Route("/api/code/sessions", code_sessions, methods=["GET"]),
         Route("/api/skills", skills, methods=["GET", "POST"]),
         Route("/api/skills/shared", shared_skills, methods=["GET"]),

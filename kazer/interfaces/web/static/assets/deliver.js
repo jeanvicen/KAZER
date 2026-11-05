@@ -157,10 +157,32 @@ function docCard(kind, name, code, closed) {
   const detail = pdf ? `~${Math.max(1, Math.round(words / 380) + 1)} páginas` : `${slides.length + 1} slides`;
   const file = name || (pdf ? "documento.pdf" : "apresentacao.slides");
 
-  const run = async (action) => {
+  const base = file.replace(/\.[^.]+$/, "") || "kazer";
+  const run = async (action, button) => {
+    if (action === "pdf") {
+      // O servidor desenha o PDF de verdade; a pessoa só baixa o arquivo.
+      const label = button?.querySelector("span");
+      if (label) label.textContent = "Gerando…";
+      if (button) button.disabled = true;
+      try {
+        const response = await fetch("/api/documents/render", {
+          method: "POST",
+          credentials: "same-origin",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ kind, source: code, name: `${base}.pdf` }),
+        });
+        if (!response.ok) throw new Error(String(response.status));
+        downloadBlob(`${base}.pdf`, await response.blob());
+        return;
+      } catch {
+        // Sem servidor: a impressão do navegador ainda salva como PDF.
+      } finally {
+        if (label) label.textContent = "Baixar PDF";
+        if (button) button.disabled = false;
+      }
+    }
     const docs = await import("./docs.js");
     const html = pdf ? docs.buildPdf(meta, body) : docs.buildSlides(meta, slides);
-    const base = file.replace(/\.[^.]+$/, "") || "kazer";
     if (action === "html") downloadText(`${base}.html`, html);
     else openPreview({ title, html, print: action === "pdf", printable: true, file: `${base}.html` });
   };
@@ -188,7 +210,7 @@ function docCard(kind, name, code, closed) {
         "div.doc-card__actions",
         {},
         h("button.doc-card__btn.is-primary", { type: "button", onclick: () => run("view") }, icon(pdf ? "file" : "research"), h("span", { text: pdf ? "Abrir" : "Apresentar" })),
-        h("button.doc-card__btn", { type: "button", onclick: () => run("pdf") }, icon("down"), h("span", { text: "Baixar PDF" })),
+        h("button.doc-card__btn", { type: "button", onclick: (event) => run("pdf", event.currentTarget) }, icon("down"), h("span", { text: "Baixar PDF" })),
         pdf ? null : h("button.doc-card__btn", { type: "button", onclick: () => run("html") }, icon("down"), h("span", { text: "HTML" })),
       ),
     ),
@@ -351,6 +373,11 @@ function galleryCard(code, closed) {
   return h("div.gallery-wrap", {}, grid, h("p.gallery__credit", { text: "Imagens: Wikimedia Commons, licenças livres." }));
 }
 
+// Abre fotos (da galeria ou anexos da própria pessoa) dentro do app.
+export function openImages(items, start = 0) {
+  lightbox(items, start);
+}
+
 function lightbox(items, start) {
   let index = start;
   const img = h("img.lightbox__img", { alt: "", referrerpolicy: "no-referrer" });
@@ -362,7 +389,10 @@ function lightbox(items, start) {
     img.alt = item.legenda || "";
     caption.textContent = item.legenda || "";
     const page = String(item.fonte || item.pagina || item.url);
-    link.href = /^https:\/\//.test(page) ? page : item.url;
+    link.href = /^(https:\/\/|\/api\/attachments\/)/.test(page) ? page : item.url;
+    link.textContent = item.download ? "Baixar" : "Ver fonte";
+    if (item.download) link.setAttribute("download", item.download);
+    else link.removeAttribute("download");
   };
   const close = () => {
     document.removeEventListener("keydown", onKey, true);

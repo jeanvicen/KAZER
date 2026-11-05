@@ -600,6 +600,21 @@ def task_effort(request: GenerationRequest) -> str:
     return "medium"
 
 
+def _without_images(request: GenerationRequest) -> GenerationRequest:
+    from dataclasses import replace
+
+    note = Part(
+        "text",
+        "[A pessoa anexou uma imagem, mas a leitura de imagens está indisponível agora."
+        " Diga isso em uma frase e ajude com o que der pelo texto.]",
+    )
+    turns = tuple(
+        replace(turn, parts=tuple(p if p.kind != "image" else note for p in turn.parts))
+        for turn in request.turns
+    )
+    return replace(request, turns=turns)
+
+
 def parse_tier(spec: str) -> list[tuple[str, dict[str, Any]]]:
     """"modelo:raciocínio,reserva" vira a lista de tentativas; lixo é ignorado."""
     attempts: list[tuple[str, dict[str, Any]]] = []
@@ -672,7 +687,21 @@ class GroqProvider(OpenAICompatibleProvider):
         Mesmo pedindo ao provedor que o esconda, se ele vier assim mesmo o
         KAZER o descarta: a tela mostra a resposta, não o rascunho do modelo.
         """
-        for event in super().stream(request, cancel):
+        try:
+            events = super().stream(request, cancel)
+            first = next(events, None)
+        except ProviderError as exc:
+            has_image = any(p.kind == "image" for turn in request.turns for p in turn.parts)
+            if exc.code != "model_error" or not has_image:
+                raise
+            # Todos os modelos de visão sumiram do provedor: responde sem a imagem,
+            # avisando, em vez de deixar a pessoa sem resposta.
+            logger.warning("model.vision_unavailable", extra={"provider": "groq"})
+            events = super().stream(_without_images(request), cancel)
+            first = next(events, None)
+        if first is not None and first.kind != "thinking":
+            yield first
+        for event in events:
             if event.kind != "thinking":
                 yield event
 

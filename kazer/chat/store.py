@@ -61,7 +61,7 @@ CREATE TABLE IF NOT EXISTS attachments (
     id TEXT PRIMARY KEY,
     user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     message_id TEXT REFERENCES messages(id) ON DELETE CASCADE,
-    kind TEXT NOT NULL CHECK (kind IN ('image', 'text', 'pdf')),
+    kind TEXT NOT NULL CHECK (kind IN ('image', 'text', 'pdf', 'file')),
     media_type TEXT NOT NULL,
     name TEXT NOT NULL,
     size INTEGER NOT NULL,
@@ -503,6 +503,7 @@ class ChatStore:
         conn = sqlite3.connect(self._path, isolation_level=None)
         try:
             conn.executescript(_SCHEMA)
+            self._allow_file_attachments(conn)
         finally:
             conn.close()
         with self._transaction() as conn:
@@ -511,6 +512,37 @@ class ChatStore:
                 " finished_at = ? WHERE status = 'streaming'",
                 (now,),
             )
+
+    @staticmethod
+    def _allow_file_attachments(conn: sqlite3.Connection) -> None:
+        """Bancos antigos só aceitavam image/text/pdf: refaz a tabela com 'file'."""
+        row = conn.execute(
+            "SELECT sql FROM sqlite_master WHERE type = 'table' AND name = 'attachments'"
+        ).fetchone()
+        if row is None or "'file'" in row[0]:
+            return
+        conn.execute("PRAGMA foreign_keys = OFF")
+        conn.execute("BEGIN")
+        try:
+            new_sql = row[0].replace("'pdf')", "'pdf', 'file')").replace(
+                "TABLE attachments", "TABLE attachments_new", 1
+            )
+            conn.execute(new_sql)
+            conn.execute("INSERT INTO attachments_new SELECT * FROM attachments")
+            conn.execute("DROP TABLE attachments")
+            conn.execute("ALTER TABLE attachments_new RENAME TO attachments")
+            conn.execute(
+                "CREATE INDEX IF NOT EXISTS attachments_user ON attachments(user_id, created_at)"
+            )
+            conn.execute(
+                "CREATE INDEX IF NOT EXISTS attachments_message ON attachments(message_id)"
+            )
+            conn.execute("COMMIT")
+        except BaseException:
+            conn.execute("ROLLBACK")
+            raise
+        finally:
+            conn.execute("PRAGMA foreign_keys = ON")
 
     def ensure_owner(self, user_id: str, email: str, created_at: int) -> None:
         """Garante a linha do dono (contas do Supabase); idempotente."""

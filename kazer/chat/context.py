@@ -14,6 +14,7 @@ from datetime import datetime
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from kazer.brain.model_provider import Part, Turn
+from kazer.chat import abilities, extract
 from kazer.chat.store import Attachment, Memory, Message
 
 MAX_CONTEXT_CHARS = 120_000
@@ -244,6 +245,7 @@ def system_prompt(
     research: bool = False,
     desktop: bool = False,
     deep_research: bool = False,
+    question: str = "",
 ) -> str:
     """Instruções completas desta resposta."""
     tz = zone(timezone)
@@ -257,6 +259,10 @@ def system_prompt(
         lines.append(_TEACHING)
     if deep_research:
         lines.append(_DEEP_RESEARCH)
+    # Habilidades embutidas que combinam com este pedido (escritas pela equipe).
+    chosen = abilities.instructions(question) if question else ""
+    if chosen:
+        lines.append(chosen)
     lines.append(_DELIVERY + "\n" + (_GODOT_DESKTOP if desktop else _GODOT_MOBILE))
     if forja:
         lines.append(_FORJA)
@@ -358,6 +364,19 @@ def build_turns(
                 data = load(attachment)
                 if data is not None:
                     parts.append(Part("document", media_type=attachment.media_type, data=data))
+            elif attachment.kind in ("pdf", "file") and recent:
+                # O modelo não lê o arquivo direto: vai o texto extraído.
+                data = load(attachment)
+                text = extract.text_of(attachment.kind, attachment.name, data) if data else ""
+                parts.append(
+                    Part(
+                        "text",
+                        text=f"Arquivo anexado: {attachment.name}\n```\n{text}\n```"
+                        if text
+                        else f"[Anexo {attachment.name}: não foi possível ler o texto deste"
+                        " arquivo (pode ser escaneado ou protegido)]",
+                    )
+                )
             else:
                 parts.append(Part("text", text=f"[Anexo anterior: {attachment.name}]"))
         if message.content:

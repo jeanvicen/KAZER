@@ -15,6 +15,8 @@ import unicodedata
 from dataclasses import dataclass
 from pathlib import Path
 
+from kazer.chat.extract import OFFICE, office_kind
+
 MAX_IMAGE_BYTES = 5 * 1024 * 1024
 MAX_TEXT_BYTES = 1024 * 1024
 MAX_PDF_BYTES = 10 * 1024 * 1024
@@ -97,6 +99,10 @@ def detect(data: bytes, name: str) -> Detected:
         detected = Detected("image", "image/webp")
     elif data.startswith(b"%PDF-"):
         detected = Detected("pdf", "application/pdf")
+    elif (office := office_kind(data)) is not None:
+        # Word, Excel e PowerPoint: guardados como "file"; o texto é extraído
+        # na hora de mandar ao modelo.
+        detected = Detected("file", OFFICE[office])
     else:
         if _extension(name) not in TEXT_EXTENSIONS or b"\x00" in data:
             raise UploadRejected("attachment_type", 415)
@@ -106,7 +112,8 @@ def detect(data: bytes, name: str) -> Detected:
             raise UploadRejected("attachment_type", 415) from None
         detected = Detected("text", "text/plain")
 
-    limit = {"image": MAX_IMAGE_BYTES, "pdf": MAX_PDF_BYTES, "text": MAX_TEXT_BYTES}[detected.kind]
+    limits = {"image": MAX_IMAGE_BYTES, "pdf": MAX_PDF_BYTES, "text": MAX_TEXT_BYTES}
+    limit = limits.get(detected.kind, MAX_PDF_BYTES)
     if len(data) > limit:
         raise UploadRejected("attachment_too_large", 413)
     return detected

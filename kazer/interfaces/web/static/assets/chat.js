@@ -23,7 +23,7 @@ import {
   trapFocus,
   uuid,
 } from "./dom.js";
-import { bundleCard, onAnswer, readSources, renderSourceList, stripSources } from "./deliver.js";
+import { bundleCard, onAnswer, openImages, readSources, renderSourceList, stripSources } from "./deliver.js";
 import { copyText, MarkdownView, render as renderMarkdown } from "./markdown.js";
 import { net, readEvents, request, waitOnline } from "./net.js";
 import { closeSheet, confirmDialog, openSheet, promptDialog, setSheetBackground, toast } from "./sheets.js";
@@ -700,16 +700,35 @@ function createModel(item) {
 }
 
 function attachmentList(attachments) {
+  const images = attachments
+    .filter((file) => file.kind === "image")
+    .map((file) => {
+      const src = file.preview || (file.id ? `/api/attachments/${file.id}` : "");
+      return { url: src, legenda: file.name, fonte: src, download: file.name };
+    });
   return h(
     "ul.files",
     { "aria-label": "Anexos" },
     attachments.map((file) => {
       if (file.kind === "image") {
         const src = file.preview || (file.id ? `/api/attachments/${file.id}` : "");
+        const index = images.findIndex((item) => item.url === src);
         return h(
           "li.files__item.files__item--image",
           {},
-          h("a.files__link", { href: src, target: "_blank", rel: "noopener", "aria-label": `Abrir ${file.name}` }, h("img.files__img", { src, alt: file.name, loading: "lazy", decoding: "async" })),
+          h(
+            "a.files__link",
+            {
+              href: src,
+              "aria-label": `Ver ${file.name}`,
+              // Abre dentro do app (no app instalado, outra aba tiraria a pessoa do KAZER).
+              onclick: (event) => {
+                event.preventDefault();
+                openImages(images, Math.max(index, 0));
+              },
+            },
+            h("img.files__img", { src, alt: file.name, loading: "lazy", decoding: "async" }),
+          ),
         );
       }
       return h(

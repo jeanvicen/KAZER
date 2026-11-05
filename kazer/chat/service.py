@@ -361,8 +361,8 @@ class ChatService:
         accept: list[str] = []
         if caps and caps.images:
             accept += ["image/png", "image/jpeg", "image/webp", "image/gif"]
-        if caps and caps.documents:
-            accept.append("application/pdf")
+        if caps:
+            accept += ["application/pdf", ".pdf", ".docx", ".xlsx", ".pptx"]
         accept += sorted(f".{ext}" for ext in TEXT_EXTENSIONS)
         return {
             "available": self._provider is not None,
@@ -377,7 +377,7 @@ class ChatService:
             "features": {
                 "deep": bool(caps and caps.deep),
                 "images": bool(caps and caps.images),
-                "pdf": bool(caps and caps.documents),
+                "pdf": caps is not None,
                 "files": self._provider is not None,
                 "web_search": bool(caps and caps.web_search),
                 "research": self._web is not None,
@@ -1565,6 +1565,7 @@ class ChatService:
             research=self._web is not None and not restricted,
             deep_research=options.research and self._web is not None and not restricted,
             desktop=options.desktop,
+            question=question.content,
         )
         specs = self._tools_for(user_id, read_only=restricted)
         builtin = () if restricted or self._web is None else self._web.definitions
@@ -1622,8 +1623,8 @@ class ChatService:
         caps = self._provider.capabilities
         if detected.kind == "image" and not caps.images:
             raise ChatError("images_unavailable", 415)
-        if detected.kind == "pdf" and not caps.documents:
-            raise ChatError("documents_unavailable", 415)
+        # PDF e Office entram sempre: se o modelo não lê o arquivo direto, o
+        # KAZER extrai o texto na hora de responder (kazer/chat/extract.py).
         self._purge_hourly()
         used, pending = self._store.storage_used(user_id)
         if pending >= MAX_PENDING_PER_USER or used + len(data) > MAX_STORAGE_PER_USER:
