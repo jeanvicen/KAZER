@@ -5,8 +5,11 @@
 // último bloco é refeito a cada atualização, então respostas longas não travam.
 
 import { h, icon } from "./dom.js";
+import { downloadText, fenceHook, isPreviewable, openPreview } from "./deliver.js";
 
-const FENCE = /^ {0,3}(`{3,}|~{3,})\s*([\w#+.-]*)/;
+const FENCE = /^ {0,3}(`{3,}|~{3,})\s*([\w#+.-]*)[ \t]*(.*)$/;
+// Nome de arquivo na cerca (```python app/main.py): vira cabeçalho com baixar.
+const FILE_NAME = /^[^\s\\<>:"|?*]{1,180}\.[A-Za-z0-9]{1,12}$/;
 const HEADING = /^ {0,3}(#{1,6})\s+(.*?)\s*#*\s*$/;
 const HR = /^ {0,3}([-*_])(\s*\1){2,}\s*$/;
 const QUOTE = /^ {0,3}>\s?(.*)$/;
@@ -88,8 +91,30 @@ function appendText(parent, text) {
 
 // ---------- Blocos ----------
 
-function codeBlock(lang, code) {
+function codeBlock(lang, code, name = "", closed = true) {
   const button = h("button.code__copy", { type: "button", "aria-label": "Copiar código" }, icon("copy"), h("span", { text: "Copiar" }));
+  const file = FILE_NAME.test(name) ? name : "";
+  const extra = [];
+  if (file && closed) {
+    if (isPreviewable(lang, file)) {
+      extra.push(
+        h(
+          "button.code__copy.code__preview",
+          { type: "button", "aria-label": `Ver prévia de ${file}`, onclick: () => openPreview({ title: file, html: code }) },
+          icon("globe"),
+          h("span", { text: "Prévia" }),
+        ),
+      );
+    }
+    extra.push(
+      h(
+        "button.code__copy",
+        { type: "button", "aria-label": `Baixar ${file}`, onclick: () => downloadText(file, code) },
+        icon("down"),
+        h("span", { text: "Baixar" }),
+      ),
+    );
+  }
   button.addEventListener("click", async () => {
     const ok = await copyText(code);
     button.classList.toggle("is-done", ok);
@@ -99,10 +124,13 @@ function codeBlock(lang, code) {
       button.lastChild.textContent = "Copiar";
     }, 1600);
   });
+  const label = file
+    ? h("span.code__file", {}, icon("file"), h("span", { text: file }), lang ? h("span.code__lang", { text: lang }) : null)
+    : h("span.code__lang", { text: lang || "código" });
   return h(
-    "div.code",
+    `div.code${file ? ".code--file" : ""}`,
     {},
-    h("div.code__bar", {}, h("span.code__lang", { text: lang || "código" }), button),
+    h("div.code__bar", {}, label, h("span.code__tools", {}, ...extra, button)),
     h("pre", { tabindex: "0" }, h("code", { text: code })),
   );
 }
@@ -234,8 +262,11 @@ export function blocks(lines) {
         code.push(lines[i]);
         i += 1;
       }
+      const closed = i < lines.length;
       i += 1; // fechamento (ou fim do texto durante o streaming)
-      out.append(codeBlock(fence[2], code.join("\n")));
+      const name = (fence[3] || "").trim();
+      const custom = fenceHook({ lang: fence[2], name, code: code.join("\n"), closed });
+      out.append(custom || codeBlock(fence[2], code.join("\n"), name, closed));
       continue;
     }
     const heading = line.match(HEADING);

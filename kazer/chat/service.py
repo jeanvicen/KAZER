@@ -30,7 +30,16 @@ from kazer.brain.model_provider import (
     ToolDef,
     Turn,
 )
-from kazer.chat import artifacts, connectors, context, mcp, official_skills, plans, skill_guard
+from kazer.chat import (
+    artifacts,
+    connectors,
+    context,
+    mcp,
+    official_skills,
+    plans,
+    skill_guard,
+    web_tools,
+)
 from kazer.chat.generation import GenerationHub, LiveGeneration
 from kazer.chat.identity import current_access_token
 from kazer.chat.protocols import AttachmentStorage, ChatStorage
@@ -214,6 +223,8 @@ class SendOptions:
     long_history: bool = False
     # Modo KZ Code: oficina de código, só nos planos pagos.
     forja: bool = False
+    # Computador (tela larga e ponteiro fino): só lá o KAZER entrega projetos Godot.
+    desktop: bool = False
     # Skills que a pessoa chamou com "/" nesta mensagem (ids, no máximo MAX_CALLED_SKILLS).
     skills: tuple[str, ...] = ()
 
@@ -226,6 +237,7 @@ class SendOptions:
             "web_search": self.web_search,
             "memory": self.memory,
             "forja": self.forja,
+            "desktop": self.desktop,
             "skills": list(self.skills),
             # Guardado com a mensagem para o consumo ser auditável depois.
             "units": self.units,
@@ -273,8 +285,16 @@ class ChatService:
         limiter: RateLimiter | None = None,
         clock: Callable[[], float] = time.time,
         hub: GenerationHub | None = None,
+        web: web_tools.WebTools | None = None,
+        checkout: Any = None,
     ) -> None:
-        """`provider` None: o chat funciona para histórico, mas não gera respostas."""
+        """`provider` None: o chat funciona para histórico, mas não gera respostas.
+
+        `web`: pesquisa em tempo real (busca, páginas e GitHub) oferecida ao modelo.
+        """
+        self._web = web
+        # Cobrança (Stripe) ligada no servidor, ou None.
+        self._checkout = checkout
         self._store = store
         self._uploads = uploads
         self._provider = provider
@@ -427,8 +447,24 @@ class ChatService:
             "plans": plans.catalog(),
             "usage": self.usage_state(user_id),
             # Sem cobrança ligada, a interface oferece sem fingir que vende.
-            "checkout": False,
+            "checkout": self._checkout is not None,
         }
+
+    def checkout(self, user_id: str, email: str, data: dict[str, Any]) -> dict[str, Any]:
+        """Abre o pagamento do plano escolhido; plano e preço decididos aqui."""
+        from kazer.integrations.payments import CheckoutError
+
+        if self._checkout is None:
+            raise ChatError("checkout_unavailable", 409)
+        plan, cycle = data.get("plan"), data.get("cycle", "mensal")
+        if not isinstance(plan, str) or not isinstance(cycle, str):
+            raise ChatError("invalid_request", 400)
+        try:
+            url = self._checkout.create(user_id=user_id, email=email, plan=plan, cycle=cycle)
+        except CheckoutError as exc:
+            status = 400 if str(exc) == "invalid_plan" else 503
+            raise ChatError("checkout_failed", status) from None
+        return {"url": url}
 
     # ---------- Preferências ----------
 
@@ -806,8 +842,16 @@ class ChatService:
     ) -> Callable[[ToolCall], tuple[str, str]]:
         """Fecha o ciclo: o modelo pede, o KAZER executa, o resultado volta."""
         by_name = {spec.name: spec for spec in self._tools_for(user_id, read_only=read_only)}
+        web = None if read_only else self._web
 
         def run(call: ToolCall) -> tuple[str, str]:
+            if web is not None and call.name in web_tools.NAMES:
+                label = web.label(call.name, call.arguments)
+                try:
+                    return (label, web.run(call.name, call.arguments))
+                except Exception:  # noqa: BLE001 - pesquisa não derruba a resposta
+                    logger.warning("chat.web_tool_failed")
+                    return (label, "A pesquisa falhou agora.")
             spec = by_name.get(call.name)
             if spec is None:
                 return ("Ferramenta indisponível", "Essa ferramenta não está ligada nesta conta.")
@@ -1111,7 +1155,8 @@ class ChatService:
         if research:
             raise ChatError("research_unavailable", 400)
         forja = data.get("forja", False)
-        if not isinstance(forja, bool):
+        desktop = data.get("desktop", False)
+        if not isinstance(forja, bool) or not isinstance(desktop, bool):
             raise ChatError("invalid_request", 400)
         called = data.get("skills", [])
         if (
@@ -1128,6 +1173,7 @@ class ChatService:
             web_search=web,
             memory=memory and memory_enabled,
             forja=forja,
+            desktop=desktop,
             skills=tuple(dict.fromkeys(called)),
         )
 
@@ -1312,6 +1358,7 @@ class ChatService:
                 item for item in current.options.get("skills", []) if isinstance(item, str)
             ),
             forja=bool(current.options.get("forja", False)),
+            desktop=bool(current.options.get("desktop", False)),
         )
         caps = self._provider.capabilities
         if (options.deep and not caps.deep) or (options.web_search and not caps.web_search):
@@ -1462,17 +1509,23 @@ class ChatService:
             web_search=options.web_search,
             forja=options.forja,
             skills=uses,
+            research=self._web is not None and not restricted,
+            desktop=options.desktop,
         )
         specs = self._tools_for(user_id, read_only=restricted)
+        builtin = () if restricted or self._web is None else self._web.definitions
         request = GenerationRequest(
             system=system,
             turns=turns,
             effort=options.effort,
             deep=options.deep,
             web_search=options.web_search,
-            tools=tuple(
-                ToolDef(name=spec.name, description=spec.description, schema=_OPEN_SCHEMA)
-                for spec in specs
+            tools=(
+                *builtin,
+                *(
+                    ToolDef(name=spec.name, description=spec.description, schema=_OPEN_SCHEMA)
+                    for spec in specs
+                ),
             ),
         )
         return request, restricted

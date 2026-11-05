@@ -58,6 +58,8 @@ def env(tmp_path: Path, fast_hashing: PasswordHashing) -> tuple[AuthService, Out
         RateLimiter(clock=clock),
         "https://kazer.test",
         clock=clock,
+        # Estes testes cobrem o fluxo com link de confirmação (opcional).
+        policy=AuthPolicy(verify_email=True),
     )
     service.initialize()
     return service, outbox, clock
@@ -246,3 +248,28 @@ def test_rate_limiter_window() -> None:
     assert limiter.hit("k", limit) > 0
     clock.now += 60
     assert limiter.hit("k", limit) == 0
+
+
+def test_default_signup_opens_a_session_without_email(
+    tmp_path: Path, fast_hashing: PasswordHashing
+) -> None:
+    outbox, clock = Outbox(), Clock()
+    service = AuthService(
+        AuthStore(tmp_path / "direto.db"),
+        fast_hashing,
+        outbox,
+        RateLimiter(clock=clock),
+        "https://kazer.test",
+        clock=clock,
+    )
+    service.initialize()
+    grant = service.register("Ana@Example.com", PASSWORD, "c1")
+    assert grant is not None and grant.email == "ana@example.com"
+    assert service.session_email(grant.token) == "ana@example.com"
+    assert outbox.messages == []  # nenhum "confira seu e-mail"
+    # Já pode entrar com a senha, sem confirmar nada.
+    assert service.login("ana@example.com", PASSWORD, "c1").email == "ana@example.com"
+    # Cadastro repetido: com a senha certa entra; com outra, nada muda.
+    assert service.register("ana@example.com", PASSWORD, "c2") is not None
+    assert service.register("ana@example.com", "another strong secret", "c3") is None
+    assert service.login("ana@example.com", PASSWORD, "c4").email == "ana@example.com"

@@ -82,3 +82,42 @@ def test_simulated_recovery_route_returns_success() -> None:
     assert response.status_code == 200
     assert response.json() == {"status": "password_updated"}
     assert 'kazer_session=""' in response.headers["set-cookie"]
+
+
+class FakeSignup:
+    """Imita /admin/users e /token: a conta nasce confirmada e já entra."""
+
+    def __init__(self) -> None:
+        self.calls: list[tuple[str, str, dict[str, Any]]] = []
+
+    def request(self, method: str, url: str, **kwargs: Any) -> httpx.Response:
+        self.calls.append((method, url, kwargs))
+        request = httpx.Request(method, url)
+        if url.endswith("/admin/users"):
+            assert kwargs["json"]["email_confirm"] is True
+            assert kwargs["headers"]["Authorization"] == "Bearer service-key"
+            return httpx.Response(200, json={"id": "u1"}, request=request)
+        if "grant_type=password" in url:
+            body = {
+                "access_token": "a", "refresh_token": "r", "expires_in": 3600,
+                "user": {"email": kwargs["json"]["email"]},
+            }
+            return httpx.Response(200, json=body, request=request)
+        return httpx.Response(500, request=request)
+
+
+def test_signup_with_service_key_skips_email_confirmation() -> None:
+    fake = FakeSignup()
+    service = SupabaseAuthService(
+        "https://example.supabase.co",
+        "sb_publishable_test",
+        "http://localhost:8000",
+        RateLimiter(),
+        client=fake,  # type: ignore[arg-type]
+        service_role_key="service-key",
+    )
+    grant = service.register("Nova@Example.com", "A new secure passphrase 2026!", "c1")
+    assert grant is not None and grant.email == "nova@example.com"
+    assert [call[1].rsplit("/", 1)[-1] for call in fake.calls] == [
+        "users", "token?grant_type=password",
+    ]

@@ -57,6 +57,10 @@ class Settings(StrictModel):
     model_vision: bool | None = None
     model_reasoning: ModelReasoning = "auto"
     model_web_search: bool = False
+    # Pesquisa em tempo real embutida (busca, páginas, GitHub) para qualquer modelo.
+    web_tools: bool = True
+    # Cobrança (Stripe). Só identificadores de preço, nunca chaves.
+    stripe_prices: dict[str, str] = Field(default_factory=dict)
     # Groq: modelo por nível de esforço (vazio = padrão do adaptador) e, se houver,
     # um modelo com visão para pedidos com imagem. Só nomes de modelo, nunca chaves.
     groq_tiers: dict[str, str] = Field(default_factory=dict)
@@ -178,6 +182,13 @@ def load_settings(environ: Mapping[str, str] | None = None) -> Settings:
         "model_vision": _optional_flag(env.get("KAZER_MODEL_VISION")),
         "model_reasoning": env.get("KAZER_MODEL_REASONING", "auto").strip().lower() or "auto",
         "model_web_search": _flag(env.get("KAZER_MODEL_WEB_SEARCH"), False),
+        "web_tools": _flag(env.get("KAZER_WEB_TOOLS"), True),
+        "stripe_prices": {
+            f"{plan}_{cycle}": value
+            for plan in ("pro", "ultra")
+            for cycle in ("mensal", "anual")
+            if (value := env.get(f"STRIPE_PRICE_{plan.upper()}_{cycle.upper()}", "").strip())
+        },
         "model_max_output_tokens": env.get("KAZER_MODEL_MAX_TOKENS", "0").strip() or "0",
         "model_timeout_seconds": env.get("KAZER_MODEL_TIMEOUT", "120").strip() or "120",
         "upload_dir": env.get("KAZER_UPLOAD_DIR", "data/uploads"),

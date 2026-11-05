@@ -34,8 +34,6 @@ const PASSWORD_ERRORS = {
   password_change_failed: "O servidor de contas não aceitou a troca agora. Tente de novo em instantes.",
 };
 
-// Milhar com ponto, como se escreve em português.
-const num = (value) => Number(value || 0).toLocaleString("pt-BR");
 
 let open = null;
 
@@ -332,23 +330,57 @@ class SettingsPanel {
     const usage = this.usage || {};
     const allowance = usage.allowance || 0;
     const used = Math.min(usage.consumed || 0, allowance);
-    const left = Math.max(allowance - used, 0);
-    const pct = allowance ? Math.round((used / allowance) * 100) : 0;
+    // Só a proporção: nenhum número de limite aparece para a pessoa. O mesmo
+    // gasto enche mais rápido num plano menor e mais devagar num maior.
+    const ratio = allowance ? used / allowance : 0;
+    const known = Boolean(allowance);
+    const mood = !known
+      ? "Medindo seu uso…"
+      : ratio < 0.05
+        ? "Tanque cheio de energia"
+        : ratio < 0.5
+          ? "Tem muito pela frente"
+          : ratio < 0.85
+            ? "Mais da metade usada"
+            : ratio < 1
+              ? "Quase no fim desta janela"
+              : "Janela usada — logo renova";
 
-    const fill = h("span.use-bar__fill");
-    window.requestAnimationFrame(() => fill.style.setProperty("--pct", `${pct}%`));
+    const level = h("span.orb__liquid", {}, h("span.orb__wave"), h("span.orb__wave.orb__wave--back"));
+    const orb = h(
+      `div.orb${ratio >= 0.85 ? ".is-high" : ""}`,
+      { role: "img", "aria-label": known ? `Uso desta janela: ${mood.toLowerCase()}` : "Uso desta janela" },
+      h("span.orb__glow", { "aria-hidden": "true" }),
+      h("span.orb__glass", { "aria-hidden": "true" }, level, h("span.orb__bubbles"), h("span.orb__shine")),
+    );
+    // Sobe devagar até o nível real (o líquido "enche" na frente da pessoa).
+    window.requestAnimationFrame(() => {
+      window.setTimeout(() => orb.style.setProperty("--fill", String(Math.max(known ? 0.06 : 0, Math.min(ratio, 1)))), 60);
+    });
 
     const open = h(
-      "button.set-action.set-action--accent",
+      "button.plans-cta",
       {
         type: "button",
         onclick: async (event) => {
-          const { openPlans } = await import("./plans.js");
-          openPlans({ opener: event.currentTarget });
+          const button = event.currentTarget;
+          button.classList.add("is-busy");
+          try {
+            const { openPlans } = await import("./plans.js");
+            await openPlans({ opener: button });
+          } finally {
+            button.classList.remove("is-busy");
+          }
         },
       },
-      icon("bolt"),
-      h("span", { text: usage.plan === "free" ? "Ver os planos do KAZER" : "Ver todos os planos" }),
+      h("span.plans-cta__shine", { "aria-hidden": "true" }),
+      h("span.plans-cta__icon", {}, icon("bolt")),
+      h(
+        "span.plans-cta__text",
+        {},
+        h("strong", { text: usage.plan && usage.plan !== "free" ? "Ver todos os planos" : "Destravar o KAZER Pro" }),
+        h("span", { text: "KZ Code, PDFs, slides e muito mais uso" }),
+      ),
       icon("chevron-right"),
     );
 
@@ -358,42 +390,25 @@ class SettingsPanel {
       this.group(
         "Seu plano",
         h(
-          "div.use-card",
+          "div.use-card.use-card--orb",
           {},
+          orb,
           h(
-            "div.use-card__head",
+            "div.use-card__info",
             {},
-            h("span.use-card__name", { text: usage.plan_name || "KAZER" }),
-            usage.plan && usage.plan !== "free" ? h("span.use-card__tag", { text: "Ativo" }) : null,
+            h(
+              "div.use-card__head",
+              {},
+              h("span.use-card__name", { text: usage.plan_name || "KAZER" }),
+              usage.plan && usage.plan !== "free" ? h("span.use-card__tag", { text: "Ativo" }) : null,
+            ),
+            h("span.use-card__mood", { text: mood }),
+            usage.reset_at ? h("span.use-card__reset", { text: `Renova ${formatReset(usage.reset_at)}.` }) : null,
+            h("span.use-card__hint", { text: "O ouro sobe conforme você usa e esvazia quando a janela renova." }),
           ),
-          allowance
-            ? h(
-                "div.use-card__meter",
-                {},
-                h(
-                  "div.use-bar",
-                  {
-                    role: "progressbar",
-                    "aria-valuemin": "0",
-                    "aria-valuemax": String(allowance),
-                    "aria-valuenow": String(used),
-                    "aria-label": "Uso da janela atual",
-                  },
-                  fill,
-                ),
-                h("span.use-card__text", {
-                  text: `${num(left)} de ${num(allowance)} unidades restantes${
-                    usage.window_hours ? ` nesta janela de ${usage.window_hours} h` : ""
-                  }.`,
-                }),
-                usage.reset_at
-                  ? h("span.use-card__reset", { text: `Renova ${formatReset(usage.reset_at)}.` })
-                  : null,
-              )
-            : h("p.set-note", { text: "O uso desta conta aparece aqui assim que o servidor informar." }),
         ),
       ),
-      this.group("Mais uso", open, h("p.set-note", { text: "A assinatura ainda não abriu: dá para ver os planos e deixar seu interesse, sem cobrança." })),
+      this.group("Mais uso", open),
     );
   }
 

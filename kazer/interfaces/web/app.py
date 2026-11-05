@@ -31,8 +31,10 @@ from kazer.chat.service import ChatService
 from kazer.chat.store import ChatStore
 from kazer.chat.supabase_store import SupabaseChatStore, SupabaseUploadStorage
 from kazer.chat.uploads import UploadStorage
+from kazer.chat.web_tools import WebTools
 from kazer.config.settings import Settings, load_settings
 from kazer.integrations.email import build_mail_sender
+from kazer.integrations.payments import build_checkout
 from kazer.interfaces.web.chat_api import chat_routes
 from kazer.interfaces.web.common import TOKEN_MAX_LENGTH, WebContext, client_of, endpoint
 from kazer.security.passwords import PasswordHashing
@@ -43,6 +45,28 @@ logger = logging.getLogger("kazer.web")
 
 STATIC_DIR = Path(__file__).parent / "static"
 
+# Prévia de páginas, PDFs e slides gerados pelo KAZER. A moldura roda em
+# sandbox sem allow-same-origin (origem opaca: sem cookies, sem sessão, sem
+# API) e pode carregar bibliotecas de CDN que o código gerado usar.
+_PREVIEW_CSP = "; ".join(
+    (
+        "default-src 'none'",
+        "script-src 'unsafe-inline' 'unsafe-eval' https: blob: data:",
+        "style-src 'unsafe-inline' https:",
+        "img-src https: data: blob:",
+        "font-src https: data:",
+        "media-src https: data: blob:",
+        "connect-src https:",
+        "worker-src blob:",
+        "base-uri 'none'",
+        "form-action 'none'",
+        "frame-ancestors 'self'",
+        "sandbox allow-scripts allow-modals allow-popups allow-downloads allow-pointer-lock"
+        " allow-forms",
+    )
+)
+PREVIEW_PATH = "/preview-frame"
+
 _CSP = "; ".join(
     (
         "default-src 'none'",
@@ -52,6 +76,8 @@ _CSP = "; ".join(
         "img-src 'self' blob:",
         "font-src 'self'",
         "connect-src 'self'",
+        # Só a moldura isolada de prévia (/preview-frame), da própria origem.
+        "frame-src 'self'",
         "manifest-src 'self'",
         "worker-src 'self'",
         "base-uri 'none'",
@@ -89,12 +115,17 @@ class SecurityHeaders:
             await self.app(scope, receive, send)
             return
         is_api = scope["path"].startswith("/api/")
+        is_preview = scope["path"] == PREVIEW_PATH
 
         async def send_with_headers(message: Message) -> None:
             if message["type"] == "http.response.start":
                 headers = MutableHeaders(scope=message)
                 for name, value in self.headers.items():
                     headers[name] = value
+                if is_preview:
+                    # A moldura de prévia é embutida pelo próprio KAZER, isolada.
+                    headers["Content-Security-Policy"] = _PREVIEW_CSP
+                    headers["X-Frame-Options"] = "SAMEORIGIN"
                 if is_api:
                     headers["Cache-Control"] = "no-store"
             await send(message)
@@ -164,6 +195,8 @@ def _build_chat(settings: Settings, provider: ModelProvider | None) -> ChatServi
         hourly_units=settings.chat_hourly_units,
         daily_units=settings.chat_daily_units,
         max_conversations=settings.chat_max_conversations,
+        web=WebTools() if settings.web_tools else None,
+        checkout=build_checkout(settings.stripe_prices, settings.public_origin),
     )
 
 
@@ -231,8 +264,18 @@ def create_app(
         auth = ctx.require_auth()
         data = await ctx.read_json(request)
         email, password = ctx.field(data, "email"), ctx.field(data, "password")
-        await run_in_threadpool(auth.register, email, password, client_of(request))
-        return JSONResponse({"status": "verification_sent"}, status_code=202)
+        grant = await run_in_threadpool(auth.register, email, password, client_of(request))
+        if grant is None:
+            # Sem sessão: e-mail que já tem conta (com outra senha) ou provedor que
+            # ainda exige confirmação. Resposta genérica, sem dizer qual dos dois.
+            return JSONResponse({"status": "verification_sent"}, status_code=202)
+        # Conta criada e ativa: entra direto no chat, sem "confira seu e-mail".
+        await run_in_threadpool(auth.logout, request.cookies.get(cookie_name))
+        response = JSONResponse(
+            {"status": "created", "authenticated": True, "email": grant.email}, status_code=201
+        )
+        ctx.set_session_cookie(response, grant.token, grant.max_age)
+        return response
 
     @endpoint
     async def resend_verification(request: Request) -> Response:
@@ -323,6 +366,7 @@ def create_app(
         # Links diretos para conversas abrem o mesmo app; a posse é checada na API.
         Route("/c/{conversation_id}", page("index.html")),
         Route("/termos", page("termos.html")),
+        Route(PREVIEW_PATH, page("preview.html")),
         Route("/privacidade", page("privacidade.html")),
         Route("/manifest.webmanifest", page("manifest.webmanifest", "application/manifest+json")),
         Route("/sw.js", service_worker),

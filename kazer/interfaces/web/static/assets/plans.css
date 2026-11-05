@@ -1,17 +1,17 @@
-/* Tela de planos do KAZER.
+/* Vitrine de planos do KAZER.
  *
- * Carregada só quando a pessoa abre os planos (plans.js injeta o <link>), para
- * o celular não baixar isto no caminho da conversa.
- *
- * As animações usam só `transform` e `opacity`, que o navegador compõe na GPU:
- * é o que deixa a entrada cinematográfica sem travar em aparelho modesto. Tudo
- * some quando a pessoa pede menos movimento.
+ * Carregada só quando a pessoa abre os planos. Animações só com transform e
+ * opacity (GPU), e tudo some quando a pessoa pede menos movimento.
+ * Paleta: preto profundo, ouro (Pro) e lilás-platina (Ultra).
  */
 
 .plans {
+  --gold: #e8b04a;
+  --gold-2: #f8dc8c;
   position: fixed;
   inset: 0;
-  z-index: 70;
+  /* Acima das configurações e de qualquer folha aberta. */
+  z-index: 98;
   display: grid;
   place-items: center;
 }
@@ -19,8 +19,8 @@
 .plans__scrim {
   position: absolute;
   inset: 0;
-  background: rgb(0 0 0 / 0.72);
-  backdrop-filter: blur(14px);
+  background: rgb(0 0 0 / 0.78);
+  backdrop-filter: blur(16px);
   opacity: 0;
   transition: opacity 0.32s ease;
 }
@@ -31,26 +31,26 @@
 
 .plans__panel {
   position: relative;
-  width: min(100%, 76rem);
-  max-height: 100dvh;
+  width: min(100%, 72rem);
+  height: 100dvh;
   display: flex;
   flex-direction: column;
-  background: var(--c-bg-2);
-  color: var(--c-text);
+  background:
+    radial-gradient(60rem 30rem at 50% -8rem, rgb(232 176 74 / 0.13), transparent 70%),
+    #060607;
+  color: #f6f4ef;
   overflow: hidden;
   opacity: 0;
-  transform: translateY(2rem) scale(0.98);
-  transition:
-    opacity 0.34s ease,
-    transform 0.34s cubic-bezier(0.22, 1, 0.36, 1);
+  transform: translateY(2rem) scale(0.985);
+  transition: opacity 0.34s ease, transform 0.45s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 @media (min-width: 60rem) {
   .plans__panel {
-    max-height: min(94dvh, 58rem);
-    border-radius: 1.5rem;
-    border: 1px solid var(--c-border);
-    box-shadow: 0 2.5rem 6rem rgb(0 0 0 / 0.6);
+    height: min(94dvh, 60rem);
+    border-radius: 1.75rem;
+    border: 1px solid rgb(255 255 255 / 0.08);
+    box-shadow: 0 3rem 8rem rgb(0 0 0 / 0.7);
   }
 }
 
@@ -60,567 +60,515 @@
 }
 
 .plans__head {
+  position: absolute;
+  inset: 0 0 auto;
+  z-index: 3;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 1rem;
-  padding: 1rem 1.25rem;
-  border-bottom: 1px solid var(--c-border);
-  flex: none;
+  padding: max(0.75rem, env(safe-area-inset-top)) 1rem 0.75rem 1.25rem;
+  background: linear-gradient(#060607, rgb(6 6 7 / 0));
 }
 
-.plans__title {
-  margin: 0;
-  /* Recebe foco só para o leitor de tela anunciar a tela: sem contorno. */
-  outline: none;
-  font-size: 1.05rem;
-  font-weight: 500;
-  letter-spacing: -0.01em;
-  color: var(--c-text-2);
+.plans__brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #b9b4ad;
+  font-size: 0.8rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
 }
 
-.plans .plans__title:focus-visible {
-  outline: none;
+.plans__brand-mark {
+  width: 1rem;
+  height: 1rem;
 }
 
-.plans__title strong {
-  color: var(--c-text);
-  font-weight: 600;
+.plans__close {
+  background: rgb(255 255 255 / 0.06) !important;
 }
 
 .plans__body {
   flex: 1;
-  min-height: 0;
   overflow-y: auto;
   overscroll-behavior: contain;
-  padding: 0 1.25rem 2.5rem;
-  -webkit-overflow-scrolling: touch;
+  padding: 4rem 1.1rem calc(2rem + env(safe-area-inset-bottom));
+  scrollbar-width: thin;
 }
 
-/* ---------- Abertura: a Fenda e a luz ---------- */
+/* ---------- Abertura ---------- */
 
-.plans__stage {
+.plans__hero {
+  display: grid;
+  justify-items: center;
+  gap: 0.7rem;
+  text-align: center;
+  padding-top: 0.5rem;
+}
+
+.plans__orb {
   position: relative;
   display: grid;
   place-items: center;
-  height: 10rem;
-  margin-inline: -1.25rem;
-  overflow: hidden;
+  width: 7.5rem;
+  height: 7.5rem;
+  margin-bottom: 0.4rem;
 }
 
-.plans__glow {
+.plans__orb-glow {
   position: absolute;
-  width: 26rem;
-  height: 26rem;
+  inset: -40%;
   border-radius: 50%;
-  background: radial-gradient(circle, rgb(91 140 255 / 0.26), transparent 62%);
-  filter: blur(16px);
-  animation: plans-breathe 7s ease-in-out infinite;
+  background: radial-gradient(circle, rgb(232 176 74 / 0.45), transparent 62%);
+  animation: plans-breathe 4.5s ease-in-out infinite;
 }
 
-.plans__ring {
+.plans__orb-ring {
   position: absolute;
-  width: 9rem;
-  height: 9rem;
+  inset: 0;
   border-radius: 50%;
-  border: 1px solid rgb(var(--ov) / 0.12);
-  animation: plans-ring 4.5s ease-out infinite;
+  border: 1px solid rgb(248 220 140 / 0.35);
+  border-top-color: var(--gold-2);
+  animation: plans-spin 7s linear infinite;
 }
 
-.plans__ring--slow {
-  animation-duration: 6.5s;
-  animation-delay: 1.4s;
+.plans__orb-ring--2 {
+  inset: 14%;
+  border-color: rgb(248 220 140 / 0.18);
+  border-bottom-color: var(--gold);
+  animation-duration: 4.5s;
+  animation-direction: reverse;
 }
 
 .plans__mark {
   position: relative;
-  width: 3.25rem;
-  height: 3.25rem;
-  animation: plans-mark-in 1s cubic-bezier(0.22, 1, 0.36, 1) both;
+  width: 2.6rem;
+  height: 2.6rem;
+  filter: drop-shadow(0 0 18px rgb(248 220 140 / 0.7));
 }
 
-.plans__mark .mark__l,
-.plans__mark .mark__r {
-  fill: currentColor;
-}
-
-.plans__mark .mark__l {
-  animation: plans-blade-l 5s ease-in-out infinite;
-}
-
-.plans__mark .mark__r {
-  animation: plans-blade-r 5s ease-in-out infinite;
+@keyframes plans-spin {
+  to {
+    transform: rotate(1turn);
+  }
 }
 
 @keyframes plans-breathe {
-  0%,
-  100% {
-    opacity: 0.55;
-    transform: scale(1);
-  }
   50% {
-    opacity: 1;
-    transform: scale(1.08);
+    transform: scale(1.12);
+    opacity: 0.7;
   }
 }
 
-@keyframes plans-ring {
-  0% {
-    opacity: 0;
-    transform: scale(0.55);
-  }
-  25% {
-    opacity: 0.5;
-  }
-  100% {
-    opacity: 0;
-    transform: scale(1.9);
-  }
+.plans__eyebrow {
+  color: var(--gold);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
 }
 
-@keyframes plans-mark-in {
-  from {
-    opacity: 0;
-    transform: scale(0.6) rotate(-8deg);
-  }
-  to {
-    opacity: 1;
-    transform: none;
-  }
+.plans__title {
+  margin: 0;
+  font-size: clamp(2rem, 7vw, 3.4rem);
+  font-weight: 800;
+  line-height: 1.02;
+  letter-spacing: -0.035em;
+  outline: none;
 }
 
-@keyframes plans-blade-l {
-  0%,
-  100% {
-    transform: translateX(0);
-  }
-  50% {
-    transform: translateX(-0.12rem);
-  }
-}
-
-@keyframes plans-blade-r {
-  0%,
-  100% {
-    transform: translateX(0);
-  }
-  50% {
-    transform: translateX(0.12rem);
-  }
+.plans__title em {
+  font-style: normal;
+  background: linear-gradient(180deg, var(--gold-2), var(--gold) 60%, #b97a22);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
 }
 
 .plans__lede {
-  margin: 0 auto 1.5rem;
-  max-width: 34rem;
-  text-align: center;
-  color: var(--c-text-2);
-  font-size: 0.95rem;
-  line-height: 1.5;
-  animation: plans-rise 0.5s 0.1s ease-out both;
+  max-width: 36rem;
+  margin: 0;
+  color: #b9b4ad;
+  font-size: 1rem;
+  line-height: 1.6;
 }
 
 /* ---------- Mensal / anual ---------- */
 
 .plans__cycle {
-  display: flex;
-  gap: 0.25rem;
-  width: fit-content;
-  margin: 0 auto 1.75rem;
-  padding: 0.25rem;
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  width: min(100%, 20rem);
+  margin: 1.6rem auto 1.4rem;
+  padding: 0.3rem;
+  border: 1px solid rgb(255 255 255 / 0.08);
   border-radius: 999px;
-  background: rgb(var(--ov) / 0.05);
-  animation: plans-rise 0.5s 0.16s ease-out both;
+  background: rgb(255 255 255 / 0.03);
+}
+
+.plans__cycle-thumb {
+  position: absolute;
+  top: 0.3rem;
+  bottom: 0.3rem;
+  left: 0.3rem;
+  width: calc(50% - 0.3rem);
+  border-radius: 999px;
+  background: rgb(255 255 255 / 0.1);
+  transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.plans__cycle.is-yearly .plans__cycle-thumb {
+  transform: translateX(100%);
 }
 
 .plans__cycle-option {
+  position: relative;
+  z-index: 1;
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 0.4rem;
-  padding: 0.5rem 1rem;
+  padding: 0.6rem 0.5rem;
   border: 0;
-  border-radius: 999px;
-  background: transparent;
-  color: var(--c-text-2);
+  background: none;
+  color: #8f8a84;
   font: inherit;
-  font-size: 0.875rem;
+  font-size: 0.9rem;
   cursor: pointer;
-  transition:
-    background 0.22s ease,
-    color 0.22s ease;
 }
 
 .plans__cycle-option[aria-checked="true"] {
-  background: rgb(var(--ov) / 0.1);
-  color: var(--c-text);
+  color: #fff;
 }
 
 .plans__save {
-  padding: 0.1rem 0.45rem;
+  padding: 0.12rem 0.45rem;
   border-radius: 999px;
-  background: rgb(91 140 255 / 0.18);
-  color: var(--link);
-  font-size: 0.7rem;
-  letter-spacing: 0.01em;
+  background: rgb(232 176 74 / 0.18);
+  color: var(--gold-2);
+  font-size: 0.68rem;
+  font-weight: 600;
+  white-space: nowrap;
 }
 
-/* ---------- Os três cartões ---------- */
+/* ---------- Cartões ---------- */
 
 .plans__grid {
   display: grid;
   gap: 1rem;
-  grid-template-columns: 1fr;
-  max-width: 68rem;
-  margin-inline: auto;
+  max-width: 56rem;
+  margin: 0 auto;
 }
 
-@media (min-width: 56rem) {
+@media (min-width: 48rem) {
   .plans__grid {
-    grid-template-columns: repeat(3, 1fr);
-    align-items: start;
+    grid-template-columns: 1fr 1fr;
+    align-items: stretch;
   }
 }
 
 .plan {
-  --accent: #8a8f98;
+  --accent: var(--gold);
   --tilt-x: 0deg;
   --tilt-y: 0deg;
-  --shine-x: 50%;
   position: relative;
   display: flex;
   flex-direction: column;
-  gap: 0.85rem;
-  padding: 1.4rem;
-  border-radius: 1.1rem;
-  border: 1px solid var(--c-border);
-  background: linear-gradient(180deg, rgb(var(--ov) / 0.045), rgb(var(--ov) / 0.015));
-  overflow: hidden;
-  transform-style: preserve-3d;
-  animation: plans-card-in 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
-  animation-delay: calc(0.22s + var(--i, 0) * 0.09s);
-  transition:
-    transform 0.3s ease,
-    border-color 0.3s ease,
-    box-shadow 0.3s ease;
+  gap: 0.7rem;
+  padding: 1.5rem 1.35rem 1.35rem;
+  border-radius: 1.5rem;
+  background: linear-gradient(180deg, rgb(255 255 255 / 0.045), rgb(255 255 255 / 0.015));
+  isolation: isolate;
+  transform: perspective(900px) rotateX(var(--tilt-x)) rotateY(var(--tilt-y));
+  transition: transform 0.25s ease;
+  opacity: 0;
+  animation: plan-in 0.7s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  animation-delay: calc(var(--i) * 0.12s + 0.15s);
 }
 
-@media (pointer: fine) {
-  .plan:hover {
-    transform: perspective(900px) rotateX(var(--tilt-x)) rotateY(var(--tilt-y)) translateY(-0.25rem);
-    border-color: color-mix(in srgb, var(--accent) 45%, transparent);
-    box-shadow: 0 1.5rem 3rem rgb(0 0 0 / 0.45);
+@keyframes plan-in {
+  from {
+    opacity: 0;
+    transform: translateY(1.5rem);
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Borda: fina nos cartões, viva e girando no destaque. */
+.plan__border {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(180deg, rgb(255 255 255 / 0.14), rgb(255 255 255 / 0.04));
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+}
+
+.plan.is-featured .plan__border {
+  padding: 1.5px;
+  background: conic-gradient(from var(--angle, 0deg), var(--gold-2), #b97a22, var(--gold), #fff3cf, var(--gold-2));
+  animation: plan-border 6s linear infinite;
+}
+
+@property --angle {
+  syntax: "<angle>";
+  initial-value: 0deg;
+  inherits: false;
+}
+
+@keyframes plan-border {
+  to {
+    --angle: 360deg;
   }
 }
 
 .plan.is-featured {
-  border-color: color-mix(in srgb, var(--accent) 40%, transparent);
-  background: linear-gradient(180deg, color-mix(in srgb, var(--accent) 12%, transparent), rgb(var(--ov) / 0.02));
+  background:
+    radial-gradient(28rem 14rem at 50% -4rem, rgb(232 176 74 / 0.2), transparent 70%),
+    linear-gradient(180deg, rgb(255 255 255 / 0.05), rgb(255 255 255 / 0.015));
+  box-shadow: 0 2rem 5rem rgb(232 176 74 / 0.12);
 }
 
-.plan.is-wanted {
-  animation:
-    plans-card-in 0.6s cubic-bezier(0.22, 1, 0.36, 1) both,
-    plans-wanted 1.6s 0.7s ease-out 2;
+.plan.is-wanted:not(.is-featured) .plan__border {
+  background: linear-gradient(180deg, var(--accent), rgb(255 255 255 / 0.05));
 }
 
-/* A luz que varre o cartão em destaque. */
 .plan__sheen {
   position: absolute;
   inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  background: radial-gradient(18rem 10rem at var(--shine-x, 50%) 0%, rgb(255 255 255 / 0.07), transparent 70%);
   pointer-events: none;
-  background: linear-gradient(105deg, transparent 38%, rgb(var(--ov) / 0.1) 50%, transparent 62%);
-  transform: translateX(-120%);
-}
-
-.plan.is-featured .plan__sheen {
-  animation: plans-sheen 5.5s 1.2s ease-in-out infinite;
 }
 
 .plan__badge {
-  position: absolute;
-  top: 1.1rem;
-  right: 1.1rem;
-  padding: 0.2rem 0.55rem;
+  align-self: flex-start;
+  padding: 0.28rem 0.7rem;
   border-radius: 999px;
-  background: color-mix(in srgb, var(--accent) 24%, transparent);
-  color: color-mix(in srgb, var(--accent) 80%, white);
-  font-size: 0.68rem;
-  letter-spacing: 0.02em;
+  background: linear-gradient(135deg, var(--gold-2), var(--gold));
+  color: #1a1206;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.plan__badge--quiet {
+  background: rgb(255 255 255 / 0.06);
+  color: color-mix(in srgb, var(--accent) 70%, #fff);
 }
 
 .plan__head {
   display: grid;
-  gap: 0.3rem;
+  gap: 0.25rem;
 }
 
 .plan__icon {
   display: grid;
   place-items: center;
-  width: 2.25rem;
-  height: 2.25rem;
+  width: 2.6rem;
+  height: 2.6rem;
   margin-bottom: 0.35rem;
-  border-radius: 0.7rem;
-  background: color-mix(in srgb, var(--accent) 18%, transparent);
-  color: color-mix(in srgb, var(--accent) 85%, white);
-}
-
-.plan__icon svg {
-  width: 1.15rem;
-  height: 1.15rem;
+  border-radius: 0.85rem;
+  background: color-mix(in srgb, var(--accent) 16%, transparent);
+  color: color-mix(in srgb, var(--accent) 80%, #fff);
 }
 
 .plan__name {
   margin: 0;
-  font-size: 1.15rem;
-  font-weight: 600;
-  letter-spacing: -0.015em;
+  font-size: 1.35rem;
+  font-weight: 750;
+  letter-spacing: -0.02em;
 }
 
 .plan__tagline {
   margin: 0;
-  color: var(--c-text-2);
-  font-size: 0.85rem;
-  line-height: 1.45;
+  color: #a39e98;
+  font-size: 0.9rem;
 }
 
 .plan__pricing {
   display: flex;
   align-items: baseline;
   gap: 0.35rem;
-  margin: 0.35rem 0 0;
+  margin: 0.4rem 0 0;
 }
 
 .plan__price {
-  font-size: 1.85rem;
-  font-weight: 600;
-  letter-spacing: -0.03em;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.1rem;
   font-variant-numeric: tabular-nums;
+}
+
+.plan__price b {
+  font-size: 3rem;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -0.04em;
+}
+
+.plan__price small {
+  color: #cfcac3;
+  font-size: 1.05rem;
+  font-weight: 600;
 }
 
 .plan__price.is-swapping {
-  animation: plans-price 0.36s cubic-bezier(0.22, 1, 0.36, 1);
+  animation: plan-swap 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@keyframes plan-swap {
+  from {
+    opacity: 0;
+    transform: translateY(0.5rem);
+  }
 }
 
 .plan__per {
-  color: var(--c-text-2);
-  font-size: 0.85rem;
+  color: #8f8a84;
 }
 
 .plan__hint {
-  display: block;
-  min-height: 1rem;
-  color: var(--c-text-2);
-  font-size: 0.75rem;
+  min-height: 1.1rem;
+  color: #8f8a84;
+  font-size: 0.8rem;
 }
 
-.plan__meter {
-  display: flex;
-  align-items: baseline;
+.plan__boost {
+  display: inline-flex;
+  align-items: center;
   gap: 0.4rem;
+  align-self: flex-start;
   margin: 0;
-  padding: 0.6rem 0.75rem;
+  padding: 0.4rem 0.7rem;
   border-radius: 0.7rem;
-  background: rgb(var(--ov) / 0.04);
-}
-
-.plan__units {
-  font-size: 1.15rem;
-  font-weight: 600;
-  font-variant-numeric: tabular-nums;
-  color: color-mix(in srgb, var(--accent) 80%, white);
-}
-
-.plan__meter-label {
-  color: var(--c-text-2);
-  font-size: 0.78rem;
-}
-
-.plan__usage {
-  display: grid;
-  gap: 0.35rem;
-}
-
-.plan__bar {
-  height: 0.375rem;
-  border-radius: 999px;
-  background: var(--c-border);
-  overflow: hidden;
-}
-
-.plan__bar-fill {
-  --pct: 0%;
-  display: block;
-  height: 100%;
-  width: var(--pct);
-  border-radius: inherit;
-  background: linear-gradient(90deg, color-mix(in srgb, var(--accent) 70%, white), var(--accent));
-  transition: width 0.8s cubic-bezier(0.22, 1, 0.36, 1);
-}
-
-.plan__usage-text {
-  color: var(--c-text-2);
-  font-size: 0.75rem;
-}
-
-.plan__list,
-.plan__extras {
-  display: grid;
-  gap: 0.5rem;
-  margin: 0.25rem 0 0;
-  padding: 0;
-  list-style: none;
-}
-
-.plan__extras {
-  padding-top: 0.75rem;
-  border-top: 1px solid var(--c-border);
-}
-
-.plan__item,
-.plan__extras li {
-  display: grid;
-  grid-template-columns: 1rem 1fr;
-  gap: 0.5rem;
-  align-items: start;
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+  color: color-mix(in srgb, var(--accent) 75%, #fff);
   font-size: 0.85rem;
-  line-height: 1.4;
+  font-weight: 600;
 }
 
-.plan__item {
-  animation: plans-item-in 0.4s ease-out both;
-  animation-delay: calc(0.5s + var(--i, 0) * 0.05s);
-}
-
-.plan__extras li {
-  color: var(--c-text-2);
-}
-
-.plan__check {
+.plan__boost svg {
   width: 1rem;
   height: 1rem;
-  margin-top: 0.15rem;
-  color: color-mix(in srgb, var(--accent) 85%, white);
 }
 
-.plan__plus {
-  width: 0.9rem;
-  height: 0.9rem;
-  margin-top: 0.2rem;
-  opacity: 0.6;
-}
-
-.plan__cta,
-.plan__current {
+.plan__cta {
+  position: relative;
+  overflow: hidden;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 0.4rem;
-  margin-top: auto;
-  padding: 0.75rem 1rem;
+  width: 100%;
+  margin: 0.4rem 0 0.2rem;
+  padding: 0.95rem 1rem;
   border: 0;
-  border-radius: 0.75rem;
+  border-radius: 999px;
+  background: rgb(255 255 255 / 0.92);
+  color: #0b0b0c;
   font: inherit;
-  font-size: 0.9rem;
-  font-weight: 500;
-}
-
-.plan__cta {
-  background: var(--c-border);
-  color: var(--c-text);
+  font-size: 0.98rem;
+  font-weight: 700;
   cursor: pointer;
-  transition:
-    background 0.22s ease,
-    transform 0.16s ease;
+  transition: transform 0.18s ease, filter 0.2s ease, box-shadow 0.2s ease;
 }
 
 .plan.is-featured .plan__cta {
-  background: color-mix(in srgb, var(--accent) 85%, black);
-  color: var(--n-ffffff);
+  background: linear-gradient(135deg, var(--gold-2), var(--gold) 50%, #c98a2b);
+  color: #1a1206;
+  box-shadow: 0 0.9rem 2.4rem rgb(232 176 74 / 0.35);
 }
 
 .plan__cta:hover {
-  background: color-mix(in srgb, var(--accent) 65%, transparent);
+  transform: translateY(-1px);
+  filter: brightness(1.05);
 }
 
 .plan__cta:active {
-  transform: scale(0.985);
+  transform: scale(0.98);
+}
+
+.plan__cta.is-busy {
+  opacity: 0.7;
+  cursor: progress;
 }
 
 .plan__cta svg {
-  width: 1rem;
-  height: 1rem;
+  width: 1.05rem;
+  height: 1.05rem;
 }
 
-.plan__current {
-  background: rgb(var(--ov) / 0.04);
-  color: var(--c-text-2);
+.plan__cta-shine {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(105deg, transparent 35%, rgb(255 255 255 / 0.6) 50%, transparent 65%);
+  transform: translateX(-120%);
+  animation: plan-shine 3.4s ease-in-out infinite;
 }
 
-.plan__current svg {
-  width: 1rem;
-  height: 1rem;
-  color: var(--ok-text);
-}
-
-.plans__foot {
-  max-width: 34rem;
-  margin: 1.75rem auto 0;
-  text-align: center;
-}
-
-.plans__note {
-  margin: 0;
-  color: var(--c-text-2);
-  font-size: 0.8rem;
-  line-height: 1.5;
-}
-
-@keyframes plans-rise {
-  from {
-    opacity: 0;
-    transform: translateY(0.75rem);
-  }
-  to {
-    opacity: 1;
-    transform: none;
-  }
-}
-
-@keyframes plans-card-in {
-  from {
-    opacity: 0;
-    transform: translateY(1.5rem) scale(0.97);
-  }
-  to {
-    opacity: 1;
-    transform: none;
-  }
-}
-
-@keyframes plans-item-in {
-  from {
-    opacity: 0;
-    transform: translateX(-0.4rem);
-  }
-  to {
-    opacity: 1;
-    transform: none;
-  }
-}
-
-@keyframes plans-sheen {
-  0%,
-  72% {
-    transform: translateX(-120%);
-  }
+@keyframes plan-shine {
+  55%,
   100% {
     transform: translateX(120%);
   }
 }
 
-@keyframes plans-price {
+.plan__current {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  padding: 0.9rem;
+  border: 1px solid rgb(255 255 255 / 0.12);
+  border-radius: 999px;
+  color: #cfcac3;
+}
+
+.plan__current svg {
+  width: 1rem;
+  height: 1rem;
+}
+
+.plan__list {
+  display: grid;
+  gap: 0.6rem;
+  margin: 0.5rem 0 0;
+  padding: 0.9rem 0 0;
+  border-top: 1px solid rgb(255 255 255 / 0.07);
+  list-style: none;
+}
+
+.plan__item {
+  display: grid;
+  grid-template-columns: 1.1rem 1fr;
+  gap: 0.55rem;
+  color: #dcd8d2;
+  font-size: 0.92rem;
+  line-height: 1.45;
+  opacity: 0;
+  animation: plan-item 0.5s ease-out forwards;
+  animation-delay: calc(var(--i, 0) * 0.06s + 0.5s);
+}
+
+.plan__item--extra {
+  color: #a39e98;
+  animation-delay: 0.9s;
+}
+
+@keyframes plan-item {
   from {
     opacity: 0;
-    transform: translateY(0.4rem);
+    transform: translateX(-0.35rem);
   }
   to {
     opacity: 1;
@@ -628,13 +576,150 @@
   }
 }
 
-@keyframes plans-wanted {
-  0%,
-  100% {
-    box-shadow: 0 0 0 0 transparent;
+.plan__check {
+  width: 1.1rem;
+  height: 1.1rem;
+  margin-top: 0.1rem;
+  color: color-mix(in srgb, var(--accent) 80%, #fff);
+}
+
+/* ---------- O que muda ---------- */
+
+.plans__value {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+  gap: 0.75rem;
+  max-width: 56rem;
+  margin: 2.25rem auto 0;
+}
+
+.plans__value-item {
+  display: grid;
+  gap: 0.3rem;
+  padding: 1rem;
+  border: 1px solid rgb(255 255 255 / 0.07);
+  border-radius: 1.1rem;
+  background: rgb(255 255 255 / 0.02);
+  opacity: 0;
+  animation: plan-in 0.6s ease-out forwards;
+  animation-delay: calc(var(--i) * 0.08s + 0.6s);
+}
+
+.plans__value-item strong {
+  font-size: 0.98rem;
+}
+
+.plans__value-item span:last-child {
+  color: #a39e98;
+  font-size: 0.86rem;
+  line-height: 1.5;
+}
+
+.plans__value-icon {
+  display: grid;
+  place-items: center;
+  width: 2.1rem;
+  height: 2.1rem;
+  margin-bottom: 0.3rem;
+  border-radius: 0.7rem;
+  background: rgb(232 176 74 / 0.12);
+  color: var(--gold-2);
+}
+
+.plans__value-icon svg {
+  width: 1.1rem;
+  height: 1.1rem;
+}
+
+/* ---------- Perguntas ---------- */
+
+.plans__faq {
+  display: grid;
+  gap: 0.5rem;
+  max-width: 44rem;
+  margin: 2rem auto 0;
+}
+
+.plans__q {
+  border: 1px solid rgb(255 255 255 / 0.07);
+  border-radius: 1rem;
+  background: rgb(255 255 255 / 0.02);
+}
+
+.plans__q summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.9rem 1rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  list-style: none;
+  cursor: pointer;
+}
+
+.plans__q summary::-webkit-details-marker {
+  display: none;
+}
+
+.plans__q summary svg {
+  flex: none;
+  width: 1.1rem;
+  height: 1.1rem;
+  color: #8f8a84;
+  transition: transform 0.25s ease;
+}
+
+.plans__q[open] summary svg {
+  transform: rotate(180deg);
+}
+
+.plans__q p {
+  margin: 0;
+  padding: 0 1rem 1rem;
+  color: #a39e98;
+  font-size: 0.9rem;
+  line-height: 1.6;
+}
+
+.plans__foot {
+  display: grid;
+  gap: 0.4rem;
+  justify-items: center;
+  margin: 1.75rem auto 0;
+  text-align: center;
+}
+
+.plans__trust {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin: 0;
+  color: #b9b4ad;
+  font-size: 0.85rem;
+}
+
+.plans__trust svg {
+  width: 1rem;
+  height: 1rem;
+  color: var(--gold);
+}
+
+.plans__note {
+  max-width: 32rem;
+  margin: 0;
+  color: #7d7872;
+  font-size: 0.78rem;
+  line-height: 1.5;
+}
+
+@media (min-width: 60rem) {
+  .plans__body {
+    padding: 4.5rem 2.5rem 2.5rem;
   }
-  40% {
-    box-shadow: 0 0 0 0.3rem color-mix(in srgb, var(--accent) 30%, transparent);
+
+  .plan {
+    padding: 1.8rem 1.6rem 1.6rem;
   }
 }
 

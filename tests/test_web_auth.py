@@ -8,7 +8,7 @@ import pytest
 from argon2 import PasswordHasher
 from starlette.testclient import TestClient
 
-from kazer.auth.service import AuthService
+from kazer.auth.service import AuthPolicy, AuthService
 from kazer.auth.store import AuthStore
 from kazer.config.settings import Settings, load_settings
 from kazer.integrations.email import MailMessage
@@ -49,6 +49,7 @@ def client(tmp_path: Path, outbox: Outbox) -> Iterator[TestClient]:
         outbox,
         RateLimiter(),
         settings.public_origin,
+        policy=AuthPolicy(verify_email=True),
     )
     with TestClient(create_app(settings, service), headers={"Origin": ORIGIN}) as test_client:
         yield test_client
@@ -195,3 +196,26 @@ def test_serverless_without_persistent_storage_keeps_accounts_closed() -> None:
         for path in ("/api/auth/login", "/api/auth/register", "/api/auth/password-reset"):
             response = client.post(path, json={"email": "ana@example.com", "password": PASSWORD})
             assert (response.status_code, response.json()) == (503, {"error": "auth_unavailable"})
+
+
+def test_signup_enters_the_app_directly(tmp_path: Path, outbox: Outbox) -> None:
+    settings = Settings(
+        environment="test", public_url=ORIGIN, database_path=tmp_path / "d.db", cookie_secure=False
+    )
+    service = AuthService(
+        AuthStore(settings.database_path),
+        PasswordHashing(PasswordHasher(time_cost=1, memory_cost=8, parallelism=1)),
+        outbox,
+        RateLimiter(),
+        settings.public_origin,
+    )
+    with TestClient(create_app(settings, service), headers={"Origin": ORIGIN}) as client:
+        response = client.post(
+            "/api/auth/register", json={"email": "ana@example.com", "password": PASSWORD}
+        )
+        assert response.status_code == 201
+        assert response.json() == {
+            "status": "created", "authenticated": True, "email": "ana@example.com"
+        }
+        assert client.get("/api/auth/session").json()["authenticated"] is True
+        assert outbox.messages == []

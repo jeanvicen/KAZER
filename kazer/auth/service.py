@@ -41,6 +41,9 @@ class AuthPolicy:
     mail_per_client: RateLimit = field(default_factory=lambda: RateLimit(10, 3600))
     mail_per_account: RateLimit = field(default_factory=lambda: RateLimit(3, 3600))
     token_per_client: RateLimit = field(default_factory=lambda: RateLimit(20, 600))
+    # Falso (padrão): a conta nasce ativa e a pessoa entra direto, sem "confira seu
+    # e-mail". Verdadeiro: o fluxo antigo, com link de confirmação.
+    verify_email: bool = False
 
 
 class AuthError(Exception):
@@ -132,8 +135,13 @@ class AuthService:
         except MailDeliveryError:
             logger.warning("auth.mail_deferred_failed")
 
-    def register(self, raw_email: str, password: str, client: str) -> None:
-        """Cria conta não confirmada e envia o link; mesma resposta se o e-mail já existir."""
+    def register(self, raw_email: str, password: str, client: str) -> SessionGrant | None:
+        """Cria a conta e já abre a sessão (sem confirmação de e-mail).
+
+        E-mail que já tem conta: com a senha certa, entra; com outra senha, nada
+        acontece (None) — a conta original nunca é alterada por um cadastro.
+        Com `policy.verify_email`, volta ao fluxo antigo do link de confirmação.
+        """
         self._limit(f"register:{client}", self._policy.register_per_client)
         email = self._valid_email(raw_email)
         try:
@@ -143,15 +151,29 @@ class AuthService:
 
         now = self._now()
         account = self._store.find_user_by_email(email)
+        created = None
         if account is None:
             # Em corrida com outro registro do mesmo e-mail, segue como conta existente.
             created = self._store.create_user(email, self._hashing.hash(password), now)
             account = created or self._store.find_user_by_email(email)
-        else:
+        elif self._policy.verify_email:
             self._hashing.burn(password)
 
+        if not self._policy.verify_email:
+            if account is None:
+                return None
+            if created is not None:
+                verified = self._store.mark_verified(created.id, now) or created
+                logger.info("auth.register.accepted")
+                return self._open_session(verified)
+            if len(password) <= 1024 and self._hashing.verify(account.password_hash, password):
+                verified = self._store.mark_verified(account.id, now) or account
+                return self._open_session(verified)
+            logger.info("auth.register.existing")
+            return None
+
         if account is None or not self._mail_quota_available(email):
-            return
+            return None
         if account.verified:
             message = messages.existing_account_message(email, self._origin)
         else:
@@ -161,6 +183,7 @@ class AuthService:
         except MailDeliveryError:
             raise AuthError("delivery_failed", 503) from None
         logger.info("auth.register.accepted")
+        return None
 
     def _issue_verification(self, user_id: str, email: str, now: int) -> MailMessage:
         token = new_token()

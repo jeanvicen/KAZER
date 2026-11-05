@@ -9,6 +9,10 @@ _ALLOWED_SECRETS: Mapping[str, frozenset[str]] = {
     "email": frozenset({"SMTP_PASSWORD"}),
     # Chave de serviço do Supabase: só para a exclusão de conta pela API admin.
     "supabase_admin": frozenset({"SUPABASE_SERVICE_ROLE_KEY"}),
+    # Pesquisa em tempo real: busca (opcional) e GitHub (limite maior de consultas).
+    "web": frozenset({"TAVILY_API_KEY", "BRAVE_SEARCH_API_KEY", "GITHUB_TOKEN"}),
+    # Cobrança: só o servidor cria sessões de pagamento.
+    "payments": frozenset({"STRIPE_SECRET_KEY", "STRIPE_WEBHOOK_SECRET"}),
     # Chaves do provedor de modelo: lidas só pelo adaptador, nunca expostas ao navegador.
     "model": frozenset(
         {

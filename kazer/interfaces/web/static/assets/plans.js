@@ -17,20 +17,37 @@ let open = null;
 
 const PLAN_ICONS = { free: "sparkle", pro: "bolt", ultra: "crown" };
 
-// Milhar com ponto, como se escreve em português.
-const num = (value) => Number(value || 0).toLocaleString("pt-BR");
+// O que o plano pago muda, em linguagem de quem programa (não de tabela).
+const VALUE = [
+  ["file", "KZ Code", "Projetos inteiros, em pastas, num .zip pronto para rodar."],
+  ["globe", "Pesquisa ao vivo", "Documentação, GitHub e a web consultados enquanto ele pensa."],
+  ["research", "PDFs e slides", "Relatórios e apresentações bonitos, prontos para enviar."],
+  ["bolt", "Muito mais uso", "Sessões longas sem bater no limite no meio do projeto."],
+];
 
+const FAQ = [
+  ["Posso cancelar quando quiser?", "Sim. Sem fidelidade e sem multa: cancelou, o plano vale até o fim do período pago."],
+  ["O que acontece com minhas conversas?", "Nada muda. Tudo o que você já fez continua na sua conta, em qualquer plano."],
+  ["Qual a diferença entre Pro e Ultra?", "O Ultra tem muito mais uso por janela e pensamento profundo sem custo dobrado — para quem programa o dia inteiro."],
+];
+
+// Abre a vitrine. Só mostra planos pagos: quem está no gratuito já está nele.
 export async function openPlans({ opener, highlight } = {}) {
   if (open) return open;
-  // Estilo e dados juntos: a tela só aparece quando os dois chegam. Enquanto
-  // isso, o Kazinho segura a espera (e some sozinho se ela for curta).
   const { createLoader } = await import("./loader.js");
   const waiting = createLoader(document.body, { label: "Preparando os planos…", full: true });
   waiting.start();
-  const [result] = await Promise.all([request("/api/plans"), loadStyle("/assets/plans.css")]);
-  waiting.stop();
-  if (!result.ok) {
-    toast("Não deu para carregar os planos agora.");
+  let result = { ok: false };
+  let styled = false;
+  try {
+    [result] = await Promise.all([request("/api/plans"), loadStyle("/assets/plans.css").then(() => (styled = true))]);
+    // Rede instável no celular: uma segunda tentativa antes de desistir.
+    if (!result.ok) result = await request("/api/plans");
+  } finally {
+    waiting.stop();
+  }
+  if (!result.ok || !styled || !Array.isArray(result.data?.plans)) {
+    toast("Não deu para carregar os planos agora. Confira a conexão e tente de novo.");
     return null;
   }
   open = new PlansScreen({ ...result.data, opener, highlight });
@@ -39,53 +56,83 @@ export async function openPlans({ opener, highlight } = {}) {
 
 class PlansScreen {
   constructor({ plans, usage, checkout, opener, highlight }) {
-    this.plans = plans;
+    this.all = plans;
+    this.plans = plans.filter((plan) => plan.monthly_cents > 0);
+    this.free = plans.find((plan) => plan.id === "free");
     this.usage = usage || {};
     this.checkout = Boolean(checkout);
     this.opener = opener;
-    this.highlight = highlight;
+    this.highlight = highlight || "pro";
     this.yearly = false;
     this.build();
   }
 
   build() {
-    this.title = h("h2.plans__title", { id: "plans-title", tabindex: "-1" }, "Escolha seu ", h("strong", { text: "KAZER" }));
     this.closeButton = h(
       "button.icon-button.plans__close",
       { type: "button", "aria-label": "Fechar planos", onclick: () => this.close() },
       icon("close"),
     );
+    const current = this.all.find((plan) => plan.id === this.usage.plan);
 
-    // Abertura cinematográfica: a Fenda no centro com a luz passando por ela.
     this.stage = h(
-      "div.plans__stage",
-      { "aria-hidden": "true" },
-      h("span.plans__glow"),
-      h("span.plans__ring"),
-      h("span.plans__ring.plans__ring--slow"),
-      mark("plans__mark"),
+      "div.plans__hero",
+      {},
+      h(
+        "div.plans__orb",
+        { "aria-hidden": "true" },
+        h("span.plans__orb-glow"),
+        h("span.plans__orb-ring"),
+        h("span.plans__orb-ring.plans__orb-ring--2"),
+        mark("plans__mark"),
+      ),
+      h("span.plans__eyebrow", { text: "KAZER Pro · KAZER Ultra" }),
+      h("h2.plans__title", { id: "plans-title", tabindex: "-1" }, "Destrave o KAZER ", h("em", { text: "inteiro." })),
+      h("p.plans__lede", {
+        text:
+          current && current.monthly_cents > 0
+            ? `Você já está no ${current.name}. Veja tudo o que ele te dá — ou suba de nível.`
+            : "Do prompt ao projeto pronto: KZ Code, pesquisa ao vivo, PDFs e slides, e uso de sobra para construir o dia todo.",
+      }),
     );
 
     this.cycle = this.buildCycle();
     this.grid = h("div.plans__grid");
-    this.cards = this.plans.map((plan, index) => this.card(plan, index));
+    this.cards = this.plans.map((plan, index) => new PlanCard(plan, {
+      index,
+      free: this.free,
+      current: plan.id === this.usage.plan,
+      highlighted: plan.id === this.highlight,
+      onChoose: (button) => this.choose(plan, button),
+    }));
     this.grid.append(...this.cards.map((card) => card.root));
 
+    const value = h(
+      "section.plans__value",
+      { "aria-label": "O que muda" },
+      VALUE.map(([iconName, title, text], index) => {
+        const item = h("div.plans__value-item", {}, h("span.plans__value-icon", {}, icon(iconName)), h("strong", { text: title }), h("span", { text }));
+        item.style.setProperty("--i", String(index));
+        return item;
+      }),
+    );
+    const faq = h(
+      "section.plans__faq",
+      { "aria-label": "Perguntas frequentes" },
+      FAQ.map(([q, a]) => h("details.plans__q", {}, h("summary", {}, h("span", { text: q }), icon("chevron")), h("p", { text: a }))),
+    );
     this.foot = h(
       "footer.plans__foot",
       {},
-      h("p.plans__note", {
-        text: this.checkout
-          ? "Você pode trocar ou cancelar quando quiser."
-          : "A assinatura ainda não abriu. Deixe seu interesse e avisamos você assim que abrir — nada é cobrado agora.",
-      }),
+      h("p.plans__trust", {}, icon("shield"), h("span", { text: "Pagamento seguro · Cancele quando quiser · Sem fidelidade" })),
+      this.checkout ? null : h("p.plans__note", { text: "A assinatura abre em breve: deixe seu interesse e avisamos você primeiro. Nada é cobrado agora." }),
     );
 
-    this.body = h("div.plans__body", {}, this.stage, h("p.plans__lede", { text: this.lede() }), this.cycle, this.grid, this.foot);
+    this.body = h("div.plans__body", {}, this.stage, this.cycle, this.grid, value, faq, this.foot);
     this.panel = h(
       "div.plans__panel",
       { role: "dialog", "aria-modal": "true", "aria-labelledby": "plans-title" },
-      h("header.plans__head", {}, this.title, this.closeButton),
+      h("header.plans__head", {}, h("span.plans__brand", {}, mark("plans__brand-mark"), h("span", { text: "Planos" })), this.closeButton),
       this.body,
     );
     this.root = h("div.plans", {}, h("div.plans__scrim", { onclick: () => this.close() }), this.panel);
@@ -93,6 +140,7 @@ class PlansScreen {
     this.onKey = (event) => {
       if (event.key === "Escape") {
         event.preventDefault();
+        event.stopPropagation();
         this.close();
       } else trapFocus(this.panel, event);
     };
@@ -103,41 +151,25 @@ class PlansScreen {
 
     window.requestAnimationFrame(() => {
       this.root.classList.add("is-open");
-      this.title.focus({ preventScroll: true });
+      this.title?.focus?.({ preventScroll: true });
+      this.panel.querySelector("#plans-title")?.focus({ preventScroll: true });
       if (!reducedMotion()) this.cards.forEach((card) => card.countUp());
-      if (this.highlight) {
-        const target = this.cards.find((card) => card.plan.id === this.highlight);
-        target?.root.classList.add("is-wanted");
-      }
     });
     announce("Planos do KAZER");
   }
 
-  lede() {
-    const current = this.plans.find((plan) => plan.id === this.usage.plan);
-    if (!current) return "Mais uso, KZ Code e artefatos quando você precisar.";
-    if (current.id === "free") return "Você está no plano gratuito. Veja o que muda quando o KAZER destrava.";
-    return `Você está no ${current.name}. Veja tudo o que ele já te dá.`;
-  }
-
   buildCycle() {
-    // O anual só aparece quando algum plano cobra: no gratuito não faz sentido.
-    if (!this.plans.some((plan) => plan.monthly_cents > 0)) return h("div", { hidden: true });
     const make = (label, yearly, extra) =>
       h(
         "button.plans__cycle-option",
-        {
-          type: "button",
-          role: "radio",
-          "aria-checked": String(this.yearly === yearly),
-          onclick: () => this.setCycle(yearly),
-        },
+        { type: "button", role: "radio", "aria-checked": String(this.yearly === yearly), onclick: () => this.setCycle(yearly) },
         h("span", { text: label }),
         extra ? h("span.plans__save", { text: extra }) : null,
       );
     this.cycleMonthly = make("Mensal", false);
     this.cycleYearly = make("Anual", true, "2 meses grátis");
-    return h("div.plans__cycle", { role: "radiogroup", "aria-label": "Forma de pagamento" }, this.cycleMonthly, this.cycleYearly);
+    this.cycleThumb = h("span.plans__cycle-thumb", { "aria-hidden": "true" });
+    return h("div.plans__cycle", { role: "radiogroup", "aria-label": "Forma de pagamento" }, this.cycleThumb, this.cycleMonthly, this.cycleYearly);
   }
 
   setCycle(yearly) {
@@ -145,44 +177,39 @@ class PlansScreen {
     this.yearly = yearly;
     this.cycleMonthly.setAttribute("aria-checked", String(!yearly));
     this.cycleYearly.setAttribute("aria-checked", String(yearly));
+    this.cycle.classList.toggle("is-yearly", yearly);
     for (const card of this.cards) card.setCycle(yearly);
   }
 
-  card(plan, index) {
-    const card = new PlanCard(plan, {
-      index,
-      current: plan.id === this.usage.plan,
-      usage: this.usage,
-      onChoose: () => this.choose(plan),
-    });
-    return card;
-  }
-
-  async choose(plan) {
-    if (plan.monthly_cents === 0) {
-      toast("Este já é o plano aberto a todo mundo.");
-      return;
-    }
+  async choose(plan, button) {
+    const cycle = this.yearly ? "anual" : "mensal";
     if (this.checkout) {
-      // Quando a cobrança existir, é aqui que ela entra.
-      toast("Abrindo o pagamento…");
+      // Cobrança ligada: o servidor cria a sessão de pagamento e devolve o link.
+      button.disabled = true;
+      button.classList.add("is-busy");
+      const result = await request("/api/checkout", { method: "POST", body: { plan: plan.id, cycle } });
+      if (result.ok && typeof result.data?.url === "string" && result.data.url.startsWith("https://")) {
+        window.location.assign(result.data.url);
+        return;
+      }
+      button.disabled = false;
+      button.classList.remove("is-busy");
+      toast("Não deu para abrir o pagamento agora. Tente de novo em instantes.");
       return;
     }
-    const saved = await request("/api/settings", {
-      method: "POST",
-      body: { preferences: { wants_plan: plan.id } },
-    });
+    const saved = await request("/api/settings", { method: "POST", body: { preferences: { wants_plan: plan.id } } });
+    const price = this.yearly ? `${plan.yearly_price} por ano` : `${plan.monthly_price} por mês`;
     const body = h(
       "div.offer",
       {},
-      h("p.offer__lead", { text: `Anotado: você quer o ${plan.name} por ${plan.monthly_price} por mês.` }),
+      h("p.offer__lead", { text: `Seu lugar no ${plan.name} (${price}) está guardado.` }),
       h("p.offer__text", {
         text: saved.ok
-          ? "A assinatura ainda não abriu. Guardamos seu interesse na sua conta e avisamos no seu e-mail assim que der para pagar. Nada foi cobrado."
-          : "A assinatura ainda não abriu e não deu para guardar seu interesse agora. Volte aqui quando a cobrança abrir — nada foi cobrado.",
+          ? "A assinatura abre em breve. Você é avisado primeiro, no seu e-mail — e nada foi cobrado."
+          : "A assinatura abre em breve e não deu para guardar seu interesse agora. Volte aqui quando abrir — nada foi cobrado.",
       }),
     );
-    openSheet({ title: "Quase lá", content: body, kind: "alert" });
+    openSheet({ title: "Você está na lista", content: body, kind: "alert" });
   }
 
   close() {
@@ -197,32 +224,32 @@ class PlansScreen {
 }
 
 class PlanCard {
-  constructor(plan, { index, current, usage, onChoose }) {
+  constructor(plan, { index, free, current, highlighted, onChoose }) {
     this.plan = plan;
-    this.current = current;
     this.yearly = false;
-    // No plano atual vale a franquia que o servidor informou: o catálogo é o
-    // que o plano promete, mas o ambiente pode estar com outro limite.
-    this.allowance = current && usage.allowance ? usage.allowance : plan.allowance;
-    this.price = h("span.plan__price", { text: plan.monthly_price });
-    this.per = h("span.plan__per", { text: plan.monthly_cents > 0 ? "/mês" : "para sempre" });
-    this.hint = h("span.plan__hint", { text: "" });
-    this.counter = h("strong.plan__units");
+    this.cents = plan.monthly_cents;
+    this.price = h("span.plan__price");
+    this.per = h("span.plan__per", { text: "/mês" });
+    this.hint = h("span.plan__hint", { text: "Cobrado todo mês" });
+    // Quanto mais uso que o gratuito — proporção, nunca o número do limite.
+    const times = free?.allowance ? Math.round(plan.allowance / free.allowance) : 0;
 
-    const action = current
-      ? h("div.plan__current", {}, icon("check"), h("span", { text: "Seu plano" }))
+    const cta = current
+      ? h("div.plan__current", {}, icon("check"), h("span", { text: "Seu plano atual" }))
       : h(
           "button.plan__cta",
-          { type: "button", onclick: onChoose },
-          h("span", { text: plan.monthly_cents > 0 ? `Quero o ${plan.name}` : "Continuar no gratuito" }),
+          { type: "button", onclick: (event) => onChoose(event.currentTarget) },
+          h("span.plan__cta-shine", { "aria-hidden": "true" }),
+          h("span", { text: `Assinar o ${plan.name}` }),
           icon("chevron-right"),
         );
 
     this.root = h(
-      `article.plan${plan.featured ? ".is-featured" : ""}${current ? ".is-current" : ""}`,
+      `article.plan${plan.featured ? ".is-featured" : ""}${highlighted ? ".is-wanted" : ""}${current ? ".is-current" : ""}`,
       {},
+      h("span.plan__border", { "aria-hidden": "true" }),
       h("span.plan__sheen", { "aria-hidden": "true" }),
-      plan.featured ? h("span.plan__badge", { text: "Mais escolhido" }) : null,
+      plan.featured ? h("span.plan__badge", { text: "Mais escolhido" }) : h("span.plan__badge.plan__badge--quiet", { text: "Para quem vive de código" }),
       h(
         "header.plan__head",
         {},
@@ -232,88 +259,58 @@ class PlanCard {
       ),
       h("p.plan__pricing", {}, this.price, this.per),
       this.hint,
-      h(
-        "p.plan__meter",
-        {},
-        this.counter,
-        h("span.plan__meter-label", {
-          text: `unidades a cada ${(current && usage.window_hours) || plan.window_hours} h`,
-        }),
-      ),
-      current && usage.allowance ? this.usageBar(usage) : null,
+      times > 1 ? h("p.plan__boost", {}, icon("bolt"), h("span", { text: `${times}× mais uso que o gratuito` })) : null,
+      cta,
       h(
         "ul.plan__list",
         {},
-        plan.highlights.map((text) =>
-          h("li.plan__item", {}, icon("check", "plan__check"), h("span", { text })),
-        ),
+        plan.highlights
+          .filter((text) => !/unidade|vezes o uso|\d+ vezes/i.test(text))
+          .map((text, i) => {
+            const item = h("li.plan__item", {}, icon("check", "plan__check"), h("span", { text }));
+            item.style.setProperty("--i", String(i));
+            return item;
+          }),
+        plan.extras.map((text) => h("li.plan__item.plan__item--extra", {}, icon("plus", "plan__check"), h("span", { text }))),
       ),
-      plan.extras.length
-        ? h("ul.plan__extras", {}, plan.extras.map((text) => h("li", {}, icon("plus", "plan__plus"), h("span", { text }))))
-        : null,
-      action,
     );
-    // CSP bloqueia `style` em atributo: as variáveis vão pelo CSSOM.
     this.root.style.setProperty("--accent", plan.accent);
     this.root.style.setProperty("--i", String(index));
-    for (const [i, item] of [...this.root.querySelectorAll(".plan__item")].entries()) {
-      item.style.setProperty("--i", String(i));
-    }
-    this.counter.textContent = num(this.allowance);
+    this.paintPrice(this.cents);
     if (finePointer() && !reducedMotion()) this.enableTilt();
   }
 
-  usageBar(usage) {
-    const used = Math.min(usage.consumed || 0, usage.allowance);
-    const pct = usage.allowance ? Math.round((used / usage.allowance) * 100) : 0;
-    const fill = h("span.plan__bar-fill");
-    const bar = h(
-      "div.plan__usage",
-      {},
-      h(
-        "div.plan__bar",
-        { role: "progressbar", "aria-valuemin": "0", "aria-valuemax": String(usage.allowance), "aria-valuenow": String(used) },
-        fill,
-      ),
-      h("span.plan__usage-text", {
-        text: usage.reset_at
-          ? `${num(used)} de ${num(usage.allowance)} usadas · renova ${formatReset(usage.reset_at)}`
-          : `${num(used)} de ${num(usage.allowance)} usadas nesta janela`,
-      }),
-    );
-    window.requestAnimationFrame(() => fill.style.setProperty("--pct", `${pct}%`));
-    return bar;
+  paintPrice(cents) {
+    const reais = Math.floor(cents / 100);
+    const centavos = String(cents % 100).padStart(2, "0");
+    this.price.replaceChildren(h("small", { text: "R$" }), h("b", { text: reais.toLocaleString("pt-BR") }), h("small", { text: `,${centavos}` }));
   }
 
   setCycle(yearly) {
     this.yearly = yearly;
     const plan = this.plan;
-    if (plan.monthly_cents === 0) return;
-    this.price.textContent = yearly ? plan.yearly_per_month : plan.monthly_price;
-    this.per.textContent = "/mês";
-    this.hint.textContent = yearly ? `${plan.yearly_price} cobrados uma vez por ano` : "";
+    this.cents = yearly ? Math.round(plan.yearly_cents / 12) : plan.monthly_cents;
+    this.paintPrice(this.cents);
+    this.hint.textContent = yearly ? `${plan.yearly_price} cobrados uma vez por ano` : "Cobrado todo mês";
     this.price.classList.remove("is-swapping");
     void this.price.offsetWidth;
     if (!reducedMotion()) this.price.classList.add("is-swapping");
   }
 
-  // Contador que sobe rápido na entrada: dá peso ao número sem enrolar.
+  // Preço que sobe rápido na entrada: dá peso ao número sem enrolar.
   countUp() {
-    const target = this.allowance;
+    const target = this.cents;
     const start = performance.now();
-    const duration = 900;
     const step = (now) => {
-      const t = Math.min((now - start) / duration, 1);
-      // Desacelera no fim (easeOutCubic).
-      const eased = 1 - (1 - t) ** 3;
-      this.counter.textContent = num(Math.round(target * eased));
+      const t = Math.min((now - start) / 900, 1);
+      this.paintPrice(Math.round(target * (1 - (1 - t) ** 3)));
       if (t < 1) window.requestAnimationFrame(step);
     };
     window.requestAnimationFrame(step);
   }
 
   enableTilt() {
-    const limit = 5;
+    const limit = 4;
     this.root.addEventListener("pointermove", (event) => {
       const box = this.root.getBoundingClientRect();
       const x = (event.clientX - box.left) / box.width - 0.5;

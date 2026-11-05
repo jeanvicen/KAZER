@@ -16,6 +16,7 @@ from __future__ import annotations
 import base64
 import json
 import logging
+import re
 import ssl
 import threading
 import urllib.error
@@ -240,6 +241,51 @@ def _status_error(status: int, retry_after: str | None) -> ProviderError:
     return ProviderError("model_error")
 
 
+class _ThinkSplitter:
+    """Separa `<think>...</think>` do texto, mesmo com a marca partida entre pedaços.
+
+    Modelos sem raciocínio nativo às vezes pensam por escrito nessas marcas (o
+    prompt do KAZER permite). O rascunho vira evento "thinking" e nunca se mistura
+    com a resposta.
+    """
+
+    _OPEN, _CLOSE = "<think>", "</think>"
+
+    def __init__(self) -> None:
+        self._buffer = ""
+        self._inside = False
+
+    def feed(self, chunk: str) -> list[tuple[str, str]]:
+        out: list[tuple[str, str]] = []
+        self._buffer += chunk
+        while self._buffer:
+            tag = self._CLOSE if self._inside else self._OPEN
+            index = self._buffer.find(tag)
+            kind = "thinking" if self._inside else "text"
+            if index >= 0:
+                if index:
+                    out.append((kind, self._buffer[:index]))
+                self._buffer = self._buffer[index + len(tag) :]
+                self._inside = not self._inside
+                continue
+            # Guarda um possível começo de marca para o próximo pedaço.
+            keep = 0
+            for size in range(min(len(tag) - 1, len(self._buffer)), 0, -1):
+                if tag.startswith(self._buffer[-size:]):
+                    keep = size
+                    break
+            emit = self._buffer[: len(self._buffer) - keep]
+            if emit:
+                out.append((kind, emit))
+            self._buffer = self._buffer[len(self._buffer) - keep :]
+            break
+        return out
+
+    def flush(self) -> list[tuple[str, str]]:
+        rest, self._buffer = self._buffer, ""
+        return [("thinking" if self._inside else "text", rest)] if rest else []
+
+
 def _text_of(turn: Turn) -> str:
     return "\n\n".join(part.text for part in turn.parts if part.kind == "text" and part.text)
 
@@ -417,6 +463,7 @@ class OpenAICompatibleProvider:
         stop = "end"
         # Os pedidos de ferramenta chegam fatiados: `index` diz a qual pertencem.
         pending: dict[int, dict[str, str]] = {}
+        splitter = _ThinkSplitter()
         try:
             with response:
                 for raw in response:
@@ -444,7 +491,8 @@ class OpenAICompatibleProvider:
                             yield StreamEvent("thinking", reasoning)
                         content = delta.get("content")
                         if isinstance(content, str) and content:
-                            yield StreamEvent("text", content)
+                            for kind, piece in splitter.feed(content):
+                                yield StreamEvent(cast(Any, kind), piece)
                         for piece in delta.get("tool_calls") or ():
                             slot = pending.setdefault(
                                 int(piece.get("index", 0)), {"id": "", "name": "", "args": ""}
@@ -468,6 +516,8 @@ class OpenAICompatibleProvider:
             if cancel.cancelled():
                 return
             raise ProviderError("model_unreachable") from None
+        for kind, piece in splitter.flush():
+            yield StreamEvent(cast(Any, kind), piece)
         if pending:
             # O KAZER executa e volta: quem fecha o ciclo é o hub.
             for slot in pending.values():
@@ -487,14 +537,65 @@ class OpenAICompatibleProvider:
 # o primeiro que existir responde, e os seguintes são reserva caso a Groq
 # aposente um modelo. Os IDs mudam com o tempo; por isso cada nível tem uma
 # variável de ambiente própria (KAZER_GROQ_MODEL_<NÍVEL>) que vence o padrão.
+#
+# O KAZ 1.1 público usa só o "baixo", então é ele que precisa ser bom de verdade:
+# o gpt-oss-120b (forte em código e com raciocínio nativo) com o raciocínio
+# "auto" — o KAZER mede o tamanho da tarefa e pensa mais quando ela pede —, e o
+# Kimi K2 e o Llama 3.3 70B de reserva.
 GROQ_DEFAULT_TIERS = {
-    "baixo": "llama-3.1-8b-instant,openai/gpt-oss-20b:low",
-    "medio": "openai/gpt-oss-20b:medium,llama-3.1-8b-instant",
-    "alto": "llama-3.3-70b-versatile,openai/gpt-oss-120b:medium",
-    "extra": "openai/gpt-oss-120b:medium,llama-3.3-70b-versatile",
+    "baixo": "openai/gpt-oss-120b:auto,moonshotai/kimi-k2-instruct-0905,llama-3.3-70b-versatile",
+    "medio": "openai/gpt-oss-120b:medium,moonshotai/kimi-k2-instruct-0905",
+    "alto": "openai/gpt-oss-120b:high,moonshotai/kimi-k2-instruct-0905",
+    "extra": "openai/gpt-oss-120b:high,llama-3.3-70b-versatile",
     "max": "openai/gpt-oss-120b:high,openai/gpt-oss-120b:medium",
 }
+# Imagens: Llama 4 (multimodal), com reserva.
+GROQ_DEFAULT_VISION = (
+    "meta-llama/llama-4-maverick-17b-128e-instruct,meta-llama/llama-4-scout-17b-16e-instruct"
+)
 _GROQ_REASONING = {"low", "medium", "high"}
+_AUTO = "auto"
+# Teto de saída por família: alto o bastante para nunca cortar um arquivo no meio.
+# (O raciocínio conta dentro do teto nos modelos que pensam.)
+_GROQ_MAX_OUT = {
+    "openai/gpt-oss": 32_768,
+    "moonshotai/kimi-k2": 16_384,
+    "llama-3.3-70b": 32_768,
+    "meta-llama/llama-4": 8_192,
+}
+
+# Sinais de tarefa que merece pensar mais (código, contas, planejamento).
+_HEAVY = re.compile(
+    r"```|\b(c[óo]digo|programa|fun[çc][ãa]o|classe|bug|erro|debug|implement|refator|"
+    r"api|banco de dados|sql|algoritmo|arquitetura|jogo|game|godot|site|app|aplicativo|"
+    r"script|python|javascript|typescript|react|html|css|java|rust|golang|c\+\+|"
+    r"calcul|prove|demonstr|equa[çc]|otimiz|compare|analis|planej|passo a passo|"
+    r"slides?|apresenta[çc][ãa]o|pdf|relat[óo]rio|documento)\b",
+    re.IGNORECASE,
+)
+
+
+def task_effort(request: GenerationRequest) -> str:
+    """Quanto raciocínio a tarefa pede: low, medium ou high.
+
+    Conversa leve responde rápido; código, contas e entregas longas pensam mais.
+    É só heurística local — nada do texto sai daqui.
+    """
+    if "modo KZ Code" in request.system:
+        return "high"
+    last = next(
+        (
+            _text_of(turn)
+            for turn in reversed(request.turns)
+            if turn.role == "user" and not turn.results
+        ),
+        "",
+    )
+    if len(last) > 700 or _HEAVY.search(last):
+        return "high"
+    if len(last) < 60 and "?" not in last:
+        return "low"
+    return "medium"
 
 
 def parse_tier(spec: str) -> list[tuple[str, dict[str, Any]]]:
@@ -506,11 +607,15 @@ def parse_tier(spec: str) -> list[tuple[str, dict[str, Any]]]:
         if not model or any(ch.isspace() for ch in model) or len(model) > 120:
             continue
         extra: dict[str, Any] = {}
-        if reasoning in _GROQ_REASONING:
+        if reasoning in _GROQ_REASONING or reasoning == _AUTO:
             # O raciocínio cru do modelo nunca chega à tela: só o resultado.
             extra = {"reasoning_effort": reasoning, "include_reasoning": False}
         attempts.append((model, extra))
     return attempts
+
+
+def _groq_max_out(model: str) -> int:
+    return next((size for prefix, size in _GROQ_MAX_OUT.items() if model.startswith(prefix)), 0)
 
 
 class GroqProvider(OpenAICompatibleProvider):
@@ -538,6 +643,7 @@ class GroqProvider(OpenAICompatibleProvider):
             if level in EFFORTS and (chain := parse_tier(spec))
         }
         self._vision_model = vision_model
+        self._vision_chain = parse_tier(vision_model) if vision_model else []
         super().__init__(
             name="groq",
             base_url=base_url,
@@ -572,12 +678,24 @@ class GroqProvider(OpenAICompatibleProvider):
         has_image = any(
             part.kind == "image" for turn in request.turns for part in turn.parts
         )
-        if has_image and self._vision_model:
-            return [(self._vision_model, {})]
-        # Esforço de fora da tabela (ou desligado pelo ambiente) cai no mais baixo.
-        wanted = next((name for name, value in EFFORTS.items() if value == request.effort), "baixo")
-        chain = self._tiers.get(wanted) or next(iter(self._tiers.values()), [])
-        return list(chain)
+        if has_image and self._vision_chain:
+            chain = list(self._vision_chain)
+        else:
+            # Esforço de fora da tabela (ou desligado pelo ambiente) cai no mais baixo.
+            wanted = next(
+                (name for name, value in EFFORTS.items() if value == request.effort), "baixo"
+            )
+            chain = list(self._tiers.get(wanted) or next(iter(self._tiers.values()), []))
+        resolved: list[tuple[str, dict[str, Any]]] = []
+        for model, extra in chain:
+            extra = dict(extra)
+            if extra.get("reasoning_effort") == _AUTO:
+                extra["reasoning_effort"] = "high" if request.deep else task_effort(request)
+            if not self._max_tokens and (ceiling := _groq_max_out(model)):
+                # Sem teto, o provedor corta cedo demais em respostas longas.
+                extra["max_completion_tokens"] = ceiling
+            resolved.append((model, extra))
+        return resolved
 
 
 # ---------------------------------------------------------------------------
@@ -835,6 +953,7 @@ def _build_groq(
         logger.warning("model.unavailable: GROQ_API_KEY não configurada")
         return None
     tiers = {**GROQ_DEFAULT_TIERS, **settings.groq_tiers}
+    vision = settings.groq_vision_model or GROQ_DEFAULT_VISION
     # KAZER_MODEL (se alguém definir) vira o nível mais baixo: compatível com
     # quem já configurou um modelo único.
     if settings.model_name and "baixo" not in settings.groq_tiers:
@@ -843,7 +962,7 @@ def _build_groq(
         base_url=base_url,
         api_key=key,
         tiers=tiers,
-        vision_model=settings.groq_vision_model,
+        vision_model=vision,
         max_tokens=max_tokens,
         timeout=timeout,
     )

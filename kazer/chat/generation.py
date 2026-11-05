@@ -32,7 +32,14 @@ logger = logging.getLogger("kazer.chat")
 HEARTBEAT_SECONDS = 15.0
 # Quantas rodadas de ferramenta uma resposta pode dar antes de parar.
 # Sem teto, um modelo preso num laço gastaria a cota da pessoa à toa.
-MAX_TOOL_ROUNDS = 6
+MAX_TOOL_ROUNDS = 8
+# Quando o provedor corta por tamanho, o KAZER pede para continuar de onde parou
+# (no máximo estas vezes), em vez de entregar um arquivo pela metade.
+MAX_CONTINUATIONS = 3
+CONTINUE_PROMPT = (
+    "Continue exatamente de onde a resposta parou, sem repetir nada e sem comentar"
+    " a interrupção. Se estava dentro de um bloco de código, continue o código."
+)
 
 
 @dataclass
@@ -262,6 +269,7 @@ class GenerationHub:
         status, error, stop = "complete", None, "end"
         last_save = time.monotonic()
         rounds = 0
+        continuations = 0
 
         def expire() -> None:
             live.timed_out = True
@@ -293,7 +301,24 @@ class GenerationHub:
                         )
                     if event.kind == "stop":
                         stop = event.text
-                if not calls or live.cancel.cancelled() or live.on_tool is None:
+                if live.cancel.cancelled():
+                    break
+                cut = not calls and stop == "length" and bool(round_text)
+                if cut and continuations < MAX_CONTINUATIONS:
+                    # Cortou por tamanho: a mesma resposta continua na rodada seguinte.
+                    continuations += 1
+                    stop = "end"
+                    live.push({"type": "step", "label": "Continuando a resposta"})
+                    request = replace(
+                        request,
+                        turns=(
+                            *request.turns,
+                            Turn("assistant", (Part("text", "".join(round_text)),)),
+                            Turn("user", (Part("text", CONTINUE_PROMPT),)),
+                        ),
+                    )
+                    continue
+                if not calls or live.on_tool is None:
                     break
                 rounds += 1
                 if rounds > MAX_TOOL_ROUNDS:

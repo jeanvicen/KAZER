@@ -355,6 +355,14 @@ def chat_routes(ctx: WebContext, chat: ChatService | None) -> list[Route]:
         return JSONResponse(await run_in_threadpool(service().plans, user.id))
 
     @endpoint
+    async def checkout(request: Request) -> Response:
+        user, _ = await account(request)
+        data = await ctx.read_json(request)
+        return JSONResponse(
+            await run_in_threadpool(service().checkout, user.id, user.email, data)
+        )
+
+    @endpoint
     async def memories(request: Request) -> Response:
         user, _ = await account(request)
         data = await ctx.read_json(request)
@@ -446,6 +454,7 @@ def chat_routes(ctx: WebContext, chat: ChatService | None) -> list[Route]:
         Route("/api/attachments/{attachment_id}", attachment, methods=["GET", "DELETE"]),
         Route("/api/settings", settings, methods=["GET", "POST"]),
         Route("/api/plans", plans, methods=["GET"]),
+        Route("/api/checkout", checkout, methods=["POST"]),
         Route("/api/code/sessions", code_sessions, methods=["GET"]),
         Route("/api/skills", skills, methods=["GET", "POST"]),
         Route("/api/skills/shared", shared_skills, methods=["GET"]),

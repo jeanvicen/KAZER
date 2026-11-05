@@ -23,6 +23,7 @@ import {
   trapFocus,
   uuid,
 } from "./dom.js";
+import { bundleCard, onAnswer } from "./deliver.js";
 import { copyText, MarkdownView, render as renderMarkdown } from "./markdown.js";
 import { net, readEvents, request, waitOnline } from "./net.js";
 import { closeSheet, confirmDialog, openSheet, promptDialog, setSheetBackground, toast } from "./sheets.js";
@@ -174,6 +175,14 @@ export async function mountChat({ email, onSignedOut }) {
   for (const id of ids) S.ui[id.replace(/-(\w)/g, (_, c) => c.toUpperCase())] = byId(root, id);
   setSheetBackground(root);
   setAccount(email);
+  // Resposta escolhida num cartão de pergunta vira a próxima mensagem.
+  onAnswer((text) => {
+    if (S.live) return;
+    S.ui.prompt.value = text;
+    autosize();
+    updateSendState();
+    send();
+  });
   bindViewport();
   bindDrawer();
   bindComposer();
@@ -750,10 +759,11 @@ function assistantElement(model) {
   const notice = h("div.msg__notice", { hidden: true });
   const actions = h("div.msg__actions", {}, actionButton("copy", "Copiar resposta", () => model.content));
   const made = h("div.msg__made", { hidden: true });
+  const bundle = h("div.msg__bundle", { hidden: true });
   const steps = h("ol.msg__steps", { hidden: true, "aria-label": "O que o KAZER está fazendo" });
-  const el = h("article.msg.msg--kazer", { dataset: { id: model.id } }, head, steps, thinking, body, made, notice, actions);
+  const el = h("article.msg.msg--kazer", { dataset: { id: model.id } }, head, steps, thinking, body, bundle, made, notice, actions);
   model.el = el;
-  model.parts = { head, steps, thinking, body, made, notice, actions, state: head.lastChild, thinkBody: thinking.lastChild };
+  model.parts = { head, steps, thinking, body, bundle, made, notice, actions, state: head.lastChild, thinkBody: thinking.lastChild };
   model.view = new MarkdownView(body);
   applyStatus(model);
   return el;
@@ -765,6 +775,7 @@ function paintBody(model) {
   model.view.update(model.content || "");
   paintSteps(model);
   paintArtifacts(model);
+  paintBundle(model);
   if (model.thinking) {
     model.parts.thinking.hidden = false;
     model.parts.thinkBody.replaceChildren(renderMarkdown(model.thinking));
@@ -791,6 +802,15 @@ function paintSteps(model) {
       ),
     ),
   );
+}
+
+// Pacote: com 2+ arquivos (ou um projeto Godot), um .zip com tudo.
+function paintBundle(model) {
+  const slot = model.parts?.bundle;
+  if (!slot) return;
+  const card = model.status === "streaming" ? null : bundleCard(model.content || "");
+  slot.hidden = !card;
+  slot.replaceChildren(...(card ? [card] : []));
 }
 
 function paintArtifacts(model) {
@@ -931,6 +951,7 @@ function finish(model, reply) {
   });
   model.view.update(model.content || "");
   if (model.thinking) model.parts.thinkBody.replaceChildren(renderMarkdown(model.thinking));
+  paintBundle(model);
   applyStatus(model);
   if (S.live?.replyId === model.id) {
     S.live = null;
@@ -1071,8 +1092,12 @@ async function send() {
         model: "kaz-1.1",
         effort: S.options.effort,
         skills: S.skillsPicked.map((item) => item.id),
-        tools: { web_search: S.options.web, research: false, memory: S.options.memory },
+        // Pesquisa em tempo real e memória ficam sempre ligadas (a memória
+        // respeita o que a pessoa escolheu nas configurações).
+        tools: { web_search: false, research: false, memory: S.prefs.memory_enabled !== false },
         forja: S.forja,
+        // Projetos Godot só rodam no computador: o servidor avisa o modelo.
+        desktop: desktopQuery.matches && !coarse.matches,
         timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
       }),
       signal: controller.signal,
@@ -1397,9 +1422,12 @@ function bindComposer() {
 }
 
 let dictation = null;
+// Carregado cedo: no toque, o start() precisa rodar ainda dentro do gesto da
+// pessoa (é ele que faz o navegador mostrar o pedido nativo de microfone).
+const voiceModule = import("./voice.js");
 
 async function toggleDictation() {
-  const { createDictation, dictationSupported, DICTATION_ERRORS } = await import("./voice.js");
+  const { createDictation, dictationSupported, dictationError } = await voiceModule;
   if (!dictationSupported) {
     toast("Este navegador não tem reconhecimento de fala. No celular, o teclado costuma ter um microfone.", {
       duration: 5200,
@@ -1431,7 +1459,7 @@ async function toggleDictation() {
           saveDraft();
         }
       },
-      onError: (code) => toast(DICTATION_ERRORS[code] || "O ditado parou. Tente de novo.", { duration: 4200 }),
+      onError: (code) => toast(dictationError(code), { duration: 6500 }),
     });
   }
   // Uma vez por navegador: o áudio é transcrito pelo serviço do navegador.
@@ -1730,18 +1758,6 @@ function openEffortSheet() {
   });
 }
 
-function toggleRow({ id, icon: iconName, title, description, checked, disabled, onChange }) {
-  const input = h("input.switch__input", { type: "checkbox", role: "switch", id, checked, disabled });
-  input.addEventListener("change", () => onChange(input.checked));
-  return h(
-    `label.tool-row${disabled ? ".is-disabled" : ""}`,
-    { for: id },
-    h("span.tool-row__icon", {}, icon(iconName)),
-    h("span.tool-row__text", {}, h("span.tool-row__title", { text: title }), h("span.tool-row__desc", { text: description })),
-    h("span.switch", {}, input, h("span.switch__track", { "aria-hidden": "true" }, h("span.switch__thumb"))),
-  );
-}
-
 function openPlusSheet() {
   const features = S.model?.features || {};
   const available = Boolean(S.model?.available);
@@ -1775,44 +1791,15 @@ function openPlusSheet() {
           ),
         ),
       );
-      const memoryAvailable = S.prefs.memory_enabled !== false;
-      const list = h(
-        "div.tools",
+      // Pesquisa na web e memória não são mais botões: o KAZER pesquisa em
+      // tempo real sozinho quando precisa, e a memória segue as configurações.
+      const note = h(
+        "p.plus__note",
         {},
-        toggleRow({
-          id: "tool-research",
-          icon: "research",
-          title: "Pesquisa",
-          description: features.research ? "Investigação em várias etapas." : "Ainda não disponível neste KAZER.",
-          checked: false,
-          disabled: !features.research,
-          onChange: () => {},
-        }),
-        toggleRow({
-          id: "tool-web",
-          icon: "globe",
-          title: "Busca na web",
-          description: features.web_search ? "Procura informação atual e cita as fontes." : "Indisponível com o modelo atual.",
-          checked: S.options.web,
-          disabled: !features.web_search,
-          onChange: (on) => {
-            S.options.web = on;
-            S.ui.plus.classList.toggle("is-active", on);
-          },
-        }),
-        toggleRow({
-          id: "tool-memory",
-          icon: "memory",
-          title: "Memória",
-          description: memoryAvailable ? "Usar o que você salvou nas configurações." : "Desligada nas configurações.",
-          checked: S.options.memory && memoryAvailable,
-          disabled: !memoryAvailable,
-          onChange: (on) => {
-            S.options.memory = on;
-          },
-        }),
+        icon("globe"),
+        h("span", { text: "Pesquisa em tempo real e memória já estão sempre ligadas." }),
       );
-      return h("div.plus", {}, tiles, list);
+      return h("div.plus", {}, tiles, note);
     },
   });
 }

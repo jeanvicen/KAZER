@@ -553,21 +553,28 @@ async function submitSignUp(email) {
   }
   ui.password.value = "";
   ui.confirm.value = "";
+  if (result.data.authenticated) {
+    // Conta criada e ativa: direto para o chat, sem "confira seu e-mail".
+    enterApp(result.data);
+    return;
+  }
+  // Sem sessão: o e-mail já tinha conta (com outra senha) ou o servidor ainda
+  // pede confirmação. A mensagem cobre os dois sem revelar qual é.
   showNotice({
-    title: "Confira seu e-mail",
+    title: "Quase lá",
     body: [
-      "Enviamos uma mensagem para ",
+      "Se ",
       emailNode(email),
-      ". Abra o link para ativar sua conta. Ele vale por 24 horas.",
+      " já tem conta no KAZER, entre com a sua senha. Se a conta é nova, procure o link de ativação na sua caixa de entrada.",
     ],
     actions: [
+      { label: "Entrar", primary: true, run: () => backToSignIn() },
       {
         label: "Reenviar link",
         run: (button) => resend(email, button, (message) => {
           ui.noticeStatus.textContent = message;
         }),
       },
-      { label: "Voltar para entrar", run: () => backToSignIn() },
     ],
   });
 }

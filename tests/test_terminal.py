@@ -84,8 +84,7 @@ def boot(
     monkeypatch.setenv(credentials.SERVER_ENV, url)
     bound = Live(env, url)
     with bound.web() as client:
-        client.post("/api/auth/register", json={"email": EMAIL, "password": PASSWORD})
-        done = client.post("/api/auth/verify-email", json={"token": env.outbox.token()})
+        done = client.post("/api/auth/register", json={"email": EMAIL, "password": PASSWORD})
         assert done.json()["authenticated"] is True
     try:
         yield bound

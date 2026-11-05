@@ -108,8 +108,8 @@ class Env:
         return TestClient(self.app, headers={"Origin": ORIGIN})
 
     def signed_in(self, client: TestClient, email: str) -> TestClient:
-        client.post("/api/auth/register", json={"email": email, "password": PASSWORD})
-        response = client.post("/api/auth/verify-email", json={"token": self.outbox.token()})
+        # Cadastro direto: a conta nasce ativa e a sessão já vem no cookie.
+        response = client.post("/api/auth/register", json={"email": email, "password": PASSWORD})
         assert response.json()["authenticated"] is True
         return client
 

@@ -390,3 +390,240 @@ html[data-motion="reduzido"] .forja * {
   animation-iteration-count: 1 !important;
   transition-duration: 0.01ms !important;
 }
+
+/* ---------- Plano gratuito: vitrine do KZ Code ---------- */
+
+.forja__locked {
+  position: relative;
+  gap: 1.15rem;
+  text-align: left;
+}
+
+.forja__aura {
+  position: absolute;
+  inset: -4rem -2rem auto;
+  height: 18rem;
+  z-index: -1;
+  background:
+    radial-gradient(40% 60% at 30% 40%, rgb(232 176 74 / 0.22), transparent 70%),
+    radial-gradient(35% 55% at 75% 30%, rgb(255 120 60 / 0.14), transparent 70%);
+  filter: blur(10px);
+  animation: forja-aura 9s ease-in-out infinite alternate;
+  pointer-events: none;
+}
+
+@keyframes forja-aura {
+  to {
+    transform: translate3d(0, 1.2rem, 0) scale(1.06);
+    opacity: 0.8;
+  }
+}
+
+.forja__locked .forja__hero {
+  display: grid;
+  gap: 0.6rem;
+}
+
+.forja__badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  justify-self: start;
+  padding: 0.3rem 0.7rem;
+  border: 1px solid rgb(232 176 74 / 0.45);
+  border-radius: 999px;
+  background: rgb(232 176 74 / 0.08);
+  color: #f3c565;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
+.forja__badge svg {
+  width: 0.85rem;
+  height: 0.85rem;
+}
+
+.forja__headline {
+  margin: 0;
+  font-size: clamp(1.35rem, 5vw, 2rem);
+  font-weight: 750;
+  line-height: 1.15;
+  letter-spacing: -0.025em;
+  background: linear-gradient(180deg, #fff 30%, #f3c565);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.forja__locked .forja__lede {
+  font-size: 0.95rem;
+  line-height: 1.6;
+}
+
+.forja__term {
+  overflow: hidden;
+  border: 1px solid var(--c-border);
+  border-radius: 1rem;
+  background: #07070a;
+  box-shadow: 0 1.5rem 3rem rgb(0 0 0 / 0.45), inset 0 1px 0 rgb(255 255 255 / 0.04);
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 0.8rem;
+}
+
+.forja__term-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.55rem 0.8rem;
+  border-bottom: 1px solid var(--c-border);
+  color: var(--c-text-3);
+}
+
+.forja__term-bar i {
+  width: 0.6rem;
+  height: 0.6rem;
+  border-radius: 50%;
+  background: #3a3a3a;
+}
+
+.forja__term-bar i:first-child {
+  background: #ff6b5f;
+}
+
+.forja__term-bar i:nth-child(2) {
+  background: #f3c565;
+}
+
+.forja__term-bar i:nth-child(3) {
+  background: #4ade80;
+}
+
+.forja__term-bar span {
+  margin-left: 0.4rem;
+}
+
+.forja__term-body {
+  display: grid;
+  gap: 0.35rem;
+  margin: 0;
+  padding: 0.85rem 1rem 1rem;
+  list-style: none;
+}
+
+.forja__term-body li {
+  display: flex;
+  gap: 0.6rem;
+  color: #d6d3cd;
+  opacity: 0;
+  animation: forja-type 0.5s ease-out forwards;
+  animation-delay: calc(var(--i) * 0.45s + 0.3s);
+}
+
+.forja__term-body b {
+  color: #f3c565;
+  font-weight: 600;
+}
+
+.forja__term-body li:first-child b {
+  color: #4ade80;
+}
+
+@keyframes forja-type {
+  from {
+    opacity: 0;
+    transform: translateX(-0.4rem);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.forja__locked .forja__list {
+  grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+  gap: 0.6rem;
+}
+
+.forja__locked .forja__item {
+  padding: 0.8rem 0.9rem;
+  border: 1px solid var(--c-border);
+  border-radius: 0.9rem;
+  background: var(--c-surface);
+  font-size: 0.85rem;
+}
+
+.forja__locked .forja__check {
+  color: #f3c565;
+}
+
+.forja__buy {
+  display: grid;
+  gap: 0.5rem;
+  justify-items: center;
+  text-align: center;
+}
+
+.forja__locked .forja__start {
+  position: relative;
+  overflow: hidden;
+  padding: 0.95rem 1.2rem;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #f8dc8c, #e8b04a 50%, #c98a2b);
+  color: #1a1206;
+  font-size: 1rem;
+  font-weight: 700;
+  box-shadow: 0 0.8rem 2.2rem rgb(232 176 74 / 0.32);
+}
+
+.forja__locked .forja__start:hover {
+  transform: translateY(-1px);
+  filter: brightness(1.05);
+}
+
+.forja__start-shine {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(105deg, transparent 35%, rgb(255 255 255 / 0.55) 50%, transparent 65%);
+  transform: translateX(-120%);
+  animation: forja-shine 3.2s ease-in-out infinite;
+}
+
+@keyframes forja-shine {
+  60%,
+  100% {
+    transform: translateX(120%);
+  }
+}
+
+.forja__locked .forja__price {
+  margin: 0;
+  color: var(--c-text-2);
+  font-size: 0.9rem;
+}
+
+.forja__locked .forja__price strong {
+  color: var(--c-text);
+}
+
+.forja__trust {
+  margin: 0;
+  color: var(--c-text-3);
+  font-size: 0.75rem;
+}
+
+.forja__locked .forja__note {
+  text-align: center;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .forja__aura,
+  .forja__start-shine {
+    animation: none;
+  }
+
+  .forja__term-body li {
+    opacity: 1;
+    animation: none;
+  }
+}

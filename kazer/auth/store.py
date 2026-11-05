@@ -125,6 +125,16 @@ class AuthStore:
             return None
         return user
 
+    def mark_verified(self, user_id: str, now: int) -> User | None:
+        """Ativa a conta sem link (cadastro direto); devolve a conta atualizada."""
+        with self._transaction() as conn:
+            conn.execute(
+                "UPDATE users SET email_verified_at = COALESCE(email_verified_at, ?) WHERE id = ?",
+                (now, user_id),
+            )
+            row = conn.execute("SELECT * FROM users WHERE id = ?", (user_id,)).fetchone()
+        return _user(row)
+
     def find_user_by_email(self, email: str) -> User | None:
         """Busca por e-mail já normalizado."""
         with self._transaction() as conn:

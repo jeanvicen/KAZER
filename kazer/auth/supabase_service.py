@@ -135,10 +135,38 @@ class SupabaseAuthService:
             return False
         return bool(claims.get("type") == "recovery")
 
-    def register(self, raw_email: str, password: str, client: str) -> None:
+    def register(self, raw_email: str, password: str, client: str) -> SessionGrant | None:
+        """Cria a conta já confirmada e abre a sessão: a pessoa entra direto.
+
+        Com a chave de serviço, a conta nasce pela API admin com `email_confirm`
+        (não depende do painel do Supabase). Sem ela, usa o /signup e aproveita a
+        sessão que o Supabase devolve quando a confirmação está desligada. Se nada
+        disso der sessão, devolve None e a tela cai no aviso de e-mail.
+        """
         self._limit(f"register:{client}", self._policy.register_per_client)
         email = self._email(raw_email)
         self._password(password, email)
+        if self._service_key:
+            response = self._request(
+                "POST",
+                "/admin/users",
+                json={"email": email, "password": password, "email_confirm": True},
+                headers={
+                    "apikey": self._service_key,
+                    "Authorization": f"Bearer {self._service_key}",
+                },
+            )
+            if response.status_code not in (200, 201, 422):
+                body = self._json(response)
+                message = str(body.get("msg", body.get("message", ""))).lower()
+                if response.status_code == 429:
+                    raise AuthError("rate_limited", 429)
+                if "password" in message:
+                    raise AuthError("password_too_common", 422)
+                logger.info("auth.register.rejected")
+                return None
+            # Criada agora ou já existente: entra se a senha confere.
+            return self._password_grant(email, password)
         response = self._request(
             "POST",
             "/signup",
@@ -157,8 +185,34 @@ class SupabaseAuthService:
                 raise AuthError("password_too_common", 422)
             # Keep signup responses generic to avoid account enumeration.
             logger.info("auth.register.rejected")
-            return
+            return None
         logger.info("auth.register.accepted")
+        body = self._json(response)
+        access, refresh = body.get("access_token"), body.get("refresh_token")
+        user_email = (body.get("user") or {}).get("email") or email
+        if isinstance(access, str) and isinstance(refresh, str):
+            expires = int(body.get("expires_in", 3600))
+            session = SupabaseSession(access, refresh, expires, user_email)
+            return SessionGrant(session.encode(), user_email, self._policy.session_ttl)
+        return None
+
+    def _password_grant(self, email: str, password: str) -> SessionGrant | None:
+        """Sessão pela senha, sem contar como falha de login (cadastro repetido)."""
+        response = self._request(
+            "POST", "/token?grant_type=password", json={"email": email, "password": password}
+        )
+        if response.status_code != 200:
+            return None
+        body = self._json(response)
+        user_email = (body.get("user") or {}).get("email")
+        access, refresh = body.get("access_token"), body.get("refresh_token")
+        if not (
+            isinstance(user_email, str) and isinstance(access, str) and isinstance(refresh, str)
+        ):
+            return None
+        session = SupabaseSession(access, refresh, int(body.get("expires_in", 3600)), user_email)
+        logger.info("auth.register.signed_in")
+        return SessionGrant(session.encode(), user_email, self._policy.session_ttl)
 
     def resend_verification(self, raw_email: str, client: str) -> MailMessage | None:
         self._limit(f"mail:{client}", self._policy.mail_per_client)
