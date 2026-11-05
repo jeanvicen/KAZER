@@ -5550,3 +5550,278 @@ html[data-motion="reduzido"] .pxword__blink {
     animation: none;
   }
 }
+
+/* ---------- Configurações: tela inicial em grupos ---------- */
+
+.settings__nav {
+  padding-bottom: calc(6rem + env(safe-area-inset-bottom));
+}
+
+.settings__head {
+  min-height: 3.5rem;
+  padding: 0;
+}
+
+.settings__close {
+  width: 2.75rem !important;
+  height: 2.75rem !important;
+  border: 1px solid var(--c-border) !important;
+  background: var(--c-surface) !important;
+  color: var(--c-text) !important;
+}
+
+.settings__profile {
+  display: grid;
+  justify-items: center;
+  gap: 0.2rem;
+  margin: -1.25rem 0 1.5rem;
+  padding: 0;
+  border: 0;
+  background: none;
+  text-align: center;
+}
+
+.settings__avatar {
+  width: 4.75rem;
+  height: 4.75rem;
+  margin-bottom: 0.6rem;
+  background: #e8b04a;
+  color: #1a1206;
+  font-size: 1.7rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.settings__name {
+  font-size: 1.3rem;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+}
+
+.settings__email {
+  max-width: 100%;
+  color: var(--c-text-2);
+  font-size: 0.875rem;
+  font-weight: 400;
+}
+
+.settings__since {
+  color: var(--c-text-3);
+}
+
+.settings__nav-list {
+  display: grid;
+  gap: 1.5rem;
+}
+
+.set-group__title {
+  margin: 0 0 0.5rem 1rem;
+  color: var(--c-text-2);
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.set-list {
+  overflow: hidden;
+  border: 1px solid var(--c-border);
+  border-radius: 1.25rem;
+  background: var(--c-surface);
+}
+
+.set-row {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  width: 100%;
+  min-height: 3.6rem;
+  padding: 0.75rem 1rem;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: var(--c-text);
+  font: inherit;
+  font-size: 1rem;
+  text-align: left;
+  cursor: pointer;
+}
+
+.set-row + .set-row {
+  border-top: 1px solid var(--c-border);
+}
+
+.set-row[hidden],
+.set-row.is-filtered {
+  display: none;
+}
+
+.set-row:hover,
+.set-row.is-active {
+  background: rgb(255 255 255 / 0.04);
+}
+
+.set-row__icon {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 1.5rem;
+  color: var(--c-text);
+}
+
+.set-row__icon .icon {
+  width: 1.4rem;
+  height: 1.4rem;
+}
+
+.set-row__label {
+  flex: 1;
+  min-width: 0;
+}
+
+.set-row__value {
+  max-width: 45%;
+  overflow: hidden;
+  color: var(--c-text-2);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.set-row__go {
+  flex: none;
+  width: 1.1rem;
+  height: 1.1rem;
+  color: var(--c-text-3);
+}
+
+.set-row--accent,
+.set-row--accent .set-row__icon {
+  color: #f3c565;
+}
+
+.set-empty {
+  margin: 2rem 0;
+  color: var(--c-text-2);
+  text-align: center;
+}
+
+.set-signout {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  width: 100%;
+  min-height: 3.6rem;
+  margin-top: 1.5rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--c-border);
+  border-radius: 1.25rem;
+  background: var(--c-surface);
+  color: #ff5a5f;
+  font: inherit;
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+.set-signout .icon {
+  width: 1.4rem;
+  height: 1.4rem;
+}
+
+.set-signout[hidden] {
+  display: none;
+}
+
+/* Busca flutuante, presa ao pé da tela no celular. */
+.set-search {
+  position: sticky;
+  bottom: calc(0.75rem + env(safe-area-inset-bottom));
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  margin: 1.5rem 0.75rem 0;
+  padding: 0 1.1rem;
+  min-height: 3.4rem;
+  border: 1px solid var(--c-border-2);
+  border-radius: 999px;
+  background: var(--c-surface);
+  box-shadow: 0 -1.5rem 2rem var(--c-bg);
+  color: var(--c-text-2);
+}
+
+.set-search .icon {
+  flex: none;
+  width: 1.3rem;
+  height: 1.3rem;
+}
+
+.set-search__input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  background: none;
+  color: var(--c-text);
+  font: inherit;
+  font-size: 1rem;
+  outline: none;
+}
+
+.set-search__input::-webkit-search-cancel-button {
+  filter: grayscale(1);
+}
+
+.settings.is-open .set-group {
+  animation: rise 520ms var(--ease-out) both;
+  animation-delay: calc(var(--i, 0) * 50ms + 100ms);
+}
+
+.settings.is-open .set-row {
+  animation: none;
+}
+
+@media (min-width: 60rem) {
+  .settings__profile {
+    margin: 0.5rem 0 1.25rem;
+  }
+
+  .settings__avatar {
+    width: 3.5rem;
+    height: 3.5rem;
+    font-size: 1.25rem;
+  }
+
+  .settings__nav-list {
+    gap: 1.1rem;
+  }
+
+  .set-row {
+    min-height: 3rem;
+    font-size: 0.925rem;
+  }
+
+  /* No computador a busca fica no topo da coluna, sem flutuar. */
+  .settings__nav {
+    width: 19rem;
+    padding-bottom: 1.25rem;
+  }
+
+  .settings__head {
+    order: -2;
+  }
+
+  .set-search {
+    position: static;
+    order: -1;
+    margin: 0 0 0.75rem;
+    min-height: 2.6rem;
+    box-shadow: none;
+    border-radius: 0.8rem;
+  }
+
+  .set-row {
+    white-space: nowrap;
+  }
+
+  .settings__close {
+    width: 2.25rem !important;
+    height: 2.25rem !important;
+  }
+}

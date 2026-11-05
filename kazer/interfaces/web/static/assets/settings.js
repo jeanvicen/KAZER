@@ -17,6 +17,37 @@ const SECTIONS = [
   ["sobre", "Sobre", "info"],
 ];
 
+// Tela inicial: grupos como nos apps grandes. Cada linha abre uma seção real;
+// "upgrade" abre direto a vitrine de planos. Palavras extras alimentam a busca.
+const GROUPS = [
+  ["Meu KAZER", [
+    ["personalizacao", "Personalização", "sparkle", "apelido estilo instruções resposta"],
+    ["memoria", "Memória", "memory", "lembrar salvar esquecer"],
+  ]],
+  ["Conta", [
+    ["upgrade", "Fazer upgrade do plano", "bolt", "pro ultra assinar comprar"],
+    ["planos", "Uso e plano", "research", "limite janela renova"],
+    ["conta", "Conta", "user", "e-mail email senha sessões excluir"],
+  ]],
+  ["", [
+    ["interface", "Aparência", "sliders", "tema escuro claro idioma texto tamanho animação enviar enter"],
+  ]],
+  ["", [
+    ["dados", "Dados e privacidade", "shield", "exportar apagar histórico conversas"],
+    ["terminal", "Terminal", "terminal", "cli linha de comando"],
+    ["sobre", "Sobre", "info", "versão termos privacidade"],
+  ]],
+];
+
+const THEME_LABELS = { escuro: "Escuro", claro: "Claro", sistema: "Sistema" };
+
+// Iniciais do nome (ou do e-mail): "jean.vicen@..." vira "JV".
+function initials(name) {
+  const parts = String(name || "").split(/[\s._-]+/).filter(Boolean);
+  const letters = (parts.length > 1 ? parts[0][0] + parts[1][0] : (parts[0] || "?").slice(0, 2)).toUpperCase();
+  return letters.replace(/[^\p{L}\p{N}]/gu, "") || "?";
+}
+
 const STYLE_SAMPLES = {
   direto: "Moa o café na hora, 1 colher para 100 ml de água a 92 °C. Molhe o filtro, despeje em círculos e pronto.",
   equilibrado:
@@ -64,35 +95,78 @@ class SettingsPanel {
   // ---------- Estrutura ----------
 
   build() {
-    this.title = h("h2.settings__title", { id: "settings-title", tabindex: "-1", text: "Configurações" });
-    this.navList = h(
-      "nav.settings__nav-list",
-      { "aria-label": "Seções" },
-      SECTIONS.map(([key, label, iconName]) =>
-        h(
-          "button.settings__nav-item",
-          { type: "button", dataset: { section: key }, onclick: () => this.show(key, { focus: true }) },
-          h("span.settings__nav-icon", {}, icon(iconName)),
-          h("span", { text: label }),
-          icon("chevron-right", "settings__nav-go"),
-        ),
-      ),
-    );
-    // `style` em atributo é bloqueado pela CSP: as variáveis vão por CSSOM.
-    this.navList.querySelectorAll(".settings__nav-item").forEach((item, index) => item.style.setProperty("--i", String(index)));
+    this.title = h("h2.settings__title.sr-only", { id: "settings-title", tabindex: "-1", text: "Configurações" });
+    this.values = {};
+    this.rows = [];
+    this.groups = GROUPS.map(([label, items]) => {
+      const rows = items.map(([key, text, iconName, words]) => {
+        const value = h("span.set-row__value");
+        this.values[key] = value;
+        const row = h(
+          `button.settings__nav-item.set-row${key === "upgrade" ? ".set-row--accent" : ""}`,
+          {
+            type: "button",
+            dataset: { section: key },
+            onclick: (event) => (key === "upgrade" ? this.openUpgrade(event.currentTarget) : this.show(key, { focus: true })),
+          },
+          h("span.set-row__icon", {}, icon(iconName)),
+          h("span.set-row__label", { text }),
+          value,
+          key === "upgrade" ? null : icon("chevron-right", "set-row__go"),
+        );
+        row.searchText = `${text} ${words}`.toLowerCase();
+        this.rows.push(row);
+        return row;
+      });
+      const list = h("div.set-list", {}, rows);
+      const group = h("section.set-group", {}, label ? h("h3.set-group__title", { text: label }) : null, list);
+      group.rowsIn = rows;
+      return group;
+    });
+    this.navList = h("nav.settings__nav-list", { "aria-label": "Seções" }, this.groups);
+    this.groups.forEach((group, index) => group.style.setProperty("--i", String(index)));
+
+    const name = this.prefs?.nickname || (this.account.email || "").split("@")[0];
+    this.avatar = h("span.settings__avatar", { "aria-hidden": "true", text: initials(name) });
+    this.profileName = h("span.settings__name", { text: name || "Sua conta" });
     this.profile = h(
       "div.settings__profile",
       {},
-      h("span.settings__avatar", { "aria-hidden": "true" }, (this.account.email || "?").charAt(0).toUpperCase()),
-      h(
-        "span.settings__who",
-        {},
-        h("span.settings__email", { text: this.account.email || "" }),
-        h("span.settings__since", { text: this.account.created_at ? `Desde ${formatDate(this.account.created_at)}` : "" }),
-      ),
+      this.avatar,
+      this.profileName,
+      h("span.settings__email", { text: this.account.email || "" }),
+      h("span.settings__since", { text: this.account.created_at ? `Desde ${formatDate(this.account.created_at)}` : "" }),
     );
-    this.closeButton = h("button.icon-button.settings__close", { type: "button", "aria-label": "Fechar configurações", onclick: () => this.close() }, icon("close"));
-    this.nav = h("aside.settings__nav", {}, h("header.settings__head", {}, this.title, this.closeButton), this.profile, this.navList);
+
+    this.signOut = h(
+      "button.set-signout",
+      { type: "button", onclick: () => this.cb.onSignOut?.() },
+      icon("sign-out"),
+      h("span", { text: "Sair" }),
+    );
+    this.empty = h("p.set-empty", { hidden: true, text: "Nenhuma configuração encontrada." });
+    this.search = h("input.set-search__input", {
+      type: "search",
+      placeholder: "Pesquisar configurações",
+      "aria-label": "Pesquisar configurações",
+      autocomplete: "off",
+      enterkeyhint: "search",
+    });
+    this.search.addEventListener("input", () => this.filter(this.search.value));
+    this.searchBar = h("label.set-search", {}, icon("search"), this.search);
+
+    this.closeButton = h("button.icon-button.settings__close", { type: "button", "aria-label": "Fechar configurações", onclick: () => this.close() }, icon("back"));
+    this.nav = h(
+      "aside.settings__nav",
+      {},
+      h("header.settings__head", {}, this.closeButton, this.title),
+      this.profile,
+      this.navList,
+      this.empty,
+      this.signOut,
+      this.searchBar,
+    );
+    this.paintNav();
 
     this.backButton = h("button.icon-button.settings__back", { type: "button", "aria-label": "Voltar", onclick: () => this.back() }, icon("back"));
     this.viewTitle = h("h3.settings__view-title", { tabindex: "-1" });
@@ -131,6 +205,44 @@ class SettingsPanel {
     });
   }
 
+  // Valores à direita das linhas (tema, plano, memória) e o nome no topo.
+  paintNav() {
+    const prefs = this.prefs || {};
+    const usage = this.usage || {};
+    const paid = usage.plan && usage.plan !== "free";
+    this.values.interface.textContent = THEME_LABELS[prefs.theme] || "";
+    this.values.memoria.textContent = prefs.memory_enabled === false ? "Desligada" : "Ligada";
+    this.values.planos.textContent = usage.plan_name || "";
+    this.values.conta.textContent = "";
+    const upgrade = this.rows.find((row) => row.dataset.section === "upgrade");
+    if (upgrade) upgrade.hidden = Boolean(paid);
+    const name = prefs.nickname || (this.account.email || "").split("@")[0];
+    this.avatar.textContent = initials(name);
+    this.profileName.textContent = name || "Sua conta";
+  }
+
+  filter(query) {
+    const words = query.trim().toLowerCase().split(/\s+/).filter(Boolean);
+    let any = false;
+    for (const group of this.groups) {
+      let visible = 0;
+      for (const row of group.rowsIn) {
+        const match = !words.length || words.every((word) => row.searchText.includes(word));
+        row.classList.toggle("is-filtered", !match);
+        if (match && !row.hidden) visible += 1;
+      }
+      group.hidden = visible === 0;
+      if (visible) any = true;
+    }
+    this.empty.hidden = any;
+    this.signOut.hidden = words.length > 0;
+  }
+
+  async openUpgrade(opener) {
+    const { openPlans } = await import("./plans.js");
+    openPlans({ opener });
+  }
+
   close() {
     document.removeEventListener("keydown", this.onKey, true);
     this.flush();
@@ -152,11 +264,13 @@ class SettingsPanel {
     this.model = result.data.model;
     this.usage = result.data.usage || this.usage;
     this.profile.querySelector(".settings__since").textContent = this.account.created_at ? `Desde ${formatDate(this.account.created_at)}` : "";
+    this.paintNav();
     if (this.current) this.show(this.current, { focus: false, animate: false });
   }
 
   show(key, { focus = false, animate = true } = {}) {
     const [, label] = SECTIONS.find(([name]) => name === key);
+    this.paintNav();
     const changed = this.current !== key;
     this.current = key;
     for (const item of this.navList.children) {
@@ -182,6 +296,7 @@ class SettingsPanel {
 
   back() {
     this.root.classList.remove("is-deep");
+    this.paintNav();
     const item = this.navList.querySelector(`[data-section="${this.current}"]`);
     window.setTimeout(() => item?.focus({ preventScroll: true }), 260);
   }
