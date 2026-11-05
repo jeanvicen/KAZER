@@ -64,6 +64,10 @@ FX = "cotacao"
 CALC = "calcular"
 NEWS = "noticias"
 
+_GH_NOISE = frozenset(
+    "top melhor melhores best bons boas bom boa repositorio repositório repositorios"
+    " repositórios repo repos github que tenha tenham com de do da para".split()
+)
 _REPO = re.compile(r"^[A-Za-z0-9_.-]{1,100}/[A-Za-z0-9_.-]{1,100}$")
 _PATH = re.compile(r"^[A-Za-z0-9_./@+ -]{0,300}$")
 
@@ -767,7 +771,17 @@ class WebTools:
             query = " ".join(str(arguments.get("consulta") or "").split())[:200]
             if not query:
                 raise ToolFailure("Diga o que buscar no GitHub.")
-            data = self._gh("/search/repositories", {"q": query, "per_page": MAX_RESULTS})
+            # "top", "melhores", "repositório" atrapalham a busca: o que importa é o
+            # assunto. Sem filtros da pessoa, os mais estrelados primeiro.
+            cleaned = " ".join(
+                word for word in query.split() if word.lower().strip(",.") not in _GH_NOISE
+            ) or query
+            params: dict[str, Any] = {"q": cleaned, "per_page": MAX_RESULTS}
+            if ":" not in cleaned:
+                params.update({"q": f"{cleaned} stars:>30", "sort": "stars", "order": "desc"})
+            data = self._gh("/search/repositories", params)
+            if not (data.get("items") if isinstance(data, dict) else None) and ":" not in cleaned:
+                data = self._gh("/search/repositories", {"q": cleaned, "per_page": MAX_RESULTS})
             items = data.get("items", []) if isinstance(data, dict) else []
             if not items:
                 return "Nenhum repositório encontrado."

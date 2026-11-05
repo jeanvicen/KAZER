@@ -33,7 +33,15 @@ logger = logging.getLogger("kazer.chat")
 HEARTBEAT_SECONDS = 15.0
 # Quantas rodadas de ferramenta uma resposta pode dar antes de parar.
 # Sem teto, um modelo preso num laço gastaria a cota da pessoa à toa.
-MAX_TOOL_ROUNDS = 8
+MAX_TOOL_ROUNDS = 4
+# Resultados de ferramenta de rodadas anteriores voltam encurtados: o modelo já
+# leu e resumiu; reenviar tudo a cada rodada estourava o limite do provedor.
+OLD_RESULT_CHARS = 1500
+STEPS_FENCE = "kazer-passos"
+FINAL_ROUND = (
+    "[KAZER: o orçamento de pesquisa desta resposta acabou. Responda agora, completo e"
+    " organizado, com o que já foi encontrado e cite as fontes. Não peça mais ferramentas.]"
+)
 # Fontes que a resposta consultou vão no fim do texto, num bloco que a interface
 # transforma em chips (e que nunca volta ao modelo como histórico).
 SOURCES_FENCE = "kazer-fontes"
@@ -66,6 +74,8 @@ class LiveGeneration:
     describe: Callable[[ToolCall], str] | None = None
     # Fontes consultadas nesta resposta (título, endereço, tipo), sem repetição.
     sources: list[dict[str, str]] = field(default_factory=list)
+    # Passos concluídos (rótulo e detalhe), salvos junto da resposta.
+    steps: list[dict[str, str]] = field(default_factory=list)
     _lock: threading.Lock = field(default_factory=threading.Lock)
     _waiters: set[tuple[asyncio.AbstractEventLoop, asyncio.Event]] = field(default_factory=set)
 
@@ -109,6 +119,22 @@ class LiveGeneration:
             finally:
                 with self._lock:
                     self._waiters.discard(entry)
+
+
+def _compact(turns: tuple[Turn, ...]) -> tuple[Turn, ...]:
+    """Encurta resultados de ferramenta já usados (o modelo já os leu)."""
+    out = []
+    for turn in turns:
+        if turn.results:
+            short = tuple(
+                (call_id, output if len(output) <= OLD_RESULT_CHARS
+                 else output[:OLD_RESULT_CHARS] + "\n[…resumido: já lido na rodada anterior]")
+                for call_id, output in turn.results
+            )
+            out.append(replace(turn, results=short))
+        else:
+            out.append(turn)
+    return tuple(out)
 
 
 class GenerationHub:
@@ -272,6 +298,8 @@ class GenerationHub:
             live.push(
                 {"type": "step", "id": step_id, "label": label, "state": "done", "detail": detail}
             )
+            if label:
+                live.steps.append({"l": label[:160], "d": detail[:80]})
             if found:
                 known = {item["u"] for item in live.sources}
                 fresh = [item for item in found if item.get("u") and item["u"] not in known]
@@ -279,16 +307,25 @@ class GenerationHub:
                     live.sources.extend(fresh[: MAX_SOURCES - len(live.sources)])
                     live.push({"type": "sources", "items": list(live.sources)})
             results.append((call.id, output))
+        budget = request.tool_rounds or MAX_TOOL_ROUNDS
+        used = sum(1 for turn in request.turns if turn.results) + 1
+        # O modelo decide se precisa de mais: sabe quanto já usou e quanto resta.
+        note = Part(
+            "text",
+            f"[KAZER: rodada de pesquisa {used} de {budget}. Se o que você já tem responde bem"
+            " ao pedido, responda agora. Só pesquise de novo se faltar algo importante, e com"
+            " uma busca diferente das anteriores.]",
+        )
         return replace(
             request,
             turns=(
-                *request.turns,
+                *_compact(request.turns),
                 Turn(
                     role="assistant",
                     parts=(Part("text", "".join(round_text)),) if round_text else (),
                     calls=tuple(calls),
                 ),
-                Turn(role="user", parts=(), results=tuple(results)),
+                Turn(role="user", parts=(note,), results=tuple(results)),
             ),
         )
 
@@ -350,10 +387,19 @@ class GenerationHub:
                 if not calls or live.on_tool is None:
                     break
                 rounds += 1
-                if rounds > (request.tool_rounds or MAX_TOOL_ROUNDS):
-                    live.push({"type": "step", "label": "Parei: ferramentas demais numa resposta"})
-                    break
                 request = self._after_tools(live, request, calls, round_text)
+                if rounds >= (request.tool_rounds or MAX_TOOL_ROUNDS):
+                    # Orçamento esgotado: uma última rodada sem ferramentas, para ele
+                    # responder com o que achou (em vez de parar sem resposta).
+                    last = request.turns[-1]
+                    request = replace(
+                        request,
+                        tool_choice="none",
+                        turns=(
+                            *request.turns[:-1],
+                            replace(last, parts=(Part("text", FINAL_ROUND),)),
+                        ),
+                    )
             if live.timed_out:
                 status, error = "error", "model_timeout"
             elif live.cancel.cancelled():
@@ -371,9 +417,18 @@ class GenerationHub:
         finally:
             watchdog.cancel()
             content, reasoning = "".join(text), "".join(thinking)
-            if live.sources and content.strip() and status in ("complete", "stopped"):
-                block = json.dumps(live.sources, ensure_ascii=False)
-                content = f"{content.rstrip()}\n\n```{SOURCES_FENCE}\n{block}\n```\n"
+            # O que foi pesquisado fica salvo na conversa, mesmo se a resposta falhar.
+            if error != "model_refused" and (live.sources or live.steps):
+                blocks = []
+                if live.sources:
+                    blocks.append(
+                        f"```{SOURCES_FENCE}\n{json.dumps(live.sources, ensure_ascii=False)}\n```"
+                    )
+                if live.steps:
+                    blocks.append(
+                        f"```{STEPS_FENCE}\n{json.dumps(live.steps[:80], ensure_ascii=False)}\n```"
+                    )
+                content = (content.rstrip() + "\n\n" + "\n\n".join(blocks) + "\n").lstrip()
             finished = int(self._clock())
             try:
                 self._store.update_reply(

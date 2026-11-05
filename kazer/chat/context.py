@@ -100,9 +100,11 @@ _RESEARCH = "\n".join(
         " preços, versões, documentação, notícias, pessoas, empresas, produtos, lugares,"
         " números, um site, um link ou um repositório. Na dúvida, pesquise. Só responda de"
         " cabeça o que é atemporal e você sabe com certeza (conceitos, código genérico).",
-        "Faça mais de uma busca quando o assunto pedir (termos diferentes, em português e em"
-        " inglês) e use a ferramenta certa: noticias para o que é recente, wikipedia para"
-        " definições, artigos_cientificos para ciência, github e pacote para código.",
+        "Pesquise na medida certa: pergunta simples pede 1 busca; uma pergunta normal, 2 ou 3;"
+        " só vá além se ainda faltar algo importante. Depois de cada resultado, pergunte-se:"
+        " 'já dá para responder bem?' Se sim, pare e responda. Nunca repita uma busca igual."
+        " Use a ferramenta certa: noticias para o recente, wikipedia para definições,"
+        " artigos_cientificos para ciência, github e pacote para código.",
         "Pesquise como um bom analista: faça a busca, abra as fontes mais confiáveis, cruze"
         " pelo menos duas quando o assunto for importante e responda com os links das fontes"
         " em Markdown. Nunca invente links: só cite o que a ferramenta devolveu.",
@@ -321,7 +323,7 @@ def system_prompt(
     return "\n\n".join(lines)
 
 
-_SOURCES_BLOCK = re.compile(r"\n*```kazer-fontes\n.*?\n```\n?", re.DOTALL)
+_SOURCES_BLOCK = re.compile(r"\n*```kazer-(fontes|passos)\n.*?\n```\n?", re.DOTALL)
 
 
 def without_sources(text: str) -> str:

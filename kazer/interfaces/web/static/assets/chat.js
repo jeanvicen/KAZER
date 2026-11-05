@@ -23,7 +23,7 @@ import {
   trapFocus,
   uuid,
 } from "./dom.js";
-import { bundleCard, onAnswer, openImages, readSources, renderSourceList, stripSources } from "./deliver.js";
+import { bundleCard, onAnswer, openImages, readSources, readSteps, renderSourceList, stripSources } from "./deliver.js";
 import { copyText, MarkdownView, render as renderMarkdown } from "./markdown.js";
 import { net, readEvents, request, waitOnline } from "./net.js";
 import { closeSheet, confirmDialog, openSheet, promptDialog, setSheetBackground, toast } from "./sheets.js";
@@ -851,6 +851,11 @@ function stepRow(step, live) {
 function paintSteps(model) {
   const box = model.parts?.steps;
   if (!box) return;
+  // Resposta carregada do histórico: os passos vêm salvos junto dela.
+  if (!model.steps?.length && model.status !== "streaming" && model.content) {
+    const saved = readSteps(model.content);
+    if (saved.length) model.steps = saved;
+  }
   const steps = model.steps || [];
   // Só aparece quando houve ação de verdade (busca, leitura, ferramenta).
   if (!steps.some((step) => !step.kind)) {

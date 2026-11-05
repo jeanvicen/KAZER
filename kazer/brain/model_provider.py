@@ -105,6 +105,8 @@ class GenerationRequest:
     tools: tuple[ToolDef, ...] = ()
     # Quantas rodadas de ferramenta esta resposta pode dar (0 = padrão do hub).
     tool_rounds: int = 0
+    # "none": as ferramentas continuam declaradas, mas o modelo deve só responder.
+    tool_choice: str = ""
 
 
 @dataclass(frozen=True, slots=True)
@@ -318,6 +320,8 @@ class OpenAICompatibleProvider:
         self._max_tokens = max_tokens
         self._timeout = timeout
         self.capabilities = capabilities
+        # Espera máxima (s) antes de tentar de novo quando todos os modelos estão cheios.
+        self.busy_wait = 12.0
 
     def __repr__(self) -> str:
         """Sem chave nem URL completa."""
@@ -375,6 +379,9 @@ class OpenAICompatibleProvider:
             {"role": "tool", "tool_call_id": call_id, "content": output}
             for call_id, output in turn.results
         )
+        note = _text_of(turn) if turn.results else ""
+        if note:
+            out.append({"role": "user", "content": note})
         return out
 
     def _attempts(self, request: GenerationRequest) -> list[tuple[str, dict[str, Any]]]:
@@ -414,6 +421,8 @@ class OpenAICompatibleProvider:
                 }
                 for tool in request.tools
             ]
+            if request.tool_choice == "none":
+                body["tool_choice"] = "none"
         return body
 
     def _open(self, body: dict[str, Any]) -> Any:
@@ -449,13 +458,38 @@ class OpenAICompatibleProvider:
         """Abre o stream e repassa texto e raciocínio conforme chegam."""
         response = None
         last: ProviderError | None = None
-        for model, extra in self._attempts(request):
+        busy: ProviderError | None = None
+        attempts = self._attempts(request)
+        for model, extra in attempts:
             try:
                 response = self._open(self._body(request, model, extra))
                 break
             except ModelGone as gone:
                 # Modelo aposentado ou inexistente: passa para o próximo da cadeia.
                 last = gone
+            except ProviderError as error:
+                if error.code != "model_busy":
+                    raise
+                # Limite de uso deste modelo: o próximo da cadeia tem limite próprio.
+                busy = busy or error
+        if response is None and busy is not None:
+            # Todos cheios: espera o que o provedor pediu (com teto) e tenta de novo.
+            wait = min(max(busy.retry_after, 2.0), self.busy_wait)
+            if wait > 0 and not cancel.cancelled():
+                cancel_event = threading.Event()
+                cancel.on_cancel(cancel_event.set)
+                cancel_event.wait(wait)
+            for model, extra in attempts:
+                if cancel.cancelled():
+                    return
+                try:
+                    response = self._open(self._body(request, model, extra))
+                    break
+                except ProviderError as error:
+                    if error.code not in ("model_busy",) and not isinstance(error, ModelGone):
+                        raise
+            if response is None:
+                raise busy
         if response is None:
             # Toda a cadeia sumiu do provedor: é erro do servidor, não da pessoa.
             logger.error("model.chain_exhausted", extra={"provider": self._name})
@@ -566,15 +600,23 @@ _GROQ_MAX_OUT = {
     "meta-llama/llama-4": 8_192,
 }
 
-# Sinais de tarefa que merece pensar mais (código, contas, planejamento).
-_HEAVY = re.compile(
-    r"```|\b(c[óo]digo|programa|fun[çc][ãa]o|classe|bug|erro|debug|implement|refator|"
-    r"api|banco de dados|sql|algoritmo|arquitetura|jogo|game|godot|site|app|aplicativo|"
-    r"script|python|javascript|typescript|react|html|css|java|rust|golang|c\+\+|"
-    r"calcul|prove|demonstr|equa[çc]|otimiz|compare|analis|planej|passo a passo|"
-    r"slides?|apresenta[çc][ãa]o|pdf|relat[óo]rio|documento)\b",
+# Pensar muito só quando a tarefa pede: construir algo, código com erro, contas
+# ou texto longo. Pesquisa e conversa comum ficam rápidas.
+_BUILD = re.compile(
+    r"\b(cri[ae]|crie|cria|faz|fa[cç]a|fazer|desenvolv|implement|program[ae]|constru|gere|"
+    r"gerar|escrev|mont[ae]|refator|corrij|conserte|arrume)\w*\b.{0,60}?\b(jogo|game|app|"
+    r"aplicativo|site|p[áa]gina|api|sistema|script|fun[çc][ãa]o|classe|c[óo]digo|programa|"
+    r"bot|pdf|slides?|apresenta[çc][ãa]o|relat[óo]rio|documento|planilha|projeto)",
+    re.IGNORECASE | re.DOTALL,
+)
+_CODE = re.compile(
+    r"```|traceback|exception|stack ?trace|\berro\b.{0,40}\b(c[óo]digo|linha)|\bbug\b",
     re.IGNORECASE,
 )
+_ASK = re.compile(
+    r"\b(pesquis|procur|busc|compar|quais|qual|melhor|recomend|explic)", re.IGNORECASE
+)
+_MATH = re.compile(r"\b(calcul|prove|demonstr|equa[çc]|derivad|integral|otimiz)", re.IGNORECASE)
 
 
 def task_effort(request: GenerationRequest) -> str:
@@ -593,9 +635,9 @@ def task_effort(request: GenerationRequest) -> str:
         ),
         "",
     )
-    if len(last) > 700 or _HEAVY.search(last):
+    if len(last) > 700 or _BUILD.search(last) or _CODE.search(last) or _MATH.search(last):
         return "high"
-    if len(last) < 60 and "?" not in last:
+    if len(last) < 60 and "?" not in last and not _ASK.search(last):
         return "low"
     return "medium"
 
@@ -810,6 +852,11 @@ class AnthropicProvider:
                         }
                     )
             text = _text_of(turn)
+            # Resultado de ferramenta vem antes de qualquer texto na fala da pessoa.
+            blocks.extend(
+                {"type": "tool_result", "tool_use_id": call_id, "content": output}
+                for call_id, output in turn.results
+            )
             if text:
                 blocks.append({"type": "text", "text": text})
             # Ciclo de ferramenta: o pedido vai na fala do modelo e o resultado
@@ -817,10 +864,6 @@ class AnthropicProvider:
             blocks.extend(
                 {"type": "tool_use", "id": call.id, "name": call.name, "input": call.arguments}
                 for call in turn.calls
-            )
-            blocks.extend(
-                {"type": "tool_result", "tool_use_id": call_id, "content": output}
-                for call_id, output in turn.results
             )
             if blocks:
                 messages.append({"role": turn.role, "content": blocks})
@@ -867,6 +910,8 @@ class AnthropicProvider:
         )
         if tools:
             params["tools"] = tools
+            if request.tool_choice == "none":
+                params["tool_choice"] = {"type": "none"}
         if self._fallbacks:
             params["betas"] = [_FALLBACK_BETA]
             params["fallbacks"] = "default"

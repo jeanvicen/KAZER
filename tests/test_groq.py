@@ -37,6 +37,7 @@ class Groq(BaseHTTPRequestHandler):
     seen: list[dict[str, Any]] = []
     auth: list[str] = []
     gone: set[str] = set()
+    busy: set[str] = set()
     status: int = 200
 
     def log_message(self, *args: Any) -> None:  # noqa: D102
@@ -47,8 +48,8 @@ class Groq(BaseHTTPRequestHandler):
         body = json.loads(self.rfile.read(length))
         Groq.seen.append(body)
         Groq.auth.append(self.headers.get("authorization", ""))
-        if Groq.status != 200:
-            self.send_response(Groq.status)
+        if Groq.status != 200 or body["model"] in Groq.busy:
+            self.send_response(Groq.status if Groq.status != 200 else 429)
             self.send_header("Retry-After", "7")
             self.end_headers()
             return
@@ -75,6 +76,7 @@ class Groq(BaseHTTPRequestHandler):
 @pytest.fixture
 def groq_url() -> Iterator[str]:
     Groq.seen, Groq.auth, Groq.gone, Groq.status = [], [], set(), 200
+    Groq.busy = set()
     server = ThreadingHTTPServer(("127.0.0.1", 0), Groq)
     threading.Thread(target=server.serve_forever, daemon=True).start()
     try:
@@ -175,14 +177,21 @@ def test_when_the_whole_chain_is_gone_the_error_is_generic(groq_url: str) -> Non
     assert caught.value.code == "model_error"
 
 
-def test_rate_limit_keeps_its_wait_and_does_not_burn_the_chain(groq_url: str) -> None:
+def test_rate_limit_tries_the_rest_of_the_chain_then_keeps_its_wait(groq_url: str) -> None:
     Groq.status = 429
     p = provider(groq_url)
+    p.busy_wait = 0  # o teste não espera de verdade
     with pytest.raises(ProviderError) as caught:
         ask(p, "high")
     assert (caught.value.code, caught.value.retry_after) == ("model_busy", 7.0)
-    # Limite de taxa não é modelo sumido: só uma tentativa.
-    assert len(Groq.seen) == 1
+    # Tentou o modelo e a reserva, e mais uma volta depois da espera.
+    assert [b["model"] for b in Groq.seen] == ["big-model", "backup-model"] * 2
+
+
+def test_a_busy_model_falls_to_the_next_one_without_an_error(groq_url: str) -> None:
+    Groq.busy = {"big-model"}
+    p = provider(groq_url)
+    assert ask(p, "high") == "resposta de backup-model"
 
 
 # ---------- Imagem ----------

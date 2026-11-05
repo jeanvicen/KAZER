@@ -222,6 +222,7 @@ export function fenceHook({ lang, name, code, closed }) {
   if (kind === "kazer-pergunta") return questionCard(code, closed);
   if (kind === "pdf" || kind === "slides") return docCard(kind, name, code, closed);
   if (kind === "kazer-fontes") return sourcesStrip(code, closed);
+  if (kind === "kazer-passos") return h("span", { hidden: true });
   if (kind === "kazer-galeria") return galleryCard(code, closed);
   if (kind === "mermaid") return diagramCard(code, closed);
   return null;
@@ -243,8 +244,24 @@ export function readSources(text) {
   }
 }
 
+const STEPS_BLOCK = /\n*```kazer-passos\n([\s\S]*?)\n```\n?/;
+
 export function stripSources(text) {
-  return (text || "").replace(SOURCES_BLOCK, "\n").trimEnd();
+  return (text || "").replace(SOURCES_BLOCK, "\n").replace(STEPS_BLOCK, "\n").trimEnd();
+}
+
+// Passos salvos com a resposta: refazem a linha do tempo depois de recarregar.
+export function readSteps(text) {
+  const match = (text || "").match(STEPS_BLOCK);
+  if (!match) return [];
+  try {
+    const items = JSON.parse(match[1]);
+    return Array.isArray(items)
+      ? items.filter((item) => typeof item?.l === "string").map((item, index) => ({ id: `s${index}`, label: item.l, detail: String(item.d || ""), state: "done" }))
+      : [];
+  } catch {
+    return [];
+  }
 }
 
 const domain = (url) => {

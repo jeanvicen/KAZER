@@ -292,3 +292,75 @@ def test_news_tool_and_lite_parser() -> None:
     )
     hits = parse_duckduckgo_lite(lite)
     assert hits[0].url == "https://a.example/" and hits[0].snippet == "Trecho A"
+
+
+class Searcher:
+    """Pede busca sempre que pode; responde quando o KAZER manda parar."""
+
+    capabilities: Any = None
+
+    def __init__(self, fail_on: int = 0) -> None:
+        self.requests: list[GenerationRequest] = []
+        self.fail_on = fail_on
+
+    def stream(self, request: GenerationRequest, cancel: CancelToken) -> Any:
+        from kazer.brain.model_provider import ProviderError
+
+        self.requests.append(request)
+        if self.fail_on and len(self.requests) == self.fail_on:
+            raise ProviderError("model_busy")
+        if request.tool_choice == "none":
+            yield StreamEvent("text", "Resposta final com o que achei.")
+            yield StreamEvent("stop", "end")
+            return
+        n = len(self.requests)
+        yield StreamEvent("tool", call=ToolCall(f"c{n}", "buscar_web", {"consulta": f"q{n}"}))
+        yield StreamEvent("stop", "tool")
+
+
+def _run(provider: Any) -> Store:
+    from kazer.chat.generation import GenerationHub
+
+    store = Store()
+    hub = GenerationHub(store, provider)  # type: ignore[arg-type]
+    request = GenerationRequest(
+        system="s", turns=(Turn("user", (Part("text", "x"),)),),
+        tools=(WebTools.definitions[0],),
+    )
+
+    def tool(call: ToolCall) -> tuple[Any, ...]:
+        return ("Pesquisando", "R" * 5000, [{"t": "A", "u": "https://a.example/", "k": "busca"}],
+                "1 resultado")
+
+    assert hub.try_reserve()
+    live = hub.start("u", "c", "r", request, on_tool=tool)
+    import time
+
+    for _ in range(300):
+        if live.done:
+            break
+        time.sleep(0.01)
+    return store
+
+
+def test_research_has_a_budget_and_always_ends_with_an_answer() -> None:
+    from kazer.chat.generation import MAX_TOOL_ROUNDS, OLD_RESULT_CHARS
+
+    provider = Searcher()
+    store = _run(provider)
+    assert store.final["status"] == "complete"
+    assert store.final["content"].startswith("Resposta final com o que achei.")
+    assert "```kazer-fontes" in store.final["content"]
+    assert "```kazer-passos" in store.final["content"]
+    # Rodadas de busca + uma final sem ferramenta (e nunca além do orçamento).
+    assert len(provider.requests) == MAX_TOOL_ROUNDS + 1
+    assert provider.requests[-1].tool_choice == "none"
+    # Resultados de rodadas antigas voltam encurtados ao modelo.
+    first_results = [t for t in provider.requests[-1].turns if t.results][0].results
+    assert len(first_results[0][1]) < OLD_RESULT_CHARS + 100
+
+
+def test_what_was_researched_is_saved_even_if_the_answer_fails() -> None:
+    store = _run(Searcher(fail_on=2))
+    assert store.final["status"] == "error"
+    assert "https://a.example/" in store.final["content"]
