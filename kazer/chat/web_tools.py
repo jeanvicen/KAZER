@@ -19,6 +19,7 @@ from __future__ import annotations
 import ipaddress
 import json
 import logging
+import os
 import re
 import socket
 import threading
@@ -61,6 +62,7 @@ HN = "hacker_news"
 WEATHER = "clima"
 FX = "cotacao"
 CALC = "calcular"
+NEWS = "noticias"
 
 _REPO = re.compile(r"^[A-Za-z0-9_.-]{1,100}/[A-Za-z0-9_.-]{1,100}$")
 _PATH = re.compile(r"^[A-Za-z0-9_./@+ -]{0,300}$")
@@ -212,6 +214,18 @@ DEFINITIONS: tuple[ToolDef, ...] = (
             "type": "object",
             "properties": {"expressao": {"type": "string"}},
             "required": ["expressao"],
+        },
+    ),
+    ToolDef(
+        name=NEWS,
+        description=(
+            "Notícias recentes de um assunto (Google Notícias e GDELT, com data e veículo)."
+            " Use para tudo que aconteceu nos últimos dias ou meses."
+        ),
+        schema={
+            "type": "object",
+            "properties": {"assunto": {"type": "string"}},
+            "required": ["assunto"],
         },
     ),
 )
@@ -379,11 +393,16 @@ class WebTools:
         self._local.detail = detail
 
     def execute(
-        self, name: str, arguments: dict[str, Any]
+        self, name: str, arguments: dict[str, Any], *, deep: bool = False
     ) -> tuple[str, list[dict[str, str]], str]:
-        """Como `run`, mas devolve também as fontes consultadas e um detalhe curto."""
+        """Como `run`, mas devolve também as fontes consultadas e um detalhe curto.
+
+        `deep`: pesquisa profunda — só nela entra a Tavily (cota paga), além de
+        mais resultados por busca.
+        """
         self._local.found = []
         self._local.detail = ""
+        self._local.deep = deep
         try:
             text = self.run(name, arguments)
             return text, list(self._local.found), str(self._local.detail)
@@ -427,6 +446,8 @@ class WebTools:
             return f"Cotação {short(arguments.get('de'))} → {short(arguments.get('para'))}"
         if name == CALC:
             return "Calculando"
+        if name == NEWS:
+            return f"Lendo notícias: {short(arguments.get('assunto'))}"
         action = arguments.get("acao")
         if action == "buscar":
             return f"Buscando no GitHub: {short(arguments.get('consulta'))}"
@@ -451,6 +472,7 @@ class WebTools:
                 WEATHER: self.weather,
                 FX: self.exchange,
                 CALC: self.calculate,
+                NEWS: self.news,
             }.get(name)
             if handler is not None:
                 return handler(arguments)
@@ -466,25 +488,110 @@ class WebTools:
     # ---------- Busca ----------
 
     def search(self, query: str) -> str:
+        """Busca em várias fontes grátis ao mesmo tempo e junta sem repetir.
+
+        Pesquisa normal: DuckDuckGo (HTML e Lite), Marginalia, Wikipédia, Brave
+        (se houver chave), SearXNG (se configurado) e notícias recentes quando a
+        pergunta é sobre algo atual. Pesquisa profunda: tudo isso + Tavily.
+        """
         query = " ".join(query.split())[:300]
         if not query:
             raise ToolFailure("Diga o que pesquisar.")
-        hits: list[Hit] = []
-        for backend in (self._tavily, self._brave, self._duckduckgo, self._wikipedia):
-            try:
-                hits = backend(query)
-            except (httpx.HTTPError, ValueError, KeyError, TypeError):
-                hits = []
-            if hits:
-                break
+        deep = bool(getattr(self._local, "deep", False))
+        backends: list[tuple[str, Callable[[str], list[Hit]]]] = [
+            ("DuckDuckGo", self._duckduckgo),
+            ("Marginalia", self._marginalia),
+            ("Wikipédia", self._wikipedia),
+            ("Brave", self._brave),
+            ("SearXNG", self._searxng),
+        ]
+        if deep or _NEWSY.search(query):
+            backends.append(("Google Notícias", self._news_rss))
+        if deep:
+            backends.insert(0, ("Tavily", self._tavily))
+        found = self._gather(backends, query)
+        if not found.get("DuckDuckGo"):
+            # A versão HTML falhou ou veio vazia: tenta a Lite antes de desistir.
+            found["DuckDuckGo"] = self._safe(self._duckduckgo_lite, query)
+        hits = _merge([found.get(name, []) for name, _ in backends], 16 if deep else MAX_RESULTS)
         if not hits:
             return "A busca não trouxe resultados. Tente outras palavras."
-        lines = [EXTERNAL + f"Resultados para: {query}"]
-        for index, hit in enumerate(hits[:MAX_RESULTS], 1):
+        answered = [name for name, _ in backends if found.get(name)]
+        lines = [EXTERNAL + f"Resultados para: {query} (fontes: {', '.join(answered)})"]
+        for index, hit in enumerate(hits, 1):
             lines.append(f"{index}. {hit.title}\n   {hit.url}\n   {hit.snippet}")
             self._found(hit.title, hit.url, "busca")
-        self._note(f"{min(len(hits), MAX_RESULTS)} resultados")
+        word = "fonte" if len(answered) == 1 else "fontes"
+        self._note(f"{len(hits)} resultados de {len(answered)} {word}")
         return "\n".join(lines)
+
+    @staticmethod
+    def _safe(backend: Callable[[str], list[Hit]], query: str) -> list[Hit]:
+        try:
+            return backend(query)
+        except (httpx.HTTPError, ValueError, KeyError, TypeError, AttributeError):
+            return []
+
+    def _gather(
+        self, backends: list[tuple[str, Callable[[str], list[Hit]]]], query: str
+    ) -> dict[str, list[Hit]]:
+        """Todas as fontes em paralelo; a mais lenta não segura as outras."""
+        from concurrent.futures import ThreadPoolExecutor, wait
+
+        results: dict[str, list[Hit]] = {}
+        with ThreadPoolExecutor(max_workers=len(backends)) as pool:
+            futures = {pool.submit(self._safe, fn, query): name for name, fn in backends}
+            done, _ = wait(futures, timeout=TIMEOUT + 2)
+            for future in done:
+                results[futures[future]] = future.result()
+        return results
+
+    def _marginalia(self, query: str) -> list[Hit]:
+        # API pública e grátis do Marginalia (a chave "public" é a oficial aberta).
+        response = self._client.get(
+            "https://api.marginalia.nu/public/search/" + quote(query), params={"count": 8}
+        )
+        response.raise_for_status()
+        return [
+            Hit(str(item.get("title") or item.get("url")), str(item["url"]),
+                _clip(str(item.get("description") or ""), 300))
+            for item in response.json().get("results", [])
+            if str(item.get("url", "")).startswith("http")
+        ]
+
+    def _searxng(self, query: str) -> list[Hit]:
+        # SearXNG (github.com/searxng/searxng) hospedado por você: grátis e junta
+        # dezenas de buscadores. Ligado só com KAZER_SEARXNG_URL.
+        base = os.environ.get("KAZER_SEARXNG_URL", "").strip().rstrip("/")
+        if not base.startswith("https://"):
+            return []
+        response = self._client.get(
+            base + "/search", params={"q": query, "format": "json", "language": "pt-BR"}
+        )
+        response.raise_for_status()
+        return [
+            Hit(str(item.get("title", "")), str(item["url"]),
+                _clip(str(item.get("content") or ""), 300))
+            for item in response.json().get("results", [])[:10]
+            if str(item.get("url", "")).startswith("http")
+        ]
+
+    def _news_rss(self, query: str) -> list[Hit]:
+        response = self._client.get(
+            "https://news.google.com/rss/search",
+            params={"q": query, "hl": "pt-BR", "gl": "BR", "ceid": "BR:pt-419"},
+        )
+        response.raise_for_status()
+        return parse_rss(response.text)[:6]
+
+    def _duckduckgo_lite(self, query: str) -> list[Hit]:
+        response = self._client.post(
+            "https://lite.duckduckgo.com/lite/",
+            data={"q": query, "kl": "br-pt"},
+            headers={"Content-Type": "application/x-www-form-urlencoded"},
+        )
+        response.raise_for_status()
+        return parse_duckduckgo_lite(response.text)
 
     def _tavily(self, query: str) -> list[Hit]:
         key = self._secret("TAVILY_API_KEY")
@@ -492,7 +599,10 @@ class WebTools:
             return []
         response = self._client.post(
             "https://api.tavily.com/search",
-            json={"api_key": key, "query": query, "max_results": MAX_RESULTS},
+            json={
+                "api_key": key, "query": query, "max_results": 10,
+                "search_depth": "advanced", "include_answer": False,
+            },
         )
         response.raise_for_status()
         return [
@@ -574,6 +684,48 @@ class WebTools:
         raise ToolFailure("Redirecionamentos demais.")
 
     def open_page(self, url: str) -> str:
+        """Lê a página; se for só JavaScript, usa um leitor; se sumiu, o arquivo."""
+        try:
+            text = self._open_page(url)
+        except ToolFailure as exc:
+            archived = self._wayback(url)
+            if not archived:
+                raise
+            text = self._open_page(archived) + "\n(Página original indisponível: cópia do"
+            text += f" Internet Archive. Erro original: {exc})"
+            return text
+        if len(text) < 900 and "Links da página" not in text[-2000:]:
+            rendered = self._reader(url)
+            if rendered:
+                return rendered
+        return text
+
+    def _wayback(self, url: str) -> str:
+        try:
+            data = self._json("https://archive.org/wayback/available", {"url": url})
+        except (ToolFailure, httpx.HTTPError, ValueError):
+            return ""
+        closest = ((data.get("archived_snapshots") or {}).get("closest") or {})
+        found = str(closest.get("url") or "")
+        return found.replace("http://", "https://", 1) if closest.get("available") else ""
+
+    def _reader(self, url: str) -> str:
+        """Páginas montadas por JavaScript: o leitor público do Jina devolve o texto."""
+        try:
+            response = self._client.get(
+                "https://r.jina.ai/" + safe_url(url, self._resolve),
+                headers={"Accept": "text/plain"},
+            )
+            response.raise_for_status()
+        except (ToolFailure, httpx.HTTPError):
+            return ""
+        text = response.text.strip()
+        if len(text) < 200:
+            return ""
+        self._found(url, url, "lido")
+        return EXTERNAL + f"Fonte: {url}\n\n" + _clip(text, MAX_PAGE_CHARS)
+
+    def _open_page(self, url: str) -> str:
         final, header, raw, encoding = self._get_public(url)
         kind = header.split(";", 1)[0].strip().lower()
         if kind in {"application/json", "text/plain", "text/markdown", "text/csv"}:
@@ -841,6 +993,30 @@ class WebTools:
                 f"- {title} ({tag('published')[:10]})\n  {authors}\n  {link}\n"
                 f"  {_clip(tag('summary'), 400)}"
             )
+        # OpenAlex: catálogo aberto de 250 milhões de trabalhos, grátis e sem chave.
+        try:
+            works = self._json(
+                "https://api.openalex.org/works", {"search": query, "per-page": 6}
+            ).get("results", [])
+        except (ToolFailure, httpx.HTTPError, ValueError):
+            works = []
+        for work in works[:6]:
+            link = str(
+                ((work.get("primary_location") or {}).get("landing_page_url"))
+                or work.get("doi") or work.get("id") or ""
+            )
+            title = str(work.get("display_name") or "")
+            if not title or not link.startswith("http"):
+                continue
+            authors = ", ".join(
+                str((a.get("author") or {}).get("display_name", ""))
+                for a in (work.get("authorships") or [])[:4]
+            )
+            self._found(title, link, "lido")
+            rows.append(
+                f"- {title} ({work.get('publication_year', '—')}, citado"
+                f" {work.get('cited_by_count', 0)}x)\n  {authors}\n  {link}"
+            )
         self._note(f"{len(rows)} artigos")
         return EXTERNAL + ("\n".join(rows) if rows else "Nenhum artigo encontrado.")
 
@@ -920,6 +1096,34 @@ class WebTools:
         self._found("Frankfurter (BCE)", "https://www.frankfurter.app/", "lido")
         return f"1 {base} = {rate} {target} (referência do BCE em {data.get('date')})."
 
+    # ---------- Notícias ----------
+
+    def news(self, arguments: dict[str, Any]) -> str:
+        subject = " ".join(str(arguments.get("assunto") or "").split())[:200]
+        if not subject:
+            raise ToolFailure("Diga o assunto.")
+        hits = self._safe(self._news_rss, subject)
+        try:
+            data = self._json(
+                "https://api.gdeltproject.org/api/v2/doc/doc",
+                {"query": subject, "mode": "artlist", "maxrecords": 10, "format": "json",
+                 "sort": "datedesc"},
+            )
+            for item in data.get("articles", [])[:10]:
+                date = str(item.get("seendate", ""))[:8]
+                when = f"{date[6:8]}/{date[4:6]}/{date[:4]}" if len(date) == 8 else ""
+                hits.append(Hit(str(item.get("title", "")), str(item.get("url", "")),
+                                f"{item.get('domain', '')} · {when}"))
+        except (ToolFailure, httpx.HTTPError, ValueError):
+            pass
+        merged = _merge([hits], 12)
+        for hit in merged:
+            self._found(hit.title, hit.url, "busca")
+        self._note(f"{len(merged)} notícias")
+        if not merged:
+            return "Nenhuma notícia recente encontrada."
+        return EXTERNAL + "\n".join(f"- {h.title}\n  {h.url}\n  {h.snippet}" for h in merged)
+
     # ---------- Calculadora ----------
 
     @staticmethod
@@ -995,6 +1199,80 @@ def parse_duckduckgo(html: str) -> list[Hit]:
                 _clip(_strip_tags(match.group("snippet") or ""), 300),
             )
         )
+        if len(hits) >= MAX_RESULTS:
+            break
+    return hits
+
+
+_NEWSY = re.compile(
+    r"\b(hoje|ontem|agora|atual|recente|ultim|último|news|noticia|notícia|lançamento|lancamento|"
+    r"semana|mês|mes|20[2-3]\d|preço|preco|cotação|eleição|eleicao|jogo de ontem|resultado)",
+    re.IGNORECASE,
+)
+
+
+def _canonical(url: str) -> str:
+    parts = urlsplit(url)
+    host = (parts.hostname or "").removeprefix("www.")
+    return f"{host}{parts.path.rstrip('/')}?{parts.query}".lower()
+
+
+def _merge(groups: list[list[Hit]], limit: int) -> list[Hit]:
+    """Intercala as fontes (a primeira de cada, depois a segunda...) sem repetir."""
+    seen: set[str] = set()
+    merged: list[Hit] = []
+    depth = max((len(group) for group in groups), default=0)
+    for index in range(depth):
+        for group in groups:
+            if index < len(group):
+                hit = group[index]
+                key = _canonical(hit.url)
+                if hit.url.startswith("http") and key not in seen:
+                    seen.add(key)
+                    merged.append(hit)
+                    if len(merged) == limit:
+                        return merged
+    return merged
+
+
+def parse_rss(xml: str) -> list[Hit]:
+    """Itens de um feed RSS (título, link, veículo e data)."""
+    hits: list[Hit] = []
+    for item in re.findall(r"<item>(.*?)</item>", xml, re.S):
+        def tag(name: str, block: str = item) -> str:
+            match = re.search(rf"<{name}[^>]*>(.*?)</{name}>", block, re.S)
+            value = match.group(1) if match else ""
+            value = re.sub(r"^<!\[CDATA\[(.*)\]\]>$", r"\1", value.strip(), flags=re.S)
+            return " ".join(unescape(value).split())
+
+        link = tag("link")
+        if link.startswith("http"):
+            hits.append(Hit(tag("title"), link, f"{tag('source')} · {tag('pubDate')[:16]}"))
+    return hits
+
+
+_LITE_LINK = re.compile(
+    r"<a[^>]+href=\"(?P<href>[^\"]+)\"[^>]*class=['\"]result-link['\"][^>]*>(?P<title>.*?)</a>",
+    re.S,
+)
+_LITE_SNIPPET = re.compile(r"<td[^>]*class=['\"]result-snippet['\"][^>]*>(?P<s>.*?)</td>", re.S)
+
+
+def parse_duckduckgo_lite(html: str) -> list[Hit]:
+    links = list(_LITE_LINK.finditer(html))
+    snippets = [m.group("s") for m in _LITE_SNIPPET.finditer(html)]
+    hits: list[Hit] = []
+    for index, match in enumerate(links):
+        href = unescape(match.group("href"))
+        if href.startswith("//"):
+            href = "https:" + href
+        parts = urlsplit(href)
+        if parts.path.startswith("/l/"):
+            href = parse_qs(parts.query).get("uddg", [href])[0]
+        if not href.startswith("http") or "duckduckgo.com/y.js" in href:
+            continue
+        snippet = _strip_tags(snippets[index]) if index < len(snippets) else ""
+        hits.append(Hit(_strip_tags(match.group("title")), href, _clip(snippet, 300)))
         if len(hits) >= MAX_RESULTS:
             break
     return hits

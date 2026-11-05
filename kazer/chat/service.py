@@ -857,7 +857,7 @@ class ChatService:
         return ""
 
     def _tool_runner(
-        self, user_id: str, *, read_only: bool = False
+        self, user_id: str, *, read_only: bool = False, deep: bool = False
     ) -> Callable[[ToolCall], tuple[Any, ...]]:
         """Fecha o ciclo: o modelo pede, o KAZER executa, o resultado volta."""
         by_name = {spec.name: spec for spec in self._tools_for(user_id, read_only=read_only)}
@@ -867,7 +867,7 @@ class ChatService:
             if web is not None and call.name in web_tools.NAMES:
                 label = web.label(call.name, call.arguments)
                 try:
-                    text, found, detail = web.execute(call.name, call.arguments)
+                    text, found, detail = web.execute(call.name, call.arguments, deep=deep)
                     return (label, text, found, detail)
                 except Exception:  # noqa: BLE001 - pesquisa não derruba a resposta
                     logger.warning("chat.web_tool_failed")
@@ -1381,7 +1381,7 @@ class ChatService:
             request,
             access_token=current_access_token(),
             on_complete=on_complete,
-            on_tool=self._tool_runner(user_id, read_only=restricted),
+            on_tool=self._tool_runner(user_id, read_only=restricted, deep=options.research),
             describe=self._describe,
         )
         logger.info("chat.message_accepted", extra={"units": options.units})
@@ -1447,7 +1447,7 @@ class ChatService:
             reply.id,
             request,
             access_token=current_access_token(),
-            on_tool=self._tool_runner(user_id, read_only=restricted),
+            on_tool=self._tool_runner(user_id, read_only=restricted, deep=options.research),
             describe=self._describe,
         )
         return reply, live

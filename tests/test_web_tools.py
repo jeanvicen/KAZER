@@ -216,3 +216,79 @@ def test_stripe_checkout_builds_a_subscription_session() -> None:
             pass
         else:  # pragma: no cover
             raise AssertionError("deveria recusar")
+
+
+class Keys(SecretProvider):
+    def get_secret(self, name: str, *, scope: str) -> str:
+        if name == "TAVILY_API_KEY":
+            return "tvly-test"
+        raise LookupError(name)
+
+
+def multi_handler(seen: list[str]) -> Any:
+    def handler(request: httpx.Request) -> httpx.Response:
+        host = request.url.host
+        seen.append(host)
+        if host == "html.duckduckgo.com":
+            return httpx.Response(200, text=DDG)
+        if host == "api.marginalia.nu":
+            items = [
+                {"url": "https://pequeno.blog/godot", "title": "Blog Godot", "description": "x"},
+                {"url": "https://godotengine.org/", "title": "Repetido", "description": ""},
+            ]
+            return httpx.Response(200, json={"results": items})
+        if host == "pt.wikipedia.org":
+            found = {"query": {"search": [{"title": "Godot (motor de jogo)", "snippet": "motor"}]}}
+            return httpx.Response(200, json=found)
+        if host == "api.tavily.com":
+            items = [{"url": "https://tavily.example/a", "title": "Profundo", "content": "y"}]
+            return httpx.Response(200, json={"results": items})
+        if host == "news.google.com":
+            rss = (
+                "<rss><channel><item><title>Godot 5 lançado</title>"
+                "<link>https://noticia.example/godot5</link><pubDate>Thu, 05 Nov 2026</pubDate>"
+                "<source url='x'>Jornal</source></item></channel></rss>"
+            )
+            return httpx.Response(200, text=rss)
+        return httpx.Response(404)
+
+    return handler
+
+
+def test_normal_search_mixes_free_sources_and_never_spends_tavily() -> None:
+    seen: list[str] = []
+    client = httpx.Client(transport=httpx.MockTransport(multi_handler(seen)))
+    w = WebTools(Keys(), client=client, resolve=public)
+    text, found, detail = w.execute("buscar_web", {"consulta": "godot engine"})
+    assert "api.tavily.com" not in seen
+    urls = [item["u"] for item in found]
+    assert "https://godotengine.org/" in urls and "https://pequeno.blog/godot" in urls
+    assert any("wikipedia.org" in url for url in urls)
+    assert urls.count("https://godotengine.org/") == 1  # repetido entre fontes some
+    assert "fontes" in detail and "DuckDuckGo" in text
+
+
+def test_deep_research_adds_tavily_and_news() -> None:
+    seen: list[str] = []
+    client = httpx.Client(transport=httpx.MockTransport(multi_handler(seen)))
+    w = WebTools(Keys(), client=client, resolve=public)
+    _, found, _ = w.execute("buscar_web", {"consulta": "godot engine"}, deep=True)
+    urls = [item["u"] for item in found]
+    assert "https://tavily.example/a" in urls
+    assert "https://noticia.example/godot5" in urls
+
+
+def test_news_tool_and_lite_parser() -> None:
+    from kazer.chat.web_tools import parse_duckduckgo_lite
+
+    seen: list[str] = []
+    client = httpx.Client(transport=httpx.MockTransport(multi_handler(seen)))
+    w = WebTools(NoSecrets(), client=client, resolve=public)
+    text, found, _ = w.execute("noticias", {"assunto": "godot"})
+    assert "Godot 5 lançado" in text and found
+    lite = (
+        "<a rel='nofollow' href=\"//duckduckgo.com/l/?uddg=https%3A%2F%2Fa.example%2F\" "
+        "class='result-link'>Título A</a><td class='result-snippet'>Trecho A</td>"
+    )
+    hits = parse_duckduckgo_lite(lite)
+    assert hits[0].url == "https://a.example/" and hits[0].snippet == "Trecho A"

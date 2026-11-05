@@ -96,9 +96,13 @@ _RESEARCH = "\n".join(
     (
         "Você tem pesquisa em tempo real: buscar_web (busca na internet), abrir_pagina (lê"
         " uma página) e github (busca repositórios, lê README, pastas e arquivos).",
-        "Use sem pedir licença quando a pergunta envolver algo atual, preços, versões,"
-        " documentação, notícias, um site, um link ou um repositório. Para perguntas"
-        " atemporais que você sabe responder, não pesquise.",
+        "Pesquise sem pedir licença sempre que a resposta depender de fatos: algo atual,"
+        " preços, versões, documentação, notícias, pessoas, empresas, produtos, lugares,"
+        " números, um site, um link ou um repositório. Na dúvida, pesquise. Só responda de"
+        " cabeça o que é atemporal e você sabe com certeza (conceitos, código genérico).",
+        "Faça mais de uma busca quando o assunto pedir (termos diferentes, em português e em"
+        " inglês) e use a ferramenta certa: noticias para o que é recente, wikipedia para"
+        " definições, artigos_cientificos para ciência, github e pacote para código.",
         "Pesquise como um bom analista: faça a busca, abra as fontes mais confiáveis, cruze"
         " pelo menos duas quando o assunto for importante e responda com os links das fontes"
         " em Markdown. Nunca invente links: só cite o que a ferramenta devolveu.",
