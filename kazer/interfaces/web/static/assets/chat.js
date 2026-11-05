@@ -829,56 +829,82 @@ function stepSummary(steps, sources) {
   return parts.join(" · ") || `${steps.length} ${steps.length === 1 ? "passo" : "passos"}`;
 }
 
+const TRAIL_VISIBLE = 3;
+
+function stepRow(step, live) {
+  const think = step.kind === "think";
+  const write = step.kind === "write";
+  const running = live && step.state === "run";
+  const seconds = Math.max(1, Math.round((step.ms || 0) / 1000));
+  const label = think ? `Pensou por ${seconds} s` : write && !running ? "Resposta escrita" : step.label;
+  const iconName = think ? "sparkle" : write ? "edit" : stepIcon(step.label);
+  return h(
+    `li.trail__step${running ? ".is-run" : ".is-done"}${think ? ".is-think" : ""}`,
+    {},
+    h("span.trail__dot", { "aria-hidden": "true" }),
+    h("span.trail__icon", { "aria-hidden": "true" }, icon(iconName)),
+    h("span.trail__label", { text: label }),
+    step.detail ? h("span.trail__detail", { text: step.detail }) : null,
+  );
+}
+
 function paintSteps(model) {
   const box = model.parts?.steps;
   if (!box) return;
   const steps = model.steps || [];
-  if (!steps.length) {
+  // Só aparece quando houve ação de verdade (busca, leitura, ferramenta).
+  if (!steps.some((step) => !step.kind)) {
     box.hidden = true;
     box.replaceChildren();
     return;
   }
   const streaming = model.status === "streaming";
-  const running = streaming ? [...steps].reverse().find((step) => step.state === "run") : null;
+  if (!streaming) for (const step of steps) if (step.state === "run") step.state = "done";
   const sources = (model.liveSources || readSources(model.content || "")).length;
-  if (model.trailOpen === undefined) model.trailOpen = true;
-  if (!streaming && model.trailOpen === true && !model.trailTouched) model.trailOpen = false;
   box.hidden = false;
   box.classList.toggle("is-live", streaming);
-  box.classList.toggle("is-open", model.trailOpen);
-  const head = h(
-    "button.trail__head",
-    {
-      type: "button",
-      "aria-expanded": String(model.trailOpen),
-      onclick: () => {
-        model.trailOpen = !model.trailOpen;
-        model.trailTouched = true;
-        paintSteps(model);
-      },
-    },
-    h(`span.trail__badge${streaming ? ".is-live" : ""}`, { "aria-hidden": "true" }, streaming ? h("span.trail__spin") : icon("check")),
-    h("span.trail__title", { text: streaming ? (running ? running.label : "Analisando o que encontrei") : "Pesquisa concluída" }),
-    h("span.trail__meta", { text: stepSummary(steps, sources) }),
-    icon("chevron", "trail__caret"),
-  );
+
+  // Terminado: uma linha de resumo que abre a linha do tempo inteira.
+  if (!streaming && !model.trailOpen) {
+    box.replaceChildren(
+      h(
+        "button.trail__summary",
+        { type: "button", "aria-expanded": "false", onclick: () => { model.trailOpen = true; paintSteps(model); } },
+        h("span.trail__badge", { "aria-hidden": "true" }, icon("check")),
+        h("span.trail__title", { text: stepSummary(steps.filter((step) => !step.kind), sources) }),
+        icon("chevron", "trail__caret"),
+      ),
+    );
+    return;
+  }
+
+  const hidden = model.trailAll ? 0 : Math.max(steps.length - TRAIL_VISIBLE, 0);
+  const shown = steps.slice(hidden);
   const list = h(
     "ol.trail__list",
-    { hidden: !model.trailOpen },
-    steps.map((step, index) => {
-      const live = streaming && step.state === "run";
-      const row = h(
-        `li.trail__step${live ? ".is-run" : ".is-done"}`,
-        {},
-        h("span.trail__icon", { "aria-hidden": "true" }, icon(stepIcon(step.label))),
-        h("span.trail__label", { text: step.label }),
-        step.detail ? h("span.trail__detail", { text: step.detail }) : live ? h("span.trail__detail", { text: "agora" }) : null,
-      );
-      row.style.setProperty("--i", String(Math.min(index, 12)));
-      return row;
-    }),
+    {},
+    shown.map((step) => stepRow(step, streaming)),
+    streaming ? h("li.trail__pulse", { "aria-hidden": "true" }, h("span")) : null,
   );
-  box.replaceChildren(head, list);
+  const more = hidden
+    ? h(
+        "button.trail__more",
+        { type: "button", onclick: () => { model.trailAll = true; paintSteps(model); } },
+        icon("dots"),
+        h("span", { text: `Mostrar ${hidden} ${hidden === 1 ? "etapa anterior" : "etapas anteriores"}` }),
+        icon("chevron", "trail__caret"),
+      )
+    : null;
+  const close = !streaming
+    ? h(
+        "button.trail__more",
+        { type: "button", onclick: () => { model.trailOpen = false; model.trailAll = false; paintSteps(model); } },
+        icon("check"),
+        h("span", { text: stepSummary(steps.filter((step) => !step.kind), sources) }),
+        icon("chevron", "trail__caret is-up"),
+      )
+    : null;
+  box.replaceChildren(...[close, more, list].filter(Boolean));
 }
 
 // ---------- Fontes ----------
@@ -1027,6 +1053,13 @@ function queueRender(model) {
 function handleEvent(model, event) {
   if (typeof event.i === "number" && S.live && S.live.replyId === model.id) S.live.lastIndex = event.i;
   if (event.type === "delta") {
+    // Começou a escrever depois de pesquisar: a linha do tempo fecha com isso.
+    if (model.steps?.length && !model.steps.some((step) => step.kind === "write")) {
+      const gap = Date.now() - (model.lastMark || Date.now());
+      if (gap >= 1500) model.steps.push({ kind: "think", ms: gap, state: "done", id: `t${model.steps.length}` });
+      model.steps.push({ kind: "write", label: "Escrevendo a resposta", state: "run", id: "write" });
+      paintSteps(model);
+    }
     model.content += event.text;
     model.searching = false;
     model.reconnecting = false;
@@ -1043,10 +1076,17 @@ function handleEvent(model, event) {
     // O KAZER conta o que está fazendo enquanto faz: o passo aparece ao começar
     // ("run") e é fechado com o que voltou ("done"). Nada é narrado sem acontecer.
     const steps = model.steps || (model.steps = []);
+    const now = Date.now();
     const known = event.id ? steps.find((step) => step.id === event.id) : null;
     const next = { id: event.id || "", label: event.label, state: event.state || "done", detail: event.detail || "" };
     if (known) Object.assign(known, next);
-    else steps.push(next);
+    else {
+      // O tempo real entre uma ação e outra vira uma etapa "pensou por Ns".
+      const gap = now - (model.lastMark || model.streamStart || now);
+      if (gap >= 1500) steps.push({ kind: "think", ms: gap, state: "done", id: `t${steps.length}` });
+      steps.push(next);
+    }
+    model.lastMark = now;
     paintSteps(model);
     applyStatus(model);
   } else if (event.type === "sources") {
@@ -1343,7 +1383,10 @@ function commitSend(event) {
     renderPage([message, event.reply], S.hasMore, {});
     for (const id of [event.message.id, event.reply.id]) S.models.get(id)?.el.classList.add("is-new");
     const reply = S.models.get(event.reply.id);
-    if (reply) paintBody(reply);
+    if (reply) {
+      reply.streamStart = Date.now();
+      paintBody(reply);
+    }
   }
   scrollToBottom(true);
   updateSendState();

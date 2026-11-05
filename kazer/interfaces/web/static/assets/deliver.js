@@ -435,12 +435,12 @@ window.addEventListener("message", (event) => {
 
 function diagramHtml(code) {
   const source = JSON.stringify(code).replace(/</g, "\\u003c");
-  return `<!doctype html><html><head><meta charset="utf-8"><style>html,body{margin:0;background:#0f0f11;color:#e8e6e3;font:14px system-ui,sans-serif}#out{display:flex;justify-content:center;padding:16px}#out svg{max-width:100%;height:auto}pre{white-space:pre-wrap;padding:16px;color:#f3a6a6}</style></head><body><div id="out"></div><script type="module">
+  return `<!doctype html><html><head><meta charset="utf-8"><style>html,body{margin:0;background:#0f0f11;color:#e8e6e3;font:14px system-ui,sans-serif}#out{display:flex;justify-content:center;padding:16px}#out svg{max-width:100%;height:auto}pre{white-space:pre-wrap;padding:16px;color:#cfcac3;font:13px/1.5 ui-monospace,monospace}</style></head><body><div id="out"></div><script type="module">
 const code=${source};const out=document.getElementById("out");
 const tell=()=>parent.postMessage({kazerHeight:document.documentElement.scrollHeight},"*");
 try{const m=(await import("https://cdn.jsdelivr.net/npm/mermaid@11.4.1/dist/mermaid.esm.min.mjs")).default;
 m.initialize({startOnLoad:false,theme:"dark",securityLevel:"strict",fontFamily:"system-ui,sans-serif",themeVariables:{primaryColor:"#1d1d22",primaryBorderColor:"#e8b04a",lineColor:"#8f8a84",primaryTextColor:"#f4f2ee"}});
-const r=await m.render("kz"+Date.now(),code);out.innerHTML=r.svg;}catch(e){const p=document.createElement("pre");p.textContent="Não deu para desenhar este diagrama:\\n"+(e&&e.message||e);out.replaceWith(p);}
+const r=await m.render("kz"+Date.now(),code);out.innerHTML=r.svg;}catch(e){const p=document.createElement("pre");p.className="fallback";p.textContent="Não deu para desenhar o diagrama agora. O código dele:\\n\\n"+code;out.replaceWith(p);}
 tell();new ResizeObserver(tell).observe(document.body);
 addEventListener("message",e=>{if(e.data&&e.data.kazerPrint)print()});
 </script></body></html>`;

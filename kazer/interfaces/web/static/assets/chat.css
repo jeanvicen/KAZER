@@ -6733,3 +6733,205 @@ html[data-motion="reduzido"] .pxword__blink {
 .bundle--compact .bundle__cta {
   flex: none;
 }
+
+/* ---------- Linha do tempo (substitui a caixa): fio, pontos e ícones ---------- */
+
+.msg__steps.trail,
+.msg__steps {
+  border: 0;
+  border-radius: 0;
+  background: none;
+  overflow: visible;
+  margin: 0 0 0.9rem;
+}
+
+.trail__summary,
+.trail__more {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  width: 100%;
+  padding: 0.35rem 0;
+  border: 0;
+  background: none;
+  color: var(--c-text-2);
+  font: inherit;
+  font-size: 0.9rem;
+  text-align: left;
+  cursor: pointer;
+}
+
+.trail__summary:hover,
+.trail__more:hover {
+  color: var(--c-text);
+}
+
+.trail__more .icon,
+.trail__summary .icon {
+  flex: none;
+  width: 1.05rem;
+  height: 1.05rem;
+}
+
+.trail__more span,
+.trail__summary .trail__title {
+  flex: 1;
+  min-width: 0;
+  font-weight: 500;
+}
+
+.trail__caret.is-up {
+  transform: rotate(180deg);
+}
+
+.trail__summary .trail__badge {
+  width: 1.4rem;
+  height: 1.4rem;
+}
+
+.trail__list {
+  position: relative;
+  display: grid;
+  gap: 0.15rem;
+  margin: 0.2rem 0 0;
+  padding: 0 0 0 1.35rem;
+  border: 0;
+  list-style: none;
+}
+
+/* O fio vertical que liga as etapas. */
+.trail__list::before {
+  content: "";
+  position: absolute;
+  left: 0.32rem;
+  top: 0.7rem;
+  bottom: 0.7rem;
+  width: 1.5px;
+  border-radius: 1px;
+  background: var(--c-border-2);
+}
+
+.trail__step {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  min-height: 2.1rem;
+  padding: 0.2rem 0;
+  font-size: 0.95rem;
+  animation: step-in 0.35s ease-out both;
+}
+
+.trail__step + .trail__step::before {
+  content: none;
+}
+
+.trail__dot {
+  position: absolute;
+  left: -1.23rem;
+  top: 50%;
+  width: 0.55rem;
+  height: 0.55rem;
+  margin-top: -0.275rem;
+  border-radius: 50%;
+  background: var(--c-text-2);
+  box-shadow: 0 0 0 3px var(--c-bg);
+}
+
+.trail__step .trail__icon {
+  width: auto;
+  height: auto;
+  background: none;
+  color: var(--c-text-2);
+}
+
+.trail__step .trail__icon svg {
+  width: 1.15rem;
+  height: 1.15rem;
+}
+
+.trail__step .trail__label {
+  color: var(--c-text);
+  font-weight: 550;
+}
+
+.trail__step.is-think .trail__label {
+  color: var(--c-text-2);
+  font-weight: 450;
+}
+
+.trail__step.is-run .trail__dot {
+  background: #e8b04a;
+}
+
+.trail__step.is-run .trail__label {
+  background: linear-gradient(90deg, var(--c-text) 40%, var(--c-text-3) 50%, var(--c-text) 60%);
+  background-size: 250% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: trail-shimmer 1.6s linear infinite;
+}
+
+@keyframes trail-shimmer {
+  from {
+    background-position: 100% 0;
+  }
+  to {
+    background-position: -150% 0;
+  }
+}
+
+/* Ponto vivo no fim enquanto o KAZER ainda trabalha. */
+.trail__pulse {
+  position: relative;
+  height: 1.6rem;
+}
+
+.trail__pulse span {
+  position: absolute;
+  left: -1.35rem;
+  top: 0.45rem;
+  width: 0.8rem;
+  height: 0.8rem;
+  border-radius: 50%;
+  background: #e8b04a;
+  box-shadow: 0 0 0.9rem #e8b04a;
+  animation: trail-breathe 1.4s ease-in-out infinite;
+}
+
+@keyframes trail-breathe {
+  50% {
+    transform: scale(0.7);
+    opacity: 0.55;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .trail__step.is-run .trail__label,
+  .trail__pulse span {
+    animation: none;
+  }
+
+  .trail__step.is-run .trail__label {
+    color: var(--c-text);
+    background: none;
+  }
+}
+
+.trail__list,
+.trail__step {
+  min-width: 0;
+}
+
+.trail__step .trail__label {
+  flex: 1 1 auto;
+}
+
+.trail__step .trail__detail {
+  flex: 0 1 auto;
+  max-width: 38%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
