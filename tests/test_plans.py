@@ -68,8 +68,10 @@ def test_the_paid_plans_unlock_more_than_the_free_one() -> None:
     free, pro, ultra = (plans.BY_ID[name] for name in ("free", "pro", "ultra"))
     assert free.allowance < pro.allowance < ultra.allowance
     assert not free.coder and pro.coder and ultra.coder
-    assert not free.github_write and pro.github_write
-    assert free.connector_limit < pro.connector_limit < ultra.connector_limit
+    # Conectores estão pausados (d04a427): nenhum plano escreve no GitHub nem
+    # conecta serviços até eles voltarem. Quando voltarem, os pagos liberam mais.
+    assert not any(plan.github_write for plan in (free, pro, ultra))
+    assert free.connector_limit == pro.connector_limit == ultra.connector_limit == 0
     # Um plano desconhecido nunca libera nada por engano.
     assert plans.plan_of("enterprise").id == "free"
     assert plans.plan_of(None).id == "free"
