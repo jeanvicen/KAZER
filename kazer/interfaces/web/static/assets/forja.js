@@ -16,10 +16,10 @@ import { pixelWord } from "./pixel.js";
 import { request } from "./net.js";
 
 const PITCH = [
-  ["Projetos completos em .zip", "Front, back e config em pastas organizadas. Baixa, extrai e roda."],
-  ["Prévia ao vivo", "Sites, apps e jogos em HTML abrem funcionando na hora, no próprio chat."],
-  ["Pesquisa enquanto programa", "Consulta a documentação atual e repositórios do GitHub antes de escrever."],
-  ["Jogos com Godot 4", "No computador, peça um jogo com engine e receba o projeto pronto para importar."],
+  ["Vários arquivos por resposta", "organizados em pastas, com download em .zip."],
+  ["Prévia de HTML", "abre a página ou o jogo dentro da conversa."],
+  ["Documentação atual", "consulta a web e o GitHub antes de escrever."],
+  ["Godot 4", "projetos completos para importar no computador."],
 ];
 
 const IDEAS = [
@@ -150,69 +150,28 @@ export function createForja({ onStart, onOpenPlans, onOpenConversation, onOpenSe
 
   function locked(planName, upgrade) {
     const price = upgrade?.monthly_price || "";
-    const daily = upgrade?.monthly_cents ? `${(upgrade.monthly_cents / 3000).toFixed(2).replace(".", ",")}` : "";
-    const cta = h(
-      "button.forja__start",
-      { type: "button", onclick: (event) => onOpenPlans?.(event.currentTarget, upgrade?.id) },
-      h("span.forja__start-shine", { "aria-hidden": "true" }),
-      icon("bolt"),
-      h("span", { text: upgrade ? `Destravar o KZ Code agora` : "Ver os planos" }),
-    );
-    // Terminal fake que "digita" um projeto saindo do zero: mostra o produto
-    // funcionando antes de pedir o cartão.
-    const lines = [
-      ["$", "kz criar \"app de tarefas com login\""],
-      ["›", "Plano: API + banco + tela, 6 arquivos"],
-      ["✓", "app/main.py"],
-      ["✓", "app/auth.py"],
-      ["✓", "web/index.html"],
-      ["›", "Pronto. Baixe o .zip e rode: python -m app"],
-    ];
-    const term = h(
-      "div.forja__term",
-      { "aria-hidden": "true" },
-      h("div.forja__term-bar", {}, h("i"), h("i"), h("i"), h("span", { text: "kz code" })),
-      h(
-        "ol.forja__term-body",
-        {},
-        lines.map(([sign, text], index) => {
-          const row = h("li", {}, h("b", { text: sign }), h("span", { text }));
-          row.style.setProperty("--i", String(index));
-          return row;
-        }),
-      ),
-    );
     return h(
       "div.forja__locked",
       {},
-      h("span.forja__aura", { "aria-hidden": "true" }),
       h(
         "div.forja__hero",
         {},
-        h("span.forja__badge", {}, icon("bolt"), h("span", { text: "Exclusivo dos planos Pro e Ultra" })),
         wordmark(),
-        h("p.forja__headline", { text: "Você descreve. O KAZER entrega o projeto inteiro." }),
-        h("p.forja__lede", {
-          text: "Pare de colar trecho por trecho. O KZ Code planeja, escreve todos os arquivos, testa a lógica e te entrega tudo organizado num .zip — pronto para rodar.",
-        }),
+        h("p.forja__headline", { text: "Projetos inteiros, não trechos de código." }),
+        h("p.forja__lede", { text: "Disponível no KAZER Pro e no Ultra." }),
       ),
-      term,
       h("ul.forja__list", {}, PITCH.map(([title, text]) => item(title, text))),
       h(
         "div.forja__buy",
         {},
-        cta,
-        price
-          ? h(
-              "p.forja__price",
-              {},
-              h("strong", { text: price }),
-              h("span", { text: daily ? ` por mês · menos de R$ ${daily} por dia` : " por mês" }),
-            )
-          : null,
-        h("p.forja__trust", { text: "Cancele quando quiser · Sem fidelidade · Pagamento seguro" }),
+        h(
+          "button.forja__start",
+          { type: "button", onclick: (event) => onOpenPlans?.(event.currentTarget, upgrade?.id) },
+          h("span", { text: upgrade ? `Assinar o ${upgrade.name}` : "Ver planos" }),
+        ),
+        price ? h("p.forja__price", { text: `${price}/mês. Cancele quando quiser.` }) : null,
       ),
-      h("p.forja__note", { text: `Hoje você está no ${planName}.` }),
+      h("p.forja__note", { text: `Plano atual: ${planName}` }),
     );
   }
 

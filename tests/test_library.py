@@ -48,9 +48,13 @@ def test_a_full_page_becomes_an_artifact() -> None:
     found = artifacts.extract(answer)
     assert len(found) == 1
     assert found[0].kind == "code" and found[0].language == "html"
-    # O título sai da frase que apresenta o bloco.
-    assert found[0].title == "Aqui está a sua landing page"
+    # Frase solta antes do bloco não vira título ("Ele contém" era o bug);
+    # sem nome de arquivo, o título é o tipo.
+    assert found[0].title == "Página HTML"
     assert found[0].content.startswith("<!doctype html>")
+    # Com o nome do arquivo citado logo antes, é ele que vale.
+    named = artifacts.extract(f"Salve como `carro.html`. Ele contém:\n```html\n{PAGINA}\n```\n")
+    assert named[0].title == "carro.html"
 
 
 def test_the_kind_follows_the_language() -> None:

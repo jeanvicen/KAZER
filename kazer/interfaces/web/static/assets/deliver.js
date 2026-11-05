@@ -86,7 +86,7 @@ function questionCard(code, closed) {
   });
   const own = { input, send };
   card.append(
-    h("div.ask__head", {}, mark("ask__mark"), h("span", { text: "O KAZER quer confirmar uma coisa" })),
+    h("div.ask__head", {}, mark("ask__mark"), h("span", { text: "Pergunta" })),
     h("p.ask__question", { text: data.question }),
     h("div.ask__options", {}, options),
     form,
@@ -308,7 +308,7 @@ export function bundleCard(text) {
       h(
         "div.bundle__text",
         {},
-        h("strong", { text: godot ? "Projeto Godot 4 pronto" : `${files.length} arquivos prontos` }),
+        h("strong", { text: godot ? "Projeto Godot 4" : `${files.length} arquivos` }),
         h("span", { text: `${files.length} arquivos · ${formatBytes(size)}` }),
       ),
     ),
@@ -328,7 +328,7 @@ export function bundleCard(text) {
                 h("li", { text: "Abra o Godot 4 → Importar → escolha o project.godot." }),
                 h("li", { text: "Aperte F5 para jogar." }),
               ]
-            : h("li", { text: "Projetos Godot rodam no computador. Abra o KAZER no PC para baixar e jogar." }),
+            : h("li", { text: "Projetos Godot rodam no computador. Abra o KAZER no PC para baixar." }),
         )
       : null,
     download,

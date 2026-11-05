@@ -1791,15 +1791,7 @@ function openPlusSheet() {
           ),
         ),
       );
-      // Pesquisa na web e memória não são mais botões: o KAZER pesquisa em
-      // tempo real sozinho quando precisa, e a memória segue as configurações.
-      const note = h(
-        "p.plus__note",
-        {},
-        icon("globe"),
-        h("span", { text: "Pesquisa em tempo real e memória já estão sempre ligadas." }),
-      );
-      return h("div.plus", {}, tiles, note);
+      return h("div.plus", {}, tiles);
     },
   });
 }

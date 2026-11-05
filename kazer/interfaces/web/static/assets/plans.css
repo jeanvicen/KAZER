@@ -19,8 +19,7 @@
 .plans__scrim {
   position: absolute;
   inset: 0;
-  background: rgb(0 0 0 / 0.78);
-  backdrop-filter: blur(16px);
+  background: rgb(0 0 0 / 0.8);
   opacity: 0;
   transition: opacity 0.32s ease;
 }
@@ -35,9 +34,7 @@
   height: 100dvh;
   display: flex;
   flex-direction: column;
-  background:
-    radial-gradient(60rem 30rem at 50% -8rem, rgb(232 176 74 / 0.13), transparent 70%),
-    #060607;
+  background: #0a0a0b;
   color: #f6f4ef;
   overflow: hidden;
   opacity: 0;
@@ -107,83 +104,13 @@
   padding-top: 0.5rem;
 }
 
-.plans__orb {
-  position: relative;
-  display: grid;
-  place-items: center;
-  width: 7.5rem;
-  height: 7.5rem;
-  margin-bottom: 0.4rem;
-}
-
-.plans__orb-glow {
-  position: absolute;
-  inset: -40%;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgb(232 176 74 / 0.45), transparent 62%);
-  animation: plans-breathe 4.5s ease-in-out infinite;
-}
-
-.plans__orb-ring {
-  position: absolute;
-  inset: 0;
-  border-radius: 50%;
-  border: 1px solid rgb(248 220 140 / 0.35);
-  border-top-color: var(--gold-2);
-  animation: plans-spin 7s linear infinite;
-}
-
-.plans__orb-ring--2 {
-  inset: 14%;
-  border-color: rgb(248 220 140 / 0.18);
-  border-bottom-color: var(--gold);
-  animation-duration: 4.5s;
-  animation-direction: reverse;
-}
-
-.plans__mark {
-  position: relative;
-  width: 2.6rem;
-  height: 2.6rem;
-  filter: drop-shadow(0 0 18px rgb(248 220 140 / 0.7));
-}
-
-@keyframes plans-spin {
-  to {
-    transform: rotate(1turn);
-  }
-}
-
-@keyframes plans-breathe {
-  50% {
-    transform: scale(1.12);
-    opacity: 0.7;
-  }
-}
-
-.plans__eyebrow {
-  color: var(--gold);
-  font-size: 0.72rem;
-  font-weight: 600;
-  letter-spacing: 0.22em;
-  text-transform: uppercase;
-}
-
 .plans__title {
   margin: 0;
-  font-size: clamp(2rem, 7vw, 3.4rem);
-  font-weight: 800;
-  line-height: 1.02;
-  letter-spacing: -0.035em;
+  font-size: clamp(1.6rem, 5vw, 2.2rem);
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
   outline: none;
-}
-
-.plans__title em {
-  font-style: normal;
-  background: linear-gradient(180deg, var(--gold-2), var(--gold) 60%, #b97a22);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
 }
 
 .plans__lede {
@@ -278,11 +205,9 @@
   flex-direction: column;
   gap: 0.7rem;
   padding: 1.5rem 1.35rem 1.35rem;
-  border-radius: 1.5rem;
-  background: linear-gradient(180deg, rgb(255 255 255 / 0.045), rgb(255 255 255 / 0.015));
-  isolation: isolate;
-  transform: perspective(900px) rotateX(var(--tilt-x)) rotateY(var(--tilt-y));
-  transition: transform 0.25s ease;
+  border: 1px solid rgb(255 255 255 / 0.1);
+  border-radius: 1rem;
+  background: #111113;
   opacity: 0;
   animation: plan-in 0.7s cubic-bezier(0.22, 1, 0.36, 1) forwards;
   animation-delay: calc(var(--i) * 0.12s + 0.15s);
@@ -298,62 +223,15 @@
   }
 }
 
-/* Borda: fina nos cartões, viva e girando no destaque. */
-.plan__border {
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  border-radius: inherit;
-  padding: 1px;
-  background: linear-gradient(180deg, rgb(255 255 255 / 0.14), rgb(255 255 255 / 0.04));
-  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
-  -webkit-mask-composite: xor;
-  mask-composite: exclude;
-}
-
-.plan.is-featured .plan__border {
-  padding: 1.5px;
-  background: conic-gradient(from var(--angle, 0deg), var(--gold-2), #b97a22, var(--gold), #fff3cf, var(--gold-2));
-  animation: plan-border 6s linear infinite;
-}
-
-@property --angle {
-  syntax: "<angle>";
-  initial-value: 0deg;
-  inherits: false;
-}
-
-@keyframes plan-border {
-  to {
-    --angle: 360deg;
-  }
-}
-
 .plan.is-featured {
-  background:
-    radial-gradient(28rem 14rem at 50% -4rem, rgb(232 176 74 / 0.2), transparent 70%),
-    linear-gradient(180deg, rgb(255 255 255 / 0.05), rgb(255 255 255 / 0.015));
-  box-shadow: 0 2rem 5rem rgb(232 176 74 / 0.12);
-}
-
-.plan.is-wanted:not(.is-featured) .plan__border {
-  background: linear-gradient(180deg, var(--accent), rgb(255 255 255 / 0.05));
-}
-
-.plan__sheen {
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  border-radius: inherit;
-  background: radial-gradient(18rem 10rem at var(--shine-x, 50%) 0%, rgb(255 255 255 / 0.07), transparent 70%);
-  pointer-events: none;
+  border-color: var(--gold);
 }
 
 .plan__badge {
   align-self: flex-start;
   padding: 0.28rem 0.7rem;
   border-radius: 999px;
-  background: linear-gradient(135deg, var(--gold-2), var(--gold));
+  background: var(--gold);
   color: #1a1206;
   font-size: 0.7rem;
   font-weight: 700;
@@ -361,25 +239,9 @@
   text-transform: uppercase;
 }
 
-.plan__badge--quiet {
-  background: rgb(255 255 255 / 0.06);
-  color: color-mix(in srgb, var(--accent) 70%, #fff);
-}
-
 .plan__head {
   display: grid;
   gap: 0.25rem;
-}
-
-.plan__icon {
-  display: grid;
-  place-items: center;
-  width: 2.6rem;
-  height: 2.6rem;
-  margin-bottom: 0.35rem;
-  border-radius: 0.85rem;
-  background: color-mix(in srgb, var(--accent) 16%, transparent);
-  color: color-mix(in srgb, var(--accent) 80%, #fff);
 }
 
 .plan__name {
@@ -410,7 +272,7 @@
 }
 
 .plan__price b {
-  font-size: 3rem;
+  font-size: 2.5rem;
   font-weight: 800;
   line-height: 1;
   letter-spacing: -0.04em;
@@ -449,12 +311,8 @@
   gap: 0.4rem;
   align-self: flex-start;
   margin: 0;
-  padding: 0.4rem 0.7rem;
-  border-radius: 0.7rem;
-  background: color-mix(in srgb, var(--accent) 12%, transparent);
-  color: color-mix(in srgb, var(--accent) 75%, #fff);
+  color: #b9b4ad;
   font-size: 0.85rem;
-  font-weight: 600;
 }
 
 .plan__boost svg {
@@ -473,7 +331,7 @@
   margin: 0.4rem 0 0.2rem;
   padding: 0.95rem 1rem;
   border: 0;
-  border-radius: 999px;
+  border-radius: 0.7rem;
   background: rgb(255 255 255 / 0.92);
   color: #0b0b0c;
   font: inherit;
@@ -484,9 +342,8 @@
 }
 
 .plan.is-featured .plan__cta {
-  background: linear-gradient(135deg, var(--gold-2), var(--gold) 50%, #c98a2b);
+  background: var(--gold);
   color: #1a1206;
-  box-shadow: 0 0.9rem 2.4rem rgb(232 176 74 / 0.35);
 }
 
 .plan__cta:hover {
@@ -506,21 +363,6 @@
 .plan__cta svg {
   width: 1.05rem;
   height: 1.05rem;
-}
-
-.plan__cta-shine {
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(105deg, transparent 35%, rgb(255 255 255 / 0.6) 50%, transparent 65%);
-  transform: translateX(-120%);
-  animation: plan-shine 3.4s ease-in-out infinite;
-}
-
-@keyframes plan-shine {
-  55%,
-  100% {
-    transform: translateX(120%);
-  }
 }
 
 .plan__current {
@@ -581,54 +423,6 @@
   height: 1.1rem;
   margin-top: 0.1rem;
   color: color-mix(in srgb, var(--accent) 80%, #fff);
-}
-
-/* ---------- O que muda ---------- */
-
-.plans__value {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
-  gap: 0.75rem;
-  max-width: 56rem;
-  margin: 2.25rem auto 0;
-}
-
-.plans__value-item {
-  display: grid;
-  gap: 0.3rem;
-  padding: 1rem;
-  border: 1px solid rgb(255 255 255 / 0.07);
-  border-radius: 1.1rem;
-  background: rgb(255 255 255 / 0.02);
-  opacity: 0;
-  animation: plan-in 0.6s ease-out forwards;
-  animation-delay: calc(var(--i) * 0.08s + 0.6s);
-}
-
-.plans__value-item strong {
-  font-size: 0.98rem;
-}
-
-.plans__value-item span:last-child {
-  color: #a39e98;
-  font-size: 0.86rem;
-  line-height: 1.5;
-}
-
-.plans__value-icon {
-  display: grid;
-  place-items: center;
-  width: 2.1rem;
-  height: 2.1rem;
-  margin-bottom: 0.3rem;
-  border-radius: 0.7rem;
-  background: rgb(232 176 74 / 0.12);
-  color: var(--gold-2);
-}
-
-.plans__value-icon svg {
-  width: 1.1rem;
-  height: 1.1rem;
 }
 
 /* ---------- Perguntas ---------- */

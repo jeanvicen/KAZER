@@ -218,6 +218,10 @@ html.in-chat .noscript {
 .screen {
   flex: 1 1 auto;
   min-width: 0;
+  /* Sem isto a tela cresce além da janela e o conteúdo não rola. */
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
 }
 
 .pane[hidden] {
@@ -4712,11 +4716,9 @@ html[data-motion="reduzido"] .pxword__blink {
 .ask {
   margin: 1rem 0 0.25rem;
   padding: 1rem;
-  border: 1px solid color-mix(in srgb, #e8b04a 38%, var(--c-border));
-  border-radius: 1.1rem;
-  background:
-    radial-gradient(120% 80% at 100% 0%, color-mix(in srgb, #e8b04a 10%, transparent), transparent 60%),
-    var(--c-surface);
+  border: 1px solid var(--c-border-2);
+  border-radius: 1rem;
+  background: var(--c-surface);
   animation: ask-in 420ms var(--spring) both;
 }
 
@@ -5030,8 +5032,8 @@ html[data-motion="reduzido"] .pxword__blink {
 .doc-card__btn.is-primary,
 .bundle__cta {
   border-color: transparent;
-  background: linear-gradient(135deg, #f6d27a, #e8b04a 55%, #c98a2b);
-  color: #1a1206;
+  background: var(--c-text);
+  color: var(--c-bg);
   font-weight: 600;
 }
 
@@ -5050,7 +5052,7 @@ html[data-motion="reduzido"] .pxword__blink {
 
 .bundle--godot {
   border-color: color-mix(in srgb, #478cbf 50%, var(--c-border));
-  background: radial-gradient(120% 90% at 100% 0%, color-mix(in srgb, #478cbf 14%, transparent), transparent 60%), var(--c-surface);
+  background: var(--c-surface);
 }
 
 .bundle__head {
@@ -5134,8 +5136,7 @@ html[data-motion="reduzido"] .pxword__blink {
   z-index: 96;
   display: flex;
   flex-direction: column;
-  background: rgb(0 0 0 / 0.86);
-  backdrop-filter: blur(10px);
+  background: rgb(0 0 0 / 0.9);
   opacity: 0;
   transition: opacity 220ms ease;
 }
@@ -5468,11 +5469,9 @@ html[data-motion="reduzido"] .pxword__blink {
   gap: 0.85rem;
   width: 100%;
   padding: 1rem 1.1rem;
-  border: 1px solid rgb(232 176 74 / 0.45);
-  border-radius: 1.1rem;
-  background:
-    radial-gradient(20rem 8rem at 0% 0%, rgb(232 176 74 / 0.2), transparent 70%),
-    linear-gradient(135deg, #17130c, #0b0a08);
+  border: 1px solid var(--c-border);
+  border-radius: 0.9rem;
+  background: var(--c-surface);
   color: var(--c-text);
   font: inherit;
   text-align: left;
@@ -5481,9 +5480,7 @@ html[data-motion="reduzido"] .pxword__blink {
 }
 
 .plans-cta:hover {
-  transform: translateY(-1px);
-  border-color: #f3c565;
-  box-shadow: 0 0.8rem 2rem rgb(232 176 74 / 0.18);
+  border-color: var(--c-border-2);
 }
 
 .plans-cta.is-busy {
@@ -5498,7 +5495,7 @@ html[data-motion="reduzido"] .pxword__blink {
   width: 2.5rem;
   height: 2.5rem;
   border-radius: 0.8rem;
-  background: linear-gradient(135deg, #f8dc8c, #e8b04a 55%, #c98a2b);
+  background: #e8b04a;
   color: #1a1206;
 }
 
@@ -5526,7 +5523,7 @@ html[data-motion="reduzido"] .pxword__blink {
 .plans-cta > svg {
   width: 1.1rem;
   height: 1.1rem;
-  color: #f3c565;
+  color: var(--c-text-3);
 }
 
 .plans-cta__shine {

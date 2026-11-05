@@ -50,16 +50,35 @@ def _explicit_title(info: str) -> str:
     return parts[1].strip().replace("\n", " ")[:MAX_TITLE] if len(parts) > 1 else ""
 
 
+_MENTIONED = re.compile(r"`?([\w.-]{1,80}\.[A-Za-z0-9]{1,8})`?")
+
+
 def _title_from(info: str, language: str, before: str) -> str:
+    """Nome do arquivo na cerca; senão o último nome de arquivo citado logo antes;
+    senão um rótulo pelo tipo. Frases soltas ("Ele contém:") nunca viram título."""
     title = _explicit_title(info)
     if title:
         return title
-    for line in reversed(before.strip().splitlines()):
-        clean = line.strip().lstrip("#").strip().rstrip(":").strip()
-        clean = re.sub(r"[*_`]", "", clean)
-        if 3 <= len(clean) <= MAX_TITLE and not clean.startswith(("|", ">", "-", "1.")):
-            return clean
+    recent = before[-400:]
+    named = [
+        name for name in _MENTIONED.findall(recent)
+        if name.rsplit(".", 1)[-1].lower() in _EXTENSIONS
+    ]
+    if named:
+        return named[-1]
+    for line in reversed(recent.strip().splitlines()[-3:]):
+        clean = line.strip()
+        if clean.startswith("#"):
+            clean = re.sub(r"[*_`]", "", clean.lstrip("#")).strip().rstrip(":").strip()
+            if 3 <= len(clean) <= MAX_TITLE:
+                return clean
     return _LABELS.get(language, "Arquivo")
+
+
+_EXTENSIONS = frozenset(
+    "html htm css js jsx ts tsx py json md txt csv sql sh yaml yml toml xml svg java c cpp h"
+    " cs go rs rb php kt swift dart lua gd tscn godot vue".split()
+)
 
 
 def extract(content: str) -> list[Draft]:

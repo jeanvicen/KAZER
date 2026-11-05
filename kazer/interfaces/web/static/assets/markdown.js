@@ -93,7 +93,9 @@ function appendText(parent, text) {
 
 function codeBlock(lang, code, name = "", closed = true) {
   const button = h("button.code__copy", { type: "button", "aria-label": "Copiar código" }, icon("copy"), h("span", { text: "Copiar" }));
-  const file = FILE_NAME.test(name) ? name : "";
+  const named = FILE_NAME.test(name) ? name : "";
+  // Página sem nome na cerca ainda ganha prévia e download.
+  const file = named || (/^html?$/i.test(lang || "") && code.length > 200 ? "pagina.html" : "");
   const extra = [];
   if (file && closed) {
     if (isPreviewable(lang, file)) {
@@ -124,11 +126,11 @@ function codeBlock(lang, code, name = "", closed = true) {
       button.lastChild.textContent = "Copiar";
     }, 1600);
   });
-  const label = file
+  const label = named
     ? h("span.code__file", {}, icon("file"), h("span", { text: file }), lang ? h("span.code__lang", { text: lang }) : null)
     : h("span.code__lang", { text: lang || "código" });
   return h(
-    `div.code${file ? ".code--file" : ""}`,
+    `div.code${named ? ".code--file" : ""}`,
     {},
     h("div.code__bar", {}, label, h("span.code__tools", {}, ...extra, button)),
     h("pre", { tabindex: "0" }, h("code", { text: code })),

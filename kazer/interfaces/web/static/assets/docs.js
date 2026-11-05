@@ -107,7 +107,7 @@ hr{border:0;border-top:1px solid var(--line);margin:8mm 0}
 <section class="cover">
   <div class="cover__brand"><i></i>KAZER</div>
   <div class="cover__main">
-    <span class="cover__kicker">${esc(meta.tipo || "Documento")}</span>
+    ${meta.tipo ? `<span class="cover__kicker">${esc(meta.tipo)}</span>` : ""}
     <h1>${esc(title)}</h1>
     ${subtitle ? `<p>${esc(subtitle)}</p>` : ""}
   </div>
@@ -139,7 +139,7 @@ export function buildSlides(meta, slides) {
     const number = kind === "divider" ? `<span class="slide__num">${String(section).padStart(2, "0")}</span>` : "";
     return `<section class="slide slide--${kind}" data-i="${index + 1}">${number}<div class="slide__body">${markdownHtml(markdown)}</div><footer class="slide__foot"><span>${esc(title)}</span><span>${index + 2}</span></footer></section>`;
   });
-  const cover = `<section class="slide slide--cover" data-i="0"><div class="slide__orb"></div><div class="slide__body"><span class="kicker">${esc(meta.tipo || "Apresentação")}</span><h1>${esc(title)}</h1>${subtitle ? `<p class="lede">${esc(subtitle)}</p>` : ""}<p class="by">${esc(author)} · ${esc(meta.data || today())}</p></div></section>`;
+  const cover = `<section class="slide slide--cover" data-i="0"><div class="slide__orb"></div><div class="slide__body">${meta.tipo ? `<span class="kicker">${esc(meta.tipo)}</span>` : ""}<h1>${esc(title)}</h1>${subtitle ? `<p class="lede">${esc(subtitle)}</p>` : ""}<p class="by">${esc(author)} · ${esc(meta.data || today())}</p></div></section>`;
 
   return `<!doctype html>
 <html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
@@ -176,19 +176,19 @@ html,body{margin:0;height:100%;background:#000;color:var(--ink);font-family:"Int
 .slide .code__file svg{display:none}
 .slide pre{margin:0;padding:20px;white-space:pre-wrap;font-size:20px}.slide pre code{background:none;padding:0;font-size:20px}
 .slide--cover .slide__body{justify-content:flex-end;padding-bottom:20px}
-.slide--cover h1{font-size:96px;max-width:1000px;background:linear-gradient(180deg,#fff 30%,color-mix(in srgb,var(--a) 60%,#fff));-webkit-background-clip:text;background-clip:text;color:transparent}
+.slide--cover h1{font-size:96px;max-width:1000px;color:#fff}
 .slide--cover .lede{font-size:32px;color:#cfcac3;max-width:900px}
 .slide--cover .by{font-size:20px;color:var(--ink-2);letter-spacing:.04em;margin-top:28px}
 .kicker{display:inline-flex;align-self:flex-start;padding:8px 18px;border:1px solid color-mix(in srgb,var(--a) 60%,transparent);color:var(--a);border-radius:99px;font-size:18px;letter-spacing:.16em;text-transform:uppercase;margin-bottom:34px}
-.slide__orb{position:absolute;right:-160px;top:-160px;width:720px;height:720px;border-radius:50%;background:radial-gradient(circle at 35% 35%,color-mix(in srgb,var(--a) 85%,#fff),var(--a) 35%,color-mix(in srgb,var(--a) 40%,#000) 70%);filter:saturate(1.1);box-shadow:0 0 160px color-mix(in srgb,var(--a) 50%,transparent);animation:float 9s ease-in-out infinite}
-.slide__orb::after{content:"";position:absolute;inset:60px;border-radius:50%;border:2px solid rgba(255,255,255,.25)}
+.slide__orb{position:absolute;left:96px;top:84px;width:56px;height:8px;border-radius:4px;background:var(--a)}
+
 @keyframes float{50%{transform:translate(-20px,24px)}}
 .slide--divider .slide__body{align-items:flex-start}
 .slide--divider h1,.slide--divider h2,.slide--divider h3{font-size:92px;max-width:1000px}
 .slide__num{position:absolute;right:80px;top:30px;font-size:300px;font-weight:900;line-height:1;color:transparent;-webkit-text-stroke:2px color-mix(in srgb,var(--a) 55%,transparent);opacity:.7}
 .slide--quote blockquote{margin:0;padding:0 0 0 48px;border-left:8px solid var(--a);font-size:46px;line-height:1.3;font-weight:600;letter-spacing:-.01em}
 .slide--quote blockquote p{font-size:46px;color:var(--ink)}
-.slide--stat p strong{display:block;font-size:150px;line-height:1;letter-spacing:-.05em;background:linear-gradient(180deg,#fff,var(--a));-webkit-background-clip:text;background-clip:text;color:transparent;margin-bottom:8px}
+.slide--stat p strong{display:block;font-size:150px;line-height:1;letter-spacing:-.05em;color:var(--a);margin-bottom:8px}
 .slide--content.alt{background:radial-gradient(800px 500px at 0% 0%,color-mix(in srgb,var(--a) 20%,transparent),transparent 60%),#0a0a0e}
 .slide__foot{position:absolute;left:96px;right:96px;bottom:34px;display:flex;justify-content:space-between;font-size:16px;color:var(--ink-2);letter-spacing:.06em;z-index:2}
 .slide--cover .slide__foot{display:none}

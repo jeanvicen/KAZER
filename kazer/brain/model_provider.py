@@ -954,10 +954,11 @@ def _build_groq(
         return None
     tiers = {**GROQ_DEFAULT_TIERS, **settings.groq_tiers}
     vision = settings.groq_vision_model or GROQ_DEFAULT_VISION
-    # KAZER_MODEL (se alguém definir) vira o nível mais baixo: compatível com
-    # quem já configurou um modelo único.
+    # KAZER_MODEL (se alguém definir) entra como reserva do nível baixo, depois
+    # da cadeia padrão: um modelo pequeno antigo no ambiente não pode tomar o
+    # lugar do modelo bom (era isso que deixava as respostas rasas).
     if settings.model_name and "baixo" not in settings.groq_tiers:
-        tiers["baixo"] = settings.model_name
+        tiers["baixo"] = f"{tiers['baixo']},{settings.model_name}"
     provider = GroqProvider(
         base_url=base_url,
         api_key=key,

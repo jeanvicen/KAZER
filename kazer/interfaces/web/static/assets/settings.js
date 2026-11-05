@@ -334,22 +334,11 @@ class SettingsPanel {
     // gasto enche mais rápido num plano menor e mais devagar num maior.
     const ratio = allowance ? used / allowance : 0;
     const known = Boolean(allowance);
-    const mood = !known
-      ? "Medindo seu uso…"
-      : ratio < 0.05
-        ? "Tanque cheio de energia"
-        : ratio < 0.5
-          ? "Tem muito pela frente"
-          : ratio < 0.85
-            ? "Mais da metade usada"
-            : ratio < 1
-              ? "Quase no fim desta janela"
-              : "Janela usada — logo renova";
 
     const level = h("span.orb__liquid", {}, h("span.orb__wave"), h("span.orb__wave.orb__wave--back"));
     const orb = h(
       `div.orb${ratio >= 0.85 ? ".is-high" : ""}`,
-      { role: "img", "aria-label": known ? `Uso desta janela: ${mood.toLowerCase()}` : "Uso desta janela" },
+      { role: "img", "aria-label": "Uso da janela atual" },
       h("span.orb__glow", { "aria-hidden": "true" }),
       h("span.orb__glass", { "aria-hidden": "true" }, level, h("span.orb__bubbles"), h("span.orb__shine")),
     );
@@ -373,13 +362,12 @@ class SettingsPanel {
           }
         },
       },
-      h("span.plans-cta__shine", { "aria-hidden": "true" }),
       h("span.plans-cta__icon", {}, icon("bolt")),
       h(
         "span.plans-cta__text",
         {},
-        h("strong", { text: usage.plan && usage.plan !== "free" ? "Ver todos os planos" : "Destravar o KAZER Pro" }),
-        h("span", { text: "KZ Code, PDFs, slides e muito mais uso" }),
+        h("strong", { text: "Ver planos" }),
+        h("span", { text: "Pro e Ultra" }),
       ),
       icon("chevron-right"),
     );
@@ -402,9 +390,7 @@ class SettingsPanel {
               h("span.use-card__name", { text: usage.plan_name || "KAZER" }),
               usage.plan && usage.plan !== "free" ? h("span.use-card__tag", { text: "Ativo" }) : null,
             ),
-            h("span.use-card__mood", { text: mood }),
             usage.reset_at ? h("span.use-card__reset", { text: `Renova ${formatReset(usage.reset_at)}.` }) : null,
-            h("span.use-card__hint", { text: "O ouro sobe conforme você usa e esvazia quando a janela renova." }),
           ),
         ),
       ),

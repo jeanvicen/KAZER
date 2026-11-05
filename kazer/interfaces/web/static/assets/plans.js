@@ -15,20 +15,11 @@ import { openSheet, toast } from "./sheets.js";
 
 let open = null;
 
-const PLAN_ICONS = { free: "sparkle", pro: "bolt", ultra: "crown" };
-
-// O que o plano pago muda, em linguagem de quem programa (não de tabela).
-const VALUE = [
-  ["file", "KZ Code", "Projetos inteiros, em pastas, num .zip pronto para rodar."],
-  ["globe", "Pesquisa ao vivo", "Documentação, GitHub e a web consultados enquanto ele pensa."],
-  ["research", "PDFs e slides", "Relatórios e apresentações bonitos, prontos para enviar."],
-  ["bolt", "Muito mais uso", "Sessões longas sem bater no limite no meio do projeto."],
-];
 
 const FAQ = [
-  ["Posso cancelar quando quiser?", "Sim. Sem fidelidade e sem multa: cancelou, o plano vale até o fim do período pago."],
-  ["O que acontece com minhas conversas?", "Nada muda. Tudo o que você já fez continua na sua conta, em qualquer plano."],
-  ["Qual a diferença entre Pro e Ultra?", "O Ultra tem muito mais uso por janela e pensamento profundo sem custo dobrado — para quem programa o dia inteiro."],
+  ["Posso cancelar quando quiser?", "Sim. O plano continua ativo até o fim do período já pago."],
+  ["O que acontece com minhas conversas?", "Continuam na sua conta, em qualquer plano."],
+  ["Qual a diferença entre Pro e Ultra?", "O Ultra tem cerca de 4 vezes o uso do Pro e não cobra em dobro pelo pensamento profundo."],
 ];
 
 // Abre a vitrine. Só mostra planos pagos: quem está no gratuito já está nele.
@@ -78,21 +69,12 @@ class PlansScreen {
     this.stage = h(
       "div.plans__hero",
       {},
-      h(
-        "div.plans__orb",
-        { "aria-hidden": "true" },
-        h("span.plans__orb-glow"),
-        h("span.plans__orb-ring"),
-        h("span.plans__orb-ring.plans__orb-ring--2"),
-        mark("plans__mark"),
-      ),
-      h("span.plans__eyebrow", { text: "KAZER Pro · KAZER Ultra" }),
-      h("h2.plans__title", { id: "plans-title", tabindex: "-1" }, "Destrave o KAZER ", h("em", { text: "inteiro." })),
+      h("h2.plans__title", { id: "plans-title", tabindex: "-1", text: "Planos do KAZER" }),
       h("p.plans__lede", {
         text:
           current && current.monthly_cents > 0
-            ? `Você já está no ${current.name}. Veja tudo o que ele te dá — ou suba de nível.`
-            : "Do prompt ao projeto pronto: KZ Code, pesquisa ao vivo, PDFs e slides, e uso de sobra para construir o dia todo.",
+            ? `Plano atual: ${current.name}.`
+            : "KZ Code, mais uso por janela e pesquisa profunda.",
       }),
     );
 
@@ -107,15 +89,6 @@ class PlansScreen {
     }));
     this.grid.append(...this.cards.map((card) => card.root));
 
-    const value = h(
-      "section.plans__value",
-      { "aria-label": "O que muda" },
-      VALUE.map(([iconName, title, text], index) => {
-        const item = h("div.plans__value-item", {}, h("span.plans__value-icon", {}, icon(iconName)), h("strong", { text: title }), h("span", { text }));
-        item.style.setProperty("--i", String(index));
-        return item;
-      }),
-    );
     const faq = h(
       "section.plans__faq",
       { "aria-label": "Perguntas frequentes" },
@@ -124,15 +97,15 @@ class PlansScreen {
     this.foot = h(
       "footer.plans__foot",
       {},
-      h("p.plans__trust", {}, icon("shield"), h("span", { text: "Pagamento seguro · Cancele quando quiser · Sem fidelidade" })),
-      this.checkout ? null : h("p.plans__note", { text: "A assinatura abre em breve: deixe seu interesse e avisamos você primeiro. Nada é cobrado agora." }),
+      h("p.plans__trust", { text: "Cancele quando quiser." }),
+      this.checkout ? null : h("p.plans__note", { text: "As assinaturas ainda não estão abertas. Escolha um plano para ser avisado por e-mail quando abrirem. Nada é cobrado agora." }),
     );
 
-    this.body = h("div.plans__body", {}, this.stage, this.cycle, this.grid, value, faq, this.foot);
+    this.body = h("div.plans__body", {}, this.stage, this.cycle, this.grid, faq, this.foot);
     this.panel = h(
       "div.plans__panel",
       { role: "dialog", "aria-modal": "true", "aria-labelledby": "plans-title" },
-      h("header.plans__head", {}, h("span.plans__brand", {}, mark("plans__brand-mark"), h("span", { text: "Planos" })), this.closeButton),
+      h("header.plans__head", {}, h("span"), this.closeButton),
       this.body,
     );
     this.root = h("div.plans", {}, h("div.plans__scrim", { onclick: () => this.close() }), this.panel);
@@ -151,7 +124,6 @@ class PlansScreen {
 
     window.requestAnimationFrame(() => {
       this.root.classList.add("is-open");
-      this.title?.focus?.({ preventScroll: true });
       this.panel.querySelector("#plans-title")?.focus({ preventScroll: true });
       if (!reducedMotion()) this.cards.forEach((card) => card.countUp());
     });
@@ -202,14 +174,14 @@ class PlansScreen {
     const body = h(
       "div.offer",
       {},
-      h("p.offer__lead", { text: `Seu lugar no ${plan.name} (${price}) está guardado.` }),
+      h("p.offer__lead", { text: `${plan.name}, ${price}.` }),
       h("p.offer__text", {
         text: saved.ok
-          ? "A assinatura abre em breve. Você é avisado primeiro, no seu e-mail — e nada foi cobrado."
-          : "A assinatura abre em breve e não deu para guardar seu interesse agora. Volte aqui quando abrir — nada foi cobrado.",
+          ? "Vamos avisar no seu e-mail quando a assinatura abrir. Nada foi cobrado."
+          : "Não foi possível salvar agora. Tente de novo em instantes. Nada foi cobrado.",
       }),
     );
-    openSheet({ title: "Você está na lista", content: body, kind: "alert" });
+    openSheet({ title: "Interesse registrado", content: body, kind: "alert" });
   }
 
   close() {
@@ -239,7 +211,6 @@ class PlanCard {
       : h(
           "button.plan__cta",
           { type: "button", onclick: (event) => onChoose(event.currentTarget) },
-          h("span.plan__cta-shine", { "aria-hidden": "true" }),
           h("span", { text: `Assinar o ${plan.name}` }),
           icon("chevron-right"),
         );
@@ -247,19 +218,16 @@ class PlanCard {
     this.root = h(
       `article.plan${plan.featured ? ".is-featured" : ""}${highlighted ? ".is-wanted" : ""}${current ? ".is-current" : ""}`,
       {},
-      h("span.plan__border", { "aria-hidden": "true" }),
-      h("span.plan__sheen", { "aria-hidden": "true" }),
-      plan.featured ? h("span.plan__badge", { text: "Mais escolhido" }) : h("span.plan__badge.plan__badge--quiet", { text: "Para quem vive de código" }),
+      plan.featured ? h("span.plan__badge", { text: "Mais escolhido" }) : null,
       h(
         "header.plan__head",
         {},
-        h("span.plan__icon", { "aria-hidden": "true" }, icon(PLAN_ICONS[plan.id] || "sparkle")),
         h("h3.plan__name", { text: plan.name }),
         h("p.plan__tagline", { text: plan.tagline }),
       ),
       h("p.plan__pricing", {}, this.price, this.per),
       this.hint,
-      times > 1 ? h("p.plan__boost", {}, icon("bolt"), h("span", { text: `${times}× mais uso que o gratuito` })) : null,
+      times > 1 ? h("p.plan__boost", { text: `${times}× o uso do plano gratuito` }) : null,
       cta,
       h(
         "ul.plan__list",
@@ -277,7 +245,6 @@ class PlanCard {
     this.root.style.setProperty("--accent", plan.accent);
     this.root.style.setProperty("--i", String(index));
     this.paintPrice(this.cents);
-    if (finePointer() && !reducedMotion()) this.enableTilt();
   }
 
   paintPrice(cents) {
