@@ -452,7 +452,7 @@ class SettingsPanel {
 
     const level = h("span.orb__liquid", {}, h("span.orb__wave"), h("span.orb__wave.orb__wave--back"));
     const orb = h(
-      `div.orb${ratio >= 0.85 ? ".is-high" : ""}`,
+      `div.orb.orb--big${ratio >= 0.85 ? ".is-high" : ""}`,
       { role: "img", "aria-label": "Uso da janela atual" },
       h("span.orb__glow", { "aria-hidden": "true" }),
       h("span.orb__glass", { "aria-hidden": "true" }, level, h("span.orb__bubbles"), h("span.orb__shine")),
@@ -488,28 +488,17 @@ class SettingsPanel {
     );
 
     return h(
-      "div",
+      "div.use-page",
       {},
-      this.group(
-        "Seu plano",
-        h(
-          "div.use-card.use-card--orb",
-          {},
-          orb,
-          h(
-            "div.use-card__info",
-            {},
-            h(
-              "div.use-card__head",
-              {},
-              h("span.use-card__name", { text: usage.plan_name || "KAZER" }),
-              usage.plan && usage.plan !== "free" ? h("span.use-card__tag", { text: "Ativo" }) : null,
-            ),
-            usage.reset_at ? h("span.use-card__reset", { text: `Renova ${formatReset(usage.reset_at)}.` }) : null,
-          ),
-        ),
+      h(
+        "div.use-hero",
+        {},
+        orb,
+        h("span.use-hero__plan", { text: usage.plan_name || "KAZER" }),
+        h("span.use-hero__label", { text: "Uso da janela atual" }),
+        usage.reset_at ? h("span.use-hero__reset", { text: `Renova ${formatReset(usage.reset_at)}` }) : null,
       ),
-      this.group("Mais uso", open),
+      this.group("", open),
     );
   }
 

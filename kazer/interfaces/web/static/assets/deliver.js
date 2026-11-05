@@ -13,6 +13,7 @@
 // gerado (prévias, PDFs, slides) só existe dentro da moldura isolada.
 
 import { formatBytes, h, icon, mark, reducedMotion } from "./dom.js";
+import { openSheet } from "./sheets.js";
 
 // ---------- Pergunta ----------
 
@@ -198,7 +199,330 @@ export function fenceHook({ lang, name, code, closed }) {
   const kind = (lang || "").toLowerCase();
   if (kind === "kazer-pergunta") return questionCard(code, closed);
   if (kind === "pdf" || kind === "slides") return docCard(kind, name, code, closed);
+  if (kind === "kazer-fontes") return sourcesStrip(code, closed);
+  if (kind === "kazer-galeria") return galleryCard(code, closed);
+  if (kind === "mermaid") return diagramCard(code, closed);
   return null;
+}
+
+// ---------- Fontes ----------
+
+const SOURCES_BLOCK = /\n*```kazer-fontes\n([\s\S]*?)\n```\n?/;
+
+// Fontes salvas no fim de uma resposta (bloco que só a interface lê).
+export function readSources(text) {
+  const match = (text || "").match(SOURCES_BLOCK);
+  if (!match) return [];
+  try {
+    const items = JSON.parse(match[1]);
+    return Array.isArray(items) ? items.filter((item) => typeof item?.u === "string" && /^https?:\/\//.test(item.u)) : [];
+  } catch {
+    return [];
+  }
+}
+
+export function stripSources(text) {
+  return (text || "").replace(SOURCES_BLOCK, "\n").trimEnd();
+}
+
+const domain = (url) => {
+  try {
+    return new URL(url).hostname.replace(/^www\./, "");
+  } catch {
+    return url;
+  }
+};
+
+const SOURCE_GROUPS = [
+  ["lido", "Páginas lidas"],
+  ["github", "GitHub"],
+  ["busca", "Resultados de busca"],
+  ["imagem", "Imagens"],
+];
+
+function sourceAvatar(url) {
+  const name = domain(url);
+  const badge = h("span.src-avatar", { "aria-hidden": "true", text: (name.replace(/^[^a-z0-9]+/i, "")[0] || "•").toUpperCase() });
+  // Cor estável por domínio: dá para reconhecer a fonte de relance.
+  let hash = 0;
+  for (const char of name) hash = (hash * 31 + char.charCodeAt(0)) % 360;
+  badge.style.setProperty("--hue", String(hash));
+  return badge;
+}
+
+export function renderSourceList(items) {
+  const box = h("div.src-list");
+  for (const [kind, title] of SOURCE_GROUPS) {
+    const group = items.filter((item) => (item.k || "busca") === kind);
+    if (!group.length) continue;
+    box.append(
+      h("h3.src-list__title", { text: `${title} · ${group.length}` }),
+      h(
+        "ul.src-list__items",
+        {},
+        group.map((item, index) =>
+          h(
+            "li",
+            {},
+            h(
+              "a.src-row",
+              { href: item.u, target: "_blank", rel: "noopener noreferrer" },
+              h("span.src-row__n", { text: String(index + 1) }),
+              sourceAvatar(item.u),
+              h("span.src-row__text", {}, h("span.src-row__title", { text: item.t || domain(item.u) }), h("span.src-row__domain", { text: domain(item.u) })),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+  return box;
+}
+
+function sourcesStrip(code, closed) {
+  if (!closed) return h("span", { hidden: true });
+  let items = [];
+  try {
+    items = JSON.parse(code).filter((item) => typeof item?.u === "string" && /^https?:\/\//.test(item.u));
+  } catch {
+    items = [];
+  }
+  if (!items.length) return h("span", { hidden: true });
+  // Primeiro o que foi lido de verdade; depois o resto.
+  const rank = { lido: 0, github: 1, busca: 2, imagem: 3 };
+  const ordered = [...items].sort((a, b) => (rank[a.k] ?? 2) - (rank[b.k] ?? 2));
+  const shown = [];
+  const seen = new Set();
+  for (const item of ordered) {
+    const host = domain(item.u);
+    if (seen.has(host)) continue;
+    seen.add(host);
+    shown.push(item);
+    if (shown.length === 3) break;
+  }
+  const more = items.length - shown.length;
+  return h(
+    "div.src-strip",
+    { role: "group", "aria-label": "Fontes desta resposta" },
+    shown.map((item) =>
+      h("a.src-chip", { href: item.u, target: "_blank", rel: "noopener noreferrer", title: item.t || item.u }, sourceAvatar(item.u), h("span", { text: domain(item.u) })),
+    ),
+    h(
+      "button.src-chip.src-chip--more",
+      { type: "button", onclick: () => openSheet({ title: "Fontes desta resposta", content: () => renderSourceList(items) }) },
+      h("span", { text: more > 0 ? `+${more} fontes` : "Ver fontes" }),
+    ),
+  );
+}
+
+// ---------- Galeria de imagens ----------
+
+const IMAGE_HOST = /^https:\/\/upload\.wikimedia\.org\//;
+
+function galleryCard(code, closed) {
+  if (!closed) return h("div.gallery.is-loading", {}, h("span", { text: "Separando imagens…" }));
+  let items = [];
+  try {
+    const data = JSON.parse(code);
+    items = (Array.isArray(data) ? data : data.imagens || data.images || []).filter((item) => IMAGE_HOST.test(String(item?.url || "")));
+  } catch {
+    items = [];
+  }
+  if (!items.length) return h("span", { hidden: true });
+  const grid = h(`div.gallery.gallery--${Math.min(items.length, 4)}`);
+  items.slice(0, 8).forEach((item, index) => {
+    const caption = String(item.legenda || item.caption || "").slice(0, 200);
+    const img = h("img.gallery__img", { src: item.url, alt: caption || "Imagem", loading: "lazy", decoding: "async", referrerpolicy: "no-referrer" });
+    img.addEventListener("error", () => figure.remove());
+    const figure = h(
+      "figure.gallery__item",
+      { tabindex: "0", role: "button", "aria-label": caption ? `Ampliar: ${caption}` : "Ampliar imagem", onclick: () => lightbox(items, index) },
+      img,
+      caption ? h("figcaption.gallery__cap", { text: caption }) : null,
+    );
+    figure.addEventListener("keydown", (event) => {
+      if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        lightbox(items, index);
+      }
+    });
+    grid.append(figure);
+  });
+  return h("div.gallery-wrap", {}, grid, h("p.gallery__credit", { text: "Imagens: Wikimedia Commons, licenças livres." }));
+}
+
+function lightbox(items, start) {
+  let index = start;
+  const img = h("img.lightbox__img", { alt: "", referrerpolicy: "no-referrer" });
+  const caption = h("p.lightbox__cap");
+  const link = h("a.lightbox__link", { target: "_blank", rel: "noopener noreferrer", text: "Ver fonte" });
+  const show = () => {
+    const item = items[index];
+    img.src = item.url;
+    img.alt = item.legenda || "";
+    caption.textContent = item.legenda || "";
+    const page = String(item.fonte || item.pagina || item.url);
+    link.href = /^https:\/\//.test(page) ? page : item.url;
+  };
+  const close = () => {
+    document.removeEventListener("keydown", onKey, true);
+    root.remove();
+  };
+  const step = (delta) => {
+    index = (index + delta + items.length) % items.length;
+    show();
+  };
+  const onKey = (event) => {
+    if (event.key === "Escape") close();
+    else if (event.key === "ArrowRight") step(1);
+    else if (event.key === "ArrowLeft") step(-1);
+  };
+  const root = h(
+    "div.lightbox",
+    { role: "dialog", "aria-modal": "true", "aria-label": "Imagem ampliada", onclick: (event) => event.target === root && close() },
+    h("button.lightbox__close", { type: "button", "aria-label": "Fechar", onclick: close }, icon("close")),
+    items.length > 1 ? h("button.lightbox__nav.lightbox__nav--prev", { type: "button", "aria-label": "Anterior", onclick: () => step(-1) }, icon("back")) : null,
+    h("figure.lightbox__figure", {}, img, h("figcaption", {}, caption, link)),
+    items.length > 1 ? h("button.lightbox__nav", { type: "button", "aria-label": "Próxima", onclick: () => step(1) }, icon("chevron-right")) : null,
+  );
+  show();
+  document.addEventListener("keydown", onKey, true);
+  document.body.append(root);
+}
+
+// ---------- Diagramas (Mermaid, desenhado na moldura isolada) ----------
+
+const frameHandlers = new Map();
+window.addEventListener("message", (event) => {
+  for (const [frame, handler] of frameHandlers) {
+    if (!frame.isConnected) {
+      frameHandlers.delete(frame);
+      continue;
+    }
+    if (event.source === frame.contentWindow) handler(event.data || {});
+  }
+});
+
+function diagramHtml(code) {
+  const source = JSON.stringify(code).replace(/</g, "\\u003c");
+  return `<!doctype html><html><head><meta charset="utf-8"><style>html,body{margin:0;background:#0f0f11;color:#e8e6e3;font:14px system-ui,sans-serif}#out{display:flex;justify-content:center;padding:16px}#out svg{max-width:100%;height:auto}pre{white-space:pre-wrap;padding:16px;color:#f3a6a6}</style></head><body><div id="out"></div><script type="module">
+const code=${source};const out=document.getElementById("out");
+const tell=()=>parent.postMessage({kazerHeight:document.documentElement.scrollHeight},"*");
+try{const m=(await import("https://cdn.jsdelivr.net/npm/mermaid@11.4.1/dist/mermaid.esm.min.mjs")).default;
+m.initialize({startOnLoad:false,theme:"dark",securityLevel:"strict",fontFamily:"system-ui,sans-serif",themeVariables:{primaryColor:"#1d1d22",primaryBorderColor:"#e8b04a",lineColor:"#8f8a84",primaryTextColor:"#f4f2ee"}});
+const r=await m.render("kz"+Date.now(),code);out.innerHTML=r.svg;}catch(e){const p=document.createElement("pre");p.textContent="Não deu para desenhar este diagrama:\\n"+(e&&e.message||e);out.replaceWith(p);}
+tell();new ResizeObserver(tell).observe(document.body);
+addEventListener("message",e=>{if(e.data&&e.data.kazerPrint)print()});
+</script></body></html>`;
+}
+
+function diagramCard(code, closed) {
+  if (!closed) return h("div.diagram.is-loading", {}, h("span", { text: "Desenhando o diagrama…" }));
+  const html = diagramHtml(code);
+  const frame = h("iframe.diagram__frame", {
+    title: "Diagrama",
+    src: "/preview-frame",
+    sandbox: "allow-scripts allow-modals",
+    referrerpolicy: "no-referrer",
+    loading: "lazy",
+  });
+  frameHandlers.set(frame, (data) => {
+    if (data.kazerPreview === "ready") frame.contentWindow?.postMessage({ kazerHtml: html }, "*");
+    if (typeof data.kazerHeight === "number") frame.style.setProperty("--h", `${Math.min(Math.max(data.kazerHeight, 120), 900)}px`);
+  });
+  return h(
+    "div.diagram",
+    {},
+    h(
+      "div.diagram__bar",
+      {},
+      h("span.diagram__label", {}, icon("research"), h("span", { text: "Diagrama" })),
+      h(
+        "span.diagram__tools",
+        {},
+        h("button.code__copy", { type: "button", onclick: () => openPreview({ title: "Diagrama", html, printable: true, file: "diagrama.html" }) }, icon("globe"), h("span", { text: "Ampliar" })),
+      ),
+    ),
+    frame,
+  );
+}
+
+// ---------- Arquivo como card ----------
+
+const LANG_LABEL = {
+  html: "HTML", htm: "HTML", css: "CSS", js: "JS", javascript: "JS", jsx: "JSX", ts: "TS", typescript: "TS", tsx: "TSX",
+  py: "PY", python: "PY", json: "JSON", md: "MD", markdown: "MD", sql: "SQL", sh: "SH", bash: "SH", gd: "GD",
+  gdscript: "GD", java: "JAVA", c: "C", cpp: "C++", cs: "C#", go: "GO", rs: "RS", rust: "RS", rb: "RB", php: "PHP",
+  kt: "KT", swift: "SWIFT", yaml: "YAML", yml: "YAML", toml: "TOML", xml: "XML", svg: "SVG", vue: "VUE", tscn: "TSCN",
+};
+
+function extOf(name, lang) {
+  const ext = (name.split(".").pop() || "").toLowerCase();
+  return LANG_LABEL[ext] || LANG_LABEL[(lang || "").toLowerCase()] || (ext || "TXT").slice(0, 4).toUpperCase();
+}
+
+// Arquivos irmãos na mesma resposta: a prévia de um index.html usa o CSS e o
+// JS que vieram junto, em vez de abrir uma página quebrada.
+function siblings(card) {
+  const files = new Map();
+  const body = card.closest(".msg__body") || card.parentElement;
+  for (const node of body?.querySelectorAll(".file-card") || []) {
+    if (node.kazerFile) files.set(node.kazerFile.name.split("/").pop(), node.kazerFile.code);
+  }
+  return files;
+}
+
+export function inlineSiblings(html, files) {
+  if (!files.size) return html;
+  return html
+    .replace(/<link\b[^>]*href=["']\.?\/?([^"'?#]+\.css)["'][^>]*>/gi, (tag, path) => {
+      const css = files.get(path.split("/").pop());
+      return css === undefined ? tag : `<style>\n${css.replace(/<\/style/gi, "<\\/style")}\n</style>`;
+    })
+    .replace(/<script\b([^>]*)src=["']\.?\/?([^"'?#]+\.m?js)["']([^>]*)>\s*<\/script>/gi, (tag, before, path, after) => {
+      const js = files.get(path.split("/").pop());
+      if (js === undefined) return tag;
+      const module = /type=["']module["']/i.test(before + after) ? ' type="module"' : "";
+      return `<script${module}>\n${js.replace(/<\/script/gi, "<\\/script")}\n</script>`;
+    });
+}
+
+export function fileCard({ name, lang, code, closed }) {
+  const lines = code ? code.split("\n").length : 0;
+  const html = isPreviewable(lang, name);
+  const card = h(`div.file-card${closed ? "" : ".is-writing"}`, {});
+  card.kazerFile = { name, code };
+  const meta = closed
+    ? `${extOf(name, lang)} · ${lines} ${lines === 1 ? "linha" : "linhas"} · ${formatBytes(new Blob([code]).size)}`
+    : `Escrevendo… ${lines} ${lines === 1 ? "linha" : "linhas"}`;
+  const open = () => {
+    const page = html ? inlineSiblings(code, siblings(card)) : "";
+    openViewer({ title: name, code, lang, html: page });
+  };
+  card.append(
+    h("span.file-card__badge", { "aria-hidden": "true", text: extOf(name, lang) }),
+    h(
+      "button.file-card__main",
+      { type: "button", disabled: !closed, onclick: open, "aria-label": `Abrir ${name}` },
+      h("span.file-card__name", { text: name.split("/").pop() }),
+      h("span.file-card__meta", { text: name.includes("/") ? `${name.split("/").slice(0, -1).join("/")}/ · ${meta}` : meta }),
+    ),
+    closed
+      ? h(
+          "span.file-card__actions",
+          {},
+          html ? h("button.file-card__btn.is-primary", { type: "button", onclick: open }, icon("globe"), h("span", { text: "Prévia" })) : null,
+          h("button.file-card__btn", { type: "button", "aria-label": `Baixar ${name}`, onclick: () => downloadText(name, code) }, icon("down")),
+        )
+      : h("span.file-card__spin", { "aria-hidden": "true" }),
+  );
+  return card;
+}
+
+// Visualizador: código com copiar/baixar e, em páginas, a prévia ao vivo.
+export function openViewer({ title, code, lang, html }) {
+  const viewer = openPreview({ title, html: html || "", file: title, code, lang, start: html ? "preview" : "code" });
+  return viewer;
 }
 
 // ---------- Arquivos ----------
@@ -294,10 +618,20 @@ export function bundleCard(text) {
       },
     },
     icon("down"),
-    h("span", { text: blocked ? "Disponível no computador" : `Baixar ${name}` }),
+    h("span", { text: blocked ? "Disponível no computador" : godot ? `Baixar ${name}` : name }),
   );
   const shown = files.slice(0, 8);
   const rest = files.length - shown.length;
+  if (!godot) {
+    // Os arquivos já aparecem como cards: aqui só o atalho para baixar tudo.
+    return h(
+      "div.bundle.bundle--compact",
+      {},
+      h("span.bundle__icon", { "aria-hidden": "true" }, icon("file")),
+      h("div.bundle__text", {}, h("strong", { text: "Baixar tudo" }), h("span", { text: `${files.length} arquivos · ${formatBytes(size)} · .zip` })),
+      download,
+    );
+  }
   return h(
     `div.bundle${godot ? ".bundle--godot" : ""}`,
     {},
@@ -339,11 +673,11 @@ export function bundleCard(text) {
 
 let preview = null;
 
-export function openPreview({ title, html, print = false, printable = false, file = "" }) {
+export function openPreview({ title, html, print = false, printable = false, file = "", code = null, lang = "", start = "preview" }) {
   preview?.close();
+  const hasPage = Boolean(html);
   const frame = h("iframe.preview__frame", {
     title: `Prévia: ${title}`,
-    src: "/preview-frame",
     // Sem allow-same-origin: a página roda numa origem opaca, sem cookies,
     // sem sessão e sem acesso à API do KAZER.
     sandbox: "allow-scripts allow-modals allow-popups allow-downloads allow-pointer-lock allow-forms",
@@ -352,35 +686,85 @@ export function openPreview({ title, html, print = false, printable = false, fil
   });
   let ready = false;
   const post = (message) => frame.contentWindow?.postMessage(message, "*");
-  const onMessage = (event) => {
-    if (event.source !== frame.contentWindow || event.data?.kazerPreview !== "ready" || ready) return;
+  const deliver = () => {
+    if (ready) return;
     ready = true;
     post({ kazerHtml: html });
     root.classList.add("is-ready");
     if (print) window.setTimeout(() => post({ kazerPrint: true }), 900);
   };
+  const onMessage = (event) => {
+    if (event.source === frame.contentWindow && event.data?.kazerPreview === "ready") deliver();
+  };
   window.addEventListener("message", onMessage);
+  // Rede: se o aviso "pronto" se perder, a página vai assim que a moldura carregar.
+  frame.addEventListener("load", () => window.setTimeout(deliver, 350));
 
-  const widths = h(
-    "div.preview__sizes",
-    { role: "radiogroup", "aria-label": "Largura da prévia" },
-    [
-      ["", "Cheia"],
-      ["390px", "Celular"],
-    ].map(([width, label], index) =>
-      h("button.preview__size", {
-        type: "button",
-        role: "radio",
-        "aria-checked": String(index === 0),
-        text: label,
-        onclick: (event) => {
-          for (const item of widths.children) item.setAttribute("aria-checked", String(item === event.currentTarget));
-          stage.style.setProperty("--w", width || "100%");
-        },
-      }),
-    ),
+  const view = { mode: hasPage ? start : "code" };
+  const codeBox = code !== null
+    ? h(
+        "div.preview__code",
+        {},
+        h("pre", { tabindex: "0" }, h("code", { text: code })),
+      )
+    : null;
+  const tabs = code !== null && hasPage
+    ? h(
+        "div.preview__sizes.preview__tabs",
+        { role: "tablist", "aria-label": "Ver" },
+        [
+          ["preview", "Prévia"],
+          ["code", "Código"],
+        ].map(([mode, label]) =>
+          h("button.preview__size", {
+            type: "button",
+            role: "tab",
+            "aria-selected": String(view.mode === mode),
+            "aria-checked": String(view.mode === mode),
+            text: label,
+            onclick: () => setMode(mode),
+          }),
+        ),
+      )
+    : null;
+  const widths = hasPage
+    ? h(
+        "div.preview__sizes",
+        { role: "radiogroup", "aria-label": "Largura da prévia" },
+        [
+          ["", "Cheia"],
+          ["390px", "Celular"],
+        ].map(([width, label], index) =>
+          h("button.preview__size", {
+            type: "button",
+            role: "radio",
+            "aria-checked": String(index === 0),
+            text: label,
+            onclick: (event) => {
+              for (const item of widths.children) item.setAttribute("aria-checked", String(item === event.currentTarget));
+              stage.style.setProperty("--w", width || "100%");
+            },
+          }),
+        ),
+      )
+    : null;
+  const stage = h(
+    "div.preview__stage",
+    {},
+    hasPage ? frame : null,
+    hasPage ? h("div.preview__wait", { "aria-hidden": "true" }, mark("preview__mark")) : null,
+    codeBox,
   );
-  const stage = h("div.preview__stage", {}, frame, h("div.preview__wait", { "aria-hidden": "true" }, mark("preview__mark")));
+  const setMode = (mode) => {
+    view.mode = mode;
+    root.classList.toggle("is-code", mode === "code");
+    if (tabs) for (const tab of tabs.children) {
+      const on = tab.textContent === (mode === "code" ? "Código" : "Prévia");
+      tab.setAttribute("aria-selected", String(on));
+      tab.setAttribute("aria-checked", String(on));
+    }
+    if (widths) widths.hidden = mode === "code";
+  };
   const close = () => {
     window.removeEventListener("message", onMessage);
     document.removeEventListener("keydown", onKey, true);
@@ -394,13 +778,21 @@ export function openPreview({ title, html, print = false, printable = false, fil
       close();
     }
   };
+  const copy = async (button) => {
+    const { copyText } = await import("./markdown.js");
+    const ok = await copyText(code || html);
+    button.lastChild.textContent = ok ? "Copiado" : "Falhou";
+    window.setTimeout(() => (button.lastChild.textContent = "Copiar"), 1500);
+  };
+  const closeButton = h("button.preview__btn.preview__close", { type: "button", "aria-label": "Fechar", onclick: close }, icon("close"));
   const root = h(
     "div.preview",
-    { role: "dialog", "aria-modal": "true", "aria-label": `Prévia de ${title}` },
+    { role: "dialog", "aria-modal": "true", "aria-label": title },
     h(
       "div.preview__bar",
       {},
       h("div.preview__title", {}, h("span.preview__dot", { "aria-hidden": "true" }), h("span", { text: title })),
+      tabs,
       widths,
       h(
         "div.preview__tools",
@@ -408,20 +800,32 @@ export function openPreview({ title, html, print = false, printable = false, fil
         printable
           ? h("button.preview__btn", { type: "button", onclick: () => post({ kazerPrint: true }) }, icon("down"), h("span", { text: "PDF" }))
           : null,
+        code !== null
+          ? h("button.preview__btn", { type: "button", onclick: (event) => copy(event.currentTarget) }, icon("copy"), h("span", { text: "Copiar" }))
+          : null,
         h(
           "button.preview__btn",
-          { type: "button", onclick: () => downloadText(file || (/\.html?$/i.test(title) ? title : `${title}.html`), html) },
+          {
+            type: "button",
+            onclick: () => downloadText(file || (/\.html?$/i.test(title) ? title : `${title}.html`), code !== null ? code : html),
+          },
           icon("down"),
-          h("span", { text: "HTML" }),
+          h("span", { text: "Baixar" }),
         ),
-        h("button.preview__btn.preview__close", { type: "button", "aria-label": "Fechar prévia", onclick: close }, icon("close")),
+        closeButton,
       ),
     ),
     stage,
   );
+  if (hasPage) frame.src = "/preview-frame";
+  else root.classList.add("is-ready");
+  setMode(view.mode);
   document.addEventListener("keydown", onKey, true);
   document.body.append(root);
-  window.requestAnimationFrame(() => root.classList.add("is-open"));
+  window.requestAnimationFrame(() => {
+    root.classList.add("is-open");
+    closeButton.focus({ preventScroll: true });
+  });
   preview = { close };
   return preview;
 }

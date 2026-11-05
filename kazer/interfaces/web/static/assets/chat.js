@@ -23,7 +23,7 @@ import {
   trapFocus,
   uuid,
 } from "./dom.js";
-import { bundleCard, onAnswer } from "./deliver.js";
+import { bundleCard, onAnswer, readSources, renderSourceList, stripSources } from "./deliver.js";
 import { copyText, MarkdownView, render as renderMarkdown } from "./markdown.js";
 import { net, readEvents, request, waitOnline } from "./net.js";
 import { closeSheet, confirmDialog, openSheet, promptDialog, setSheetBackground, toast } from "./sheets.js";
@@ -66,6 +66,8 @@ const SEND_ERRORS = {
   documents_unavailable: "O modelo atual não lê PDFs.",
   deep_unavailable: "Pensamento profundo está indisponível com o modelo atual.",
   web_search_unavailable: "A busca na web está indisponível no momento.",
+  research_limit: "Você já usou as 3 pesquisas profundas de hoje. Elas liberam 24 h depois de cada uso.",
+  research_unavailable: "A pesquisa profunda está indisponível agora.",
   research_unavailable: "A pesquisa está indisponível no momento.",
   message_too_long: "Mensagem longa demais: o máximo é de 32 mil caracteres.",
   empty_message: "Escreva algo ou anexe um arquivo.",
@@ -131,7 +133,7 @@ const S = {
   sending: false,
   live: null, // { replyId, lastIndex, controller }
   attachments: [],
-  options: { effort: store.get("kazer:effort", "baixo"), web: false, memory: true },
+  options: { effort: store.get("kazer:effort", "baixo"), web: false, memory: true, research: false },
   // Skills chamadas com "/" nesta mensagem.
   skillsPicked: [],
   pinned: true,
@@ -166,11 +168,11 @@ export async function mountChat({ email, onSignedOut }) {
     "drawer", "drawer-close", "new-chat", "history-search", "history", "history-list", "history-empty",
     "history-more", "drawer-nav", "panel-conversas", "screen",
     "open-settings", "account-avatar", "account-mail", "sign-out", "drawer-scrim", "pane",
-    "menu", "topbar-title", "new-chat-top", "ambient", "empty", "greeting", "greeting-a", "greeting-b",
+    "menu", "topbar-title", "sources-top", "sources-count", "ambient", "empty", "greeting", "greeting-a", "greeting-b",
     "empty-note", "thread", "messages", "older", "to-bottom", "composer", "composer-alert",
     "composer-alert-text", "composer-alert-close", "composer-box", "tray", "skill-chips", "prompt", "plus", "model-chip",
     "open-palette",
-    "forja-chip", "mic", "send", "pick-camera", "pick-photos", "pick-files",
+    "forja-chip", "research-chip", "mic", "send", "pick-camera", "pick-photos", "pick-files",
   ];
   for (const id of ids) S.ui[id.replace(/-(\w)/g, (_, c) => c.toUpperCase())] = byId(root, id);
   setSheetBackground(root);
@@ -413,6 +415,7 @@ function resetThread() {
   S.hasMore = false;
   lazyObserver?.disconnect();
   for (const node of [...S.ui.messages.children]) if (node !== S.ui.older) node.remove();
+  paintSourcesBall();
 }
 
 function detachLive() {
@@ -665,6 +668,7 @@ function renderPage(items, hasMore, { initial = false, prepend = false } = {}) {
   if (initial) window.requestAnimationFrame(() => scrollToBottom(false));
   S.ui.older.classList.toggle("is-active", hasMore);
   if (!prepend) refreshRetry();
+  paintSourcesBall();
 }
 
 // Só a última resposta oferece "tentar de novo".
@@ -757,7 +761,7 @@ function assistantElement(model) {
   );
   const body = h("div.msg__body.md");
   const notice = h("div.msg__notice", { hidden: true });
-  const actions = h("div.msg__actions", {}, actionButton("copy", "Copiar resposta", () => model.content));
+  const actions = h("div.msg__actions", {}, actionButton("copy", "Copiar resposta", () => stripSources(model.content)));
   const made = h("div.msg__made", { hidden: true });
   const bundle = h("div.msg__bundle", { hidden: true });
   const steps = h("ol.msg__steps", { hidden: true, "aria-label": "O que o KAZER está fazendo" });
@@ -782,26 +786,120 @@ function paintBody(model) {
   }
 }
 
+const STEP_ICONS = [
+  [/^(Pesquisando|Procurando)/, "search"],
+  [/^(Lendo|Consultando|Vendo|Cotação)/, "globe"],
+  [/GitHub/, "file"],
+  [/^Buscando imagens/, "image"],
+  [/^Buscando/, "search"],
+  [/^Calculando/, "research"],
+];
+
+function stepIcon(label) {
+  return STEP_ICONS.find(([pattern]) => pattern.test(label))?.[1] || "dots";
+}
+
+// Resumo verdadeiro do que aconteceu, contado dos próprios passos.
+function stepSummary(steps, sources) {
+  const searched = steps.filter((step) => /^(Pesquisando|Procurando|Buscando)/.test(step.label)).length;
+  const read = steps.filter((step) => /^(Lendo|Abrindo|Consultando)/.test(step.label)).length;
+  const parts = [];
+  if (searched) parts.push(`${searched} ${searched === 1 ? "busca" : "buscas"}`);
+  if (read) parts.push(`${read} ${read === 1 ? "leitura" : "leituras"}`);
+  if (sources) parts.push(`${sources} ${sources === 1 ? "fonte" : "fontes"}`);
+  return parts.join(" · ") || `${steps.length} ${steps.length === 1 ? "passo" : "passos"}`;
+}
+
 function paintSteps(model) {
-  const list = model.parts?.steps;
-  if (!list) return;
+  const box = model.parts?.steps;
+  if (!box) return;
   const steps = model.steps || [];
   if (!steps.length) {
-    list.hidden = true;
-    list.replaceChildren();
+    box.hidden = true;
+    box.replaceChildren();
     return;
   }
-  list.hidden = false;
-  list.replaceChildren(
-    ...steps.map((label, index) =>
-      h(
-        `li.msg__step${index === steps.length - 1 && model.status === "streaming" ? ".is-now" : ""}`,
-        {},
-        h("span.msg__step-dot", { "aria-hidden": "true" }),
-        h("span", { text: label }),
-      ),
-    ),
+  const streaming = model.status === "streaming";
+  const running = streaming ? [...steps].reverse().find((step) => step.state === "run") : null;
+  const sources = (model.liveSources || readSources(model.content || "")).length;
+  if (model.trailOpen === undefined) model.trailOpen = true;
+  if (!streaming && model.trailOpen === true && !model.trailTouched) model.trailOpen = false;
+  box.hidden = false;
+  box.classList.toggle("is-live", streaming);
+  box.classList.toggle("is-open", model.trailOpen);
+  const head = h(
+    "button.trail__head",
+    {
+      type: "button",
+      "aria-expanded": String(model.trailOpen),
+      onclick: () => {
+        model.trailOpen = !model.trailOpen;
+        model.trailTouched = true;
+        paintSteps(model);
+      },
+    },
+    h(`span.trail__badge${streaming ? ".is-live" : ""}`, { "aria-hidden": "true" }, streaming ? h("span.trail__spin") : icon("check")),
+    h("span.trail__title", { text: streaming ? (running ? running.label : "Analisando o que encontrei") : "Pesquisa concluída" }),
+    h("span.trail__meta", { text: stepSummary(steps, sources) }),
+    icon("chevron", "trail__caret"),
   );
+  const list = h(
+    "ol.trail__list",
+    { hidden: !model.trailOpen },
+    steps.map((step, index) => {
+      const live = streaming && step.state === "run";
+      const row = h(
+        `li.trail__step${live ? ".is-run" : ".is-done"}`,
+        {},
+        h("span.trail__icon", { "aria-hidden": "true" }, icon(stepIcon(step.label))),
+        h("span.trail__label", { text: step.label }),
+        step.detail ? h("span.trail__detail", { text: step.detail }) : live ? h("span.trail__detail", { text: "agora" }) : null,
+      );
+      row.style.setProperty("--i", String(Math.min(index, 12)));
+      return row;
+    }),
+  );
+  box.replaceChildren(head, list);
+}
+
+// ---------- Fontes ----------
+
+// Fontes da conversa inteira (de cada resposta, ao vivo ou já salvas).
+function conversationSources() {
+  const seen = new Map();
+  for (const model of S.models.values()) {
+    if (model.role !== "assistant") continue;
+    for (const item of model.liveSources || readSources(model.content || "")) {
+      if (item?.u && !seen.has(item.u)) seen.set(item.u, item);
+    }
+  }
+  return [...seen.values()];
+}
+
+function paintSourcesBall() {
+  if (!S.ui.sourcesTop) return;
+  const count = conversationSources().length;
+  S.ui.sourcesCount.hidden = !count;
+  S.ui.sourcesCount.textContent = count > 99 ? "99+" : String(count);
+  S.ui.sourcesTop.classList.toggle("has-sources", count > 0);
+}
+
+function openSourcesSheet(items = null) {
+  const list = items || conversationSources();
+  openSheet({
+    title: "Fontes",
+    opener: S.ui.sourcesTop,
+    content: () =>
+      list.length
+        ? renderSourceList(list)
+        : h(
+            "div.sources-empty",
+            {},
+            h("span.sources-empty__icon", { "aria-hidden": "true" }, icon("globe")),
+            h("p", { text: "O KAZER ainda não pesquisou nada nesta conversa." }),
+            h("p.sources-empty__hint", { text: "Quando ele buscar na web, ler páginas ou consultar o GitHub, tudo aparece aqui com o link." }),
+          ),
+  });
 }
 
 // Pacote: com 2+ arquivos (ou um projeto Godot), um .zip com tudo.
@@ -851,7 +949,8 @@ function applyStatus(model) {
   el.classList.toggle("is-error", model.status === "error");
   head.classList.toggle("is-generating", streaming);
   if (streaming) {
-    state.textContent = model.searching ? "Buscando na web…" : model.content ? "" : model.thinking ? "Pensando…" : model.reconnecting ? "Reconectando…" : "Pensando…";
+    const researching = (model.steps || []).some((step) => step.state === "run");
+    state.textContent = model.content ? "" : model.reconnecting ? "Reconectando…" : researching || model.searching ? "Pesquisando…" : "Pensando…";
   } else {
     state.textContent = "";
   }
@@ -922,9 +1021,19 @@ function handleEvent(model, event) {
   } else if (event.type === "title") {
     applyTitle(event.conversation_id, event.title);
   } else if (event.type === "step") {
-    // O KAZER conta o que está fazendo enquanto faz.
-    model.steps = [...(model.steps || []), event.label].slice(-6);
+    // O KAZER conta o que está fazendo enquanto faz: o passo aparece ao começar
+    // ("run") e é fechado com o que voltou ("done"). Nada é narrado sem acontecer.
+    const steps = model.steps || (model.steps = []);
+    const known = event.id ? steps.find((step) => step.id === event.id) : null;
+    const next = { id: event.id || "", label: event.label, state: event.state || "done", detail: event.detail || "" };
+    if (known) Object.assign(known, next);
+    else steps.push(next);
     paintSteps(model);
+    applyStatus(model);
+  } else if (event.type === "sources") {
+    model.liveSources = event.items;
+    paintSteps(model);
+    paintSourcesBall();
   } else if (event.type === "artifacts") {
     // A resposta rendeu peças para a Biblioteca.
     model.artifacts = event.items;
@@ -949,10 +1058,14 @@ function finish(model, reply) {
     searching: false,
     reconnecting: false,
   });
+  model.liveSources = null;
   model.view.update(model.content || "");
   if (model.thinking) model.parts.thinkBody.replaceChildren(renderMarkdown(model.thinking));
   paintBundle(model);
   applyStatus(model);
+  // Sem isto o último passo continuava "ao vivo" (brilhando) depois da entrega.
+  paintSteps(model);
+  paintSourcesBall();
   if (S.live?.replyId === model.id) {
     S.live = null;
     setStreamingUi(false);
@@ -1094,7 +1207,7 @@ async function send() {
         skills: S.skillsPicked.map((item) => item.id),
         // Pesquisa em tempo real e memória ficam sempre ligadas (a memória
         // respeita o que a pessoa escolheu nas configurações).
-        tools: { web_search: false, research: false, memory: S.prefs.memory_enabled !== false },
+        tools: { web_search: false, research: Boolean(S.options.research), memory: S.prefs.memory_enabled !== false },
         forja: S.forja,
         // Projetos Godot só rodam no computador: o servidor avisa o modelo.
         desktop: desktopQuery.matches && !coarse.matches,
@@ -1179,6 +1292,7 @@ function failSend(data) {
   }
   // O servidor mudou a oferta de esforços: volta ao Baixo em vez de travar o envio.
   if (data.error === "invalid_effort") setEffort("baixo", { quiet: true });
+  if (data.error === "research_limit" || data.error === "research_unavailable") setResearch(false);
 }
 
 function commitSend(event) {
@@ -1192,6 +1306,11 @@ function commitSend(event) {
   upsertHistory(event.conversation);
   if (S.forja && S.prefs && !S.prefs.code_sessions?.includes(event.conversation.id)) {
     S.prefs.code_sessions = [event.conversation.id, ...(S.prefs.code_sessions || [])].slice(0, 30);
+  }
+  // Pesquisa profunda vale para uma mensagem: conta o uso e desliga.
+  if (S.options.research) {
+    S.prefs.research_log = [...(S.prefs.research_log || []), Math.floor(Date.now() / 1000)];
+    setResearch(false);
   }
   // Limpa o composer só agora: a mensagem já está salva no servidor.
   S.ui.prompt.value = "";
@@ -1791,9 +1910,55 @@ function openPlusSheet() {
           ),
         ),
       );
-      return h("div.plus", {}, tiles);
+      // Pesquisa profunda: liga para a próxima mensagem; 3 por dia.
+      const left = researchLeft();
+      const research = h(
+        `button.plus__research${S.options.research ? ".is-on" : ""}`,
+        {
+          type: "button",
+          disabled: !features.research || (!S.options.research && left <= 0),
+          "aria-pressed": String(Boolean(S.options.research)),
+          onclick: () => {
+            handle.close({ restore: false });
+            setResearch(!S.options.research);
+            S.ui.prompt.focus();
+          },
+        },
+        h("span.plus__research-icon", { "aria-hidden": "true" }, icon("research")),
+        h(
+          "span.plus__research-text",
+          {},
+          h("strong", { text: "Pesquisa profunda" }),
+          h("span", {
+            text: !features.research
+              ? "Indisponível agora."
+              : left > 0
+                ? "Dezenas de buscas e fontes lidas, relatório com citações."
+                : "Você usou as 3 de hoje. Libera em 24 h.",
+          }),
+        ),
+        h("span.plus__research-left", { text: features.research ? `${left}/${features.research_per_day || 3}` : "" }),
+      );
+      return h("div.plus", {}, tiles, research);
     },
   });
+}
+
+// Usos da pesquisa profunda nas últimas 24 h (o servidor confere de verdade).
+function researchLeft() {
+  const per = S.model?.features?.research_per_day || 3;
+  const now = Date.now() / 1000;
+  const used = (S.prefs.research_log || []).filter((time) => now - time < 86400).length;
+  return Math.max(per - used, 0);
+}
+
+function setResearch(on) {
+  S.options.research = on;
+  S.ui.researchChip.hidden = !on;
+  S.ui.composerBox.classList.toggle("is-research", on);
+  if (S.ui.prompt && !S.forja) {
+    S.ui.prompt.placeholder = on ? "O que você quer investigar a fundo?" : "Converse com o KAZER...";
+  }
 }
 
 // ---------- Atalhos de teclado (computador) ----------
@@ -1916,7 +2081,8 @@ function bindDrawer() {
   S.ui.drawerClose.addEventListener("click", () => closeDrawer());
   S.ui.drawerScrim.addEventListener("click", () => closeDrawer());
   S.ui.newChat.addEventListener("click", () => newConversation());
-  S.ui.newChatTop.addEventListener("click", () => newConversation());
+  S.ui.sourcesTop.addEventListener("click", () => openSourcesSheet());
+  S.ui.researchChip.addEventListener("click", () => setResearch(false));
   S.ui.openSettings.addEventListener("click", () => openSettings());
   S.ui.signOut.addEventListener("click", () => signOut());
   S.ui.drawer.addEventListener("keydown", (event) => {

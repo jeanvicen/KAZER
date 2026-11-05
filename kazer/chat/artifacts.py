@@ -90,7 +90,7 @@ def extract(content: str) -> list[Draft]:
         language = (info.split(None, 1)[0] if info else "").lower()
         title = _title_from(info, language, content[: match.start()])
         explicitly_named = bool(_FILENAME.fullmatch(_explicit_title(info)))
-        if not language or not body or len(body) > MAX_CHARS:
+        if not language or not body or len(body) > MAX_CHARS or language.startswith("kazer-"):
             continue
         if len(body) < MIN_CHARS and not explicitly_named:
             continue

@@ -9,18 +9,12 @@
 // anunciados e diz que a assinatura abre em breve, em vez de simular uma compra
 // que não acontece.
 
-import { announce, finePointer, formatReset, h, icon, loadStyle, mark, reducedMotion, trapFocus } from "./dom.js";
+import { announce, formatReset, h, icon, loadStyle, mark, reducedMotion, trapFocus } from "./dom.js";
 import { request } from "./net.js";
 import { openSheet, toast } from "./sheets.js";
 
 let open = null;
 
-
-const FAQ = [
-  ["Posso cancelar quando quiser?", "Sim. O plano continua ativo até o fim do período já pago."],
-  ["O que acontece com minhas conversas?", "Continuam na sua conta, em qualquer plano."],
-  ["Qual a diferença entre Pro e Ultra?", "O Ultra tem cerca de 4 vezes o uso do Pro e não cobra em dobro pelo pensamento profundo."],
-];
 
 // Abre a vitrine. Só mostra planos pagos: quem está no gratuito já está nele.
 export async function openPlans({ opener, highlight } = {}) {
@@ -45,16 +39,18 @@ export async function openPlans({ opener, highlight } = {}) {
   return open;
 }
 
+// Ícones dos benefícios, na ordem em que o catálogo do servidor lista.
+const PERK_ICONS = ["sparkle", "bolt", "file", "research", "globe", "crown"];
+
 class PlansScreen {
   constructor({ plans, usage, checkout, opener, highlight }) {
-    this.all = plans;
     this.plans = plans.filter((plan) => plan.monthly_cents > 0);
     this.free = plans.find((plan) => plan.id === "free");
     this.usage = usage || {};
     this.checkout = Boolean(checkout);
     this.opener = opener;
-    this.highlight = highlight || "pro";
-    this.yearly = false;
+    this.selected = this.plans.find((plan) => plan.id === highlight) || this.plans.find((plan) => plan.featured) || this.plans[0];
+    this.yearly = true;
     this.build();
   }
 
@@ -64,49 +60,42 @@ class PlansScreen {
       { type: "button", "aria-label": "Fechar planos", onclick: () => this.close() },
       icon("close"),
     );
-    const current = this.all.find((plan) => plan.id === this.usage.plan);
+    this.heading = h("h2.plans__title", { id: "plans-title", tabindex: "-1" });
+    this.tagline = h("p.plans__lede");
+    this.tabs = h(
+      "div.plans__tabs",
+      { role: "tablist", "aria-label": "Plano" },
+      this.plans.map((plan) =>
+        h("button.plans__tab", {
+          type: "button",
+          role: "tab",
+          dataset: { plan: plan.id },
+          text: plan.name.replace(/^KAZER\s+/, ""),
+          onclick: () => this.select(plan),
+        }),
+      ),
+    );
+    this.perks = h("ul.plans__perks");
+    this.options = h("div.plans__options", { role: "radiogroup", "aria-label": "Cobrança" });
+    this.cta = h("button.plans__cta", { type: "button", onclick: (event) => this.choose(this.selected, event.currentTarget) });
+    this.ctaNote = h("p.plans__cta-note");
 
-    this.stage = h(
-      "div.plans__hero",
+    this.body = h(
+      "div.plans__body",
       {},
-      h("h2.plans__title", { id: "plans-title", tabindex: "-1", text: "Planos do KAZER" }),
-      h("p.plans__lede", {
-        text:
-          current && current.monthly_cents > 0
-            ? `Plano atual: ${current.name}.`
-            : "KZ Code, mais uso por janela e pesquisa profunda.",
-      }),
+      h("div.plans__brand", { "aria-hidden": "true" }, mark("plans__mark")),
+      this.heading,
+      this.tagline,
+      this.tabs,
+      this.perks,
+      this.options,
     );
-
-    this.cycle = this.buildCycle();
-    this.grid = h("div.plans__grid");
-    this.cards = this.plans.map((plan, index) => new PlanCard(plan, {
-      index,
-      free: this.free,
-      current: plan.id === this.usage.plan,
-      highlighted: plan.id === this.highlight,
-      onChoose: (button) => this.choose(plan, button),
-    }));
-    this.grid.append(...this.cards.map((card) => card.root));
-
-    const faq = h(
-      "section.plans__faq",
-      { "aria-label": "Perguntas frequentes" },
-      FAQ.map(([q, a]) => h("details.plans__q", {}, h("summary", {}, h("span", { text: q }), icon("chevron")), h("p", { text: a }))),
-    );
-    this.foot = h(
-      "footer.plans__foot",
-      {},
-      h("p.plans__trust", { text: "Cancele quando quiser." }),
-      this.checkout ? null : h("p.plans__note", { text: "As assinaturas ainda não estão abertas. Escolha um plano para ser avisado por e-mail quando abrirem. Nada é cobrado agora." }),
-    );
-
-    this.body = h("div.plans__body", {}, this.stage, this.cycle, this.grid, faq, this.foot);
     this.panel = h(
       "div.plans__panel",
       { role: "dialog", "aria-modal": "true", "aria-labelledby": "plans-title" },
       h("header.plans__head", {}, h("span"), this.closeButton),
       this.body,
+      h("footer.plans__bar", {}, this.cta, this.ctaNote),
     );
     this.root = h("div.plans", {}, h("div.plans__scrim", { onclick: () => this.close() }), this.panel);
 
@@ -121,36 +110,67 @@ class PlansScreen {
     document.body.append(this.root);
     const chat = document.getElementById("chat");
     if (chat) chat.inert = true;
-
+    this.select(this.selected);
     window.requestAnimationFrame(() => {
       this.root.classList.add("is-open");
-      this.panel.querySelector("#plans-title")?.focus({ preventScroll: true });
-      if (!reducedMotion()) this.cards.forEach((card) => card.countUp());
+      this.heading.focus({ preventScroll: true });
     });
     announce("Planos do KAZER");
   }
 
-  buildCycle() {
-    const make = (label, yearly, extra) =>
-      h(
-        "button.plans__cycle-option",
-        { type: "button", role: "radio", "aria-checked": String(this.yearly === yearly), onclick: () => this.setCycle(yearly) },
-        h("span", { text: label }),
-        extra ? h("span.plans__save", { text: extra }) : null,
-      );
-    this.cycleMonthly = make("Mensal", false);
-    this.cycleYearly = make("Anual", true, "2 meses grátis");
-    this.cycleThumb = h("span.plans__cycle-thumb", { "aria-hidden": "true" });
-    return h("div.plans__cycle", { role: "radiogroup", "aria-label": "Forma de pagamento" }, this.cycleThumb, this.cycleMonthly, this.cycleYearly);
+  select(plan) {
+    this.selected = plan;
+    for (const tab of this.tabs.children) tab.setAttribute("aria-selected", String(tab.dataset.plan === plan.id));
+    this.panel.style.setProperty("--accent", plan.accent || "#e8b04a");
+    this.heading.textContent = plan.name;
+    this.tagline.textContent = plan.tagline;
+    const times = this.free?.allowance ? Math.round(plan.allowance / this.free.allowance) : 0;
+    const perks = [
+      times > 1 ? `${times}× o uso do plano gratuito` : null,
+      ...plan.highlights.filter((text) => !/plano gratuito|vezes o uso|\d+ vezes|Tudo do/i.test(text)),
+      ...plan.extras,
+    ].filter(Boolean);
+    this.perks.replaceChildren(
+      ...perks.map((text, index) => {
+        const item = h("li.plans__perk", {}, h("span.plans__perk-icon", {}, icon(PERK_ICONS[index % PERK_ICONS.length])), h("span", { text }));
+        item.style.setProperty("--i", String(index));
+        return item;
+      }),
+    );
+    this.paintOptions();
   }
 
-  setCycle(yearly) {
-    if (this.yearly === yearly) return;
-    this.yearly = yearly;
-    this.cycleMonthly.setAttribute("aria-checked", String(!yearly));
-    this.cycleYearly.setAttribute("aria-checked", String(yearly));
-    this.cycle.classList.toggle("is-yearly", yearly);
-    for (const card of this.cards) card.setCycle(yearly);
+  paintOptions() {
+    const plan = this.selected;
+    const saving = plan.monthly_cents ? Math.round((1 - plan.yearly_cents / 12 / plan.monthly_cents) * 100) : 0;
+    const option = (yearly) =>
+      h(
+        "button.plans__option",
+        {
+          type: "button",
+          role: "radio",
+          "aria-checked": String(this.yearly === yearly),
+          onclick: () => {
+            this.yearly = yearly;
+            this.paintOptions();
+          },
+        },
+        h("span.plans__radio", { "aria-hidden": "true" }),
+        h(
+          "span.plans__option-text",
+          {},
+          h("span.plans__option-name", {}, h("span", { text: yearly ? "Anual" : "Mensal" }), yearly && saving > 0 ? h("span.plans__save", { text: `Economize ${saving}%` }) : null),
+          h("span.plans__option-sub", { text: yearly ? `${plan.yearly_price} por ano` : "Cobrado todo mês" }),
+        ),
+        h("span.plans__option-price", {}, h("strong", { text: yearly ? plan.yearly_per_month : plan.monthly_price }), h("span", { text: "/mês" })),
+      );
+    this.options.replaceChildren(option(true), option(false));
+    const current = plan.id === this.usage.plan;
+    this.cta.disabled = current;
+    this.cta.textContent = current ? "Este já é o seu plano" : `Continuar com ${plan.name}`;
+    this.ctaNote.textContent = this.checkout
+      ? "Cancele quando quiser."
+      : "As assinaturas abrem em breve. Nada é cobrado agora.";
   }
 
   async choose(plan, button) {
@@ -192,104 +212,6 @@ class PlansScreen {
     window.setTimeout(() => this.root.remove(), reducedMotion() ? 0 : 320);
     if (this.opener?.isConnected) this.opener.focus({ preventScroll: true });
     open = null;
-  }
-}
-
-class PlanCard {
-  constructor(plan, { index, free, current, highlighted, onChoose }) {
-    this.plan = plan;
-    this.yearly = false;
-    this.cents = plan.monthly_cents;
-    this.price = h("span.plan__price");
-    this.per = h("span.plan__per", { text: "/mês" });
-    this.hint = h("span.plan__hint", { text: "Cobrado todo mês" });
-    // Quanto mais uso que o gratuito — proporção, nunca o número do limite.
-    const times = free?.allowance ? Math.round(plan.allowance / free.allowance) : 0;
-
-    const cta = current
-      ? h("div.plan__current", {}, icon("check"), h("span", { text: "Seu plano atual" }))
-      : h(
-          "button.plan__cta",
-          { type: "button", onclick: (event) => onChoose(event.currentTarget) },
-          h("span", { text: `Assinar o ${plan.name}` }),
-          icon("chevron-right"),
-        );
-
-    this.root = h(
-      `article.plan${plan.featured ? ".is-featured" : ""}${highlighted ? ".is-wanted" : ""}${current ? ".is-current" : ""}`,
-      {},
-      plan.featured ? h("span.plan__badge", { text: "Mais escolhido" }) : null,
-      h(
-        "header.plan__head",
-        {},
-        h("h3.plan__name", { text: plan.name }),
-        h("p.plan__tagline", { text: plan.tagline }),
-      ),
-      h("p.plan__pricing", {}, this.price, this.per),
-      this.hint,
-      times > 1 ? h("p.plan__boost", { text: `${times}× o uso do plano gratuito` }) : null,
-      cta,
-      h(
-        "ul.plan__list",
-        {},
-        plan.highlights
-          .filter((text) => !/unidade|vezes o uso|\d+ vezes/i.test(text))
-          .map((text, i) => {
-            const item = h("li.plan__item", {}, icon("check", "plan__check"), h("span", { text }));
-            item.style.setProperty("--i", String(i));
-            return item;
-          }),
-        plan.extras.map((text) => h("li.plan__item.plan__item--extra", {}, icon("plus", "plan__check"), h("span", { text }))),
-      ),
-    );
-    this.root.style.setProperty("--accent", plan.accent);
-    this.root.style.setProperty("--i", String(index));
-    this.paintPrice(this.cents);
-  }
-
-  paintPrice(cents) {
-    const reais = Math.floor(cents / 100);
-    const centavos = String(cents % 100).padStart(2, "0");
-    this.price.replaceChildren(h("small", { text: "R$" }), h("b", { text: reais.toLocaleString("pt-BR") }), h("small", { text: `,${centavos}` }));
-  }
-
-  setCycle(yearly) {
-    this.yearly = yearly;
-    const plan = this.plan;
-    this.cents = yearly ? Math.round(plan.yearly_cents / 12) : plan.monthly_cents;
-    this.paintPrice(this.cents);
-    this.hint.textContent = yearly ? `${plan.yearly_price} cobrados uma vez por ano` : "Cobrado todo mês";
-    this.price.classList.remove("is-swapping");
-    void this.price.offsetWidth;
-    if (!reducedMotion()) this.price.classList.add("is-swapping");
-  }
-
-  // Preço que sobe rápido na entrada: dá peso ao número sem enrolar.
-  countUp() {
-    const target = this.cents;
-    const start = performance.now();
-    const step = (now) => {
-      const t = Math.min((now - start) / 900, 1);
-      this.paintPrice(Math.round(target * (1 - (1 - t) ** 3)));
-      if (t < 1) window.requestAnimationFrame(step);
-    };
-    window.requestAnimationFrame(step);
-  }
-
-  enableTilt() {
-    const limit = 4;
-    this.root.addEventListener("pointermove", (event) => {
-      const box = this.root.getBoundingClientRect();
-      const x = (event.clientX - box.left) / box.width - 0.5;
-      const y = (event.clientY - box.top) / box.height - 0.5;
-      this.root.style.setProperty("--tilt-x", `${(-y * limit).toFixed(2)}deg`);
-      this.root.style.setProperty("--tilt-y", `${(x * limit).toFixed(2)}deg`);
-      this.root.style.setProperty("--shine-x", `${((x + 0.5) * 100).toFixed(1)}%`);
-    });
-    this.root.addEventListener("pointerleave", () => {
-      this.root.style.setProperty("--tilt-x", "0deg");
-      this.root.style.setProperty("--tilt-y", "0deg");
-    });
   }
 }
 

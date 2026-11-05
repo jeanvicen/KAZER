@@ -5,7 +5,7 @@
 // último bloco é refeito a cada atualização, então respostas longas não travam.
 
 import { h, icon } from "./dom.js";
-import { downloadText, fenceHook, isPreviewable, openPreview } from "./deliver.js";
+import { downloadText, fenceHook, fileCard, isPreviewable, openPreview } from "./deliver.js";
 
 const FENCE = /^ {0,3}(`{3,}|~{3,})\s*([\w#+.-]*)[ \t]*(.*)$/;
 // Nome de arquivo na cerca (```python app/main.py): vira cabeçalho com baixar.
@@ -267,8 +267,14 @@ export function blocks(lines) {
       const closed = i < lines.length;
       i += 1; // fechamento (ou fim do texto durante o streaming)
       const name = (fence[3] || "").trim();
-      const custom = fenceHook({ lang: fence[2], name, code: code.join("\n"), closed });
-      out.append(custom || codeBlock(fence[2], code.join("\n"), name, closed));
+      const text = code.join("\n");
+      const custom = fenceHook({ lang: fence[2], name, code: text, closed });
+      // Arquivo com nome (ou página inteira) vira card, como num entregável de verdade;
+      // trecho curto continua como bloco de código no meio do texto.
+      const named = FILE_NAME.test(name);
+      const page = !named && /^html?$/i.test(fence[2] || "") && /<(html|body|!doctype)/i.test(text);
+      const card = !custom && (named || page) ? fileCard({ name: named ? name : "pagina.html", lang: fence[2], code: text, closed }) : null;
+      out.append(custom || card || codeBlock(fence[2], text, name, closed));
       continue;
     }
     const heading = line.match(HEADING);

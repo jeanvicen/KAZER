@@ -8,6 +8,7 @@ pode reatar do ponto em que parou (ou ler o resultado final do banco).
 from __future__ import annotations
 
 import asyncio
+import json
 import logging
 import threading
 import time
@@ -33,6 +34,10 @@ HEARTBEAT_SECONDS = 15.0
 # Quantas rodadas de ferramenta uma resposta pode dar antes de parar.
 # Sem teto, um modelo preso num laço gastaria a cota da pessoa à toa.
 MAX_TOOL_ROUNDS = 8
+# Fontes que a resposta consultou vão no fim do texto, num bloco que a interface
+# transforma em chips (e que nunca volta ao modelo como histórico).
+SOURCES_FENCE = "kazer-fontes"
+MAX_SOURCES = 60
 # Quando o provedor corta por tamanho, o KAZER pede para continuar de onde parou
 # (no máximo estas vezes), em vez de entregar um arquivo pela metade.
 MAX_CONTINUATIONS = 3
@@ -55,8 +60,12 @@ class LiveGeneration:
     timed_out: bool = False
     # Chamado depois da resposta pronta (por exemplo, para dar nome à conversa).
     on_complete: Callable[[LiveGeneration, str], None] | None = None
-    # Executa uma ferramenta de conector; devolve (rótulo, texto do resultado).
-    on_tool: Callable[[ToolCall], tuple[str, str]] | None = None
+    # Executa uma ferramenta; devolve (rótulo, texto) ou (rótulo, texto, fontes, detalhe).
+    on_tool: Callable[[ToolCall], tuple[Any, ...]] | None = None
+    # Rótulo do passo antes de a ferramenta rodar (para a tela mostrar "fazendo agora").
+    describe: Callable[[ToolCall], str] | None = None
+    # Fontes consultadas nesta resposta (título, endereço, tipo), sem repetição.
+    sources: list[dict[str, str]] = field(default_factory=list)
     _lock: threading.Lock = field(default_factory=threading.Lock)
     _waiters: set[tuple[asyncio.AbstractEventLoop, asyncio.Event]] = field(default_factory=set)
 
@@ -166,7 +175,8 @@ class GenerationHub:
         request: GenerationRequest,
         access_token: str | None = None,
         on_complete: Callable[[LiveGeneration, str], None] | None = None,
-        on_tool: Callable[[ToolCall], tuple[str, str]] | None = None,
+        on_tool: Callable[[ToolCall], tuple[Any, ...]] | None = None,
+        describe: Callable[[ToolCall], str] | None = None,
     ) -> LiveGeneration:
         """Inicia a geração numa vaga já reservada com `try_reserve()`.
 
@@ -175,6 +185,7 @@ class GenerationHub:
         live = LiveGeneration(reply_id, user_id, conversation_id)
         live.on_complete = on_complete
         live.on_tool = on_tool
+        live.describe = describe
         with self._lock:
             self._evict()
             self._live[reply_id] = live
@@ -247,8 +258,26 @@ class GenerationHub:
         assert live.on_tool is not None
         results: list[tuple[str, str]] = []
         for call in calls:
-            label, output = live.on_tool(call)
-            live.push({"type": "step", "label": label})
+            # O passo aparece antes de rodar ("fazendo agora") e é fechado depois,
+            # com o que realmente voltou. Nada é narrado sem ter acontecido.
+            step_id = f"{call.id or call.name}-{len(live.events)}"
+            label = live.describe(call) if live.describe else ""
+            if label:
+                live.push({"type": "step", "id": step_id, "label": label, "state": "run"})
+            outcome = live.on_tool(call)
+            label = str(outcome[0]) or label
+            output = str(outcome[1])
+            found = outcome[2] if len(outcome) > 2 else []
+            detail = str(outcome[3]) if len(outcome) > 3 and outcome[3] else ""
+            live.push(
+                {"type": "step", "id": step_id, "label": label, "state": "done", "detail": detail}
+            )
+            if found:
+                known = {item["u"] for item in live.sources}
+                fresh = [item for item in found if item.get("u") and item["u"] not in known]
+                if fresh:
+                    live.sources.extend(fresh[: MAX_SOURCES - len(live.sources)])
+                    live.push({"type": "sources", "items": list(live.sources)})
             results.append((call.id, output))
         return replace(
             request,
@@ -321,7 +350,7 @@ class GenerationHub:
                 if not calls or live.on_tool is None:
                     break
                 rounds += 1
-                if rounds > MAX_TOOL_ROUNDS:
+                if rounds > (request.tool_rounds or MAX_TOOL_ROUNDS):
                     live.push({"type": "step", "label": "Parei: ferramentas demais numa resposta"})
                     break
                 request = self._after_tools(live, request, calls, round_text)
@@ -342,6 +371,9 @@ class GenerationHub:
         finally:
             watchdog.cancel()
             content, reasoning = "".join(text), "".join(thinking)
+            if live.sources and content.strip() and status in ("complete", "stopped"):
+                block = json.dumps(live.sources, ensure_ascii=False)
+                content = f"{content.rstrip()}\n\n```{SOURCES_FENCE}\n{block}\n```\n"
             finished = int(self._clock())
             try:
                 self._store.update_reply(

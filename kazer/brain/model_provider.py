@@ -103,6 +103,8 @@ class GenerationRequest:
     deep: bool = False
     web_search: bool = False
     tools: tuple[ToolDef, ...] = ()
+    # Quantas rodadas de ferramenta esta resposta pode dar (0 = padrão do hub).
+    tool_rounds: int = 0
 
 
 @dataclass(frozen=True, slots=True)
