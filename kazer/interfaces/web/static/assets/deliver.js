@@ -222,7 +222,7 @@ export function fenceHook({ lang, name, code, closed }) {
   if (kind === "kazer-pergunta") return questionCard(code, closed);
   if (kind === "pdf" || kind === "slides") return docCard(kind, name, code, closed);
   if (kind === "kazer-fontes") return sourcesStrip(code, closed);
-  if (kind === "kazer-passos") return h("span", { hidden: true });
+  if (kind === "kazer-passos" || kind === "kazer-imagens") return h("span", { hidden: true });
   if (kind === "kazer-galeria") return galleryCard(code, closed);
   if (kind === "mermaid") return diagramCard(code, closed);
   return null;
@@ -245,9 +245,42 @@ export function readSources(text) {
 }
 
 const STEPS_BLOCK = /\n*```kazer-passos\n([\s\S]*?)\n```\n?/;
+const IMAGES_BLOCK = /\n*```kazer-imagens\n([\s\S]*?)\n```\n?/;
 
 export function stripSources(text) {
-  return (text || "").replace(SOURCES_BLOCK, "\n").replace(STEPS_BLOCK, "\n").trimEnd();
+  return (text || "").replace(SOURCES_BLOCK, "\n").replace(STEPS_BLOCK, "\n").replace(IMAGES_BLOCK, "\n").trimEnd();
+}
+
+// Fotos que a pesquisa trouxe (salvas com a resposta): só hosts permitidos.
+export function readImages(text) {
+  const match = (text || "").match(IMAGES_BLOCK);
+  if (!match) return [];
+  try {
+    const items = JSON.parse(match[1]);
+    return Array.isArray(items) ? items.filter((item) => IMAGE_HOST.test(String(item?.url || ""))) : [];
+  } catch {
+    return [];
+  }
+}
+
+// Faixa de fotos no topo da resposta (como o ChatGPT faz com assuntos visuais).
+export function picsStrip(items) {
+  const list = (items || []).filter((item) => IMAGE_HOST.test(String(item?.url || ""))).slice(0, 8);
+  if (!list.length) return null;
+  const strip = h("div.pics", { role: "group", "aria-label": "Fotos da web sobre o assunto" });
+  list.forEach((item, index) => {
+    const caption = String(item.legenda || "").slice(0, 160);
+    const img = h("img.pics__img", { src: item.url, alt: caption || "Foto", loading: "lazy", decoding: "async", referrerpolicy: "no-referrer" });
+    const button = h(
+      "button.pics__item",
+      { type: "button", title: caption, "aria-label": caption ? `Ampliar: ${caption}` : "Ampliar foto", onclick: () => lightbox(list, index) },
+      img,
+    );
+    // Foto que não carrega some sem deixar buraco.
+    img.addEventListener("error", () => button.remove());
+    strip.append(button);
+  });
+  return strip;
 }
 
 // Passos salvos com a resposta: refazem a linha do tempo depois de recarregar.
@@ -356,7 +389,7 @@ function sourcesStrip(code, closed) {
 
 // ---------- Galeria de imagens ----------
 
-const IMAGE_HOST = /^https:\/\/upload\.wikimedia\.org\//;
+const IMAGE_HOST = /^https:\/\/(upload\.wikimedia\.org|api\.openverse\.org)\//;
 
 function galleryCard(code, closed) {
   if (!closed) return h("div.gallery.is-loading", {}, h("span", { text: "Separando imagens…" }));
@@ -387,7 +420,7 @@ function galleryCard(code, closed) {
     });
     grid.append(figure);
   });
-  return h("div.gallery-wrap", {}, grid, h("p.gallery__credit", { text: "Imagens: Wikimedia Commons, licenças livres." }));
+  return h("div.gallery-wrap", {}, grid, h("p.gallery__credit", { text: "Imagens com licença livre (Wikimedia Commons e Openverse)." }));
 }
 
 // Abre fotos (da galeria ou anexos da própria pessoa) dentro do app.

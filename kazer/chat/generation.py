@@ -52,6 +52,10 @@ MAX_SOURCES = 60
 # Quando o provedor corta por tamanho, o KAZER pede para continuar de onde parou
 # (no máximo estas vezes), em vez de entregar um arquivo pela metade.
 MAX_CONTINUATIONS = 3
+IMAGES_FENCE = "kazer-imagens"
+MAX_IMAGES = 8
+# Quanto esperar o modelo leve decidir se vale pesquisar (depois disso, pesquisa).
+DECIDE_SECONDS = 4.0
 CONTINUE_PROMPT = (
     "Continue exatamente de onde a resposta parou, sem repetir nada e sem comentar"
     " a interrupção. Se estava dentro de um bloco de código, continue o código."
@@ -79,6 +83,8 @@ class LiveGeneration:
     sources: list[dict[str, str]] = field(default_factory=list)
     # Passos concluídos (rótulo e detalhe), salvos junto da resposta.
     steps: list[dict[str, str]] = field(default_factory=list)
+    # Fotos da web achadas na pesquisa: a interface mostra no topo da resposta.
+    images: list[dict[str, str]] = field(default_factory=list)
     _lock: threading.Lock = field(default_factory=threading.Lock)
     _waiters: set[tuple[asyncio.AbstractEventLoop, asyncio.Event]] = field(default_factory=set)
 
@@ -329,6 +335,17 @@ class GenerationHub:
         )
 
     def _record(self, live: LiveGeneration, found: Sequence[dict[str, str]]) -> None:
+        pictures = [item for item in found if item.get("img")]
+        if pictures:
+            have = {item["url"] for item in live.images}
+            for item in pictures:
+                if item["img"] not in have and len(live.images) < MAX_IMAGES:
+                    have.add(item["img"])
+                    live.images.append(
+                        {"url": item["img"], "legenda": item.get("t", ""), "fonte": item["u"]}
+                    )
+            live.push({"type": "images", "items": list(live.images)})
+        found = [item for item in found if not item.get("img")]
         known = {item["u"] for item in live.sources}
         fresh = [item for item in found if item.get("u") and item["u"] not in known]
         if fresh:
@@ -363,11 +380,41 @@ class GenerationHub:
             results.append((label, output, found))
         return results
 
+    def _worth_searching(self, question: str) -> bool:
+        """Caso duvidoso: o modelo leve diz SIM ou NAO (na dúvida, pesquisa)."""
+        token = CancelToken()
+        decide = GenerationRequest(
+            system=pre.DECIDE_PROMPT,
+            turns=(Turn("user", (Part("text", question),)),),
+            light=True,
+        )
+
+        def ask() -> str:
+            pieces: list[str] = []
+            for event in self._provider.stream(decide, token):
+                if event.kind == "text":
+                    pieces.append(event.text)
+                if sum(len(piece) for piece in pieces) > 40:
+                    break
+            return "".join(pieces)
+
+        pool = ThreadPoolExecutor(max_workers=1)
+        try:
+            answer = pool.submit(ask).result(timeout=DECIDE_SECONDS)
+        except Exception:  # noqa: BLE001 - lento ou fora do ar: pesquisa por garantia
+            token.cancel()
+            return True
+        finally:
+            pool.shutdown(wait=False)
+        return not answer.strip().upper().startswith("N")
+
     def _prefetch(self, live: LiveGeneration, request: GenerationRequest) -> GenerationRequest:
         """Pesquisa antes do modelo: busca, lê as melhores páginas e junta à pergunta.
 
         A Groq recebe tudo pronto e só escreve — sem chamar ferramenta nenhuma.
         """
+        if request.prefetch_check and not self._worth_searching(request.prefetch_check):
+            return replace(request, prefetch=(), prefetch_check="")
         first = self._run_parallel(live, request.prefetch)
         opened = {
             str(call.arguments.get("url", "")) for call in request.prefetch if call.name == wt.OPEN
@@ -388,6 +435,7 @@ class GenerationHub:
         return replace(
             request,
             prefetch=(),
+            prefetch_check="",
             # Só falta escrever com o que veio: pensar pouco economiza cota.
             brief=True,
             turns=(*request.turns[:-1], replace(last, parts=(*last.parts, note))),
@@ -504,8 +552,12 @@ class GenerationHub:
             watchdog.cancel()
             content, reasoning = "".join(text), "".join(thinking)
             # O que foi pesquisado fica salvo na conversa, mesmo se a resposta falhar.
-            if error != "model_refused" and (live.sources or live.steps):
+            if error != "model_refused" and (live.sources or live.steps or live.images):
                 blocks = []
+                if live.images:
+                    blocks.append(
+                        f"```{IMAGES_FENCE}\n{json.dumps(live.images, ensure_ascii=False)}\n```"
+                    )
                 if live.sources:
                     blocks.append(
                         f"```{SOURCES_FENCE}\n{json.dumps(live.sources, ensure_ascii=False)}\n```"

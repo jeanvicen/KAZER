@@ -71,6 +71,20 @@ _CITY = re.compile(
 )
 _IMAGES = re.compile(r"\bfotos?\b|\bimage(?:m|ns)\b|como [ée] (?:um|uma|o|a)\b|mostr[ae]",
                      re.IGNORECASE)
+# Assunto que se entende melhor vendo (o ChatGPT mostra fotos nesses casos).
+_VISUAL = re.compile(
+    r"\bfotos?\b|\bimage(?:m|ns)\b|\bfigura|\bmostr[ae]|quem (?:[ée]|foi)\b|onde fica|"
+    r"como [ée] (?:um|uma|o|a)\b|apar[êe]ncia|\b(?:animal|bicho|p[áa]ssaro|peixe|inseto|"
+    r"planta|flor|[áa]rvore|cidade|pa[íi]s|praia|ilha|montanha|vulc[ãa]o|monumento|castelo|"
+    r"pr[ée]dio|igreja|museu|pintura|quadro|escultura|obra|carro|moto|avi[ãa]o|navio|foguete|"
+    r"planeta|estrela|gal[áa]xia|dinossauro|comida|prato|receita|ra[çc]a)\b",
+    re.IGNORECASE,
+)
+_IMAGE_FILLER = re.compile(
+    r"^(?:(?:me\s+)?mostr\w*|fotos?|imagens?|figuras?|de|do|da|dos|das|um|uma|o|a|os|as|"
+    r"quem|[ée]|foi|onde|fica|como|sobre)\s+",
+    re.IGNORECASE,
+)
 _GITHUB = re.compile(r"github|reposit[óo]rio", re.IGNORECASE)
 _MONEY = {
     "dolar": "USD", "dólar": "USD", "euro": "EUR", "libra": "GBP", "iene": "JPY",
@@ -107,6 +121,43 @@ def needs_search(question: str) -> bool:
     return bool(_FRESH.search(text))
 
 
+_QUESTION = re.compile(
+    r"\?\s*$|^\s*(?:qual|quais|quando|onde|quanto|quantos|quantas|quem|como (?:est[áa]|anda|fica)|"
+    r"por ?que|o que (?:aconteceu|houve)|existe|tem como|ainda|j[áa] (?:saiu|lan[çc]ou))\b",
+    re.IGNORECASE,
+)
+_PROPER = re.compile(r"(?<![.!?]\s)(?<!^)\b[A-ZÁÂÃÉÊÍÓÔÕÚÇ][\wÀ-ÿ]{2,}")
+_CHAT = re.compile(
+    r"^\s*(?:oi|ol[áa]|e a[íi]|bom dia|boa tarde|boa noite|valeu|obrigad|tmj|kkk|haha|"
+    r"tudo bem|beleza|blz|ok|show|top|legal|massa|entendi|certo|sim|n[ãa]o)\b",
+    re.IGNORECASE,
+)
+_ARITHMETIC = re.compile(r"^\s*(?:quanto (?:[ée]|d[áa])\s*)?[\d\s+\-*/x×÷^().,%=]+\??\s*$",
+                         re.IGNORECASE)
+# Conceito atemporal que o modelo sabe explicar sem internet.
+_TIMELESS = re.compile(
+    r"^\s*(?:explica|explique|me explica|o que (?:[ée]|significa|quer dizer)|como funciona|"
+    r"qual a diferen[çc]a|me ensina|ensina|define|defini[çc][ãa]o)\b",
+    re.IGNORECASE,
+)
+
+
+def uncertain(question: str, previous: str = "") -> bool:
+    """Caso duvidoso: a heurística não sabe, então um modelo pequeno decide.
+
+    "Qual o melhor celular?" ou "Quem é Fulano?" podem ou não precisar de
+    internet — vale perguntar ao modelo leve (cota grande) antes de pesquisar.
+    """
+    text = question.strip()
+    if not text or needs_search(text) or _MAKE.search(text) or _CHAT.search(text):
+        return False
+    if "```" in text or len(text) > 600 or _ARITHMETIC.search(text):
+        return False
+    if _TIMELESS.search(text) and not _PROPER.search(text):
+        return False
+    return bool(_QUESTION.search(text) or _PROPER.search(text))
+
+
 def clean_query(question: str, previous: str = "", *, follow_up: bool = False) -> str:
     """O pedido virado consulta de busca: sem "pesquisa pra mim", curto e direto."""
     text = " ".join(_URL.sub(" ", question).split())
@@ -125,7 +176,7 @@ def plan(question: str, previous: str = "") -> tuple[ToolCall, ...]:
         previous and len(question.split()) <= 6 and _FOLLOW.search(question)
         and needs_search(previous)
     )
-    if not needs_search(question) and not follow_up:
+    if not needs_search(question) and not follow_up and not uncertain(question, previous):
         return ()
     calls: list[ToolCall] = []
 
@@ -146,8 +197,14 @@ def plan(question: str, previous: str = "") -> tuple[ToolCall, ...]:
         add(wt.GITHUB, acao="buscar", consulta=query)
     if _NEWS.search(question):
         add(wt.NEWS, assunto=query)
-    if _IMAGES.search(question):
-        add(wt.IMAGES, consulta=query)
+    if _VISUAL.search(question):
+        subject = query
+        for _ in range(6):  # "me mostra fotos de um axolote" → "axolote"
+            shorter = _IMAGE_FILLER.sub("", subject, count=1)
+            if shorter == subject:
+                break
+            subject = shorter
+        add(wt.IMAGES, consulta=subject or query)
     if not links or len(question) > len(links[0]) + 25:
         add(wt.SEARCH, consulta=query)
     return tuple(calls)
@@ -169,6 +226,16 @@ def pages_to_open(found: Sequence[dict[str, str]], already: set[str]) -> list[st
         if len(chosen) == MAX_PAGES:
             break
     return chosen
+
+
+DECIDE_PROMPT = (
+    "Você decide se uma mensagem precisa de busca na internet para ser respondida"
+    " corretamente HOJE: fatos que mudam (preços, notícias, versões, lançamentos,"
+    " resultados), pessoas, empresas, produtos, lugares, eventos, dados específicos ou"
+    " qualquer coisa que um modelo de linguagem pode errar ou não saber. Conversa,"
+    " opinião, conceitos atemporais, código, contas e textos criativos NÃO precisam."
+    " Responda só SIM ou NAO."
+)
 
 
 def context_note(results: Sequence[tuple[str, str]]) -> str:

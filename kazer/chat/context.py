@@ -137,10 +137,9 @@ _TEACHING = "\n".join(
     (
         "Ao explicar algo que a pessoa não conhece, ensine como um ótimo professor:",
         "- Comece pela intuição (uma analogia do dia a dia), depois o detalhe técnico.",
-        "- Se o assunto é visual (animal, lugar, objeto, anatomia, obra, máquina, pessoa"
-        " histórica) e a pesquisa trouxe imagens, mostre de 2 a 8 fotos num bloco ```kazer-galeria"
-        ' com JSON [{"url": "...", "legenda": "...", "fonte": "..."}], só com URLs que a'
-        " pesquisa devolveu.",
+        "- Se o assunto é visual, a pesquisa do KAZER já mostra fotos reais no topo da"
+        " resposta automaticamente: não monte galeria nem cole links de imagem; só comente o"
+        " que as fotos mostram quando ajudar.",
         "- Se há processo, fluxo, hierarquia, arquitetura ou linha do tempo, desenhe um"
         " diagrama num bloco ```mermaid (flowchart, sequenceDiagram, mindmap, timeline,"
         " classDiagram, erDiagram, gantt ou pie). Rótulos curtos, entre aspas quando tiverem"
@@ -386,7 +385,7 @@ def system_prompt(
     return "\n\n".join(lines)
 
 
-_SOURCES_BLOCK = re.compile(r"\n*```kazer-(fontes|passos)\n.*?\n```\n?", re.DOTALL)
+_SOURCES_BLOCK = re.compile(r"\n*```kazer-(fontes|passos|imagens)\n.*?\n```\n?", re.DOTALL)
 
 
 def without_sources(text: str) -> str:

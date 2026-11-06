@@ -1602,6 +1602,11 @@ class ChatService:
             web_search=options.web_search,
             tool_rounds=RESEARCH_TOOL_ROUNDS if options.research else 0,
             prefetch=planned,
+            prefetch_check=(
+                question.content[:1500]
+                if planned and pre.uncertain(question.content, previous)
+                else ""
+            ),
             tools=(
                 *builtin,
                 *(

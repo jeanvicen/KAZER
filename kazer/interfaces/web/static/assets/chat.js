@@ -23,7 +23,7 @@ import {
   trapFocus,
   uuid,
 } from "./dom.js";
-import { bundleCard, onAnswer, openImages, readSources, readSteps, renderSourceList, stripSources } from "./deliver.js";
+import { bundleCard, onAnswer, openImages, picsStrip, readImages, readSources, readSteps, renderSourceList, stripSources } from "./deliver.js";
 import { copyText, MarkdownView, render as renderMarkdown } from "./markdown.js";
 import { net, readEvents, request, waitOnline } from "./net.js";
 import { closeSheet, confirmDialog, openSheet, promptDialog, setSheetBackground, toast } from "./sheets.js";
@@ -785,18 +785,33 @@ function assistantElement(model) {
   const made = h("div.msg__made", { hidden: true });
   const bundle = h("div.msg__bundle", { hidden: true });
   const steps = h("ol.msg__steps", { hidden: true, "aria-label": "O que o KAZER está fazendo" });
-  const el = h("article.msg.msg--kazer", { dataset: { id: model.id } }, head, steps, thinking, body, bundle, made, notice, actions);
+  const pics = h("div.msg__pics", { hidden: true });
+  const el = h("article.msg.msg--kazer", { dataset: { id: model.id } }, head, steps, pics, thinking, body, bundle, made, notice, actions);
   model.el = el;
-  model.parts = { head, steps, thinking, body, bundle, made, notice, actions, state: head.lastChild, thinkBody: thinking.lastChild };
+  model.parts = { head, steps, pics, thinking, body, bundle, made, notice, actions, state: head.lastChild, thinkBody: thinking.lastChild };
   model.view = new MarkdownView(body);
   applyStatus(model);
   return el;
+}
+
+// Fotos da pesquisa no topo da resposta: ao vivo (evento) ou salvas no conteúdo.
+function paintPics(model) {
+  const slot = model.parts?.pics;
+  if (!slot) return;
+  const items = model.liveImages || readImages(model.content || "");
+  const key = items.map((item) => item.url).join("|");
+  if (slot.dataset.key === key) return;
+  slot.dataset.key = key;
+  const strip = picsStrip(items);
+  slot.hidden = !strip;
+  slot.replaceChildren(...(strip ? [strip] : []));
 }
 
 function paintBody(model) {
   if (model.role !== "assistant") return;
   model.painted = true;
   model.view.update(model.content || "");
+  paintPics(model);
   paintSteps(model);
   paintArtifacts(model);
   paintBundle(model);
@@ -1095,6 +1110,9 @@ function handleEvent(model, event) {
     model.lastMark = now;
     paintSteps(model);
     applyStatus(model);
+  } else if (event.type === "images") {
+    model.liveImages = event.items;
+    paintPics(model);
   } else if (event.type === "sources") {
     model.liveSources = event.items;
     paintSteps(model);
@@ -1124,7 +1142,9 @@ function finish(model, reply) {
     reconnecting: false,
   });
   model.liveSources = null;
+  model.liveImages = null;
   model.view.update(model.content || "");
+  paintPics(model);
   if (model.thinking) model.parts.thinkBody.replaceChildren(renderMarkdown(model.thinking));
   paintBundle(model);
   applyStatus(model);

@@ -303,14 +303,36 @@ def test_normal_search_mixes_free_sources_and_never_spends_tavily() -> None:
     assert "fontes" in detail and "DuckDuckGo" in text
 
 
-def test_deep_research_adds_tavily_and_news() -> None:
+def test_tavily_only_when_free_sources_come_back_empty() -> None:
     seen: list[str] = []
-    client = httpx.Client(transport=httpx.MockTransport(multi_handler(seen)))
+    base = multi_handler(seen)
+
+    def blocked(request: httpx.Request) -> httpx.Response:
+        host = request.url.host
+        if host in ("api.tavily.com",):
+            return base(request)
+        seen.append(host)
+        return httpx.Response(403)  # todas as grátis bloqueando o servidor
+
+    client = httpx.Client(transport=httpx.MockTransport(blocked))
     w = WebTools(Keys(), client=client, resolve=public)
-    _, found, _ = w.execute("buscar_web", {"consulta": "godot engine"}, deep=True)
-    urls = [item["u"] for item in found]
-    assert "https://tavily.example/a" in urls
-    assert "https://noticia.example/godot5" in urls
+    _, found, _ = w.execute("buscar_web", {"consulta": "godot engine novidades"})
+    assert "https://tavily.example/a" in [item["u"] for item in found]
+
+
+def test_bing_feed_counts_as_a_source_and_results_are_ranked() -> None:
+    from kazer.chat.web_tools import Hit, parse_rss, rank_hits
+
+    rss = (
+        "<rss><channel><item><title>Preço do iPhone 17 no Brasil</title>"
+        "<link>https://loja.example/iphone17</link><description>Custa R$ 7.999</description>"
+        "</item></channel></rss>"
+    )
+    hits = parse_rss(rss)
+    assert hits[0].snippet == "Custa R$ 7.999"
+    noise = [Hit("Receita de bolo", f"https://bolo{i}.example", "farinha") for i in range(4)]
+    ranked = rank_hits("preço iphone 17", [*noise, *hits, *hits, *hits], 3)
+    assert ranked[0].url == "https://loja.example/iphone17"
 
 
 def test_news_tool_and_lite_parser() -> None:
@@ -512,3 +534,118 @@ def test_a_failing_search_still_gets_an_answer() -> None:
             break
         time.sleep(0.01)
     assert store.final["status"] == "complete"
+
+
+class JudgeProvider(WriterProvider):
+    """O modelo leve responde `verdict` quando perguntado se vale pesquisar."""
+
+    def __init__(self, verdict: str) -> None:
+        super().__init__()
+        self.verdict = verdict
+
+    def stream(self, request: GenerationRequest, cancel: CancelToken) -> Any:
+        if request.light:
+            yield StreamEvent("text", self.verdict)
+            yield StreamEvent("stop", "end")
+            return
+        yield from super().stream(request, cancel)
+
+
+def _run_with_judge(verdict: str) -> tuple[list[ToolCall], JudgeProvider]:
+    import time
+
+    from kazer.chat import prefetch
+
+    ran: list[ToolCall] = []
+
+    def on_tool(call: ToolCall) -> tuple[Any, ...]:
+        ran.append(call)
+        return ("Pesquisando", "resultado", [], "1 resultado")
+
+    question = "qual o melhor celular custo benefício?"
+    assert prefetch.uncertain(question)
+    provider, store = JudgeProvider(verdict), Store()
+    hub = GenerationHub(store, provider)  # type: ignore[arg-type]
+    request = GenerationRequest(
+        system="s",
+        turns=(Turn("user", (Part("text", question),)),),
+        prefetch=prefetch.plan(question),
+        prefetch_check=question,
+    )
+    assert hub.try_reserve()
+    live = hub.start("u", "c", "r", request, on_tool=on_tool)
+    for _ in range(300):
+        if live.done:
+            break
+        time.sleep(0.01)
+    assert store.final["status"] == "complete"
+    return ran, provider
+
+
+def test_in_doubt_a_small_model_decides_whether_to_search() -> None:
+    ran, _ = _run_with_judge("SIM")
+    assert [c.name for c in ran] == ["buscar_web"]
+    ran, provider = _run_with_judge("NAO")
+    assert ran == []
+    assert "Pesquisa feita agora" not in provider.requests[-1].turns[-1].parts[-1].text
+
+
+def test_clear_cases_never_ask_the_small_model() -> None:
+    from kazer.chat.prefetch import uncertain
+
+    assert not uncertain("pesquisa o preço do iphone")  # já é certeza: pesquisa
+    assert not uncertain("crie um site de pizzaria")
+    assert not uncertain("explica o que é recursão")
+    assert not uncertain("quanto é 2+2?")
+
+
+def test_photos_from_commons_and_openverse_show_on_top_and_stay_saved() -> None:
+    import time
+
+    def web(request: httpx.Request) -> httpx.Response:
+        if request.url.host == "commons.wikimedia.org":
+            pages = {"1": {"index": 1, "title": "File:Axolote.jpg", "imageinfo": [{
+                "thumburl": "https://upload.wikimedia.org/a.jpg",
+                "descriptionurl": "https://commons.wikimedia.org/wiki/File:Axolote.jpg",
+                "extmetadata": {"LicenseShortName": {"value": "CC BY-SA 4.0"}},
+            }]}}
+            return httpx.Response(200, json={"query": {"pages": pages}})
+        if request.url.host == "api.openverse.org":
+            return httpx.Response(200, json={"results": [{
+                "thumbnail": "https://api.openverse.org/v1/images/x/thumb/",
+                "title": "Axolote rosa", "foreign_landing_url": "https://flickr.com/p/1",
+                "license": "by", "license_version": "2.0",
+            }, {"thumbnail": "https://evil.example/x.jpg", "title": "fora da lista"}]})
+        return httpx.Response(404)
+
+    w = WebTools(NoSecrets(), client=httpx.Client(transport=httpx.MockTransport(web)),
+                 resolve=public)
+    text, found, _ = w.execute("buscar_imagens", {"consulta": "axolote"})
+    pictures = [item["img"] for item in found if item.get("img")]
+    assert pictures == [
+        "https://upload.wikimedia.org/a.jpg",
+        "https://api.openverse.org/v1/images/x/thumb/",
+    ]
+    assert "evil.example" not in text
+
+    def on_tool(call: ToolCall) -> tuple[Any, ...]:
+        return ("Buscando imagens", text, found, "")
+
+    provider, store = WriterProvider(), Store()
+    hub = GenerationHub(store, provider)  # type: ignore[arg-type]
+    request = GenerationRequest(
+        system="s",
+        turns=(Turn("user", (Part("text", "fotos de axolote"),)),),
+        prefetch=(ToolCall("pre-0", "buscar_imagens", {"consulta": "axolote"}),),
+    )
+    assert hub.try_reserve()
+    live = hub.start("u", "c", "r", request, on_tool=on_tool)
+    for _ in range(300):
+        if live.done:
+            break
+        time.sleep(0.01)
+    events = [event for event in live.events if event["type"] == "images"]
+    assert events and events[-1]["items"][0]["url"] == "https://upload.wikimedia.org/a.jpg"
+    assert "```kazer-imagens" in store.final["content"]
+    # Foto não vira "fonte" repetida na lista de fontes.
+    assert all(not item.get("img") for item in live.sources)

@@ -74,7 +74,7 @@ _CSP = "; ".join(
         "style-src 'self'",
         # blob: só para a prévia local de anexos escolhidos antes do envio.
         # Fotos das galerias (Wikimedia Commons, licença livre).
-        "img-src 'self' blob: https://upload.wikimedia.org",
+        "img-src 'self' blob: https://upload.wikimedia.org https://api.openverse.org",
         "font-src 'self'",
         "connect-src 'self'",
         # Só a moldura isolada de prévia (/preview-frame), da própria origem.

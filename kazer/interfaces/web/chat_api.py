@@ -394,6 +394,25 @@ def chat_routes(ctx: WebContext, chat: ChatService | None) -> list[Route]:
         )
 
     @endpoint
+    async def search_health(request: Request) -> Response:
+        """Diagnóstico: quais fontes de busca respondem DESTE servidor agora.
+
+        Só contagens e tempos (nenhum conteúdo), para quem está logado, com
+        limite de uso. Abra /api/diagnostics/search no navegador depois de entrar.
+        """
+        user, _ = await account(request)
+        web = service()._web
+        if web is None:
+            raise ChatError("web_search_unavailable", 503)
+        wait = service()._limiter.hit(f"diag:{user.id}", RateLimit(5, 300))
+        if wait > 0:
+            raise ChatError("rate_limited", 429, retry_after=wait)
+        query = str(request.query_params.get("q") or "preço do iphone 17")[:120]
+        report = await run_in_threadpool(web.diagnose, query)
+        working = [item["fonte"] for item in report if item["resultados"]]
+        return JSONResponse({"consulta": query, "funcionando": working, "fontes": report})
+
+    @endpoint
     async def memories(request: Request) -> Response:
         user, _ = await account(request)
         data = await ctx.read_json(request)
@@ -487,6 +506,7 @@ def chat_routes(ctx: WebContext, chat: ChatService | None) -> list[Route]:
         Route("/api/plans", plans, methods=["GET"]),
         Route("/api/checkout", checkout, methods=["POST"]),
         Route("/api/documents/render", render_document, methods=["POST"]),
+        Route("/api/diagnostics/search", search_health, methods=["GET"]),
         Route("/api/code/sessions", code_sessions, methods=["GET"]),
         Route("/api/skills", skills, methods=["GET", "POST"]),
         Route("/api/skills/shared", shared_skills, methods=["GET"]),

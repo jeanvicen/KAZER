@@ -121,6 +121,9 @@ class GenerationRequest:
     # Buscas que o KAZER faz ANTES do modelo (o hub roda e junta o resultado
     # à pergunta; o provedor nunca vê este campo).
     prefetch: tuple[ToolCall, ...] = ()
+    # Se não vazio: antes de pesquisar, um modelo leve confirma se precisa
+    # (o texto é a pergunta a julgar).
+    prefetch_check: str = ""
 
 
 @dataclass(frozen=True, slots=True)
