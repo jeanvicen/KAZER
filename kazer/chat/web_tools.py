@@ -39,7 +39,8 @@ logger = logging.getLogger("kazer.web_tools")
 
 TIMEOUT = 12.0
 MAX_PAGE_BYTES = 2_000_000
-MAX_PAGE_CHARS = 14_000
+MAX_PAGE_CHARS = 14_000  # pesquisa profunda
+PAGE_CHARS = 6_000  # resposta normal: menos texto por página = menos tokens por minuto
 MAX_FILE_CHARS = 40_000
 MAX_RESULTS = 8
 MAX_REDIRECTS = 4
@@ -234,6 +235,28 @@ DEFINITIONS: tuple[ToolDef, ...] = (
     ),
 )
 
+_HINTS: dict[str, re.Pattern[str]] = {
+    GITHUB: re.compile(r"github|reposit|repo\b|c[óo]digo aberto|open.?source|biblioteca|lib\b|"
+                       r"projeto|framework|exemplo de c[óo]digo", re.IGNORECASE),
+    IMAGES: re.compile(r"foto|imagem|imagens|figura|galeria|como [ée]|apar[êe]ncia|mostr|"
+                       r"desenho|logo", re.IGNORECASE),
+    PACKAGE: re.compile(r"npm|pip|pypi|pacote|package|vers[ãa]o|biblioteca|lib\b|depend",
+                        re.IGNORECASE),
+    STACK: re.compile(r"erro|error|bug|exception|traceback|n[ãa]o funciona|stack ?overflow|"
+                      r"c[óo]digo|programa", re.IGNORECASE),
+    WIKI: re.compile(r"quem (foi|[ée])|o que [ée]|hist[óo]ria|wikip|significado|defini",
+                     re.IGNORECASE),
+    PAPERS: re.compile(r"artigo|paper|estudo|pesquisa cient|ci[êe]ncia|arxiv|acad[êe]m|"
+                       r"tese|evid[êe]ncia", re.IGNORECASE),
+    HN: re.compile(r"hacker ?news|startup|tecnologia|tech\b|lan[çc]amento", re.IGNORECASE),
+    WEATHER: re.compile(r"clima|tempo (em|hoje|amanh)|previs[ãa]o|chuva|temperatura|"
+                        r"calor|frio", re.IGNORECASE),
+    FX: re.compile(r"cota[çc][ãa]o|d[óo]lar|euro|real\b|bitcoin|btc|c[âa]mbio|moeda|"
+                   r"cripto", re.IGNORECASE),
+    NEWS: re.compile(r"not[íi]cia|hoje|agora|[úu]ltim|recente|aconteceu|atual|semana|"
+                     r"elei[çc]|placar", re.IGNORECASE),
+}
+
 
 NAMES = frozenset(tool.name for tool in DEFINITIONS)
 
@@ -395,6 +418,24 @@ class WebTools:
 
     def _note(self, detail: str) -> None:
         self._local.detail = detail
+
+    def _page_chars(self) -> int:
+        return MAX_PAGE_CHARS if getattr(self._local, "deep", False) else PAGE_CHARS
+
+    def select(self, question: str, *, deep: bool = False) -> tuple[ToolDef, ...]:
+        """Só as ferramentas que fazem sentido para o pedido.
+
+        Cada ferramenta custa tokens em toda chamada; mandar as 13 sempre estoura
+        o limite por minuto do provedor grátis. Busca, página e conta vão sempre;
+        as outras entram quando o pedido dá pista (ou todas na pesquisa profunda).
+        """
+        if deep or not question:
+            return DEFINITIONS
+        wanted = {SEARCH, OPEN, CALC}
+        for name, pattern in _HINTS.items():
+            if pattern.search(question):
+                wanted.add(name)
+        return tuple(tool for tool in DEFINITIONS if tool.name in wanted)
 
     def execute(
         self, name: str, arguments: dict[str, Any], *, deep: bool = False
@@ -727,7 +768,7 @@ class WebTools:
         if len(text) < 200:
             return ""
         self._found(url, url, "lido")
-        return EXTERNAL + f"Fonte: {url}\n\n" + _clip(text, MAX_PAGE_CHARS)
+        return EXTERNAL + f"Fonte: {url}\n\n" + _clip(text, self._page_chars())
 
     def _open_page(self, url: str) -> str:
         final, header, raw, encoding = self._get_public(url)
@@ -735,7 +776,7 @@ class WebTools:
         if kind in {"application/json", "text/plain", "text/markdown", "text/csv"}:
             text = raw.decode(encoding, "replace")
             self._found(final, final, "lido")
-            return EXTERNAL + f"Fonte: {final}\n\n" + _clip(text, MAX_PAGE_CHARS)
+            return EXTERNAL + f"Fonte: {final}\n\n" + _clip(text, self._page_chars())
         if kind and "html" not in kind and "xml" not in kind:
             raise ToolFailure(f"Esse endereço não é uma página de texto ({kind}).")
         title, body, links = page_text(raw.decode(encoding, "replace"), final)
@@ -745,7 +786,7 @@ class WebTools:
         return (
             EXTERNAL
             + f"Fonte: {final}\nTítulo: {title or '(sem título)'}\n\n"
-            + _clip(body, MAX_PAGE_CHARS)
+            + _clip(body, self._page_chars())
             + (f"\n\nLinks da página:\n{listed}" if listed else "")
         )
 
@@ -822,7 +863,7 @@ class WebTools:
                 + f"★{info.get('stargazers_count', 0)} · {info.get('language') or '—'} ·"
                 + f" licença {((info.get('license') or {}).get('spdx_id')) or '—'} ·"
                 + f" atualizado {info.get('pushed_at') or '—'}\n\nRaiz:\n{names}\n\n"
-                + (f"README:\n{_clip(readme, MAX_PAGE_CHARS)}" if readme else "")
+                + (f"README:\n{_clip(readme, self._page_chars())}" if readme else "")
             )
         if action == "pasta":
             listing = self._gh(f"/repos/{repo}/contents/{quoted}")

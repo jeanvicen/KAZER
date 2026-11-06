@@ -26,6 +26,7 @@ _ALLOWED_SECRETS: Mapping[str, frozenset[str]] = {
             "OPENROUTER_API_KEY",
             "TOGETHER_API_KEY",
             "KAZER_MODEL_API_KEY",
+            "CEREBRAS_API_KEY",
         }
     ),
 }

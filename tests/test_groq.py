@@ -291,3 +291,64 @@ def test_kaz_1_1_uses_only_the_low_effort_model(
         assert stream[-1]["reply"]["content"] == "resposta de small-model"
         # O raciocínio cru nunca chegou à tela.
         assert "segredo do raciocínio" not in json.dumps(stream)
+
+
+class _Scripted:
+    """Provedor de mentira: falha com um código ou responde um texto."""
+
+    def __init__(self, outcome: str, *, images: bool = True) -> None:
+        from kazer.brain.model_provider import Capabilities
+
+        self.outcome = outcome
+        self.capabilities = Capabilities(images=images)
+        self.seen: list[GenerationRequest] = []
+
+    def stream(self, request: GenerationRequest, cancel: CancelToken) -> Iterator[Any]:
+        from kazer.brain.model_provider import StreamEvent
+
+        self.seen.append(request)
+        if self.outcome.startswith("model_"):
+            raise ProviderError(self.outcome)
+        yield StreamEvent(kind="text", text=self.outcome)
+
+
+def _text(provider: Any) -> str:
+    turn = Turn(role="user", parts=(Part(kind="text", text="oi"),))
+    request = GenerationRequest(system="", turns=(turn,))
+    return "".join(getattr(e, "text", "") for e in provider.stream(request, CancelToken()))
+
+
+def test_a_busy_provider_hands_over_to_the_next_one() -> None:
+    from kazer.brain.model_provider import FallbackProvider
+
+    busy, spare = _Scripted("model_busy"), _Scripted("resposta da reserva")
+    assert _text(FallbackProvider([busy, spare])) == "resposta da reserva"
+    assert busy.seen and spare.seen
+
+
+def test_a_refusal_is_not_hidden_by_the_fallback() -> None:
+    from kazer.brain.model_provider import FallbackProvider
+
+    refused, spare = _Scripted("model_rejected"), _Scripted("não devia chegar aqui")
+    with pytest.raises(ProviderError) as caught:
+        _text(FallbackProvider([refused, spare]))
+    assert caught.value.code == "model_rejected"
+    assert not spare.seen
+
+
+def test_when_every_provider_is_busy_the_last_error_stays() -> None:
+    from kazer.brain.model_provider import FallbackProvider
+
+    with pytest.raises(ProviderError) as caught:
+        _text(FallbackProvider([_Scripted("model_busy"), _Scripted("model_timeout")]))
+    assert caught.value.code == "model_timeout"
+
+
+def test_free_fallbacks_join_only_when_their_key_exists() -> None:
+    from kazer.brain.model_provider import FallbackProvider
+
+    settings = Settings(environment="test", model_provider="groq")
+    built = build_provider(settings, Env2(GROQ_API_KEY=KEY, CEREBRAS_API_KEY="csk-segredo"))
+    assert isinstance(built, FallbackProvider)
+    assert "csk-segredo" not in repr(built) and KEY not in repr(built)
+    assert isinstance(build_provider(settings, Env2(GROQ_API_KEY=KEY)), GroqProvider)

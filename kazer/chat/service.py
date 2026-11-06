@@ -1568,7 +1568,11 @@ class ChatService:
             question=question.content,
         )
         specs = self._tools_for(user_id, read_only=restricted)
-        builtin = () if restricted or self._web is None else self._web.definitions
+        builtin = (
+            ()
+            if restricted or self._web is None
+            else self._web.select(question.content, deep=options.research)
+        )
         request = GenerationRequest(
             system=system,
             turns=turns,

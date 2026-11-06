@@ -16,6 +16,7 @@ from __future__ import annotations
 import base64
 import json
 import logging
+import os
 import re
 import ssl
 import threading
@@ -200,6 +201,7 @@ _PRESETS: dict[str, _Preset] = {
     "together": _Preset("https://api.together.xyz/v1", "TOGETHER_API_KEY", False),
     "ollama": _Preset("http://127.0.0.1:11434/v1", None, False),
     "custom": _Preset("", "KAZER_MODEL_API_KEY", False),
+    "cerebras": _Preset("https://api.cerebras.ai/v1", "CEREBRAS_API_KEY", False),
 }
 
 _FINISH = {"stop": "end", "length": "length", "content_filter": "refusal"}
@@ -579,7 +581,11 @@ class OpenAICompatibleProvider:
 # "auto" — o KAZER mede o tamanho da tarefa e pensa mais quando ela pede —, e o
 # Kimi K2 e o Llama 3.3 70B de reserva.
 GROQ_DEFAULT_TIERS = {
-    "baixo": "openai/gpt-oss-120b:auto,moonshotai/kimi-k2-instruct-0905,llama-3.3-70b-versatile",
+    # Cada modelo tem limite próprio por minuto e por dia na Groq: quanto mais
+    # longa a cadeia, mais difícil o KAZER ficar sem resposta.
+    "baixo": "openai/gpt-oss-120b:auto,moonshotai/kimi-k2-instruct-0905,"
+    "meta-llama/llama-4-scout-17b-16e-instruct,llama-3.3-70b-versatile,"
+    "openai/gpt-oss-20b:auto,qwen/qwen3-32b,llama-3.1-8b-instant",
     "medio": "openai/gpt-oss-120b:medium,moonshotai/kimi-k2-instruct-0905",
     "alto": "openai/gpt-oss-120b:high,moonshotai/kimi-k2-instruct-0905",
     "extra": "openai/gpt-oss-120b:high,llama-3.3-70b-versatile",
@@ -597,6 +603,8 @@ _GROQ_MAX_OUT = {
     "openai/gpt-oss": 32_768,
     "moonshotai/kimi-k2": 16_384,
     "llama-3.3-70b": 32_768,
+    "llama-3.1-8b": 8_192,
+    "qwen/qwen3": 16_384,
     "meta-llama/llama-4": 8_192,
 }
 
@@ -1015,6 +1023,63 @@ def _seen(block: Any) -> str:
 
 
 # ---------------------------------------------------------------------------
+# Reserva entre provedores (o mesmo padrão do LiteLLM Router, sem a dependência)
+# ---------------------------------------------------------------------------
+
+# Falhas que valem tentar outro provedor: limite, fora do ar, demora, erro deles.
+_SWITCH = {"model_busy", "model_unreachable", "model_timeout", "model_error", "model_auth"}
+
+# Provedores de reserva com plano grátis: entram sozinhos quando a chave existe.
+# O modelo de cada um pode ser trocado por KAZER_FALLBACK_<NOME>_MODEL.
+FALLBACKS: tuple[tuple[str, str, str, str], ...] = (
+    ("cerebras", "https://api.cerebras.ai/v1", "CEREBRAS_API_KEY", "gpt-oss-120b"),
+    ("gemini", "https://generativelanguage.googleapis.com/v1beta/openai", "GEMINI_API_KEY",
+     "gemini-2.5-flash"),
+    ("openrouter", "https://openrouter.ai/api/v1", "OPENROUTER_API_KEY",
+     "meta-llama/llama-3.3-70b-instruct:free"),
+    ("mistral", "https://api.mistral.ai/v1", "MISTRAL_API_KEY", "mistral-small-latest"),
+)
+
+
+class FallbackProvider:
+    """Tenta o principal e, se ele falhar antes de responder, o próximo da lista."""
+
+    def __init__(self, providers: list[ModelProvider]) -> None:
+        self._providers = providers
+        self.capabilities = providers[0].capabilities
+
+    def __repr__(self) -> str:
+        """Sem chaves."""
+        return f"FallbackProvider({len(self._providers)})"
+
+    def stream(self, request: GenerationRequest, cancel: CancelToken) -> Iterator[StreamEvent]:
+        last: ProviderError | None = None
+        for index, provider in enumerate(self._providers):
+            if cancel.cancelled():
+                return
+            attempt = request
+            if index and not provider.capabilities.images:
+                attempt = _without_images(request)
+            events = provider.stream(attempt, cancel)
+            try:
+                first = next(events, None)
+            except ProviderError as error:
+                if error.code not in _SWITCH:
+                    raise
+                logger.warning(
+                    "model.fallback", extra={"from": index, "code": error.code}
+                )
+                last = error
+                continue
+            if first is not None:
+                yield first
+            yield from events
+            return
+        if last is not None:
+            raise last
+
+
+# ---------------------------------------------------------------------------
 # Montagem a partir da configuração
 # ---------------------------------------------------------------------------
 
@@ -1055,6 +1120,45 @@ def _build_groq(
 
 
 def build_provider(
+    settings: Settings, secrets: SecretProvider | None = None
+) -> ModelProvider | None:
+    """O provedor principal e, atrás dele, as reservas que tiverem chave."""
+    secrets = secrets or EnvironmentSecretProvider()
+    primary = _build_primary(settings, secrets)
+    if primary is None:
+        return None
+    chain: list[ModelProvider] = [primary]
+    for name, base_url, secret, model in FALLBACKS:
+        if name == settings.model_provider:
+            continue
+        try:
+            key = secrets.get_secret(secret, scope="model")
+        except LookupError:
+            continue
+        chosen = os.environ.get(f"KAZER_FALLBACK_{name.upper()}_MODEL", "").strip() or model
+        chain.append(
+            OpenAICompatibleProvider(
+                name=name,
+                base_url=base_url,
+                api_key=key,
+                model=chosen,
+                deep_model="",
+                capabilities=Capabilities(images=name in ("gemini", "openrouter")),
+                send_effort=False,
+                max_tokens=settings.model_max_output_tokens or 16_384,
+                timeout=settings.model_timeout_seconds,
+            )
+        )
+    if len(chain) > 1:
+        # Com reserva, o principal não fica esperando a fila: passa a vez rápido.
+        if isinstance(primary, OpenAICompatibleProvider):
+            primary.busy_wait = 2.0
+        logger.info("model.fallbacks", extra={"count": len(chain) - 1})
+        return FallbackProvider(chain)
+    return primary
+
+
+def _build_primary(
     settings: Settings, secrets: SecretProvider | None = None
 ) -> ModelProvider | None:
     """Monta o adaptador do KAZ 1.1 ou None (a interface mostra "não configurado").

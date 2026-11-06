@@ -17,7 +17,8 @@ from kazer.brain.model_provider import Part, Turn
 from kazer.chat import abilities, extract
 from kazer.chat.store import Attachment, Memory, Message
 
-MAX_CONTEXT_CHARS = 120_000
+# Histórico enviado a cada resposta (o provedor grátis limita tokens por minuto).
+MAX_CONTEXT_CHARS = 48_000
 MAX_TEXT_FILE_CHARS = 60_000
 MEDIA_RECENT_MESSAGES = 6
 
@@ -41,6 +42,10 @@ _CORE = "\n".join(
         " que só repete o que já foi dito. Varie o começo das respostas.",
         "Use Markdown quando ajudar: títulos curtos, listas, tabelas e blocos de código com a"
         " linguagem indicada.",
+        "Entenda o pedido pelo sentido, não ao pé da letra: no celular o corretor erra muito."
+        " 'Pará', 'pra' ou 'Para' no meio da frase quase sempre é só a palavra 'para'"
+        " ('pesquisa pará mim' = 'pesquisa para mim'); só trate como o estado do Pará se o"
+        " contexto deixar isso claro. O mesmo vale para outras palavras trocadas.",
         "Não invente fatos, links, números, citações ou resultados. Quando não souber ou não"
         " tiver certeza, diga.",
         "Só diga que pesquisou na web, executou código ou leu um arquivo se isso realmente"
@@ -154,40 +159,79 @@ _DEEP_RESEARCH = "\n".join(
 )
 
 # Entregas: arquivos, pacotes, prévias, PDFs, slides, perguntas e Godot.
-_DELIVERY = "\n".join(
-    (
-        "Entregas (a interface do KAZER transforma isto em cartões):",
+_DELIVERY_PARTS: dict[str, str] = {
+    "arquivo": (
         "- Arquivo: SEMPRE um bloco cercado com a linguagem e o caminho na própria cerca, por"
         " exemplo ```python app/main.py ou ```html carro.html — nunca um bloco sem nome quando"
         " a pessoa pediu um arquivo, app, site ou jogo. Cada arquivo inteiro, sem trechos"
-        " soltos. Com dois ou"
-        " mais arquivos a pessoa baixa tudo num .zip; organize em pastas com nomes claros"
-        " (ex.: meu-projeto/src/...). Antes dos arquivos, resuma em poucas linhas o que vai"
-        " fazer; depois, diga como rodar e testar.",
-        "- Jogo, app, site, página ou demonstração: entregue UM único arquivo ```html nome.html"
-        " com TODO o código dentro (CSS em <style>, JS em <script>), completo e funcionando,"
-        " sem depender de outros arquivos do projeto. Bibliotecas só por CDN (https). A"
-        " interface abre a prévia ao vivo. Só divida em vários arquivos se a pessoa pedir um"
-        " projeto com estrutura de pastas ou um framework (React, Node, Python etc.).",
-        "- PDF: quando pedirem um PDF, relatório, apostila, currículo ou documento para baixar,"
-        " NUNCA entregue código (Python, JS, LaTeX) que gera PDF: escreva o conteúdo num bloco"
-        " ```pdf nome.pdf — a interface transforma em um arquivo .pdf de verdade. Formato:\n"
-        "```pdf relatorio.pdf\n---\ntitulo: Título\nsubtitulo: Subtítulo\nautor: KAZER\n"
-        "cor: #2563eb\n---\n# Seção\nTexto, listas, tabelas e > destaques.\n```\n"
-        " Escreva conteúdo rico e bem organizado: introdução, seções, tabelas e conclusão.",
-        "- Slides: quando pedirem apresentação ou slides, use ```slides nome.slides com o mesmo"
-        " cabeçalho (titulo, subtitulo, autor, cor) e separe cada slide com uma linha contendo"
-        " só ---. Cada slide começa com # Título; use listas curtas, números grandes e"
-        " frases de impacto; um slide só com # Título vira divisor de seção. Faça quantos slides"
-        " o assunto pedir (sem limite; se a pessoa disser um número, siga o número). Um bloco"
-        " só para a apresentação inteira.",
+        " soltos. Com dois ou mais arquivos a pessoa baixa tudo num .zip; organize em pastas"
+        " com nomes claros. Antes dos arquivos, resuma em poucas linhas o que vai fazer;"
+        " depois, diga como rodar e testar."
+    ),
+    "html": (
+        "- Jogo, app, site, página ou demonstração: UM único arquivo ```html nome.html com TODO"
+        " o código dentro (CSS em <style>, JS em <script>), completo e funcionando. Bibliotecas"
+        " só por CDN (https). A interface abre a prévia ao vivo. Só divida em vários arquivos"
+        " se a pessoa pedir um projeto com pastas ou um framework (React, Node, Python etc.)."
+    ),
+    "pdf": (
+        "- PDF: para PDF, relatório, apostila, currículo ou documento para baixar, NUNCA entregue"
+        " código que gera PDF: escreva o conteúdo num bloco ```pdf nome.pdf — a interface gera"
+        " o arquivo .pdf de verdade. Formato:\n```pdf relatorio.pdf\n---\ntitulo: Título\n"
+        "subtitulo: Subtítulo\nautor: KAZER\ncor: #2563eb\n---\n# Seção\nTexto, listas,"
+        " tabelas e > destaques.\n```\nConteúdo rico: introdução, seções, tabelas e conclusão."
+    ),
+    "slides": (
+        "- Slides: use ```slides nome.slides com o mesmo cabeçalho (titulo, subtitulo, autor,"
+        " cor) e separe cada slide com uma linha só com ---. Cada slide começa com # Título;"
+        " listas curtas, números grandes, frases de impacto; um slide só com # Título vira"
+        " divisor. Quantos slides o assunto pedir (se a pessoa disser um número, siga). Um"
+        " bloco só para a apresentação inteira."
+    ),
+    "pergunta": (
         "- Pergunta: se o pedido for ambíguo e a resposta depender de uma decisão que só a"
-        " pessoa pode tomar, não chute — termine a resposta com um bloco"
-        ' ```kazer-pergunta contendo JSON {"pergunta": "...", "opcoes": ["...", "...", "..."]}'
-        " com exatamente 3 opções curtas e prováveis (a pessoa também pode escrever a"
-        " própria). No máximo uma pergunta por resposta.",
-    )
-)
+        " pessoa pode tomar, não chute — termine com um bloco ```kazer-pergunta contendo JSON"
+        ' {"pergunta": "...", "opcoes": ["...", "...", "..."]} com exatamente 3 opções curtas.'
+        " No máximo uma pergunta por resposta."
+    ),
+}
+
+# Só entra no pedido a parte do manual que combina com ele (menos tokens = menos
+# "muita demanda" no provedor).
+_WANTS = {
+    "arquivo": re.compile(
+        r"arquivo|c[óo]digo|script|projeto|programa|app|aplicativo|site|p[áa]gina|jogo|game|"
+        r"api|bot|fun[çc][ãa]o|classe|html|css|python|javascript|react|crie|cria|fa[çc]a|"
+        r"implement|desenvolv|```",
+        re.IGNORECASE,
+    ),
+    "pdf": re.compile(r"pdf|relat[óo]rio|apostila|curr[íi]culo|documento|ebook|e-book",
+                      re.IGNORECASE),
+    "slides": re.compile(r"slide|apresenta[çc]|deck|pitch", re.IGNORECASE),
+    "godot": re.compile(r"godot|engine|motor de jogo|unity|unreal", re.IGNORECASE),
+    "ensinar": re.compile(
+        r"explic|ensin|o que [ée]|como funciona|entender|aprender|aula|estud|mostr|foto|"
+        r"imagem|diagrama|desenh|hist[óo]ria|ci[êe]ncia|biologia|f[íi]sica|qu[íi]mica",
+        re.IGNORECASE,
+    ),
+}
+
+
+def _delivery(question: str, desktop: bool) -> str:
+    """As regras de entrega que importam para este pedido (todas, sem pedido)."""
+    every = not question
+    parts = ["Entregas (a interface do KAZER transforma isto em cartões):"]
+    if every or _WANTS["arquivo"].search(question):
+        parts += [_DELIVERY_PARTS["arquivo"], _DELIVERY_PARTS["html"]]
+    if every or _WANTS["pdf"].search(question):
+        parts.append(_DELIVERY_PARTS["pdf"])
+    if every or _WANTS["slides"].search(question):
+        parts.append(_DELIVERY_PARTS["slides"])
+    parts.append(_DELIVERY_PARTS["pergunta"])
+    if every or _WANTS["godot"].search(question):
+        parts.append(_GODOT_DESKTOP if desktop else _GODOT_MOBILE)
+    return "\n".join(parts)
+
 
 _GODOT_DESKTOP = (
     "- Godot: só quando a pessoa pedir explicitamente um jogo com engine/motor/Godot, entregue"
@@ -262,14 +306,15 @@ def system_prompt(
     lines = [_CORE, f"Hoje é {date}; fuso horário da pessoa: {tz.key}.", _REASONING]
     if research:
         lines.append(_RESEARCH)
-        lines.append(_TEACHING)
+        if not question or _WANTS["ensinar"].search(question):
+            lines.append(_TEACHING)
     if deep_research:
         lines.append(_DEEP_RESEARCH)
     # Habilidades embutidas que combinam com este pedido (escritas pela equipe).
     chosen = abilities.instructions(question) if question else ""
     if chosen:
         lines.append(chosen)
-    lines.append(_DELIVERY + "\n" + (_GODOT_DESKTOP if desktop else _GODOT_MOBILE))
+    lines.append(_delivery(question, desktop))
     if forja:
         lines.append(_FORJA)
     if language == "en":
