@@ -369,6 +369,19 @@ class GenerationHub:
                         stop = event.text
                 if live.cancel.cancelled():
                     break
+                if (
+                    not calls
+                    and stop == "length"
+                    and not round_text
+                    and not request.brief
+                    and continuations < MAX_CONTINUATIONS
+                ):
+                    # O raciocínio gastou todo o espaço e não sobrou resposta:
+                    # tenta de novo pensando pouco (em vez de mostrar erro).
+                    continuations += 1
+                    stop = "end"
+                    request = replace(request, brief=True)
+                    continue
                 cut = not calls and stop == "length" and bool(round_text)
                 if cut and continuations < MAX_CONTINUATIONS:
                     # Cortou por tamanho: a mesma resposta continua na rodada seguinte.

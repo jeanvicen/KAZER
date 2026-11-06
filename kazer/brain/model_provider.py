@@ -22,7 +22,7 @@ import threading
 import urllib.error
 import urllib.request
 from collections.abc import Callable, Iterator
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from typing import Any, Literal, Protocol, cast
 from urllib.parse import urlsplit
 
@@ -115,6 +115,9 @@ class GenerationRequest:
     tool_choice: str = ""
     # Tarefa de bastidor (título da conversa): modelo leve, resposta curta.
     light: bool = False
+    # Pensar pouco: depois de pesquisar (só falta escrever) ou quando o
+    # raciocínio comeu o espaço da resposta na tentativa anterior.
+    brief: bool = False
 
 
 @dataclass(frozen=True, slots=True)
@@ -218,6 +221,31 @@ class ModelGone(ProviderError):
 
 
 _GONE_CODES = {"model_decommissioned", "model_not_found", "model_not_active"}
+# O modelo errou o formato da chamada de ferramenta (comum na Groq: inventa uma
+# ferramenta que não existe ou manda JSON quebrado). Outro modelo — ou o mesmo
+# de novo — costuma acertar; nunca é culpa da pessoa.
+_TOOL_FAILED = {"tool_use_failed", "json_validate_failed", "output_parse_failed"}
+
+
+def _error_code(raw: bytes | dict[str, Any]) -> str:
+    """`error.code` do corpo de erro (só o código; o resto nunca é lido nem logado)."""
+    body: Any = raw
+    if isinstance(raw, bytes):
+        try:
+            body = json.loads(raw)
+        except ValueError:
+            return ""
+    error = body.get("error") if isinstance(body, dict) else None
+    code = error.get("code") if isinstance(error, dict) else None
+    return code if isinstance(code, str) else ""
+
+
+class _Switch(ProviderError):
+    """Falha antes de qualquer resposta: dá para tentar outro modelo."""
+
+    def __init__(self, code: str, model: str) -> None:
+        super().__init__(code)
+        self.model = model
 
 
 def _model_gone(code: int, raw: bytes) -> bool:
@@ -463,6 +491,8 @@ class OpenAICompatibleProvider:
                 "model.http_error",
                 extra={"provider": self._name, "status": exc.code, "model_gone": gone},
             )
+            if exc.code == 400 and _error_code(raw) in _TOOL_FAILED:
+                raise ProviderError("model_tool_failed") from None
             if exc.code == 413 or sizes:
                 # Pedido maior que o limite por minuto DESTE modelo: outro modelo
                 # (ou o mesmo com resposta menor) resolve; esperar não adianta.
@@ -495,26 +525,74 @@ class OpenAICompatibleProvider:
         return min(max(busy.retry_after, 2.0), self.busy_wait)
 
     def stream(self, request: GenerationRequest, cancel: CancelToken) -> Iterator[StreamEvent]:
-        """Abre o stream e repassa texto e raciocínio conforme chegam."""
+        """Abre o stream e repassa texto e raciocínio conforme chegam.
+
+        Se um modelo falhar ANTES de mandar qualquer texto (erro no meio do
+        stream, chamada de ferramenta malformada), o próximo da cadeia assume —
+        a pessoa só vê a resposta que deu certo. Se nenhum acertar a chamada de
+        ferramenta, a última volta responde sem ferramentas.
+        """
+        skip: set[str] = set()
+        current = request
+        tool_failures = 0
+        for _ in range(6):
+            emitted = False
+            try:
+                for event in self._stream_once(current, cancel, skip):
+                    if event.kind in ("text", "tool"):
+                        emitted = True
+                    yield event
+                return
+            except _Switch as switch:
+                if emitted:
+                    raise ProviderError(switch.code) from None
+                logger.warning("model.switch", extra={"provider": self._name, "code": switch.code})
+                skip.add(switch.model)
+                if switch.code == "model_tool_failed":
+                    tool_failures += 1
+            except ProviderError as error:
+                if emitted or error.code != "model_tool_failed":
+                    raise
+                tool_failures = 99
+            if tool_failures >= 2:
+                if not current.tools or current.tool_choice == "none":
+                    raise ProviderError("model_error")
+                # Nenhum acertou a ferramenta: responde com o que já tem, sem ferramentas.
+                current = replace(current, tool_choice="none")
+                skip.clear()
+                tool_failures = 0
+        raise ProviderError("model_error")
+
+    def _stream_once(
+        self, request: GenerationRequest, cancel: CancelToken, skip: set[str]
+    ) -> Iterator[StreamEvent]:
         response = None
+        chosen = ""
         last: ProviderError | None = None
         busy: ProviderError | None = None
-        attempts = self._attempts(request)
+        tool_failed: ProviderError | None = None
+        every = self._attempts(request)
+        attempts = [item for item in every if item[0] not in skip] or every
         for model, extra in attempts:
             if cancel.cancelled():
                 return
             try:
                 response = self._open(self._body(request, model, extra))
+                chosen = model
                 break
             except ModelGone as gone:
                 # Modelo aposentado ou inexistente: passa para o próximo da cadeia.
                 last = gone
             except ProviderError as error:
+                if error.code == "model_tool_failed":
+                    tool_failed = error
+                    continue
                 if error.code == "model_too_large":
                     smaller = self._resize(request, model, extra)
                     if smaller is not None:
                         try:
                             response = self._open(self._body(request, model, smaller))
+                            chosen = model
                             break
                         except ProviderError as again:
                             if again.code not in ("model_too_large", "model_busy"):
@@ -525,6 +603,8 @@ class OpenAICompatibleProvider:
                     raise
                 # Limite de uso deste modelo: o próximo da cadeia tem limite próprio.
                 busy = busy or error
+        if response is None and busy is None and tool_failed is not None:
+            raise tool_failed
         if response is None and busy is not None:
             # Todos cheios: espera o modelo que libera primeiro (com teto) e tenta de novo.
             wait = self._busy_wait(attempts, busy)
@@ -540,6 +620,7 @@ class OpenAICompatibleProvider:
                     return
                 try:
                     response = self._open(self._body(request, model, extra))
+                    chosen = model
                     break
                 except ProviderError as error:
                     if error.code not in ("model_busy", "model_too_large") and not isinstance(
@@ -577,7 +658,8 @@ class OpenAICompatibleProvider:
                         continue
                     if chunk.get("error"):
                         logger.warning("model.stream_error", extra={"provider": self._name})
-                        raise ProviderError("model_error")
+                        failed = _error_code(chunk) in _TOOL_FAILED
+                        raise _Switch("model_tool_failed" if failed else "model_error", chosen)
                     for choice in chunk.get("choices") or ():
                         delta = choice.get("delta") or {}
                         reasoning = delta.get("reasoning_content") or delta.get("reasoning")
@@ -656,6 +738,8 @@ GROQ_LIGHT = "llama-3.1-8b-instant,meta-llama/llama-4-scout-17b-16e-instruct,ope
 # Conversa leve começa por estes (cota por minuto maior que a do gpt-oss-120b).
 _LIGHT_FIRST = ("meta-llama/llama-4-scout", "moonshotai/kimi-k2")
 _GROQ_REASONING = {"low", "medium", "high"}
+# Espaço mínimo de saída por nível de raciocínio (pensar + responder).
+_THINK_ROOM = {"low": 1_536, "medium": 3_072, "high": 4_096}
 _AUTO = "auto"
 # Teto de saída por família: alto o bastante para nunca cortar um arquivo no meio.
 # (O raciocínio conta dentro do teto nos modelos que pensam.)
@@ -862,16 +946,28 @@ class GroqProvider(OpenAICompatibleProvider):
 
     def _attempts(self, request: GenerationRequest) -> list[tuple[str, dict[str, Any]]]:
         prompt = _prompt_tokens(request)
+        # Depois de uma pesquisa o trabalho é escrever com o que achou: pensar
+        # pouco aqui economiza muitos tokens (e cota) por mensagem.
+        brief = request.brief or bool(request.turns and request.turns[-1].results)
         ready: list[tuple[str, dict[str, Any]]] = []
         later: list[tuple[float, int, tuple[str, dict[str, Any]]]] = []
         unfit: list[tuple[str, dict[str, Any]]] = []
         for position, (model, extra) in enumerate(self._chain(request)):
             extra = dict(extra)
             if extra.get("reasoning_effort") == _AUTO:
-                extra["reasoning_effort"] = "high" if request.deep else task_effort(request)
+                extra["reasoning_effort"] = (
+                    "low" if brief else "high" if request.deep else task_effort(request)
+                )
+            elif brief and extra.get("reasoning_effort") in _GROQ_REASONING:
+                extra["reasoning_effort"] = "low"
             ceiling = 160 if request.light else _groq_max_out(model)
             if not self._max_tokens and ceiling:
-                budget = self.governor.output_budget(model, prompt, ceiling)
+                # Modelos que pensam precisam de espaço para pensar E responder:
+                # sem isso o raciocínio come tudo e a resposta sai vazia.
+                floor = _THINK_ROOM.get(str(extra.get("reasoning_effort", "")), MIN_OUTPUT)
+                budget = self.governor.output_budget(
+                    model, prompt, ceiling, floor=min(floor, ceiling)
+                )
                 if budget is None:
                     # Nem o pedido cabe no limite por minuto deste modelo.
                     unfit.append((model, extra))

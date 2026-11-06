@@ -167,13 +167,15 @@ class Governor:
                 wait = max(wait, state.minute_resets - now)
             return wait
 
-    def output_budget(self, model: str, prompt_tokens: int, ceiling: int) -> int | None:
-        """Máximo de saída que cabe no TPM do modelo; None se nem o pedido cabe."""
+    def output_budget(
+        self, model: str, prompt_tokens: int, ceiling: int, floor: int = MIN_OUTPUT
+    ) -> int | None:
+        """Máximo de saída que cabe no TPM do modelo; None se não sobra nem `floor`."""
         tpm = self.tpm(model)
         if not tpm:
             return ceiling
         room = tpm - prompt_tokens - SAFETY
-        if room < MIN_OUTPUT:
+        if room < floor:
             return None
         return min(ceiling, room)
 

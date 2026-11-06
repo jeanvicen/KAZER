@@ -185,6 +185,41 @@ def test_a_cut_answer_continues_where_it_stopped() -> None:
     assert follow[-2].role == "assistant"
 
 
+class ThinkerProvider:
+    """Na 1ª rodada só pensa até estourar o tamanho; na 2ª (pensando pouco) responde."""
+
+    capabilities: Any = None
+
+    def __init__(self) -> None:
+        self.requests: list[GenerationRequest] = []
+
+    def stream(self, request: GenerationRequest, cancel: CancelToken) -> Any:
+        self.requests.append(request)
+        if not request.brief:
+            yield StreamEvent("thinking", "pensando muito " * 50)
+            yield StreamEvent("stop", "length")
+        else:
+            yield StreamEvent("text", "R$ 7.999")
+            yield StreamEvent("stop", "end")
+
+
+def test_when_thinking_eats_the_whole_answer_it_retries_thinking_less() -> None:
+    import time
+
+    provider, store = ThinkerProvider(), Store()
+    hub = GenerationHub(store, provider)  # type: ignore[arg-type]
+    request = GenerationRequest(system="s", turns=(Turn("user", (Part("text", "x"),)),))
+    assert hub.try_reserve()
+    live = hub.start("u", "c", "r", request)
+    for _ in range(200):
+        if live.done:
+            break
+        time.sleep(0.01)
+    assert store.final["status"] == "complete"
+    assert store.final["content"] == "R$ 7.999"
+    assert [r.brief for r in provider.requests] == [False, True]
+
+
 def test_tool_labels_never_carry_html() -> None:
     label = WebTools.label("buscar_web", {"consulta": "<b>x</b>" * 40})
     assert len(label) < 100

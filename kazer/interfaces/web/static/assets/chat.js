@@ -50,6 +50,7 @@ const REPLY_ERRORS = {
   model_refused: "O KAZER não pode ajudar com esse pedido.",
   model_empty: "O modelo não devolveu nenhuma resposta.",
   model_error: "Algo deu errado ao gerar a resposta.",
+  model_tool_failed: "O modelo se enrolou com a pesquisa. Tente de novo.",
   interrupted: "A resposta foi interrompida.",
 };
 
@@ -1136,19 +1137,29 @@ function finish(model, reply) {
   }
   if (S.pinned) window.requestAnimationFrame(() => scrollToBottom(false));
   announce(model.status === "complete" ? "Resposta pronta." : "A resposta não foi concluída.");
-  if (model.status === "error" && model.error === "model_busy" && !model.content) autoRetry(model);
+  if (model.status === "error" && RETRYABLE[model.error] && !model.content) autoRetry(model);
   else if (model.status === "complete") model.busyTries = 0;
 }
 
 // Fila cheia na Groq: em vez de largar a pessoa com um erro, o KAZER tenta de
 // novo sozinho (com contagem visível) — o servidor já pula os modelos lotados.
-const BUSY_RETRIES = [5, 12, 25];
+// Falhas passageiras também tentam de novo sozinhas (uma vez, rápido).
+const RETRYABLE = {
+  model_busy: [5, 12, 25],
+  model_error: [2],
+  model_empty: [2],
+  model_unreachable: [3],
+  model_timeout: [3],
+  model_tool_failed: [2],
+};
 
 function autoRetry(model) {
+  const plan = RETRYABLE[model.error] || [];
   const tries = model.busyTries || 0;
-  if (tries >= BUSY_RETRIES.length) return;
+  if (tries >= plan.length) return;
   model.busyTries = tries + 1;
-  let left = BUSY_RETRIES[tries];
+  let left = plan[tries];
+  const busy = model.error === "model_busy";
   clearTimeout(model.busyTimer);
   const tick = () => {
     if (model.status !== "error" || S.ui.messages.lastElementChild !== model.el) return;
@@ -1158,7 +1169,7 @@ function autoRetry(model) {
       return;
     }
     const span = model.parts.notice.querySelector("span");
-    if (span) span.textContent = `Muita gente usando agora. Tento de novo em ${left} s…`;
+    if (span) span.textContent = busy ? `Muita gente usando agora. Tento de novo em ${left} s…` : `Deu um tropeço. Tentando de novo em ${left} s…`;
     left -= 1;
     model.busyTimer = setTimeout(tick, 1000);
   };

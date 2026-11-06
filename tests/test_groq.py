@@ -20,6 +20,8 @@ from kazer.brain.model_provider import (
     GroqProvider,
     Part,
     ProviderError,
+    ToolCall,
+    ToolDef,
     Turn,
     build_provider,
     parse_tier,
@@ -39,6 +41,8 @@ class Groq(BaseHTTPRequestHandler):
     gone: set[str] = set()
     busy: set[str] = set()
     too_large: set[str] = set()
+    tool_fail: set[str] = set()  # 400 tool_use_failed (enquanto houver ferramentas)
+    stream_fail: set[str] = set()  # 200 e depois erro no meio do stream
     extra_headers: dict[str, str] = {}
     status: int = 200
 
@@ -54,6 +58,20 @@ class Groq(BaseHTTPRequestHandler):
             self.send_response(Groq.status if Groq.status != 200 else 429)
             self.send_header("Retry-After", "7")
             self.end_headers()
+            return
+        if body["model"] in Groq.tool_fail and body.get("tool_choice") != "none":
+            payload = json.dumps({"error": {"code": "tool_use_failed", "message": "x"}})
+            self.send_response(400)
+            self.send_header("Content-Length", str(len(payload)))
+            self.end_headers()
+            self.wfile.write(payload.encode())
+            return
+        if body["model"] in Groq.stream_fail:
+            self.send_response(200)
+            self.send_header("Content-Type", "text/event-stream")
+            self.end_headers()
+            error = {"error": {"code": "tool_use_failed", "message": "Failed to call a function"}}
+            self.wfile.write(f"data: {json.dumps(error)}\n\n".encode())
             return
         if body["model"] in Groq.too_large:
             payload = json.dumps(
@@ -91,6 +109,7 @@ class Groq(BaseHTTPRequestHandler):
 def groq_url() -> Iterator[str]:
     Groq.seen, Groq.auth, Groq.gone, Groq.status = [], [], set(), 200
     Groq.busy, Groq.too_large, Groq.extra_headers = set(), set(), {}
+    Groq.tool_fail, Groq.stream_fail = set(), set()
     server = ThreadingHTTPServer(("127.0.0.1", 0), Groq)
     threading.Thread(target=server.serve_forever, daemon=True).start()
     try:
@@ -371,3 +390,61 @@ def test_kaz_1_1_uses_only_the_low_effort_model(
         # O raciocínio cru nunca chegou à tela.
         assert "segredo do raciocínio" not in json.dumps(stream)
 
+
+
+# ---------- Erros reais da Groq em pesquisa ----------
+
+SEARCH_TOOL = ToolDef(name="buscar_web", description="busca", schema={"type": "object"})
+
+
+def _search_request(**kwargs: Any) -> GenerationRequest:
+    return GenerationRequest(
+        system="s",
+        turns=(Turn("user", (Part("text", "pesquisa o preço do iphone 17"),)),),
+        tools=(SEARCH_TOOL,),
+        **kwargs,
+    )
+
+
+def _answer(p: GroqProvider, request: GenerationRequest) -> str:
+    return "".join(e.text for e in p.stream(request, CancelToken()) if e.kind == "text")
+
+
+def test_a_tool_call_error_in_the_middle_of_the_stream_switches_model(groq_url: str) -> None:
+    Groq.stream_fail = {"big-model"}
+    p = provider(groq_url)
+    assert _answer(p, _search_request(effort="high")) == "resposta de backup-model"
+
+
+def test_malformed_tool_calls_everywhere_still_get_an_answer(groq_url: str) -> None:
+    Groq.tool_fail = {"big-model", "backup-model"}
+    p = provider(groq_url)
+    assert _answer(p, _search_request(effort="high")) == "resposta de big-model"
+    assert Groq.seen[-1]["tool_choice"] == "none"
+
+
+def test_after_searching_it_thinks_little_and_writes(groq_url: str) -> None:
+    p = provider(groq_url, tiers={"baixo": "openai/gpt-oss-120b:auto"})
+    call = ToolCall(id="c1", name="buscar_web", arguments={"q": "iphone"})
+    request = GenerationRequest(
+        system="s",
+        turns=(
+            Turn("user", (Part("text", "pesquisa o preço do iphone 17 e explica tudo"),)),
+            Turn("assistant", (), calls=(call,)),
+            Turn("user", (), results=(("c1", "R$ 7.999"),)),
+        ),
+        tools=(SEARCH_TOOL,),
+    )
+    _answer(p, request)
+    assert Groq.seen[-1]["reasoning_effort"] == "low"
+
+
+def test_a_prompt_too_big_for_thinking_room_goes_to_a_roomier_model(groq_url: str) -> None:
+    p = provider(
+        groq_url,
+        tiers={"baixo": "openai/gpt-oss-120b:high,meta-llama/llama-4-scout-17b-16e-instruct"},
+    )
+    big = GenerationRequest(
+        system="x" * 16_000, turns=(Turn("user", (Part("text", "Crie um app completo"),)),)
+    )
+    assert _answer(p, big) == "resposta de meta-llama/llama-4-scout-17b-16e-instruct"
