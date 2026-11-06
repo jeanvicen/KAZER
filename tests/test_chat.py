@@ -292,16 +292,19 @@ def test_options_are_validated_against_real_capabilities(make_env: Callable[...,
             "invalid_effort": {"effort": "alto"},
             "deep_unavailable": {"deep": True},
             "web_search_unavailable": {"tools": {"web_search": True}},
-            "research_unavailable": {"tools": {"research": True}},
         }
         for code, extra in cases.items():
             response = client.post(
                 "/api/chat", json={"content": "Oi", "client_id": f"opt-{code}", **extra}
             )
             assert (response.status_code, response.json()["error"]) == (400, code)
+        # Pesquisa profunda saiu: navegador antigo que ainda mande o campo não quebra.
+        legacy = {"content": "Oi", "client_id": "old-research", "tools": {"research": True}}
+        old = client.post("/api/chat", json=legacy)
+        assert old.status_code == 200
         empty = client.post("/api/chat", json={"content": "   ", "client_id": "empty-msg-1"})
         assert empty.json()["error"] == "empty_message"
-        assert client.get("/api/conversations").json()["items"] == []
+        assert len(client.get("/api/conversations").json()["items"]) == 1
 
 
 def test_conversations_are_isolated_between_accounts(make_env: Callable[..., Env]) -> None:

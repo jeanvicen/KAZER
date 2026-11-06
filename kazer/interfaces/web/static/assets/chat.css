@@ -6671,81 +6671,6 @@ html[data-motion="reduzido"] .pxword__blink {
   }
 }
 
-/* ---------- Pesquisa profunda no + e no campo ---------- */
-
-.plus__research {
-  display: flex;
-  align-items: center;
-  gap: 0.85rem;
-  width: 100%;
-  margin-top: 0.75rem;
-  padding: 0.85rem 0.95rem;
-  border: 1px solid var(--c-border);
-  border-radius: 1rem;
-  background: var(--c-surface);
-  color: var(--c-text);
-  font: inherit;
-  text-align: left;
-  cursor: pointer;
-  transition: border-color 0.15s ease;
-}
-
-.plus__research:hover:not(:disabled),
-.plus__research.is-on {
-  border-color: #e8b04a;
-}
-
-.plus__research:disabled {
-  opacity: 0.55;
-  cursor: not-allowed;
-}
-
-.plus__research-icon {
-  display: grid;
-  place-items: center;
-  flex: none;
-  width: 2.4rem;
-  height: 2.4rem;
-  border-radius: 0.75rem;
-  background: color-mix(in srgb, #e8b04a 15%, transparent);
-  color: #f3c565;
-}
-
-.plus__research-text {
-  display: grid;
-  gap: 0.15rem;
-  flex: 1;
-  min-width: 0;
-}
-
-.plus__research-text span {
-  color: var(--c-text-2);
-  font-size: 0.82rem;
-  line-height: 1.4;
-}
-
-.plus__research-left {
-  flex: none;
-  color: var(--c-text-2);
-  font-size: 0.8rem;
-  font-variant-numeric: tabular-nums;
-}
-
-.tool--research {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  width: auto !important;
-  padding: 0 0.8rem !important;
-  border-radius: 999px !important;
-  background: color-mix(in srgb, #e8b04a 16%, transparent) !important;
-  color: #f3c565 !important;
-}
-
-.tool--research[hidden] {
-  display: none !important;
-}
-
 .tool__label {
   font-size: 0.85rem;
   font-weight: 600;
@@ -6982,4 +6907,15 @@ html[data-motion="reduzido"] .pxword__blink {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+/* Microfone e enviar ficam à direita da barra (antes era style inline, que a
+   CSP bloqueia — por isso o alinhamento nunca era aplicado). */
+.composer__tools .tool--mic,
+.composer .tool--mic {
+  margin-left: auto;
+}
+
+.composer .send {
+  margin-left: 0;
 }

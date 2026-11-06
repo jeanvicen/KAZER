@@ -120,10 +120,6 @@ LONG_HISTORY_MESSAGES = 20
 MAX_UNITS = 12
 # Pesquisa profunda: pesada de verdade (dezenas de buscas e leituras), então tem
 # cota própria por dia e pesa mais na franquia.
-RESEARCH_PER_DAY = 3
-RESEARCH_WINDOW = 24 * 3600
-UNITS_RESEARCH = 4
-RESEARCH_TOOL_ROUNDS = 24
 MAX_CODE_SESSIONS = 30
 
 PREFERENCE_DEFAULTS: dict[str, Any] = {
@@ -144,8 +140,8 @@ PREFERENCE_DEFAULTS: dict[str, Any] = {
     # o servidor (ver `_remember_code_session`): a pessoa não edita esta lista.
     "code_sessions": [],
     # Quando a pessoa usou a pesquisa profunda (segundos); só o servidor escreve.
-    "research_log": [],
 }
+# research_log: rastro antigo da pesquisa profunda (removida); nunca vai ao navegador.
 _SERVER_ONLY_PREFERENCES = {"code_sessions", "research_log"}
 _CHOICES = {
     "style": {"direto", "equilibrado", "detalhado"},
@@ -234,8 +230,6 @@ class SendOptions:
     forja: bool = False
     # Computador (tela larga e ponteiro fino): só lá o KAZER entrega projetos Godot.
     desktop: bool = False
-    # Pesquisa profunda (botão + → Pesquisa profunda).
-    research: bool = False
     # Skills que a pessoa chamou com "/" nesta mensagem (ids, no máximo MAX_CALLED_SKILLS).
     skills: tuple[str, ...] = ()
 
@@ -249,7 +243,6 @@ class SendOptions:
             "memory": self.memory,
             "forja": self.forja,
             "desktop": self.desktop,
-            "research": self.research,
             "skills": list(self.skills),
             # Guardado com a mensagem para o consumo ser auditável depois.
             "units": self.units,
@@ -266,7 +259,6 @@ class SendOptions:
         units += UNITS_PDF * self.documents
         units += UNITS_LONG_PROMPT if self.long_prompt else 0
         units += UNITS_LONG_HISTORY if self.long_history else 0
-        units += UNITS_RESEARCH if self.research else 0
         return min(units, MAX_UNITS)
 
 
@@ -382,7 +374,6 @@ class ChatService:
                 "files": self._provider is not None,
                 "web_search": bool(caps and caps.web_search),
                 "research": self._web is not None,
-                "research_per_day": RESEARCH_PER_DAY,
                 "memory": True,
                 "voice": False,
             },
@@ -858,7 +849,7 @@ class ChatService:
         return ""
 
     def _tool_runner(
-        self, user_id: str, *, read_only: bool = False, deep: bool = False, focus: str = ""
+        self, user_id: str, *, read_only: bool = False, focus: str = ""
     ) -> Callable[[ToolCall], tuple[Any, ...]]:
         """Fecha o ciclo: o modelo pede, o KAZER executa, o resultado volta."""
         by_name = {spec.name: spec for spec in self._tools_for(user_id, read_only=read_only)}
@@ -868,9 +859,7 @@ class ChatService:
             if web is not None and call.name in web_tools.NAMES:
                 label = web.label(call.name, call.arguments)
                 try:
-                    text, found, detail = web.execute(
-                        call.name, call.arguments, deep=deep, focus=focus
-                    )
+                    text, found, detail = web.execute(call.name, call.arguments, focus=focus)
                     return (label, text, found, detail)
                 except Exception:  # noqa: BLE001 - pesquisa não derruba a resposta
                     logger.warning("chat.web_tool_failed")
@@ -1164,19 +1153,17 @@ class ChatService:
         tools = data.get("tools", {})
         if not isinstance(tools, dict):
             raise ChatError("invalid_request", 400)
-        deep, web, research = data.get("deep", False), tools.get("web_search", False), tools.get(
-            "research", False
-        )
+        # "research" (pesquisa profunda) saiu: navegador antigo que ainda mande
+        # o campo é aceito e ignorado — a pesquisa normal já busca sozinha.
+        deep, web = data.get("deep", False), tools.get("web_search", False)
         memory = tools.get("memory", True)
-        if not all(isinstance(flag, bool) for flag in (deep, web, research, memory)):
+        if not all(isinstance(flag, bool) for flag in (deep, web, memory)):
             raise ChatError("invalid_request", 400)
         caps = self._provider.capabilities if self._provider else None
         if deep and not (caps and caps.deep):
             raise ChatError("deep_unavailable", 400)
         if web and not (caps and caps.web_search):
             raise ChatError("web_search_unavailable", 400)
-        if research and self._web is None:
-            raise ChatError("research_unavailable", 400)
         forja = data.get("forja", False)
         desktop = data.get("desktop", False)
         if not isinstance(forja, bool) or not isinstance(desktop, bool):
@@ -1197,33 +1184,8 @@ class ChatService:
             memory=memory and memory_enabled,
             forja=forja,
             desktop=desktop,
-            research=research,
             skills=tuple(dict.fromkeys(called)),
         )
-
-    def _research_log(self, prefs: dict[str, Any]) -> list[int]:
-        cutoff = self._now() - RESEARCH_WINDOW
-        return [int(t) for t in prefs.get("research_log", []) if isinstance(t, int) and t > cutoff]
-
-    def research_left(self, user_id: str) -> int:
-        """Quantas pesquisas profundas ainda cabem nas últimas 24 horas."""
-        return max(RESEARCH_PER_DAY - len(self._research_log(self.preferences(user_id))), 0)
-
-    def _check_research(self, prefs: dict[str, Any]) -> None:
-        used = self._research_log(prefs)
-        if len(used) >= RESEARCH_PER_DAY:
-            reset = min(used) + RESEARCH_WINDOW
-            raise ChatError(
-                "research_limit", 429, retry_after=max(reset - self._now(), 1), reset_at=reset
-            )
-
-    def _record_research(self, user_id: str, prefs: dict[str, Any]) -> None:
-        """Anota o uso (não derruba o envio se a gravação falhar)."""
-        try:
-            log = [*self._research_log(prefs), self._now()]
-            self._store.save_preferences(user_id, {**prefs, "research_log": log}, self._now())
-        except Exception:  # noqa: BLE001
-            logger.warning("chat.research_log_failed")
 
     def _allows(self, user_id: str, feature: str) -> bool:
         """O plano da conta libera este recurso?"""
@@ -1318,8 +1280,6 @@ class ChatService:
         )
         if conversation_id and self._hub.busy(conversation_id):
             raise ChatError("busy", 409)
-        if options.research:
-            self._check_research(prefs)
         wait = self._limiter.hit(f"send:{user_id}", RateLimit(20, 60))
         if wait > 0:
             raise ChatError("rate_limited", 429, retry_after=wait)
@@ -1366,8 +1326,6 @@ class ChatService:
         if options.forja:
             self._remember_code_session(user_id, exchange.conversation.id, prefs)
             prefs = self.preferences(user_id)
-        if options.research:
-            self._record_research(user_id, prefs)
         request, restricted = self._request(
             user_id, exchange.user_message, options, prefs, timezone
         )
@@ -1385,7 +1343,7 @@ class ChatService:
             access_token=current_access_token(),
             on_complete=on_complete,
             on_tool=self._tool_runner(
-                user_id, read_only=restricted, deep=options.research, focus=asked
+                user_id, read_only=restricted, focus=asked
             ),
             describe=self._describe,
         )
@@ -1415,7 +1373,6 @@ class ChatService:
             ),
             forja=bool(current.options.get("forja", False)),
             desktop=bool(current.options.get("desktop", False)),
-            research=bool(current.options.get("research", False)) and self._web is not None,
         )
         caps = self._provider.capabilities
         if (options.deep and not caps.deep) or (options.web_search and not caps.web_search):
@@ -1453,7 +1410,7 @@ class ChatService:
             request,
             access_token=current_access_token(),
             on_tool=self._tool_runner(
-                user_id, read_only=restricted, deep=options.research, focus=question.content
+                user_id, read_only=restricted, focus=question.content
             ),
             describe=self._describe,
         )
@@ -1570,20 +1527,14 @@ class ChatService:
             forja=options.forja,
             skills=uses,
             research=self._web is not None and not restricted,
-            deep_research=options.research and self._web is not None and not restricted,
             desktop=options.desktop,
             question=question.content,
         )
         specs = self._tools_for(user_id, read_only=restricted)
-        # Resposta normal: o KAZER pesquisa ANTES (prefetch) e a Groq só escreve,
-        # sem ferramentas de busca — é onde os modelos mais erravam. A pesquisa
-        # profunda continua com o agente que decide pesquisar de novo.
+        # O KAZER pesquisa ANTES (prefetch) e o modelo só escreve, sem
+        # ferramentas de busca — era onde os modelos da Groq mais erravam.
+        # Ferramentas de verdade só as dos conectores da própria pessoa.
         searchable = not restricted and self._web is not None
-        builtin = (
-            self._web.select(question.content, deep=True)
-            if searchable and options.research and self._web is not None
-            else ()
-        )
         previous = next(
             (
                 item.content
@@ -1597,22 +1548,17 @@ class ChatService:
             system=system,
             turns=turns,
             effort=options.effort,
-            # A pesquisa profunda pensa no máximo e pode dar muito mais rodadas.
-            deep=options.deep or options.research,
+            deep=options.deep,
             web_search=options.web_search,
-            tool_rounds=RESEARCH_TOOL_ROUNDS if options.research else 0,
             prefetch=planned,
             prefetch_check=(
                 question.content[:1500]
                 if planned and pre.uncertain(question.content, previous)
                 else ""
             ),
-            tools=(
-                *builtin,
-                *(
-                    ToolDef(name=spec.name, description=spec.description, schema=_OPEN_SCHEMA)
-                    for spec in specs
-                ),
+            tools=tuple(
+                ToolDef(name=spec.name, description=spec.description, schema=_OPEN_SCHEMA)
+                for spec in specs
             ),
         )
         return request, restricted

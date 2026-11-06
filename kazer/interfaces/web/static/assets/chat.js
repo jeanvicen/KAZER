@@ -67,8 +67,6 @@ const SEND_ERRORS = {
   documents_unavailable: "O modelo atual não lê PDFs.",
   deep_unavailable: "Pensamento profundo está indisponível com o modelo atual.",
   web_search_unavailable: "A busca na web está indisponível no momento.",
-  research_limit: "Você já usou as 3 pesquisas profundas de hoje. Elas liberam 24 h depois de cada uso.",
-  research_unavailable: "A pesquisa profunda está indisponível agora.",
   research_unavailable: "A pesquisa está indisponível no momento.",
   message_too_long: "Mensagem longa demais: o máximo é de 32 mil caracteres.",
   empty_message: "Escreva algo ou anexe um arquivo.",
@@ -134,7 +132,7 @@ const S = {
   sending: false,
   live: null, // { replyId, lastIndex, controller }
   attachments: [],
-  options: { effort: store.get("kazer:effort", "baixo"), web: false, memory: true, research: false },
+  options: { effort: store.get("kazer:effort", "baixo"), web: false, memory: true },
   // Skills chamadas com "/" nesta mensagem.
   skillsPicked: [],
   pinned: true,
@@ -173,7 +171,7 @@ export async function mountChat({ email, onSignedOut }) {
     "empty-note", "thread", "messages", "older", "to-bottom", "composer", "composer-alert",
     "composer-alert-text", "composer-alert-close", "composer-box", "tray", "skill-chips", "prompt", "plus", "model-chip",
     "open-palette",
-    "forja-chip", "research-chip", "mic", "send", "pick-camera", "pick-photos", "pick-files",
+    "forja-chip", "mic", "send", "pick-camera", "pick-photos", "pick-files",
   ];
   for (const id of ids) S.ui[id.replace(/-(\w)/g, (_, c) => c.toUpperCase())] = byId(root, id);
   setSheetBackground(root);
@@ -1329,7 +1327,7 @@ async function send() {
         skills: S.skillsPicked.map((item) => item.id),
         // Pesquisa em tempo real e memória ficam sempre ligadas (a memória
         // respeita o que a pessoa escolheu nas configurações).
-        tools: { web_search: false, research: Boolean(S.options.research), memory: S.prefs.memory_enabled !== false },
+        tools: { web_search: false, memory: S.prefs.memory_enabled !== false },
         forja: S.forja,
         // Projetos Godot só rodam no computador: o servidor avisa o modelo.
         desktop: desktopQuery.matches && !coarse.matches,
@@ -1414,7 +1412,6 @@ function failSend(data) {
   }
   // O servidor mudou a oferta de esforços: volta ao Baixo em vez de travar o envio.
   if (data.error === "invalid_effort") setEffort("baixo", { quiet: true });
-  if (data.error === "research_limit" || data.error === "research_unavailable") setResearch(false);
 }
 
 function commitSend(event) {
@@ -1428,11 +1425,6 @@ function commitSend(event) {
   upsertHistory(event.conversation);
   if (S.forja && S.prefs && !S.prefs.code_sessions?.includes(event.conversation.id)) {
     S.prefs.code_sessions = [event.conversation.id, ...(S.prefs.code_sessions || [])].slice(0, 30);
-  }
-  // Pesquisa profunda vale para uma mensagem: conta o uso e desliga.
-  if (S.options.research) {
-    S.prefs.research_log = [...(S.prefs.research_log || []), Math.floor(Date.now() / 1000)];
-    setResearch(false);
   }
   // Limpa o composer só agora: a mensagem já está salva no servidor.
   S.ui.prompt.value = "";
@@ -2035,55 +2027,9 @@ function openPlusSheet() {
           ),
         ),
       );
-      // Pesquisa profunda: liga para a próxima mensagem; 3 por dia.
-      const left = researchLeft();
-      const research = h(
-        `button.plus__research${S.options.research ? ".is-on" : ""}`,
-        {
-          type: "button",
-          disabled: !features.research || (!S.options.research && left <= 0),
-          "aria-pressed": String(Boolean(S.options.research)),
-          onclick: () => {
-            handle.close({ restore: false });
-            setResearch(!S.options.research);
-            S.ui.prompt.focus();
-          },
-        },
-        h("span.plus__research-icon", { "aria-hidden": "true" }, icon("research")),
-        h(
-          "span.plus__research-text",
-          {},
-          h("strong", { text: "Pesquisa profunda" }),
-          h("span", {
-            text: !features.research
-              ? "Indisponível agora."
-              : left > 0
-                ? "Dezenas de buscas e fontes lidas, relatório com citações."
-                : "Você usou as 3 de hoje. Libera em 24 h.",
-          }),
-        ),
-        h("span.plus__research-left", { text: features.research ? `${left}/${features.research_per_day || 3}` : "" }),
-      );
-      return h("div.plus", {}, tiles, research);
+      return h("div.plus", {}, tiles);
     },
   });
-}
-
-// Usos da pesquisa profunda nas últimas 24 h (o servidor confere de verdade).
-function researchLeft() {
-  const per = S.model?.features?.research_per_day || 3;
-  const now = Date.now() / 1000;
-  const used = (S.prefs.research_log || []).filter((time) => now - time < 86400).length;
-  return Math.max(per - used, 0);
-}
-
-function setResearch(on) {
-  S.options.research = on;
-  S.ui.researchChip.hidden = !on;
-  S.ui.composerBox.classList.toggle("is-research", on);
-  if (S.ui.prompt && !S.forja) {
-    S.ui.prompt.placeholder = on ? "O que você quer investigar a fundo?" : "Converse com o KAZER...";
-  }
 }
 
 // ---------- Atalhos de teclado (computador) ----------
@@ -2207,7 +2153,6 @@ function bindDrawer() {
   S.ui.drawerScrim.addEventListener("click", () => closeDrawer());
   S.ui.newChat.addEventListener("click", () => newConversation());
   S.ui.sourcesTop.addEventListener("click", () => openSourcesSheet());
-  S.ui.researchChip.addEventListener("click", () => setResearch(false));
   S.ui.openSettings.addEventListener("click", () => openSettings());
   S.ui.signOut.addEventListener("click", () => signOut());
   S.ui.drawer.addEventListener("keydown", (event) => {
