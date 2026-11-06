@@ -303,11 +303,15 @@ def system_prompt(
     date = (
         f"{_WEEKDAYS[local.weekday()]}, {local.day} de {_MONTHS[local.month - 1]} de {local.year}"
     )
-    lines = [_CORE, f"Hoje é {date}; fuso horário da pessoa: {tz.key}.", _REASONING]
+    # Ordem importa: o começo fixo (igual para todo mundo) vem primeiro, e o que
+    # muda (data, pedido, pessoa) vem depois. A Groq guarda em cache o começo
+    # repetido do prompt, e tokens em cache não contam no limite por minuto.
+    lines = [_CORE, _REASONING]
     if research:
         lines.append(_RESEARCH)
-        if not question or _WANTS["ensinar"].search(question):
-            lines.append(_TEACHING)
+    lines.append(f"Hoje é {date}; fuso horário da pessoa: {tz.key}.")
+    if research and (not question or _WANTS["ensinar"].search(question)):
+        lines.append(_TEACHING)
     if deep_research:
         lines.append(_DEEP_RESEARCH)
     # Habilidades embutidas que combinam com este pedido (escritas pela equipe).

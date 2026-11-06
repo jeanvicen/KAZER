@@ -1136,6 +1136,33 @@ function finish(model, reply) {
   }
   if (S.pinned) window.requestAnimationFrame(() => scrollToBottom(false));
   announce(model.status === "complete" ? "Resposta pronta." : "A resposta não foi concluída.");
+  if (model.status === "error" && model.error === "model_busy" && !model.content) autoRetry(model);
+  else if (model.status === "complete") model.busyTries = 0;
+}
+
+// Fila cheia na Groq: em vez de largar a pessoa com um erro, o KAZER tenta de
+// novo sozinho (com contagem visível) — o servidor já pula os modelos lotados.
+const BUSY_RETRIES = [5, 12, 25];
+
+function autoRetry(model) {
+  const tries = model.busyTries || 0;
+  if (tries >= BUSY_RETRIES.length) return;
+  model.busyTries = tries + 1;
+  let left = BUSY_RETRIES[tries];
+  clearTimeout(model.busyTimer);
+  const tick = () => {
+    if (model.status !== "error" || S.ui.messages.lastElementChild !== model.el) return;
+    if (left <= 0) {
+      if (S.live || S.sending) model.busyTimer = setTimeout(tick, 1000);
+      else retry(model);
+      return;
+    }
+    const span = model.parts.notice.querySelector("span");
+    if (span) span.textContent = `Muita gente usando agora. Tento de novo em ${left} s…`;
+    left -= 1;
+    model.busyTimer = setTimeout(tick, 1000);
+  };
+  tick();
 }
 
 // Lê o stream até o fim; devolve "done", "pending" ou "broken" (queda de rede).

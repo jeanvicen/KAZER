@@ -26,7 +26,6 @@ ModelProviderName = Literal[
     "together",
     "ollama",
     "custom",
-    "cerebras",
 ]
 # auto: o adaptador decide; effort: envia nível de raciocínio; off: nunca envia.
 ModelReasoning = Literal["auto", "effort", "off"]

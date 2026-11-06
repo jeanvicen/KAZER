@@ -38,6 +38,8 @@ class Groq(BaseHTTPRequestHandler):
     auth: list[str] = []
     gone: set[str] = set()
     busy: set[str] = set()
+    too_large: set[str] = set()
+    extra_headers: dict[str, str] = {}
     status: int = 200
 
     def log_message(self, *args: Any) -> None:  # noqa: D102
@@ -53,6 +55,16 @@ class Groq(BaseHTTPRequestHandler):
             self.send_header("Retry-After", "7")
             self.end_headers()
             return
+        if body["model"] in Groq.too_large:
+            payload = json.dumps(
+                {"error": {"message": "Request too large for model on tokens per minute (TPM):"
+                           " Limit 6000, Requested 34087, please reduce your message size"}}
+            )
+            self.send_response(413)
+            self.send_header("Content-Length", str(len(payload)))
+            self.end_headers()
+            self.wfile.write(payload.encode())
+            return
         if body["model"] in Groq.gone:
             payload = json.dumps({"error": {"code": "model_decommissioned", "message": "x"}})
             self.send_response(400)
@@ -62,6 +74,8 @@ class Groq(BaseHTTPRequestHandler):
             return
         self.send_response(200)
         self.send_header("Content-Type", "text/event-stream")
+        for name, value in Groq.extra_headers.items():
+            self.send_header(name, value)
         self.end_headers()
         chunks = [
             {"choices": [{"delta": {"reasoning": "segredo do raciocínio"}}]},
@@ -76,7 +90,7 @@ class Groq(BaseHTTPRequestHandler):
 @pytest.fixture
 def groq_url() -> Iterator[str]:
     Groq.seen, Groq.auth, Groq.gone, Groq.status = [], [], set(), 200
-    Groq.busy = set()
+    Groq.busy, Groq.too_large, Groq.extra_headers = set(), set(), {}
     server = ThreadingHTTPServer(("127.0.0.1", 0), Groq)
     threading.Thread(target=server.serve_forever, daemon=True).start()
     try:
@@ -180,12 +194,77 @@ def test_when_the_whole_chain_is_gone_the_error_is_generic(groq_url: str) -> Non
 def test_rate_limit_tries_the_rest_of_the_chain_then_keeps_its_wait(groq_url: str) -> None:
     Groq.status = 429
     p = provider(groq_url)
-    p.busy_wait = 0  # o teste não espera de verdade
+    p.busy_wait = 0  # espera maior que o teto: avisa já, sem prender a pessoa
     with pytest.raises(ProviderError) as caught:
         ask(p, "high")
     assert (caught.value.code, caught.value.retry_after) == ("model_busy", 7.0)
-    # Tentou o modelo e a reserva, e mais uma volta depois da espera.
-    assert [b["model"] for b in Groq.seen] == ["big-model", "backup-model"] * 2
+    assert [b["model"] for b in Groq.seen] == ["big-model", "backup-model"]
+
+
+# ---------- Governador de limites ----------
+
+
+def test_a_model_that_said_429_is_skipped_until_it_cools_down(groq_url: str) -> None:
+    Groq.busy = {"big-model"}
+    p = provider(groq_url)
+    assert ask(p, "high") == "resposta de backup-model"
+    Groq.seen.clear()
+    # Na próxima mensagem o KAZER nem bate no modelo cheio: vai direto ao livre.
+    assert ask(p, "high") == "resposta de backup-model"
+    assert [b["model"] for b in Groq.seen] == ["backup-model"]
+
+
+def test_the_answer_size_fits_the_models_tokens_per_minute(groq_url: str) -> None:
+    Groq.extra_headers = {"x-ratelimit-limit-tokens": "5000"}
+    p = provider(groq_url, tiers={"baixo": "openai/gpt-oss-120b"})
+    ask(p, "low")
+    first = Groq.seen[-1]["max_completion_tokens"]
+    assert first <= 8_000 - 300  # TPM grátis conhecido do modelo
+    ask(p, "low")
+    # Depois de ler o cabeçalho, o teto segue o limite real (5000) e nunca o estoura.
+    assert Groq.seen[-1]["max_completion_tokens"] <= 5000 - 300
+
+
+def test_request_too_large_moves_on_and_learns_the_limit(groq_url: str) -> None:
+    Groq.too_large = {"big-model"}
+    p = provider(groq_url)
+    assert ask(p, "high") == "resposta de backup-model"
+    assert p.governor.tpm("big-model") == 6000
+
+
+def test_light_chat_starts_on_models_with_spare_quota(groq_url: str) -> None:
+    p = provider(
+        groq_url,
+        tiers={"baixo": "openai/gpt-oss-120b:auto,meta-llama/llama-4-scout-17b-16e-instruct"},
+    )
+    assert ask(p, "low") == "resposta de meta-llama/llama-4-scout-17b-16e-instruct"
+    request = GenerationRequest(
+        system="s",
+        turns=(Turn("user", (Part("text", "Crie um jogo de carro completo em HTML"),)),),
+    )
+    out = "".join(e.text for e in p.stream(request, CancelToken()) if e.kind == "text")
+    assert out == "resposta de openai/gpt-oss-120b"
+
+
+def test_background_tasks_use_the_small_model(groq_url: str) -> None:
+    p = provider(groq_url)
+    request = GenerationRequest(
+        system="s", turns=(Turn("user", (Part("text", "título"),)),), light=True
+    )
+    list(p.stream(request, CancelToken()))
+    assert Groq.seen[-1]["model"] == "llama-3.1-8b-instant"
+    assert Groq.seen[-1]["max_completion_tokens"] <= 160
+
+
+def test_rate_limit_durations_are_parsed() -> None:
+    from kazer.brain.groq_limits import parse_duration
+
+    assert parse_duration("2m59.56s") == pytest.approx(179.56)
+    assert parse_duration("7.66s") == pytest.approx(7.66)
+    assert parse_duration("450ms") == pytest.approx(0.45)
+    assert parse_duration("1h2m") == pytest.approx(3720)
+    assert parse_duration("12") == 12
+    assert parse_duration("lixo") == 0
 
 
 def test_a_busy_model_falls_to_the_next_one_without_an_error(groq_url: str) -> None:
@@ -292,63 +371,3 @@ def test_kaz_1_1_uses_only_the_low_effort_model(
         # O raciocínio cru nunca chegou à tela.
         assert "segredo do raciocínio" not in json.dumps(stream)
 
-
-class _Scripted:
-    """Provedor de mentira: falha com um código ou responde um texto."""
-
-    def __init__(self, outcome: str, *, images: bool = True) -> None:
-        from kazer.brain.model_provider import Capabilities
-
-        self.outcome = outcome
-        self.capabilities = Capabilities(images=images)
-        self.seen: list[GenerationRequest] = []
-
-    def stream(self, request: GenerationRequest, cancel: CancelToken) -> Iterator[Any]:
-        from kazer.brain.model_provider import StreamEvent
-
-        self.seen.append(request)
-        if self.outcome.startswith("model_"):
-            raise ProviderError(self.outcome)
-        yield StreamEvent(kind="text", text=self.outcome)
-
-
-def _text(provider: Any) -> str:
-    turn = Turn(role="user", parts=(Part(kind="text", text="oi"),))
-    request = GenerationRequest(system="", turns=(turn,))
-    return "".join(getattr(e, "text", "") for e in provider.stream(request, CancelToken()))
-
-
-def test_a_busy_provider_hands_over_to_the_next_one() -> None:
-    from kazer.brain.model_provider import FallbackProvider
-
-    busy, spare = _Scripted("model_busy"), _Scripted("resposta da reserva")
-    assert _text(FallbackProvider([busy, spare])) == "resposta da reserva"
-    assert busy.seen and spare.seen
-
-
-def test_a_refusal_is_not_hidden_by_the_fallback() -> None:
-    from kazer.brain.model_provider import FallbackProvider
-
-    refused, spare = _Scripted("model_rejected"), _Scripted("não devia chegar aqui")
-    with pytest.raises(ProviderError) as caught:
-        _text(FallbackProvider([refused, spare]))
-    assert caught.value.code == "model_rejected"
-    assert not spare.seen
-
-
-def test_when_every_provider_is_busy_the_last_error_stays() -> None:
-    from kazer.brain.model_provider import FallbackProvider
-
-    with pytest.raises(ProviderError) as caught:
-        _text(FallbackProvider([_Scripted("model_busy"), _Scripted("model_timeout")]))
-    assert caught.value.code == "model_timeout"
-
-
-def test_free_fallbacks_join_only_when_their_key_exists() -> None:
-    from kazer.brain.model_provider import FallbackProvider
-
-    settings = Settings(environment="test", model_provider="groq")
-    built = build_provider(settings, Env2(GROQ_API_KEY=KEY, CEREBRAS_API_KEY="csk-segredo"))
-    assert isinstance(built, FallbackProvider)
-    assert "csk-segredo" not in repr(built) and KEY not in repr(built)
-    assert isinstance(build_provider(settings, Env2(GROQ_API_KEY=KEY)), GroqProvider)

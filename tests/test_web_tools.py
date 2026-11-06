@@ -364,3 +364,16 @@ def test_what_was_researched_is_saved_even_if_the_answer_fails() -> None:
     store = _run(Searcher(fail_on=2))
     assert store.final["status"] == "error"
     assert "https://a.example/" in store.final["content"]
+
+
+def test_long_pages_keep_only_what_answers_the_question() -> None:
+    from kazer.chat.web_tools import focus_text
+
+    filler = [f"Parágrafo {i} sobre receitas de bolo e farinha." for i in range(80)]
+    page = "\n\n".join(["Começo da página.", *filler, "O preço do iPhone 17 é R$ 7.999.", *filler])
+    out = focus_text(page, "pesquisa pará mim o preço do iphone", 800)
+    assert "R$ 7.999" in out and len(out) < 800
+    assert "Começo da página." in out
+    # Página curta passa inteira; sem pistas no pedido, corta pelo começo.
+    assert focus_text("curto", "x", 800) == "curto"
+    assert focus_text(page, "", 300).startswith("Começo da página.")

@@ -16,7 +16,6 @@ from __future__ import annotations
 import base64
 import json
 import logging
-import os
 import re
 import ssl
 import threading
@@ -27,6 +26,12 @@ from dataclasses import dataclass
 from typing import Any, Literal, Protocol, cast
 from urllib.parse import urlsplit
 
+from kazer.brain.groq_limits import (
+    GOVERNOR,
+    MIN_OUTPUT,
+    estimate_tokens,
+    too_large_numbers,
+)
 from kazer.config.settings import Settings
 from kazer.security.secrets import EnvironmentSecretProvider, SecretProvider
 
@@ -108,6 +113,8 @@ class GenerationRequest:
     tool_rounds: int = 0
     # "none": as ferramentas continuam declaradas, mas o modelo deve só responder.
     tool_choice: str = ""
+    # Tarefa de bastidor (título da conversa): modelo leve, resposta curta.
+    light: bool = False
 
 
 @dataclass(frozen=True, slots=True)
@@ -201,7 +208,6 @@ _PRESETS: dict[str, _Preset] = {
     "together": _Preset("https://api.together.xyz/v1", "TOGETHER_API_KEY", False),
     "ollama": _Preset("http://127.0.0.1:11434/v1", None, False),
     "custom": _Preset("", "KAZER_MODEL_API_KEY", False),
-    "cerebras": _Preset("https://api.cerebras.ai/v1", "CEREBRAS_API_KEY", False),
 }
 
 _FINISH = {"stop": "end", "length": "length", "content_filter": "refusal"}
@@ -214,19 +220,19 @@ class ModelGone(ProviderError):
 _GONE_CODES = {"model_decommissioned", "model_not_found", "model_not_active"}
 
 
-def _model_gone(exc: urllib.error.HTTPError) -> bool:
+def _model_gone(code: int, raw: bytes) -> bool:
     """O erro diz que o modelo sumiu? Lê só o código; o corpo nunca vai ao log."""
-    if exc.code == 404:
+    if code == 404:
         return True
-    if exc.code != 400:
+    if code != 400:
         return False
     try:
-        body = json.loads(exc.read(4096))
-    except (OSError, ValueError):
+        body = json.loads(raw)
+    except ValueError:
         return False
     error = body.get("error") if isinstance(body, dict) else None
-    code = error.get("code") if isinstance(error, dict) else None
-    return isinstance(code, str) and code in _GONE_CODES
+    code_name = error.get("code") if isinstance(error, dict) else None
+    return isinstance(code_name, str) and code_name in _GONE_CODES
 
 
 def _status_error(status: int, retry_after: str | None) -> ProviderError:
@@ -439,15 +445,29 @@ class OpenAICompatibleProvider:
         http_request = urllib.request.Request(
             self._url, data=json.dumps(body).encode("utf-8"), headers=headers, method="POST"
         )
+        model = str(body.get("model", ""))
         try:
-            return urllib.request.urlopen(http_request, timeout=self._timeout)  # noqa: S310
+            response = urllib.request.urlopen(http_request, timeout=self._timeout)  # noqa: S310
         except urllib.error.HTTPError as exc:
-            gone = _model_gone(exc)
+            raw = b""
+            if exc.code in (400, 413, 429):
+                try:
+                    raw = exc.read(4096)
+                except OSError:
+                    raw = b""
+            gone = _model_gone(exc.code, raw)
+            self._observe(model, exc.headers, exc.code)
+            sizes = too_large_numbers(raw.decode("utf-8", "replace"))
             exc.close()
             logger.warning(
                 "model.http_error",
                 extra={"provider": self._name, "status": exc.code, "model_gone": gone},
             )
+            if exc.code == 413 or sizes:
+                # Pedido maior que o limite por minuto DESTE modelo: outro modelo
+                # (ou o mesmo com resposta menor) resolve; esperar não adianta.
+                self._too_large(model, sizes)
+                raise ProviderError("model_too_large") from None
             error = _status_error(exc.code, exc.headers.get("retry-after"))
             raise ModelGone(error.code, error.retry_after) if gone else error from None
         except TimeoutError:
@@ -455,6 +475,24 @@ class OpenAICompatibleProvider:
         except (urllib.error.URLError, ssl.SSLError, OSError):
             logger.warning("model.unreachable", extra={"provider": self._name})
             raise ProviderError("model_unreachable") from None
+        self._observe(model, response.headers, response.status)
+        return response
+
+    def _observe(self, model: str, headers: Any, status: int) -> None:
+        """Ganchos de limite (a Groq usa; o genérico ignora)."""
+
+    def _too_large(self, model: str, sizes: tuple[int, int] | None) -> None:
+        """O provedor recusou por tamanho (a Groq aprende o limite real)."""
+
+    def _resize(
+        self, request: GenerationRequest, model: str, extra: dict[str, Any]
+    ) -> dict[str, Any] | None:
+        """Parâmetros menores para tentar o mesmo modelo de novo (None = não dá)."""
+        return None
+
+    def _busy_wait(self, attempts: list[tuple[str, dict[str, Any]]], busy: ProviderError) -> float:
+        """Quanto esperar antes da segunda volta quando todos estão cheios."""
+        return min(max(busy.retry_after, 2.0), self.busy_wait)
 
     def stream(self, request: GenerationRequest, cancel: CancelToken) -> Iterator[StreamEvent]:
         """Abre o stream e repassa texto e raciocínio conforme chegam."""
@@ -463,6 +501,8 @@ class OpenAICompatibleProvider:
         busy: ProviderError | None = None
         attempts = self._attempts(request)
         for model, extra in attempts:
+            if cancel.cancelled():
+                return
             try:
                 response = self._open(self._body(request, model, extra))
                 break
@@ -470,13 +510,27 @@ class OpenAICompatibleProvider:
                 # Modelo aposentado ou inexistente: passa para o próximo da cadeia.
                 last = gone
             except ProviderError as error:
+                if error.code == "model_too_large":
+                    smaller = self._resize(request, model, extra)
+                    if smaller is not None:
+                        try:
+                            response = self._open(self._body(request, model, smaller))
+                            break
+                        except ProviderError as again:
+                            if again.code not in ("model_too_large", "model_busy"):
+                                raise
+                    busy = busy or ProviderError("model_busy")
+                    continue
                 if error.code != "model_busy":
                     raise
                 # Limite de uso deste modelo: o próximo da cadeia tem limite próprio.
                 busy = busy or error
         if response is None and busy is not None:
-            # Todos cheios: espera o que o provedor pediu (com teto) e tenta de novo.
-            wait = min(max(busy.retry_after, 2.0), self.busy_wait)
+            # Todos cheios: espera o modelo que libera primeiro (com teto) e tenta de novo.
+            wait = self._busy_wait(attempts, busy)
+            if wait > self.busy_wait:
+                # Cota do dia acabou em todos: avisa já, sem prender a pessoa.
+                raise ProviderError("model_busy", retry_after=wait)
             if wait > 0 and not cancel.cancelled():
                 cancel_event = threading.Event()
                 cancel.on_cancel(cancel_event.set)
@@ -488,7 +542,9 @@ class OpenAICompatibleProvider:
                     response = self._open(self._body(request, model, extra))
                     break
                 except ProviderError as error:
-                    if error.code not in ("model_busy",) and not isinstance(error, ModelGone):
+                    if error.code not in ("model_busy", "model_too_large") and not isinstance(
+                        error, ModelGone
+                    ):
                         raise
             if response is None:
                 raise busy
@@ -595,6 +651,10 @@ GROQ_DEFAULT_TIERS = {
 GROQ_DEFAULT_VISION = (
     "meta-llama/llama-4-maverick-17b-128e-instruct,meta-llama/llama-4-scout-17b-16e-instruct"
 )
+# Bastidores (título da conversa): modelo pequeno com cota diária grande.
+GROQ_LIGHT = "llama-3.1-8b-instant,meta-llama/llama-4-scout-17b-16e-instruct,openai/gpt-oss-20b:low"
+# Conversa leve começa por estes (cota por minuto maior que a do gpt-oss-120b).
+_LIGHT_FIRST = ("meta-llama/llama-4-scout", "moonshotai/kimi-k2")
 _GROQ_REASONING = {"low", "medium", "high"}
 _AUTO = "auto"
 # Teto de saída por família: alto o bastante para nunca cortar um arquivo no meio.
@@ -711,6 +771,7 @@ class GroqProvider(OpenAICompatibleProvider):
         }
         self._vision_model = vision_model
         self._vision_chain = parse_tier(vision_model) if vision_model else []
+        self.governor = GOVERNOR
         super().__init__(
             name="groq",
             base_url=base_url,
@@ -755,28 +816,89 @@ class GroqProvider(OpenAICompatibleProvider):
             if event.kind != "thinking":
                 yield event
 
-    def _attempts(self, request: GenerationRequest) -> list[tuple[str, dict[str, Any]]]:
-        has_image = any(
-            part.kind == "image" for turn in request.turns for part in turn.parts
+    # --- limites: cada modelo da Groq tem cota própria -----------------------
+
+    def _observe(self, model: str, headers: Any, status: int) -> None:
+        self.governor.observe(model, headers, status)
+
+    def _too_large(self, model: str, sizes: tuple[int, int] | None) -> None:
+        if sizes:
+            self.governor.too_large(model, sizes[0])
+
+    def _resize(
+        self, request: GenerationRequest, model: str, extra: dict[str, Any]
+    ) -> dict[str, Any] | None:
+        budget = self.governor.output_budget(
+            model, _prompt_tokens(request), _groq_max_out(model) or 8_192
         )
+        current = int(extra.get("max_completion_tokens") or 0)
+        if budget is None or (current and budget >= current):
+            return None
+        return {**extra, "max_completion_tokens": budget}
+
+    def _busy_wait(self, attempts: list[tuple[str, dict[str, Any]]], busy: ProviderError) -> float:
+        waits = [self.governor.cooling(model) for model, _ in attempts]
+        known = min(waits) if waits else 0.0
+        return round(max(known, min(busy.retry_after, self.busy_wait), 1.0), 1)
+
+    def _chain(self, request: GenerationRequest) -> list[tuple[str, dict[str, Any]]]:
+        """A cadeia de modelos para este pedido, já na ordem de preferência."""
+        has_image = any(part.kind == "image" for turn in request.turns for part in turn.parts)
         if has_image and self._vision_chain:
-            chain = list(self._vision_chain)
-        else:
-            # Esforço de fora da tabela (ou desligado pelo ambiente) cai no mais baixo.
-            wanted = next(
-                (name for name, value in EFFORTS.items() if value == request.effort), "baixo"
-            )
-            chain = list(self._tiers.get(wanted) or next(iter(self._tiers.values()), []))
-        resolved: list[tuple[str, dict[str, Any]]] = []
-        for model, extra in chain:
+            return list(self._vision_chain)
+        if request.light:
+            return parse_tier(GROQ_LIGHT)
+        # Esforço de fora da tabela (ou desligado pelo ambiente) cai no mais baixo.
+        wanted = next(
+            (name for name, value in EFFORTS.items() if value == request.effort), "baixo"
+        )
+        chain = list(self._tiers.get(wanted) or next(iter(self._tiers.values()), []))
+        if wanted == "baixo" and not request.deep and task_effort(request) == "low":
+            # Conversa leve vai primeiro para modelos com cota folgada: o
+            # gpt-oss-120b (o mais forte) fica livre para o que precisa dele.
+            light = [item for item in chain if item[0].startswith(_LIGHT_FIRST)]
+            chain = light + [item for item in chain if item not in light]
+        return chain
+
+    def _attempts(self, request: GenerationRequest) -> list[tuple[str, dict[str, Any]]]:
+        prompt = _prompt_tokens(request)
+        ready: list[tuple[str, dict[str, Any]]] = []
+        later: list[tuple[float, int, tuple[str, dict[str, Any]]]] = []
+        unfit: list[tuple[str, dict[str, Any]]] = []
+        for position, (model, extra) in enumerate(self._chain(request)):
             extra = dict(extra)
             if extra.get("reasoning_effort") == _AUTO:
                 extra["reasoning_effort"] = "high" if request.deep else task_effort(request)
-            if not self._max_tokens and (ceiling := _groq_max_out(model)):
-                # Sem teto, o provedor corta cedo demais em respostas longas.
-                extra["max_completion_tokens"] = ceiling
-            resolved.append((model, extra))
-        return resolved
+            ceiling = 160 if request.light else _groq_max_out(model)
+            if not self._max_tokens and ceiling:
+                budget = self.governor.output_budget(model, prompt, ceiling)
+                if budget is None:
+                    # Nem o pedido cabe no limite por minuto deste modelo.
+                    unfit.append((model, extra))
+                    continue
+                # Cabe no TPM do modelo; se a resposta for maior, ela continua
+                # sozinha na próxima chamada (sem corte para a pessoa).
+                extra["max_completion_tokens"] = budget
+            wait = self.governor.cooling(model, need=prompt + MIN_OUTPUT)
+            if wait > 0:
+                later.append((wait, position, (model, extra)))
+            else:
+                ready.append((model, extra))
+        ordered = ready + [item for _, _, item in sorted(later, key=lambda w: (w[0], w[1]))]
+        # Sem nenhum que caiba, tenta mesmo assim (a Groq ensina o limite real).
+        return ordered or unfit
+
+
+def _prompt_tokens(request: GenerationRequest) -> int:
+    """Estimativa local do tamanho do pedido (texto + ferramentas; imagem à parte)."""
+    chars = len(request.system)
+    for turn in request.turns:
+        chars += sum(len(part.text) for part in turn.parts if part.kind != "image")
+        chars += sum(len(text) for _, text in turn.results)
+        chars += sum(len(call.name) + len(json.dumps(call.arguments)) for call in turn.calls)
+    for tool in request.tools:
+        chars += len(tool.name) + len(tool.description) + len(json.dumps(tool.schema))
+    return estimate_tokens(chars)
 
 
 # ---------------------------------------------------------------------------
@@ -1027,58 +1149,6 @@ def _seen(block: Any) -> str:
 # ---------------------------------------------------------------------------
 
 # Falhas que valem tentar outro provedor: limite, fora do ar, demora, erro deles.
-_SWITCH = {"model_busy", "model_unreachable", "model_timeout", "model_error", "model_auth"}
-
-# Provedores de reserva com plano grátis: entram sozinhos quando a chave existe.
-# O modelo de cada um pode ser trocado por KAZER_FALLBACK_<NOME>_MODEL.
-FALLBACKS: tuple[tuple[str, str, str, str], ...] = (
-    ("cerebras", "https://api.cerebras.ai/v1", "CEREBRAS_API_KEY", "gpt-oss-120b"),
-    ("gemini", "https://generativelanguage.googleapis.com/v1beta/openai", "GEMINI_API_KEY",
-     "gemini-2.5-flash"),
-    ("openrouter", "https://openrouter.ai/api/v1", "OPENROUTER_API_KEY",
-     "meta-llama/llama-3.3-70b-instruct:free"),
-    ("mistral", "https://api.mistral.ai/v1", "MISTRAL_API_KEY", "mistral-small-latest"),
-)
-
-
-class FallbackProvider:
-    """Tenta o principal e, se ele falhar antes de responder, o próximo da lista."""
-
-    def __init__(self, providers: list[ModelProvider]) -> None:
-        self._providers = providers
-        self.capabilities = providers[0].capabilities
-
-    def __repr__(self) -> str:
-        """Sem chaves."""
-        return f"FallbackProvider({len(self._providers)})"
-
-    def stream(self, request: GenerationRequest, cancel: CancelToken) -> Iterator[StreamEvent]:
-        last: ProviderError | None = None
-        for index, provider in enumerate(self._providers):
-            if cancel.cancelled():
-                return
-            attempt = request
-            if index and not provider.capabilities.images:
-                attempt = _without_images(request)
-            events = provider.stream(attempt, cancel)
-            try:
-                first = next(events, None)
-            except ProviderError as error:
-                if error.code not in _SWITCH:
-                    raise
-                logger.warning(
-                    "model.fallback", extra={"from": index, "code": error.code}
-                )
-                last = error
-                continue
-            if first is not None:
-                yield first
-            yield from events
-            return
-        if last is not None:
-            raise last
-
-
 # ---------------------------------------------------------------------------
 # Montagem a partir da configuração
 # ---------------------------------------------------------------------------
@@ -1120,45 +1190,6 @@ def _build_groq(
 
 
 def build_provider(
-    settings: Settings, secrets: SecretProvider | None = None
-) -> ModelProvider | None:
-    """O provedor principal e, atrás dele, as reservas que tiverem chave."""
-    secrets = secrets or EnvironmentSecretProvider()
-    primary = _build_primary(settings, secrets)
-    if primary is None:
-        return None
-    chain: list[ModelProvider] = [primary]
-    for name, base_url, secret, model in FALLBACKS:
-        if name == settings.model_provider:
-            continue
-        try:
-            key = secrets.get_secret(secret, scope="model")
-        except LookupError:
-            continue
-        chosen = os.environ.get(f"KAZER_FALLBACK_{name.upper()}_MODEL", "").strip() or model
-        chain.append(
-            OpenAICompatibleProvider(
-                name=name,
-                base_url=base_url,
-                api_key=key,
-                model=chosen,
-                deep_model="",
-                capabilities=Capabilities(images=name in ("gemini", "openrouter")),
-                send_effort=False,
-                max_tokens=settings.model_max_output_tokens or 16_384,
-                timeout=settings.model_timeout_seconds,
-            )
-        )
-    if len(chain) > 1:
-        # Com reserva, o principal não fica esperando a fila: passa a vez rápido.
-        if isinstance(primary, OpenAICompatibleProvider):
-            primary.busy_wait = 2.0
-        logger.info("model.fallbacks", extra={"count": len(chain) - 1})
-        return FallbackProvider(chain)
-    return primary
-
-
-def _build_primary(
     settings: Settings, secrets: SecretProvider | None = None
 ) -> ModelProvider | None:
     """Monta o adaptador do KAZ 1.1 ou None (a interface mostra "não configurado").

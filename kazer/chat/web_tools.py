@@ -23,6 +23,7 @@ import os
 import re
 import socket
 import threading
+import unicodedata
 from collections.abc import Callable
 from dataclasses import dataclass
 from html import unescape
@@ -422,6 +423,10 @@ class WebTools:
     def _page_chars(self) -> int:
         return MAX_PAGE_CHARS if getattr(self._local, "deep", False) else PAGE_CHARS
 
+    def _fit(self, text: str) -> str:
+        """Texto de página no tamanho certo, priorizando o que responde ao pedido."""
+        return focus_text(text, getattr(self._local, "focus", ""), self._page_chars())
+
     def select(self, question: str, *, deep: bool = False) -> tuple[ToolDef, ...]:
         """Só as ferramentas que fazem sentido para o pedido.
 
@@ -438,7 +443,7 @@ class WebTools:
         return tuple(tool for tool in DEFINITIONS if tool.name in wanted)
 
     def execute(
-        self, name: str, arguments: dict[str, Any], *, deep: bool = False
+        self, name: str, arguments: dict[str, Any], *, deep: bool = False, focus: str = ""
     ) -> tuple[str, list[dict[str, str]], str]:
         """Como `run`, mas devolve também as fontes consultadas e um detalhe curto.
 
@@ -448,6 +453,10 @@ class WebTools:
         self._local.found = []
         self._local.detail = ""
         self._local.deep = deep
+        # O que a pessoa perguntou: páginas longas viram só os trechos que importam.
+        self._local.focus = " ".join(
+            [focus, *(str(v) for v in arguments.values() if isinstance(v, str))]
+        )
         try:
             text = self.run(name, arguments)
             return text, list(self._local.found), str(self._local.detail)
@@ -768,7 +777,7 @@ class WebTools:
         if len(text) < 200:
             return ""
         self._found(url, url, "lido")
-        return EXTERNAL + f"Fonte: {url}\n\n" + _clip(text, self._page_chars())
+        return EXTERNAL + f"Fonte: {url}\n\n" + self._fit(text)
 
     def _open_page(self, url: str) -> str:
         final, header, raw, encoding = self._get_public(url)
@@ -776,7 +785,7 @@ class WebTools:
         if kind in {"application/json", "text/plain", "text/markdown", "text/csv"}:
             text = raw.decode(encoding, "replace")
             self._found(final, final, "lido")
-            return EXTERNAL + f"Fonte: {final}\n\n" + _clip(text, self._page_chars())
+            return EXTERNAL + f"Fonte: {final}\n\n" + self._fit(text)
         if kind and "html" not in kind and "xml" not in kind:
             raise ToolFailure(f"Esse endereço não é uma página de texto ({kind}).")
         title, body, links = page_text(raw.decode(encoding, "replace"), final)
@@ -786,7 +795,7 @@ class WebTools:
         return (
             EXTERNAL
             + f"Fonte: {final}\nTítulo: {title or '(sem título)'}\n\n"
-            + _clip(body, self._page_chars())
+            + self._fit(body)
             + (f"\n\nLinks da página:\n{listed}" if listed else "")
         )
 
@@ -863,7 +872,7 @@ class WebTools:
                 + f"★{info.get('stargazers_count', 0)} · {info.get('language') or '—'} ·"
                 + f" licença {((info.get('license') or {}).get('spdx_id')) or '—'} ·"
                 + f" atualizado {info.get('pushed_at') or '—'}\n\nRaiz:\n{names}\n\n"
-                + (f"README:\n{_clip(readme, self._page_chars())}" if readme else "")
+                + (f"README:\n{self._fit(readme)}" if readme else "")
             )
         if action == "pasta":
             listing = self._gh(f"/repos/{repo}/contents/{quoted}")
@@ -1194,6 +1203,69 @@ class WebTools:
 # ---------------------------------------------------------------------------
 # Auxiliares
 # ---------------------------------------------------------------------------
+
+
+_STOP = frozenset(
+    "a o as os de da do das dos e em no na nos nas um uma uns umas que para pra por com"
+    " sem se como mais muito sobre qual quais quando onde porque isso esse essa este esta"
+    " me mim meu minha voce você eu ele ela the of and to in for is on with what how"
+    " pesquisa pesquise busca procure fala diga mostra explica quero".split()
+)
+
+
+def _terms(text: str) -> set[str]:
+    folded = unicodedata.normalize("NFKD", text.lower())
+    folded = "".join(ch for ch in folded if not unicodedata.combining(ch))
+    return {word for word in re.findall(r"[a-z0-9]{3,}", folded) if word not in _STOP}
+
+
+def focus_text(text: str, query: str, limit: int) -> str:
+    """Corta uma página longa mantendo os trechos que mais respondem ao pedido.
+
+    Compressão extrativa (a ideia do LLMLingua/"context pruning", sem modelo):
+    divide em blocos, dá nota pela quantidade de palavras do pedido em cada um,
+    guarda o começo da página e os melhores blocos na ordem original. Menos
+    tokens enviados à Groq, e o que sobra é o que interessa.
+    """
+    text = text.strip()
+    if len(text) <= limit:
+        return text
+    wanted = _terms(query)
+    blocks = [b.strip() for b in re.split(r"\n\s*\n|(?<=[.!?])\s{2,}", text) if b.strip()]
+    if not wanted or len(blocks) < 3:
+        return _clip(text, limit)
+    pieces: list[str] = []
+    for block in blocks:  # blocos gigantes viram pedaços de ~600 caracteres
+        while len(block) > 900:
+            cut = block.rfind(". ", 0, 600)
+            cut = cut + 1 if cut > 200 else 600
+            pieces.append(block[:cut].strip())
+            block = block[cut:].strip()
+        if block:
+            pieces.append(block)
+    scored = sorted(
+        range(len(pieces)),
+        key=lambda i: (-len(wanted & _terms(pieces[i])), i),
+    )
+    keep = {0}
+    size = len(pieces[0])
+    for index in scored:
+        if index in keep or not (wanted & _terms(pieces[index])):
+            continue
+        if size + len(pieces[index]) + 2 > limit:
+            continue
+        keep.add(index)
+        size += len(pieces[index]) + 2
+    if len(keep) == 1:
+        return _clip(text, limit)
+    out = []
+    previous = -1
+    for index in sorted(keep):
+        if previous >= 0 and index != previous + 1:
+            out.append("[…]")
+        out.append(pieces[index])
+        previous = index
+    return _clip("\n\n".join(out), limit) + "\n[trechos mais relevantes da página]"
 
 
 def _clip(text: str, limit: int) -> str:
