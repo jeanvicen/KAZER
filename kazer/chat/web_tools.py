@@ -41,7 +41,7 @@ logger = logging.getLogger("kazer.web_tools")
 TIMEOUT = 12.0
 MAX_PAGE_BYTES = 2_000_000
 MAX_PAGE_CHARS = 14_000  # pesquisa profunda
-PAGE_CHARS = 6_000  # resposta normal: menos texto por página = menos tokens por minuto
+PAGE_CHARS = 3_500  # resposta normal: menos texto por página = menos tokens por minuto
 MAX_FILE_CHARS = 40_000
 MAX_RESULTS = 8
 MAX_REDIRECTS = 4

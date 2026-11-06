@@ -118,6 +118,9 @@ class GenerationRequest:
     # Pensar pouco: depois de pesquisar (só falta escrever) ou quando o
     # raciocínio comeu o espaço da resposta na tentativa anterior.
     brief: bool = False
+    # Buscas que o KAZER faz ANTES do modelo (o hub roda e junta o resultado
+    # à pergunta; o provedor nunca vê este campo).
+    prefetch: tuple[ToolCall, ...] = ()
 
 
 @dataclass(frozen=True, slots=True)

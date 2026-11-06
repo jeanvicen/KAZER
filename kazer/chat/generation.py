@@ -12,7 +12,8 @@ import json
 import logging
 import threading
 import time
-from collections.abc import AsyncIterator, Callable
+from collections.abc import AsyncIterator, Callable, Sequence
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field, replace
 from typing import Any
 
@@ -25,6 +26,8 @@ from kazer.brain.model_provider import (
     ToolCall,
     Turn,
 )
+from kazer.chat import prefetch as pre
+from kazer.chat import web_tools as wt
 from kazer.chat.identity import bind_access_token
 from kazer.chat.protocols import ChatStorage
 
@@ -301,11 +304,7 @@ class GenerationHub:
             if label:
                 live.steps.append({"l": label[:160], "d": detail[:80]})
             if found:
-                known = {item["u"] for item in live.sources}
-                fresh = [item for item in found if item.get("u") and item["u"] not in known]
-                if fresh:
-                    live.sources.extend(fresh[: MAX_SOURCES - len(live.sources)])
-                    live.push({"type": "sources", "items": list(live.sources)})
+                self._record(live, found)
             results.append((call.id, output))
         budget = request.tool_rounds or MAX_TOOL_ROUNDS
         used = sum(1 for turn in request.turns if turn.results) + 1
@@ -329,6 +328,71 @@ class GenerationHub:
             ),
         )
 
+    def _record(self, live: LiveGeneration, found: Sequence[dict[str, str]]) -> None:
+        known = {item["u"] for item in live.sources}
+        fresh = [item for item in found if item.get("u") and item["u"] not in known]
+        if fresh:
+            live.sources.extend(fresh[: MAX_SOURCES - len(live.sources)])
+            live.push({"type": "sources", "items": list(live.sources)})
+
+    def _run_parallel(
+        self, live: LiveGeneration, calls: Sequence[ToolCall]
+    ) -> list[tuple[str, str, list[dict[str, str]]]]:
+        """Roda várias buscas ao mesmo tempo, mostrando cada passo de verdade."""
+        assert live.on_tool is not None
+        on_tool = live.on_tool
+        ids = [f"{call.id}-{len(live.events)}-{n}" for n, call in enumerate(calls)]
+        for step_id, call in zip(ids, calls, strict=True):
+            label = live.describe(call) if live.describe else ""
+            if label:
+                live.push({"type": "step", "id": step_id, "label": label, "state": "run"})
+        with ThreadPoolExecutor(max_workers=min(4, len(calls))) as pool:
+            outcomes = list(pool.map(on_tool, calls))
+        results = []
+        for step_id, outcome in zip(ids, outcomes, strict=True):
+            label = str(outcome[0])
+            output = str(outcome[1])
+            found = list(outcome[2]) if len(outcome) > 2 else []
+            detail = str(outcome[3]) if len(outcome) > 3 and outcome[3] else ""
+            live.push(
+                {"type": "step", "id": step_id, "label": label, "state": "done", "detail": detail}
+            )
+            if label:
+                live.steps.append({"l": label[:160], "d": detail[:80]})
+            self._record(live, found)
+            results.append((label, output, found))
+        return results
+
+    def _prefetch(self, live: LiveGeneration, request: GenerationRequest) -> GenerationRequest:
+        """Pesquisa antes do modelo: busca, lê as melhores páginas e junta à pergunta.
+
+        A Groq recebe tudo pronto e só escreve — sem chamar ferramenta nenhuma.
+        """
+        first = self._run_parallel(live, request.prefetch)
+        opened = {
+            str(call.arguments.get("url", "")) for call in request.prefetch if call.name == wt.OPEN
+        }
+        found = [item for _, _, items in first for item in items]
+        pages = [] if live.cancel.cancelled() else pre.pages_to_open(found, opened)
+        second = (
+            self._run_parallel(
+                live,
+                [ToolCall(f"pre-page-{n}", wt.OPEN, {"url": url}) for n, url in enumerate(pages)],
+            )
+            if pages
+            else []
+        )
+        results = [(label, output) for label, output, _ in (*first, *second)]
+        note = Part("text", pre.context_note(results))
+        last = request.turns[-1]
+        return replace(
+            request,
+            prefetch=(),
+            # Só falta escrever com o que veio: pensar pouco economiza cota.
+            brief=True,
+            turns=(*request.turns[:-1], replace(last, parts=(*last.parts, note))),
+        )
+
     def _generate(self, live: LiveGeneration, request: GenerationRequest) -> None:
         text: list[str] = []
         thinking: list[str] = []
@@ -345,6 +409,15 @@ class GenerationHub:
         watchdog.daemon = True
         watchdog.start()
         try:
+            if request.prefetch:
+                if live.on_tool is not None:
+                    try:
+                        request = self._prefetch(live, request)
+                    except Exception:  # noqa: BLE001 - busca falhou: responde sem ela
+                        logger.warning("chat.prefetch_failed")
+                        request = replace(request, prefetch=())
+                else:
+                    request = replace(request, prefetch=())
             while True:
                 calls: list[ToolCall] = []
                 round_text: list[str] = []

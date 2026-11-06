@@ -40,6 +40,7 @@ from kazer.chat import (
     skill_guard,
     web_tools,
 )
+from kazer.chat import prefetch as pre
 from kazer.chat.generation import GenerationHub, LiveGeneration
 from kazer.chat.identity import current_access_token
 from kazer.chat.protocols import AttachmentStorage, ChatStorage
@@ -1574,11 +1575,24 @@ class ChatService:
             question=question.content,
         )
         specs = self._tools_for(user_id, read_only=restricted)
+        # Resposta normal: o KAZER pesquisa ANTES (prefetch) e a Groq só escreve,
+        # sem ferramentas de busca — é onde os modelos mais erravam. A pesquisa
+        # profunda continua com o agente que decide pesquisar de novo.
+        searchable = not restricted and self._web is not None
         builtin = (
-            ()
-            if restricted or self._web is None
-            else self._web.select(question.content, deep=options.research)
+            self._web.select(question.content, deep=True)
+            if searchable and options.research and self._web is not None
+            else ()
         )
+        previous = next(
+            (
+                item.content
+                for item in reversed(history)
+                if item.role == "user" and item.seq < question.seq
+            ),
+            "",
+        )
+        planned = pre.plan(question.content, previous) if searchable else ()
         request = GenerationRequest(
             system=system,
             turns=turns,
@@ -1587,6 +1601,7 @@ class ChatService:
             deep=options.deep or options.research,
             web_search=options.web_search,
             tool_rounds=RESEARCH_TOOL_ROUNDS if options.research else 0,
+            prefetch=planned,
             tools=(
                 *builtin,
                 *(

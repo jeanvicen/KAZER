@@ -17,6 +17,24 @@ O "O KAZER está com muita demanda agora" era o erro 429 da Groq: algum desses
 limites estourou. Abaixo está o que foi feito para isso acontecer o mínimo
 possível, sem nenhuma outra IA e sem gastar nada.
 
+## 0. Pesquisa antes do modelo (`kazer/chat/prefetch.py`)
+
+Na resposta normal, a Groq **não chama ferramenta nenhuma**. O fluxo é o do
+Perplexity:
+
+1. O KAZER olha o pedido, sem gastar modelo, e decide se precisa da internet e o
+   quê: busca na web, clima, cotação, notícias, um link que a pessoa mandou,
+   fotos ou GitHub. "Oi", "crie um jogo" e "explica recursão" não pesquisam.
+2. As buscas rodam ao mesmo tempo, e as 2 melhores páginas são abertas e
+   resumidas nos trechos que respondem ao pedido.
+3. Tudo vai junto da pergunta para a Groq, que só lê e escreve, em **uma
+   chamada**.
+
+Isso acaba com os erros de "chamada de ferramenta" (`tool_use_failed`), que eram
+a causa mais comum de falha na pesquisa, e gasta menos cota: antes eram 2 ou 3
+chamadas por pesquisa, agora é 1. A pesquisa profunda continua com o agente
+que pesquisa várias vezes.
+
 ## 1. Governador de limites (`kazer/brain/groq_limits.py`)
 
 Inspirado no *cooldown* do roteador do [LiteLLM](https://github.com/BerriAI/litellm),

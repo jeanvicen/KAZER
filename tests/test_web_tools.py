@@ -412,3 +412,103 @@ def test_long_pages_keep_only_what_answers_the_question() -> None:
     # Página curta passa inteira; sem pistas no pedido, corta pelo começo.
     assert focus_text("curto", "x", 800) == "curto"
     assert focus_text(page, "", 300).startswith("Começo da página.")
+
+
+class WriterProvider:
+    """Só escreve: guarda o pedido que recebeu (e quebra se receber ferramenta)."""
+
+    capabilities: Any = None
+
+    def __init__(self) -> None:
+        self.requests: list[GenerationRequest] = []
+
+    def stream(self, request: GenerationRequest, cancel: CancelToken) -> Any:
+        self.requests.append(request)
+        yield StreamEvent("text", "O iPhone 17 custa R$ 7.999 [fonte](https://loja.example/iphone).")
+        yield StreamEvent("stop", "end")
+
+
+def test_search_happens_first_and_the_model_only_writes() -> None:
+    import time
+
+    from kazer.chat import prefetch
+
+    ran: list[ToolCall] = []
+
+    def on_tool(call: ToolCall) -> tuple[Any, ...]:
+        ran.append(call)
+        if call.name == "buscar_web":
+            found = [
+                {"t": "Loja", "u": "https://loja.example/iphone", "k": "busca"},
+                {"t": "Vídeo", "u": "https://youtube.com/watch?v=1", "k": "busca"},
+                {"t": "Blog", "u": "https://blog.example/precos", "k": "busca"},
+            ]
+            return ("Pesquisando: preço iphone 17", "1. Loja — R$ 7.999", found, "3 resultados")
+        return (f"Lendo {call.arguments['url']}", "Preço oficial: R$ 7.999", [], "lido")
+
+    provider, store = WriterProvider(), Store()
+    hub = GenerationHub(store, provider)  # type: ignore[arg-type]
+    question = "pesquisa pará mim o preço do iphone 17"
+    request = GenerationRequest(
+        system="s",
+        turns=(Turn("user", (Part("text", question),)),),
+        prefetch=prefetch.plan(question),
+    )
+    assert hub.try_reserve()
+    live = hub.start("u", "c", "r", request, on_tool=on_tool)
+    for _ in range(300):
+        if live.done:
+            break
+        time.sleep(0.01)
+    assert store.final["status"] == "complete"
+    # Buscou, depois abriu as 2 melhores páginas (pulando o YouTube)…
+    assert [c.name for c in ran] == ["buscar_web", "abrir_pagina", "abrir_pagina"]
+    assert ran[0].arguments == {"consulta": "o preço do iphone 17"}
+    assert {c.arguments["url"] for c in ran[1:]} == {
+        "https://loja.example/iphone",
+        "https://blog.example/precos",
+    }
+    # …e a Groq recebeu tudo pronto: uma única chamada, sem ferramentas.
+    assert len(provider.requests) == 1
+    sent = provider.requests[0]
+    assert sent.tools == () and sent.prefetch == () and sent.brief
+    note = sent.turns[-1].parts[-1].text
+    assert "Pesquisa feita agora pelo KAZER" in note and "R$ 7.999" in note
+    # Fontes e passos ficam salvos na conversa.
+    assert "kazer-fontes" in store.final["content"]
+    assert "loja.example" in store.final["content"]
+
+
+def test_chit_chat_and_building_do_not_search() -> None:
+    from kazer.chat.prefetch import plan
+
+    assert plan("oi tudo bem?") == ()
+    assert plan("crie um jogo de carro em html") == ()
+    assert plan("explica o que é recursão") == ()
+    photos = plan("me mostra fotos de um axolote")
+    assert [c.name for c in photos] == ["buscar_imagens", "buscar_web"]
+    assert plan("e no Brasil?", "pesquisa o preço do iphone 17")[0].arguments["consulta"] == (
+        "o preço do iphone 17 e no Brasil"
+    )
+
+
+def test_a_failing_search_still_gets_an_answer() -> None:
+    import time
+
+    def on_tool(call: ToolCall) -> tuple[Any, ...]:
+        raise RuntimeError("rede caiu")
+
+    provider, store = WriterProvider(), Store()
+    hub = GenerationHub(store, provider)  # type: ignore[arg-type]
+    request = GenerationRequest(
+        system="s",
+        turns=(Turn("user", (Part("text", "preço do iphone hoje"),)),),
+        prefetch=(ToolCall("pre-0", "buscar_web", {"consulta": "iphone"}),),
+    )
+    assert hub.try_reserve()
+    live = hub.start("u", "c", "r", request, on_tool=on_tool)
+    for _ in range(300):
+        if live.done:
+            break
+        time.sleep(0.01)
+    assert store.final["status"] == "complete"
