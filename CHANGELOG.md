@@ -2,6 +2,28 @@
 
 Mudanças que importam para quem usa e para quem opera o KAZER.
 
+## 2026-11 — Fotos na explicação, vidro, voz e uso que abre
+
+### Corrigido
+- **Uso e plano** abre de novo para quem já usou o app (a data de renovação vinha
+  em texto do Supabase e travava a tela) e agora mostra quanto foi usado, quanto
+  falta e quando renova.
+- A galeria de fotos rola com o dedo (estava cortada na borda); arrastar não
+  abre a foto.
+
+### Melhor
+- O KAZER só pesquisa quando precisa: tutoriais, criação, conceitos e conversa
+  não vão mais para a web; na dúvida, um modelo leve decide e, se ele não
+  responder, o KAZER responde com o que sabe.
+- Fotos de referência no meio da explicação, como no ChatGPT: ao explicar algo
+  visual, o KAZER busca só as fotos e mostra cada uma junto do parágrafo certo.
+- Vidro líquido (estilo iOS) no botão de enviar, nos botões do campo e na
+  conversa aberta do histórico, no lugar da faixa dourada.
+- Ditado como o do Claude: o texto aparece ao vivo em até 3 linhas, a onda
+  reage à voz e há botões para cancelar, parar e revisar, ou enviar direto.
+- "Pensando · N s" com o tempo de verdade, prévia da ideia do momento e, no fim,
+  "Pensou por N s" com as etapas do raciocínio legíveis.
+
 ## 2026-11 — Pesquisa com cara de ChatGPT
 
 ### Melhor

@@ -776,7 +776,12 @@ function assistantElement(model) {
   const thinking = h(
     "details.think",
     { hidden: true },
-    h("summary.think__summary", {}, h("span.think__label", { text: "Raciocínio" }), icon("chevron", "think__caret")),
+    h(
+      "summary.think__summary",
+      {},
+      h("span.think__row", {}, h("span.think__label", { text: "Raciocínio" }), icon("chevron", "think__caret")),
+      h("span.think__peek", { "aria-hidden": "true" }),
+    ),
     h("div.think__body.md"),
   );
   const body = h("div.msg__body.md");
@@ -1020,9 +1025,52 @@ function paintSteps(model) {
       if (line.kind === "web") return webLine(line, model);
       if (line.kind === "tool") return actItem(line, model, { glyph: icon(stepIcon(line.step.label)), text: line.step.label, detail: line.running ? "" : line.step.detail });
       if (line.kind === "think") return actItem(line, model, { text: t(`Pensou por ${seconds(line.step.ms)} s`) });
-      return actItem(line, model, { text: t("Pensando") });
+      const item = actItem(line, model, { text: t("Pensando") });
+      ticking(item.querySelector(".act__text"), model.lastMark || model.streamStart || Date.now());
+      return item;
     }),
   );
+}
+
+// Relógio do "Pensando": conta o tempo de verdade desde que começou. Só troca o
+// texto (sem refazer a linha), então o brilho continua liso.
+let tickTimer = 0;
+function ticking(el, since) {
+  if (!el) return;
+  if (!since) {
+    delete el.dataset.since;
+    return;
+  }
+  // Quem chama acabou de escrever o rótulo base: o relógio entra na mesma hora
+  // (sem piscar entre "Pensando" e "Pensando · 5 s" a cada redesenho).
+  el.dataset.since = String(since);
+  el.dataset.base = el.textContent;
+  clockText(el);
+  if (!tickTimer) {
+    tickTimer = window.setInterval(() => {
+      const live = document.querySelectorAll("[data-since]");
+      if (!live.length) {
+        window.clearInterval(tickTimer);
+        tickTimer = 0;
+        return;
+      }
+      for (const node of live) clockText(node);
+    }, 1000);
+  }
+}
+
+function clockText(node) {
+  const elapsed = Math.floor((Date.now() - Number(node.dataset.since)) / 1000);
+  node.textContent = elapsed >= 2 ? `${node.dataset.base} · ${elapsed} s` : node.dataset.base;
+}
+
+// A ideia mais recente do raciocínio, numa linha (sem marcação de markdown).
+function lastThought(text) {
+  const lines = String(text || "").split("\n").map((line) => line.replace(/[*_#`>]+/g, "").replace(/^\s*[-•]\s*/, "").trim()).filter(Boolean);
+  const last = lines[lines.length - 1] || "";
+  if (last.length <= 140) return last;
+  const sentences = last.split(/(?<=[.!?])\s+/).filter(Boolean);
+  return (sentences[sentences.length - 1] || last).slice(-140);
 }
 
 // "Pular" (como no ChatGPT): encerra a pesquisa e o KAZER responde com o que já tem.
@@ -1126,9 +1174,12 @@ function applyStatus(model) {
   head.classList.toggle("is-generating", streaming);
   if (streaming) {
     const busy = !model.parts.steps.hidden || Boolean(model.thinking);
+    const waiting = !model.content && !model.reconnecting && !busy;
     state.textContent = model.content ? "" : model.reconnecting ? "Reconectando…" : busy ? "" : t("Pensando");
+    ticking(state, waiting ? model.streamStart : 0);
   } else {
     state.textContent = "";
+    ticking(state, 0);
   }
   notice.replaceChildren();
   notice.hidden = true;
@@ -1157,6 +1208,9 @@ function applyStatus(model) {
   const thinkingNow = streaming && !model.content;
   model.parts.thinking.classList.toggle("is-live", thinkingNow && Boolean(model.thinking));
   if (label) label.textContent = thinkingNow ? t("Pensando") : model.thinkMs ? t(`Pensou por ${seconds(model.thinkMs)} s`) : t("Raciocínio");
+  if (label) ticking(label, thinkingNow && model.thinking ? model.thinkStart : 0);
+  const peek = model.parts.thinking.querySelector(".think__peek");
+  if (peek) peek.textContent = thinkingNow && model.thinking ? lastThought(model.thinking) : "";
 }
 
 // ---------- Streaming ----------
@@ -1793,6 +1847,54 @@ let dictation = null;
 // Carregado cedo: no toque, o start() precisa rodar ainda dentro do gesto da
 // pessoa (é ele que faz o navegador mostrar o pedido nativo de microfone).
 const voiceModule = import("./voice.js");
+let voiceUi = null;
+let sendAfterVoice = false;
+
+// Ditado como o do Claude: o texto aparece ao vivo (3 linhas, as antigas somem
+// no alto), a onda reage ao que o navegador ouve e a barra tem cancelar, parar
+// (revisar no campo) e enviar direto.
+function buildVoiceUi() {
+  if (voiceUi) return voiceUi;
+  const text = h("p.voice__text", { "data-placeholder": t("Pode falar…") });
+  const wave = h("div.voice__wave", { "aria-hidden": "true" });
+  for (let n = 0; n < 28; n += 1) {
+    const bar = h("i");
+    bar.style.setProperty("--n", String(n));
+    // Altura própria de cada barra (fixa): a onda não fica um bloco uniforme.
+    bar.style.setProperty("--h", String(0.35 + ((n * 37) % 11) / 16));
+    wave.append(bar);
+  }
+  const cancel = h("button.tool.voice__cancel", { type: "button", "aria-label": t("Cancelar ditado"), title: t("Cancelar ditado"), onclick: () => dictation?.cancel() }, icon("close"));
+  const stop = h("button.tool.voice__stop", { type: "button", "aria-label": t("Parar e revisar"), title: t("Parar e revisar"), onclick: () => dictation?.stop() }, icon("stop"));
+  const go = h(
+    "button.send.voice__send",
+    { type: "button", "aria-label": t("Enviar"), disabled: true, onclick: () => { sendAfterVoice = true; dictation?.stop(); } },
+    icon("arrow-up"),
+  );
+  const root = h("div.voice", { role: "group", "aria-label": t("Ditado por voz") }, text, h("div.voice__bar", {}, cancel, wave, stop, go));
+  root.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") {
+      event.preventDefault();
+      dictation?.cancel();
+    }
+  });
+  S.ui.composerBox.insertBefore(root, S.ui.prompt);
+  voiceUi = { root, text, wave, go, stop, pulse: 0 };
+  return voiceUi;
+}
+
+// A onda mexe quando o navegador detecta som/fala e pulsa a cada palavra.
+function voiceActivity(kind) {
+  const ui = voiceUi;
+  if (!ui) return;
+  if (kind === "sound") ui.wave.classList.add("is-hearing");
+  else if (kind === "silence") ui.wave.classList.remove("is-hearing");
+  else if (kind === "word") {
+    ui.wave.classList.add("is-hearing", "is-word");
+    window.clearTimeout(ui.pulse);
+    ui.pulse = window.setTimeout(() => ui.wave.classList.remove("is-word"), 260);
+  }
+}
 
 async function toggleDictation() {
   const { createDictation, dictationSupported, dictationError } = await voiceModule;
@@ -1809,12 +1911,21 @@ async function toggleDictation() {
   if (!dictation) {
     dictation = createDictation({
       lang: locale(),
-      onText: (text, interim) => {
+      onLive: (text) => {
+        const ui = buildVoiceUi();
+        ui.text.textContent = text;
+        ui.go.disabled = !text.trim();
+      },
+      onActivity: voiceActivity,
+      onText: (text) => {
         S.ui.prompt.value = text;
-        S.ui.composerBox.classList.toggle("is-hearing", interim);
         autosize();
         updateSendState();
         S.ui.empty.classList.toggle("is-typing", Boolean(text));
+        if (sendAfterVoice) {
+          sendAfterVoice = false;
+          S.ui.composer.requestSubmit();
+        }
       },
       onState: (state) => {
         const on = state !== "idle";
@@ -1822,10 +1933,24 @@ async function toggleDictation() {
         S.ui.mic.classList.toggle("is-listening", state === "listening");
         S.ui.mic.setAttribute("aria-label", on ? "Parar de ditar" : "Ditar por voz");
         S.ui.composerBox.classList.toggle("is-dictating", on);
-        if (!on) {
-          S.ui.composerBox.classList.remove("is-hearing");
-          saveDraft();
+        S.ui.composerBox.classList.toggle("is-voice", on);
+        if (on) {
+          const ui = buildVoiceUi();
+          if (state === "listening") {
+            announce(t("Ouvindo. Pode falar."));
+            ui.stop.focus({ preventScroll: true });
+          }
+          return;
         }
+        if (voiceUi) {
+          voiceUi.wave.classList.remove("is-hearing", "is-word");
+          voiceUi.text.textContent = "";
+          voiceUi.go.disabled = true;
+        }
+        const review = !sendAfterVoice;
+        sendAfterVoice = false;
+        saveDraft();
+        if (review && S.ui.prompt.value.trim()) S.ui.prompt.focus({ preventScroll: true });
       },
       onError: (code) => toast(dictationError(code), { duration: 6500 }),
     });

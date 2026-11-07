@@ -12,40 +12,59 @@ const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 // uma segunda captura com getUserMedia evita o NotAllowedError em PWAs Android.
 export const dictationSupported = Boolean(Recognition);
 
-// Um toque inicia uma única fala. O texto só entra no campo depois que o
-// navegador termina de reconhecer a fala, nunca enquanto a pessoa está falando.
-export function createDictation({ onText, onState, onError, lang = "pt-BR" }) {
+// Ditado como o do Claude: fica ouvindo até a pessoa parar, enviar ou cancelar.
+// Enquanto fala, o texto aparece ao vivo (onLive) — só na tela, nunca enviado nem
+// guardado; vai para o campo só no fim (onText). onActivity conta o que o próprio
+// navegador detecta ("sound", "silence", "word") para a onda reagir à voz de
+// verdade, sem fingir volume: o KAZER não abre o microfone por conta própria.
+const MAX_RESTARTS = 20;
+
+export function createDictation({ onText, onState, onError, onLive, onActivity, lang = "pt-BR" }) {
   if (!dictationSupported) return null;
 
   const recognition = new Recognition();
   recognition.lang = lang;
-  recognition.continuous = false;
-  // Parciais só ficam guardados aqui dentro (nunca vão para o campo): servem
-  // para não perder a última frase quando a pessoa para antes do resultado final.
+  recognition.continuous = true;
   recognition.interimResults = true;
   recognition.maxAlternatives = 1;
 
-  let listening = false;
-  let wanted = false;
+  let listening = false; // o navegador está captando agora
+  let wanted = false; // a pessoa quer que continue ouvindo
+  let discard = false; // cancelou: nada vai para o campo
   let prefix = "";
-  let transcript = "";
+  let earlier = ""; // texto das sessões anteriores (o navegador reinicia em pausas longas)
+  let finals = "";
   let pending = "";
-  let hasFinalResult = false;
+  let restarts = 0;
+
+  const join = (...parts) => parts.map((part) => (part || "").trim()).filter(Boolean).join(" ");
+  const heard = () => join(earlier, finals, pending);
+  const live = () => onLive?.(join(prefix, heard()), Boolean(heard()));
 
   recognition.addEventListener("result", (event) => {
-    pending = "";
-    for (let i = event.resultIndex; i < event.results.length; i += 1) {
+    // Remonta tudo a partir da lista inteira: alguns Androids repetem o trecho
+    // anterior dentro do novo, e somar aos pedaços viraria "olá olá tudo bem".
+    let done = "";
+    let partial = "";
+    for (let i = 0; i < event.results.length; i += 1) {
       const result = event.results[i];
       const text = result[0]?.transcript?.trim();
       if (!text) continue;
       if (result.isFinal) {
-        transcript += (transcript ? " " : "") + text;
-        hasFinalResult = true;
+        done = done && text.toLowerCase().startsWith(done.toLowerCase()) ? text : join(done, text);
       } else {
-        pending += (pending ? " " : "") + text;
+        partial = join(partial, text);
       }
     }
+    finals = done;
+    pending = partial;
+    onActivity?.("word");
+    live();
   });
+
+  for (const [name, kind] of [["audiostart", "open"], ["soundstart", "sound"], ["speechstart", "sound"], ["speechend", "silence"], ["soundend", "silence"]]) {
+    recognition.addEventListener(name, () => onActivity?.(kind));
+  }
 
   recognition.addEventListener("start", () => {
     listening = true;
@@ -54,22 +73,36 @@ export function createDictation({ onText, onState, onError, lang = "pt-BR" }) {
 
   recognition.addEventListener("end", () => {
     listening = false;
-    // Parou antes do resultado final? A última frase ouvida vale como final.
-    if (pending) {
-      transcript += (transcript ? " " : "") + pending;
-      pending = "";
-      hasFinalResult = true;
+    // O que esta sessão ouviu vale como final (a frase parcial também).
+    earlier = heard();
+    finals = "";
+    pending = "";
+    // Pausa longa: o navegador encerra sozinho. Se a pessoa não parou, continua.
+    if (wanted && !discard && restarts < MAX_RESTARTS) {
+      restarts += 1;
+      try {
+        recognition.start();
+        return;
+      } catch {
+        /* não deu para continuar: entrega o que já tem */
+      }
     }
-    const shouldApply = wanted && hasFinalResult;
+    const deliver = !discard && Boolean(earlier);
+    const text = join(prefix, earlier);
     wanted = false;
-    if (shouldApply) onText(prefix + transcript, false);
+    onActivity?.("silence");
+    if (deliver) onText(text);
     onState?.("idle");
   });
 
   recognition.addEventListener("error", async (event) => {
     let code = event.error;
-    // Silêncio e cancelamento manual não são falhas visíveis para a pessoa.
-    if (code === "no-speech" || code === "aborted") return;
+    if (code === "aborted") return; // cancelamento pedido pela própria pessoa
+    if (code === "no-speech") {
+      // Silêncio desde o começo: para quieto. Já falou algo? O "end" continua.
+      if (!heard()) wanted = false;
+      return;
+    }
     wanted = false;
     onState?.("idle");
     // "not-allowed" serve para dois casos: a pessoa recusou agora ou o site está
@@ -86,10 +119,14 @@ export function createDictation({ onText, onState, onError, lang = "pt-BR" }) {
     start(initial = "") {
       if (wanted) return;
       wanted = true;
+      discard = false;
       prefix = initial;
-      transcript = "";
-      hasFinalResult = false;
+      earlier = "";
+      finals = "";
+      pending = "";
+      restarts = 0;
       onState?.("starting");
+      live();
       try {
         // O próprio start() faz o navegador pedir a permissão nativa.
         recognition.start();
@@ -102,9 +139,9 @@ export function createDictation({ onText, onState, onError, lang = "pt-BR" }) {
         onError?.("service-not-allowed");
       }
     },
+    // Termina e entrega o texto para o campo (o navegador fecha a última frase).
     stop() {
-      // Se já está ouvindo, deixa o navegador fechar e entregar o último
-      // resultado final. Durante o pedido de permissão, aí sim cancela.
+      wanted = false;
       if (listening) {
         try {
           recognition.stop();
@@ -113,7 +150,20 @@ export function createDictation({ onText, onState, onError, lang = "pt-BR" }) {
         }
         return;
       }
+      onState?.("idle");
+    },
+    // Descarta tudo o que foi falado.
+    cancel() {
+      discard = true;
       wanted = false;
+      if (listening) {
+        try {
+          recognition.abort();
+        } catch {
+          /* já parado */
+        }
+        return;
+      }
       onState?.("idle");
     },
     toggle(initial = "") {
