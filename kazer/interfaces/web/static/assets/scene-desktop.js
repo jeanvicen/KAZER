@@ -4,7 +4,7 @@
 // a cada quadro e paralaxe seguindo o mouse. Grade de 288×240 pixels ampliada por
 // fator inteiro e recortada para cobrir o palco. Só é carregada em telas grandes.
 
-import { P, rgba, painter, bayer, clamp, rng, drawMan, drawScreen } from "./scene.js";
+import { P, rgba, painter, bayer, clamp, rng, drawMan, drawScreen, POSTER, FIGURE, LOGO_MAP } from "./scene.js";
 
 const W = 288;
 const H = 240;
@@ -35,32 +35,6 @@ function mix(a, b, t) {
     Math.round(ag + (bg - ag) * t),
     Math.round(ab + (bb - ab) * t),
   );
-}
-
-// Rasteriza o símbolo (Fenda) em qualquer tamanho para quadro e bonequinho.
-function markRows(w, h) {
-  const tri = [
-    [30, 1.14, 10, 27.5, 30, 53.86],
-    [34, 10.14, 54, 36.5, 34, 62.86],
-  ];
-  const inside = (px, py, [ax, ay, bx, by, cx, cy]) => {
-    const d = (x1, y1, x2, y2) => (px - x2) * (y1 - y2) - (x1 - x2) * (py - y2);
-    const d1 = d(ax, ay, bx, by);
-    const d2 = d(bx, by, cx, cy);
-    const d3 = d(cx, cy, ax, ay);
-    return !((d1 < 0 || d2 < 0 || d3 < 0) && (d1 > 0 || d2 > 0 || d3 > 0));
-  };
-  const rows = [];
-  for (let j = 0; j < h; j += 1) {
-    let row = "";
-    for (let i = 0; i < w; i += 1) {
-      const sx = 10 + ((i + 0.5) / w) * 44;
-      const sy = 1 + ((j + 0.5) / h) * 62;
-      row += tri.some((t) => inside(sx, sy, t)) ? "#" : ".";
-    }
-    rows.push(row);
-  }
-  return rows;
 }
 
 // ---------- Cenário estático ----------
@@ -119,11 +93,11 @@ function buildRoom() {
   // Varal de luzes: só o fio é estático.
   for (let x = 134; x < W; x += 1) px(x, Math.round(9 + 7 * Math.sin((Math.PI * (x - 134)) / 153)), X.wire);
 
-  // Quadro com o símbolo do KAZER.
+  // Quadro com o logo do KAZER (o alien com o colar dourado).
   rect(140, 30, 166, 72, P.posterFrame);
   rect(141, 31, 165, 71, P.posterMat);
   rect(143, 33, 163, 69, P.posterBg);
-  sprite(146, 37, markRows(15, 22), { "#": P.ink });
+  sprite(146, 43, POSTER, LOGO_MAP);
 
   // Prateleira com livros e um bonequinho do KAZER.
   rect(176, 74, W - 1, 75, P.shelf);
@@ -142,9 +116,8 @@ function buildRoom() {
     bx += w + 1;
   });
   for (let i = 0; i < 12; i += 1) rect(bx + i, 73 - i, bx + i + 2, 73 - i, P.bookPurple);
-  sprite(236, 60, markRows(9, 13), { "#": P.ink });
-  px(238, 66, P.screen);
-  px(243, 69, P.screen);
+  // Bonequinho do mascote na prateleira.
+  sprite(236, 63, FIGURE, { ...LOGO_MAP, e: P.screen });
   rect(234, 73, 246, 73, P.lavDim);
   rect(254, 70, 272, 71, P.bookCream);
   rect(255, 72, 271, 73, P.bookRose);

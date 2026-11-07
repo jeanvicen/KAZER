@@ -99,8 +99,8 @@
   padding: 0.7rem 1rem;
   border: 0;
   border-radius: 0.7rem;
-  background: linear-gradient(135deg, #ff9540, #ff6b3d);
-  color: #140a04;
+  background: var(--gradient-gold-button);
+  color: var(--color-accent-foreground);
   font: inherit;
   font-size: 0.875rem;
   font-weight: 600;
@@ -165,7 +165,7 @@
 }
 
 .forja__compose:focus-within {
-  border-color: rgb(255 149 64 / 0.55);
+  border-color: var(--color-accent-border);
 }
 
 .forja__input {
@@ -198,8 +198,8 @@
   height: 2.25rem;
   border: 0;
   border-radius: 50%;
-  background: linear-gradient(135deg, #ff9540, #ff6b3d);
-  color: #140a04;
+  background: var(--gradient-gold-button);
+  color: var(--color-accent-foreground);
   cursor: pointer;
   transition:
     transform 140ms var(--spring, ease-out),
@@ -355,12 +355,12 @@
 /* ---------- O chip no campo de escrita ---------- */
 
 .composer__box.is-forja {
-  border-color: rgb(255 149 64 / 0.45);
+  border-color: var(--color-accent-border);
 }
 
 .tool--forja.is-on {
-  background: linear-gradient(135deg, #ff9540, #ff6b3d);
-  color: #140a04;
+  background: var(--gradient-gold-button);
+  color: var(--color-accent-foreground);
 }
 
 @keyframes forja-in {
@@ -430,11 +430,13 @@ html[data-motion="reduzido"] .forja * {
   gap: 0.5rem;
 }
 
+/* A ação principal desta tela: assinar. Por isso é o botão dourado. */
 .forja__locked .forja__start {
   padding: 0.85rem 1rem;
   border-radius: 0.7rem;
-  background: var(--c-text);
-  color: var(--c-bg);
+  background: var(--gradient-gold-button);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.35), inset 0 -1px 0 rgb(0 0 0 / 0.18);
+  color: var(--color-accent-foreground);
   font-size: 0.95rem;
   font-weight: 600;
 }
@@ -451,4 +453,48 @@ html[data-motion="reduzido"] .forja * {
   color: var(--c-text-3);
   font-size: 0.75rem;
   text-align: center;
+}
+
+/* Mascote do KAZER (pixel) nas boas-vindas do KZ Code. */
+.forja__mascot {
+  width: 3.25rem;
+  height: auto;
+  margin-bottom: 0.15rem;
+}
+
+.mascot {
+  display: block;
+  width: 100%;
+  height: auto;
+  image-rendering: pixelated;
+}
+
+.mascot__blink {
+  opacity: 0;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .mascot__body {
+    animation: mascot-bob 2.4s steps(1, end) infinite;
+  }
+
+  .mascot__blink {
+    animation: mascot-blink 4.2s steps(1, end) infinite;
+  }
+}
+
+@keyframes mascot-bob {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-0.5px); }
+}
+
+@keyframes mascot-blink {
+  0%, 94%, 100% { opacity: 0; }
+  95%, 98% { opacity: 1; }
+}
+
+.forja__brand {
+  display: grid;
+  justify-items: center;
+  gap: 0.7rem;
 }

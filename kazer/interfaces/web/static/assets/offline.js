@@ -1,5 +1,5 @@
-// Tela "sem internet" do KAZER: o Kazinho, um personagem em pixel com a cabeça
-// da Fenda (as duas metades do símbolo, com um olhinho em cada), vive a vida
+// Tela "sem internet" do KAZER: o Kazinho, o mascote em pixel — a cabeça do
+// alien do logo (olhos pretos inclinados e o colar dourado) —, vive a vida
 // enquanto a rede não volta: varre a casa, cochila, brinca de bola, treina e
 // mostra o muque. Tudo desenhado aqui, num canvas minúsculo ampliado sem
 // suavização. Para quando a tela some; respeita "reduzir movimento".
@@ -14,6 +14,8 @@ const MID = W / 2;
 const C = {
   white: "#f5f5f5",
   half: "#c4c4c4",
+  gold: "#d5b15a",
+  goldHi: "#f1dfa5",
   eye: "#070707",
   hood: "#5d5d5d",
   hoodLight: "#767676",
@@ -98,36 +100,55 @@ function createScene(canvas, onActivity) {
 
   // ---------- Partes do Kazinho ----------
 
-  const HALF = [1, 2, 3, 4, 4, 4, 3, 2, 1]; // largura de cada linha de uma metade
+  // Cabeça do alien (11 × 10): cúpula branca com sombra à direita, queixo
+  // fino e, embaixo, o colar dourado do logo. Os olhos são desenhados à parte
+  // para piscar, olhar para os lados, dormir e sorrir.
+  const HEAD = [
+    "...wwwww...",
+    ".wwwwwwwwh.",
+    "wwwwwwwwwwh",
+    "wwwwwwwwwwh",
+    "wwwwwwwwwwh",
+    "wwwwwwwwwwh",
+    ".wwwwwwwwh.",
+    "..wwwwwwh..",
+    "O...wwh...o",
+    "oo.ooooo.oo",
+  ];
+  const HEAD_COLORS = { w: C.white, h: C.half, o: C.gold, O: C.goldHi };
 
-  // Cabeça: metade esquerda branca, direita cinza-claro e um pixel mais baixa (como a Fenda).
   function head(cx, top, { blink = false, look = 0, closed = false, happy = false } = {}) {
-    HALF.forEach((width, row) => {
-      rect(cx - width, top + row, width, 1, C.white);
-      rect(cx + 1, top + 1 + row, width, 1, C.half);
+    HEAD.forEach((row, j) => {
+      for (let i = 0; i < row.length; i += 1) {
+        if (row[i] !== ".") px(cx - 5 + i, top + j, HEAD_COLORS[row[i]]);
+      }
     });
     if (closed) {
+      // dormindo: tracinhos retos
       rect(cx - 3, top + 5, 2, 1, C.eye);
-      rect(cx + 2, top + 6, 2, 1, C.eye);
+      rect(cx + 2, top + 5, 2, 1, C.eye);
       return;
     }
     if (happy) {
       // olhinhos em "^"
+      px(cx - 4 + look, top + 5, C.eye);
       px(cx - 3 + look, top + 4, C.eye);
-      px(cx - 2 + look, top + 3, C.eye);
-      px(cx - 1 + look, top + 4, C.eye);
-      px(cx + 1 + look, top + 5, C.eye);
-      px(cx + 2 + look, top + 4, C.eye);
-      px(cx + 3 + look, top + 5, C.eye);
+      px(cx - 2 + look, top + 5, C.eye);
+      px(cx + 2 + look, top + 5, C.eye);
+      px(cx + 3 + look, top + 4, C.eye);
+      px(cx + 4 + look, top + 5, C.eye);
       return;
     }
     if (blink) {
-      rect(cx - 3 + look, top + 4, 2, 1, C.eye);
-      rect(cx + 2 + look, top + 5, 2, 1, C.eye);
+      rect(cx - 4 + look, top + 5, 3, 1, C.eye);
+      rect(cx + 2 + look, top + 5, 3, 1, C.eye);
       return;
     }
-    rect(cx - 2 + look, top + 3, 1, 2, C.eye);
-    rect(cx + 2 + look, top + 4, 1, 2, C.eye);
+    // olhos de alien: amêndoas pretas inclinadas para o centro
+    rect(cx - 4 + look, top + 4, 2, 1, C.eye);
+    rect(cx - 3 + look, top + 5, 2, 1, C.eye);
+    rect(cx + 3 + look, top + 4, 2, 1, C.eye);
+    rect(cx + 2 + look, top + 5, 2, 1, C.eye);
   }
 
   function body(cx, ground, { legs = 0 } = {}) {
@@ -137,12 +158,11 @@ function createScene(canvas, onActivity) {
     rect(cx + 1, ground - 3 - lift[1], 2, 3, C.leg);
     rect(cx - 4, ground - 1 - lift[0], 3, 1, C.shoe);
     rect(cx + 1, ground - 1 - lift[1], 3, 1, C.shoe);
-    // moletom com luz à esquerda, sombra embaixo e a Fenda no peito
+    // moletom com luz à esquerda, sombra embaixo e um botão dourado no peito
     rect(cx - 3, ground - 9, 7, 6, C.hood);
     rect(cx - 3, ground - 9, 1, 5, C.hoodLight);
     rect(cx - 3, ground - 4, 7, 1, C.hoodDark);
-    px(cx - 1, ground - 7, C.white);
-    px(cx + 1, ground - 6, C.half);
+    px(cx, ground - 7, C.gold);
   }
 
   function arm(sx, sy, hx, hy) {

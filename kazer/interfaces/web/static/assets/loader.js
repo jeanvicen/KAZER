@@ -25,6 +25,7 @@ const FRAME_MS = 50;
 const C = {
   white: "#f5f5f5",
   half: "#c4c4c4",
+  gold: "#d5b15a",
   eye: "#070707",
   hood: "#5d5d5d",
   hoodLight: "#767676",
@@ -37,8 +38,19 @@ const C = {
   sweat: "#bcd3ff",
 };
 
-// Larguras das linhas de cada metade da Fenda, de cima para baixo.
-const HALF = [1, 2, 3, 4, 3, 2, 1];
+// Cabeça do alien do logo (9 × 9) com o colar dourado; os olhos vêm à parte.
+const HEAD = [
+  "..wwwww..",
+  ".wwwwwwh.",
+  "wwwwwwwwh",
+  "wwwwwwwwh",
+  "wwwwwwwwh",
+  ".wwwwwwh.",
+  "..wwwwh..",
+  "o..www..o",
+  "oo.ooo.oo",
+];
+const HEAD_COLORS = { w: C.white, h: C.half, o: C.gold };
 const easeInOut = (t) => (t < 0.5 ? 2 * t * t : 1 - (-2 * t + 2) ** 2 / 2);
 
 function draw(canvas) {
@@ -79,18 +91,22 @@ function draw(canvas) {
   };
 
   function head(cx, top, { strain = false } = {}) {
-    HALF.forEach((width, row) => {
-      rect(cx - width, top + row, width, 1, C.white);
-      rect(cx + 1, top + 1 + row, width, 1, C.half);
+    HEAD.forEach((row, j) => {
+      for (let i = 0; i < row.length; i += 1) {
+        if (row[i] !== ".") px(cx - 4 + i, top + j, HEAD_COLORS[row[i]]);
+      }
     });
     if (strain) {
       // Olhinhos apertados no esforço.
       rect(cx - 3, top + 4, 2, 1, C.eye);
-      rect(cx + 2, top + 5, 2, 1, C.eye);
+      rect(cx + 2, top + 4, 2, 1, C.eye);
       return;
     }
-    px(cx - 3, top + 4, C.eye);
-    px(cx + 2, top + 5, C.eye);
+    // Olhos de alien: amêndoas inclinadas para o centro.
+    rect(cx - 3, top + 3, 2, 1, C.eye);
+    rect(cx - 2, top + 4, 2, 1, C.eye);
+    rect(cx + 2, top + 3, 2, 1, C.eye);
+    rect(cx + 1, top + 4, 2, 1, C.eye);
   }
 
   function body(cx, { neck = 0 } = {}) {

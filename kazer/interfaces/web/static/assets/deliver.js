@@ -194,7 +194,7 @@ function docCard(kind, name, code, closed) {
       ? h("span.doc-card__page", {}, h("span.doc-card__band"), h("span.doc-card__lines"))
       : h("span.doc-card__deck", {}, h("span"), h("span"), h("span")),
   );
-  const accent = /^#[0-9a-f]{3,8}$/i.test(meta.cor || "") ? meta.cor : pdf ? "#2563eb" : "#e8b04a";
+  const accent = /^#[0-9a-f]{3,8}$/i.test(meta.cor || "") ? meta.cor : pdf ? "#2563eb" : "#d5b15a";
   thumb.style.setProperty("--accent", accent);
   return h(
     `div.doc-card.doc-card--${kind}`,
@@ -586,7 +586,7 @@ function diagramHtml(code) {
 const code=${source};const out=document.getElementById("out");
 const tell=()=>parent.postMessage({kazerHeight:document.documentElement.scrollHeight},"*");
 try{const m=(await import("https://cdn.jsdelivr.net/npm/mermaid@11.4.1/dist/mermaid.esm.min.mjs")).default;
-m.initialize({startOnLoad:false,theme:"dark",securityLevel:"strict",fontFamily:"system-ui,sans-serif",themeVariables:{primaryColor:"#1d1d22",primaryBorderColor:"#e8b04a",lineColor:"#8f8a84",primaryTextColor:"#f4f2ee"}});
+m.initialize({startOnLoad:false,theme:"dark",securityLevel:"strict",fontFamily:"system-ui,sans-serif",themeVariables:{primaryColor:"#1d1d22",primaryBorderColor:"#d5b15a",lineColor:"#8f8a84",primaryTextColor:"#f4f2ee"}});
 const r=await m.render("kz"+Date.now(),code);out.innerHTML=r.svg;}catch(e){const p=document.createElement("pre");p.className="fallback";p.textContent="Não deu para desenhar o diagrama agora. O código dele:\\n\\n"+code;out.replaceWith(p);}
 tell();new ResizeObserver(tell).observe(document.body);
 addEventListener("message",e=>{if(e.data&&e.data.kazerPrint)print()});

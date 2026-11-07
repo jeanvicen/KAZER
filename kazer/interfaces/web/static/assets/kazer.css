@@ -9,15 +9,68 @@
 }
 
 :root {
-  --black: #030303;
-  --black-2: #080808;
-  --surface: #0d0d0d;
-  --surface-2: #141416;
-  --text: #f5f5f5;
-  --text-2: #929292;
-  --border: #242424;
-  --border-hover: #3a3a3a;
+  /* ===== Design system KAZER: obsidiana + ouro champanhe =====
+     Fundação preta e neutra; o ouro é acento secundário: ação principal,
+     seleção, foco e progresso. Tokens semânticos — use-os em vez de hex. */
+
+  /* Fundação */
+  --black: #030303;          /* obsidiana */
+  --black-2: #080808;        /* preto profundo */
+  --surface: #0d0d0d;        /* superfície */
+  --surface-2: #141416;      /* superfície elevada */
+  --text: #f5f5f5;           /* texto principal */
+  --text-2: #929292;         /* texto secundário */
+  --text-3: #5f5f5f;         /* texto apagado */
+  --border: #242424;         /* borda sutil */
+  --border-hover: #333333;   /* borda forte */
   --invalid: #8a8a8a;
+
+  /* Ouro metálico (do mais escuro ao brilho) */
+  --gold-shadow: #6d4b19;
+  --gold-bronze: #a8792a;
+  --gold-metal: #b88a3b;
+  --gold: #d5b15a;           /* ouro champanhe */
+  --gold-hi: #f1dfa5;
+  --gradient-metallic-gold: linear-gradient(115deg, #6d4b19 0%, #a8792a 22%, #d5b15a 43%, #f1dfa5 52%, #b88a3b 74%, #6d4b19 100%);
+  /* Versão para botão: luz vinda de cima, sem faixas fortes. */
+  --gradient-gold-button: linear-gradient(180deg, #ead08d 0%, #d5b15a 46%, #bb8d3e 100%);
+
+  /* Papéis semânticos */
+  --color-bg: var(--black);
+  --color-bg-elevated: var(--black-2);
+  --color-surface: var(--surface);
+  --color-surface-hover: var(--surface-2);
+  --color-text-primary: var(--text);
+  --color-text-secondary: var(--text-2);
+  --color-text-muted: var(--text-3);
+  --color-border: var(--border);
+  --color-border-strong: var(--border-hover);
+  --color-accent: var(--gold);
+  --color-accent-hover: #e0c072;
+  --color-accent-active: var(--gold-metal);
+  --color-accent-subtle: rgb(213 177 90 / 0.1);
+  --color-accent-border: rgb(213 177 90 / 0.38);
+  --color-accent-foreground: #17110a;
+  --color-accent-glow: rgb(213 177 90 / 0.18);
+  --color-focus-ring: rgb(213 177 90 / 0.72);
+  --color-danger: #ff8a80;
+  --color-success: #7ee2a8;
+  --color-warning: #f5a25a;
+  --color-warning-subtle: rgb(245 162 90 / 0.08);
+  --color-warning-border: rgb(245 162 90 / 0.35);
+
+  /* Forma e espaço */
+  --radius-sm: 0.5rem;
+  --radius-md: 0.75rem;
+  --radius-lg: 1rem;
+  --radius-xl: 1.375rem;
+  --radius-pill: 999px;
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.5rem;
+  --space-6: 2rem;
 
   --font-display: "Grenze Gotisch", "Iowan Old Style", Georgia, serif;
   --font-ui: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
@@ -84,7 +137,7 @@ a {
   border: 0;
 }
 
-/* ---------- Símbolo (Fenda) ---------- */
+/* ---------- Símbolo (o alien do KAZER) ---------- */
 
 .mark {
   display: block;
@@ -92,34 +145,48 @@ a {
   overflow: visible;
 }
 
-.mark__l,
-.mark__r {
+.mark__head,
+.mark__plate {
   transform-box: view-box;
+  transform-origin: 32px 32px;
 }
 
-/* Estado "gerando": as metades deslizam em sentidos opostos e se alinham. */
-.is-generating .mark__l,
-.mark--busy .mark__l {
+/* As placas do colar têm cantos arredondados (o contorno da mesma cor). */
+.mark__plate {
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linejoin: round;
+}
+
+/* Atraso de cada placa no estado "gerando": a luz corre da esquerda para a direita. */
+.mark__plate--b {
+  --plate-delay: 0.18s;
+}
+
+.mark__plate--r {
+  --plate-delay: 0.36s;
+}
+
+/* Estado "gerando": a cabeça flutua de leve e as placas acendem em sequência. */
+.is-generating .mark__head,
+.mark--busy .mark__head {
   animation: mark-l 1.6s cubic-bezier(0.65, 0, 0.35, 1) infinite;
 }
 
-.is-generating .mark__r,
-.mark--busy .mark__r {
-  animation: mark-r 1.6s cubic-bezier(0.65, 0, 0.35, 1) infinite;
+.is-generating .mark__plate,
+.mark--busy .mark__plate {
+  animation: mark-r 1.6s cubic-bezier(0.65, 0, 0.35, 1) var(--plate-delay, 0s) infinite;
 }
 
 @keyframes mark-l {
-  0%, 100% { transform: translate(0, 0); }
-  25% { transform: translate(-1.5px, 4.5px); }
-  50% { transform: translate(0, 9px); }
-  75% { transform: translate(-1.5px, 4.5px); }
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-2px); }
 }
 
 @keyframes mark-r {
-  0%, 100% { transform: translate(0, 0); }
-  25% { transform: translate(1.5px, -4.5px); }
-  50% { transform: translate(0, -9px); }
-  75% { transform: translate(1.5px, -4.5px); }
+  0%, 100% { opacity: 1; }
+  40% { opacity: 0.28; }
+  70% { opacity: 1; }
 }
 
 /* ---------- Abertura (partículas) ---------- */
@@ -298,6 +365,7 @@ a {
 }
 
 .caret {
+  color: var(--gold);
   animation: caret 1.05s steps(1, end) infinite;
 }
 
@@ -305,12 +373,41 @@ a {
   50% { opacity: 0; }
 }
 
-.cta {
+/* Entrada no estilo "e-mail primeiro": campo, ação principal dourada e o
+   atalho para criar conta. No computador vira um cartão discreto. */
+.entry {
   flex: 0 0 auto;
   width: 100%;
   max-width: var(--column);
   display: grid;
-  gap: 0.75rem;
+  gap: 0.6rem;
+}
+
+/* No celular o campo já se explica pelo exemplo; o rótulo fica para leitores de tela. */
+.entry .field__label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.entry .field__error:empty {
+  display: none;
+}
+
+.entry__alt {
+  margin: 0.15rem 0 0;
+  color: var(--text-2);
+  font-size: 0.875rem;
+  text-align: center;
+}
+
+.entry__alt .link {
+  color: var(--text);
+  font-weight: 600;
 }
 
 /* ---------- Botões ---------- */
@@ -337,13 +434,23 @@ a {
   transform: scale(0.985);
 }
 
+/* Ação principal: ouro champanhe com luz de cima e uma borda fina mais clara.
+   Sem brilho exagerado — o metal está na transição de tons, não no reflexo. */
 .button--primary {
-  background: var(--text);
-  color: var(--black);
+  background: var(--gradient-gold-button);
+  color: var(--color-accent-foreground);
+  box-shadow:
+    inset 0 1px 0 rgb(255 247 222 / 0.55),
+    inset 0 0 0 1px rgb(109 75 25 / 0.35),
+    0 1px 2px rgb(0 0 0 / 0.4);
 }
 
 .button--primary:hover {
-  background: #ffffff;
+  filter: brightness(1.06);
+}
+
+.button--primary:active {
+  filter: brightness(0.96);
 }
 
 .button--secondary {
@@ -360,7 +467,7 @@ a {
 .link:focus-visible,
 .icon-button:focus-visible,
 .legal a:focus-visible {
-  outline: 1px solid var(--text);
+  outline: 2px solid var(--color-focus-ring);
   outline-offset: 3px;
 }
 
@@ -380,8 +487,9 @@ a {
 
 .button:disabled:not([aria-busy="true"]) {
   background: var(--surface);
-  color: var(--text-2);
+  color: var(--text-3);
   box-shadow: inset 0 0 0 1px var(--border);
+  filter: none;
   cursor: not-allowed;
 }
 
@@ -526,17 +634,22 @@ a {
 
 .field__input:focus {
   outline: none;
-  border-color: var(--text);
+  border-color: var(--color-accent-border);
   background: var(--surface);
-  box-shadow: 0 0 0 3px rgba(245, 245, 245, 0.07);
+  box-shadow: 0 0 0 3px var(--color-accent-subtle);
+}
+
+.field__input::placeholder {
+  color: var(--text-3);
 }
 
 .field__input[aria-invalid="true"] {
-  border-color: var(--invalid);
+  border-color: rgb(255 138 128 / 0.55);
 }
 
 .field__input[aria-invalid="true"]:focus {
-  border-color: var(--text);
+  border-color: var(--color-danger);
+  box-shadow: 0 0 0 3px rgb(255 138 128 / 0.12);
 }
 
 .field__input:-webkit-autofill,
@@ -703,6 +816,14 @@ a {
     gap: 0.5rem;
   }
 
+  .entry .field__label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+  }
+
   .tagline {
     font-size: 1rem;
   }
@@ -854,12 +975,12 @@ a {
     font-size: 2.1rem;
   }
 
-  .brand:hover .mark__l {
+  .brand:hover .mark__head {
     animation: mark-l 1.6s cubic-bezier(0.65, 0, 0.35, 1) infinite;
   }
 
-  .brand:hover .mark__r {
-    animation: mark-r 1.6s cubic-bezier(0.65, 0, 0.35, 1) infinite;
+  .brand:hover .mark__plate {
+    animation: mark-r 1.6s cubic-bezier(0.65, 0, 0.35, 1) var(--plate-delay, 0s) infinite;
   }
 
   .tagline {
@@ -885,9 +1006,28 @@ a {
     line-height: 1.6;
   }
 
-  .cta {
+  .entry {
     max-width: 26rem;
-    gap: 0.85rem;
+    gap: 0.7rem;
+    padding: 1.4rem 1.4rem 1.2rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-xl);
+    background:
+      linear-gradient(180deg, rgb(255 255 255 / 0.025), transparent 40%),
+      var(--surface);
+    box-shadow: 0 24px 60px -32px rgb(0 0 0 / 0.9);
+  }
+
+  .entry__alt {
+    text-align: left;
+  }
+
+  .entry .field__label {
+    position: static;
+    width: auto;
+    height: auto;
+    overflow: visible;
+    clip: auto;
   }
 
   .button {
@@ -906,7 +1046,7 @@ a {
     position: absolute;
     inset: 0;
     z-index: -1;
-    background: linear-gradient(105deg, transparent 35%, rgba(255, 255, 255, 0.95) 50%, transparent 65%);
+    background: linear-gradient(105deg, transparent 38%, rgb(255 247 222 / 0.45) 50%, transparent 62%);
     background-size: 250% 100%;
     background-position: 140% 0;
     transition: background-position 700ms var(--ease-out);
@@ -917,7 +1057,10 @@ a {
   }
 
   .button--primary:hover {
-    box-shadow: 0 14px 44px -14px rgba(245, 245, 245, 0.5);
+    box-shadow:
+      inset 0 1px 0 rgb(255 247 222 / 0.55),
+      inset 0 0 0 1px rgb(109 75 25 / 0.35),
+      0 14px 40px -18px rgb(213 177 90 / 0.55);
   }
 
   .button--secondary:hover {
@@ -942,7 +1085,13 @@ a {
     flex: 0 0 auto;
     max-width: 26rem;
     margin: auto 0;
-    padding: 2rem 0;
+    padding: 1.75rem 1.6rem 1.4rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-xl);
+    background:
+      linear-gradient(180deg, rgb(255 255 255 / 0.025), transparent 40%),
+      var(--surface);
+    box-shadow: 0 24px 60px -32px rgb(0 0 0 / 0.9);
   }
 
   .auth__title,

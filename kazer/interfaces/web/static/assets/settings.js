@@ -306,6 +306,8 @@ class SettingsPanel {
   savePrefs(changes, { immediate = false } = {}) {
     Object.assign(this.prefs, changes);
     Object.assign(this.pending, changes);
+    // O valor à direita da linha (ex.: "Aparência · Claro") e o avatar mudam na hora.
+    this.paintNav();
     this.cb.onPreferences?.(changes);
     window.clearTimeout(this.saveTimer);
     this.saveTimer = window.setTimeout(() => this.flush(), immediate ? 0 : 650);

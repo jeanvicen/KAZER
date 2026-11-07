@@ -32,7 +32,7 @@
     <!-- Início: cena, frase e as duas entradas -->
     <section class="view home" id="home" aria-labelledby="brand-name">
       <header class="brand reveal" data-i="0">
-        <svg class="mark" viewBox="0 0 64 64" aria-hidden="true" focusable="false"><polygon class="mark__l" points="30,1.14 10,27.5 30,53.86"/><polygon class="mark__r" points="34,10.14 54,36.5 34,62.86"/></svg>
+        <svg class="mark" viewBox="0 0 64 64" aria-hidden="true" focusable="false"><path class="mark__head" fill-rule="evenodd" d="M32 4C43.2 4 50.6 12 50.6 21.6C50.6 31.8 41.6 39.4 32 44.1C22.4 39.4 13.4 31.8 13.4 21.6C13.4 12 20.8 4 32 4ZM18.2 27.8C20.4 25.6 27 28.6 28.4 36.2C23 36.8 18.6 32.4 18.2 27.8ZM45.8 27.8C43.6 25.6 37 28.6 35.6 36.2C41 36.8 45.4 32.4 45.8 27.8Z"/><path class="mark__plate mark__plate--l" d="M6 40.6Q15 40.6 19.6 44.9L20.2 50.6Q14.6 48.4 6.2 48.2Z"/><path class="mark__plate mark__plate--b" d="M20.4 52.3Q32 58.6 43.6 52.3L43.1 58.4Q32 65.2 20.9 58.4Z"/><path class="mark__plate mark__plate--r" d="M58 40.6Q49 40.6 44.4 44.9L43.8 50.6Q49.4 48.4 57.8 48.2Z"/></svg>
         <h1 class="brand__name" id="brand-name" data-text="KAZER">KAZER</h1>
       </header>
 
@@ -48,10 +48,16 @@
 
       <p class="subcopy reveal" data-i="1">Um assistente de IA com conta própria. Só e-mail e senha: sem login social e sem rastreadores.</p>
 
-      <div class="cta reveal" data-i="2">
-        <button class="button button--primary" type="button" id="open-signup">Criar conta</button>
-        <button class="button button--secondary" type="button" id="open-signin">Entrar</button>
-      </div>
+      <!-- Entrada direta, e-mail primeiro: um passo e você já está na senha. -->
+      <form class="entry reveal" data-i="2" id="entry-form" novalidate aria-label="Entrar ou criar conta">
+        <label class="field__label" for="entry-email">E-mail</label>
+        <input class="field__input" id="entry-email" name="entry-email" type="email" inputmode="email"
+               autocomplete="username" autocapitalize="off" spellcheck="false" maxlength="254"
+               placeholder="voce@email.com" aria-describedby="entry-email-error">
+        <p class="field__error" id="entry-email-error"></p>
+        <button class="button button--primary" type="submit" id="open-signin">Entrar com e-mail</button>
+        <p class="entry__alt">Novo por aqui? <button class="link" type="button" id="open-signup">Criar conta</button></p>
+      </form>
 
       <p class="legal reveal" data-i="3">Ao continuar, você concorda com os <a href="/termos">Termos de Uso</a> e com a <a href="/privacidade">Política de Privacidade</a>.</p>
     </section>
@@ -62,7 +68,7 @@
         <button class="icon-button" type="button" id="back" aria-label="Voltar">
           <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M15 5l-7 7 7 7"/></svg>
         </button>
-        <svg class="mark mark--bar" viewBox="0 0 64 64" aria-hidden="true" focusable="false"><polygon class="mark__l" points="30,1.14 10,27.5 30,53.86"/><polygon class="mark__r" points="34,10.14 54,36.5 34,62.86"/></svg>
+        <svg class="mark mark--bar" viewBox="0 0 64 64" aria-hidden="true" focusable="false"><path class="mark__head" fill-rule="evenodd" d="M32 4C43.2 4 50.6 12 50.6 21.6C50.6 31.8 41.6 39.4 32 44.1C22.4 39.4 13.4 31.8 13.4 21.6C13.4 12 20.8 4 32 4ZM18.2 27.8C20.4 25.6 27 28.6 28.4 36.2C23 36.8 18.6 32.4 18.2 27.8ZM45.8 27.8C43.6 25.6 37 28.6 35.6 36.2C41 36.8 45.4 32.4 45.8 27.8Z"/><path class="mark__plate mark__plate--l" d="M6 40.6Q15 40.6 19.6 44.9L20.2 50.6Q14.6 48.4 6.2 48.2Z"/><path class="mark__plate mark__plate--b" d="M20.4 52.3Q32 58.6 43.6 52.3L43.1 58.4Q32 65.2 20.9 58.4Z"/><path class="mark__plate mark__plate--r" d="M58 40.6Q49 40.6 44.4 44.9L43.8 50.6Q49.4 48.4 57.8 48.2Z"/></svg>
         <span class="auth__spacer"></span>
       </header>
 
@@ -114,7 +120,7 @@
 
             <button class="button button--primary button--submit" type="submit" id="submit">
               <span class="button__label" id="submit-label">Entrar</span>
-              <svg class="mark mark--busy" viewBox="0 0 64 64" aria-hidden="true" focusable="false"><polygon class="mark__l" points="30,1.14 10,27.5 30,53.86"/><polygon class="mark__r" points="34,10.14 54,36.5 34,62.86"/></svg>
+              <svg class="mark mark--busy" viewBox="0 0 64 64" aria-hidden="true" focusable="false"><path class="mark__head" fill-rule="evenodd" d="M32 4C43.2 4 50.6 12 50.6 21.6C50.6 31.8 41.6 39.4 32 44.1C22.4 39.4 13.4 31.8 13.4 21.6C13.4 12 20.8 4 32 4ZM18.2 27.8C20.4 25.6 27 28.6 28.4 36.2C23 36.8 18.6 32.4 18.2 27.8ZM45.8 27.8C43.6 25.6 37 28.6 35.6 36.2C41 36.8 45.4 32.4 45.8 27.8Z"/><path class="mark__plate mark__plate--l" d="M6 40.6Q15 40.6 19.6 44.9L20.2 50.6Q14.6 48.4 6.2 48.2Z"/><path class="mark__plate mark__plate--b" d="M20.4 52.3Q32 58.6 43.6 52.3L43.1 58.4Q32 65.2 20.9 58.4Z"/><path class="mark__plate mark__plate--r" d="M58 40.6Q49 40.6 44.4 44.9L43.8 50.6Q49.4 48.4 57.8 48.2Z"/></svg>
             </button>
 
             <div class="links">

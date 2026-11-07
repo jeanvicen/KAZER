@@ -123,7 +123,7 @@
 }
 
 .pal__row.is-on .pal__row-glyph {
-  color: var(--c-text-2);
+  color: var(--accent-text);
 }
 
 .pal__row-glyph svg {

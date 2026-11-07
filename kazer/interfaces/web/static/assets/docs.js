@@ -5,7 +5,11 @@
 // moldura isolada da prévia (ou é baixado); o PDF sai pela impressão do
 // navegador, com página A4 (documentos) ou 16:9 (slides).
 
+import { MARK_PATHS } from "./dom.js";
 import { render } from "./markdown.js";
+
+// Símbolo do KAZER na capa dos documentos (mesma geometria do logo).
+const BRAND_SVG = `<svg viewBox="0 0 64 64" aria-hidden="true"><path fill-rule="evenodd" d="${MARK_PATHS.head}"/><path class="p" d="${MARK_PATHS.l}"/><path class="p" d="${MARK_PATHS.b}"/><path class="p" d="${MARK_PATHS.r}"/></svg>`;
 
 const esc = (value) =>
   String(value ?? "").replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[char]);
@@ -58,7 +62,7 @@ body{margin:0;font:11pt/1.7 "Inter","Segoe UI",system-ui,-apple-system,Roboto,Ar
 .cover::before{width:150mm;height:150mm;right:-55mm;top:-40mm}
 .cover::after{width:90mm;height:90mm;right:10mm;bottom:-30mm;background:rgba(255,255,255,.06)}
 .cover__brand{display:flex;align-items:center;gap:10px;font-weight:600;letter-spacing:.24em;font-size:9pt;text-transform:uppercase;opacity:.9}
-.cover__brand i{width:22px;height:22px;background:#fff;clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%)}
+.cover__brand svg{width:22px;height:22px;fill:#fff}.cover__brand .p{stroke:#fff;stroke-width:1.6;stroke-linejoin:round}
 .cover__main{position:relative;z-index:1}
 .cover__kicker{display:inline-block;padding:5px 12px;border:1px solid rgba(255,255,255,.4);border-radius:99px;font-size:9pt;letter-spacing:.08em;text-transform:uppercase;margin-bottom:16mm}
 .cover h1{color:#fff;font-size:38pt;line-height:1.08;margin:0 0 8mm;letter-spacing:-.02em;font-weight:800;max-width:150mm}
@@ -105,7 +109,7 @@ hr{border:0;border-top:1px solid var(--line);margin:8mm 0}
 </style>${PRINT_BRIDGE}</head>
 <body>
 <section class="cover">
-  <div class="cover__brand"><i></i>KAZER</div>
+  <div class="cover__brand">${BRAND_SVG}KAZER</div>
   <div class="cover__main">
     ${meta.tipo ? `<span class="cover__kicker">${esc(meta.tipo)}</span>` : ""}
     <h1>${esc(title)}</h1>
@@ -128,7 +132,7 @@ function slideKind(markdown, index) {
 }
 
 export function buildSlides(meta, slides) {
-  const accent = color(meta.cor || meta.color, "#e8b04a");
+  const accent = color(meta.cor || meta.color, "#d5b15a");
   const title = meta.titulo || meta.title || "Apresentação";
   const subtitle = meta.subtitulo || meta.subtitle || "";
   const author = meta.autor || meta.author || "KAZER";

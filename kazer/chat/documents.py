@@ -470,7 +470,7 @@ class _Deck(_Pdf):
 def render_slides(source: str) -> bytes:
     """Apresentação: capa, divisores de seção e slides de conteúdo, sem limite."""
     meta, body = front_matter(source[:MAX_SOURCE])
-    accent = _hex(meta.get("cor") or meta.get("color", ""), (232, 176, 74))
+    accent = _hex(meta.get("cor") or meta.get("color", ""), (213, 177, 90))
     title = clean(meta.get("titulo") or meta.get("title") or "Apresentação")
     subtitle = clean(meta.get("subtitulo") or meta.get("subtitle") or "")
     author = clean(meta.get("autor") or meta.get("author") or "KAZER")

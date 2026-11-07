@@ -64,9 +64,9 @@
 }
 
 .library__chip[aria-selected="true"] {
-  border-color: transparent;
-  background: var(--c-text);
-  color: var(--c-bg);
+  border-color: var(--color-accent-border);
+  background: var(--color-accent-subtle);
+  color: var(--accent-text);
 }
 
 /* ---------- Lista ----------
@@ -193,8 +193,8 @@
   animation: library-pulse 1.4s ease-in-out infinite;
 }
 
-.library__mark .mark__l,
-.library__mark .mark__r {
+.library__mark .mark__head,
+.library__mark .mark__plate {
   fill: currentColor;
 }
 

@@ -22,6 +22,9 @@ const ui = {
   auth: $("auth"),
   openSignup: $("open-signup"),
   openSignin: $("open-signin"),
+  entryForm: $("entry-form"),
+  entryEmail: $("entry-email"),
+  entryError: $("entry-email-error"),
   back: $("back"),
   taglineText: $("tagline-text"),
   formView: $("form-view"),
@@ -264,8 +267,36 @@ function focusAuth() {
   }
 }
 
-ui.openSignup.addEventListener("click", () => openAuth("signup"));
-ui.openSignin.addEventListener("click", () => openAuth("signin"));
+// Entrada no estilo "e-mail primeiro": o e-mail digitado aqui segue para a
+// tela da conta e o foco já cai na senha. Nada é enviado ao servidor neste passo.
+function carryEmail() {
+  const value = ui.entryEmail.value.trim();
+  ui.entryEmail.removeAttribute("aria-invalid");
+  ui.entryError.textContent = "";
+  if (value && !EMAIL_SHAPE.test(value)) {
+    ui.entryEmail.setAttribute("aria-invalid", "true");
+    ui.entryError.textContent = "Digite um e-mail válido.";
+    ui.entryEmail.focus();
+    return null;
+  }
+  if (value) ui.email.value = value;
+  return value;
+}
+
+ui.entryForm.addEventListener("submit", (event) => {
+  event.preventDefault();
+  const value = carryEmail();
+  if (value === null) return;
+  openAuth("signin", { focus: false });
+  (value ? ui.password : ui.email).focus({ preventScroll: true });
+});
+ui.entryEmail.addEventListener("input", () => {
+  if (ui.entryEmail.hasAttribute("aria-invalid")) carryEmail();
+});
+ui.openSignup.addEventListener("click", () => {
+  if (carryEmail() === null) return;
+  openAuth("signup");
+});
 ui.back.addEventListener("click", goHome);
 
 // ---------- Frase digitada ----------

@@ -223,12 +223,17 @@ export const EN = {
   "Treino de braço, que ninguém é de ferro.": "Arm day, because nobody's made of iron.",
   "Ver o que já carregou": "See what already loaded",
   "Voltar ao início": "Back to start",
+  "Mascote do KAZER": "KAZER mascot",
 
   // ---------- Entrar, criar conta e recuperar senha ----------
   "Entrar": "Sign in",
   "Entrar no KAZER": "Sign in to KAZER",
   "Criar conta": "Create account",
   "Criar sua conta": "Create your account",
+  "Entrar ou criar conta": "Sign in or create account",
+  "Entrar com e-mail": "Sign in with email",
+  "Novo por aqui?": "New here?",
+  "voce@email.com": "you@email.com",
   "Já tem conta?": "Already have an account?",
   "Não tem conta?": "Don't have an account?",
   "E-mail": "Email",

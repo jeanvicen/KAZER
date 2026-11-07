@@ -1,3 +1,5 @@
+import { MARK_PATHS } from "./dom.js";
+
 // Abertura: partículas reais convergem das bordas, formam KAZER e se abrem
 // para revelar a autenticação. Roda ~1,9 s e para por completo ao terminar.
 
@@ -32,23 +34,34 @@ function pickShade() {
   return 0;
 }
 
-// Símbolo do KAZER (Fenda): duas metades de um losango separadas pelo cursor.
-const MARK = [
-  [30, 1.14, 10, 27.5, 30, 53.86],
-  [34, 10.14, 54, 36.5, 34, 62.86],
-];
+// Símbolo do KAZER (o alien): cabeça com olhos vazados e o colar em três placas.
+let markShapes = null;
+function shapes() {
+  if (!markShapes) {
+    markShapes = {
+      head: new Path2D(MARK_PATHS.head),
+      plates: [MARK_PATHS.l, MARK_PATHS.b, MARK_PATHS.r].map((d) => new Path2D(d)),
+    };
+  }
+  return markShapes;
+}
 
 // Desenha símbolo + nome com deslocamento horizontal opcional (truque da sombra do halo).
 function paintLockup(g, word, dx) {
   const s = word.markSize / 64;
-  for (const [ax, ay, bx, by, cx, cy] of MARK) {
-    g.beginPath();
-    g.moveTo(word.centerX + (ax - 32) * s + dx, word.markTop + ay * s);
-    g.lineTo(word.centerX + (bx - 32) * s + dx, word.markTop + by * s);
-    g.lineTo(word.centerX + (cx - 32) * s + dx, word.markTop + cy * s);
-    g.closePath();
-    g.fill();
+  const { head, plates } = shapes();
+  g.save();
+  g.translate(word.centerX - 32 * s + dx, word.markTop);
+  g.scale(s, s);
+  g.fill(head, "evenodd");
+  g.lineJoin = "round";
+  g.lineWidth = 1.6;
+  g.strokeStyle = g.fillStyle;
+  for (const plate of plates) {
+    g.fill(plate);
+    g.stroke(plate);
   }
+  g.restore();
   let x = word.left + dx;
   word.glyphs.forEach((ch, i) => {
     g.fillText(ch, x, word.baseline);

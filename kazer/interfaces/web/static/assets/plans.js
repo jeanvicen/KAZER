@@ -121,7 +121,7 @@ class PlansScreen {
   select(plan) {
     this.selected = plan;
     for (const tab of this.tabs.children) tab.setAttribute("aria-selected", String(tab.dataset.plan === plan.id));
-    this.panel.style.setProperty("--accent", plan.accent || "#e8b04a");
+    this.panel.style.setProperty("--accent", plan.accent || "#d5b15a");
     this.heading.textContent = plan.name;
     this.tagline.textContent = plan.tagline;
     const times = this.free?.allowance ? Math.round(plan.allowance / this.free.allowance) : 0;

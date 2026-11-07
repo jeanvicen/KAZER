@@ -45,6 +45,8 @@ const P = Object.fromEntries(
     glass2: "#c8c6ff", rim: "#8b8cf0",
     hood: "#3b3f78", hoodLo: "#2a2c5a", hoodHi: "#565ca0", string: "#e9e7ff", pants: "#22243f",
     chair: "#2b2238", chairHi: "#57466e", chairLo: "#1e1828", chairStripe: "#c45a6a",
+    // Ouro champanhe do colar do mascote (o mesmo do logo).
+    gold: "#d5b15a", goldHi: "#f1dfa5", goldLo: "#8a6424",
   }).map(([name, hex]) => [name, rgba(hex)]),
 );
 
@@ -208,22 +210,24 @@ function buildRoom() {
     }
   }
 
-  // Quadro com o símbolo do KAZER.
+  // Quadro com o logo do KAZER (o alien com o colar dourado).
   rect(70, 16, 88, 42, P.posterFrame);
   rect(71, 17, 87, 41, P.posterMat);
   rect(73, 19, 85, 39, P.posterBg);
-  sprite(75, 22, [
-    "....#.....",
-    "...##.....",
-    "..###.#...",
-    ".####.##..",
-    "#####.###.",
-    ".####.####",
-    "..###.###.",
-    "...##.##..",
-    "....#.#...",
-    "......#...",
-  ], { "#": P.ink });
+  sprite(74, 23, [
+    "...wwwww...",
+    ".wwwwwwwww.",
+    "wwwwwwwwwww",
+    "wwwwwwwwwww",
+    "weewwwwweew",
+    "wweewwweeww",
+    ".wwwwwwwww.",
+    "..wwwwwww..",
+    "....www....",
+    "o.........o",
+    "oo.......oo",
+    "..ooooooo..",
+  ], { w: P.ink, e: P.posterBg, o: P.gold });
 
   // Prateleira com livros.
   rect(96, 32, 143, 33, P.shelf);
@@ -483,6 +487,67 @@ function drawMan(buf, t, frameIndex, screenGlow, surface = MOBILE) {
   if (pose.head !== "face" && screenGlow > 0.5) px(69, 88 + breath, P.rim);
 }
 
+// ---------- Mascote do KAZER (pixel) ----------
+//
+// O alien do logo em versão mascote, para as cenas: cabeça grande, olhos
+// pretos inclinados e colar dourado. Sprites simétricos (metades espelhadas).
+const MASCOT = [
+    "....wwwww....",
+    "..wwwwwwwww..",
+    ".wwwwwwwwwww.",
+    ".wwwwwwwwwww.",
+    ".weewwwwweew.",
+    ".wweewwweeww.",
+    "..wwwwwwwww..",
+    "...wwwwwww...",
+    ".....www.....",
+  ];
+const MASCOT_BLINK = [
+    "....wwwww....",
+    "..wwwwwwwww..",
+    ".wwwwwwwwwww.",
+    ".wwwwwwwwwww.",
+    ".wwwwwwwwwww.",
+    ".weeewwweeew.",
+    "..wwwwwwwww..",
+    "...wwwwwww...",
+    ".....www.....",
+  ];
+const MASCOT_MAP = { w: P.ink, e: P.screen };
+// O logo no quadro da parede e o bonequinho da prateleira (cena do computador).
+const POSTER = [
+    ".....wwww.....",
+    "...wwwwwwww...",
+    "..wwwwwwwwww..",
+    ".wwwwwwwwwwww.",
+    ".wwwwwwwwwwww.",
+    ".wwwwwwwwwwww.",
+    ".weeewwwweeew.",
+    ".wweeewweeeww.",
+    "..wwwewwewww..",
+    "...wwwwwwww...",
+    "....wwwwww....",
+    ".....wwww.....",
+    "o............o",
+    "ooo........ooo",
+    ".ooo......ooo.",
+    "....oooooo....",
+    "...oooooooo...",
+  ];
+const FIGURE = [
+    "..wwwww..",
+    ".wwwwwww.",
+    "wwwwwwwww",
+    "weewwweew",
+    "wweeweeww",
+    ".wwwwwww.",
+    "..wwwww..",
+    "o...w...o",
+    "oo.ooo.oo",
+    "...ooo...",
+  ];
+const LOGO_MAP = { w: P.ink, e: P.posterBg, o: P.gold };
+
 // ---------- Tela: o KAZER coder em ação ----------
 
 const SX = 67;
@@ -510,43 +575,28 @@ function drawScreen(buf, t, frameIndex, surface = MOBILE) {
   const local = s % 3600;
   const thinking = activity === 4;
 
-  // O personagem: o símbolo do KAZER com olhos, braços e um laptop.
+  // O personagem: o mascote do KAZER (o alien do logo) digitando no laptop.
+  // Cabeça grande, olhos pretos inclinados, colar dourado em três placas.
   const bx = SX + 4;
   const by = SY + 18;
-  const swing = thinking ? Math.round(Math.sin(local / 180) * 2) : 0;
+  const swing = thinking ? Math.round(Math.sin(local / 180) * 1.5) : 0;
   const bob = !thinking && Math.floor(local / 160) % 2 === 0 ? 1 : 0;
-  sprite(bx, by - 2 + swing, [
-    "....#",
-    "...##",
-    "..###",
-    ".####",
-    "#####",
-    ".####",
-    "..###",
-    "...##",
-    "....#",
-  ], { "#": P.ink });
-  sprite(bx + 6, by + 1 - swing, [
-    "#....",
-    "##...",
-    "###..",
-    "####.",
-    "#####",
-    "####.",
-    "###..",
-    "##...",
-    "#....",
-  ], { "#": P.ink });
   const blink = local % 1700 < 110;
-  px(bx + 3, by + 2 + swing, blink ? P.ink : P.screen);
-  px(bx + 7, by + 5 - swing, blink ? P.ink : P.screen);
-  rect(bx + 1, by + 11, bx + 13, by + 11, P.lavDim);
-  rect(bx + 3, by + 9 + bob, bx + 4, by + 9 + bob, P.lav);
-  rect(bx + 9, by + 9 + (1 - bob), bx + 10, by + 9 + (1 - bob), P.lav);
-  rect(bx + 2, by + 12, bx + 12, by + 12, P.lav);
+  sprite(bx + swing, by - 4, blink ? MASCOT_BLINK : MASCOT, MASCOT_MAP);
+  // Colar: asas à esquerda e à direita, placa curva embaixo do queixo.
+  rect(bx + 1, by + 5, bx + 3, by + 5, P.gold);
+  rect(bx + 9, by + 5, bx + 11, by + 5, P.gold);
+  rect(bx + 4, by + 6, bx + 8, by + 6, P.gold);
+  px(bx + 1, by + 5, P.goldHi);
+  px(bx + 11, by + 5, P.goldLo);
+  // Mãos no teclado do laptop (sobem e descem enquanto digita).
+  rect(bx + 3, by + 9 + bob, bx + 4, by + 9 + bob, P.soft);
+  rect(bx + 8, by + 9 + (1 - bob), bx + 9, by + 9 + (1 - bob), P.soft);
+  rect(bx + 1, by + 11, bx + 12, by + 11, P.lavDim);
+  rect(bx + 2, by + 12, bx + 11, by + 12, P.lav);
   if (thinking) {
     for (let i = 0; i < 3; i += 1) {
-      if (Math.floor(local / 250) % 4 > i) px(bx + 3 + i * 3, by - 6, P.soft);
+      if (Math.floor(local / 250) % 4 > i) px(bx + 3 + i * 3, by - 7, P.soft);
     }
   }
 
@@ -731,7 +781,7 @@ export function createRoom() {
 }
 
 // Peças compartilhadas com a cena de desktop (scene-desktop.js).
-export { P, rgba, painter, bayer, clamp, rng, drawMan, drawScreen, FONT3, HEADS, HEAD_MAP };
+export { P, rgba, painter, bayer, clamp, rng, drawMan, drawScreen, FONT3, HEADS, HEAD_MAP, POSTER, FIGURE, LOGO_MAP, MASCOT, MASCOT_BLINK };
 
 // ---------- Ciclo de animação ----------
 

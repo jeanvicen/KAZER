@@ -93,21 +93,32 @@ export function icon(name, cls = "") {
   return svg;
 }
 
-// O símbolo Fenda (mesmas metades do logo), para marcas pequenas na interface.
+// Símbolo do KAZER: a cabeça do alien (olhos vazados) e o colar em três
+// placas. Mesma geometria do logo (assets/brand/mark.svg); as placas têm
+// classes próprias para os estados "gerando" e "digitando".
+export const MARK_PATHS = {
+  head: "M32 4C43.2 4 50.6 12 50.6 21.6C50.6 31.8 41.6 39.4 32 44.1C22.4 39.4 13.4 31.8 13.4 21.6C13.4 12 20.8 4 32 4ZM18.2 27.8C20.4 25.6 27 28.6 28.4 36.2C23 36.8 18.6 32.4 18.2 27.8ZM45.8 27.8C43.6 25.6 37 28.6 35.6 36.2C41 36.8 45.4 32.4 45.8 27.8Z",
+  l: "M6 40.6Q15 40.6 19.6 44.9L20.2 50.6Q14.6 48.4 6.2 48.2Z",
+  b: "M20.4 52.3Q32 58.6 43.6 52.3L43.1 58.4Q32 65.2 20.9 58.4Z",
+  r: "M58 40.6Q49 40.6 44.4 44.9L43.8 50.6Q49.4 48.4 57.8 48.2Z",
+};
+
 export function mark(cls = "") {
   const svg = document.createElementNS(SVG, "svg");
   svg.setAttribute("viewBox", "0 0 64 64");
   svg.setAttribute("aria-hidden", "true");
   svg.setAttribute("focusable", "false");
   svg.setAttribute("class", `mark ${cls}`.trim());
-  for (const [klass, points] of [
-    ["mark__l", "30,1.14 10,27.5 30,53.86"],
-    ["mark__r", "34,10.14 54,36.5 34,62.86"],
-  ]) {
-    const polygon = document.createElementNS(SVG, "polygon");
-    polygon.setAttribute("class", klass);
-    polygon.setAttribute("points", points);
-    svg.append(polygon);
+  const head = document.createElementNS(SVG, "path");
+  head.setAttribute("class", "mark__head");
+  head.setAttribute("fill-rule", "evenodd");
+  head.setAttribute("d", MARK_PATHS.head);
+  svg.append(head);
+  for (const side of ["l", "b", "r"]) {
+    const plate = document.createElementNS(SVG, "path");
+    plate.setAttribute("class", `mark__plate mark__plate--${side}`);
+    plate.setAttribute("d", MARK_PATHS[side]);
+    svg.append(plate);
   }
   return svg;
 }

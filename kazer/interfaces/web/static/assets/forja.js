@@ -12,6 +12,7 @@
 // Carregada só quando a aba abre.
 
 import { formatDate, h, icon, loadStyle } from "./dom.js";
+import { pixelMascot } from "./mascot.js";
 import { pixelWord } from "./pixel.js";
 import { request } from "./net.js";
 
@@ -42,7 +43,12 @@ export function createForja({ onStart, onOpenPlans, onOpenConversation, onOpenSe
   }
 
   function wordmark() {
-    return h("h3.forja__word", {}, pixelWord("KZ CODE", { label: "KZ Code", blink: 3 }));
+    return h(
+      "div.forja__brand",
+      {},
+      h("div.forja__mascot", {}, pixelMascot()),
+      h("h3.forja__word", {}, pixelWord("KZ CODE", { label: "KZ Code", blink: 3 })),
+    );
   }
 
   // ---------- Plano pago ----------
