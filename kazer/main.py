@@ -8,6 +8,9 @@ import sys
 
 from kazer.interfaces.terminal.shell import main as terminal
 
+# A Vercel procura `app` neste arquivo: o import fica mesmo sem uso aqui.
+from kazer.interfaces.web.asgi import app  # noqa: F401
+
 
 def main() -> None:
     """Entrega o comando ao KAZER no terminal."""
