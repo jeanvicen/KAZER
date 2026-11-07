@@ -370,6 +370,25 @@ class _Reader(HTMLParser):
             self._anchor.append(data)
 
 
+_DATE_PATTERNS = (
+    re.compile(r'<meta[^>]+(?:property|name|itemprop)=["\'](?:article:published_time|'
+               r'og:published_time|datePublished|date|dc\.date|pubdate|publishdate)["\'][^>]*'
+               r'content=["\'](\d{4}-\d{2}-\d{2})', re.IGNORECASE),
+    re.compile(r'"datePublished"\s*:\s*"(\d{4}-\d{2}-\d{2})'),
+    re.compile(r'<time[^>]+datetime=["\'](\d{4}-\d{2}-\d{2})', re.IGNORECASE),
+)
+
+
+def published_date(html: str) -> str:
+    """Data de publicação (AAAA-MM-DD) pelos metadados da página, se houver."""
+    head = html[:200_000]
+    for pattern in _DATE_PATTERNS:
+        match = pattern.search(head)
+        if match and "1990-01-01" <= match.group(1) <= "2100-01-01":
+            return match.group(1)
+    return ""
+
+
 def page_text(html: str, base: str) -> tuple[str, str, list[tuple[str, str]]]:
     """Título, texto principal e links de uma página."""
     reader = _Reader(base)
@@ -416,10 +435,14 @@ class WebTools:
 
     definitions = DEFINITIONS
 
-    def _found(self, title: str, url: str, kind: str, img: str = "") -> None:
+    def _found(
+        self, title: str, url: str, kind: str, img: str = "", date: str = ""
+    ) -> None:
         bucket = getattr(self._local, "found", None)
         if bucket is not None and url.startswith(("http://", "https://")):
             item = {"t": " ".join(title.split())[:140] or url, "u": url[:500], "k": kind}
+            if date:
+                item["d"] = date[:10]
             if img.startswith(IMAGE_HOSTS):
                 item["img"] = img[:500]
             bucket.append(item)
@@ -880,13 +903,17 @@ class WebTools:
             return EXTERNAL + f"Fonte: {final}\n\n" + self._fit(text)
         if kind and "html" not in kind and "xml" not in kind:
             raise ToolFailure(f"Esse endereço não é uma página de texto ({kind}).")
-        title, body, links = page_text(raw.decode(encoding, "replace"), final)
-        self._found(title or final, final, "lido")
+        html = raw.decode(encoding, "replace")
+        title, body, links = page_text(html, final)
+        date = published_date(html)
+        self._found(title or final, final, "lido", date=date)
         self._note(f"{len(body.split())} palavras lidas")
         listed = "\n".join(f"- {text}: {href}" for text, href in links[:25])
         return (
             EXTERNAL
-            + f"Fonte: {final}\nTítulo: {title or '(sem título)'}\n\n"
+            + f"Fonte: {final}\nTítulo: {title or '(sem título)'}\n"
+            + (f"Publicado em: {date}\n" if date else "")
+            + "\n"
             + self._fit(body)
             + (f"\n\nLinks da página:\n{listed}" if listed else "")
         )

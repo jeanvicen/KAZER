@@ -23,7 +23,7 @@ import {
   trapFocus,
   uuid,
 } from "./dom.js";
-import { bundleCard, onAnswer, openImages, picsStrip, readImages, readSources, readSteps, renderSourceList, stripSources } from "./deliver.js";
+import { bundleCard, citeChips, onAnswer, openImages, picsStrip, readImages, readResearch, readSources, readSteps, renderSourceList, stripSources } from "./deliver.js";
 import { copyText, MarkdownView, render as renderMarkdown } from "./markdown.js";
 import { net, readEvents, request, waitOnline } from "./net.js";
 import { closeSheet, confirmDialog, openSheet, promptDialog, setSheetBackground, toast } from "./sheets.js";
@@ -791,6 +791,8 @@ function assistantElement(model) {
   model.el = el;
   model.parts = { head, steps, pics, thinking, body, bundle, made, notice, actions, state: head.lastChild, thinkBody: thinking.lastChild };
   model.view = new MarkdownView(body);
+  // [2] no texto vira selo da fonte 2 desta resposta (só fontes que existem).
+  model.view.decorate = (fragment) => citeChips(fragment, model.liveSources || readSources(model.content || ""));
   applyStatus(model);
   return el;
 }
@@ -836,7 +838,22 @@ function stepIcon(label) {
 }
 
 // Resumo verdadeiro do que aconteceu, contado dos próprios passos.
-function stepSummary(steps, sources) {
+// Resumo com números reais: páginas lidas, resultados e buscas são coisas
+// diferentes e aparecem separadas (nunca "N fontes" misturando tudo).
+function researchSummary(stats) {
+  const parts = [];
+  if (stats.paginas_lidas) parts.push(`Leu ${stats.paginas_lidas} ${stats.paginas_lidas === 1 ? "página" : "páginas"}`);
+  if (stats.resultados) parts.push(`${stats.resultados} ${stats.resultados === 1 ? "resultado" : "resultados"} em ${stats.buscas} ${stats.buscas === 1 ? "busca" : "buscas"}`);
+  else if (stats.buscas_tentadas) parts.push(`${stats.buscas_tentadas} ${stats.buscas_tentadas === 1 ? "busca sem resultado" : "buscas sem resultado"}`);
+  if (stats.imagens) parts.push(`${stats.imagens} ${stats.imagens === 1 ? "foto" : "fotos"}`);
+  return parts.join(" · ");
+}
+
+function stepSummary(steps, sources, stats) {
+  if (stats) {
+    const text = researchSummary(stats);
+    if (text) return text;
+  }
   const searched = steps.filter((step) => /^(Pesquisando|Procurando|Buscando)/.test(step.label)).length;
   const read = steps.filter((step) => /^(Lendo|Abrindo|Consultando)/.test(step.label)).length;
   const parts = [];
@@ -883,6 +900,7 @@ function paintSteps(model) {
   const streaming = model.status === "streaming";
   if (!streaming) for (const step of steps) if (step.state === "run") step.state = "done";
   const sources = (model.liveSources || readSources(model.content || "")).length;
+  const stats = model.research || readResearch(model.content || "");
   box.hidden = false;
   box.classList.toggle("is-live", streaming);
 
@@ -893,7 +911,7 @@ function paintSteps(model) {
         "button.trail__summary",
         { type: "button", "aria-expanded": "false", onclick: () => { model.trailOpen = true; paintSteps(model); } },
         h("span.trail__badge", { "aria-hidden": "true" }, icon("check")),
-        h("span.trail__title", { text: stepSummary(steps.filter((step) => !step.kind), sources) }),
+        h("span.trail__title", { text: stepSummary(steps.filter((step) => !step.kind), sources, stats) }),
         icon("chevron", "trail__caret"),
       ),
     );
@@ -922,7 +940,7 @@ function paintSteps(model) {
         "button.trail__more",
         { type: "button", onclick: () => { model.trailOpen = false; model.trailAll = false; paintSteps(model); } },
         icon("check"),
-        h("span", { text: stepSummary(steps.filter((step) => !step.kind), sources) }),
+        h("span", { text: stepSummary(steps.filter((step) => !step.kind), sources, stats) }),
         icon("chevron", "trail__caret is-up"),
       )
     : null;
@@ -1111,6 +1129,9 @@ function handleEvent(model, event) {
     model.lastMark = now;
     paintSteps(model);
     applyStatus(model);
+  } else if (event.type === "research") {
+    model.research = event.stats;
+    paintSteps(model);
   } else if (event.type === "images") {
     model.liveImages = event.items;
     paintPics(model);

@@ -376,6 +376,8 @@ export class MarkdownView {
     this.parts.length = same;
     for (const source of next.slice(same)) {
       const fragment = render(source);
+      // Gancho opcional (ex.: transformar [2] em selo de fonte).
+      if (this.decorate) this.decorate(fragment);
       const nodes = [...fragment.childNodes];
       this.container.append(fragment);
       this.parts.push({ source, nodes });

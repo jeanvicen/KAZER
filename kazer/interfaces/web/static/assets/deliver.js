@@ -222,7 +222,7 @@ export function fenceHook({ lang, name, code, closed }) {
   if (kind === "kazer-pergunta") return questionCard(code, closed);
   if (kind === "pdf" || kind === "slides") return docCard(kind, name, code, closed);
   if (kind === "kazer-fontes") return sourcesStrip(code, closed);
-  if (kind === "kazer-passos" || kind === "kazer-imagens") return h("span", { hidden: true });
+  if (kind === "kazer-passos" || kind === "kazer-imagens" || kind === "kazer-pesquisa") return h("span", { hidden: true });
   if (kind === "kazer-galeria") return galleryCard(code, closed);
   if (kind === "mermaid") return diagramCard(code, closed);
   return null;
@@ -248,7 +248,13 @@ const STEPS_BLOCK = /\n*```kazer-passos\n([\s\S]*?)\n```\n?/;
 const IMAGES_BLOCK = /\n*```kazer-imagens\n([\s\S]*?)\n```\n?/;
 
 export function stripSources(text) {
-  return (text || "").replace(SOURCES_BLOCK, "\n").replace(STEPS_BLOCK, "\n").replace(IMAGES_BLOCK, "\n").trimEnd();
+  return (text || "")
+    .replace(SOURCES_BLOCK, "\n")
+    .replace(STEPS_BLOCK, "\n")
+    .replace(IMAGES_BLOCK, "\n")
+    .replace(/\n*```kazer-pesquisa\n[\s\S]*?\n```\n?/, "\n")
+    .replace(CITE, "")
+    .trimEnd();
 }
 
 // Fotos que a pesquisa trouxe (salvas com a resposta): só hosts permitidos.
@@ -339,9 +345,14 @@ export function renderSourceList(items) {
             h(
               "a.src-row",
               { href: item.u, target: "_blank", rel: "noopener noreferrer" },
-              h("span.src-row__n", { text: String(index + 1) }),
+              h("span.src-row__n", { text: String(item.n || index + 1) }),
               sourceAvatar(item.u),
-              h("span.src-row__text", {}, h("span.src-row__title", { text: item.t || domain(item.u) }), h("span.src-row__domain", { text: domain(item.u) })),
+              h(
+                "span.src-row__text",
+                {},
+                h("span.src-row__title", { text: item.t || domain(item.u) }),
+                h("span.src-row__domain", { text: item.d ? `${domain(item.u)} · ${formatDate(item.d)}` : domain(item.u) }),
+              ),
             ),
           ),
         ),
@@ -349,6 +360,92 @@ export function renderSourceList(items) {
     );
   }
   return box;
+}
+
+function formatDate(iso) {
+  const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso || "");
+  return match ? `${match[3]}/${match[2]}/${match[1]}` : "";
+}
+
+// ---------- Citações por afirmação ----------
+//
+// O modelo escreve "[2]" logo depois da frase que a fonte 2 sustenta. Aqui o
+// marcador vira um selo com o nome do site (e "+N" quando são várias), como
+// nos assistentes de pesquisa. Só vira selo o número que existe na lista de
+// fontes desta resposta; número desconhecido some (nada de link inventado).
+
+const CITE = /(?:\[\d{1,2}(?:\s*,\s*\d{1,2})*\])+/g;
+const SKIP_TAGS = new Set(["CODE", "PRE", "A", "BUTTON", "SCRIPT", "STYLE"]);
+
+function citeChip(found) {
+  const first = found[0];
+  const more = found.length - 1;
+  const label = domain(first.u).replace(/\.(com|org|net|gov|edu)(\.br)?$/, "");
+  return h(
+    "button.cite",
+    {
+      type: "button",
+      title: found.map((item) => item.t || domain(item.u)).join(" · "),
+      "aria-label": `Fonte: ${found.map((item) => domain(item.u)).join(", ")}`,
+      onclick: () =>
+        found.length === 1
+          ? window.open(first.u, "_blank", "noopener,noreferrer")
+          : openSheet({ title: "Fontes desta afirmação", content: () => renderSourceList(found) }),
+    },
+    sourceAvatar(first.u),
+    h("span.cite__name", { text: label.length > 16 ? `${label.slice(0, 15)}…` : label }),
+    more > 0 ? h("span.cite__more", { text: `+${more}` }) : null,
+  );
+}
+
+export function citeChips(root, sources) {
+  const byNumber = new Map();
+  for (const item of sources || []) {
+    if (item?.n && /^https?:\/\//.test(item.u || "")) byNumber.set(Number(item.n), item);
+  }
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
+    acceptNode(node) {
+      for (let el = node.parentElement; el && el !== root.parentElement; el = el.parentElement) {
+        if (SKIP_TAGS.has(el.tagName) || el.classList?.contains("cite")) return NodeFilter.FILTER_REJECT;
+      }
+      return /\[\d/.test(node.nodeValue) ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_SKIP;
+    },
+  });
+  const targets = [];
+  while (walker.nextNode()) targets.push(walker.currentNode);
+  for (const node of targets) {
+    const text = node.nodeValue;
+    const out = document.createDocumentFragment();
+    let last = 0;
+    let changed = false;
+    for (const match of text.matchAll(CITE)) {
+      const numbers = [...match[0].matchAll(/\d{1,2}/g)].map((m) => Number(m[0]));
+      const found = [...new Set(numbers)].map((n) => byNumber.get(n)).filter(Boolean);
+      // Sem lista de fontes (resposta sem pesquisa), "[1]" pode ser texto normal.
+      if (!byNumber.size) continue;
+      changed = true;
+      out.append(text.slice(last, match.index).replace(/\s+$/, found.length ? " " : ""));
+      if (found.length) out.append(citeChip(found));
+      last = match.index + match[0].length;
+    }
+    if (!changed) continue;
+    out.append(text.slice(last));
+    node.replaceWith(out);
+  }
+}
+
+// Números reais da pesquisa salvos com a resposta.
+const RESEARCH_BLOCK = /\n*```kazer-pesquisa\n([\s\S]*?)\n```\n?/;
+
+export function readResearch(text) {
+  const match = (text || "").match(RESEARCH_BLOCK);
+  if (!match) return null;
+  try {
+    const data = JSON.parse(match[1]);
+    return data && typeof data === "object" ? data : null;
+  } catch {
+    return null;
+  }
 }
 
 function sourcesStrip(code, closed) {

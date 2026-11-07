@@ -6935,3 +6935,44 @@ html[data-motion="reduzido"] .pxword__blink {
   color: var(--c-text-2);
   font-size: 0.78rem;
 }
+
+/* Selo de fonte colado na afirmação ([2] no texto do modelo). */
+.cite {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  max-width: 11rem;
+  margin: 0 0.1rem;
+  padding: 0.05rem 0.45rem 0.05rem 0.15rem;
+  border: 1px solid var(--c-border);
+  border-radius: 999px;
+  background: var(--c-surface);
+  color: var(--c-text-2);
+  font: inherit;
+  font-size: 0.72rem;
+  line-height: 1.5;
+  vertical-align: 0.1em;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.cite:hover,
+.cite:focus-visible {
+  border-color: var(--c-border-2);
+  color: var(--c-text);
+}
+
+.cite .src-avatar {
+  width: 1rem;
+  height: 1rem;
+  font-size: 0.55rem;
+}
+
+.cite__name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cite__more {
+  color: var(--c-text-2);
+}

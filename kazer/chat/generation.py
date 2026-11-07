@@ -16,6 +16,7 @@ from collections.abc import AsyncIterator, Callable, Sequence
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field, replace
 from typing import Any
+from urllib.parse import urlsplit
 
 from kazer.brain.model_provider import (
     CancelToken,
@@ -53,6 +54,9 @@ MAX_SOURCES = 60
 # (no máximo estas vezes), em vez de entregar um arquivo pela metade.
 MAX_CONTINUATIONS = 3
 IMAGES_FENCE = "kazer-imagens"
+RESEARCH_FENCE = "kazer-pesquisa"
+# Fontes numeradas que o modelo pode citar com [n].
+MAX_CITED = 12
 MAX_IMAGES = 8
 # Quanto esperar o modelo leve decidir se vale pesquisar (depois disso, pesquisa).
 DECIDE_SECONDS = 4.0
@@ -85,6 +89,8 @@ class LiveGeneration:
     steps: list[dict[str, str]] = field(default_factory=list)
     # Fotos da web achadas na pesquisa: a interface mostra no topo da resposta.
     images: list[dict[str, str]] = field(default_factory=list)
+    # Números reais da pesquisa feita antes do modelo (buscas, resultados, páginas).
+    research: dict[str, Any] = field(default_factory=dict)
     # Modelo desta resposta (premium) — None usa o do hub (KAZ 1.1).
     provider: ModelProvider | None = None
     _lock: threading.Lock = field(default_factory=threading.Lock)
@@ -388,56 +394,99 @@ class GenerationHub:
 
     def _worth_searching(self, question: str) -> bool:
         """Caso duvidoso: o modelo leve diz SIM ou NAO (na dúvida, pesquisa)."""
+        answer = self._light_answer(pre.DECIDE_PROMPT, question)
+        return not answer.strip().upper().startswith("N")
+
+    def _light_answer(self, system: str, text: str) -> str:
+        """Pergunta rápida ao modelo leve (bastidor); '' se falhar ou demorar."""
         token = CancelToken()
-        decide = GenerationRequest(
-            system=pre.DECIDE_PROMPT,
-            turns=(Turn("user", (Part("text", question),)),),
-            light=True,
+        ask_request = GenerationRequest(
+            system=system, turns=(Turn("user", (Part("text", text),)),), light=True
         )
 
         def ask() -> str:
             pieces: list[str] = []
-            for event in self._provider.stream(decide, token):
+            for event in self._provider.stream(ask_request, token):
                 if event.kind == "text":
                     pieces.append(event.text)
-                if sum(len(piece) for piece in pieces) > 40:
+                if sum(len(piece) for piece in pieces) > 1200:
                     break
             return "".join(pieces)
 
         pool = ThreadPoolExecutor(max_workers=1)
         try:
-            answer = pool.submit(ask).result(timeout=DECIDE_SECONDS)
-        except Exception:  # noqa: BLE001 - lento ou fora do ar: pesquisa por garantia
+            return pool.submit(ask).result(timeout=DECIDE_SECONDS)
+        except Exception:  # noqa: BLE001 - bastidor nunca derruba a resposta
             token.cancel()
-            return True
+            return ""
         finally:
             pool.shutdown(wait=False)
-        return not answer.strip().upper().startswith("N")
+
+    def _step(self, live: LiveGeneration, label: str) -> str:
+        step_id = f"etapa-{len(live.events)}"
+        live.push({"type": "step", "id": step_id, "label": label, "state": "run"})
+        return step_id
+
+    def _step_done(self, live: LiveGeneration, step_id: str, label: str, detail: str) -> None:
+        live.push(
+            {"type": "step", "id": step_id, "label": label, "state": "done", "detail": detail}
+        )
+        live.steps.append({"l": label[:160], "d": detail[:80]})
 
     def _prefetch(self, live: LiveGeneration, request: GenerationRequest) -> GenerationRequest:
-        """Pesquisa antes do modelo: busca, lê as melhores páginas e junta à pergunta.
+        """Pesquisa antes do modelo, na medida do pedido, com números reais.
 
-        A Groq recebe tudo pronto e só escreve — sem chamar ferramenta nenhuma.
+        1. Decide a profundidade (simples, moderada ou profunda).
+        2. Nas não simples, o modelo leve planeja consultas diferentes.
+        3. Roda as buscas em paralelo e lê as páginas mais confiáveis.
+        4. Se leu pouco, faz uma segunda rodada com outras páginas.
+        5. Numera as fontes ([1], [2]…) para o modelo citar cada afirmação.
+        A Groq recebe tudo pronto e só escreve — sem chamar ferramenta.
         """
         if request.prefetch_check and not self._worth_searching(request.prefetch_check):
             return replace(request, prefetch=(), prefetch_check="")
-        first = self._run_parallel(live, request.prefetch)
-        opened = {
-            str(call.arguments.get("url", "")) for call in request.prefetch if call.name == wt.OPEN
-        }
-        found = [item for _, _, items in first for item in items]
-        pages = [] if live.cancel.cancelled() else pre.pages_to_open(found, opened)
-        second = (
-            self._run_parallel(
-                live,
-                [ToolCall(f"pre-page-{n}", wt.OPEN, {"url": url}) for n, url in enumerate(pages)],
-            )
-            if pages
-            else []
-        )
-        results = [(label, output) for label, output, _ in (*first, *second)]
-        note = Part("text", pre.context_note(results))
         last = request.turns[-1]
+        question = next((p.text for p in last.parts if p.kind == "text"), "")[:1500]
+        level = pre.depth(question)
+        budget = pre.BUDGET[level]
+        calls = list(request.prefetch)
+        main = next((c for c in calls if c.name == wt.SEARCH), None)
+        if main is not None and budget["queries"] > 1 and not live.cancel.cancelled():
+            step = self._step(live, "Planejando a pesquisa")
+            plan = self._light_answer(
+                pre.PLAN_PROMPT.replace("{n}", str(budget["queries"])), question
+            )
+            queries = pre.parse_queries(
+                plan, str(main.arguments.get("consulta", "")), budget["queries"]
+            )
+            self._step_done(
+                live, step, "Planejou a pesquisa",
+                f"{len(queries)} {'busca' if len(queries) == 1 else 'buscas'} · {level}",
+            )
+            calls = [c for c in calls if c.name != wt.SEARCH] + [
+                ToolCall(f"pre-q{n}", wt.SEARCH, {"consulta": q}) for n, q in enumerate(queries)
+            ]
+        first = self._run_parallel(live, calls) if not live.cancel.cancelled() else []
+        opened = {str(c.arguments.get("url", "")) for c in calls if c.name == wt.OPEN}
+        found = [item for _, _, items in first for item in items]
+        pages = (
+            []
+            if live.cancel.cancelled()
+            else pre.pages_to_open(found, opened, budget["pages"], question)
+        )
+        reads = self._read_pages(live, pages)
+        read_ok = sum(1 for _, _, items in reads if any(i.get("k") == "lido" for i in items))
+        if budget["second_round"] and read_ok < 2 and not live.cancel.cancelled():
+            # Leu pouco (site fora do ar, bloqueio): tenta outras páginas da busca.
+            more = pre.pages_to_open(found, opened | set(pages), budget["pages"] - read_ok,
+                                     question)
+            reads += self._read_pages(live, more)
+        everything = [*first, *reads]
+        numbered = self._number_sources(live, everything)
+        self._publish_stats(live, calls, first, reads, level)
+        results = [(label, output) for label, output, _ in everything]
+        limit = {pre.SIMPLE: 10_000, pre.MODERATE: 14_000, pre.DEEP: 20_000}[level]
+        note = Part("text", pre.context_note(results, numbered, limit=limit))
         return replace(
             request,
             prefetch=(),
@@ -446,6 +495,75 @@ class GenerationHub:
             brief=True,
             turns=(*request.turns[:-1], replace(last, parts=(*last.parts, note))),
         )
+
+    def _read_pages(
+        self, live: LiveGeneration, urls: Sequence[str]
+    ) -> list[tuple[str, str, list[dict[str, str]]]]:
+        if not urls or live.cancel.cancelled():
+            return []
+        calls = [ToolCall(f"pre-page-{len(live.events)}-{n}", wt.OPEN, {"url": url})
+                 for n, url in enumerate(urls)]
+        return self._run_parallel(live, calls)
+
+    def _number_sources(
+        self, live: LiveGeneration, results: Sequence[tuple[str, str, list[dict[str, str]]]]
+    ) -> list[dict[str, str]]:
+        """Numera as fontes que o modelo pode citar: lidas primeiro, depois resultados."""
+        items = [i for _, _, found in results for i in found if not i.get("img")]
+        seen: set[str] = set()
+        ordered: list[dict[str, str]] = []
+        for kind in ("lido", "github", "busca"):
+            for item in items:
+                if item.get("k") == kind and item["u"] not in seen:
+                    seen.add(item["u"])
+                    ordered.append(item)
+        numbered = []
+        for n, item in enumerate(ordered[:MAX_CITED], 1):
+            numbered.append({**item, "n": n})
+        by_url = {item["u"]: item["n"] for item in numbered}
+        for source in live.sources:
+            if source["u"] in by_url:
+                source["n"] = by_url[source["u"]]
+                # Lida vale mais que "achada na busca" quando a mesma URL tem os dois.
+                if any(i["u"] == source["u"] and i.get("k") == "lido" for i in numbered):
+                    source["k"] = "lido"
+                date = next((i.get("d") for i in numbered if i["u"] == source["u"]), "")
+                if date:
+                    source["d"] = date
+        if numbered:
+            live.push({"type": "sources", "items": list(live.sources)})
+        return numbered
+
+    def _publish_stats(
+        self,
+        live: LiveGeneration,
+        calls: Sequence[ToolCall],
+        first: Sequence[tuple[str, str, list[dict[str, str]]]],
+        reads: Sequence[tuple[str, str, list[dict[str, str]]]],
+        level: str,
+    ) -> None:
+        """Contagens reais e separadas (nunca uma mistura de buscas com leituras)."""
+        searches = [
+            (call, result) for call, result in zip(calls, first, strict=False)
+            if call.name in (wt.SEARCH, wt.NEWS, wt.GITHUB)
+        ]
+        hits = [i for _, (_, _, found) in searches for i in found if i.get("k") != "imagem"]
+        domains = {(urlsplit(i["u"]).hostname or "").removeprefix("www.") for i in hits}
+        direct = [r for c, r in zip(calls, first, strict=False) if c.name == wt.OPEN]
+        attempts = [*direct, *reads]
+        ok = sum(1 for _, _, found in attempts if any(i.get("k") == "lido" for i in found))
+        stats = {
+            "nivel": level,
+            "buscas": sum(1 for _, (_, _, found) in searches if found),
+            "buscas_tentadas": len(searches),
+            "resultados": len(hits),
+            "dominios": len(domains - {""}),
+            "paginas_lidas": ok,
+            "paginas_falharam": len(attempts) - ok,
+            "imagens": len(live.images),
+        }
+        live.research = stats
+        live.push({"type": "research", "stats": stats})
 
     def _generate(self, live: LiveGeneration, request: GenerationRequest) -> None:
         text: list[str] = []
@@ -560,6 +678,10 @@ class GenerationHub:
             # O que foi pesquisado fica salvo na conversa, mesmo se a resposta falhar.
             if error != "model_refused" and (live.sources or live.steps or live.images):
                 blocks = []
+                if live.research:
+                    blocks.append(
+                        f"```{RESEARCH_FENCE}\n{json.dumps(live.research)}\n```"
+                    )
                 if live.images:
                     blocks.append(
                         f"```{IMAGES_FENCE}\n{json.dumps(live.images, ensure_ascii=False)}\n```"
