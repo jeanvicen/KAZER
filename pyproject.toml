@@ -47,6 +47,9 @@ entrypoint = "kazer.interfaces.web.asgi:app"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+# A raiz entra no caminho de importação: `pytest` e `python -m pytest` se comportam
+# igual (os testes importam `tests.test_chat`, e o CI chama `pytest` direto).
+pythonpath = ["."]
 addopts = "-ra"
 
 [tool.ruff]
