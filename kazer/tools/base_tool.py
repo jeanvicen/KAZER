@@ -3,6 +3,7 @@
 from abc import ABC, abstractmethod
 from enum import StrEnum
 from typing import Any, ClassVar
+
 from pydantic import BaseModel
 
 

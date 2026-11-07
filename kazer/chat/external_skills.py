@@ -32,7 +32,7 @@ TOPICS = (
     ("web", "react"),
 )
 CACHE_SECONDS = 15 * 60
-_cache: tuple[float, tuple["ExternalSkill", ...]] = (0.0, ())
+_cache: tuple[float, tuple[ExternalSkill, ...]] = (0.0, ())
 
 
 @dataclass(frozen=True, slots=True)
@@ -59,7 +59,8 @@ class ExternalSkill:
 
 
 def _get_json(url: str) -> dict[str, Any]:
-    request = Request(url, headers={"User-Agent": "KAZER Skills Catalog/1.0", "Accept": "application/json"})
+    headers = {"User-Agent": "KAZER Skills Catalog/1.0", "Accept": "application/json"}
+    request = Request(url, headers=headers)
     with urlopen(request, timeout=8) as response:  # noqa: S310 -- URL fixa acima
         return json.loads(response.read().decode("utf-8"))
 
@@ -135,7 +136,10 @@ def _sanitize(text: str) -> str:
 def instructions(skill: ExternalSkill) -> str | None:
     """Baixa a instrução original e retorna o arquivo principal, sem arquivos extras."""
     try:
-        data = _get_json(DOWNLOAD_URL.format(source=quote(skill.source, safe="/"), slug=quote(skill.skill_id, safe="/")))
+        url = DOWNLOAD_URL.format(
+            source=quote(skill.source, safe="/"), slug=quote(skill.skill_id, safe="/")
+        )
+        data = _get_json(url)
     except (OSError, ValueError, json.JSONDecodeError):
         return None
     files = data.get("files")

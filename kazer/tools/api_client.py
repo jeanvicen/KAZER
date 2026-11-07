@@ -1,6 +1,7 @@
 """Chamadas API somente a destinos e escopos previamente autorizados."""
 
 from typing import ClassVar
+
 from pydantic import BaseModel, ConfigDict
 
 from kazer.tools.base_tool import BaseTool, Permission, ToolResult
@@ -16,7 +17,9 @@ class ApiClientTool(BaseTool):
     """Chamadas API somente a destinos e escopos previamente autorizados."""
 
     name: ClassVar[str] = "api_client"
-    description: ClassVar[str] = "Chamadas API somente a destinos e escopos previamente autorizados."
+    description: ClassVar[str] = (
+        "Chamadas API somente a destinos e escopos previamente autorizados."
+    )
     input_schema: ClassVar[type[BaseModel]] = ApiClientToolInput
     permissions: ClassVar[frozenset[Permission]] = frozenset({
         Permission.NETWORK,

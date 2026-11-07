@@ -1,0 +1,6 @@
+# Toda mudança passa pelo dono do produto.
+* @jeanvicen
+# Cobrança e segurança: revisão obrigatória.
+/kazer/billing/ @jeanvicen
+/kazer/security/ @jeanvicen
+/supabase/migrations/ @jeanvicen

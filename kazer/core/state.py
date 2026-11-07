@@ -1,7 +1,9 @@
 """Tipos de estado isolado para sessões e tarefas do agente."""
 
 from enum import StrEnum
+
 from pydantic import Field
+
 from kazer.config.models import StrictModel
 
 

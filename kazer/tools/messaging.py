@@ -1,6 +1,7 @@
 """Envio de mensagens externas exige aprovação humana por ação."""
 
 from typing import ClassVar
+
 from pydantic import BaseModel, ConfigDict
 
 from kazer.tools.base_tool import BaseTool, Permission, ToolResult

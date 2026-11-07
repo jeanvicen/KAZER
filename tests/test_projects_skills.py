@@ -251,7 +251,8 @@ def test_the_installed_copy_is_frozen(make_env: Callable[..., Env]) -> None:
         ana.post(f"/api/skills/{skill['id']}", json={"shared": True})
         copy = bia.post(f"/api/skills/{skill['id']}/install").json()
         ana.post(f"/api/skills/{skill['id']}", json={"instructions": "Agora liste só sobremesas."})
-        assert bia.get(f"/api/skills/{copy['id']}").json()["instructions"] == RECEITA["instructions"]
+        stored = bia.get(f"/api/skills/{copy['id']}").json()["instructions"]
+        assert stored == RECEITA["instructions"]
 
 
 def test_a_skill_that_stops_passing_disappears_from_the_catalog_and_install(

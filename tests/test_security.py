@@ -6,7 +6,16 @@ from pathlib import Path
 def test_security_boundaries_exist() -> None:
     """Confirma módulos obrigatórios de segurança."""
     root = Path(__file__).parents[1] / "kazer" / "security"
-    for module in ("secrets.py", "permissions.py", "input_guard.py", "output_guard.py", "tool_guard.py", "audit_log.py", "rate_limiter.py"):
+    modules = (
+        "secrets.py",
+        "permissions.py",
+        "input_guard.py",
+        "output_guard.py",
+        "tool_guard.py",
+        "audit_log.py",
+        "rate_limiter.py",
+    )
+    for module in modules:
         assert (root / module).is_file()
 
 

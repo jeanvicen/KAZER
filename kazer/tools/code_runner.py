@@ -1,6 +1,7 @@
 """Execução de código apenas por runtime isolado e sandbox validada."""
 
 from typing import ClassVar
+
 from pydantic import BaseModel, ConfigDict
 
 from kazer.tools.base_tool import BaseTool, Permission, ToolResult

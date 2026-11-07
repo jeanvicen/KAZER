@@ -94,7 +94,8 @@ def extract(content: str) -> list[Draft]:
             continue
         if len(body) < MIN_CHARS and not explicitly_named:
             continue
-        found.append(Draft(kind=_KINDS.get(language, "code"), title=title, language=language, content=body))
+        kind = _KINDS.get(language, "code")
+        found.append(Draft(kind=kind, title=title, language=language, content=body))
         if len(found) == MAX_PER_REPLY:
             break
     return found

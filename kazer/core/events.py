@@ -1,7 +1,9 @@
 """Contratos para eventos internos minimizados e auditáveis."""
 
 from datetime import datetime
+
 from pydantic import Field
+
 from kazer.config.models import StrictModel
 
 

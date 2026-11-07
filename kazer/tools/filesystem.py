@@ -1,6 +1,7 @@
 """Acesso restrito ao workspace, sem caminhos fora do escopo autorizado."""
 
 from typing import ClassVar
+
 from pydantic import BaseModel, ConfigDict
 
 from kazer.tools.base_tool import BaseTool, Permission, ToolResult
@@ -16,7 +17,9 @@ class FilesystemTool(BaseTool):
     """Acesso restrito ao workspace, sem caminhos fora do escopo autorizado."""
 
     name: ClassVar[str] = "filesystem"
-    description: ClassVar[str] = "Acesso restrito ao workspace, sem caminhos fora do escopo autorizado."
+    description: ClassVar[str] = (
+        "Acesso restrito ao workspace, sem caminhos fora do escopo autorizado."
+    )
     input_schema: ClassVar[type[BaseModel]] = FilesystemToolInput
     permissions: ClassVar[frozenset[Permission]] = frozenset({
         Permission.FILESYSTEM,

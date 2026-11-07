@@ -1,6 +1,7 @@
 """Fronteira obrigatória de autorização de chamadas de ferramenta."""
 
 from dataclasses import dataclass
+
 from kazer.tools.base_tool import Permission
 
 

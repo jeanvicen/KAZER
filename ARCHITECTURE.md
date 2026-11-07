@@ -7,7 +7,7 @@
 3. **Permissões independentes do modelo**: saída do modelo é dado não confiável; política determinística decide autorização.
 4. **Falha fechada**: falta de identidade, escopo, permissão ou aprovação bloqueia execução.
 5. **Contexto seletivo**: recuperar o mínimo de informação relevante; separar conteúdo externo de instruções confiáveis.
-6. **UI restrita à entrada**: a única tela é a de autenticação (`interfaces/web`); CLI, API do agente e webhook continuam stubs. A interface principal segue no roadmap.
+6. **Interface web completa**: o app (`interfaces/web`) tem login, chat, pesquisa, arquivos, planos e configurações; CLI e API do agente continuam como contratos.
 
 ## Fluxo de tarefa
 

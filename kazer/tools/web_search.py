@@ -1,6 +1,7 @@
 """Pesquisa na web com resultados externos tratados como dados não confiáveis."""
 
 from typing import ClassVar
+
 from pydantic import BaseModel, ConfigDict
 
 from kazer.tools.base_tool import BaseTool, Permission, ToolResult
@@ -16,7 +17,9 @@ class WebSearchTool(BaseTool):
     """Pesquisa na web com resultados externos tratados como dados não confiáveis."""
 
     name: ClassVar[str] = "web_search"
-    description: ClassVar[str] = "Pesquisa na web com resultados externos tratados como dados não confiáveis."
+    description: ClassVar[str] = (
+        "Pesquisa na web com resultados externos tratados como dados não confiáveis."
+    )
     input_schema: ClassVar[type[BaseModel]] = WebSearchToolInput
     permissions: ClassVar[frozenset[Permission]] = frozenset({
         Permission.NETWORK,

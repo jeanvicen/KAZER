@@ -7,7 +7,6 @@ O comando `kazer` abre o KAZER no terminal. O servidor web sobe por
 import sys
 
 from kazer.interfaces.terminal.shell import main as terminal
-from kazer.interfaces.web.asgi import app
 
 
 def main() -> None:

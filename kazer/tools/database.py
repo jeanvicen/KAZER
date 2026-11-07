@@ -1,6 +1,7 @@
 """Operações de banco limitadas por política e escopo de usuário."""
 
 from typing import ClassVar
+
 from pydantic import BaseModel, ConfigDict
 
 from kazer.tools.base_tool import BaseTool, Permission, ToolResult

@@ -1,23 +1,46 @@
 # KAZER
 
-KAZER é a fundação de um agente de IA modular, auditável e extensível. Este repositório contém a arquitetura inicial, documentação, contratos tipados e stubs do agente, além da **tela de entrada com autenticação própria por e-mail e senha**. Ainda **não contém a interface principal, integrações operacionais do agente nem autonomia implementada**.
+[![CI](https://github.com/jeanvicen/KAZER/actions/workflows/ci.yml/badge.svg)](https://github.com/jeanvicen/KAZER/actions/workflows/ci.yml)
 
-## Visão do produto
+Assistente de IA em português, feito como app web instalável (PWA). Conversa,
+pesquisa na internet em tempo real, cria arquivos, sites, jogos, PDFs e
+apresentações, lê anexos e oferece os principais modelos de IA do mercado nos
+planos pagos.
 
-Preparar uma base segura para um agente que poderá planejar tarefas, usar ferramentas e memória sob limites verificáveis, e futuramente delegar trabalho especializado. A evolução será incremental: começar por fluxos controláveis e acrescentar autonomia apenas quando avaliações e controles justificarem a complexidade.
+- **KAZ 1.1**: o modelo do KAZER, na Groq, incluso em todos os planos.
+- **Pesquisa**: o KAZER busca antes de responder, lê as melhores páginas e
+  mostra fontes e fotos. Quando é duvidoso, um modelo leve decide se vale
+  buscar.
+- **Pro (R$ 1.599) e Ultra (R$ 10.000)**: Claude, GPT e Kimi com crédito mensal
+  medido por resposta. As contas estão em [docs/NEGOCIO.md](docs/NEGOCIO.md).
 
-## Arquitetura em camadas
+## Mapa do repositório
 
-- **Interfaces**: tela de entrada web com API de contas (`interfaces/web`); CLI, API do agente e webhook continuam stubs.
-- **Auth**: contas próprias por e-mail e senha, sessões e recuperação (`kazer/auth`).
-- **Core**: agente, orquestração, planejamento, roteamento, execução e estado.
-- **Brain**: contratos para provedores, prompts, decisões e montagem de contexto.
-- **Memory**: contratos para memória com escopo e política explícitos.
-- **Tools / Integrations**: capacidades e serviços isolados atrás de contratos e permissões.
-- **Security / Runtime**: fronteiras de autorização, auditoria e futuro isolamento de execução.
-- **Observability / Config**: telemetria minimizada e configuração validada.
+| Pasta | O que tem |
+|---|---|
+| `kazer/interfaces/web/` | App web (Starlette) e a tela inteira em `static/` (HTML, CSS e JS sem build) |
+| `kazer/chat/` | Conversa: serviço, geração em streaming, pesquisa (`prefetch.py`, `web_tools.py`), arquivos, PDFs |
+| `kazer/brain/` | Provedores de modelo (Groq, Anthropic, OpenAI-compatível) e o governador de limites da Groq |
+| `kazer/billing/` | Planos, divisão de cada assinatura, modelos premium, créditos e webhook do Stripe |
+| `kazer/auth/` | Contas (Supabase Auth ou local), sessões e recuperação de senha |
+| `kazer/security/` | Segredos por escopo, limites de taxa, guardas de entrada e saída |
+| `kazer/integrations/` | Serviços externos (pagamento) |
+| `kazer/core`, `memory`, `runtime`, `tools`, `observability` | Contratos do agente (base para evoluções) |
+| `supabase/migrations/` | Esquema do banco, com RLS em todas as tabelas |
+| `tests/` | Testes automáticos (`make test`) |
+| `docs/` | Documentação: veja o índice abaixo |
 
-O fluxo normativo e as fronteiras estão em [ARCHITECTURE.md](ARCHITECTURE.md); riscos e controles em [SECURITY.md](SECURITY.md).
+## Documentação
+
+| Documento | Assunto |
+|---|---|
+| [ARCHITECTURE.md](ARCHITECTURE.md) | Princípios, fronteiras e fluxo do agente |
+| [SECURITY.md](SECURITY.md) | Riscos e controles |
+| [docs/NEGOCIO.md](docs/NEGOCIO.md) | Planos, margem, créditos, Stripe e chaves das IAs |
+| [docs/ESCALA.md](docs/ESCALA.md) | Como o KAZER aguenta mais gente na Groq grátis |
+| [docs/supabase-chat-storage.md](docs/supabase-chat-storage.md) | Banco do chat no Supabase |
+| [CONTRIBUTING.md](CONTRIBUTING.md) | Como mexer no código sem quebrar nada |
+| [CHANGELOG.md](CHANGELOG.md) | O que mudou em cada versão |
 
 ## Requisitos e execução local
 
