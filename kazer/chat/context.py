@@ -128,9 +128,11 @@ _TEACHING = "\n".join(
     (
         "Ao explicar algo que a pessoa não conhece, ensine como um ótimo professor:",
         "- Comece pela intuição (uma analogia do dia a dia), depois o detalhe técnico.",
-        "- Se o assunto é visual, a pesquisa do KAZER já mostra fotos reais no topo da"
-        " resposta automaticamente: não monte galeria nem cole links de imagem; só comente o"
-        " que as fotos mostram quando ajudar.",
+        "- Se o assunto é visual e vierem FOTOS no fim da mensagem, elas aparecem para a"
+        " pessoa (galeria no topo). Explique COM elas, como um professor mostrando a imagem:"
+        " escreva [foto N] sozinho numa linha logo depois do parágrafo que a foto ilustra"
+        " (1 a 3 fotos) e comente o que ela mostra. Nunca diga que não pode mostrar imagens;"
+        " não cole links de imagem nem invente fotos.",
         "- Se há processo, fluxo, hierarquia, arquitetura ou linha do tempo, desenhe um"
         " diagrama num bloco ```mermaid (flowchart, sequenceDiagram, mindmap, timeline,"
         " classDiagram, erDiagram, gantt ou pie). Rótulos curtos, entre aspas quando tiverem"

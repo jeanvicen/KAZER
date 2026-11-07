@@ -437,9 +437,13 @@ class GenerationHub:
         return results
 
     def _worth_searching(self, question: str) -> bool:
-        """Caso duvidoso: o modelo leve diz SIM ou NAO (na dúvida, pesquisa)."""
-        answer = self._light_answer(pre.DECIDE_PROMPT, question)
-        return not answer.strip().upper().startswith("N")
+        """Caso duvidoso: o modelo leve diz SIM ou NAO.
+
+        Sem resposta (demorou ou falhou), NÃO pesquisa: o KAZER responde com o que
+        sabe. Pesquisar à toa deixa a resposta lenta e gasta cota.
+        """
+        answer = self._light_answer(pre.DECIDE_PROMPT, question).strip().upper()
+        return answer.startswith("S")
 
     def _light_answer(
         self, system: str, text: str, *, stop: threading.Event | None = None
@@ -503,7 +507,11 @@ class GenerationHub:
         A Groq recebe tudo pronto e só escreve — sem chamar ferramenta.
         """
         if request.prefetch_check and not self._worth_searching(request.prefetch_check):
-            return replace(request, prefetch=(), prefetch_check="")
+            # Não precisa da web, mas o assunto é visual: ficam só as fotos de referência.
+            pictures = tuple(c for c in request.prefetch if c.name == wt.IMAGES)
+            if not pictures:
+                return replace(request, prefetch=(), prefetch_check="")
+            request = replace(request, prefetch=pictures, prefetch_check="")
         last = request.turns[-1]
         question = next((p.text for p in last.parts if p.kind == "text"), "")[:1500]
         level = pre.depth(question)
@@ -535,7 +543,8 @@ class GenerationHub:
 
         first = self._run_parallel(live, calls, skippable=True) if not halted() else []
         opened = {str(c.arguments.get("url", "")) for c in calls if c.name == wt.OPEN}
-        found = [item for _, _, items in first for item in items]
+        # Foto não é página para ler: as imagens ficam fora da leitura.
+        found = [item for _, _, items in first for item in items if not item.get("img")]
         pages = [] if halted() else pre.pages_to_open(found, opened, budget["pages"], question)
         reads = self._read_pages(live, pages)
         read_ok = sum(1 for _, _, items in reads if any(i.get("k") == "lido" for i in items))
@@ -551,15 +560,18 @@ class GenerationHub:
                    if output and output != _SKIPPED]
         limit = {pre.SIMPLE: 10_000, pre.MODERATE: 14_000, pre.DEEP: 20_000}[level]
         text = pre.context_note(results, numbered, limit=limit)
+        text += pre.photos_note(live.images)
         if live.skip.is_set():
             text += SKIP_NOTE
         note = Part("text", text)
+        # Só fotos (sem ler a web): o modelo pensa no ritmo normal dele.
+        searched = any(c.name != wt.IMAGES for c in calls)
         return replace(
             request,
             prefetch=(),
             prefetch_check="",
             # Só falta escrever com o que veio: pensar pouco economiza cota.
-            brief=True,
+            brief=searched or request.brief,
             turns=(*request.turns[:-1], replace(last, parts=(*last.parts, note))),
         )
 

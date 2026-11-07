@@ -401,8 +401,9 @@ class ChatService:
         if reader is not None:
             try:
                 raw = reader(user_id) or {}
-            except Exception:  # noqa: BLE001 - uso é informativo; não derruba o chat
-                logger.warning("chat.usage_state_failed")
+            except Exception as exc:  # noqa: BLE001 - uso é informativo; não derruba o chat
+                # Só o tipo do erro (nunca dados da conta): dá para achar a causa no log.
+                logger.warning("chat.usage_state_failed: %s", type(exc).__name__)
         plan = plans.plan_of(raw.get("plan"))
         local_plan = getattr(self._store, "plan_of", None)
         if not raw and local_plan is not None:
@@ -440,10 +441,13 @@ class ChatService:
             "window_hours": plans.WINDOW_HOURS,
             "features": plan.public()["features"],
         }
-        # Horários só aparecem quando o banco realmente sabe deles.
+        # Horários só aparecem quando o banco realmente sabe deles. O Supabase manda
+        # texto ISO; a tela trabalha em segundos (como o aviso de limite), então
+        # tudo sai daqui no mesmo formato. Texto que não for data some.
         for key in ("reset_at", "renews_at"):
-            if raw.get(key):
-                state[key] = raw[key]
+            when = _epoch_seconds(raw.get(key))
+            if when:
+                state[key] = when
         return state
 
     def _offer(self, user_id: str) -> dict[str, Any]:
@@ -1821,3 +1825,20 @@ def _build_premium(model: premium.PremiumModel) -> ModelProvider | None:
         max_tokens=16_384,
         timeout=300.0,
     )
+
+
+def _epoch_seconds(value: Any) -> int | None:
+    """Data do banco (segundos ou texto ISO 8601) em segundos; None se não for data."""
+    if isinstance(value, bool) or value is None:
+        return None
+    if isinstance(value, int | float):
+        return int(value) if value > 0 else None
+    if isinstance(value, str) and value.strip():
+        from datetime import datetime
+
+        text = value.strip().replace("Z", "+00:00")
+        try:
+            return int(datetime.fromisoformat(text).timestamp())
+        except ValueError:
+            return int(text) if text.isdigit() else None
+    return None

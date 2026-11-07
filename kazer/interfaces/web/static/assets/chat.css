@@ -6093,9 +6093,51 @@ html[data-motion="reduzido"] .pxword__blink {
 }
 
 .use-hero__label,
-.use-hero__reset {
+.use-hero__reset,
+.use-hero__renews {
   color: var(--c-text-2);
   font-size: 0.9rem;
+}
+
+.use-hero__renews {
+  color: var(--c-text-3);
+}
+
+/* Quanto já foi e quanto falta, em números que a pessoa entende. */
+.use-meter {
+  display: grid;
+  gap: 0.45rem;
+  width: min(18rem, 80vw);
+  margin: 0.85rem 0 0.35rem;
+}
+
+.use-meter__bar {
+  position: relative;
+  height: 0.5rem;
+  border-radius: 999px;
+  background: rgb(var(--ov) / 0.08);
+  overflow: hidden;
+}
+
+.use-meter__fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: calc(var(--used, 0) * 100%);
+  border-radius: inherit;
+  background: var(--gradient-gold-button);
+  transition: width 700ms var(--ease-out);
+}
+
+.use-meter__legend {
+  display: flex;
+  justify-content: space-between;
+  color: var(--c-text-2);
+  font-size: 0.8125rem;
+}
+
+.use-meter__legend strong {
+  color: var(--c-text);
+  font-weight: 650;
 }
 
 /* A busca das configurações fica no topo, parada (nunca por cima da lista). */
@@ -6333,14 +6375,23 @@ html[data-motion="reduzido"] .pxword__blink {
   display: none;
 }
 
+/* A mensagem é um grid: sem isto a faixa crescia até a largura de todas as
+ * fotos juntas e era cortada na borda, sem ter o que rolar. */
+.msg__pics {
+  min-width: 0;
+}
+
 .pics {
   display: flex;
   gap: 0.4rem;
+  max-width: 100%;
   margin: 0.25rem 0 0.75rem;
   overflow-x: auto;
-  scroll-snap-type: x mandatory;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x proximity;
   scrollbar-width: none;
   -webkit-overflow-scrolling: touch;
+  touch-action: pan-x pan-y;
 }
 
 .pics::-webkit-scrollbar {
@@ -6372,8 +6423,56 @@ html[data-motion="reduzido"] .pxword__blink {
 }
 
 .pics__item:focus-visible {
-  outline: 2px solid var(--c-text);
+  outline: 2px solid var(--color-focus-ring);
   outline-offset: 2px;
+}
+
+/* Foto de referência no meio da explicação ([foto N] → a foto da pesquisa). */
+.ref-pic {
+  margin: 0.9rem 0 1.1rem;
+}
+
+.ref-pic__open {
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  border-radius: 1rem;
+  overflow: hidden;
+  background: var(--c-surface);
+  cursor: zoom-in;
+}
+
+.ref-pic__img {
+  display: block;
+  width: 100%;
+  max-height: min(18rem, 48vh);
+  object-fit: cover;
+}
+
+.ref-pic__open:focus-visible {
+  outline: 2px solid var(--color-focus-ring);
+  outline-offset: 2px;
+}
+
+.ref-pic__cap {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: space-between;
+  margin-top: 0.45rem;
+  color: var(--c-text-2);
+  font-size: 0.8125rem;
+  line-height: 1.4;
+}
+
+.ref-pic__src {
+  flex: none;
+  color: var(--c-text-3);
+}
+
+li .ref-pic,
+td .ref-pic {
+  margin: 0.5rem 0;
 }
 
 .gallery-wrap {

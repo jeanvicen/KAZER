@@ -2,7 +2,7 @@
 // interface) e salva sozinho. No celular é uma pilha de telas; no computador,
 // navegação à esquerda e conteúdo à direita.
 
-import { announce, finePointer, formatDate, formatReset, h, icon, loadStyle, mark, reducedMotion, trapFocus } from "./dom.js";
+import { announce, finePointer, formatDate, formatReset, h, icon, loadStyle, mark, reducedMotion, toDate, trapFocus } from "./dom.js";
 import { request } from "./net.js";
 import { confirmDialog, openSheet, toast } from "./sheets.js";
 
@@ -447,10 +447,12 @@ class SettingsPanel {
     const usage = this.usage || {};
     const allowance = usage.allowance || 0;
     const used = Math.min(usage.consumed || 0, allowance);
-    // Só a proporção: nenhum número de limite aparece para a pessoa. O mesmo
-    // gasto enche mais rápido num plano menor e mais devagar num maior.
+    // Em porcentagem (a unidade interna de cota não diz nada para a pessoa):
+    // quanto já foi, quanto falta e quando a janela renova.
     const ratio = allowance ? used / allowance : 0;
     const known = Boolean(allowance);
+    const usedPct = Math.round(ratio * 100);
+    const leftPct = Math.max(0, 100 - usedPct);
 
     const level = h("span.orb__liquid", {}, h("span.orb__wave"), h("span.orb__wave.orb__wave--back"));
     const orb = h(
@@ -459,9 +461,11 @@ class SettingsPanel {
       h("span.orb__glow", { "aria-hidden": "true" }),
       h("span.orb__glass", { "aria-hidden": "true" }, level, h("span.orb__bubbles"), h("span.orb__shine")),
     );
-    // Sobe devagar até o nível real (o líquido "enche" na frente da pessoa).
+    // Sobe devagar até o nível real. Nada usado = vazio de verdade (antes o
+    // líquido aparecia em 6% mesmo sem uso).
+    const fill = ratio > 0 ? Math.max(ratio, 0.04) : 0;
     window.requestAnimationFrame(() => {
-      window.setTimeout(() => orb.style.setProperty("--fill", String(Math.max(known ? 0.06 : 0, Math.min(ratio, 1)))), 60);
+      window.setTimeout(() => orb.style.setProperty("--fill", String(Math.min(fill, 1))), 60);
     });
 
     const open = h(
@@ -489,6 +493,29 @@ class SettingsPanel {
       icon("chevron-right"),
     );
 
+    const resetWhen = formatReset(usage.reset_at);
+    const hours = usage.window_hours ? `${usage.window_hours} h` : "";
+    const meter = known
+      ? h(
+          "div.use-meter",
+          {},
+          h(
+            "div.use-meter__bar",
+            { role: "meter", "aria-valuemin": "0", "aria-valuemax": "100", "aria-valuenow": String(usedPct), "aria-label": "Uso da janela atual" },
+            h("span.use-meter__fill"),
+          ),
+          h(
+            "div.use-meter__legend",
+            {},
+            h("span", {}, h("strong", { text: `${usedPct}%` }), " usado"),
+            h("span", {}, h("strong", { text: `${leftPct}%` }), " livre"),
+          ),
+        )
+      : null;
+    meter?.querySelector(".use-meter__fill").style.setProperty("--used", String(Math.min(ratio, 1)));
+    const renews = toDate(usage.renews_at);
+    const paid = usage.plan && usage.plan !== "free";
+
     return h(
       "div.use-page",
       {},
@@ -497,8 +524,14 @@ class SettingsPanel {
         {},
         orb,
         h("span.use-hero__plan", { text: usage.plan_name || "KAZER" }),
-        h("span.use-hero__label", { text: "Uso da janela atual" }),
-        usage.reset_at ? h("span.use-hero__reset", { text: `Renova ${formatReset(usage.reset_at)}` }) : null,
+        h("span.use-hero__label", { text: hours ? `Uso da janela de ${hours}` : "Uso da janela atual" }),
+        meter,
+        resetWhen
+          ? h("span.use-hero__reset", { text: `Renova ${resetWhen}` })
+          : known && !used
+            ? h("span.use-hero__reset", { text: "Nada usado nesta janela ainda." })
+            : null,
+        paid && renews ? h("span.use-hero__renews", { text: `Plano renova em ${renews.toLocaleDateString("pt-BR", { day: "2-digit", month: "long" })}` }) : null,
       ),
       this.group("", open),
     );

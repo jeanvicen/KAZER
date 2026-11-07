@@ -133,3 +133,30 @@ def test_the_wanted_plan_is_saved_without_granting_anything(
         # E um valor fora do catálogo é recusado.
         bad = client.post("/api/settings", json={"preferences": {"wants_plan": "patrocinio"}})
         assert (bad.status_code, bad.json()) == (400, {"error": "invalid_request"})
+
+
+def test_usage_dates_from_the_database_always_reach_the_screen_as_seconds(
+    make_env: Callable[..., Env],
+) -> None:
+    """O Supabase devolve `reset_at` como texto ISO; a tela trabalha em segundos.
+
+    Antes, o texto passava direto, a tela fazia `texto * 1000` e o "Uso e plano"
+    nem abria (RangeError: Invalid time value) para quem já tinha usado o app.
+    """
+    env = make_env(FakeProvider())
+    rows = {
+        "plan": "pro", "allowance": 800, "consumed": 280,
+        "reset_at": "2026-11-07T15:00:00.123456+00:00",
+        "renews_at": "2026-12-07T12:00:00Z",
+    }
+    env.chat._store.usage_state = lambda user_id: dict(rows)  # type: ignore[attr-defined]
+    usage = env.chat.usage_state("qualquer")
+    assert usage["plan"] == "pro" and usage["consumed"] == 280
+    assert usage["reset_at"] == 1794063600  # 2026-11-07 15:00:00 UTC
+    assert usage["renews_at"] == 1796644800  # 2026-12-07 12:00:00 UTC
+    assert all(isinstance(usage[key], int) for key in ("reset_at", "renews_at"))
+
+    # Já em segundos continua igual; o que não é data some (não quebra a tela).
+    rows.update(reset_at=1794063600, renews_at="amanhã cedo")
+    usage = env.chat.usage_state("qualquer")
+    assert usage["reset_at"] == 1794063600 and "renews_at" not in usage

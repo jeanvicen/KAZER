@@ -649,3 +649,37 @@ def test_photos_from_commons_and_openverse_show_on_top_and_stay_saved() -> None:
     assert "```kazer-imagens" in store.final["content"]
     # Foto não vira "fonte" repetida na lista de fontes.
     assert all(not item.get("img") for item in live.sources)
+
+
+def test_only_searches_when_it_really_needs_to() -> None:
+    """Pesquisar à toa deixa tudo lento: tutorial, criar, conceito e conversa não pesquisam."""
+    from kazer.chat.prefetch import plan, uncertain
+
+    for question in (
+        "como tirar foto panorâmica passo a passo",  # "foto" não é pedido de fotos
+        "cria uma imagem de um gato",
+        "agora me explica o que é inflação",  # "agora" não é notícia
+        "como ganhar dinheiro online",  # "online" não é pedido de pesquisa
+        "algoritmo de busca binária em python",  # "busca" não é pesquisa
+        "qual a melhor forma de estudar para prova?",
+        "como funciona a fotossíntese",
+    ):
+        assert plan(question) == (), question
+        assert not uncertain(question), question
+    # O que muda com o tempo (ou foi pedido) continua indo para a web.
+    for question in (
+        "pesquisa o preço do iphone 17",
+        "qual o preço do dólar hoje?",
+        "quem ganhou o jogo do flamengo ontem?",
+        "quais as últimas notícias sobre IA",
+    ):
+        assert any(c.name == "buscar_web" for c in plan(question)), question
+
+
+def test_explaining_something_visual_brings_reference_photos_without_the_web() -> None:
+    from kazer.chat.prefetch import plan
+
+    calls = plan("o que é um axolote?")
+    assert [c.name for c in calls] == ["buscar_imagens"]
+    assert calls[0].arguments["consulta"] == "axolote"
+    assert plan("explica o que é recursão") == ()  # conceito sem imagem: nada

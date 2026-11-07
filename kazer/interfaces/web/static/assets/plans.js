@@ -222,7 +222,8 @@ class PlansScreen {
 export async function limitReached(data, { opener } = {}) {
   await loadStyle("/assets/plans.css");
   const upgrade = data.upgrade;
-  const resets = data.reset_at ? `Libera de novo ${formatReset(data.reset_at)}.` : "";
+  const when = formatReset(data.reset_at);
+  const resets = when ? `Libera de novo ${when}.` : "";
   const body = h("div.limit", {});
 
   body.append(

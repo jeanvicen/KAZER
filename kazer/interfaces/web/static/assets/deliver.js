@@ -254,6 +254,8 @@ export function stripSources(text) {
     .replace(IMAGES_BLOCK, "\n")
     .replace(/\n*```kazer-pesquisa\n[\s\S]*?\n```\n?/, "\n")
     .replace(CITE, "")
+    .replace(/^[ \t]*\[foto\s*\d{1,2}\][ \t]*\n?/gim, "")
+    .replace(/\[foto\s*\d{1,2}\]/gi, "")
     .trimEnd();
 }
 
@@ -274,12 +276,20 @@ export function picsStrip(items) {
   const list = (items || []).filter((item) => IMAGE_HOST.test(String(item?.url || ""))).slice(0, 8);
   if (!list.length) return null;
   const strip = h("div.pics", { role: "group", "aria-label": "Fotos da web sobre o assunto" });
+  // Arrastar o dedo rola a faixa; só um toque parado abre a foto.
+  let pressX = 0;
+  let pressScroll = 0;
+  strip.addEventListener("pointerdown", (event) => {
+    pressX = event.clientX;
+    pressScroll = strip.scrollLeft;
+  }, { passive: true });
+  const dragged = (event) => Math.abs(strip.scrollLeft - pressScroll) > 6 || Math.abs((event.clientX || pressX) - pressX) > 10;
   list.forEach((item, index) => {
     const caption = String(item.legenda || "").slice(0, 160);
     const img = h("img.pics__img", { src: item.url, alt: caption || "Foto", loading: "lazy", decoding: "async", referrerpolicy: "no-referrer" });
     const button = h(
       "button.pics__item",
-      { type: "button", title: caption, "aria-label": caption ? `Ampliar: ${caption}` : "Ampliar foto", onclick: () => lightbox(list, index) },
+      { type: "button", title: caption, "aria-label": caption ? `Ampliar: ${caption}` : "Ampliar foto", onclick: (event) => { if (event.detail === 0 || !dragged(event)) lightbox(list, index); } },
       img,
     );
     // Foto que não carrega some sem deixar buraco.
@@ -287,6 +297,64 @@ export function picsStrip(items) {
     strip.append(button);
   });
   return strip;
+}
+
+// ---------- Fotos de referência no meio da explicação (jeito ChatGPT) ----------
+//
+// O modelo escreve [foto N] logo depois do parágrafo que a foto ilustra; aqui o
+// marcador vira a foto real que a pesquisa achou (a mesma da galeria do topo).
+// Número que não existe some: nenhuma imagem é inventada.
+const PHOTO_MARK = /\[foto\s*(\d{1,2})\]/gi;
+
+function photoFigure(item, usable) {
+  const caption = String(item.legenda || "").slice(0, 160);
+  const img = h("img.ref-pic__img", { src: item.url, alt: caption || "Foto de referência", loading: "lazy", decoding: "async", referrerpolicy: "no-referrer" });
+  const source = item.fonte ? domain(item.fonte) : "";
+  const fig = h(
+    "figure.ref-pic",
+    {},
+    h("button.ref-pic__open", { type: "button", "aria-label": caption ? `Ampliar: ${caption}` : "Ampliar foto", onclick: () => lightbox(usable, Math.max(usable.indexOf(item), 0)) }, img),
+    caption || source ? h("figcaption.ref-pic__cap", {}, caption ? h("span", { text: caption }) : null, source ? h("span.ref-pic__src", { text: source }) : null) : null,
+  );
+  img.addEventListener("error", () => fig.remove());
+  return fig;
+}
+
+export function inlinePhotos(root, images) {
+  const list = Array.isArray(images) ? images : [];
+  const usable = list.filter((item) => IMAGE_HOST.test(String(item?.url || "")));
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
+    acceptNode(node) {
+      for (let el = node.parentElement; el && el !== root.parentElement; el = el.parentElement) {
+        if (SKIP_TAGS.has(el.tagName)) return NodeFilter.FILTER_REJECT;
+      }
+      return /\[foto\s*\d/i.test(node.nodeValue) ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_SKIP;
+    },
+  });
+  const targets = [];
+  while (walker.nextNode()) targets.push(walker.currentNode);
+  for (const node of targets) {
+    const wanted = [];
+    node.nodeValue = node.nodeValue.replace(PHOTO_MARK, (_, number) => {
+      const item = list[Number(number) - 1];
+      if (item && usable.includes(item)) wanted.push(item);
+      return "";
+    });
+    const block = node.parentElement?.closest("p, li, td, th, blockquote, h1, h2, h3, h4") || node.parentElement;
+    if (!block) continue;
+    let anchor = block;
+    for (const item of wanted) {
+      const fig = photoFigure(item, usable);
+      // Dentro de item de lista ou tabela a foto fica lá dentro; senão, depois do parágrafo.
+      if (/^(LI|TD|TH)$/.test(block.tagName)) block.append(fig);
+      else {
+        anchor.after(fig);
+        anchor = fig;
+      }
+    }
+    // Parágrafo que era só o marcador some (não deixa linha em branco).
+    if (block.tagName === "P" && !block.textContent.trim() && !block.querySelector("img")) block.remove();
+  }
 }
 
 // Passos salvos com a resposta: refazem a linha do tempo depois de recarregar.

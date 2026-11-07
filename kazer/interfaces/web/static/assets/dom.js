@@ -189,17 +189,29 @@ const timeFmt = { format: (d) => new Intl.DateTimeFormat(lang(), { hour: "2-digi
 const dateFmt = { format: (d) => new Intl.DateTimeFormat(lang(), { day: "numeric", month: "long", year: "numeric" }).format(d) };
 const dayFmt = { format: (d) => new Intl.DateTimeFormat(lang(), { weekday: "long", hour: "2-digit", minute: "2-digit" }).format(d) };
 
-export function formatTime(seconds) {
-  return timeFmt.format(new Date(seconds * 1000));
+export function formatTime(value) {
+  const date = toDate(value);
+  return date ? timeFmt.format(date) : "";
 }
 
-export function formatDate(seconds) {
-  return dateFmt.format(new Date(seconds * 1000));
+// Aceita segundos (o servidor) ou texto ISO (o Supabase). Data inválida volta
+// null/"" em vez de lançar erro: um horário ruim nunca pode impedir uma tela de
+// abrir (foi o que travava o "Uso e plano").
+export function formatDate(value) {
+  const date = toDate(value);
+  return date ? dateFmt.format(date) : "";
+}
+
+export function toDate(value) {
+  if (value === null || value === undefined || value === "") return null;
+  const date = typeof value === "number" || /^\d+(\.\d+)?$/.test(String(value)) ? new Date(Number(value) * 1000) : new Date(value);
+  return Number.isNaN(date.getTime()) ? null : date;
 }
 
 // "às 14:32", "amanhã às 08:10" ou "quinta-feira, 08:10".
-export function formatReset(seconds) {
-  const target = new Date(seconds * 1000);
+export function formatReset(value) {
+  const target = toDate(value);
+  if (!target) return "";
   const now = new Date();
   const days = Math.round((startOfDay(target) - startOfDay(now)) / 86400000);
   if (days <= 0) return `às ${timeFmt.format(target)}`;

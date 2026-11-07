@@ -23,7 +23,7 @@ import {
   trapFocus,
   uuid,
 } from "./dom.js";
-import { bundleCard, citeChips, onAnswer, openImages, picsStrip, readImages, readResearch, readSources, readSteps, renderSourceList, siteHost, sourceAvatar, stripSources } from "./deliver.js";
+import { bundleCard, citeChips, inlinePhotos, onAnswer, openImages, picsStrip, readImages, readResearch, readSources, readSteps, renderSourceList, siteHost, sourceAvatar, stripSources } from "./deliver.js";
 import { copyText, MarkdownView, render as renderMarkdown } from "./markdown.js";
 import { net, readEvents, request, waitOnline } from "./net.js";
 import { closeSheet, confirmDialog, openSheet, promptDialog, setSheetBackground, toast } from "./sheets.js";
@@ -107,9 +107,8 @@ async function offerFeature(data) {
 
 function sendError(data) {
   if (data.error === "usage_limit") {
-    return data.reset_at
-      ? `Você chegou ao limite de uso por agora. Libera ${formatReset(data.reset_at)}.`
-      : "Você chegou ao limite de uso por agora.";
+    const when = formatReset(data.reset_at);
+    return when ? `Você chegou ao limite de uso por agora. Libera ${when}.` : "Você chegou ao limite de uso por agora.";
   }
   return SEND_ERRORS[data.error] || "Não foi possível enviar agora. Tente de novo.";
 }
@@ -792,7 +791,11 @@ function assistantElement(model) {
   model.parts = { head, steps, pics, thinking, body, bundle, made, notice, actions, state: head.lastChild, thinkBody: thinking.lastChild };
   model.view = new MarkdownView(body);
   // [2] no texto vira selo da fonte 2 desta resposta (só fontes que existem).
-  model.view.decorate = (fragment) => citeChips(fragment, model.liveSources || readSources(model.content || ""));
+  model.view.decorate = (fragment) => {
+    citeChips(fragment, model.liveSources || readSources(model.content || ""));
+    // [foto N] vira a foto real da pesquisa, no meio da explicação.
+    inlinePhotos(fragment, model.liveImages || readImages(model.content || ""));
+  };
   applyStatus(model);
   return el;
 }
@@ -967,8 +970,12 @@ function webLine(line, model) {
   const hosts = siteList(sources);
   const stats = model.research || readResearch(model.content || "");
   const runningNow = (pattern) => line.steps.some((step) => step.state === "run" && pattern.test(step.label));
+  const photosOnly = line.steps.length > 0 && line.steps.every((step) => /^Buscando imagens/.test(step.label));
   let text;
-  if (line.running) {
+  if (photosOnly) {
+    const found = (model.liveImages || readImages(model.content || "")).length || stats?.imagens || 0;
+    text = line.running ? t("Buscando imagens de referência") : found ? t(`Encontrou ${plural(found, "foto", "fotos")}`) : t("Nenhuma foto encontrada");
+  } else if (line.running) {
     if (runningNow(/^Planejando/)) text = t("Planejando a pesquisa");
     else if (runningNow(/^Lendo /) && hosts.length) text = t(`Pesquisando em ${plural(hosts.length, "site", "sites")}`);
     else text = t("Pesquisando na web");
@@ -980,7 +987,7 @@ function webLine(line, model) {
     else text = t("Pesquisou na web");
   }
   const faces = hosts.slice(0, 3);
-  const glyph = faces.length ? h("span.act__sites", {}, faces.map((host) => sourceAvatar(`https://${host}`))) : icon("globe");
+  const glyph = photosOnly ? icon("image") : faces.length ? h("span.act__sites", {}, faces.map((host) => sourceAvatar(`https://${host}`))) : icon("globe");
   // "Pular" só existe enquanto há pesquisa nossa rodando (e funciona de verdade).
   const canSkip = line.running && !line.native && S.live?.replyId === model.id && line.steps.some((step) => step.state === "run" && step.skippable);
   const skip = canSkip

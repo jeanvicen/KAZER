@@ -19,6 +19,7 @@ profunda continua com o agente que pesquisa várias vezes.
 
 from __future__ import annotations
 
+import datetime as _dt
 import re
 import unicodedata
 from collections.abc import Sequence
@@ -32,10 +33,28 @@ MAX_PAGES = 2
 MAX_CONTEXT_CHARS = 12_000
 _URL = re.compile(r"https?://[^\s<>\"')\]]+", re.IGNORECASE)
 
-# Pediu pesquisa com todas as letras (ou mandou um link).
+# Pediu pesquisa com todas as letras (ou mandou um link). "online", "busca"
+# sozinho ("busca binária"), "link" e "procuro um nome" NÃO são pedido de pesquisa.
 _ASKED = re.compile(
-    r"pesquis|busc[ae]|buscar|procur|google|na internet|na web|online|fontes?\b|links?\b|"
-    r"site oficial|reposit|github",
+    r"\bpesquis\w*|\b(?:busc|procur|ach|encontr|olh|v[eê])\w*\b[^.?!]{0,30}?"
+    r"\b(?:na|no|pela|pelo|em)\s+(?:internet|web|google|net)\b|\bno google\b|"
+    r"\bna (?:internet|web)\b|\bfontes?\b|\blinks?\s+(?:d[oa]s?|para|pra|oficia\w*)\b|"
+    r"site oficial|reposit[óo]rio|github",
+    re.IGNORECASE,
+)
+# Quer VER fotos de algo real ("me mostra fotos de…", "fotos da Torre Eiffel").
+_SHOW_PHOTOS = re.compile(
+    r"\b(?:mostr\w*|quero ver|me (?:d[áa]|manda|passa)|ver)\b[^.?!]{0,40}?"
+    r"\b(?:fotos?|imagens?|figuras?)\b|^\s*(?:fotos?|imagens?|figuras?)\s+d[eoa]s?\b",
+    re.IGNORECASE,
+)
+# Como fazer algo (tutorial): o modelo sabe ensinar sem internet.
+_HOWTO = re.compile(
+    r"^\s*(?:me\s+)?(?:ensina|explica)?\s*"
+    r"(?:como|qual (?:a|o) (?:melhor )?(?:forma|jeito|maneira) de)\s+"
+    r"(?:eu\s+)?(?:fa[çc]o|fazer|faz|cri[ao]|criar|tir[ao]|tirar|usar?|us[ao]|instal\w*|configur\w*|"
+    r"aprend\w*|come[çc]\w*|ganh\w*|melhor\w*|calcul\w*|resolv\w*|edit\w*|trat\w*|mont\w*|"
+    r"organiz\w*|estud\w*|limp\w*|cozinh\w*|prepar\w*|desenh\w*|program\w*)\b",
     re.IGNORECASE,
 )
 # Pedido de criar/escrever algo: não precisa de internet (a menos que peça).
@@ -45,15 +64,24 @@ _MAKE = re.compile(
     r"explica\s+(?:esse|este|o)\s+c[óo]digo)",
     re.IGNORECASE,
 )
-# Assunto que muda com o tempo ou fato do mundo: vale pesquisar.
+# Assunto que muda com o tempo: só sinais fortes. Conhecimento geral, história,
+# ciência, tutoriais e opinião o modelo responde sem internet.
+_YEAR = _dt.date.today().year
 _FRESH = re.compile(
-    r"\bhoje\b|\bagora\b|atual|recente|[úu]ltim[oa]s?\b|lan[çc]a(?:mento|do|ou)|"
-    r"pre[çc]o|quanto custa|quanto (?:est[áa]|t[áa]) |cota[çc][ãa]o|valor d[oa]|"
-    r"\bclima\b|previs[ãa]o|temperatura|vai chover|not[íi]cia|aconteceu|"
-    r"resultado d|placar|quem ganhou|campe[ãa]o|elei[çc]|vers[ãa]o|\b20[2-3]\d\b|"
-    r"quem (?:[ée]|foi|criou|inventou|fundou)\b|onde fica|endere[çc]o|telefone|"
-    r"hor[áa]rio|vale a pena|review|an[áa]lise d[oa]|compar[ae] .* com|melhores? .* (?:de|para)\b|"
-    r"estreia|lan[çc]amentos?|dispon[íi]vel|pre[çc]os?",
+    r"\bhoje\b(?!\s+em\s+dia)|\bagora mesmo\b|\batualmente\b|\bneste momento\b|"
+    r"\b(?:essa|esta) semana\b|\b(?:esse|este) (?:m[êe]s|ano)\b|\bontem\b|"
+    r"pre[çc]os?\b|quanto custa|quanto (?:est[áa]|t[áa]) (?:o|a|custando)|cota[çc][ãa]o|"
+    r"valor d[oa] (?:d[óo]lar|euro|bitcoin|a[çc][ãa]o|real)|"
+    r"\bclima\b|previs[ãa]o do tempo|vai chover|temperatura (?:em|hoje|agora|de hoje)|"
+    r"not[íi]cias?|o que aconteceu|aconteceu (?:hoje|ontem|com)|"
+    r"resultado d[oa] (?:jogo|partida|elei\w*|sorteio|mega|loteria)|placar|quem ganhou|"
+    r"campe[ãa]o d[oa]|elei[çc][ãa]o|pesquisa eleitoral|"
+    r"lan[çc]amentos?|lan[çc]ou|vai lan[çc]ar|estreia|data de lan[çc]amento|"
+    r"[úu]ltim[oa]s? (?:not[íi]cias?|vers[ãa]o|atualiza\w*|lan[çc]amento|modelo|"
+    r"epis[óo]dio|temporada|jogo|resultado)|vers[ãa]o (?:mais )?(?:atual|nova|recente)|"
+    r"mais recente|hor[áa]rio de (?:funcionamento|atendimento|abertura)|"
+    r"endere[çc]o d[oa]|telefone d[oa]|aberto agora|perto de mim|"
+    rf"\b(?:{_YEAR - 1}|{_YEAR}|{_YEAR + 1})\b",
     re.IGNORECASE,
 )
 _NEWS = re.compile(r"not[íi]cia|aconteceu|[úu]ltimas", re.IGNORECASE)
@@ -110,14 +138,21 @@ def _fold(text: str) -> str:
 
 
 def needs_search(question: str) -> bool:
-    """O pedido precisa da internet? (heurística local, sem gastar modelo)."""
+    """O pedido precisa da internet? (heurística local, sem gastar modelo).
+
+    Só pesquisa quando a pessoa pede, manda um link, quer ver fotos de algo real
+    ou pergunta algo que muda com o tempo. Criar, escrever, programar, ensinar
+    como fazer e conhecimento geral o modelo resolve sem internet.
+    """
     text = question.strip()
     if not text:
         return False
-    if _URL.search(text) or _ASKED.search(text) or _PHOTOS.search(text):
+    if _URL.search(text) or _ASKED.search(text):
         return True
-    if _MAKE.search(text):
+    if _MAKE.search(text) or _HOWTO.search(text):
         return False
+    if _SHOW_PHOTOS.search(text):
+        return True
     return bool(_FRESH.search(text))
 
 
@@ -153,9 +188,45 @@ def uncertain(question: str, previous: str = "") -> bool:
         return False
     if "```" in text or len(text) > 600 or _ARITHMETIC.search(text):
         return False
+    if _HOWTO.search(text):
+        return False
     if _TIMELESS.search(text) and not _PROPER.search(text):
         return False
     return bool(_QUESTION.search(text) or _PROPER.search(text))
+
+
+# Assunto que se entende melhor vendo: bicho, lugar, obra, objeto, comida…
+# (sem "foto"/"imagem": "como tirar foto" não é sobre ver uma foto).
+_SUBJECT = re.compile(
+    r"\b(?:animal|bicho|p[áa]ssaro|ave|peixe|inseto|r[ée]ptil|mam[íi]fero|axolote|planta|flor|"
+    r"[áa]rvore|fruta|cidade|pa[íi]s|praia|ilha|montanha|vulc[ãa]o|cachoeira|deserto|floresta|"
+    r"monumento|castelo|pal[áa]cio|templo|pir[âa]mide|pr[ée]dio|igreja|catedral|museu|ponte|torre|"
+    r"est[áa]tua|pintura|quadro|escultura|obra de arte|carro|moto|avi[ãa]o|navio|trem|foguete|"
+    r"sat[ée]lite|planeta|estrela|gal[áa]xia|nebulosa|dinossauro|f[óo]ssil|mineral|cristal|"
+    r"comida|prato t[íi]pico|ra[çc]a|instrumento musical|roupa t[íi]pica|bandeira)\b",
+    re.IGNORECASE,
+)
+# Pergunta de "o que é / como é / quem foi / fala sobre": pede explicação.
+_DESCRIBE = re.compile(
+    r"^\s*(?:(?:me\s+)?(?:explica|explique|fala|conta|descreve)\s+(?:sobre|de|do|da|o|a|um|uma)?|"
+    r"o que (?:[ée]|s[ãa]o)|quem (?:[ée]|foi|era)|como (?:[ée]|era|s[ãa]o)|onde fica|"
+    r"qual (?:[ée]|era) (?:o|a)|curiosidades?\s+(?:sobre|de|do|da))\b",
+    re.IGNORECASE,
+)
+
+
+def wants_pictures(question: str) -> bool:
+    """Explicação de algo visual: vale mostrar fotos de referência (sem pesquisar a web).
+
+    Como o ChatGPT, que mostra fotos ao explicar um animal ou um lugar. Só a busca
+    de imagens (barata, sem gastar o modelo); nada de ler páginas.
+    """
+    text = question.strip()
+    if not text or len(text) > 400 or "```" in text:
+        return False
+    if _MAKE.search(text) or _HOWTO.search(text) or _CHAT.search(text):
+        return False
+    return bool(_DESCRIBE.search(text) and (_SUBJECT.search(text) or _PROPER.search(text)))
 
 
 def clean_query(question: str, previous: str = "", *, follow_up: bool = False) -> str:
@@ -170,6 +241,20 @@ def clean_query(question: str, previous: str = "", *, follow_up: bool = False) -
     return text[:200] or question.strip()[:200]
 
 
+def _subject(question: str, query: str = "") -> str:
+    """O assunto da foto: "me mostra fotos de um axolote" → "axolote"."""
+    subject = query or clean_query(question)
+    subject = re.sub(r"^(?:o que (?:[ée]|s[ãa]o)|quem (?:[ée]|foi|era)|como (?:[ée]|era|s[ãa]o)|"
+                     r"(?:me\s+)?(?:explica|explique|fala|conta|descreve)(?:\s+(?:sobre|de))?|"
+                     r"curiosidades?\s+(?:sobre|de)|onde fica)\s+", "", subject.strip(), flags=re.I)
+    for _ in range(6):
+        shorter = _IMAGE_FILLER.sub("", subject, count=1)
+        if shorter == subject:
+            break
+        subject = shorter
+    return subject.strip(" ?!.") or query or question[:80]
+
+
 def plan(question: str, previous: str = "") -> tuple[ToolCall, ...]:
     """As buscas que o KAZER faz antes de chamar o modelo (vazio = não pesquisa)."""
     follow_up = bool(
@@ -177,6 +262,9 @@ def plan(question: str, previous: str = "") -> tuple[ToolCall, ...]:
         and needs_search(previous)
     )
     if not needs_search(question) and not follow_up and not uncertain(question, previous):
+        if wants_pictures(question):
+            subject = _subject(question)
+            return (ToolCall(id="pre-0", name=wt.IMAGES, arguments={"consulta": subject}),)
         return ()
     calls: list[ToolCall] = []
 
@@ -197,14 +285,8 @@ def plan(question: str, previous: str = "") -> tuple[ToolCall, ...]:
         add(wt.GITHUB, acao="buscar", consulta=query)
     if _NEWS.search(question):
         add(wt.NEWS, assunto=query)
-    if _VISUAL.search(question):
-        subject = query
-        for _ in range(6):  # "me mostra fotos de um axolote" → "axolote"
-            shorter = _IMAGE_FILLER.sub("", subject, count=1)
-            if shorter == subject:
-                break
-            subject = shorter
-        add(wt.IMAGES, consulta=subject or query)
+    if _VISUAL.search(question) or wants_pictures(question):
+        add(wt.IMAGES, consulta=_subject(question, query))
     if not links or len(question) > len(links[0]) + 25:
         add(wt.SEARCH, consulta=query)
     return tuple(calls)
@@ -338,13 +420,40 @@ def pages_to_open(
 
 
 DECIDE_PROMPT = (
-    "Você decide se uma mensagem precisa de busca na internet para ser respondida"
-    " corretamente HOJE: fatos que mudam (preços, notícias, versões, lançamentos,"
-    " resultados), pessoas, empresas, produtos, lugares, eventos, dados específicos ou"
-    " qualquer coisa que um modelo de linguagem pode errar ou não saber. Conversa,"
-    " opinião, conceitos atemporais, código, contas e textos criativos NÃO precisam."
-    " Responda só SIM ou NAO."
+    "Você decide se uma mensagem precisa de busca na internet. Responda SIM só quando a"
+    " resposta certa depende de algo que muda (preço, notícia, resultado, versão atual,"
+    " lançamento, horário, dado de hoje) ou de um assunto específico que um modelo de"
+    " linguagem provavelmente NÃO conhece (empresa pequena, pessoa pouco famosa, produto"
+    " novo, evento recente). Responda NAO para conhecimento geral, história, ciência,"
+    " geografia, pessoas e lugares famosos, como fazer algo, explicações, conselhos,"
+    " opinião, código, contas e textos. Responda só SIM ou NAO."
 )
+
+
+MAX_PHOTOS_NOTE = 8
+
+
+def photos_note(images: Sequence[dict[str, str]]) -> str:
+    """Fotos numeradas: o modelo coloca [foto N] onde a foto ajuda a explicar.
+
+    A tela troca o marcador pela foto real (a mesma da galeria), então o modelo
+    nunca precisa de link nem inventa imagem — e não pode dizer que não mostra fotos.
+    """
+    listed = [
+        f"[foto {n}] {item.get('legenda') or 'sem legenda'}"
+        for n, item in enumerate(images[:MAX_PHOTOS_NOTE], 1)
+        if item.get("url")
+    ]
+    if not listed:
+        return ""
+    return (
+        "\n\nFOTOS (já aparecem para a pessoa numa galeria no topo da resposta):\n"
+        + "\n".join(listed)
+        + "\n\nPara mostrar uma foto no meio da explicação, escreva o marcador [foto N]"
+        " sozinho numa linha, logo depois do parágrafo que ela ilustra (de 1 a 3 fotos, só"
+        " as que ajudam). Use só números desta lista. Nunca diga que não pode mostrar"
+        " imagens e nunca cole links de imagem."
+    )
 
 
 def context_note(

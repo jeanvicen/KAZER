@@ -285,3 +285,60 @@ def test_skip_is_ignored_once_the_answer_is_done() -> None:
     assert live.done and live.research["pulou"] is False
     hub = GenerationHub(Store(), Planner())  # type: ignore[arg-type]
     assert hub.skip("u", "inexistente") is False
+
+
+class Judge(Planner):
+    """Modelo leve que responde o que mandarem (ou fica mudo)."""
+
+    def __init__(self, verdict: str) -> None:
+        super().__init__()
+        self.verdict = verdict
+
+    def stream(self, request: GenerationRequest, cancel: CancelToken) -> Any:
+        if request.light and "Responda só SIM ou NAO" in request.system:
+            self.requests.append(request)
+            if self.verdict:
+                yield StreamEvent("text", self.verdict)
+            yield StreamEvent("stop", "end")
+            return
+        yield from super().stream(request, cancel)
+
+
+def ask(question: str, verdict: str) -> tuple[list[ToolCall], Any, Any]:
+    ran: list[ToolCall] = []
+
+    def on_tool(call: ToolCall) -> tuple[Any, ...]:
+        ran.append(call)
+        if call.name == "buscar_imagens":
+            pics = [{"t": "Napoleão a cavalo", "u": "https://commons.wikimedia.org/wiki/File:N.jpg",
+                     "k": "imagem", "img": "https://upload.wikimedia.org/n.jpg"}]
+            return ("Buscando imagens", "Imagens encontradas", pics, "1 imagem")
+        return ("Pesquisando", "1. Resultado", [], "1 resultado")
+
+    provider = Judge(verdict)
+    store = Store()
+    hub = GenerationHub(store, provider)  # type: ignore[arg-type]
+    request = GenerationRequest(
+        system="s", turns=(Turn("user", (Part("text", question),)),),
+        prefetch=prefetch.plan(question), prefetch_check=question,
+    )
+    assert hub.try_reserve()
+    live = hub.start("u", "c", "r", request, on_tool=on_tool)
+    wait_for(live, lambda lv: lv.done)
+    return ran, provider, live
+
+
+def test_a_silent_judge_means_no_search() -> None:
+    """Se o modelo leve demora ou falha, o KAZER responde com o que sabe."""
+    ran, _, _ = ask("qual o melhor celular custo benefício?", "")
+    assert ran == []
+
+
+def test_no_web_for_famous_things_but_the_reference_photos_stay() -> None:
+    ran, provider, live = ask("quem foi Napoleão?", "NAO")
+    assert [c.name for c in ran] == ["buscar_imagens"]  # sem ler a web
+    note = provider.requests[-1].turns[-1].parts[-1].text
+    assert "FOTOS" in note and "[foto 1] Napoleão a cavalo" in note
+    assert "Nunca diga que não pode mostrar imagens" in note
+    assert live.images and live.images[0]["url"] == "https://upload.wikimedia.org/n.jpg"
+    assert provider.requests[-1].brief is False  # só fotos: pensa no ritmo normal

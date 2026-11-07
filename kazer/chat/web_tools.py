@@ -1043,7 +1043,8 @@ class WebTools:
             EXTERNAL
             + f"Imagens encontradas para: {query}\n"
             + "\n".join(rows)
-            + "\n\nEssas fotos já aparecem para a pessoa no topo da resposta, numa galeria:"
+            + "\n\nEssas fotos já aparecem para a pessoa no topo da resposta, numa galeria."
+            " Para colocar uma no meio da explicação, use o marcador [foto N] da lista FOTOS;"
             " não monte outra galeria nem cole os links das imagens."
         )
 
