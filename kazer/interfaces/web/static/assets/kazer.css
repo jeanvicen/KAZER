@@ -383,15 +383,10 @@ a {
   gap: 0.6rem;
 }
 
-/* No celular o campo já se explica pelo exemplo; o rótulo fica para leitores de tela. */
+/* O rótulo fica visível em todo tamanho: o exemplo dentro do campo some assim
+ * que a pessoa começa a digitar, e o rótulo continua dizendo o que vai ali. */
 .entry .field__label {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  margin: 0;
-  overflow: hidden;
-  clip: rect(0 0 0 0);
-  white-space: nowrap;
+  margin-bottom: -0.2rem;
 }
 
 .entry .field__error:empty {
@@ -816,14 +811,6 @@ a {
     gap: 0.5rem;
   }
 
-  .entry .field__label {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    overflow: hidden;
-    clip: rect(0 0 0 0);
-  }
-
   .tagline {
     font-size: 1rem;
   }
@@ -1020,14 +1007,6 @@ a {
 
   .entry__alt {
     text-align: left;
-  }
-
-  .entry .field__label {
-    position: static;
-    width: auto;
-    height: auto;
-    overflow: visible;
-    clip: auto;
   }
 
   .button {

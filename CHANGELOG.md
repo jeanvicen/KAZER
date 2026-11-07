@@ -2,6 +2,26 @@
 
 Mudanças que importam para quem usa e para quem opera o KAZER.
 
+## 2026-11 — Visual novo: obsidiana e ouro champanhe
+
+### Novo
+- Logo novo (o alien) em todo lugar: cabeçalhos, favicon, ícones do app
+  instalável, intro animada e capa dos documentos gerados.
+- Mascote em pixel art: o KAZER aparece programando na tela da cena de
+  entrada, no pôster e no boneco da estante, na tela sem internet, no
+  carregador e nas boas-vindas do KZ Code.
+- Entrada no estilo "e-mail primeiro" ("Entrar com e-mail" e "Criar conta"),
+  com cartão no computador e as cenas em pixel mantidas.
+
+### Melhor
+- Sistema de cores com tokens semânticos (`docs/brand.md`): preto obsidiana como
+  base, ouro champanhe só na ação principal, na seleção, no foco e em detalhes
+  da marca. Tema claro com texto em bronze, legível (AA).
+- KZ Code e plano Ultra entram na mesma família de cor (saem o laranja e o
+  roxo); avisos ganham uma cor própria, separada do ouro e do vermelho de erro.
+- Rótulo "E-mail" visível em todos os tamanhos de tela.
+- Configurações: a linha "Aparência" mostra o tema novo assim que ele muda.
+
 ## 2026-11 — Modelos premium e pesquisa nova
 
 ### Novo
