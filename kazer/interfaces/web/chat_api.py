@@ -394,6 +394,36 @@ def chat_routes(ctx: WebContext, chat: ChatService | None) -> list[Route]:
         )
 
     @endpoint
+    async def models(request: Request) -> Response:
+        """Modelos do seletor: KAZ 1.1 + premium, com o que o plano libera."""
+        user, _ = await account(request)
+        return JSONResponse(await run_in_threadpool(service().models_for, user.id))
+
+    @endpoint
+    async def stripe_webhook(request: Request) -> Response:
+        """Stripe avisa pagamento/renovação/cancelamento; assinatura conferida."""
+        from kazer.billing import stripe_webhook as hook
+        from kazer.security.secrets import EnvironmentSecretProvider
+
+        try:
+            secret = EnvironmentSecretProvider().get_secret(
+                "STRIPE_WEBHOOK_SECRET", scope="payments"
+            )
+        except LookupError:
+            raise ChatError("webhook_unavailable", 503) from None
+        payload = await ctx.read_body(request, 512 * 1024)
+        try:
+            event = hook.verify(payload, request.headers.get("stripe-signature", ""), secret)
+        except hook.WebhookError:
+            logger.warning("billing.webhook_rejected")
+            raise ChatError("invalid_signature", 400) from None
+        change = hook.plan_change(event)
+        if change is not None:
+            await run_in_threadpool(service().apply_plan, change.user_id, change.plan,
+                                    change.renews_at)
+        return JSONResponse({"received": True})
+
+    @endpoint
     async def search_health(request: Request) -> Response:
         """Diagnóstico: quais fontes de busca respondem DESTE servidor agora.
 
@@ -507,6 +537,8 @@ def chat_routes(ctx: WebContext, chat: ChatService | None) -> list[Route]:
         Route("/api/checkout", checkout, methods=["POST"]),
         Route("/api/documents/render", render_document, methods=["POST"]),
         Route("/api/diagnostics/search", search_health, methods=["GET"]),
+        Route("/api/models", models, methods=["GET"]),
+        Route("/api/stripe/webhook", stripe_webhook, methods=["POST"]),
         Route("/api/code/sessions", code_sessions, methods=["GET"]),
         Route("/api/skills", skills, methods=["GET", "POST"]),
         Route("/api/skills/shared", shared_skills, methods=["GET"]),

@@ -26,6 +26,8 @@ _ALLOWED_SECRETS: Mapping[str, frozenset[str]] = {
             "OPENROUTER_API_KEY",
             "TOGETHER_API_KEY",
             "KAZER_MODEL_API_KEY",
+            # Kimi (Moonshot AI), modelo premium dos planos pagos.
+            "MOONSHOT_API_KEY",
         }
     ),
 }

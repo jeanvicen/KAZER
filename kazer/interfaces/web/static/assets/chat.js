@@ -74,7 +74,10 @@ const SEND_ERRORS = {
   unauthenticated: "Sua sessão expirou.",
   auth_unavailable: "As contas estão fechadas neste ambiente.",
   chat_unavailable: "O chat ainda não está disponível neste ambiente.",
-  plan_required: "O KZ Code entra com os planos pagos.",
+  plan_required: "Esse recurso entra com os planos pagos.",
+  credits_exhausted: "Seu crédito de modelos premium deste mês acabou. Voltei para o KAZ 1.1, que continua liberado.",
+  credits_unavailable: "Não deu para conferir seu crédito agora. Use o KAZ 1.1 ou tente em instantes.",
+  premium_unavailable: "Esse modelo ainda não está ligado neste servidor. Use o KAZ 1.1 por enquanto.",
   invalid_effort: "Esse esforço não está disponível agora. Voltei para o Baixo; é só enviar de novo.",
 };
 
@@ -132,7 +135,7 @@ const S = {
   sending: false,
   live: null, // { replyId, lastIndex, controller }
   attachments: [],
-  options: { effort: store.get("kazer:effort", "baixo"), web: false, memory: true },
+  options: { effort: store.get("kazer:effort", "baixo"), web: false, memory: true, model: store.get("kazer:model", "kaz-1.1") },
   // Skills chamadas com "/" nesta mensagem.
   skillsPicked: [],
   pinned: true,
@@ -1322,7 +1325,7 @@ async function send() {
         conversation_id: S.conversation?.id || null,
         content,
         attachments: attachmentIds,
-        model: "kaz-1.1",
+        model: S.options.model || "kaz-1.1",
         effort: S.options.effort,
         skills: S.skillsPicked.map((item) => item.id),
         // Pesquisa em tempo real e memória ficam sempre ligadas (a memória
@@ -1412,6 +1415,10 @@ function failSend(data) {
   }
   // O servidor mudou a oferta de esforços: volta ao Baixo em vez de travar o envio.
   if (data.error === "invalid_effort") setEffort("baixo", { quiet: true });
+  // Modelo premium indisponível ou sem crédito: volta ao KAZ 1.1 sem travar.
+  if (["credits_exhausted", "credits_unavailable", "premium_unavailable", "invalid_model"].includes(data.error)) {
+    setModel("kaz-1.1", "KAZ 1.1", { quiet: true });
+  }
 }
 
 function commitSend(event) {
@@ -1731,9 +1738,24 @@ function effortLabel() {
 
 function paintEffort() {
   const label = effortLabel();
+  const premium = S.options.model && S.options.model !== "kaz-1.1";
+  const name = premium ? store.get("kazer:model-label", "Premium") : "KAZ 1.1";
+  const modelText = S.ui.modelChip.querySelector(".chip__model");
+  if (modelText) modelText.textContent = name;
   const chip = S.ui.modelChip.querySelector(".chip__effort");
-  if (chip) chip.textContent = label;
-  S.ui.modelChip.setAttribute("aria-label", `Modelo KAZ 1.1, esforço ${label}`);
+  if (chip) {
+    chip.textContent = premium ? "" : label;
+    chip.hidden = Boolean(premium);
+  }
+  S.ui.modelChip.setAttribute("aria-label", premium ? `Modelo ${name}` : `Modelo KAZ 1.1, esforço ${label}`);
+}
+
+function setModel(id, label, { quiet = false } = {}) {
+  S.options.model = id;
+  store.set("kazer:model", id);
+  store.set("kazer:model-label", label);
+  paintEffort();
+  if (!quiet) toast(`Usando ${label}.`, { duration: 1600 });
 }
 
 function setEffort(id, { quiet = false } = {}) {
@@ -1920,41 +1942,75 @@ function pressable(row, run) {
   return row;
 }
 
-// "Selecionar modelo": só o KAZ 1.1 e, abaixo, a linha que leva ao esforço.
-function openModelSheet() {
-  const available = S.model?.available;
+// "Selecionar modelo": KAZ 1.1 (incluso) e os premium dos planos pagos.
+async function openModelSheet() {
+  let info = S.modelsInfo;
+  try {
+    const response = await fetch("/api/models", { credentials: "same-origin", cache: "no-store" });
+    if (response.ok) info = S.modelsInfo = await response.json();
+  } catch {
+    /* sem rede: usa o que já sabia */
+  }
+  const list = info?.models || [{ id: "kaz-1.1", label: "KAZ 1.1", blurb: "Incluso em todos os planos.", allowed: true, ready: Boolean(S.model?.available) }];
+  const current = S.options.model || "kaz-1.1";
   openSheet({
     title: "Selecionar modelo",
     opener: S.ui.modelChip,
     content: (handle) => {
-      const model = pressable(
-        h(
-          "div.pick-row",
-          { role: "radio", "aria-checked": "true", tabindex: "0" },
+      const row = (item) => {
+        const on = item.id === current;
+        const locked = !item.allowed;
+        const off = !locked && !item.ready;
+        const badge = locked ? (item.plans?.includes("pro") ? "Pro" : "Ultra") : off ? "Em breve" : null;
+        const el = h(
+          `div.pick-row${locked || off ? ".is-locked" : ""}`,
+          { role: "radio", "aria-checked": String(on), "aria-disabled": String(off), tabindex: "0" },
           h(
             "span.pick-row__text",
             {},
-            h("span.pick-row__title", { text: "KAZ 1.1" }),
-            h("span.pick-row__desc", {
-              text: available ? "O modelo do KAZER para o dia a dia." : "Ainda não conectado a um provedor neste servidor.",
-            }),
+            h("span.pick-row__title", { text: item.label }),
+            h("span.pick-row__desc", { text: item.maker && item.premium ? `${item.maker} · ${item.blurb}` : item.blurb }),
           ),
-          icon("check", "pick-row__check"),
-        ),
-        () => handle.close(),
-      );
-      const effort = h(
-        "button.pick-row.pick-row--link",
-        { type: "button", onclick: () => openEffortSheet() },
-        h("span.pick-row__title", { text: "Esforço" }),
-        h("span.pick-row__value", { text: effortLabel() }),
-        icon("chevron-right", "pick-row__go"),
-      );
+          badge ? h("span.pick-row__badge", { text: badge }) : on ? icon("check", "pick-row__check") : null,
+        );
+        return pressable(el, () => {
+          if (off) return;
+          handle.close();
+          if (locked) {
+            offerFeature({ upgrade: { id: item.plans?.[0] || "pro" } });
+            return;
+          }
+          setModel(item.id, item.label);
+        });
+      };
+      const base = list.filter((item) => !item.premium);
+      const premium = list.filter((item) => item.premium);
+      const credit = info?.credits;
+      const effort = current === "kaz-1.1"
+        ? h(
+            "div.pick-group",
+            {},
+            h(
+              "button.pick-row.pick-row--link",
+              { type: "button", onclick: () => openEffortSheet() },
+              h("span.pick-row__title", { text: "Esforço" }),
+              h("span.pick-row__value", { text: effortLabel() }),
+              icon("chevron-right", "pick-row__go"),
+            ),
+          )
+        : null;
       return h(
         "div.model-sheet",
         {},
-        h("div.pick-group", { role: "radiogroup", "aria-label": "Modelo" }, model),
-        h("div.pick-group", {}, effort),
+        h("div.pick-group", { role: "radiogroup", "aria-label": "Modelo" }, base.map(row)),
+        premium.length ? h("p.sheet__label", { text: "Modelos premium" }) : null,
+        premium.length ? h("div.pick-group", { role: "radiogroup", "aria-label": "Modelos premium" }, premium.map(row)) : null,
+        credit
+          ? h("p.sheet__note", { text: credit.exhausted ? "O crédito deste mês acabou. O KAZ 1.1 continua liberado." : `Crédito premium do mês: ${Math.round(credit.used_pct)}% usado.` })
+          : premium.length
+            ? h("p.sheet__note", { text: "Claude, GPT e Kimi entram nos planos Pro e Ultra." })
+            : null,
+        effort,
       );
     },
   });

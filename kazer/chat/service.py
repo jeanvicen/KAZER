@@ -17,6 +17,9 @@ from functools import partial
 from typing import Any
 from urllib.parse import urlsplit
 
+from kazer.billing import catalog as premium
+from kazer.billing import credits, economics
+from kazer.billing.metered import MeteredProvider
 from kazer.brain.model_provider import (
     EFFORTS,
     PUBLIC_MODEL_ID,
@@ -232,11 +235,13 @@ class SendOptions:
     desktop: bool = False
     # Skills que a pessoa chamou com "/" nesta mensagem (ids, no máximo MAX_CALLED_SKILLS).
     skills: tuple[str, ...] = ()
+    # KAZ 1.1 (Groq, incluso) ou um modelo premium dos planos pagos.
+    model: str = PUBLIC_MODEL_ID
 
     def as_dict(self) -> dict[str, Any]:
         """Gravado junto da mensagem para auditoria de uso."""
         return {
-            "model": PUBLIC_MODEL_ID,
+            "model": self.model,
             "effort": self.effort,
             "deep": self.deep,
             "web_search": self.web_search,
@@ -292,6 +297,7 @@ class ChatService:
         hub: GenerationHub | None = None,
         web: web_tools.WebTools | None = None,
         checkout: Any = None,
+        premium_factory: Callable[[premium.PremiumModel], ModelProvider | None] | None = None,
     ) -> None:
         """`provider` None: o chat funciona para histórico, mas não gera respostas.
 
@@ -310,6 +316,9 @@ class ChatService:
         self._hub = hub or (GenerationHub(store, provider, clock=clock) if provider else None)
         self._last_purge = 0
         self._owners: set[str] = set()
+        # Modelos premium (Claude, GPT, Kimi) dos planos pagos, criados sob demanda.
+        self._premium_factory = premium_factory or _build_premium
+        self._premium: dict[str, ModelProvider | None] = {}
 
     def _now(self) -> int:
         return int(self._clock())
@@ -395,6 +404,13 @@ class ChatService:
             except Exception:  # noqa: BLE001 - uso é informativo; não derruba o chat
                 logger.warning("chat.usage_state_failed")
         plan = plans.plan_of(raw.get("plan"))
+        local_plan = getattr(self._store, "plan_of", None)
+        if not raw and local_plan is not None:
+            # Banco local (desenvolvimento): o plano vem da tabela local `plans`.
+            try:
+                plan = plans.plan_of(local_plan(user_id, self._now()))
+            except Exception:  # noqa: BLE001 - informativo
+                logger.warning("chat.usage_state_failed")
         if not raw:
             # Sem banco com planos (desenvolvimento local): o limite real é a
             # janela configurada no servidor, então é ela que a tela mostra.
@@ -1139,13 +1155,105 @@ class ChatService:
             if (live := hub.get(user_id, message.id)) is not None
         ]
 
+    # ---------- Modelos premium e créditos ----------
+
+    def plan(self, user_id: str) -> plans.Plan:
+        return plans.plan_of(self.usage_state(user_id).get("plan"))
+
+    def _premium_provider(self, model: premium.PremiumModel) -> ModelProvider | None:
+        if model.id not in self._premium:
+            try:
+                self._premium[model.id] = self._premium_factory(model)
+            except Exception:  # noqa: BLE001 - chave errada não derruba o chat
+                logger.exception("billing.premium_build_failed")
+                self._premium[model.id] = None
+        return self._premium[model.id]
+
+    def credit_state(self, user_id: str, plan: plans.Plan | None = None) -> dict[str, Any]:
+        """Crédito do mês nos modelos premium (só porcentagem vai para a tela)."""
+        plan = plan or self.plan(user_id)
+        budget = economics.split(plan.yearly_per_month).api_usd if plan.monthly_cents else 0.0
+        month = credits.month_key(self._clock())
+        reader = getattr(self._store, "credit_spent", None)
+        try:
+            spent = reader(user_id, month) if reader is not None else 0
+        except Exception:  # noqa: BLE001 - sem medir, não libera (fecha por segurança)
+            logger.warning("billing.credit_read_failed")
+            return {**credits.state(0, 0.0, month), "unavailable": True}
+        return credits.state(spent, budget, month)
+
+    def _check_premium(self, model_id: Any, user_id: str) -> None:
+        model = premium.find(model_id) if isinstance(model_id, str) else None
+        if model is None:
+            raise ChatError("invalid_model", 400)
+        plan = self.plan(user_id) if user_id else plans.FREE
+        if plan.id not in model.plans:
+            raise ChatError("plan_required", 402, feature="models", **self._offer(user_id))
+        if self._premium_provider(model) is None:
+            raise ChatError("premium_unavailable", 503)
+        state = self.credit_state(user_id, plan)
+        if state.get("unavailable"):
+            raise ChatError("credits_unavailable", 503)
+        if state["exhausted"]:
+            raise ChatError("credits_exhausted", 402, used_pct=state["used_pct"])
+
+    def _metered(self, user_id: str, model_id: str) -> ModelProvider | None:
+        """O provedor premium desta resposta, cobrando do crédito; None = KAZ 1.1."""
+        model = premium.find(model_id) if model_id != PUBLIC_MODEL_ID else None
+        inner = self._premium_provider(model) if model is not None else None
+        if model is None or inner is None:
+            return None
+        charger = getattr(self._store, "charge_credits", None)
+        month = credits.month_key(self._clock())
+
+        def charge(usd: float) -> None:
+            if charger is not None:
+                charger(user_id, month, credits.to_micro(usd))
+
+        return MeteredProvider(inner, model, charge)
+
+    def apply_plan(self, user_id: str, plan: str, renews_at: int | None) -> None:
+        """Webhook do pagamento: liga, renova ou desliga o plano (só o servidor chama)."""
+        if not valid_id(user_id) or plan not in plans.BY_ID:
+            logger.warning("billing.plan_change_ignored")
+            return
+        setter = getattr(self._store, "set_plan", None)
+        if setter is None:
+            raise ChatError("billing_unavailable", 503)
+        setter(user_id, plan, renews_at, self._now())
+        logger.info("billing.plan_changed", extra={"plan": plan})
+
+    def models_for(self, user_id: str) -> dict[str, Any]:
+        """Modelos que a pessoa vê no seletor, com o que o plano dela libera."""
+        plan = self.plan(user_id)
+        listed = [{
+            "id": PUBLIC_MODEL_ID, "label": PUBLIC_MODEL_LABEL, "maker": "KAZER",
+            "blurb": "Incluso em todos os planos.", "premium": False, "allowed": True,
+            "ready": self._provider is not None,
+        }]
+        for model in premium.catalog():
+            listed.append({
+                **model.public(),
+                "allowed": plan.id in model.plans,
+                "ready": premium.key_configured(model),
+            })
+        state = self.credit_state(user_id, plan) if plan.monthly_cents else None
+        return {
+            "plan": plan.id,
+            "models": listed,
+            "credits": None if state is None else {
+                "used_pct": state["used_pct"], "exhausted": state["exhausted"],
+            },
+        }
+
     # ---------- Envio ----------
 
     def _options(
         self, data: dict[str, Any], memory_enabled: bool, user_id: str = ""
     ) -> SendOptions:
-        if data.get("model", PUBLIC_MODEL_ID) != PUBLIC_MODEL_ID:
-            raise ChatError("invalid_model", 400)
+        model_id = data.get("model", PUBLIC_MODEL_ID)
+        if model_id != PUBLIC_MODEL_ID:
+            self._check_premium(model_id, user_id)
         effort = data.get("effort", "baixo")
         # Só vale o que o provedor realmente diferencia; o resto o servidor recusa.
         if effort not in EFFORTS or effort not in self._efforts():
@@ -1185,6 +1293,7 @@ class ChatService:
             forja=forja,
             desktop=desktop,
             skills=tuple(dict.fromkeys(called)),
+            model=str(model_id),
         )
 
     def _allows(self, user_id: str, feature: str) -> bool:
@@ -1346,6 +1455,7 @@ class ChatService:
                 user_id, read_only=restricted, focus=asked
             ),
             describe=self._describe,
+            provider=self._metered(user_id, options.model),
         )
         logger.info("chat.message_accepted", extra={"units": options.units})
         return exchange, live
@@ -1373,7 +1483,11 @@ class ChatService:
             ),
             forja=bool(current.options.get("forja", False)),
             desktop=bool(current.options.get("desktop", False)),
+            model=str(current.options.get("model") or PUBLIC_MODEL_ID),
         )
+        if options.model != PUBLIC_MODEL_ID:
+            # Repetir num modelo premium confere plano e crédito de novo.
+            self._check_premium(options.model, user_id)
         caps = self._provider.capabilities
         if (options.deep and not caps.deep) or (options.web_search and not caps.web_search):
             options = replace(
@@ -1413,6 +1527,7 @@ class ChatService:
                 user_id, read_only=restricted, focus=question.content
             ),
             describe=self._describe,
+            provider=self._metered(user_id, options.model),
         )
         return reply, live
 
@@ -1503,6 +1618,9 @@ class ChatService:
     ) -> tuple[GenerationRequest, bool]:
         """O pedido ao modelo e se esta resposta é restrita (Skill de terceiros em uso)."""
         provider = self._provider
+        chosen = premium.find(options.model) if options.model != PUBLIC_MODEL_ID else None
+        if chosen is not None:
+            provider = self._premium_provider(chosen) or provider
         assert provider is not None
         history = self._store.context_messages(
             question.conversation_id, question.seq, CONTEXT_MESSAGES
@@ -1547,7 +1665,8 @@ class ChatService:
         request = GenerationRequest(
             system=system,
             turns=turns,
-            effort=options.effort,
+            # Premium: o modelo é escolhido pela qualidade, então pensa direito.
+            effort="high" if chosen is not None else options.effort,
             deep=options.deep,
             web_search=options.web_search,
             prefetch=planned,
@@ -1660,3 +1779,39 @@ class ChatService:
         self._store.delete_owner(user_id)
         self._owners = {key for key in self._owners if not key.startswith(f"{user_id}:")}
         self._uploads.delete_user(user_id)
+
+
+def _build_premium(model: premium.PremiumModel) -> ModelProvider | None:
+    """Cliente da API de cada empresa, com a chave do servidor (None sem chave)."""
+    from kazer.brain.model_provider import (
+        AnthropicProvider,
+        Capabilities,
+        OpenAICompatibleProvider,
+    )
+    from kazer.security.secrets import EnvironmentSecretProvider
+
+    try:
+        key = EnvironmentSecretProvider().get_secret(premium.KEYS[model.provider], scope="model")
+    except LookupError:
+        return None
+    if model.provider == premium.ANTHROPIC:
+        return AnthropicProvider(
+            api_key=key,
+            model=model.upstream,
+            base_url="",
+            max_tokens=32_000,
+            timeout=300.0,
+            capabilities=Capabilities(deep=True, images=True, documents=True),
+            adaptive=True,
+        )
+    return OpenAICompatibleProvider(
+        name=model.provider,
+        base_url=premium.BASE_URLS[model.provider],
+        api_key=key,
+        model=model.upstream,
+        deep_model="",
+        capabilities=Capabilities(images=model.images),
+        send_effort=False,
+        max_tokens=16_384,
+        timeout=300.0,
+    )

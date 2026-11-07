@@ -9,8 +9,8 @@ Com isso, a tela de planos troca o "avise-me" por um botão que abre o Checkout
 hospedado do Stripe (cartão, Pix e boleto, conforme o painel). Quem decide o
 plano e o preço é o servidor: o navegador só manda `plan` e `cycle`, e o ID do
 preço vem da configuração. A ativação do plano depois do pagamento chega pelo
-webhook do Stripe (evento `checkout.session.completed`), com o `client_reference_id`
-sendo o id da conta — ainda a ligar no banco (`kazer_plan`).
+webhook do Stripe (`kazer/billing/stripe_webhook.py`, rota /api/stripe/webhook),
+que ativa, renova e cancela o plano em `kazer_plans`.
 """
 
 from __future__ import annotations
@@ -68,6 +68,8 @@ class StripeCheckout:
             "metadata[kazer_plan]": plan,
             "metadata[kazer_cycle]": cycle,
             "subscription_data[metadata][kazer_user]": user_id,
+            # A renovação (invoice.paid) precisa saber o plano sem consultar nada.
+            "subscription_data[metadata][kazer_plan]": plan,
             "success_url": f"{origin}/?assinatura=ok",
             "cancel_url": f"{origin}/?assinatura=cancelada",
         }

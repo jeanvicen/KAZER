@@ -56,8 +56,8 @@ def test_the_catalog_matches_the_quota_in_the_database() -> None:
 
 def test_prices_are_formatted_in_reais() -> None:
     assert plans.BY_ID["free"].monthly_price == "Grátis"
-    assert plans.BY_ID["pro"].monthly_price == "R$ 59,99"
-    assert plans.BY_ID["ultra"].monthly_price == "R$ 179,99"
+    assert plans.BY_ID["pro"].monthly_price == "R$ 1.599,00"
+    assert plans.BY_ID["ultra"].monthly_price == "R$ 10.000,00"
     # O anual equivale a dez meses: quem paga o ano economiza dois.
     for plan in plans.PLANS:
         if plan.monthly_cents:
@@ -87,7 +87,7 @@ def test_the_catalog_reaches_the_browser_with_the_current_usage(
 
         data: dict[str, Any] = client.get("/api/plans").json()
         assert [plan["id"] for plan in data["plans"]] == ["free", "pro", "ultra"]
-        assert data["plans"][1]["monthly_price"] == "R$ 59,99"
+        assert data["plans"][1]["monthly_price"] == "R$ 1.599,00"
         # Sem cobrança ligada, a interface não pode fingir que vende.
         assert data["checkout"] is False
 
@@ -113,7 +113,7 @@ def test_the_limit_offers_the_next_plan(make_env: Callable[..., Env]) -> None:
         assert body["plan"] == "free" and body["plan_name"] == "KAZER"
         # A oferta é o plano de cima, com o quanto de uso a mais ele dá.
         assert body["upgrade"]["id"] == "pro"
-        assert body["upgrade"]["price"] == "R$ 59,99"
+        assert body["upgrade"]["price"] == "R$ 1.599,00"
         # Em português o decimal é vírgula; a interface escreve "6,7×".
         assert body["upgrade"]["times"] == "6,7"
 

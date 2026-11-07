@@ -85,6 +85,8 @@ class LiveGeneration:
     steps: list[dict[str, str]] = field(default_factory=list)
     # Fotos da web achadas na pesquisa: a interface mostra no topo da resposta.
     images: list[dict[str, str]] = field(default_factory=list)
+    # Modelo desta resposta (premium) — None usa o do hub (KAZ 1.1).
+    provider: ModelProvider | None = None
     _lock: threading.Lock = field(default_factory=threading.Lock)
     _waiters: set[tuple[asyncio.AbstractEventLoop, asyncio.Event]] = field(default_factory=set)
 
@@ -212,8 +214,11 @@ class GenerationHub:
         on_complete: Callable[[LiveGeneration, str], None] | None = None,
         on_tool: Callable[[ToolCall], tuple[Any, ...]] | None = None,
         describe: Callable[[ToolCall], str] | None = None,
+        provider: ModelProvider | None = None,
     ) -> LiveGeneration:
         """Inicia a geração numa vaga já reservada com `try_reserve()`.
+
+        `provider`: outro modelo só para esta resposta (premium dos planos pagos).
 
         `on_tool` executa uma ferramenta de conector e devolve (rótulo, texto).
         """
@@ -221,6 +226,7 @@ class GenerationHub:
         live.on_complete = on_complete
         live.on_tool = on_tool
         live.describe = describe
+        live.provider = provider
         with self._lock:
             self._evict()
             self._live[reply_id] = live
@@ -469,7 +475,7 @@ class GenerationHub:
             while True:
                 calls: list[ToolCall] = []
                 round_text: list[str] = []
-                for event in self._provider.stream(request, live.cancel):
+                for event in (live.provider or self._provider).stream(request, live.cancel):
                     if live.cancel.cancelled():
                         break
                     if event.kind == "tool" and event.call is not None:

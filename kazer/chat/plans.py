@@ -6,9 +6,9 @@ em Python: nome público, preço e o que cada plano libera. Os dois precisam
 contar a mesma história, então a franquia aparece aqui com o mesmo valor e o
 teste `test_plans.py` falha se alguém mexer num lado só.
 
-Preço: o KAZER ainda não tem cobrança ligada. Os valores abaixo são os preços
-anunciados; enquanto o pagamento não abrir, a interface diz isso em vez de
-simular uma compra.
+Preço: a cobrança é do Stripe (kazer/integrations/payments.py) e o plano liga
+pelo webhook (kazer/billing/stripe_webhook.py). Sem as chaves do Stripe, a
+interface avisa em vez de simular uma compra.
 """
 
 from __future__ import annotations
@@ -73,6 +73,7 @@ class Plan:
                 "coder": self.coder,
                 "artifacts": self.artifacts,
                 "research": self.research,
+                "models": self.monthly_cents > 0,
             },
         }
 
@@ -85,10 +86,12 @@ def _brl(cents: int) -> str:
     return f"R$ {cents // 100:,}".replace(",", ".") + f",{cents % 100:02d}"
 
 
-# Preços escolhidos olhando o mercado brasileiro em outubro de 2026: ChatGPT Go
-# a R$ 39,99, ChatGPT Plus a R$ 99,90 e Claude Pro a R$ 110 por mês. O Pro do
-# KAZER fica abaixo dos dois grandes, e o Ultra abaixo do ChatGPT Pro
-# (a partir de R$ 525). O anual equivale a dez meses: dois de graça.
+# Pro e Ultra são planos de "todos os modelos": além do KAZ 1.1, a pessoa usa
+# Claude, GPT e Kimi pela API de cada empresa, com um crédito mensal que sai do
+# próprio preço do plano (ver kazer/billing/economics.py: taxa, imposto,
+# reserva e margem saem antes; o resto vira crédito). O anual equivale a dez
+# meses (dois de graça), e o crédito é calculado pelo valor mensal do anual,
+# para a margem valer nos dois ciclos.
 PLANS: tuple[Plan, ...] = (
     Plan(
         id="free",
@@ -110,9 +113,9 @@ PLANS: tuple[Plan, ...] = (
     Plan(
         id="pro",
         name="KAZER Pro",
-        tagline="Para trabalho diário com código e documentos.",
-        monthly_cents=5999,
-        yearly_cents=59990,
+        tagline="Todos os grandes modelos de IA num lugar só.",
+        monthly_cents=159900,
+        yearly_cents=1599000,
         allowance=800,
         accent="#e8b04a",
         featured=True,
@@ -123,19 +126,20 @@ PLANS: tuple[Plan, ...] = (
         connector_limit=0,
         highlights=[
             "Tudo do plano gratuito",
-            "Mais de 6 vezes o uso por janela",
+            "Claude Opus, Sonnet e Haiku, GPT e Kimi",
+            "Crédito mensal nos modelos premium",
+            "Mais de 6 vezes o uso do KAZ 1.1",
             "KZ Code com projetos em .zip e prévia",
             "PDFs e apresentações para baixar",
-            "Pesquisa profunda em várias etapas",
         ],
         extras=["Prioridade em horários de pico"],
     ),
     Plan(
         id="ultra",
         name="KAZER Ultra",
-        tagline="Para quem usa o KAZER o dia inteiro.",
-        monthly_cents=17999,
-        yearly_cents=179990,
+        tagline="Para quem vive de IA: o máximo de cada modelo.",
+        monthly_cents=1000000,
+        yearly_cents=10000000,
         allowance=3000,
         accent="#c084fc",
         coder=True,
@@ -145,8 +149,9 @@ PLANS: tuple[Plan, ...] = (
         connector_limit=0,
         highlights=[
             "Tudo do Pro",
-            "25 vezes o uso do plano gratuito",
-            "Pensamento profundo sem custo dobrado",
+            "Claude Fable 5.1, o topo da Anthropic",
+            "Crédito mensal 6 vezes maior que o do Pro",
+            "25 vezes o uso do KAZ 1.1",
             "Sessões longas no KZ Code",
         ],
         extras=["Acesso antecipado a novos recursos", "Suporte por e-mail com prioridade"],

@@ -129,6 +129,18 @@ CREATE TABLE IF NOT EXISTS connections (
 );
 CREATE UNIQUE INDEX IF NOT EXISTS connections_user_connector
     ON connections(user_id, connector_id);
+CREATE TABLE IF NOT EXISTS plans (
+    user_id TEXT PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+    plan TEXT NOT NULL DEFAULT 'free' CHECK (plan IN ('free', 'pro', 'ultra')),
+    renews_at INTEGER,
+    updated_at INTEGER NOT NULL
+);
+CREATE TABLE IF NOT EXISTS credit_usage (
+    user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    month TEXT NOT NULL,
+    spent_micro INTEGER NOT NULL DEFAULT 0,
+    PRIMARY KEY (user_id, month)
+);
 """
 
 
@@ -1083,6 +1095,52 @@ class ChatStore:
                 " updated_at = excluded.updated_at",
                 (user_id, json.dumps(data, separators=(",", ":")), now),
             )
+
+    # ---------- Plano e créditos (cobrança) ----------
+
+    def plan_of(self, user_id: str, now: int) -> str:
+        """Plano ativo; vencido há mais de 3 dias volta a ser o gratuito."""
+        with self._transaction() as conn:
+            row = conn.execute(
+                "SELECT plan, renews_at FROM plans WHERE user_id = ?", (user_id,)
+            ).fetchone()
+        if row is None:
+            return "free"
+        if row["renews_at"] is not None and row["renews_at"] < now - 3 * 86400:
+            return "free"
+        return str(row["plan"])
+
+    def set_plan(self, user_id: str, plan: str, renews_at: int | None, now: int) -> None:
+        with self._transaction() as conn:
+            conn.execute(
+                "INSERT INTO plans (user_id, plan, renews_at, updated_at) VALUES (?, ?, ?, ?)"
+                " ON CONFLICT(user_id) DO UPDATE SET plan = excluded.plan,"
+                " renews_at = excluded.renews_at, updated_at = excluded.updated_at",
+                (user_id, plan, renews_at, now),
+            )
+
+    def credit_spent(self, user_id: str, month: str) -> int:
+        with self._transaction() as conn:
+            row = conn.execute(
+                "SELECT spent_micro FROM credit_usage WHERE user_id = ? AND month = ?",
+                (user_id, month),
+            ).fetchone()
+        return int(row["spent_micro"]) if row else 0
+
+    def charge_credits(self, user_id: str, month: str, micro: int) -> int:
+        """Soma atômica do gasto do mês (devolve o total)."""
+        with self._transaction() as conn:
+            conn.execute(
+                "INSERT INTO credit_usage (user_id, month, spent_micro) VALUES (?, ?, ?)"
+                " ON CONFLICT(user_id, month) DO UPDATE SET"
+                " spent_micro = credit_usage.spent_micro + excluded.spent_micro",
+                (user_id, month, max(micro, 0)),
+            )
+            row = conn.execute(
+                "SELECT spent_micro FROM credit_usage WHERE user_id = ? AND month = ?",
+                (user_id, month),
+            ).fetchone()
+        return int(row["spent_micro"])
 
     # ---------- Conectores ligados ----------
 

@@ -17,12 +17,12 @@ dependencies = [
     "httpx>=0.27,<1",
     "fpdf2>=2.8,<3",
     "pypdf>=4,<7",
+    # SDK oficial da Anthropic: modelos Claude dos planos pagos.
+    "anthropic>=2,<3",
 ]
 
 [project.optional-dependencies]
 dev = ["pytest>=8,<9", "ruff>=0.6,<1", "mypy>=1.11,<2", "httpx>=0.27,<1", "httpx2>=2,<3"]
-# Só para KAZER_MODEL_PROVIDER=anthropic (SDK oficial); os outros provedores usam a biblioteca padrão.
-anthropic = ["anthropic>=2,<3"]
 
 [project.scripts]
 kazer = "kazer.main:main"

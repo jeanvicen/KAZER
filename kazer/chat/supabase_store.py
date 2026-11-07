@@ -203,6 +203,61 @@ class SupabaseChatStore:
         except ValueError:
             return None
 
+    def _service(self, method: str, path: str, **kwargs: Any) -> httpx.Response:
+        """Chamada com a chave de serviço (cobrança: o usuário nunca escreve aqui)."""
+        if not self._service_key:
+            raise StorageUnavailable("cobrança precisa de SUPABASE_SERVICE_ROLE_KEY")
+        headers = {
+            "apikey": self._service_key,
+            "Authorization": f"Bearer {self._service_key}",
+            "Content-Type": "application/json",
+        }
+        headers.update(kwargs.pop("headers", {}))
+        try:
+            response = self._client.request(
+                method, f"{self._base}/rest/v1/{path}", headers=headers, **kwargs
+            )
+        except httpx.HTTPError:
+            raise StorageUnavailable("banco inacessível") from None
+        if response.status_code >= 400:
+            logger.warning("billing.store_error", extra={"path": path.split("?")[0],
+                                                          "status": response.status_code})
+            raise StorageUnavailable("banco recusou a operação de cobrança",
+                                     not_migrated=response.status_code == 404)
+        return response
+
+    def set_plan(self, user_id: str, plan: str, renews_at: int | None, now: int) -> None:
+        """Webhook do pagamento: ativa, renova ou cancela o plano da conta."""
+        self._service(
+            "POST",
+            "kazer_plans?on_conflict=user_id",
+            headers={"Prefer": "resolution=merge-duplicates,return=minimal"},
+            json={
+                "user_id": user_id,
+                "plan": plan,
+                "renews_at": _iso(renews_at) if renews_at else None,
+                "updated_at": _iso(now),
+            },
+        )
+
+    def credit_spent(self, user_id: str, month: str) -> int:
+        response = self._service(
+            "GET",
+            "kazer_credit_usage",
+            params={"select": "spent_micro", "user_id": f"eq.{user_id}", "month": f"eq.{month}"},
+        )
+        rows = response.json() if response.content else []
+        return int(rows[0]["spent_micro"]) if rows else 0
+
+    def charge_credits(self, user_id: str, month: str, micro: int) -> int:
+        response = self._service(
+            "POST",
+            "rpc/kazer_charge_credits",
+            json={"p_user_id": user_id, "p_month": month, "p_micro": max(micro, 0)},
+        )
+        value = response.json()
+        return int(value) if isinstance(value, int | float) else 0
+
     def _storage(self, method: str, path: str, **kwargs: Any) -> httpx.Response:
         bearer, service = self._auth()
         headers = {"apikey": service or self._key, "Authorization": f"Bearer {bearer}"}
