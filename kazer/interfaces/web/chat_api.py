@@ -152,6 +152,18 @@ def chat_routes(ctx: WebContext, chat: ChatService | None) -> list[Route]:
         return JSONResponse({"status": "stopping"}, status_code=202)
 
     @endpoint
+    async def skip(request: Request) -> Response:
+        """"Pular" a pesquisa em andamento (como no ChatGPT): a resposta continua."""
+        user, _ = await account(request)
+        ctx.check_origin(request)
+        applied = await run_in_threadpool(
+            service().skip_research, user.id, request.path_params["message_id"]
+        )
+        if applied:
+            return JSONResponse({"status": "skipping"}, status_code=202)
+        return JSONResponse({"status": "idle"})
+
+    @endpoint
     async def conversations(request: Request) -> Response:
         user, _ = await account(request)
         page = await run_in_threadpool(
@@ -521,6 +533,7 @@ def chat_routes(ctx: WebContext, chat: ChatService | None) -> list[Route]:
         Route("/api/messages/{message_id}", message, methods=["GET"]),
         Route("/api/messages/{message_id}/stream", follow, methods=["GET"]),
         Route("/api/messages/{message_id}/stop", stop, methods=["POST"]),
+        Route("/api/messages/{message_id}/skip", skip, methods=["POST"]),
         Route("/api/messages/{message_id}/retry", retry, methods=["POST"]),
         Route("/api/conversations", conversations, methods=["GET"]),
         Route("/api/conversations/clear", clear_conversations, methods=["POST"]),

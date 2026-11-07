@@ -3,7 +3,7 @@
 // se a rede cair no meio, a interface reata do último evento recebido.
 
 import { hydratePixelWords } from "./pixel.js";
-import { initLanguage, locale } from "./i18n.js";
+import { initLanguage, locale, t } from "./i18n.js";
 import { applyTheme } from "./theme.js";
 import {
   announce,
@@ -23,7 +23,7 @@ import {
   trapFocus,
   uuid,
 } from "./dom.js";
-import { bundleCard, citeChips, onAnswer, openImages, picsStrip, readImages, readResearch, readSources, readSteps, renderSourceList, stripSources } from "./deliver.js";
+import { bundleCard, citeChips, onAnswer, openImages, picsStrip, readImages, readResearch, readSources, readSteps, renderSourceList, siteHost, sourceAvatar, stripSources } from "./deliver.js";
 import { copyText, MarkdownView, render as renderMarkdown } from "./markdown.js";
 import { net, readEvents, request, waitOnline } from "./net.js";
 import { closeSheet, confirmDialog, openSheet, promptDialog, setSheetBackground, toast } from "./sheets.js";
@@ -785,7 +785,7 @@ function assistantElement(model) {
   const actions = h("div.msg__actions", {}, actionButton("copy", "Copiar resposta", () => stripSources(model.content)));
   const made = h("div.msg__made", { hidden: true });
   const bundle = h("div.msg__bundle", { hidden: true });
-  const steps = h("ol.msg__steps", { hidden: true, "aria-label": "O que o KAZER está fazendo" });
+  const steps = h("div.msg__steps.act", { hidden: true, role: "group", "aria-label": "O que o KAZER está fazendo" });
   const pics = h("div.msg__pics", { hidden: true });
   const el = h("article.msg.msg--kazer", { dataset: { id: model.id } }, head, steps, pics, thinking, body, bundle, made, notice, actions);
   model.el = el;
@@ -849,37 +849,144 @@ function researchSummary(stats) {
   return parts.join(" · ");
 }
 
-function stepSummary(steps, sources, stats) {
-  if (stats) {
-    const text = researchSummary(stats);
-    if (text) return text;
+// ---------- Atividade: o que o KAZER está fazendo, no jeito do ChatGPT ----------
+//
+// Nada de linha do tempo com bolinhas: cada fase vira uma linha discreta. Enquanto
+// acontece, o texto brilha ("Pesquisando em 12 sites", com os sites ao lado); quando
+// termina, fica o resumo ("Pesquisou 16 sites") e tocar abre o que foi visto. Tudo
+// sai dos passos e dos números que o servidor mandou: nada é narrado sem acontecer.
+
+// Passos que fazem parte da pesquisa na web (viram uma linha só).
+const WEB_STEP = /^(Planejando a pesquisa|Planejou a pesquisa|Pesquisando:|Lendo |Buscando imagens|Buscando artigos|Buscando no Hacker|Procurando no Stack)/;
+
+const plural = (n, one, many) => `${n} ${n === 1 ? one : many}`;
+const seconds = (ms) => Math.max(1, Math.round((ms || 0) / 1000));
+
+function siteList(sources) {
+  const hosts = [];
+  for (const item of sources) {
+    if (!item?.u || item.k === "imagem") continue;
+    const host = siteHost(item.u);
+    if (host && !hosts.includes(host)) hosts.push(host);
   }
-  const searched = steps.filter((step) => /^(Pesquisando|Procurando|Buscando)/.test(step.label)).length;
-  const read = steps.filter((step) => /^(Lendo|Abrindo|Consultando)/.test(step.label)).length;
-  const parts = [];
-  if (searched) parts.push(`${searched} ${searched === 1 ? "busca" : "buscas"}`);
-  if (read) parts.push(`${read} ${read === 1 ? "leitura" : "leituras"}`);
-  if (sources) parts.push(`${sources} ${sources === 1 ? "fonte" : "fontes"}`);
-  return parts.join(" · ") || `${steps.length} ${steps.length === 1 ? "passo" : "passos"}`;
+  return hosts;
 }
 
-const TRAIL_VISIBLE = 3;
+// As linhas desta resposta, na ordem em que aconteceram.
+function activityLines(model, streaming) {
+  const steps = model.steps || [];
+  const lines = [];
+  let web = null;
+  steps.forEach((step, index) => {
+    if (step.kind === "write") return;
+    if (step.kind === "think") {
+      // Só o "pensou" logo antes de escrever vira linha; o resto é parte da pesquisa.
+      // Com raciocínio do modelo, quem mostra o tempo é a caixa dele.
+      if (steps[index + 1]?.kind === "write" && !model.thinking) lines.push({ key: step.id, kind: "think", step });
+      return;
+    }
+    if (WEB_STEP.test(step.label || "")) {
+      if (!web) {
+        web = { key: `web-${index}`, kind: "web", steps: [] };
+        lines.push(web);
+      }
+      web.steps.push(step);
+      return;
+    }
+    web = null;
+    lines.push({ key: step.id || `tool-${index}`, kind: "tool", step });
+  });
+  // Modelo que pesquisa sozinho (sem passos nossos): a linha vem do aviso dele.
+  if (model.searched && !lines.some((line) => line.kind === "web")) {
+    lines.unshift({ key: "native", kind: "web", steps: [], native: true });
+  }
+  for (const line of lines) {
+    if (line.kind === "think") line.running = false;
+    else if (line.native) line.running = streaming && Boolean(model.searching);
+    else line.running = streaming && (line.steps || [line.step]).some((step) => step.state === "run");
+  }
+  // Já pesquisou e ainda não começou a escrever: o modelo está pensando de verdade.
+  if (streaming && lines.length && !model.content && !model.thinking && !lines.some((line) => line.running)) {
+    lines.push({ key: "pondering", kind: "pondering", running: true });
+  }
+  return lines;
+}
 
-function stepRow(step, live) {
-  const think = step.kind === "think";
-  const write = step.kind === "write";
-  const running = live && step.state === "run";
-  const seconds = Math.max(1, Math.round((step.ms || 0) / 1000));
-  const label = think ? `Pensou por ${seconds} s` : write && !running ? "Resposta escrita" : step.label;
-  const iconName = think ? "sparkle" : write ? "edit" : stepIcon(step.label);
+function toggleActivity(model, key, running) {
+  model.actOpen = model.actOpen || new Set();
+  model.actLive = model.actLive || new Set();
+  if (model.actOpen.has(key)) {
+    model.actOpen.delete(key);
+    model.actLive.delete(key);
+  } else {
+    model.actOpen.add(key);
+    // Aberto no meio da pesquisa: fecha sozinho quando ela acaba, para a resposta aparecer.
+    if (running) model.actLive.add(key);
+  }
+  paintSteps(model);
+}
+
+function actItem(line, model, { glyph = null, text, detail = "", panel = null, skip = null }) {
+  const open = Boolean(panel) && Boolean(model.actOpen?.has(line.key));
+  const inner = [
+    glyph ? h("span.act__ico", { "aria-hidden": "true" }, glyph) : null,
+    h("span.act__text", { text }),
+    detail ? h("span.act__detail", { text: detail }) : null,
+    panel ? icon("chevron", "act__caret") : null,
+  ];
+  const row = panel
+    ? h("button.act__line", { type: "button", "aria-expanded": String(open), onclick: () => toggleActivity(model, line.key, line.running) }, inner)
+    : h("div.act__line", {}, inner);
+  return h(`div.act__item${line.running ? ".is-run" : ".is-done"}${open ? ".is-open" : ""}`, {}, row, skip, open ? panel : null);
+}
+
+// O que abre ao tocar: os sites (como os chips do ChatGPT), os números reais e cada passo.
+function webPanel(line, sources, hosts, stats) {
+  const sheet = () => openSourcesSheet(sources);
+  const chips = hosts.slice(0, 3).map((host) => h("button.act__chip", { type: "button", onclick: sheet }, sourceAvatar(`https://${host}`), h("span", { text: host })));
+  if (hosts.length > 3) chips.push(h("button.act__chip.act__chip--more", { type: "button", onclick: sheet }, h("span", { text: t(`mais ${hosts.length - 3}`) })));
+  const facts = stats ? researchSummary(stats) : "";
+  const shown = line.steps.slice(0, 10);
+  const rows = shown.map((step) => {
+    const glyph = /^Pesquisando:/.test(step.label) ? "search" : /^Planej/.test(step.label) ? "research" : stepIcon(step.label);
+    return h("li.act__row", {}, icon(glyph), h("span", { text: step.label.replace(/^Pesquisando:\s*/, "") }), step.detail ? h("em", { text: step.detail }) : null);
+  });
+  if (line.steps.length > shown.length) rows.push(h("li.act__row", {}, h("span", { text: `+${line.steps.length - shown.length}` })));
+  if (!chips.length && !facts && !rows.length) return null;
   return h(
-    `li.trail__step${running ? ".is-run" : ".is-done"}${think ? ".is-think" : ""}`,
+    "div.act__panel",
     {},
-    h("span.trail__dot", { "aria-hidden": "true" }),
-    h("span.trail__icon", { "aria-hidden": "true" }, icon(iconName)),
-    h("span.trail__label", { text: label }),
-    step.detail ? h("span.trail__detail", { text: step.detail }) : null,
+    chips.length ? h("div.act__chips", {}, chips) : null,
+    facts ? h("p.act__facts", { text: facts }) : null,
+    rows.length ? h("ul.act__rows", { "aria-label": t("Passos da pesquisa") }, rows) : null,
   );
+}
+
+function webLine(line, model) {
+  const sources = model.liveSources || readSources(model.content || "");
+  const hosts = siteList(sources);
+  const stats = model.research || readResearch(model.content || "");
+  const runningNow = (pattern) => line.steps.some((step) => step.state === "run" && pattern.test(step.label));
+  let text;
+  if (line.running) {
+    if (runningNow(/^Planejando/)) text = t("Planejando a pesquisa");
+    else if (runningNow(/^Lendo /) && hosts.length) text = t(`Pesquisando em ${plural(hosts.length, "site", "sites")}`);
+    else text = t("Pesquisando na web");
+  } else {
+    const count = stats?.dominios || hosts.length;
+    if (stats?.pulou) text = count ? t(`Pesquisou ${plural(count, "site", "sites")} e pulou o resto`) : t("Pesquisa pulada");
+    else if (count) text = t(`Pesquisou ${plural(count, "site", "sites")}`);
+    else if (stats && !stats.resultados) text = t("Pesquisa sem resultados");
+    else text = t("Pesquisou na web");
+  }
+  const faces = hosts.slice(0, 3);
+  const glyph = faces.length ? h("span.act__sites", {}, faces.map((host) => sourceAvatar(`https://${host}`))) : icon("globe");
+  // "Pular" só existe enquanto há pesquisa nossa rodando (e funciona de verdade).
+  const canSkip = line.running && !line.native && S.live?.replyId === model.id && line.steps.some((step) => step.state === "run" && step.skippable);
+  const skip = canSkip
+    ? h("button.act__skip", { type: "button", disabled: Boolean(model.skipAsked), onclick: () => skipResearch(model), text: model.skipAsked ? t("Pulando…") : t("Pular") })
+    : null;
+  return actItem(line, model, { glyph, text, panel: webPanel(line, sources, hosts, stats), skip });
 }
 
 function paintSteps(model) {
@@ -890,61 +997,38 @@ function paintSteps(model) {
     const saved = readSteps(model.content);
     if (saved.length) model.steps = saved;
   }
-  const steps = model.steps || [];
-  // Só aparece quando houve ação de verdade (busca, leitura, ferramenta).
-  if (!steps.some((step) => !step.kind)) {
-    box.hidden = true;
-    box.replaceChildren();
-    return;
-  }
   const streaming = model.status === "streaming";
-  if (!streaming) for (const step of steps) if (step.state === "run") step.state = "done";
-  const sources = (model.liveSources || readSources(model.content || "")).length;
-  const stats = model.research || readResearch(model.content || "");
-  box.hidden = false;
-  box.classList.toggle("is-live", streaming);
-
-  // Terminado: uma linha de resumo que abre a linha do tempo inteira.
-  if (!streaming && !model.trailOpen) {
-    box.replaceChildren(
-      h(
-        "button.trail__summary",
-        { type: "button", "aria-expanded": "false", onclick: () => { model.trailOpen = true; paintSteps(model); } },
-        h("span.trail__badge", { "aria-hidden": "true" }, icon("check")),
-        h("span.trail__title", { text: stepSummary(steps.filter((step) => !step.kind), sources, stats) }),
-        icon("chevron", "trail__caret"),
-      ),
-    );
-    return;
+  if (!streaming) for (const step of model.steps || []) if (step.state === "run") step.state = "done";
+  const lines = activityLines(model, streaming);
+  for (const line of lines) {
+    if (!line.running && model.actLive?.has(line.key)) {
+      model.actLive.delete(line.key);
+      model.actOpen?.delete(line.key);
+    }
   }
-
-  const hidden = model.trailAll ? 0 : Math.max(steps.length - TRAIL_VISIBLE, 0);
-  const shown = steps.slice(hidden);
-  const list = h(
-    "ol.trail__list",
-    {},
-    shown.map((step) => stepRow(step, streaming)),
-    streaming ? h("li.trail__pulse", { "aria-hidden": "true" }, h("span")) : null,
+  box.hidden = !lines.length;
+  box.classList.toggle("is-live", streaming);
+  box.replaceChildren(
+    ...lines.map((line) => {
+      if (line.kind === "web") return webLine(line, model);
+      if (line.kind === "tool") return actItem(line, model, { glyph: icon(stepIcon(line.step.label)), text: line.step.label, detail: line.running ? "" : line.step.detail });
+      if (line.kind === "think") return actItem(line, model, { text: t(`Pensou por ${seconds(line.step.ms)} s`) });
+      return actItem(line, model, { text: t("Pensando") });
+    }),
   );
-  const more = hidden
-    ? h(
-        "button.trail__more",
-        { type: "button", onclick: () => { model.trailAll = true; paintSteps(model); } },
-        icon("dots"),
-        h("span", { text: `Mostrar ${hidden} ${hidden === 1 ? "etapa anterior" : "etapas anteriores"}` }),
-        icon("chevron", "trail__caret"),
-      )
-    : null;
-  const close = !streaming
-    ? h(
-        "button.trail__more",
-        { type: "button", onclick: () => { model.trailOpen = false; model.trailAll = false; paintSteps(model); } },
-        icon("check"),
-        h("span", { text: stepSummary(steps.filter((step) => !step.kind), sources, stats) }),
-        icon("chevron", "trail__caret is-up"),
-      )
-    : null;
-  box.replaceChildren(...[close, more, list].filter(Boolean));
+}
+
+// "Pular" (como no ChatGPT): encerra a pesquisa e o KAZER responde com o que já tem.
+async function skipResearch(model) {
+  if (S.live?.replyId !== model.id || model.skipAsked) return;
+  model.skipAsked = true;
+  paintSteps(model);
+  const result = await request(`/api/messages/${model.id}/skip`, { body: {} });
+  if (!result.ok || result.data?.status !== "skipping") {
+    model.skipAsked = false;
+    paintSteps(model);
+    toast(t("Não deu para pular agora. A pesquisa termina sozinha em instantes."));
+  }
 }
 
 // ---------- Fontes ----------
@@ -1034,8 +1118,8 @@ function applyStatus(model) {
   el.classList.toggle("is-error", model.status === "error");
   head.classList.toggle("is-generating", streaming);
   if (streaming) {
-    const researching = (model.steps || []).some((step) => step.state === "run");
-    state.textContent = model.content ? "" : model.reconnecting ? "Reconectando…" : researching || model.searching ? "Pesquisando…" : "Pensando…";
+    const busy = !model.parts.steps.hidden || Boolean(model.thinking);
+    state.textContent = model.content ? "" : model.reconnecting ? "Reconectando…" : busy ? "" : t("Pensando");
   } else {
     state.textContent = "";
   }
@@ -1061,8 +1145,11 @@ function applyStatus(model) {
   }
   model.parts.actions.hidden = streaming || !model.content;
   if (model.thinking && model.parts.thinking.hidden) model.parts.thinking.hidden = false;
+  // Como no ChatGPT: "Pensando" enquanto pensa, "Pensou por N s" depois (tempo medido aqui).
   const label = model.parts.thinking.querySelector(".think__label");
-  if (label) label.textContent = streaming && !model.content ? "Pensando…" : "Raciocínio";
+  const thinkingNow = streaming && !model.content;
+  model.parts.thinking.classList.toggle("is-live", thinkingNow && Boolean(model.thinking));
+  if (label) label.textContent = thinkingNow ? t("Pensando") : model.thinkMs ? t(`Pensou por ${seconds(model.thinkMs)} s`) : t("Raciocínio");
 }
 
 // ---------- Streaming ----------
@@ -1100,15 +1187,21 @@ function handleEvent(model, event) {
       model.steps.push({ kind: "write", label: "Escrevendo a resposta", state: "run", id: "write" });
       paintSteps(model);
     }
+    if (model.thinkStart && !model.thinkMs) model.thinkMs = Date.now() - model.thinkStart;
     model.content += event.text;
+    const wasSearching = model.searching;
     model.searching = false;
     model.reconnecting = false;
+    if (wasSearching) paintSteps(model);
     queueRender(model);
   } else if (event.type === "thinking") {
+    if (!model.thinkStart) model.thinkStart = Date.now();
     model.thinking = (model.thinking || "") + event.text;
     queueRender(model);
   } else if (event.type === "searching") {
     model.searching = true;
+    model.searched = true;
+    paintSteps(model);
     queueRender(model);
   } else if (event.type === "title") {
     applyTitle(event.conversation_id, event.title);
@@ -1118,7 +1211,7 @@ function handleEvent(model, event) {
     const steps = model.steps || (model.steps = []);
     const now = Date.now();
     const known = event.id ? steps.find((step) => step.id === event.id) : null;
-    const next = { id: event.id || "", label: event.label, state: event.state || "done", detail: event.detail || "" };
+    const next = { id: event.id || "", label: event.label, state: event.state || "done", detail: event.detail || "", skippable: Boolean(event.skippable) };
     if (known) Object.assign(known, next);
     else {
       // O tempo real entre uma ação e outra vira uma etapa "pensou por Ns".
@@ -1512,7 +1605,11 @@ async function retry(model) {
     if (data.error === "usage_limit") offerPlans(data);
     return;
   }
-  Object.assign(model, { status: "streaming", content: "", thinking: "", error: null, stop: null });
+  Object.assign(model, {
+    status: "streaming", content: "", thinking: "", error: null, stop: null,
+    steps: [], research: null, liveSources: null, liveImages: null, searched: false, searching: false,
+    skipAsked: false, actOpen: null, thinkStart: 0, thinkMs: 0, lastMark: 0, streamStart: Date.now(),
+  });
   model.view.clear();
   model.parts.thinking.hidden = true;
   model.parts.thinkBody.replaceChildren();

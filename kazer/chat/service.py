@@ -1695,6 +1695,12 @@ class ChatService:
             raise ChatError("not_found", 404)
         return found
 
+    def skip_research(self, user_id: str, reply_id: str) -> bool:
+        """"Pular" a pesquisa: a resposta segue com o que já foi encontrado."""
+        if self._hub is None or not valid_id(reply_id):
+            return False
+        return self._hub.skip(user_id, reply_id)
+
     def stop(self, user_id: str, reply_id: str) -> None:
         """Interrompe a resposta em andamento."""
         if self._hub is None or not valid_id(reply_id) or not self._hub.cancel(user_id, reply_id):

@@ -13,7 +13,7 @@ import logging
 import threading
 import time
 from collections.abc import AsyncIterator, Callable, Sequence
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import ThreadPoolExecutor, wait
 from dataclasses import dataclass, field, replace
 from typing import Any
 from urllib.parse import urlsplit
@@ -60,6 +60,14 @@ MAX_CITED = 12
 MAX_IMAGES = 8
 # Quanto esperar o modelo leve decidir se vale pesquisar (depois disso, pesquisa).
 DECIDE_SECONDS = 4.0
+# "Pular" (como no ChatGPT): a pessoa encerra a pesquisa e o modelo responde já.
+SKIP_NOTE = (
+    "\n\n[KAZER: a pessoa tocou em \"Pular\" e encerrou a pesquisa antes do fim. Responda"
+    " agora com o que já foi encontrado. O que não deu para verificar na web, diga que não"
+    " foi verificado.]"
+)
+# Resultado de uma busca que não terminou porque a pessoa pulou (fica fora das contas).
+_SKIPPED = "\x00pulada"
 CONTINUE_PROMPT = (
     "Continue exatamente de onde a resposta parou, sem repetir nada e sem comentar"
     " a interrupção. Se estava dentro de um bloco de código, continue o código."
@@ -93,6 +101,9 @@ class LiveGeneration:
     research: dict[str, Any] = field(default_factory=dict)
     # Modelo desta resposta (premium) — None usa o do hub (KAZ 1.1).
     provider: ModelProvider | None = None
+    # "Pular": encerra só a pesquisa em andamento; a resposta continua com o que
+    # já veio. Parar a resposta inteira é o `cancel`.
+    skip: threading.Event = field(default_factory=threading.Event)
     _lock: threading.Lock = field(default_factory=threading.Lock)
     _waiters: set[tuple[asyncio.AbstractEventLoop, asyncio.Event]] = field(default_factory=set)
 
@@ -253,6 +264,14 @@ class GenerationHub:
         live.cancel.cancel()
         return True
 
+    def skip(self, user_id: str, reply_id: str) -> bool:
+        """Pula a pesquisa em andamento da própria conta (a resposta continua)."""
+        live = self.get(user_id, reply_id)
+        if live is None or live.done:
+            return False
+        live.skip.set()
+        return True
+
     def shutdown(self) -> None:
         """Encerramento do servidor: interrompe tudo (o banco marca como interrompido)."""
         with self._lock:
@@ -365,20 +384,45 @@ class GenerationHub:
             live.push({"type": "sources", "items": list(live.sources)})
 
     def _run_parallel(
-        self, live: LiveGeneration, calls: Sequence[ToolCall]
+        self, live: LiveGeneration, calls: Sequence[ToolCall], *, skippable: bool = False
     ) -> list[tuple[str, str, list[dict[str, str]]]]:
-        """Roda várias buscas ao mesmo tempo, mostrando cada passo de verdade."""
+        """Roda várias buscas ao mesmo tempo, mostrando cada passo de verdade.
+
+        Com `skippable` (a pesquisa de antes do modelo), "Pular" encerra a espera:
+        o que terminou entra, o que não terminou é marcado como pulado e descartado.
+        """
         assert live.on_tool is not None
         on_tool = live.on_tool
         ids = [f"{call.id}-{len(live.events)}-{n}" for n, call in enumerate(calls)]
-        for step_id, call in zip(ids, calls, strict=True):
-            label = live.describe(call) if live.describe else ""
+        labels = [live.describe(call) if live.describe else "" for call in calls]
+        for step_id, label in zip(ids, labels, strict=True):
             if label:
-                live.push({"type": "step", "id": step_id, "label": label, "state": "run"})
-        with ThreadPoolExecutor(max_workers=min(4, len(calls))) as pool:
-            outcomes = list(pool.map(on_tool, calls))
+                event: dict[str, Any] = {"type": "step", "id": step_id, "label": label,
+                                         "state": "run"}
+                if skippable:
+                    event["skippable"] = True
+                live.push(event)
+        pool = ThreadPoolExecutor(max_workers=min(4, len(calls)))
+        futures = [pool.submit(on_tool, call) for call in calls]
+        pending = set(futures)
+        try:
+            while pending:
+                if skippable and (live.skip.is_set() or live.cancel.cancelled()):
+                    break
+                _, pending = wait(pending, timeout=0.2 if skippable else None)
+        finally:
+            # Pulou: o que ainda roda termina sozinho (no prazo da rede) e é descartado.
+            pool.shutdown(wait=not pending, cancel_futures=True)
         results = []
-        for step_id, outcome in zip(ids, outcomes, strict=True):
+        for step_id, label, future in zip(ids, labels, futures, strict=True):
+            if future.cancelled() or not future.done():
+                # "Pular" pula; o botão de parar interrompe a resposta inteira.
+                why = "pulada" if live.skip.is_set() else "interrompida"
+                live.push({"type": "step", "id": step_id, "label": label, "state": "done",
+                           "detail": why})
+                results.append((label, _SKIPPED, []))
+                continue
+            outcome = future.result()
             label = str(outcome[0])
             output = str(outcome[1])
             found = list(outcome[2]) if len(outcome) > 2 else []
@@ -397,8 +441,10 @@ class GenerationHub:
         answer = self._light_answer(pre.DECIDE_PROMPT, question)
         return not answer.strip().upper().startswith("N")
 
-    def _light_answer(self, system: str, text: str) -> str:
-        """Pergunta rápida ao modelo leve (bastidor); '' se falhar ou demorar."""
+    def _light_answer(
+        self, system: str, text: str, *, stop: threading.Event | None = None
+    ) -> str:
+        """Pergunta rápida ao modelo leve (bastidor); '' se falhar, demorar ou parar."""
         token = CancelToken()
         ask_request = GenerationRequest(
             system=system, turns=(Turn("user", (Part("text", text),)),), light=True
@@ -415,16 +461,29 @@ class GenerationHub:
 
         pool = ThreadPoolExecutor(max_workers=1)
         try:
-            return pool.submit(ask).result(timeout=DECIDE_SECONDS)
+            future = pool.submit(ask)
+            deadline = time.monotonic() + DECIDE_SECONDS
+            while True:
+                remaining = deadline - time.monotonic()
+                if remaining <= 0 or (stop is not None and stop.is_set()):
+                    token.cancel()
+                    return ""
+                try:
+                    return future.result(timeout=min(0.2, remaining))
+                except TimeoutError:
+                    continue
         except Exception:  # noqa: BLE001 - bastidor nunca derruba a resposta
             token.cancel()
             return ""
         finally:
             pool.shutdown(wait=False)
 
-    def _step(self, live: LiveGeneration, label: str) -> str:
+    def _step(self, live: LiveGeneration, label: str, *, skippable: bool = False) -> str:
         step_id = f"etapa-{len(live.events)}"
-        live.push({"type": "step", "id": step_id, "label": label, "state": "run"})
+        event: dict[str, Any] = {"type": "step", "id": step_id, "label": label, "state": "run"}
+        if skippable:
+            event["skippable"] = True
+        live.push(event)
         return step_id
 
     def _step_done(self, live: LiveGeneration, step_id: str, label: str, detail: str) -> None:
@@ -452,31 +511,35 @@ class GenerationHub:
         calls = list(request.prefetch)
         main = next((c for c in calls if c.name == wt.SEARCH), None)
         if main is not None and budget["queries"] > 1 and not live.cancel.cancelled():
-            step = self._step(live, "Planejando a pesquisa")
+            step = self._step(live, "Planejando a pesquisa", skippable=True)
             plan = self._light_answer(
-                pre.PLAN_PROMPT.replace("{n}", str(budget["queries"])), question
+                pre.PLAN_PROMPT.replace("{n}", str(budget["queries"])), question,
+                stop=live.skip,
             )
             queries = pre.parse_queries(
                 plan, str(main.arguments.get("consulta", "")), budget["queries"]
             )
-            self._step_done(
-                live, step, "Planejou a pesquisa",
-                f"{len(queries)} {'busca' if len(queries) == 1 else 'buscas'} · {level}",
-            )
+            if live.skip.is_set():
+                # Interrompido no meio: não dá para dizer que planejou.
+                self._step_done(live, step, "Planejando a pesquisa", "pulada")
+            else:
+                self._step_done(
+                    live, step, "Planejou a pesquisa",
+                    f"{len(queries)} {'busca' if len(queries) == 1 else 'buscas'} · {level}",
+                )
             calls = [c for c in calls if c.name != wt.SEARCH] + [
                 ToolCall(f"pre-q{n}", wt.SEARCH, {"consulta": q}) for n, q in enumerate(queries)
             ]
-        first = self._run_parallel(live, calls) if not live.cancel.cancelled() else []
+        def halted() -> bool:
+            return live.cancel.cancelled() or live.skip.is_set()
+
+        first = self._run_parallel(live, calls, skippable=True) if not halted() else []
         opened = {str(c.arguments.get("url", "")) for c in calls if c.name == wt.OPEN}
         found = [item for _, _, items in first for item in items]
-        pages = (
-            []
-            if live.cancel.cancelled()
-            else pre.pages_to_open(found, opened, budget["pages"], question)
-        )
+        pages = [] if halted() else pre.pages_to_open(found, opened, budget["pages"], question)
         reads = self._read_pages(live, pages)
         read_ok = sum(1 for _, _, items in reads if any(i.get("k") == "lido" for i in items))
-        if budget["second_round"] and read_ok < 2 and not live.cancel.cancelled():
+        if budget["second_round"] and read_ok < 2 and not halted():
             # Leu pouco (site fora do ar, bloqueio): tenta outras páginas da busca.
             more = pre.pages_to_open(found, opened | set(pages), budget["pages"] - read_ok,
                                      question)
@@ -484,9 +547,13 @@ class GenerationHub:
         everything = [*first, *reads]
         numbered = self._number_sources(live, everything)
         self._publish_stats(live, calls, first, reads, level)
-        results = [(label, output) for label, output, _ in everything]
+        results = [(label, output) for label, output, _ in everything
+                   if output and output != _SKIPPED]
         limit = {pre.SIMPLE: 10_000, pre.MODERATE: 14_000, pre.DEEP: 20_000}[level]
-        note = Part("text", pre.context_note(results, numbered, limit=limit))
+        text = pre.context_note(results, numbered, limit=limit)
+        if live.skip.is_set():
+            text += SKIP_NOTE
+        note = Part("text", text)
         return replace(
             request,
             prefetch=(),
@@ -499,11 +566,11 @@ class GenerationHub:
     def _read_pages(
         self, live: LiveGeneration, urls: Sequence[str]
     ) -> list[tuple[str, str, list[dict[str, str]]]]:
-        if not urls or live.cancel.cancelled():
+        if not urls or live.cancel.cancelled() or live.skip.is_set():
             return []
         calls = [ToolCall(f"pre-page-{len(live.events)}-{n}", wt.OPEN, {"url": url})
                  for n, url in enumerate(urls)]
-        return self._run_parallel(live, calls)
+        return self._run_parallel(live, calls, skippable=True)
 
     def _number_sources(
         self, live: LiveGeneration, results: Sequence[tuple[str, str, list[dict[str, str]]]]
@@ -545,12 +612,13 @@ class GenerationHub:
         """Contagens reais e separadas (nunca uma mistura de buscas com leituras)."""
         searches = [
             (call, result) for call, result in zip(calls, first, strict=False)
-            if call.name in (wt.SEARCH, wt.NEWS, wt.GITHUB)
+            if call.name in (wt.SEARCH, wt.NEWS, wt.GITHUB) and result[1] != _SKIPPED
         ]
         hits = [i for _, (_, _, found) in searches for i in found if i.get("k") != "imagem"]
         domains = {(urlsplit(i["u"]).hostname or "").removeprefix("www.") for i in hits}
-        direct = [r for c, r in zip(calls, first, strict=False) if c.name == wt.OPEN]
-        attempts = [*direct, *reads]
+        direct = [r for c, r in zip(calls, first, strict=False)
+                  if c.name == wt.OPEN and r[1] != _SKIPPED]
+        attempts = [*direct, *(r for r in reads if r[1] != _SKIPPED)]
         ok = sum(1 for _, _, found in attempts if any(i.get("k") == "lido" for i in found))
         stats = {
             "nivel": level,
@@ -561,6 +629,7 @@ class GenerationHub:
             "paginas_lidas": ok,
             "paginas_falharam": len(attempts) - ok,
             "imagens": len(live.images),
+            "pulou": live.skip.is_set(),
         }
         live.research = stats
         live.push({"type": "research", "stats": stats})

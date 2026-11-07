@@ -311,6 +311,9 @@ const domain = (url) => {
   }
 };
 
+// Domínio sem "www." (para os ícones de site na linha de pesquisa).
+export { domain as siteHost };
+
 const SOURCE_GROUPS = [
   ["lido", "Páginas lidas"],
   ["github", "GitHub"],
@@ -318,7 +321,7 @@ const SOURCE_GROUPS = [
   ["imagem", "Imagens"],
 ];
 
-function sourceAvatar(url) {
+export function sourceAvatar(url) {
   const name = domain(url);
   const badge = h("span.src-avatar", { "aria-hidden": "true", text: (name.replace(/^[^a-z0-9]+/i, "")[0] || "•").toUpperCase() });
   // Cor estável por domínio: dá para reconhecer a fonte de relance.

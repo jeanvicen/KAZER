@@ -2,6 +2,20 @@
 
 Mudanças que importam para quem usa e para quem opera o KAZER.
 
+## 2026-11 — Pesquisa com cara de ChatGPT
+
+### Melhor
+- A pesquisa aparece como linhas discretas no lugar da linha do tempo com
+  bolinhas: "Planejando a pesquisa", "Pesquisando na web", "Pesquisando em 6
+  sites" (com os sites ao lado), depois "Pesquisou 6 sites" e "Pensando". Tocar
+  na linha abre os sites visitados, os números reais e cada busca feita.
+- "Pensou por N s" no lugar de "Raciocínio" quando o modelo pensa antes de
+  responder (tempo medido de verdade).
+
+### Novo
+- Botão **Pular** enquanto a pesquisa roda: o KAZER para de pesquisar e responde
+  com o que já encontrou, avisando o que não deu para verificar.
+
 ## 2026-11 — Visual novo: obsidiana e ouro champanhe
 
 ### Novo

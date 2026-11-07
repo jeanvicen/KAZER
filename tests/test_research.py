@@ -17,6 +17,7 @@ from kazer.brain.model_provider import (
 )
 from kazer.chat import prefetch
 from kazer.chat.generation import GenerationHub
+from kazer.chat.web_tools import WebTools
 
 
 class Store:
@@ -186,3 +187,101 @@ def test_reliability_prefers_official_and_primary_sources() -> None:
         "https://cupons.blogspot.com/x", q)
     assert prefetch.reliability("https://www.gov.br/receita", "imposto") > 0
     assert prefetch.reliability("https://pt.wikipedia.org/wiki/X", "x") > 0
+
+
+def wait_for(live: Any, predicate: Any, seconds: float = 5.0) -> None:
+    deadline = time.monotonic() + seconds
+    while time.monotonic() < deadline:
+        if predicate(live):
+            return
+        time.sleep(0.01)
+    raise AssertionError("o evento esperado não chegou")
+
+
+def test_skip_ends_research_and_the_model_answers_with_what_it_has() -> None:
+    """"Pular" (como no ChatGPT): o que terminou entra, o resto é descartado."""
+    _, quick = fake_web()
+    opened: list[str] = []
+
+    def on_tool(call: ToolCall) -> tuple[Any, ...]:
+        if call.name == "abrir_pagina":
+            opened.append(call.arguments["url"])
+            time.sleep(3)  # página lenta: é aqui que a pessoa pula
+        return quick(call)
+
+    question = "quais são as melhores lojas de roupa para afiliado?"
+    assert prefetch.depth(question) != prefetch.SIMPLE
+    provider = Planner()
+    store = Store()
+    hub = GenerationHub(store, provider)  # type: ignore[arg-type]
+    request = GenerationRequest(
+        system="s", turns=(Turn("user", (Part("text", question),)),),
+        prefetch=prefetch.plan(question),
+    )
+    assert hub.try_reserve()
+    # Como em produção: o rótulo do passo aparece antes de a ferramenta rodar.
+    live = hub.start("u", "c", "r", request, on_tool=on_tool,
+                     describe=lambda call: WebTools.label(call.name, call.arguments))
+    wait_for(live, lambda lv: any(e.get("label", "").startswith("Lendo")
+                                  and e.get("state") == "run" for e in lv.events))
+    asked = time.monotonic()
+    assert hub.skip("u", "r") is True
+    assert hub.skip("outra-conta", "r") is False  # só a própria conta pula
+    wait_for(live, lambda lv: lv.done)
+    assert time.monotonic() - asked < 1.5  # não esperou as páginas lentas
+    assert store.final["status"] == "complete"
+
+    steps = [e for e in live.events if e["type"] == "step"]
+    assert all(e.get("skippable") for e in steps if e["state"] == "run")
+    skipped = [e for e in steps if e["state"] == "done" and e.get("detail") == "pulada"]
+    assert skipped and all(e["label"].startswith("Lendo") for e in skipped)
+
+    stats = live.research
+    assert stats["pulou"] is True
+    assert stats["buscas"] == 4  # as buscas terminaram antes e contam
+    assert stats["paginas_lidas"] == 0
+    assert stats["paginas_falharam"] == 0  # pulada não é página que falhou
+
+    note = provider.requests[-1].turns[-1].parts[-1].text
+    assert "Pular" in note and "não foi verificado" in note
+    assert "Shein" in note  # o que já tinha voltado da busca segue para o modelo
+
+
+def test_skip_while_planning_answers_without_searching() -> None:
+    class SlowPlanner(Planner):
+        def stream(self, request: GenerationRequest, cancel: CancelToken) -> Any:
+            if request.light and "planeja buscas" in request.system:
+                self.requests.append(request)
+                time.sleep(3)  # o modelo leve demora para planejar
+                yield StreamEvent("stop", "end")
+                return
+            yield from super().stream(request, cancel)
+
+    ran, on_tool = fake_web()
+    question = "quais são as melhores lojas de roupa para afiliado?"
+    provider = SlowPlanner()
+    store = Store()
+    hub = GenerationHub(store, provider)  # type: ignore[arg-type]
+    request = GenerationRequest(
+        system="s", turns=(Turn("user", (Part("text", question),)),),
+        prefetch=prefetch.plan(question),
+    )
+    assert hub.try_reserve()
+    live = hub.start("u", "c", "r", request, on_tool=on_tool)
+    wait_for(live, lambda lv: any(e.get("label") == "Planejando a pesquisa" for e in lv.events))
+    hub.skip("u", "r")
+    wait_for(live, lambda lv: lv.done)
+    assert ran == []  # nenhuma busca rodou depois do "Pular"
+    planned = [e for e in live.events if e["type"] == "step" and e["state"] == "done"]
+    assert planned[-1]["label"] == "Planejando a pesquisa" and planned[-1]["detail"] == "pulada"
+    assert live.research["pulou"] is True and live.research["buscas_tentadas"] == 0
+    assert "Pular" in provider.requests[-1].turns[-1].parts[-1].text
+    assert store.final["status"] == "complete"
+
+
+def test_skip_is_ignored_once_the_answer_is_done() -> None:
+    ran, on_tool = fake_web()
+    live, store, _ = run("quais são as melhores lojas de roupa para afiliado?", on_tool)
+    assert live.done and live.research["pulou"] is False
+    hub = GenerationHub(Store(), Planner())  # type: ignore[arg-type]
+    assert hub.skip("u", "inexistente") is False
