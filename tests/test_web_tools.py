@@ -683,3 +683,15 @@ def test_explaining_something_visual_brings_reference_photos_without_the_web() -
     assert [c.name for c in calls] == ["buscar_imagens"]
     assert calls[0].arguments["consulta"] == "axolote"
     assert plan("explica o que é recursão") == ()  # conceito sem imagem: nada
+
+
+def test_only_photos_about_the_subject_are_shown() -> None:
+    from kazer.chat.prefetch import plan
+    from kazer.chat.web_tools import image_matches
+
+    assert image_matches("axolote", "File:Axolotl ganz.jpg")  # pt ~ en pelo começo
+    assert image_matches("Torre Eiffel", "Eiffel Tower at night")
+    assert not image_matches("axolote", "Manifestação na avenida Paulista")
+    assert not image_matches("Torre Eiffel", "IMG_2041.jpg")
+    # Palavra visual solta não puxa fotos numa pergunta de outro assunto.
+    assert all(c.name != "buscar_imagens" for c in plan("qual o melhor carro custo benefício?"))

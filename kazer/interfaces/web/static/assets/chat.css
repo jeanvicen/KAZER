@@ -7207,3 +7207,9 @@ td .ref-pic {
     height: calc(6px + var(--h, 0.5) * 10px);
   }
 }
+
+.ask__hint {
+  margin: 0.25rem 0 0;
+  color: var(--c-text-2);
+  font-size: 0.9rem;
+}

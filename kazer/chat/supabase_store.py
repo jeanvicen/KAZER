@@ -796,15 +796,48 @@ class SupabaseUploadStorage:
         )
 
     def save(self, user_id: str, attachment_id: str, data: bytes) -> None:
-        """Grava em `kazer-anexos/<conta>/<anexo>`."""
-        response = self._store._storage(
-            "POST",
-            f"{BUCKET}/{user_id}/{attachment_id}",
-            content=data,
-            headers={"Content-Type": "application/octet-stream", "x-upsert": "true"},
-        )
-        if response.status_code >= 400:
-            raise StorageUnavailable("não foi possível guardar o anexo")
+        """Grava em `kazer-anexos/<conta>/<anexo>`.
+
+        Primeiro com o token da pessoa (a política do bucket só deixa cada conta
+        na própria pasta). Se o Storage recusar e o servidor tiver a chave de
+        serviço, tenta de novo com ela — o caminho continua sendo a pasta desta
+        conta, validada pelo serviço — e cria o bucket privado se ele faltar.
+        """
+        path = f"{BUCKET}/{user_id}/{attachment_id}"
+        headers = {"Content-Type": "application/octet-stream", "x-upsert": "true"}
+        response = self._store._storage("POST", path, content=data, headers=headers)
+        if response.status_code < 400:
+            return
+        first = response.status_code
+        service = self._store._service_key
+        if service:
+            response = self._service_storage(
+                "POST", f"object/{path}", content=data, headers=headers
+            )
+            if response.status_code in (400, 404) and b"not found" in response.content.lower():
+                self._service_storage(
+                    "POST", "bucket", json={"id": BUCKET, "name": BUCKET, "public": False}
+                )
+                response = self._service_storage(
+                    "POST", f"object/{path}", content=data, headers=headers
+                )
+            if response.status_code < 400:
+                logger.warning("chat.attachment_saved_with_service_key: %s", first)
+                return
+        # Só os códigos HTTP (nunca o conteúdo): dá para achar a causa no log.
+        logger.warning("chat.attachment_save_failed: %s %s", first, response.status_code)
+        raise StorageUnavailable("não foi possível guardar o anexo")
+
+    def _service_storage(self, method: str, path: str, **kwargs: Any) -> httpx.Response:
+        key = self._store._service_key or ""
+        headers = {"apikey": key, "Authorization": f"Bearer {key}"}
+        headers.update(kwargs.pop("headers", {}))
+        try:
+            return self._store._client.request(
+                method, f"{self._store._base}/storage/v1/{path}", headers=headers, **kwargs
+            )
+        except httpx.HTTPError:
+            raise StorageUnavailable("armazenamento de anexos inacessível") from None
 
     def read(self, user_id: str, attachment_id: str) -> bytes | None:
         """Conteúdo do anexo, ou None se já não existir."""

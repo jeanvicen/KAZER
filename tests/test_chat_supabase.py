@@ -330,3 +330,38 @@ def _auth_for(settings: Settings) -> SupabaseAuthService:
         settings.supabase_url, settings.supabase_publishable_key, ORIGIN, RateLimiter(),
         client=fake,  # type: ignore[arg-type]
     )
+
+
+def test_attachment_save_falls_back_to_service_key_and_creates_missing_bucket() -> None:
+    """O Storage recusou com o token da pessoa: tenta com a chave de serviço (mesma pasta)."""
+    import httpx
+
+    from kazer.chat.identity import bind_access_token
+    from kazer.chat.supabase_store import SupabaseUploadStorage
+
+    calls: list[tuple[str, str, str]] = []
+    state = {"bucket": False}
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        auth = request.headers.get("authorization", "")
+        calls.append((request.method, request.url.path, auth))
+        if request.url.path.endswith("/storage/v1/bucket"):
+            state["bucket"] = True
+            return httpx.Response(200, json={"name": "kazer-anexos"})
+        if auth == "Bearer token-da-pessoa":
+            return httpx.Response(403, json={"error": "Unauthorized"})
+        if not state["bucket"]:
+            return httpx.Response(404, json={"error": "Bucket not found"})
+        return httpx.Response(200, json={"Key": "ok"})
+
+    storage = SupabaseUploadStorage(
+        "https://x.supabase.co", "pub", service_role_key="chave-servico",
+        client=httpx.Client(transport=httpx.MockTransport(handler)),
+    )
+    user = "0f8fad5b-d9cb-469f-a165-70867728950e"
+    with bind_access_token("token-da-pessoa"):
+        storage.save(user, "a" * 32, b"\xff\xd8\xffdados")
+    object_posts = [c for c in calls if "/storage/v1/object/" in c[1]]
+    assert object_posts[0][2] == "Bearer token-da-pessoa"
+    assert all(f"/kazer-anexos/{user}/" in c[1] for c in object_posts)  # sempre a pasta da conta
+    assert object_posts[-1][2] == "Bearer chave-servico" and state["bucket"]

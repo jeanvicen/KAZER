@@ -285,7 +285,9 @@ def plan(question: str, previous: str = "") -> tuple[ToolCall, ...]:
         add(wt.GITHUB, acao="buscar", consulta=query)
     if _NEWS.search(question):
         add(wt.NEWS, assunto=query)
-    if _VISUAL.search(question) or wants_pictures(question):
+    # Fotos só quando a pessoa quer ver algo ou a explicação é de algo visual
+    # (antes, qualquer palavra como "carro" ou "cidade" puxava fotos aleatórias).
+    if _SHOW_PHOTOS.search(question) or wants_pictures(question):
         add(wt.IMAGES, consulta=_subject(question, query))
     if not links or len(question) > len(links[0]) + 25:
         add(wt.SEARCH, consulta=query)

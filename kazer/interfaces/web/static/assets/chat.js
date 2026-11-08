@@ -92,7 +92,20 @@ const UPLOAD_ERRORS = {
   model_unavailable: "O KAZ 1.1 ainda não está conectado neste ambiente.",
   network: "Sem conexão: o anexo não foi enviado.",
   payload_too_large: "Arquivo grande demais.",
+  chat_unavailable: "O armazenamento de anexos não respondeu. Tente de novo em instantes.",
+  unauthenticated: "Sua sessão expirou. Entre de novo para anexar.",
+  unsupported_media_type: "Tipo de arquivo não suportado.",
 };
+
+// Sem código conhecido: o status HTTP já diz o motivo (ex.: 413 da hospedagem).
+function uploadError(status, data) {
+  if (UPLOAD_ERRORS[data?.error]) return UPLOAD_ERRORS[data.error];
+  if (status === 413) return UPLOAD_ERRORS.payload_too_large;
+  if (status === 401) return UPLOAD_ERRORS.unauthenticated;
+  if (status === 415) return UPLOAD_ERRORS.attachment_type;
+  if (status >= 500) return "O servidor não conseguiu guardar o arquivo agora. Tente de novo.";
+  return "Não deu para anexar este arquivo.";
+}
 
 async function offerPlans(data) {
   const { limitReached } = await import("./plans.js");
@@ -2094,21 +2107,28 @@ async function upload(item, original) {
       paintTrayItem(item);
     }
   });
-  const done = (ok, data) => {
+  const done = (ok, data, status = 0) => {
     item.xhr = null;
     if (!S.attachments.includes(item)) return;
+    // Falha passageira (rede ou servidor): tenta mais uma vez sozinho.
+    if (!ok && !item.retried && (status === 0 || status >= 500) && data?.error !== "attachment_quota") {
+      item.retried = true;
+      item.progress = 0;
+      window.setTimeout(() => upload(item, original), 900);
+      return;
+    }
     if (ok) {
       Object.assign(item, { status: "ready", id: data.attachment.id, kind: data.attachment.kind, name: data.attachment.name });
     } else {
       item.status = "error";
-      item.error = UPLOAD_ERRORS[data?.error] || "Não deu para anexar este arquivo.";
+      item.error = uploadError(status, data);
       showAlert(`${item.name}: ${item.error}`);
       if (data?.error === "unauthenticated") window.dispatchEvent(new CustomEvent("kazer:unauthenticated"));
     }
     paintTrayItem(item);
     updateSendState();
   };
-  xhr.addEventListener("load", () => done(xhr.status === 201, xhr.response || {}));
+  xhr.addEventListener("load", () => done(xhr.status === 201, xhr.response || {}, xhr.status));
   xhr.addEventListener("error", () => {
     net.report();
     done(false, { error: "network" });

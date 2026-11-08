@@ -1031,6 +1031,9 @@ class WebTools:
                 if index < len(group) and group[index]["thumb"] not in seen:
                     seen.add(group[index]["thumb"])
                     picked.append(group[index])
+        # Só foto que tem a ver: o título precisa citar o assunto (melhor nenhuma
+        # foto do que uma aleatória no meio da resposta).
+        picked = [item for item in picked if image_matches(query, item.get("title", ""))]
         picked = picked[:MAX_IMAGES]
         if not picked:
             return "Nenhuma imagem livre encontrada. Tente outras palavras (em inglês rende mais)."
@@ -1691,3 +1694,28 @@ def safe_eval(expression: str) -> float | int:
     if isinstance(result, float) and result.is_integer() and abs(result) < 1e15:
         return int(result)
     return round(result, 10) if isinstance(result, float) else result
+
+
+_IMAGE_STOP = {
+    "como", "qual", "quais", "sobre", "para", "pela", "pelo", "fotos", "foto", "imagem",
+    "imagens", "mostra", "mostrar", "quero", "ver", "uma", "umas", "uns", "dos", "das",
+    "que", "isso", "esse", "essa", "este", "esta", "onde", "fica", "quem", "foi",
+    "photo", "image", "picture", "with", "from", "the", "and",
+}
+
+
+def _fold_word(text: str) -> str:
+    import unicodedata
+
+    text = unicodedata.normalize("NFKD", text.lower())
+    return "".join(ch for ch in text if not unicodedata.combining(ch))
+
+
+def image_matches(query: str, title: str) -> bool:
+    """A foto cita o assunto? Compara o começo das palavras (axolote ~ axolotl)."""
+    terms = [w for w in re.findall(r"[a-z0-9]+", _fold_word(query)) if len(w) >= 4]
+    terms = [w for w in terms if w not in _IMAGE_STOP]
+    if not terms:
+        return True
+    words = re.findall(r"[a-z0-9]+", _fold_word(title))
+    return any(word[:5] == term[:5] for term in terms for word in words if len(word) >= 4)

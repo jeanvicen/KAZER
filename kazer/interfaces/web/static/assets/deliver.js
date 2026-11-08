@@ -23,22 +23,52 @@ export function onAnswer(handler) {
   answer = handler;
 }
 
+// Tolerante: o modelo às vezes manda aspas tortas, vírgula sobrando ou outros
+// nomes de campo. Só precisa de um objeto JSON completo (durante a escrita,
+// ainda incompleto, o cartão fica em "Preparando").
 function parseQuestion(code) {
+  const raw = String(code || "");
+  const first = raw.indexOf("{");
+  const last = raw.lastIndexOf("}");
+  if (first < 0 || last <= first) return null;
+  const json = raw
+    .slice(first, last + 1)
+    .replace(/[“”]/g, '"')
+    .replace(/[‘’]/g, "'")
+    .replace(/,\s*([}\]])/g, "$1");
+  let data;
   try {
-    const data = JSON.parse(code);
-    const question = String(data.pergunta || data.question || "").trim();
-    const options = (Array.isArray(data.opcoes) ? data.opcoes : Array.isArray(data.options) ? data.options : [])
-      .map((item) => String(item || "").trim())
-      .filter(Boolean)
-      .slice(0, 3);
-    return question ? { question, options } : null;
+    data = JSON.parse(json);
   } catch {
     return null;
   }
+  if (!data || typeof data !== "object") return null;
+  const question = String(data.pergunta || data.question || data.titulo || "").trim();
+  const list = [data.opcoes, data["opções"], data.options, data.respostas, data.alternativas].find(Array.isArray) || [];
+  const options = list
+    .map((item) => String(typeof item === "object" && item ? item.texto || item.text || item.label || "" : item || "").trim())
+    .filter(Boolean)
+    .slice(0, 3);
+  return question ? { question, options } : null;
+}
+
+// Bloco fechado que nem o leitor tolerante entende: mostra o texto legível,
+// nunca um "Preparando…" eterno.
+function questionFallback(code) {
+  const text = String(code || "")
+    .replace(/[{}\[\]"]/g, " ")
+    .replace(/\b(pergunta|question|opcoes|opções|options)\s*:/gi, "\n")
+    .replace(/\s*,\s*/g, "\n")
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean);
+  if (!text.length) return h("span", { hidden: true });
+  return h("div.ask", { role: "group" }, h("p.ask__question", { text: text[0] }), ...text.slice(1, 4).map((line) => h("p.ask__hint", { text: `• ${line}` })));
 }
 
 function questionCard(code, closed) {
-  const data = closed ? parseQuestion(code) : null;
+  const data = parseQuestion(code);
+  if (!data && closed) return questionFallback(code);
   if (!data) {
     return h(
       "div.ask.is-loading",
