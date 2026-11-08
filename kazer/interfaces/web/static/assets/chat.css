@@ -7213,3 +7213,291 @@ td .ref-pic {
   color: var(--c-text-2);
   font-size: 0.9rem;
 }
+
+/* ---------- Texto chegando: blocos novos entram suaves ---------- */
+
+.md-in {
+  animation: md-in 420ms var(--ease-out, ease-out) both;
+}
+
+@keyframes md-in {
+  from {
+    opacity: 0;
+    transform: translateY(3px);
+  }
+}
+
+/* ---------- Pergunta registrada na conversa ---------- */
+
+.ask.is-note {
+  padding: 0.85rem 1rem;
+  background: transparent;
+}
+
+.ask.is-note .ask__question {
+  margin: 0.45rem 0 0.4rem;
+  font-size: 0.98rem;
+}
+
+.ask__list {
+  display: grid;
+  gap: 0.2rem;
+  margin: 0;
+  padding-left: 1.2rem;
+  color: var(--c-text-2);
+  font-size: 0.9rem;
+}
+
+/* ---------- Painel da pergunta (sobe do campo de escrita) ---------- */
+
+.askdock {
+  position: relative;
+  margin: 0 0 0.5rem;
+  padding: 0.9rem 0.9rem 0.7rem;
+  border: 1px solid var(--color-accent-border, var(--c-border-2));
+  border-radius: 1.25rem;
+  background:
+    linear-gradient(180deg, rgb(var(--ov, 255 255 255) / 0.05), transparent 40%),
+    var(--c-surface);
+  box-shadow:
+    0 -12px 40px -18px rgb(0 0 0 / 0.55),
+    inset 0 1px 0 rgb(255 255 255 / 0.06);
+  transform-origin: 50% 100%;
+  animation: askdock-up 460ms var(--spring, cubic-bezier(0.2, 0.9, 0.25, 1.15)) both;
+}
+
+.askdock.is-leaving {
+  animation: askdock-down 240ms var(--ease-out, ease-in) both;
+}
+
+@keyframes askdock-up {
+  from {
+    opacity: 0;
+    transform: translateY(28px) scale(0.97);
+  }
+}
+
+@keyframes askdock-down {
+  to {
+    opacity: 0;
+    transform: translateY(22px) scale(0.98);
+  }
+}
+
+.askdock__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.askdock__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.22rem 0.6rem 0.22rem 0.4rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--gold) 14%, transparent);
+  color: var(--accent-text);
+  font-size: 0.74rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.askdock__mark {
+  width: 0.95rem;
+  height: 0.95rem;
+}
+
+.askdock__close {
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--c-text-3);
+  cursor: pointer;
+}
+
+.askdock__close:hover {
+  background: rgb(var(--ov, 255 255 255) / 0.07);
+  color: var(--c-text);
+}
+
+.askdock__close svg {
+  width: 1rem;
+  height: 1rem;
+}
+
+.askdock__question {
+  margin: 0.55rem 0.15rem 0.7rem;
+  font-size: 1.02rem;
+  font-weight: 600;
+  line-height: 1.45;
+}
+
+.askdock__options {
+  display: grid;
+  gap: 0.35rem;
+  max-height: min(42vh, 22rem);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.askdock__option,
+.askdock__own {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  width: 100%;
+  padding: 0.6rem 0.7rem;
+  border: 1px solid var(--c-border);
+  border-radius: 0.9rem;
+  background: var(--c-bg-2);
+  color: var(--c-text);
+  font: inherit;
+  text-align: left;
+  animation: ask-in 380ms var(--spring) both;
+  animation-delay: calc(var(--i, 0) * 55ms + 120ms);
+}
+
+.askdock__option {
+  cursor: pointer;
+  transition: border-color 140ms linear, background 140ms linear, transform 200ms var(--spring);
+}
+
+.askdock__option:hover,
+.askdock__option:focus-visible {
+  outline: none;
+  border-color: var(--gold);
+  background: color-mix(in srgb, var(--gold) 8%, var(--c-bg-2));
+}
+
+.askdock__option:active {
+  transform: scale(0.985);
+}
+
+.askdock__own {
+  margin-top: 0.35rem;
+  padding: 0.35rem 0.35rem 0.35rem 0.7rem;
+}
+
+.askdock__own:focus-within {
+  border-color: var(--gold);
+}
+
+.askdock__key {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 1.6rem;
+  height: 1.6rem;
+  border-radius: 0.5rem;
+  background: color-mix(in srgb, var(--gold) 16%, transparent);
+  color: var(--accent-text);
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.askdock__key.is-own {
+  background: rgb(var(--ov, 255 255 255) / 0.06);
+  color: var(--c-text-3);
+}
+
+.askdock__body {
+  display: grid;
+  flex: 1;
+  min-width: 0;
+  gap: 0.1rem;
+}
+
+.askdock__label {
+  line-height: 1.35;
+}
+
+.askdock__hint {
+  color: var(--c-text-3);
+  font-size: 0.82rem;
+  line-height: 1.35;
+}
+
+.askdock__go {
+  flex: none;
+  width: 1rem;
+  height: 1rem;
+  color: var(--c-text-3);
+}
+
+.askdock__input {
+  flex: 1;
+  min-width: 0;
+  padding: 0.45rem 0;
+  border: 0;
+  background: transparent;
+  color: var(--c-text);
+  font: inherit;
+  font-size: 1rem;
+  outline: none;
+}
+
+.askdock__input::placeholder {
+  color: var(--c-text-3);
+}
+
+.askdock__send {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 2.25rem;
+  height: 2.25rem;
+  border: 0;
+  border-radius: 50%;
+  background: var(--gradient-gold-button, var(--gold));
+  color: var(--color-accent-foreground, #111);
+  cursor: pointer;
+}
+
+.askdock__send:disabled {
+  background: var(--c-border);
+  color: var(--c-text-3);
+  cursor: default;
+}
+
+.askdock__send svg {
+  width: 1rem;
+  height: 1rem;
+}
+
+.askdock__keys {
+  margin: 0.5rem 0.2rem 0;
+  color: var(--c-text-3);
+  font-size: 0.72rem;
+}
+
+@media (pointer: coarse) {
+  .askdock__keys {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html:not([data-motion="completo"]) .askdock,
+  html:not([data-motion="completo"]) .askdock *,
+  html:not([data-motion="completo"]) .md-in {
+    animation: none !important;
+  }
+}
+
+html[data-motion="reduzido"] .askdock,
+html[data-motion="reduzido"] .askdock *,
+html[data-motion="reduzido"] .md-in {
+  animation: none !important;
+}
+
+.askdock__input:focus,
+.askdock__input:focus-visible {
+  outline: none;
+  box-shadow: none;
+}

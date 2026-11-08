@@ -26,7 +26,7 @@ export function onAnswer(handler) {
 // Tolerante: o modelo às vezes manda aspas tortas, vírgula sobrando ou outros
 // nomes de campo. Só precisa de um objeto JSON completo (durante a escrita,
 // ainda incompleto, o cartão fica em "Preparando").
-function parseQuestion(code) {
+export function parseQuestion(code) {
   const raw = String(code || "");
   const first = raw.indexOf("{");
   const last = raw.lastIndexOf("}");
@@ -45,11 +45,26 @@ function parseQuestion(code) {
   if (!data || typeof data !== "object") return null;
   const question = String(data.pergunta || data.question || data.titulo || "").trim();
   const list = [data.opcoes, data["opções"], data.options, data.respostas, data.alternativas].find(Array.isArray) || [];
-  const options = list
-    .map((item) => String(typeof item === "object" && item ? item.texto || item.text || item.label || "" : item || "").trim())
-    .filter(Boolean)
-    .slice(0, 3);
-  return question ? { question, options } : null;
+  const items = list
+    .map((item) => {
+      if (item && typeof item === "object") {
+        return {
+          text: String(item.texto || item.text || item.label || item.titulo || "").trim(),
+          hint: String(item.descricao || item["descrição"] || item.description || item.detalhe || "").trim(),
+        };
+      }
+      return { text: String(item || "").trim(), hint: "" };
+    })
+    .filter((item) => item.text)
+    .slice(0, 4);
+  if (!question) return null;
+  return { question, options: items.map((item) => item.text), hints: items.map((item) => item.hint) };
+}
+
+// A última pergunta de uma resposta (bloco ```kazer-pergunta fechado).
+export function findQuestion(content) {
+  const blocks = [...String(content || "").matchAll(/```kazer-pergunta[^\n]*\n([\s\S]*?)```/g)];
+  return blocks.length ? parseQuestion(blocks[blocks.length - 1][1]) : null;
 }
 
 // Bloco fechado que nem o leitor tolerante entende: mostra o texto legível,
@@ -66,6 +81,8 @@ function questionFallback(code) {
   return h("div.ask", { role: "group" }, h("p.ask__question", { text: text[0] }), ...text.slice(1, 4).map((line) => h("p.ask__hint", { text: `• ${line}` })));
 }
 
+// Na conversa fica só o registro da pergunta; quem responde é o painel que
+// sobe em cima do campo de escrita (questionDock).
 function questionCard(code, closed) {
   const data = parseQuestion(code);
   if (!data && closed) return questionFallback(code);
@@ -76,53 +93,94 @@ function questionCard(code, closed) {
       h("div.ask__head", {}, mark("ask__mark"), h("span", { text: "Preparando uma pergunta…" })),
     );
   }
-  const card = h("div.ask", { role: "group", "aria-label": "Pergunta do KAZER" });
-  const buttons = [];
-  const settle = (text, chosen) => {
-    card.classList.add("is-answered");
-    for (const button of buttons) button.disabled = true;
-    chosen?.classList.add("is-chosen");
-    own.input.disabled = true;
-    own.send.disabled = true;
-    answer?.(text);
-  };
+  return h(
+    "div.ask.is-note",
+    { role: "note", "aria-label": "Pergunta do KAZER" },
+    h("div.ask__head", {}, mark("ask__mark"), h("span", { text: "Pergunta" })),
+    h("p.ask__question", { text: data.question }),
+    h("ol.ask__list", {}, data.options.map((text) => h("li", { text }))),
+  );
+}
+
+// Painel da pergunta: sobe do campo de escrita como o do Claude. Números
+// escolhem, setas andam, Esc dispensa (a pessoa escreve o que quiser no campo).
+export function questionDock(data, { onPick, onDismiss }) {
+  const dock = h("section.askdock", { role: "dialog", "aria-modal": "false", "aria-label": "Pergunta do KAZER" });
+  const close = h("button.askdock__close", { type: "button", "aria-label": "Dispensar pergunta", onclick: () => onDismiss?.() }, icon("close"));
+  const head = h(
+    "div.askdock__head",
+    {},
+    h("span.askdock__chip", {}, mark("askdock__mark"), h("span", { text: "KAZER quer saber" })),
+    close,
+  );
   const options = data.options.map((text, index) => {
+    const hint = data.hints?.[index];
     const button = h(
-      "button.ask__option",
-      { type: "button", onclick: () => settle(text, button) },
-      h("span.ask__key", { text: String(index + 1) }),
-      h("span.ask__text", { text }),
-      icon("chevron-right", "ask__go"),
+      "button.askdock__option",
+      { type: "button", onclick: () => onPick?.(text) },
+      h("span.askdock__key", { text: String(index + 1) }),
+      h("span.askdock__body", {}, h("span.askdock__label", { text }), hint ? h("span.askdock__hint", { text: hint }) : null),
+      icon("chevron-right", "askdock__go"),
     );
     button.style.setProperty("--i", String(index));
-    buttons.push(button);
     return button;
   });
-  const input = h("input.ask__input", {
+  const input = h("input.askdock__input", {
     type: "text",
     maxlength: "2000",
-    placeholder: "Ou escreva a sua resposta…",
+    placeholder: "Outra coisa… escreva aqui",
     "aria-label": "Sua resposta",
     autocomplete: "off",
+    enterkeyhint: "send",
   });
-  const send = h("button.ask__send", { type: "submit", "aria-label": "Enviar resposta", disabled: true }, icon("arrow-up"));
+  const send = h("button.askdock__send", { type: "submit", "aria-label": "Enviar resposta", disabled: true }, icon("arrow-up"));
   input.addEventListener("input", () => {
     send.disabled = !input.value.trim();
   });
-  const form = h("form.ask__own", {}, input, send);
+  const form = h("form.askdock__own", {}, h("span.askdock__key.is-own", { text: String(options.length + 1) }), input, send);
   form.addEventListener("submit", (event) => {
     event.preventDefault();
+    event.stopPropagation();
     const text = input.value.trim();
-    if (text) settle(text, null);
+    if (text) onPick?.(text);
   });
-  const own = { input, send };
-  card.append(
-    h("div.ask__head", {}, mark("ask__mark"), h("span", { text: "Pergunta" })),
-    h("p.ask__question", { text: data.question }),
-    h("div.ask__options", {}, options),
+  form.style.setProperty("--i", String(options.length));
+  dock.append(
+    head,
+    h("p.askdock__question", { text: data.question }),
+    h("div.askdock__options", {}, options),
     form,
+    h("p.askdock__keys", { text: "1–" + (options.length + 1) + " escolhe · Esc dispensa" }),
   );
-  return card;
+  dock.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") {
+      event.preventDefault();
+      onDismiss?.();
+      return;
+    }
+    const typing = event.target === input;
+    if (!typing && /^[1-9]$/.test(event.key)) {
+      const index = Number(event.key) - 1;
+      if (options[index]) {
+        event.preventDefault();
+        options[index].click();
+      } else if (index === options.length) {
+        event.preventDefault();
+        input.focus();
+      }
+      return;
+    }
+    if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+      const items = [...options, input];
+      const at = items.indexOf(document.activeElement);
+      if (at < 0) return;
+      event.preventDefault();
+      const next = items[(at + (event.key === "ArrowDown" ? 1 : items.length - 1)) % items.length];
+      next.focus();
+    }
+  });
+  dock.focusFirst = () => (options[0] || input).focus({ preventScroll: true });
+  return dock;
 }
 
 // ---------- Documentos (PDF e slides) ----------

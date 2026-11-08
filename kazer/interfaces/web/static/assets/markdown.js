@@ -359,29 +359,44 @@ function chunks(text) {
   return parts;
 }
 
+const FADE_MS = 420;
+
 export class MarkdownView {
   constructor(container) {
     this.container = container;
     this.parts = []; // { source, nodes: Node[] }
   }
 
-  update(text) {
+  // fade: blocos que acabaram de nascer entram suaves. O último bloco é refeito a
+  // cada quadro; a idade dele vai junto (atraso negativo) para o fade não reiniciar.
+  update(text, { fade = false } = {}) {
     const next = chunks(text);
     let same = 0;
     // Pedaços idênticos e não-finais ficam como estão.
     while (same < next.length - 1 && same < this.parts.length && this.parts[same].source === next[same]) {
       same += 1;
     }
+    const births = this.parts.map((part) => part.born);
     for (const part of this.parts.slice(same)) part.nodes.forEach((node) => node.remove());
     this.parts.length = same;
-    for (const source of next.slice(same)) {
+    const now = performance.now();
+    next.slice(same).forEach((source, offset) => {
       const fragment = render(source);
       // Gancho opcional (ex.: transformar [2] em selo de fonte).
       if (this.decorate) this.decorate(fragment);
       const nodes = [...fragment.childNodes];
+      const born = births[same + offset] ?? (fade ? now : 0);
+      const age = now - born;
+      if (born && age < FADE_MS) {
+        for (const node of nodes) {
+          if (node.nodeType !== 1) continue;
+          node.classList.add("md-in");
+          node.style.setProperty("animation-delay", `${-Math.round(age)}ms`);
+        }
+      }
       this.container.append(fragment);
-      this.parts.push({ source, nodes });
-    }
+      this.parts.push({ source, nodes, born });
+    });
   }
 
   clear() {

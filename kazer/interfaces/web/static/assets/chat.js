@@ -23,7 +23,7 @@ import {
   trapFocus,
   uuid,
 } from "./dom.js";
-import { bundleCard, citeChips, inlinePhotos, onAnswer, openImages, picsStrip, readImages, readResearch, readSources, readSteps, renderSourceList, siteHost, sourceAvatar, stripSources } from "./deliver.js";
+import { bundleCard, citeChips, findQuestion, inlinePhotos, onAnswer, openImages, questionDock, picsStrip, readImages, readResearch, readSources, readSteps, renderSourceList, siteHost, sourceAvatar, stripSources } from "./deliver.js";
 import { copyText, MarkdownView, render as renderMarkdown } from "./markdown.js";
 import { net, readEvents, request, waitOnline } from "./net.js";
 import { closeSheet, confirmDialog, openSheet, promptDialog, setSheetBackground, toast } from "./sheets.js";
@@ -430,6 +430,7 @@ function resetThread() {
   lazyObserver?.disconnect();
   for (const node of [...S.ui.messages.children]) if (node !== S.ui.older) node.remove();
   paintSourcesBall();
+  closeAsk({ instant: true });
 }
 
 function detachLive() {
@@ -570,6 +571,8 @@ async function openConversation(id, { push = true } = {}) {
   restoreDraft();
   const page = result.data.messages;
   renderPage(page.items, page.has_more, { initial: true });
+  const last = page.items[page.items.length - 1];
+  if (last?.role === "assistant" && last.status === "complete") maybeAsk(S.models.get(last.id));
   // Resposta ainda em geração (por exemplo, aba recarregada no meio): reata.
   const streaming = page.items.filter((m) => m.role === "assistant" && m.status === "streaming").pop();
   if (streaming) resume(streaming.id, -1);
@@ -1231,6 +1234,28 @@ function applyStatus(model) {
 let renderQueued = new Set();
 let renderFrame = 0;
 
+// O Groq escreve rápido demais: o texto chegava em blocos e "cuspia" a resposta.
+// Aqui o que já chegou é mostrado aos poucos, palavra por palavra, num ritmo
+// que acelera quando há muito acumulado (nunca segura o texto por muito tempo).
+function revealStep(item) {
+  const full = item.content || "";
+  if (reducedMotion()) {
+    item.shown = full.length;
+    return full;
+  }
+  let shown = Math.min(item.shown ?? 0, full.length);
+  const backlog = full.length - shown;
+  if (backlog > 0) {
+    let next = Math.min(full.length, shown + Math.max(2, Math.ceil(backlog / 60)));
+    // Termina a palavra: nada de meia palavra piscando na tela.
+    const space = full.slice(next, next + 16).search(/\s/);
+    if (space > 0) next += space;
+    shown = Math.min(full.length, next);
+  }
+  item.shown = shown;
+  return full.slice(0, shown);
+}
+
 function queueRender(model) {
   renderQueued.add(model);
   if (renderFrame) return;
@@ -1239,13 +1264,19 @@ function queueRender(model) {
     const batch = renderQueued;
     renderQueued = new Set();
     for (const item of batch) {
-      if (!item.el.isConnected) continue;
-      item.view.update(item.content);
+      if (!item.el.isConnected) {
+        item.shown = (item.content || "").length;
+        if (item.finishPending) finishNow(item);
+        continue;
+      }
+      item.view.update(revealStep(item), { fade: true });
       if (item.thinking) {
         item.parts.thinking.hidden = false;
         item.parts.thinkBody.textContent = item.thinking;
       }
       applyStatus(item);
+      if (item.shown < (item.content || "").length) queueRender(item);
+      else if (item.finishPending) finishNow(item);
     }
     if (S.pinned) scrollToBottom(false);
   });
@@ -1320,7 +1351,78 @@ function handleEvent(model, event) {
   return null;
 }
 
+function finishNow(model) {
+  const reply = model.finishPending;
+  model.finishPending = null;
+  model.shown = (model.content || "").length;
+  if (reply) finish(model, reply);
+}
+
+// ---------- Pergunta do KAZER (painel que sobe) ----------
+
+const asked = new Set(); // respostas cuja pergunta já foi respondida ou dispensada
+
+function maybeAsk(model) {
+  if (!model || model.role !== "assistant" || asked.has(model.id)) return;
+  // Só a última mensagem da conversa pergunta; respostas antigas não.
+  const lastEl = [...S.ui.messages.children].filter((node) => node !== S.ui.older).pop();
+  if (lastEl && lastEl !== model.el) return;
+  const data = findQuestion(model.content);
+  if (!data || !data.options.length) return;
+  openAsk(model.id, data);
+}
+
+function openAsk(id, data) {
+  closeAsk({ instant: true });
+  const dock = questionDock(data, {
+    onPick: (text) => {
+      asked.add(id);
+      closeAsk();
+      if (S.live) return;
+      S.ui.prompt.value = text;
+      autosize();
+      updateSendState();
+      send();
+    },
+    onDismiss: () => {
+      asked.add(id);
+      closeAsk();
+      S.ui.prompt.focus({ preventScroll: true });
+    },
+  });
+  dock.dataset.reply = id;
+  S.ask = dock;
+  S.ui.composer.insertBefore(dock, S.ui.composerBox);
+  S.ui.composerBox.classList.add("is-asking");
+  announce(`O KAZER perguntou: ${data.question}`);
+  if (!coarse.matches) window.requestAnimationFrame(() => dock.focusFirst());
+  if (S.pinned) window.requestAnimationFrame(() => scrollToBottom(false));
+}
+
+function closeAsk({ instant = false } = {}) {
+  const dock = S.ask;
+  if (!dock) return;
+  S.ask = null;
+  S.ui.composerBox.classList.remove("is-asking");
+  if (instant || reducedMotion()) {
+    dock.remove();
+    return;
+  }
+  dock.classList.add("is-leaving");
+  dock.addEventListener("animationend", () => dock.remove(), { once: true });
+  setTimeout(() => dock.remove(), 400);
+}
+
 function finish(model, reply) {
+  const content = reply.content ?? model.content;
+  // Ainda mostrando o texto aos poucos: termina de mostrar e só então entrega.
+  if (model.shown !== undefined && model.shown < (content || "").length && !reducedMotion() && model.el.isConnected) {
+    model.content = content;
+    model.finishPending = reply;
+    queueRender(model);
+    return;
+  }
+  model.finishPending = null;
   Object.assign(model, {
     status: reply.status,
     error: reply.error,
@@ -1346,6 +1448,7 @@ function finish(model, reply) {
   }
   if (S.pinned) window.requestAnimationFrame(() => scrollToBottom(false));
   announce(model.status === "complete" ? "Resposta pronta." : "A resposta não foi concluída.");
+  if (model.status === "complete" && S.models.get(model.id) === model) maybeAsk(model);
   if (model.status === "error" && RETRYABLE[model.error] && !model.content) autoRetry(model);
   else if (model.status === "complete") model.busyTries = 0;
 }
@@ -1486,6 +1589,10 @@ async function send() {
   if (!canSend()) return;
   if (dictation?.listening) dictation.stop();
   hideAlert();
+  if (S.ask) {
+    asked.add(S.ask.dataset.reply);
+    closeAsk();
+  }
   const content = S.ui.prompt.value.trim();
   const files = readyAttachments();
   const attachmentIds = files.map((item) => item.id);

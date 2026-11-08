@@ -177,7 +177,9 @@ _DELIVERY_PARTS: dict[str, str] = {
     "pergunta": (
         "- Pergunta: se o pedido for ambíguo e a resposta depender de uma decisão que só a"
         " pessoa pode tomar, não chute — termine com um bloco ```kazer-pergunta contendo JSON"
-        ' {"pergunta": "...", "opcoes": ["...", "...", "..."]} com exatamente 3 opções curtas.'
+        ' {"pergunta": "...", "opcoes": [{"texto": "...", "descricao": "..."}, ...]} com 2 a 4'
+        " opções curtas (descricao opcional, uma frase dizendo o que muda). JSON válido, aspas"
+        " retas. Antes do bloco, no máximo uma frase de contexto; não repita as opções no texto."
         " No máximo uma pergunta por resposta."
     ),
 }
