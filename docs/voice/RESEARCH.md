@@ -196,3 +196,19 @@ Rejeitados por licença dos pesos: XTTS (Coqui, CPML não comercial), F5-TTS bas
 - **Redis:** licença atual dupla; Valkey (BSD) cobre o mesmo uso.
 - **KoljaB/RealtimeVoiceChat:** sem licença declarada.
 - **Kaldi, WeNet, FunASR, ESPnet:** pesados para operar e com pouco pt-BR pronto.
+
+## Adendo: Kokoro rodando no navegador (avaliado e adiado)
+
+Verificado em 2026-11-08 lendo os pacotes do npm (sem executar):
+- `kokoro-js@1.2.1` (Apache-2.0) traz os arquivos das vozes pt-BR (`pf_dora`,
+  `pm_alex`, `pm_santa`), mas a lista de vozes aceitas tem só inglês e o
+  fonemizador é fixo em `en-us`/`en`.
+- `phonemizer@1.2.1` (espeak-ng em WASM, Apache-2.0) tem a definição de voz
+  `roa/pt-BR`, mas **só embute o dicionário `en_dict`**: sem o `pt_dict`, a
+  pronúncia em português sairia errada.
+- Além disso, o modelo q8 tem ~90 MB por aparelho e roda devagar em celular sem
+  WebGPU.
+
+Conclusão: voz Kokoro realista em pt-BR fica no **voice gateway** (servidor com
+espeak-ng completo). No navegador, o KAZER usa a voz mais humana do próprio
+aparelho (neural/online primeiro) e deixa a pessoa escolher.

@@ -1380,7 +1380,10 @@ function buildVoiceSheet() {
   const label = h("p.vmode__state", { "aria-live": "polite" });
   const badge = h("span", { text: "Microfone ativo" });
   const live = h("p.vmode__live");
-  const orb = h("button.vmode__orb", { type: "button", "aria-label": "Interromper ou falar" }, h("span.vmode__core"), mark("vmode__mark"));
+  const canvas = h("canvas.vmode__canvas", { "aria-hidden": "true" });
+  const orb = h("button.vmode__orb", { type: "button", "aria-label": "Interromper ou falar" }, canvas);
+  const voiceBtn = h("button.vmode__type", { type: "button", "aria-label": "Escolher a voz", "aria-expanded": "false" }, icon("voice"), h("span", { text: "Voz" }));
+  const voices = h("div.vmode__voices", { role: "listbox", "aria-label": "Vozes do aparelho", hidden: true });
   const end = h("button.vmode__end", { type: "button", "aria-label": "Encerrar conversa por voz" }, icon("close"));
   const type = h("button.vmode__type", { type: "button", "aria-label": "Voltar a digitar" }, icon("chat"), h("span", { text: "Digitar" }));
   const root = h(
@@ -1388,7 +1391,8 @@ function buildVoiceSheet() {
     { role: "dialog", "aria-modal": "true", "aria-label": "Conversa por voz com o KAZER", hidden: true },
     h("header.vmode__top", {}, h("span.vmode__badge", {}, h("i.vmode__rec", { "aria-hidden": "true" }), badge), end),
     h("div.vmode__stage", {}, orb, label, live),
-    h("footer.vmode__bottom", {}, type, h("p.vmode__hint", { text: "Toque no centro para interromper" })),
+    voices,
+    h("footer.vmode__bottom", {}, h("div.vmode__row", {}, type, voiceBtn), h("p.vmode__hint", { text: "Toque no centro para interromper" })),
   );
   document.body.append(root);
   root.addEventListener("keydown", (event) => {
@@ -1400,16 +1404,56 @@ function buildVoiceSheet() {
   end.addEventListener("click", () => closeVoiceMode());
   type.addEventListener("click", () => closeVoiceMode({ focusPrompt: true }));
   orb.addEventListener("click", () => voiceTap?.tap());
-  return { root, label, live, orb, badge };
+  voiceBtn.addEventListener("click", () => toggleVoicePicker());
+  return { root, label, live, orb, badge, canvas, voices, voiceBtn, sphere: null };
+}
+
+// Lista as vozes em português do aparelho, a mais humana primeiro; tocar
+// escolhe e toca um exemplo. A escolha fica salva neste navegador.
+async function toggleVoicePicker(force) {
+  const sheet = voiceSheet;
+  if (!sheet) return;
+  const open = force ?? sheet.voices.hidden;
+  sheet.voices.hidden = !open;
+  sheet.voiceBtn.setAttribute("aria-expanded", String(open));
+  if (!open) return;
+  const { listVoices, chosenVoice, chooseVoice, previewVoice } = await voiceModeModule();
+  const lang = locale();
+  const list = listVoices(lang);
+  const saved = chosenVoice() || list[0]?.name || "";
+  if (!list.length) {
+    sheet.voices.replaceChildren(h("p.vmode__empty", { text: "Este aparelho não tem vozes em português instaladas. Instale nas configurações de fala do sistema." }));
+    return;
+  }
+  sheet.voices.replaceChildren(
+    ...list.slice(0, 8).map((voice, index) => {
+      const item = h(
+        "button.vmode__voice",
+        { type: "button", role: "option", "aria-selected": String(voice.name === saved) },
+        h("span.vmode__voice-name", { text: voice.name.replace(/\s*\(.*?\)\s*/g, " ").trim() || voice.name }),
+        index === 0 ? h("span.vmode__voice-tag", { text: "mais natural" }) : null,
+      );
+      item.addEventListener("click", () => {
+        chooseVoice(voice.name);
+        for (const other of sheet.voices.children) other.setAttribute("aria-selected", String(other === item));
+        previewVoice(lang);
+      });
+      return item;
+    }),
+  );
 }
 
 async function openVoiceMode() {
   if (voiceTap) return;
   if (dictation?.listening) dictation.cancel();
-  const { createVoiceMode } = await voiceModeModule();
+  const [{ createVoiceMode }, { createOrb }] = await Promise.all([voiceModeModule(), import("./voiceorb.js")]);
   voiceSheet ||= buildVoiceSheet();
   const sheet = voiceSheet;
   sheet.root.hidden = false;
+  sheet.voices.hidden = true;
+  sheet.sphere ||= createOrb(sheet.canvas, { reduced: reducedMotion });
+  sheet.sphere.setState("conectando");
+  sheet.sphere.start();
   document.documentElement.classList.add("is-voice-mode");
   haptic(12);
   voiceTap = createVoiceMode({
@@ -1434,13 +1478,20 @@ async function openVoiceMode() {
       S.ui.prompt.value = text;
       autosize();
       updateSendState();
-      send();
+      // A parte síncrona do send() monta o corpo do pedido: o sinal vale só para ele.
+      S.voiceSend = true;
+      try {
+        send();
+      } finally {
+        S.voiceSend = false;
+      }
     },
     stopReply: () => {
       if (S.live) stop();
     },
     onState: (state, detail) => {
       sheet.root.dataset.state = state;
+      sheet.sphere?.setState(state);
       // O selo diz a verdade: no motor do navegador o microfone pausa enquanto o KAZER fala.
       const micOn = state === "ouvindo" || (state !== "erro" && state !== "pausado" && voiceTap?.engineKind === "gateway");
       sheet.badge.textContent = micOn ? "Microfone ativo" : "Microfone em pausa";
@@ -1448,10 +1499,11 @@ async function openVoiceMode() {
       if (state === "ouvindo") haptic(8);
     },
     onLive: (text) => {
+      if (text && text !== sheet.live.textContent) sheet.sphere?.pulse(0.35);
       sheet.live.textContent = text;
     },
     onLevel: (value) => {
-      sheet.orb.style.setProperty("--level", value.toFixed(3));
+      sheet.sphere?.setLevel(value);
     },
     onError: (code) => {
       if (code === "rate_limited") toast("Muitas conversas por voz seguidas. Tente em alguns minutos.");
@@ -1468,6 +1520,7 @@ function closeVoiceMode({ focusPrompt = false } = {}) {
   if (voiceSheet) {
     voiceSheet.root.hidden = true;
     voiceSheet.live.textContent = "";
+    voiceSheet.sphere?.stop();
   }
   document.documentElement.classList.remove("is-voice-mode");
   haptic(8);
@@ -1754,7 +1807,9 @@ async function send() {
         content,
         attachments: attachmentIds,
         model: S.options.model || "kaz-1.1",
-        effort: S.options.effort,
+        // Conversa por voz: o modelo mais rápido e respostas curtas e faladas.
+        effort: S.voiceSend ? "baixo" : S.options.effort,
+        voice: Boolean(S.voiceSend),
         skills: S.skillsPicked.map((item) => item.id),
         // Pesquisa em tempo real e memória ficam sempre ligadas (a memória
         // respeita o que a pessoa escolheu nas configurações).

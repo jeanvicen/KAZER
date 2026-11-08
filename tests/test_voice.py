@@ -460,3 +460,22 @@ def test_capacity_counts_handshakes_in_progress() -> None:
     with TestClient(create_gateway_app(gw)) as client:
         with client.websocket_connect("/v1/voice") as socket:
             assert socket.receive_json()["code"] == "overloaded"
+
+
+def test_voice_conversation_prompt_asks_for_short_spoken_answers() -> None:
+    from kazer.chat import context
+
+    common = dict(
+        now=1_790_000_000,
+        timezone="America/Sao_Paulo",
+        nickname="",
+        style="",
+        instructions="",
+        memories=[],
+        web_search=False,
+        question="o que é um buraco negro?",
+    )
+    spoken = context.system_prompt(**common, voice=True)
+    written = context.system_prompt(**common)
+    assert "Conversa por VOZ" in spoken and "Conversa por VOZ" not in written
+    assert "markdown" in spoken.split("Conversa por VOZ", 1)[1]

@@ -205,6 +205,19 @@ _WANTS = {
 }
 
 
+# Conversa por voz: o texto vira fala. Curto, natural e sem nada que não se fala.
+_VOICE = (
+    "- Conversa por VOZ: a pessoa está falando com você e vai OUVIR a resposta."
+    " Responda como numa conversa de verdade: frases curtas e naturais, em tom humano,"
+    " no máximo 2 a 4 frases (a não ser que ela peça algo longo, como uma história)."
+    " Comece direto pela resposta, sem saudação repetida. Nada de markdown, listas,"
+    " tabelas, títulos, emojis, links ou citações [n]; números e siglas do jeito que"
+    " se falam. Se precisar de código, diga que deixou o código na tela e explique"
+    " em uma frase. Se a pergunta for ambígua, faça uma pergunta curta de volta"
+    " em vez de um bloco kazer-pergunta."
+)
+
+
 def _delivery(question: str, desktop: bool) -> str:
     """As regras de entrega que importam para este pedido (todas, sem pedido)."""
     every = not question
@@ -283,6 +296,7 @@ def system_prompt(
     research: bool = False,
     desktop: bool = False,
     question: str = "",
+    voice: bool = False,
 ) -> str:
     """Instruções completas desta resposta."""
     tz = zone(timezone)
@@ -306,6 +320,8 @@ def system_prompt(
     lines.append(_delivery(question, desktop))
     if forja:
         lines.append(_FORJA)
+    if voice:
+        lines.append(_VOICE)
     if language == "en":
         # A interface da pessoa está em inglês: é a língua em que ela espera a resposta,
         # a menos que escreva em outra.

@@ -233,6 +233,8 @@ class SendOptions:
     forja: bool = False
     # Computador (tela larga e ponteiro fino): só lá o KAZER entrega projetos Godot.
     desktop: bool = False
+    # Conversa por voz: respostas curtas e faladas (sem markdown), mais rápidas.
+    voice: bool = False
     # Skills que a pessoa chamou com "/" nesta mensagem (ids, no máximo MAX_CALLED_SKILLS).
     skills: tuple[str, ...] = ()
     # KAZ 1.1 (Groq, incluso) ou um modelo premium dos planos pagos.
@@ -248,6 +250,7 @@ class SendOptions:
             "memory": self.memory,
             "forja": self.forja,
             "desktop": self.desktop,
+            "voice": self.voice,
             "skills": list(self.skills),
             # Guardado com a mensagem para o consumo ser auditável depois.
             "units": self.units,
@@ -1278,7 +1281,8 @@ class ChatService:
             raise ChatError("web_search_unavailable", 400)
         forja = data.get("forja", False)
         desktop = data.get("desktop", False)
-        if not isinstance(forja, bool) or not isinstance(desktop, bool):
+        voice = data.get("voice", False)
+        if not all(isinstance(flag, bool) for flag in (forja, desktop, voice)):
             raise ChatError("invalid_request", 400)
         called = data.get("skills", [])
         if (
@@ -1296,6 +1300,7 @@ class ChatService:
             memory=memory and memory_enabled,
             forja=forja,
             desktop=desktop,
+            voice=voice,
             skills=tuple(dict.fromkeys(called)),
             model=str(model_id),
         )
@@ -1487,6 +1492,7 @@ class ChatService:
             ),
             forja=bool(current.options.get("forja", False)),
             desktop=bool(current.options.get("desktop", False)),
+            voice=bool(current.options.get("voice", False)),
             model=str(current.options.get("model") or PUBLIC_MODEL_ID),
         )
         if options.model != PUBLIC_MODEL_ID:
@@ -1650,6 +1656,7 @@ class ChatService:
             skills=uses,
             research=self._web is not None and not restricted,
             desktop=options.desktop,
+            voice=options.voice,
             question=question.content,
         )
         specs = self._tools_for(user_id, read_only=restricted)

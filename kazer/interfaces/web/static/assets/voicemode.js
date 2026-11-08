@@ -55,6 +55,16 @@ export function speakable(text) {
 function takeSentences(clean, from, final) {
   const rest = clean.slice(from);
   const out = [];
+  // Começa a falar antes: no início da resposta, a primeira vírgula depois de
+  // ~40 letras já vale como pedaço (menos espera até a primeira palavra).
+  if (from === 0 && !final) {
+    const comma = rest.slice(40, 140).search(/[,—–] /);
+    const stop = rest.search(/[.!?…\n]/);
+    if (comma >= 0 && (stop < 0 || stop > comma + 40)) {
+      const cut = 40 + comma + 1;
+      return { sentences: [rest.slice(0, cut).trim()], next: cut };
+    }
+  }
   // Frase termina em . ! ? … ou quebra de linha (":" de lista não corta a frase).
   const pattern = /[^.!?…\n]+(?:[.!?…]+|\n)/g;
   let used = 0;
@@ -76,13 +86,73 @@ function takeSentences(clean, from, final) {
 
 // ---------- Motor do navegador ----------
 
-function pickVoice(lang) {
+// Vozes do aparelho, da mais humana para a mais robótica. As neurais/online
+// (Google no Android, "Natural" no Edge, "Premium/Enhanced" na Apple) soam bem
+// mais naturais que as locais antigas (eSpeak e afins).
+const HUMAN = /natural|neural|online|premium|enhanced|wavenet|google|francisca|thalita|antonio|luciana|felipe/i;
+const ROBOTIC = /espeak|compact|eloquence|robot/i;
+
+function voiceScore(voice) {
+  let score = 0;
+  if (HUMAN.test(voice.name)) score += 10;
+  if (/natural|neural|premium|enhanced/i.test(voice.name)) score += 6;
+  if (!voice.localService) score += 2; // vozes da nuvem do sistema costumam ser neurais
+  if (ROBOTIC.test(voice.name)) score -= 20;
+  return score;
+}
+
+export function listVoices(lang) {
   const voices = synth?.getVoices?.() || [];
   const base = lang.toLowerCase();
   const same = voices.filter((voice) => voice.lang?.toLowerCase().replace("_", "-") === base);
   const near = same.length ? same : voices.filter((voice) => voice.lang?.toLowerCase().startsWith(base.slice(0, 2)));
-  // Vozes neurais/online soam mais naturais quando existem.
-  return near.find((voice) => /natural|neural|google|online/i.test(voice.name)) || near[0] || null;
+  return near.slice().sort((a, b) => voiceScore(b) - voiceScore(a));
+}
+
+const VOICE_KEY = "kazer:voice-name";
+
+export function chosenVoice() {
+  try {
+    return localStorage.getItem(VOICE_KEY) || "";
+  } catch {
+    return "";
+  }
+}
+
+export function chooseVoice(name) {
+  try {
+    if (name) localStorage.setItem(VOICE_KEY, name);
+    else localStorage.removeItem(VOICE_KEY);
+  } catch {
+    /* sem armazenamento: vale só nesta visita */
+  }
+}
+
+// Voz estranha não pode deixar o KAZER mudo: cai para a voz padrão do idioma.
+function setVoice(utterance, voice) {
+  if (!voice) return;
+  try {
+    utterance.voice = voice;
+  } catch {
+    /* fica a voz padrão */
+  }
+}
+
+function pickVoice(lang) {
+  const voices = listVoices(lang);
+  const saved = chosenVoice();
+  return voices.find((voice) => voice.name === saved) || voices[0] || null;
+}
+
+// Fala um exemplo com a voz escolhida (para a pessoa comparar).
+export function previewVoice(lang, text = "Oi! Eu sou o KAZER. É assim que eu falo.") {
+  if (!synth) return;
+  synth.cancel();
+  const utterance = new SpeechSynthesisUtterance(text);
+  utterance.lang = lang;
+  const voice = pickVoice(lang);
+  setVoice(utterance, voice);
+  synth.speak(utterance);
 }
 
 function browserEngine({ lang, onLive, onFinal, onIdle, onError, onSpeechState, onBoundary }) {
@@ -144,8 +214,8 @@ function browserEngine({ lang, onLive, onFinal, onIdle, onError, onSpeechState, 
     const utterance = new SpeechSynthesisUtterance(sentence);
     utterance.lang = lang;
     const voice = pickVoice(lang);
-    if (voice) utterance.voice = voice;
-    utterance.rate = 1.04;
+    setVoice(utterance, voice);
+    utterance.rate = 1.0;
     queue += 1;
     onSpeechState(true);
     utterance.onboundary = () => onBoundary();
@@ -210,6 +280,10 @@ async function gatewayEngine({ session, onLive, onFinal, onError, onSpeechState,
   const analyser = context.createAnalyser();
   analyser.fftSize = 512;
   const worklet = new AudioWorkletNode(context, "kazer-pcm16", { processorOptions: { targetRate: 16000 } });
+  // Saída passa por um analisador: a esfera segue o volume real da voz do KAZER.
+  const outAnalyser = context.createAnalyser();
+  outAnalyser.fftSize = 512;
+  outAnalyser.connect(context.destination);
   source.connect(analyser);
   source.connect(worklet);
   let muted = false;
@@ -236,7 +310,7 @@ async function gatewayEngine({ session, onLive, onFinal, onError, onSpeechState,
       for (let i = 0; i < pcm.length; i += 1) channel[i] = pcm[i] / 32768;
       const node = context.createBufferSource();
       node.buffer = buffer;
-      node.connect(context.destination);
+      node.connect(outAnalyser);
       playAt = Math.max(playAt, context.currentTime + 0.03);
       node.start(playAt);
       playAt += buffer.duration;
@@ -313,7 +387,7 @@ async function gatewayEngine({ session, onLive, onFinal, onError, onSpeechState,
     },
     // Nível real do microfone (0..1) para o indicador.
     level() {
-      analyser.getByteTimeDomainData(levels);
+      (playing.size ? outAnalyser : analyser).getByteTimeDomainData(levels);
       let sum = 0;
       for (const value of levels) sum += ((value - 128) / 128) ** 2;
       return Math.min(1, Math.sqrt(sum / levels.length) * 4);
