@@ -186,7 +186,7 @@ export async function mountChat({ email, onSignedOut }) {
     "empty-note", "thread", "messages", "older", "to-bottom", "composer", "composer-alert",
     "composer-alert-text", "composer-alert-close", "composer-box", "tray", "skill-chips", "prompt", "plus", "model-chip",
     "open-palette",
-    "forja-chip", "mic", "send", "pick-camera", "pick-photos", "pick-files",
+    "forja-chip", "mic", "talk", "send", "pick-camera", "pick-photos", "pick-files",
   ];
   for (const id of ids) S.ui[id.replace(/-(\w)/g, (_, c) => c.toUpperCase())] = byId(root, id);
   setSheetBackground(root);
@@ -1294,6 +1294,7 @@ function handleEvent(model, event) {
     }
     if (model.thinkStart && !model.thinkMs) model.thinkMs = Date.now() - model.thinkStart;
     model.content += event.text;
+    voiceTap?.reply(model.id, model.content, false);
     const wasSearching = model.searching;
     model.searching = false;
     model.reconnecting = false;
@@ -1349,6 +1350,129 @@ function handleEvent(model, event) {
     return "pending";
   }
   return null;
+}
+
+// ---------- Modo voz (conversa falada pelo mesmo chat) ----------
+
+let voiceTap = null;
+let voiceSheet = null;
+const voiceModeModule = () => import("./voicemode.js");
+
+const VOICE_LABELS = {
+  conectando: "Conectando…",
+  ouvindo: "Ouvindo",
+  pensando: "Pensando",
+  falando: "Falando",
+  pausado: "Toque para falar",
+  erro: "Não deu para usar a voz",
+};
+
+const VOICE_ERRORS = {
+  "not-allowed": "O microfone está bloqueado. Libere nas permissões do navegador e toque para tentar de novo.",
+  "service-not-allowed": "Este navegador não liberou o reconhecimento de fala. Tente no Chrome ou no Edge.",
+  "audio-capture": "Nenhum microfone encontrado.",
+  network: "A voz precisa de internet. Confira a conexão e toque para tentar de novo.",
+  unsupported: "Este navegador não tem reconhecimento e síntese de fala. O chat por texto continua normal.",
+  overloaded: "A voz está cheia agora. Tente em instantes; o chat por texto continua normal.",
+};
+
+function buildVoiceSheet() {
+  const label = h("p.vmode__state", { "aria-live": "polite" });
+  const badge = h("span", { text: "Microfone ativo" });
+  const live = h("p.vmode__live");
+  const orb = h("button.vmode__orb", { type: "button", "aria-label": "Interromper ou falar" }, h("span.vmode__core"), mark("vmode__mark"));
+  const end = h("button.vmode__end", { type: "button", "aria-label": "Encerrar conversa por voz" }, icon("close"));
+  const type = h("button.vmode__type", { type: "button", "aria-label": "Voltar a digitar" }, icon("chat"), h("span", { text: "Digitar" }));
+  const root = h(
+    "section.vmode",
+    { role: "dialog", "aria-modal": "true", "aria-label": "Conversa por voz com o KAZER", hidden: true },
+    h("header.vmode__top", {}, h("span.vmode__badge", {}, h("i.vmode__rec", { "aria-hidden": "true" }), badge), end),
+    h("div.vmode__stage", {}, orb, label, live),
+    h("footer.vmode__bottom", {}, type, h("p.vmode__hint", { text: "Toque no centro para interromper" })),
+  );
+  document.body.append(root);
+  root.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") {
+      event.preventDefault();
+      closeVoiceMode();
+    }
+  });
+  end.addEventListener("click", () => closeVoiceMode());
+  type.addEventListener("click", () => closeVoiceMode({ focusPrompt: true }));
+  orb.addEventListener("click", () => voiceTap?.tap());
+  return { root, label, live, orb, badge };
+}
+
+async function openVoiceMode() {
+  if (voiceTap) return;
+  if (dictation?.listening) dictation.cancel();
+  const { createVoiceMode } = await voiceModeModule();
+  voiceSheet ||= buildVoiceSheet();
+  const sheet = voiceSheet;
+  sheet.root.hidden = false;
+  document.documentElement.classList.add("is-voice-mode");
+  haptic(12);
+  voiceTap = createVoiceMode({
+    lang: locale(),
+    fetchJson: async (path, options = {}) => {
+      const result = await request(path, options);
+      if (!result.ok) throw new Error(result.data?.error || "failed");
+      return result.data;
+    },
+    // O texto reconhecido vai pelo chat de sempre: fica na conversa, conta no uso.
+    sendText: async (text) => {
+      // Falou de novo com resposta em andamento: interrompe e manda a fala nova
+      // (nada do que a pessoa disse é descartado em silêncio).
+      if (S.live) {
+        await stop();
+        for (let i = 0; i < 50 && S.live; i += 1) await new Promise((done) => setTimeout(done, 100));
+        if (S.live) {
+          toast("Não deu para interromper a resposta. Tente de novo.");
+          return;
+        }
+      }
+      S.ui.prompt.value = text;
+      autosize();
+      updateSendState();
+      send();
+    },
+    stopReply: () => {
+      if (S.live) stop();
+    },
+    onState: (state, detail) => {
+      sheet.root.dataset.state = state;
+      // O selo diz a verdade: no motor do navegador o microfone pausa enquanto o KAZER fala.
+      const micOn = state === "ouvindo" || (state !== "erro" && state !== "pausado" && voiceTap?.engineKind === "gateway");
+      sheet.badge.textContent = micOn ? "Microfone ativo" : "Microfone em pausa";
+      sheet.label.textContent = state === "erro" ? VOICE_ERRORS[detail] || VOICE_LABELS.erro : VOICE_LABELS[state] || "";
+      if (state === "ouvindo") haptic(8);
+    },
+    onLive: (text) => {
+      sheet.live.textContent = text;
+    },
+    onLevel: (value) => {
+      sheet.orb.style.setProperty("--level", value.toFixed(3));
+    },
+    onError: (code) => {
+      if (code === "rate_limited") toast("Muitas conversas por voz seguidas. Tente em alguns minutos.");
+    },
+  });
+  sheet.orb.focus({ preventScroll: true });
+  await voiceTap?.start({ conversationId: S.conversation?.id });
+}
+
+function closeVoiceMode({ focusPrompt = false } = {}) {
+  const tap = voiceTap;
+  voiceTap = null;
+  tap?.close();
+  if (voiceSheet) {
+    voiceSheet.root.hidden = true;
+    voiceSheet.live.textContent = "";
+  }
+  document.documentElement.classList.remove("is-voice-mode");
+  haptic(8);
+  if (focusPrompt) S.ui.prompt.focus({ preventScroll: true });
+  else S.ui.talk?.focus({ preventScroll: true });
 }
 
 function finishNow(model) {
@@ -1449,6 +1573,7 @@ function finish(model, reply) {
   if (S.pinned) window.requestAnimationFrame(() => scrollToBottom(false));
   announce(model.status === "complete" ? "Resposta pronta." : "A resposta não foi concluída.");
   if (model.status === "complete" && S.models.get(model.id) === model) maybeAsk(model);
+  voiceTap?.reply(model.id, model.content || "", true);
   if (model.status === "error" && RETRYABLE[model.error] && !model.content) autoRetry(model);
   else if (model.status === "complete") model.busyTries = 0;
 }
@@ -1569,6 +1694,14 @@ function updateSendState() {
   const streaming = Boolean(S.live);
   S.ui.send.disabled = streaming ? false : !canSend();
   S.ui.send.setAttribute("aria-busy", String(S.sending));
+  // Campo vazio (sem texto e sem anexo), sem resposta em andamento: o botão vira
+  // "conversar por voz". Qualquer texto ou anexo traz a seta de enviar de volta.
+  const blank = !streaming && !S.sending && !S.ui.prompt.value.trim() && !S.attachments.length;
+  S.ui.composerBox.classList.toggle("is-blank", blank);
+  if (S.ui.talk) {
+    S.ui.talk.hidden = !blank;
+    S.ui.send.hidden = blank;
+  }
 }
 
 function showAlert(text) {
@@ -1923,6 +2056,7 @@ function bindComposer() {
   S.ui.composerAlertClose.addEventListener("click", hideAlert);
   S.ui.plus.addEventListener("click", () => openPlusSheet());
   S.ui.mic.addEventListener("click", () => toggleDictation());
+  S.ui.talk.addEventListener("click", () => openVoiceMode());
   S.ui.modelChip.addEventListener("click", () => openModelSheet());
   for (const [input, source] of [
     [S.ui.pickCamera, "camera"],

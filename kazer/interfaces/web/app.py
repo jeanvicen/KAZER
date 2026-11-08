@@ -37,6 +37,7 @@ from kazer.integrations.email import build_mail_sender
 from kazer.integrations.payments import build_checkout
 from kazer.interfaces.web.chat_api import chat_routes
 from kazer.interfaces.web.common import TOKEN_MAX_LENGTH, WebContext, client_of, endpoint
+from kazer.interfaces.web.voice_api import voice_routes
 from kazer.security.passwords import PasswordHashing
 from kazer.security.rate_limiter import RateLimiter
 from kazer.security.secrets import get_secret
@@ -91,11 +92,18 @@ _CSP = "; ".join(
 class SecurityHeaders:
     """Middleware ASGI puro que aplica cabeçalhos de proteção a toda resposta."""
 
-    def __init__(self, app: ASGIApp, hsts: bool) -> None:
-        """`hsts` só faz sentido quando o site é servido por HTTPS."""
+    def __init__(self, app: ASGIApp, hsts: bool, connect_extra: str = "") -> None:
+        """`hsts` só faz sentido quando o site é servido por HTTPS.
+
+        `connect_extra`: uma origem a mais no connect-src (o voice gateway, quando
+        configurado). Nada além disso é liberado.
+        """
         self.app = app
+        csp = _CSP
+        if connect_extra:
+            csp = csp.replace("connect-src 'self'", f"connect-src 'self' {connect_extra}")
         self.headers = {
-            "Content-Security-Policy": _CSP,
+            "Content-Security-Policy": csp,
             "X-Content-Type-Options": "nosniff",
             "Referrer-Policy": "no-referrer",
             "X-Frame-Options": "DENY",
@@ -382,10 +390,17 @@ def create_app(
         Route("/api/auth/password-reset", request_reset, methods=["POST"]),
         Route("/api/auth/password-reset/confirm", confirm_reset, methods=["POST"]),
         *chat_routes(ctx, chat),
+        *voice_routes(ctx, settings),
         Mount("/assets", app=StaticFiles(directory=STATIC_DIR / "assets"), name="assets"),
     ]
     return Starlette(
         routes=routes,
-        middleware=[Middleware(SecurityHeaders, hsts=settings.cookie_secure)],
+        middleware=[
+            Middleware(
+                SecurityHeaders,
+                hsts=settings.cookie_secure,
+                connect_extra=settings.voice_gateway_origin,
+            )
+        ],
         lifespan=lifespan,
     )

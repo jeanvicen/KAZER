@@ -2,6 +2,21 @@
 
 Mudanças que importam para quem usa e para quem opera o KAZER.
 
+## 2026-11 — Conversa por voz
+
+### Novo
+- **Conversa por voz:** com o campo vazio, o botão dourado de onda abre a tela
+  de voz (Ouvindo · Pensando · Falando). O KAZER responde pelo mesmo chat (a
+  conversa fica salva normalmente) e fala a resposta frase a frase, sem ler
+  markdown, código, links nem citações. Tocar no centro interrompe.
+- Com texto ou anexo no campo, o botão volta a ser a seta de enviar.
+- **Voice gateway opcional e auto-hospedado** (faster-whisper + Kokoro, código
+  e pesos com licenças permissivas), com token curto de uso único, limites por
+  conta e por instância, `/healthz`, `/readyz`, `/metrics`. Sem ele, a voz usa o
+  reconhecimento e a síntese do navegador. Docs em `docs/voice/`.
+- Pesquisa de 100 repositórios open source de voz verificados
+  (`docs/voice/RESEARCH.md`).
+
 ## 2026-11 — Fotos na explicação, vidro, voz e uso que abre
 
 ### Corrigido

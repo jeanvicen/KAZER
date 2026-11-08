@@ -7508,3 +7508,254 @@ html[data-motion="reduzido"] .md-in {
   outline: none;
   box-shadow: none;
 }
+
+/* ---------- Botão "conversar por voz" (campo vazio) ----------
+ * Ocupa exatamente o lugar da seta de enviar (mesma classe .send): trocar um pelo
+ * outro não mexe em nada do layout. */
+
+.talk {
+  background: var(--gradient-gold-button);
+  color: var(--color-accent-foreground);
+  animation: talk-in 220ms var(--spring) both;
+}
+
+.composer__box:not(.is-blank) .send:not(.talk) {
+  animation: talk-in 220ms var(--spring) both;
+}
+
+.talk svg {
+  width: 1.2rem;
+  height: 1.2rem;
+}
+
+@keyframes talk-in {
+  from {
+    opacity: 0;
+    transform: scale(0.82);
+  }
+}
+
+/* ---------- Tela do modo voz ---------- */
+
+html.is-voice-mode,
+html.is-voice-mode body {
+  overflow: hidden;
+}
+
+.vmode {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  padding: max(env(safe-area-inset-top), 0.75rem) max(env(safe-area-inset-right), 1rem)
+    max(env(safe-area-inset-bottom), 1rem) max(env(safe-area-inset-left), 1rem);
+  background:
+    radial-gradient(60% 45% at 50% 42%, color-mix(in srgb, var(--gold) 9%, transparent), transparent 70%),
+    var(--c-bg);
+  color: var(--c-text);
+  animation: vmode-in 280ms var(--ease-out, ease-out) both;
+}
+
+@keyframes vmode-in {
+  from {
+    opacity: 0;
+  }
+}
+
+.vmode__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* Indicador sempre visível enquanto o microfone pode estar ligado. */
+.vmode__badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.35rem 0.7rem;
+  border: 1px solid var(--c-border);
+  border-radius: 999px;
+  color: var(--c-text-2);
+  font-size: 0.78rem;
+}
+
+.vmode__rec {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background: #e5484d;
+}
+
+.vmode[data-state="falando"] .vmode__rec,
+.vmode[data-state="pensando"] .vmode__rec,
+.vmode[data-state="pausado"] .vmode__rec,
+.vmode[data-state="erro"] .vmode__rec {
+  background: var(--c-text-3);
+}
+
+.vmode__end {
+  display: grid;
+  place-items: center;
+  width: 2.9rem;
+  height: 2.9rem;
+  border: 0;
+  border-radius: 50%;
+  background: rgb(var(--ov) / 0.08);
+  color: var(--c-text);
+  cursor: pointer;
+}
+
+.vmode__end svg {
+  width: 1.2rem;
+  height: 1.2rem;
+}
+
+.vmode__stage {
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 1.1rem;
+  min-height: 0;
+  text-align: center;
+}
+
+/* O centro: escala com o nível real do microfone (motor gateway) ou com as
+ * fronteiras de palavra da fala do KAZER. Parado, só "respira" devagar. */
+.vmode__orb {
+  --level: 0;
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: min(52vw, 13rem);
+  aspect-ratio: 1;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  cursor: pointer;
+}
+
+.vmode__core {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 35% 30%, rgb(255 247 222 / 0.55), transparent 42%),
+    var(--gradient-gold-button);
+  box-shadow:
+    0 0 calc(30px + var(--level) * 60px) color-mix(in srgb, var(--gold) 35%, transparent),
+    inset 0 -10px 30px rgb(0 0 0 / 0.25);
+  transform: scale(calc(0.86 + var(--level) * 0.18));
+  transition: transform 90ms linear, box-shadow 120ms linear, filter 300ms linear;
+}
+
+.vmode__mark {
+  position: relative;
+  width: 34%;
+  height: auto;
+  color: #1b1408;
+  opacity: 0.85;
+}
+
+.vmode[data-state="ouvindo"] .vmode__core {
+  animation: vmode-breathe 2.6s ease-in-out infinite;
+}
+
+.vmode[data-state="pensando"] .vmode__core {
+  animation: vmode-think 1.2s ease-in-out infinite;
+}
+
+.vmode[data-state="pausado"] .vmode__core,
+.vmode[data-state="erro"] .vmode__core,
+.vmode[data-state="conectando"] .vmode__core {
+  filter: saturate(0.35) brightness(0.7);
+}
+
+@keyframes vmode-breathe {
+  50% {
+    filter: brightness(1.08);
+  }
+}
+
+@keyframes vmode-think {
+  50% {
+    filter: brightness(0.82);
+  }
+}
+
+.vmode__state {
+  margin: 0;
+  max-width: 28ch;
+  font-size: 1.15rem;
+  font-weight: 600;
+}
+
+.vmode__live {
+  min-height: 3em;
+  max-width: 34ch;
+  margin: 0;
+  color: var(--c-text-2);
+  font-size: 1rem;
+  line-height: 1.5;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.vmode__bottom {
+  display: grid;
+  justify-items: center;
+  gap: 0.6rem;
+}
+
+.vmode__type {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  min-height: 2.75rem;
+  padding: 0 1.1rem;
+  border: 1px solid var(--c-border-2);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--c-text);
+  font: inherit;
+  cursor: pointer;
+}
+
+.vmode__type svg {
+  width: 1.05rem;
+  height: 1.05rem;
+}
+
+.vmode__hint {
+  margin: 0;
+  color: var(--c-text-3);
+  font-size: 0.78rem;
+}
+
+.vmode__orb:focus-visible,
+.vmode__end:focus-visible,
+.vmode__type:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 4px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html:not([data-motion="completo"]) .vmode,
+  html:not([data-motion="completo"]) .vmode__core,
+  html:not([data-motion="completo"]) .talk,
+  html:not([data-motion="completo"]) .composer__box .send {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+html[data-motion="reduzido"] .vmode,
+html[data-motion="reduzido"] .vmode__core,
+html[data-motion="reduzido"] .talk,
+html[data-motion="reduzido"] .composer__box .send {
+  animation: none !important;
+  transition: none !important;
+}

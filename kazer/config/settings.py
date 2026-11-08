@@ -49,6 +49,9 @@ class Settings(StrictModel):
     supabase_auth_redirect_url: str = ""
     cookie_secure: bool = True
     serverless: bool = False
+    # Modo voz: endereço público (wss://) do voice gateway opcional. Vazio = só o
+    # reconhecimento/síntese do próprio navegador. O segredo dos tokens fica em secrets.
+    voice_gateway_url: str = ""
     # Modelo por trás do "KAZ 1.1". Chaves NUNCA ficam aqui: só em kazer.security.secrets.
     model_provider: ModelProviderName = ""
     model_name: str = ""
@@ -124,6 +127,16 @@ class Settings(StrictModel):
         return bool(self.supabase_url and self.supabase_publishable_key)
 
     @property
+    def voice_gateway_origin(self) -> str:
+        """Origem do gateway para a CSP (connect-src); vazio se não houver ou se inválido."""
+        parts = urlsplit(self.voice_gateway_url)
+        if parts.scheme not in ("wss", "ws") or not parts.netloc:
+            return ""
+        if parts.scheme == "ws" and self.environment == "production":
+            return ""
+        return f"{parts.scheme}://{parts.netloc}"
+
+    @property
     def public_origin(self) -> str:
         """Origem pública (esquema + host) usada em links enviados por e-mail."""
         parts = urlsplit(self.public_url)
@@ -169,6 +182,7 @@ def load_settings(environ: Mapping[str, str] | None = None) -> Settings:
             env.get("KAZER_COOKIE_SECURE"), environment == "production" or serverless
         ),
         "serverless": serverless,
+        "voice_gateway_url": env.get("KAZER_VOICE_GATEWAY_URL", "").strip(),
         "model_provider": env.get("KAZER_MODEL_PROVIDER", "").strip().lower(),
         "model_name": env.get("KAZER_MODEL", "").strip(),
         "model_deep_name": env.get("KAZER_MODEL_DEEP", "").strip(),
