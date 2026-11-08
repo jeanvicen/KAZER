@@ -58,7 +58,8 @@ export function createDictation({ onText, onState, onError, onLive, onActivity, 
     }
     finals = done;
     pending = partial;
-    onActivity?.("word");
+    // Quanto texto o navegador tem agora: a onda cresce com o que foi captado.
+    onActivity?.("word", heard().length);
     live();
   });
 

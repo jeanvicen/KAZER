@@ -1977,13 +1977,6 @@ function buildVoiceUi() {
   if (voiceUi) return voiceUi;
   const text = h("p.voice__text", { "data-placeholder": t("Pode falar…") });
   const wave = h("div.voice__wave", { "aria-hidden": "true" });
-  for (let n = 0; n < 28; n += 1) {
-    const bar = h("i");
-    bar.style.setProperty("--n", String(n));
-    // Altura própria de cada barra (fixa): a onda não fica um bloco uniforme.
-    bar.style.setProperty("--h", String(0.35 + ((n * 37) % 11) / 16));
-    wave.append(bar);
-  }
   const cancel = h("button.tool.voice__cancel", { type: "button", "aria-label": t("Cancelar ditado"), title: t("Cancelar ditado"), onclick: () => dictation?.cancel() }, icon("close"));
   const stop = h("button.tool.voice__stop", { type: "button", "aria-label": t("Parar e revisar"), title: t("Parar e revisar"), onclick: () => dictation?.stop() }, icon("stop"));
   const go = h(
@@ -1999,20 +1992,82 @@ function buildVoiceUi() {
     }
   });
   S.ui.composerBox.insertBefore(root, S.ui.prompt);
-  voiceUi = { root, text, wave, go, stop, pulse: 0 };
+  voiceUi = { root, text, wave, go, stop, bars: [], levels: [], level: 0, heard: 0, frame: 0, tick: 0 };
   return voiceUi;
 }
 
-// A onda mexe quando o navegador detecta som/fala e pulsa a cada palavra.
-function voiceActivity(kind) {
+// A onda corre da direita para a esquerda e só cresce com o que o
+// reconhecimento de fala capta de verdade: cada trecho novo de texto empurra o
+// nível para cima (mais texto de uma vez = mais alto) e o silêncio baixa até
+// virar pontinhos. Sem segunda captura de microfone e sem volume inventado.
+const WAVE_STEP_MS = 70;
+
+function fitWave(ui) {
+  const width = ui.wave.clientWidth || 160;
+  const count = Math.max(8, Math.min(48, Math.floor((width + 3) / 6)));
+  if (ui.bars.length === count) return;
+  ui.bars = [];
+  ui.levels = Array.from({ length: count }, (_, index) => ui.levels[index] || 0);
+  ui.wave.replaceChildren(
+    ...ui.levels.map((value) => {
+      const bar = h("i");
+      bar.style.setProperty("--v", value.toFixed(3));
+      ui.bars.push(bar);
+      return bar;
+    }),
+  );
+}
+
+function waveLoop(ui) {
+  if (ui.frame) return;
+  const step = (now) => {
+    if (!S.ui.composerBox.classList.contains("is-voice")) {
+      ui.frame = 0;
+      return;
+    }
+    if (now - ui.tick >= WAVE_STEP_MS) {
+      ui.tick = now;
+      fitWave(ui);
+      // Barra nova entra pela direita com o nível atual (com variação natural).
+      const jitter = 0.55 + Math.random() * 0.45;
+      ui.levels.push(ui.level > 0.04 ? Math.min(1, ui.level * jitter) : 0);
+      ui.levels.shift();
+      ui.level *= 0.86;
+      ui.levels.forEach((value, index) => ui.bars[index]?.style.setProperty("--v", value.toFixed(3)));
+      ui.wave.classList.toggle("is-hearing", ui.level > 0.04);
+    }
+    ui.frame = window.requestAnimationFrame(step);
+  };
+  ui.frame = window.requestAnimationFrame(step);
+}
+
+function voiceActivity(kind, size = 0) {
   const ui = voiceUi;
   if (!ui) return;
-  if (kind === "sound") ui.wave.classList.add("is-hearing");
-  else if (kind === "silence") ui.wave.classList.remove("is-hearing");
-  else if (kind === "word") {
-    ui.wave.classList.add("is-hearing", "is-word");
-    window.clearTimeout(ui.pulse);
-    ui.pulse = window.setTimeout(() => ui.wave.classList.remove("is-word"), 260);
+  if (kind === "open") {
+    ui.heard = 0;
+    ui.level = 0;
+    ui.levels = ui.levels.map(() => 0);
+    waveLoop(ui);
+  } else if (kind === "sound") {
+    ui.level = Math.max(ui.level, 0.3);
+  } else if (kind === "word") {
+    const grown = Math.max(0, size - ui.heard);
+    ui.heard = size;
+    // Toda atualização é sinal de fala; trechos maiores sobem mais.
+    ui.level = Math.min(1, Math.max(ui.level, 0.35) + Math.min(0.6, grown / 14));
+  } else if (kind === "silence") {
+    ui.level *= 0.5;
+  }
+}
+
+// Toque leve no aparelho (só onde existe: Android). Sem vibração em "menos movimento".
+function haptic(ms) {
+  if (reducedMotion()) return;
+  try {
+    navigator.vibrate?.(ms);
+  } catch {
+    /* sem vibração */
   }
 }
 
@@ -2056,14 +2111,20 @@ async function toggleDictation() {
         S.ui.composerBox.classList.toggle("is-voice", on);
         if (on) {
           const ui = buildVoiceUi();
+          waveLoop(ui);
           if (state === "listening") {
+            haptic(12);
             announce(t("Ouvindo. Pode falar."));
             ui.stop.focus({ preventScroll: true });
           }
           return;
         }
         if (voiceUi) {
-          voiceUi.wave.classList.remove("is-hearing", "is-word");
+          haptic(8);
+          voiceUi.level = 0;
+          voiceUi.heard = 0;
+          voiceUi.levels = voiceUi.levels.map(() => 0);
+          voiceUi.wave.classList.remove("is-hearing");
           voiceUi.text.textContent = "";
           voiceUi.go.disabled = true;
         }
