@@ -711,4 +711,15 @@ export const EN = {
   "O reconhecimento de fala precisa de internet. Confira a conexão e tente de novo.": "Speech recognition needs internet. Check your connection and try again.",
   "O navegador bloqueou o reconhecimento de fala. Tente no Chrome ou no Edge.": "Your browser blocked speech recognition. Try Chrome or Edge.",
   "Reenviar link": "Resend link",
+
+  // ---------- Sugestões da tela vazia ----------
+  "Sugestões para começar": "Ways to start",
+  "Planejar minha semana": "Plan my week",
+  "Explicar um assunto": "Explain a topic",
+  "Criar um site": "Build a website",
+  "Pesquisar na web": "Search the web",
+  "Me ajuda a planejar minha semana com prioridades claras.": "Help me plan my week with clear priorities.",
+  "Explique de um jeito simples:": "Explain it simply:",
+  "Crie um site de uma página para": "Build a one-page website for",
+  "Pesquise na web e me diga:": "Search the web and tell me:",
 };

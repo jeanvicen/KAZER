@@ -15,9 +15,11 @@
   <link rel="manifest" href="/manifest.webmanifest">
   <link rel="icon" href="/assets/brand/favicon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="/assets/brand/apple-touch-icon.png">
+  <link rel="preload" href="/assets/fonts/inter-latin-wght.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="/assets/fonts/grenze-gotisch-500.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="/assets/kazer.css">
   <link rel="stylesheet" href="/assets/chat.css">
+  <link rel="stylesheet" href="/assets/refine.css">
   <script type="module" src="/assets/app.js"></script>
 </head>
 <body>
@@ -155,7 +157,7 @@
       </div>
       <nav class="drawer__nav" id="drawer-nav" aria-label="Seções do KAZER">
         <button class="drawer__item is-active" type="button" data-screen="conversas" id="nav-conversas"><span data-icon="chat"></span><span>Conversas</span></button>
-        <button class="drawer__item" type="button" data-screen="forja" id="nav-forja"><span data-icon="code"></span><span data-pixword="KZ CODE">KZ Code</span></button>
+        <button class="drawer__item" type="button" data-screen="forja" id="nav-forja"><span data-icon="code"></span><span>KZ Code</span></button>
         <button class="drawer__item" type="button" data-screen="artefatos" id="nav-artefatos"><span data-icon="layers"></span><span>Artefatos</span></button>
       </nav>
       <div class="drawer__panel" id="panel-conversas">
@@ -227,6 +229,12 @@
           </div>
         </div>
       </form>
+      <div class="starters" id="starters" role="group" aria-label="Sugestões para começar">
+        <button class="starter" type="button" data-starter="semana"><span data-icon="sparkle"></span><span>Planejar minha semana</span></button>
+        <button class="starter" type="button" data-starter="explicar"><span data-icon="book"></span><span>Explicar um assunto</span></button>
+        <button class="starter" type="button" data-starter="site"><span data-icon="code"></span><span>Criar um site</span></button>
+        <button class="starter" type="button" data-starter="pesquisar"><span data-icon="search"></span><span>Pesquisar na web</span></button>
+      </div>
       <input class="sr-only" type="file" id="pick-camera" accept="image/*" capture="environment" tabindex="-1" aria-hidden="true">
       <input class="sr-only" type="file" id="pick-photos" accept="image/*" multiple tabindex="-1" aria-hidden="true">
       <input class="sr-only" type="file" id="pick-files" multiple tabindex="-1" aria-hidden="true">

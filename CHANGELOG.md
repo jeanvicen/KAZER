@@ -2,6 +2,21 @@
 
 Mudanças que importam para quem usa e para quem opera o KAZER.
 
+## 2026-11 — Visual refinado (estilo buscador de respostas)
+
+### Melhor
+- **Uma fonte só na interface (Inter)**, servida pelo próprio site; o gótico
+  fica só no nome KAZER. Saudação, títulos e textos ficaram mais calmos e
+  legíveis.
+- **Tela vazia como um buscador de respostas:** no computador o campo de
+  escrever fica no centro, com a saudação acima e sugestões de começo abaixo
+  ("Planejar minha semana", "Explicar um assunto", "Criar um site", "Pesquisar
+  na web"). No celular as sugestões ficam acima do campo. Tocar só preenche.
+- Composer, mensagens, tabelas, blocos de código, gaveta e telas de entrada com
+  medidas mais precisas; "Nova conversa" neutro (o ouro fica para enviar); no
+  tema claro o campo é branco com borda fina.
+- Rótulos pequenos da gaveta e o atalho "Ctrl K" agora passam no contraste AA.
+
 ## 2026-11 — Conversa por voz
 
 ### Novo

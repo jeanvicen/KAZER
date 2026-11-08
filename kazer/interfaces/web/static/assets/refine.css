@@ -1,0 +1,471 @@
+/* KAZER — refinamento visual (2026-11).
+ *
+ * Carregado por último. Não muda comportamento, só a forma:
+ * - uma fonte de interface (Inter, servida pelo próprio site);
+ * - tela vazia como um buscador de respostas: no computador o campo fica no
+ *   centro, com sugestões de começo logo abaixo; no celular as sugestões ficam
+ *   acima do campo, perto do polegar;
+ * - composer, mensagens, tabelas, código e gaveta com medidas mais precisas;
+ * - entrada e telas de conta com a mesma tipografia calma.
+ *
+ * Regras da marca (docs/brand.md) continuam valendo: o gótico só no nome
+ * KAZER, ouro sólido só na ação principal, cores sempre por token. */
+
+:root {
+  --font-ui: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --tracking-ui: -0.006em;
+  --tracking-tight: -0.022em;
+  --tracking-display: -0.03em;
+  --ease-quiet: cubic-bezier(0.2, 0.7, 0.2, 1);
+  --hairline: rgb(var(--ov, 255 255 255) / 0.09);
+  --hairline-strong: rgb(var(--ov, 255 255 255) / 0.16);
+  --wash: rgb(var(--ov, 255 255 255) / 0.035);
+  --wash-strong: rgb(var(--ov, 255 255 255) / 0.07);
+  --lift: 0 1px 0 rgb(255 255 255 / 0.03) inset, 0 12px 32px -20px rgb(0 0 0 / 0.85);
+  --composer-bg: var(--n-141414);
+}
+
+html.in-chat[data-theme="light"] {
+  --lift: 0 1px 0 rgb(255 255 255 / 0.9) inset, 0 10px 28px -18px rgb(0 0 0 / 0.22);
+  /* No claro o campo é branco com borda fina: mais nítido que um bloco cinza. */
+  --composer-bg: #ffffff;
+}
+
+body {
+  font-family: var(--font-ui);
+  letter-spacing: var(--tracking-ui);
+  font-kerning: normal;
+  text-rendering: optimizeLegibility;
+}
+
+::selection {
+  background: rgb(213 177 90 / 0.28);
+  color: inherit;
+}
+
+/* ==========================================================================
+   Entrada (início) e telas de conta
+   ========================================================================== */
+
+.tagline {
+  font-family: var(--font-ui);
+  font-weight: 600;
+  letter-spacing: var(--tracking-tight);
+}
+
+.tagline__lead {
+  font-weight: 400;
+  letter-spacing: -0.01em;
+}
+
+/* Cursor de digitação fino (em vez do "_"), sempre em ouro. */
+.caret {
+  display: inline-block;
+  width: 0.07em;
+  height: 0.95em;
+  margin-left: 0.08em;
+  overflow: hidden;
+  border-radius: 1px;
+  background: var(--gold);
+  color: transparent;
+  vertical-align: -0.1em;
+}
+
+.auth__title,
+.notice__title {
+  font-size: 1.75rem;
+  letter-spacing: var(--tracking-tight);
+  line-height: 1.2;
+}
+
+.auth__lede,
+.notice__body {
+  line-height: 1.55;
+}
+
+.field__label {
+  font-weight: 500;
+  letter-spacing: 0;
+}
+
+.field__input {
+  border-color: var(--hairline);
+  background: rgb(255 255 255 / 0.025);
+}
+
+.field__input:hover {
+  border-color: var(--hairline-strong);
+}
+
+.entry__alt,
+.links .link {
+  letter-spacing: 0;
+}
+
+@media (min-width: 60rem) and (min-height: 35rem) {
+  .tagline {
+    font-size: clamp(2rem, 2.9vw, 2.85rem);
+    line-height: 1.1;
+    letter-spacing: var(--tracking-display);
+  }
+
+  .tagline__lead {
+    margin-bottom: 0.7rem;
+    font-size: 0.42em;
+    letter-spacing: 0;
+  }
+
+  .subcopy {
+    line-height: 1.65;
+    letter-spacing: -0.004em;
+  }
+
+  .entry {
+    border-color: var(--hairline);
+    border-radius: 1.25rem;
+    background: rgb(255 255 255 / 0.018);
+    box-shadow: var(--lift);
+  }
+}
+
+/* ==========================================================================
+   Tela vazia: saudação calma e sugestões de começo
+   ========================================================================== */
+
+.empty__mark {
+  width: 2.75rem;
+  height: 2.75rem;
+}
+
+.greeting {
+  margin-top: 1.15rem;
+}
+
+.greeting__a {
+  font: 600 clamp(1.8rem, 7.4vw, 2.5rem) / 1.1 var(--font-ui);
+  letter-spacing: var(--tracking-display);
+}
+
+.greeting__b {
+  margin-top: 0.55rem;
+  font-size: clamp(0.98rem, 3.9vw, 1.0625rem);
+  letter-spacing: -0.006em;
+}
+
+/* Sugestões: só na tela vazia. Tocar preenche o campo (não envia sozinho). */
+.starters {
+  display: none;
+}
+
+.pane.is-empty .starters {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  gap: 0.5rem;
+  width: 100%;
+  max-width: 48rem;
+  margin: 0 auto;
+  transition: opacity 180ms var(--ease-quiet);
+}
+
+/* Escrevendo (ou com anexo): as sugestões saem do caminho, sem pular o layout. */
+.pane.is-empty .composer:has(.composer__box:not(.is-blank)) ~ .starters {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.starter {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 2.5rem;
+  padding: 0 0.95rem 0 0.8rem;
+  border: 1px solid var(--hairline);
+  border-radius: 999px;
+  background: var(--wash);
+  color: var(--c-text-2);
+  font: 500 0.875rem / 1 var(--font-ui);
+  letter-spacing: -0.004em;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    color 160ms linear,
+    border-color 160ms linear,
+    background-color 160ms linear;
+}
+
+.starter:hover {
+  border-color: var(--hairline-strong);
+  background: var(--wash-strong);
+  color: var(--c-text);
+}
+
+.starter:focus-visible {
+  outline: 2px solid var(--color-focus-ring);
+  outline-offset: 2px;
+}
+
+.starter svg {
+  width: 1rem;
+  height: 1rem;
+  flex: none;
+  color: var(--c-text-3);
+  transition: color 160ms linear;
+}
+
+.starter:hover svg {
+  color: var(--accent-text);
+}
+
+@media (pointer: coarse) {
+  .starter {
+    min-height: 2.75rem;
+  }
+}
+
+/* Celular: sugestões numa fileira que rola de lado, logo acima do campo. */
+@media (max-width: 47.99rem), (max-height: 33.99rem) {
+  .pane.is-empty .starters {
+    order: 1;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding: 0 max(env(safe-area-inset-right), 0.75rem) 0.6rem max(env(safe-area-inset-left), 0.75rem);
+    scrollbar-width: none;
+    -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 2rem), transparent);
+    mask-image: linear-gradient(to right, #000 calc(100% - 2rem), transparent);
+  }
+
+  .pane.is-empty .starters::-webkit-scrollbar {
+    display: none;
+  }
+
+  .pane.is-empty .composer {
+    order: 2;
+  }
+}
+
+/* Computador e tablet: o campo vai para o centro, como num buscador de
+   respostas; a saudação fica logo acima e as sugestões logo abaixo. */
+@media (min-width: 48rem) and (min-height: 34rem) {
+  .pane.is-empty .empty {
+    flex: 0 0 auto;
+    margin-top: auto;
+    padding-bottom: 2rem;
+  }
+
+  .pane.is-empty .composer {
+    order: 1;
+    padding-bottom: 0;
+  }
+
+  .pane.is-empty .starters {
+    order: 2;
+    flex-wrap: wrap;
+    justify-content: center;
+    max-width: 56rem;
+    margin-bottom: auto;
+    padding: 1rem 1.5rem 12vh;
+  }
+
+  .pane.is-empty .composer__input {
+    min-height: 3.6rem;
+  }
+}
+
+/* ==========================================================================
+   Composer
+   ========================================================================== */
+
+.composer__box {
+  border-color: var(--hairline);
+  border-radius: 1.5rem;
+  background: var(--composer-bg);
+  box-shadow: var(--lift);
+}
+
+.composer__box:focus-within {
+  border-color: var(--hairline-strong);
+}
+
+.composer__box:has(.composer__input:focus-visible) {
+  border-color: rgb(var(--ov) / 0.22);
+}
+
+.composer__input {
+  font: 400 1rem / 1.55 var(--font-ui);
+  letter-spacing: var(--tracking-ui);
+  padding: 0.6rem 0.75rem 0.45rem;
+}
+
+.chip {
+  letter-spacing: -0.004em;
+}
+
+/* ==========================================================================
+   Conversa
+   ========================================================================== */
+
+.thread__inner {
+  gap: 2rem;
+  padding-top: 1rem;
+}
+
+.msg__bubble {
+  padding: 0.7rem 1rem;
+  border-radius: 1.25rem 1.25rem 0.4rem 1.25rem;
+  background: var(--n-181818);
+  letter-spacing: var(--tracking-ui);
+}
+
+.msg__head {
+  letter-spacing: 0;
+}
+
+.msg__body {
+  line-height: 1.7;
+  letter-spacing: -0.004em;
+}
+
+.md h2,
+.md h3,
+.md h4 {
+  font-weight: 600;
+  letter-spacing: -0.016em;
+}
+
+.md h2 {
+  font-size: 1.25em;
+  margin-top: 1.5em;
+}
+
+.md strong {
+  font-weight: 600;
+}
+
+.md li::marker {
+  color: var(--c-text-3);
+}
+
+.md code {
+  border-color: var(--hairline);
+  background: var(--wash);
+}
+
+.code {
+  border-color: var(--hairline);
+  border-radius: 0.9rem;
+  background: var(--n-0a0a0a);
+}
+
+.code__bar {
+  border-bottom-color: var(--hairline);
+  letter-spacing: 0.02em;
+}
+
+.table {
+  border-color: var(--hairline);
+  border-radius: 0.9rem;
+}
+
+.md th {
+  background: var(--wash);
+  color: var(--c-text-2);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+.md th,
+.md td {
+  padding: 0.65rem 0.9rem;
+  border-bottom-color: var(--hairline);
+}
+
+.msg__action {
+  border-radius: 0.65rem;
+}
+
+.msg__retry {
+  border-color: var(--hairline-strong);
+}
+
+/* ==========================================================================
+   Gaveta
+   ========================================================================== */
+
+.drawer {
+  border-right-color: var(--hairline);
+}
+
+.drawer__item {
+  border-radius: 0.65rem;
+  letter-spacing: -0.004em;
+}
+
+/* Rótulos pequenos em caixa-alta: cinza médio para passar no AA (4,5:1). */
+.drawer__section,
+.hist__group {
+  color: var(--c-text-2);
+  font-size: 0.6875rem;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+}
+
+.drawer__kbd kbd {
+  color: var(--c-text-2);
+}
+
+.drawer__search {
+  border: 1px solid var(--hairline);
+  background: var(--wash);
+}
+
+/* "Nova conversa": ação clara, mas neutra — o ouro sólido fica para enviar. */
+.drawer__new {
+  border: 1px solid var(--hairline-strong);
+  border-radius: 0.9rem;
+  background: var(--wash);
+  color: var(--c-text);
+  font-weight: 500;
+  letter-spacing: -0.004em;
+  transition:
+    background-color 160ms linear,
+    border-color 160ms linear,
+    transform 140ms var(--spring);
+}
+
+.drawer__new:hover {
+  border-color: rgb(var(--ov) / 0.24);
+  background: var(--wash-strong);
+}
+
+.drawer__new:focus-visible {
+  outline: 2px solid var(--color-focus-ring);
+  outline-offset: 2px;
+}
+
+/* ==========================================================================
+   Barra do topo
+   ========================================================================== */
+
+.topbar__title {
+  font-weight: 500;
+  letter-spacing: -0.006em;
+}
+
+/* ==========================================================================
+   Menos movimento
+   ========================================================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  html:not([data-motion="completo"]) .starter,
+  html:not([data-motion="completo"]) .pane.is-empty .starters {
+    transition: none;
+  }
+}
+
+html[data-motion="reduzido"] .starter,
+html[data-motion="reduzido"] .pane.is-empty .starters {
+  transition: none;
+}

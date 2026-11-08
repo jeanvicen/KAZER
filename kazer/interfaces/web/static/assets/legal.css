@@ -1,6 +1,16 @@
 /* KAZER — documentos legais. Mesma paleta da tela de entrada, foco em leitura. */
 
 @font-face {
+  font-family: "Inter";
+  src: url("fonts/inter-latin-wght.woff2") format("woff2");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308,
+    U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
   font-family: "Grenze Gotisch";
   src: url("fonts/grenze-gotisch-500.woff2") format("woff2");
   font-weight: 500;
@@ -33,7 +43,7 @@ body {
   margin: 0;
   background: var(--black);
   color: var(--text);
-  font: 400 1rem/1.7 system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font: 400 1rem/1.7 "Inter", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
 }
 

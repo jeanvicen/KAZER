@@ -186,7 +186,7 @@ export async function mountChat({ email, onSignedOut }) {
     "empty-note", "thread", "messages", "older", "to-bottom", "composer", "composer-alert",
     "composer-alert-text", "composer-alert-close", "composer-box", "tray", "skill-chips", "prompt", "plus", "model-chip",
     "open-palette",
-    "forja-chip", "mic", "talk", "send", "pick-camera", "pick-photos", "pick-files",
+    "forja-chip", "mic", "talk", "send", "starters", "pick-camera", "pick-photos", "pick-files",
   ];
   for (const id of ids) S.ui[id.replace(/-(\w)/g, (_, c) => c.toUpperCase())] = byId(root, id);
   setSheetBackground(root);
@@ -460,6 +460,14 @@ function newConversation({ push = true, focus = true } = {}) {
 // ---------- Abas da gaveta ----------
 
 const SCREENS = ["conversas", "forja", "artefatos", "biblioteca"];
+
+// Texto que cada sugestão da tela vazia coloca no campo (a pessoa completa).
+const STARTERS = {
+  semana: "Me ajuda a planejar minha semana com prioridades claras.",
+  explicar: "Explique de um jeito simples:",
+  site: "Crie um site de uma página para",
+  pesquisar: "Pesquise na web e me diga:",
+};
 
 const SCREEN_LABELS = {
   conversas: "Conversas",
@@ -2112,6 +2120,21 @@ function bindComposer() {
   S.ui.plus.addEventListener("click", () => openPlusSheet());
   S.ui.mic.addEventListener("click", () => toggleDictation());
   S.ui.talk.addEventListener("click", () => openVoiceMode());
+  // Sugestões da tela vazia: preenchem o campo e deixam a pessoa completar.
+  S.ui.starters?.addEventListener("click", (event) => {
+    const button = event.target.closest("[data-starter]");
+    const text = button && STARTERS[button.dataset.starter];
+    if (!text) return;
+    const prompt = S.ui.prompt;
+    // Frase aberta ("...para", "...diga:") ganha um espaço para a pessoa continuar.
+    const value = t(text);
+    prompt.value = /[.!?]$/.test(value) ? value : `${value} `;
+    autosize();
+    updateSendState();
+    S.ui.empty.classList.add("is-typing");
+    prompt.focus({ preventScroll: true });
+    prompt.setSelectionRange(prompt.value.length, prompt.value.length);
+  });
   S.ui.modelChip.addEventListener("click", () => openModelSheet());
   for (const [input, source] of [
     [S.ui.pickCamera, "camera"],

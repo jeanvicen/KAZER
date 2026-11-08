@@ -62,6 +62,33 @@ KAZER em Grenze Gotisch 500 (SIL Open Font License 1.1, servida localmente),
 tracking de 0,14 em. Em lockup, o símbolo fica à esquerda, com a altura da
 caixa-alta.
 
+## Tipografia da interface
+
+Uma fonte só para a interface inteira: **Inter** (SIL Open Font License 1.1),
+variável (100–900), subconjunto latino com todos os acentos do português,
+servida localmente em `static/assets/fonts/inter-latin-wght.woff2` (48 KB). O
+gótico (Grenze Gotisch) fica **só no nome KAZER**; saudação, títulos e textos
+usam Inter.
+
+| Uso | Medida |
+| --- | --- |
+| Saudação da tela vazia | 600, `clamp(1.8rem, 7.4vw, 2.5rem)`, tracking −0,03 em |
+| Títulos de tela (entrar, criar conta) | 600, 1,75 rem, tracking −0,022 em |
+| Texto da conversa | 400, `--msg-size` (16 px), entrelinha 1,7 |
+| Interface | 400–500, 0,8125–1 rem, tracking −0,006 em |
+| Rótulos em caixa-alta | 500, 0,6875 rem, tracking 0,08 em, cor `--c-text-2` (AA) |
+
+Os detalhes ficam em `static/assets/refine.css` (carregado por último), com os
+tokens `--hairline`, `--hairline-strong`, `--wash`, `--wash-strong`, `--lift` e
+`--composer-bg` (branco no tema claro).
+
+## Tela vazia
+
+Como um buscador de respostas: no computador e no tablet o campo de escrever
+fica no centro, com a saudação acima e as sugestões de começo abaixo. No
+celular o campo fica embaixo, perto do polegar, e as sugestões numa fileira
+logo acima dele. Sugestão só preenche o campo; quem envia é a pessoa.
+
 ## Cor
 
 Os tokens ficam em `:root` no `static/assets/kazer.css`; o `chat.css` acrescenta
