@@ -159,6 +159,33 @@ function createCloudVoice({ onSpeechState, onCaption }) {
   const analyser = context.createAnalyser();
   analyser.fftSize = 512;
   analyser.connect(context.destination);
+  // Timbre "assistente": voz um pouco mais grave (toca a 0,94; o servidor já
+  // gera mais rápido para compensar o ritmo) e um leve ar de sala (reverb curto).
+  const RATE = 0.94;
+  const dry = context.createGain();
+  dry.gain.value = 0.92;
+  const wet = context.createGain();
+  wet.gain.value = 0.16;
+  const room = context.createConvolver();
+  room.buffer = (() => {
+    const seconds = 0.7;
+    const length = Math.floor(context.sampleRate * seconds);
+    const impulse = context.createBuffer(2, length, context.sampleRate);
+    for (let channel = 0; channel < 2; channel += 1) {
+      const data = impulse.getChannelData(channel);
+      for (let i = 0; i < length; i += 1) data[i] = (Math.random() * 2 - 1) * (1 - i / length) ** 3.2;
+    }
+    return impulse;
+  })();
+  const warm = context.createBiquadFilter();
+  warm.type = "lowshelf";
+  warm.frequency.value = 220;
+  warm.gain.value = 3;
+  warm.connect(dry);
+  warm.connect(room);
+  room.connect(wet);
+  dry.connect(analyser);
+  wet.connect(analyser);
   const levels = new Uint8Array(analyser.fftSize);
   let items = []; // { text, audio: Promise<AudioBuffer|null> }
   let playing = null;
@@ -199,7 +226,8 @@ function createCloudVoice({ onSpeechState, onCaption }) {
       await new Promise((resolve) => {
         const node = context.createBufferSource();
         node.buffer = audio;
-        node.connect(analyser);
+        node.playbackRate.value = RATE;
+        node.connect(warm);
         node.onended = resolve;
         item.node = node;
         node.start();
@@ -316,10 +344,101 @@ function browserEngine({ lang, cloud, onLive, onFinal, onIdle, onError, onSpeech
   let useCloud = true;
   let captionTimer = 0;
 
+  // ---- Interrupção por voz (como numa conversa de verdade) ----
+  // Enquanto o KAZER fala, um reconhecimento contínuo fica ouvindo. Se a pessoa
+  // fala por cima, a fala dele para e o que ela disse vira a próxima mensagem.
+  // Anti-eco: o que for basicamente a frase que o próprio KAZER está dizendo
+  // (o microfone pegando o alto-falante) é ignorado.
+  let watcher = null;
+  const recent = [];
+  const words = (text) =>
+    text
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^a-z0-9 ]+/g, " ")
+      .split(/\s+/)
+      .filter(Boolean);
+  const isEcho = (text) => {
+    const said = words(text);
+    if (!said.length) return true;
+    const pool = new Set(words(recent.join(" ")));
+    return said.filter((word) => pool.has(word)).length / said.length >= 0.6;
+  };
+  const STOP = /^(para|pare|espera|espere|pera[ií]?|calma|kazer|ei|n[aã]o|chega|stop|wait)\b/i;
+
+  function watch(onBarge, stillSpeaking) {
+    if (!Recognition || watcher || listening) return;
+    const rec = new Recognition();
+    rec.lang = lang;
+    rec.continuous = true;
+    rec.interimResults = true;
+    let barged = false;
+    let from = 0;
+    let text = "";
+    let silence = 0;
+    rec.onresult = (event) => {
+      const all = [...event.results].map((result) => result[0]?.transcript || "");
+      if (!barged) {
+        const fresh = (all[all.length - 1] || "").trim();
+        if (!fresh || isEcho(fresh)) return;
+        if (words(fresh).length < 2 && !STOP.test(fresh)) return;
+        barged = true;
+        from = all.length - 1;
+        onBarge();
+      }
+      text = all.slice(from).join(" ").replace(/\s+/g, " ").trim();
+      onLive(text);
+      // Fim da fala: 1,3 s sem palavra nova.
+      window.clearTimeout(silence);
+      silence = window.setTimeout(() => {
+        try {
+          rec.stop();
+        } catch {
+          /* já parou */
+        }
+      }, 1300);
+    };
+    rec.onerror = () => {};
+    rec.onend = () => {
+      window.clearTimeout(silence);
+      if (watcher === rec) watcher = null;
+      if (barged) {
+        if (text) onFinal(text);
+        else onIdle();
+      } else if (stillSpeaking()) {
+        // O navegador encerrou sozinho no meio da fala: volta a vigiar.
+        watch(onBarge, stillSpeaking);
+      }
+    };
+    try {
+      rec.start();
+      watcher = rec;
+    } catch {
+      watcher = null;
+    }
+  }
+
+  function unwatch() {
+    const rec = watcher;
+    watcher = null;
+    if (!rec) return;
+    rec.onend = null;
+    try {
+      rec.abort();
+    } catch {
+      /* já parou */
+    }
+  }
+
   // A voz é só a do KAZER (servidor). Sem ela, a frase aparece escrita na
   // legenda pelo tempo de leitura — a voz do aparelho (Google etc.) não é usada.
   function speak(sentence) {
     cancelled = false;
+    // Guarda a resposta inteira (a fila enche rápido e a frase que está tocando
+    // pode ser uma das primeiras): o anti-eco compara com tudo que ele vai dizer.
+    recent.push(sentence);
+    if (recent.length > 40) recent.shift();
     if (cloud?.usable && useCloud) {
       cloud.enqueue(sentence);
       return;
@@ -343,6 +462,8 @@ function browserEngine({ lang, cloud, onLive, onFinal, onIdle, onError, onSpeech
 
   return {
     kind: cloud ? "cloud" : "browser",
+    watch,
+    unwatch,
     setCloud(on) {
       useCloud = Boolean(on);
     },
@@ -355,6 +476,7 @@ function browserEngine({ lang, cloud, onLive, onFinal, onIdle, onError, onSpeech
     },
     level: () => cloud?.level() || 0,
     close() {
+      unwatch();
       stopListening(false);
       cancelSpeech();
       cloud?.close();
@@ -515,7 +637,7 @@ async function gatewayEngine({ session, onLive, onFinal, onError, onSpeechState,
 
 // ---------- Controlador ----------
 
-export function createVoiceMode({ lang = "pt-BR", sendText, stopReply, fetchJson, onState, onLive, onLevel, onError }) {
+export function createVoiceMode({ lang = "pt-BR", sendText, stopReply, fetchJson, onState, onLive, onLevel, onError, onBarge }) {
   let engine = null;
   let state = "idle";
   let open = false;
@@ -527,15 +649,30 @@ export function createVoiceMode({ lang = "pt-BR", sendText, stopReply, fetchJson
   let levelFrame = 0;
   let cloudAvailable = false;
   let muted = false;
+  // Respostas interrompidas: o resto que ainda chegar pelo stream não é falado.
+  const dropped = new Set();
 
   const set = (next, detail = "") => {
     state = next;
     onState(next, detail);
   };
 
+  // A pessoa falou por cima: o KAZER cala na hora e passa a ouvir.
+  function barge() {
+    if (!open || !engine) return;
+    if (replyId) dropped.add(replyId);
+    engine.cancelSpeech();
+    stopReply();
+    replyDone = true;
+    replyId = "";
+    set("ouvindo");
+    onBarge?.();
+  }
+
   function afterSpeech() {
     if (!open) return;
     if (replyDone && !engine?.speaking) {
+      engine?.unwatch?.();
       replyId = "";
       listen();
     }
@@ -579,8 +716,10 @@ export function createVoiceMode({ lang = "pt-BR", sendText, stopReply, fetchJson
       if (code === "not-allowed" || code === "service-not-allowed" || code === "audio-capture") set("erro", code);
     },
     onSpeechState: (speaking) => {
-      if (speaking) set("falando");
-      else afterSpeech();
+      if (speaking) {
+        set("falando");
+        if (!muted) engine?.watch?.(barge, () => Boolean(engine?.speaking) || !replyDone);
+      } else afterSpeech();
     },
     onBoundary: () => onLevel(0.6),
     onVad: (speaking) => onLevel(speaking ? 0.5 : 0),
@@ -653,7 +792,7 @@ export function createVoiceMode({ lang = "pt-BR", sendText, stopReply, fetchJson
     },
     // Texto da resposta chegando (mesmo stream do chat).
     reply(id, content, done) {
-      if (!open || !engine) return;
+      if (!open || !engine || dropped.has(id)) return;
       if (!replyId) {
         replyId = id;
         spokenUpTo = 0;
@@ -677,6 +816,7 @@ export function createVoiceMode({ lang = "pt-BR", sendText, stopReply, fetchJson
       muted = Boolean(on);
       if (!engine) return;
       if (muted) {
+        engine.unwatch?.();
         engine.stopListening(false);
         engine.mute?.(true);
         if (state === "ouvindo" || state === "pausado") set("mudo");
@@ -694,6 +834,8 @@ export function createVoiceMode({ lang = "pt-BR", sendText, stopReply, fetchJson
     tap() {
       if (!engine) return;
       if (state === "falando" || state === "pensando") {
+        if (replyId) dropped.add(replyId);
+        engine.unwatch?.();
         engine.cancelSpeech();
         stopReply();
         replyDone = true;

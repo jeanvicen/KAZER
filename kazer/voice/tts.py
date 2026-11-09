@@ -152,8 +152,9 @@ def _piper_wav(name: str, text: str) -> bytes:
     from piper import SynthesisConfig  # type: ignore[import-not-found]
 
     voice = _piper_voice(name)
-    # Um pouco mais pausado e com variação natural: menos "robô lendo".
-    tuning = SynthesisConfig(length_scale=1.05, noise_scale=0.6, noise_w_scale=0.8)
+    # Mais variação de entonação (menos "robô lendo"); um pouco mais rápido porque
+    # o app toca a 0,94 para deixar o timbre mais grave, no estilo assistente.
+    tuning = SynthesisConfig(length_scale=0.97, noise_scale=0.72, noise_w_scale=0.9)
     buffer = io.BytesIO()
     with wave.open(buffer, "wb") as wav_file:
         voice.synthesize_wav(text, wav_file, syn_config=tuning)  # type: ignore[attr-defined]

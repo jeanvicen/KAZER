@@ -2,6 +2,19 @@
 
 Mudanças que importam para quem usa e para quem opera o KAZER.
 
+## 2026-11 — Conversa por voz como com uma pessoa
+
+### Novo
+- **Interromper falando:** enquanto o KAZER fala, ele continua ouvindo. Se você
+  falar por cima, ele para na hora e responde ao que você disse agora. Um filtro
+  anti-eco ignora o microfone captando a própria voz dele; "para", "espera" e
+  "calma" também interrompem.
+- **Timbre "assistente":** a voz masculina ficou mais grave e serena, com um leve
+  ar de sala; a síntese tem mais variação de entonação (menos "robô lendo").
+- **Jeito de falar humano:** no modo voz o KAZER fala como numa conversa — frases
+  curtas, português falado, sem "Claro!", "Ótima pergunta" nem "Espero ter
+  ajudado", sem repetir aberturas, e pede pra repetir quando não entende.
+
 ## 2026-11 — Voz masculina open source dentro do KAZER
 
 ### Mudou
