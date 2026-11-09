@@ -1159,33 +1159,13 @@ function paintBundle(model) {
   slot.replaceChildren(...(card ? [card] : []));
 }
 
+// Entregas pedidas pela pessoa vão para "Artefatos" (gaveta) sem poluir a
+// resposta: nada de lista de "peças" embaixo do texto.
 function paintArtifacts(model) {
   const strip = model.parts?.made;
-  const items = model.artifacts;
   if (!strip) return;
-  if (!items?.length) {
-    strip.hidden = true;
-    strip.replaceChildren();
-    return;
-  }
-  strip.hidden = false;
-  strip.replaceChildren(
-    h("span.msg__made-label", { text: items.length === 1 ? "Na sua Biblioteca:" : `${items.length} peças na sua Biblioteca:` }),
-    ...items.map((item) =>
-      h(
-        "button.made-chip",
-        {
-          type: "button",
-          onclick: async () => {
-            const { openArtifactById } = await import("./library.js");
-            openArtifactById(item.id);
-          },
-        },
-        icon("book"),
-        h("span", { text: item.title }),
-      ),
-    ),
-  );
+  strip.hidden = true;
+  strip.replaceChildren();
 }
 
 function applyStatus(model) {
@@ -1371,7 +1351,8 @@ const VOICE_LABELS = {
   ouvindo: "Ouvindo",
   pensando: "Pensando",
   falando: "Falando",
-  pausado: "Toque para falar",
+  pausado: "Toque na esfera para falar",
+  mudo: "Microfone desligado",
   erro: "Não deu para usar a voz",
 };
 
@@ -1384,23 +1365,33 @@ const VOICE_ERRORS = {
   overloaded: "A voz está cheia agora. Tente em instantes; o chat por texto continua normal.",
 };
 
+// Tela da conversa por voz, no jeito do ChatGPT: a esfera no centro, um status
+// discreto e uma barra de botões redondos embaixo (microfone, legenda, voz,
+// digitar e o X vermelho para encerrar). A legenda mostra o que foi ouvido.
 function buildVoiceSheet() {
   const label = h("p.vmode__state", { "aria-live": "polite" });
   const badge = h("span", { text: "Microfone ativo" });
   const live = h("p.vmode__live");
   const canvas = h("canvas.vmode__canvas", { "aria-hidden": "true" });
   const orb = h("button.vmode__orb", { type: "button", "aria-label": "Interromper ou falar" }, canvas);
-  const voiceBtn = h("button.vmode__type", { type: "button", "aria-label": "Escolher a voz", "aria-expanded": "false" }, icon("voice"), h("span", { text: "Voz" }));
-  const voices = h("div.vmode__voices", { role: "listbox", "aria-label": "Vozes do aparelho", hidden: true });
-  const end = h("button.vmode__end", { type: "button", "aria-label": "Encerrar conversa por voz" }, icon("close"));
-  const type = h("button.vmode__type", { type: "button", "aria-label": "Voltar a digitar" }, icon("chat"), h("span", { text: "Digitar" }));
+  const voices = h("div.vmode__voices", { role: "listbox", "aria-label": "Vozes", hidden: true });
+  const control = (cls, labelText, iconName) =>
+    h(`button.vmode__ctl.${cls}`, { type: "button", "aria-label": labelText, title: labelText }, icon(iconName));
+  const mic = control("vmode__mic", "Desligar o microfone", "mic");
+  mic.setAttribute("aria-pressed", "false");
+  const captions = control("vmode__cc", "Legenda", "captions");
+  captions.setAttribute("aria-pressed", "true");
+  const voiceBtn = control("vmode__voicebtn", "Escolher a voz", "voice");
+  voiceBtn.setAttribute("aria-expanded", "false");
+  const type = control("vmode__typebtn", "Voltar a digitar", "chat");
+  const end = control("vmode__end", "Encerrar conversa por voz", "close");
   const root = h(
     "section.vmode",
     { role: "dialog", "aria-modal": "true", "aria-label": "Conversa por voz com o KAZER", hidden: true },
-    h("header.vmode__top", {}, h("span.vmode__badge", {}, h("i.vmode__rec", { "aria-hidden": "true" }), badge), end),
-    h("div.vmode__stage", {}, orb, label, live),
+    h("header.vmode__top", {}, h("span.vmode__badge", {}, h("i.vmode__rec", { "aria-hidden": "true" }), badge)),
+    h("div.vmode__stage", {}, orb, live),
     voices,
-    h("footer.vmode__bottom", {}, h("div.vmode__row", {}, type, voiceBtn), h("p.vmode__hint", { text: "Toque no centro para interromper" })),
+    h("footer.vmode__bottom", {}, label, h("div.vmode__bar", {}, mic, captions, voiceBtn, type, end)),
   );
   document.body.append(root);
   root.addEventListener("keydown", (event) => {
@@ -1413,7 +1404,20 @@ function buildVoiceSheet() {
   type.addEventListener("click", () => closeVoiceMode({ focusPrompt: true }));
   orb.addEventListener("click", () => voiceTap?.tap());
   voiceBtn.addEventListener("click", () => toggleVoicePicker());
-  return { root, label, live, orb, badge, canvas, voices, voiceBtn, sphere: null };
+  mic.addEventListener("click", () => {
+    const off = mic.getAttribute("aria-pressed") !== "true";
+    mic.setAttribute("aria-pressed", String(off));
+    mic.setAttribute("aria-label", off ? "Ligar o microfone" : "Desligar o microfone");
+    mic.title = mic.getAttribute("aria-label");
+    mic.replaceChildren(icon(off ? "mic-off" : "mic"));
+    voiceTap?.mute(off);
+  });
+  captions.addEventListener("click", () => {
+    const on = captions.getAttribute("aria-pressed") !== "true";
+    captions.setAttribute("aria-pressed", String(on));
+    root.classList.toggle("is-captionless", !on);
+  });
+  return { root, label, live, orb, badge, canvas, voices, voiceBtn, mic, sphere: null };
 }
 
 // Lista as vozes em português do aparelho, a mais humana primeiro; tocar
@@ -1425,24 +1429,41 @@ async function toggleVoicePicker(force) {
   sheet.voices.hidden = !open;
   sheet.voiceBtn.setAttribute("aria-expanded", String(open));
   if (!open) return;
-  const { listVoices, chosenVoice, chooseVoice, previewVoice } = await voiceModeModule();
+  const { listVoices, chosenVoice, chooseVoice, previewVoice, CLOUD_VOICE } = await voiceModeModule();
   const lang = locale();
+  const cloud = Boolean(voiceTap?.cloudAvailable);
   const list = listVoices(lang);
-  const saved = chosenVoice() || list[0]?.name || "";
-  if (!list.length) {
+  const saved = chosenVoice() || (cloud ? CLOUD_VOICE : list[0]?.name || "");
+  if (!list.length && !cloud) {
     sheet.voices.replaceChildren(h("p.vmode__empty", { text: "Este aparelho não tem vozes em português instaladas. Instale nas configurações de fala do sistema." }));
     return;
   }
+  // Primeira opção: a voz realista do KAZER (gerada no servidor).
+  const realistic = cloud
+    ? h(
+        "button.vmode__voice",
+        { type: "button", role: "option", "aria-selected": String(saved === CLOUD_VOICE) },
+        h("span.vmode__voice-name", { text: "Voz realista do KAZER" }),
+        h("span.vmode__voice-tag", { text: "recomendada" }),
+      )
+    : null;
+  realistic?.addEventListener("click", () => {
+    chooseVoice(CLOUD_VOICE);
+    voiceTap?.useCloudVoice(true);
+    for (const other of sheet.voices.children) other.setAttribute("aria-selected", String(other === realistic));
+  });
   sheet.voices.replaceChildren(
+    ...(realistic ? [realistic] : []),
     ...list.slice(0, 8).map((voice, index) => {
       const item = h(
         "button.vmode__voice",
         { type: "button", role: "option", "aria-selected": String(voice.name === saved) },
         h("span.vmode__voice-name", { text: voice.name.replace(/\s*\(.*?\)\s*/g, " ").trim() || voice.name }),
-        index === 0 ? h("span.vmode__voice-tag", { text: "mais natural" }) : null,
+        index === 0 && !cloud ? h("span.vmode__voice-tag", { text: "mais natural" }) : null,
       );
       item.addEventListener("click", () => {
         chooseVoice(voice.name);
+        voiceTap?.useCloudVoice(false);
         for (const other of sheet.voices.children) other.setAttribute("aria-selected", String(other === item));
         previewVoice(lang);
       });
@@ -1459,6 +1480,10 @@ async function openVoiceMode() {
   const sheet = voiceSheet;
   sheet.root.hidden = false;
   sheet.voices.hidden = true;
+  // Cada conversa por voz começa com o microfone ligado.
+  sheet.mic.setAttribute("aria-pressed", "false");
+  sheet.mic.setAttribute("aria-label", "Desligar o microfone");
+  sheet.mic.replaceChildren(icon("mic"));
   sheet.sphere ||= createOrb(sheet.canvas, { reduced: reducedMotion });
   sheet.sphere.setState("conectando");
   sheet.sphere.start();
@@ -1501,8 +1526,8 @@ async function openVoiceMode() {
       sheet.root.dataset.state = state;
       sheet.sphere?.setState(state);
       // O selo diz a verdade: no motor do navegador o microfone pausa enquanto o KAZER fala.
-      const micOn = state === "ouvindo" || (state !== "erro" && state !== "pausado" && voiceTap?.engineKind === "gateway");
-      sheet.badge.textContent = micOn ? "Microfone ativo" : "Microfone em pausa";
+      const micOn = state === "ouvindo" || (!["erro", "pausado", "mudo"].includes(state) && voiceTap?.engineKind === "gateway");
+      sheet.badge.textContent = state === "mudo" ? "Microfone desligado" : micOn ? "Microfone ativo" : "Microfone em pausa";
       sheet.label.textContent = state === "erro" ? VOICE_ERRORS[detail] || VOICE_LABELS.erro : VOICE_LABELS[state] || "";
       if (state === "ouvindo") haptic(8);
     },

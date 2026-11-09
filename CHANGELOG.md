@@ -2,6 +2,22 @@
 
 Mudanças que importam para quem usa e para quem opera o KAZER.
 
+## 2026-11 — Voz realista, tela de voz estilo ChatGPT e artefatos só quando pedidos
+
+### Novo
+- **Voz realista:** com `ELEVENLABS_API_KEY` ou `OPENAI_API_KEY` configurada, a
+  conversa por voz fala com voz neural gerada no servidor (`/api/voice/tts`),
+  frase a frase, e a esfera segue o volume real da voz. Sem chave, voz do aparelho.
+- **Tela de voz como a do ChatGPT:** esfera grande, legenda e uma barra de botões
+  redondos: microfone (desligar/ligar), legenda, voz, digitar e o X vermelho.
+
+### Mudou
+- **Artefatos só quando a pessoa pede uma entrega** (site, arquivo, PDF, slides,
+  planilha, "me manda o arquivo", "refaz"...). Pergunta de como fazer ou conversa
+  comum não cria nada, mesmo com exemplos de código na resposta.
+- Saiu a lista "peças na sua Biblioteca" embaixo das respostas; as entregas
+  pedidas continuam em Artefatos, na gaveta.
+
 ## 2026-11 — Visual refinado (estilo buscador de respostas)
 
 ### Melhor

@@ -14,7 +14,7 @@ _ALLOWED_SECRETS: Mapping[str, frozenset[str]] = {
     # Cobrança: só o servidor cria sessões de pagamento.
     "payments": frozenset({"STRIPE_SECRET_KEY", "STRIPE_WEBHOOK_SECRET"}),
     # Modo voz: segredo compartilhado que assina os tokens curtos do voice gateway.
-    "voice": frozenset({"KAZER_VOICE_TOKEN_SECRET"}),
+    "voice": frozenset({"KAZER_VOICE_TOKEN_SECRET", "ELEVENLABS_API_KEY", "OPENAI_API_KEY"}),
     # Chaves do provedor de modelo: lidas só pelo adaptador, nunca expostas ao navegador.
     "model": frozenset(
         {

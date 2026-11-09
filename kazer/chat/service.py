@@ -1578,13 +1578,13 @@ class ChatService:
 
     def _finish_reply(self, live: Any, answer: str, question: str, name_it: bool) -> None:
         """Depois da resposta pronta: guarda os artefatos e dá nome à conversa."""
-        self._save_artifacts(live, answer)
+        self._save_artifacts(live, answer, question)
         if name_it:
             self._name_conversation(live, answer, question)
 
-    def _save_artifacts(self, live: Any, answer: str) -> None:
-        """Extrai os artefatos da resposta e avisa a interface do que apareceu."""
-        drafts = artifacts.extract(answer)
+    def _save_artifacts(self, live: Any, answer: str, question: str = "") -> None:
+        """Guarda artefatos só quando a pessoa pediu uma entrega (arquivo, slide, site...)."""
+        drafts = artifacts.extract(answer, question)
         if not drafts:
             return
         saver = getattr(self._store, "save_artifacts", None)

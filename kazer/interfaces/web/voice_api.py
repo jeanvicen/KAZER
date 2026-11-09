@@ -23,12 +23,13 @@ from kazer.config.settings import Settings
 from kazer.interfaces.web.common import WebContext, endpoint
 from kazer.security.rate_limiter import RateLimit, RateLimiter
 from kazer.security.secrets import EnvironmentSecretProvider, SecretNotConfiguredError
-from kazer.voice import tokens
+from kazer.voice import tokens, tts
 
 logger = logging.getLogger("kazer.voice")
 
 PROTOCOL = "kazer-voice/1"
 SESSION_LIMIT = RateLimit(20, 600)  # 20 sessões de voz a cada 10 min por conta
+TTS_LIMIT = RateLimit(400, 3600)  # trechos falados por hora por conta (cada um = 1-2 frases)
 
 
 def voice_routes(ctx: WebContext, settings: Settings) -> list[Route]:
@@ -54,8 +55,30 @@ def voice_routes(ctx: WebContext, settings: Settings) -> list[Route]:
                 # O motor do navegador sempre existe como reserva (texto só).
                 "engines": ["gateway", "browser"] if enabled else ["browser"],
                 "gateway": {"url": gateway} if enabled else None,
+                # Voz realista gerada no servidor (sem chave: voz do aparelho).
+                "tts": {"provider": speech.provider} if (speech := tts.load_config()) else None,
             }
         )
+
+    @endpoint
+    async def speak(request: Request) -> Response:
+        """Um trecho curto de texto vira MP3 com voz neural (nada é guardado)."""
+        user, _ = await ctx.user(request)
+        data = await ctx.read_json(request, limit=4096)
+        text = data.get("text")
+        if not isinstance(text, str) or not text.strip() or len(text) > tts.MAX_TTS_CHARS * 2:
+            raise AuthError("invalid_request", 400)
+        speech = tts.load_config()
+        if speech is None:
+            raise AuthError("voice_unavailable", 503)
+        wait = limiter.hit(f"tts:{user.id}", TTS_LIMIT)
+        if wait > 0:
+            raise AuthError("rate_limited", 429, retry_after=wait)
+        try:
+            audio = await run_in_threadpool(tts.synthesize, speech, text)
+        except tts.TTSError:
+            raise AuthError("voice_failed", 502) from None
+        return Response(audio, media_type="audio/mpeg", headers={"Cache-Control": "no-store"})
 
     @endpoint
     async def session(request: Request) -> Response:
@@ -88,4 +111,5 @@ def voice_routes(ctx: WebContext, settings: Settings) -> list[Route]:
     return [
         Route("/api/voice/config", config, methods=["GET"]),
         Route("/api/voice/session", session, methods=["POST"]),
+        Route("/api/voice/tts", speak, methods=["POST"]),
     ]

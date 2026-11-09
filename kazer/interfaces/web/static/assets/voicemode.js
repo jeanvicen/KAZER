@@ -155,7 +155,121 @@ export function previewVoice(lang, text = "Oi! Eu sou o KAZER. É assim que eu f
   synth.speak(utterance);
 }
 
-function browserEngine({ lang, onLive, onFinal, onIdle, onError, onSpeechState, onBoundary }) {
+// ---------- Voz realista do servidor (/api/voice/tts) ----------
+//
+// Cada frase vira MP3 no servidor (ElevenLabs ou OpenAI, conforme a chave
+// configurada). A próxima já é pedida enquanto a atual toca, para não haver
+// pausa entre frases. A esfera segue o volume real do áudio (AnalyserNode).
+// Uma frase que falhar é dita com a voz do aparelho; duas falhas seguidas e o
+// resto da conversa usa a voz do aparelho.
+
+export const CLOUD_VOICE = "kazer-realista";
+
+function createCloudVoice({ onSpeechState, fallback }) {
+  const context = new (window.AudioContext || window.webkitAudioContext)();
+  const analyser = context.createAnalyser();
+  analyser.fftSize = 512;
+  analyser.connect(context.destination);
+  const levels = new Uint8Array(analyser.fftSize);
+  let items = []; // { text, audio: Promise<AudioBuffer|null> }
+  let playing = null;
+  let controller = new AbortController();
+  let failures = 0;
+  let generation = 0;
+
+  async function fetchAudio(text, signal) {
+    try {
+      const response = await fetch("/api/voice/tts", {
+        method: "POST",
+        credentials: "same-origin",
+        headers: { "Content-Type": "application/json", Accept: "audio/mpeg" },
+        body: JSON.stringify({ text }),
+        signal,
+      });
+      if (!response.ok) throw new Error(String(response.status));
+      const buffer = await response.arrayBuffer();
+      failures = 0;
+      return await context.decodeAudioData(buffer);
+    } catch (error) {
+      if (signal.aborted) return null;
+      failures += 1;
+      return null;
+    }
+  }
+
+  async function pump() {
+    if (playing || !items.length) return;
+    const mine = generation;
+    const item = items[0];
+    playing = item;
+    onSpeechState(true);
+    const audio = await item.audio;
+    if (mine !== generation) return;
+    if (audio) {
+      await new Promise((resolve) => {
+        const node = context.createBufferSource();
+        node.buffer = audio;
+        node.connect(analyser);
+        node.onended = resolve;
+        item.node = node;
+        node.start();
+      });
+    } else if (failures) {
+      await fallback(item.text);
+    }
+    if (mine !== generation) return;
+    items.shift();
+    playing = null;
+    // Pede com antecedência a frase depois da próxima.
+    if (items[1] && !items[1].audio) items[1].audio = fetchAudio(items[1].text, controller.signal);
+    if (items.length) pump();
+    else onSpeechState(false);
+  }
+
+  return {
+    get usable() {
+      return failures < 2;
+    },
+    get busy() {
+      return Boolean(playing || items.length);
+    },
+    start() {
+      return context.resume().catch(() => {});
+    },
+    enqueue(text) {
+      const item = { text, audio: null };
+      // Só as duas primeiras da fila são pedidas já; as outras quando chegar a vez.
+      if (items.length < 2) item.audio = fetchAudio(text, controller.signal);
+      items.push(item);
+      pump();
+    },
+    cancel() {
+      generation += 1;
+      controller.abort();
+      controller = new AbortController();
+      try {
+        playing?.node?.stop();
+      } catch {
+        /* já parou */
+      }
+      items = [];
+      playing = null;
+    },
+    level() {
+      if (!playing) return 0;
+      analyser.getByteTimeDomainData(levels);
+      let sum = 0;
+      for (const value of levels) sum += ((value - 128) / 128) ** 2;
+      return Math.min(1, Math.sqrt(sum / levels.length) * 4);
+    },
+    close() {
+      this.cancel();
+      context.close().catch(() => {});
+    },
+  };
+}
+
+function browserEngine({ lang, cloud, onLive, onFinal, onIdle, onError, onSpeechState, onBoundary }) {
   let recognition = null;
   let listening = false;
   let queue = 0;
@@ -208,7 +322,29 @@ function browserEngine({ lang, onLive, onFinal, onIdle, onError, onSpeechState, 
     }
   }
 
+  function speakDevice(sentence) {
+    return new Promise((resolve) => {
+      if (!synth) {
+        resolve();
+        return;
+      }
+      const utterance = new SpeechSynthesisUtterance(sentence);
+      utterance.lang = lang;
+      setVoice(utterance, pickVoice(lang));
+      utterance.onend = resolve;
+      utterance.onerror = resolve;
+      synth.speak(utterance);
+    });
+  }
+
+  let useCloud = true;
+
   function speak(sentence) {
+    if (cloud?.usable && useCloud) {
+      cancelled = false;
+      cloud.enqueue(sentence);
+      return;
+    }
     if (!synth) return;
     cancelled = false;
     const utterance = new SpeechSynthesisUtterance(sentence);
@@ -231,22 +367,28 @@ function browserEngine({ lang, onLive, onFinal, onIdle, onError, onSpeechState, 
   function cancelSpeech() {
     cancelled = true;
     queue = 0;
+    cloud?.cancel();
     synth?.cancel();
   }
 
   return {
-    kind: "browser",
+    kind: cloud ? "cloud" : "browser",
+    speakDevice,
+    setCloud(on) {
+      useCloud = Boolean(on);
+    },
     listen,
     stopListening,
     speak,
     cancelSpeech,
     get speaking() {
-      return queue > 0;
+      return queue > 0 || Boolean(cloud?.busy);
     },
-    level: () => 0,
+    level: () => cloud?.level() || 0,
     close() {
       stopListening(false);
       cancelSpeech();
+      cloud?.close();
     },
   };
 }
@@ -414,6 +556,8 @@ export function createVoiceMode({ lang = "pt-BR", sendText, stopReply, fetchJson
   let replyDone = false;
   let idleTries = 0;
   let levelFrame = 0;
+  let cloudAvailable = false;
+  let muted = false;
 
   const set = (next, detail = "") => {
     state = next;
@@ -430,6 +574,11 @@ export function createVoiceMode({ lang = "pt-BR", sendText, stopReply, fetchJson
 
   function listen() {
     if (!open || !engine) return;
+    // Microfone desligado pela pessoa: o KAZER fala, mas não volta a ouvir.
+    if (muted) {
+      set("mudo");
+      return;
+    }
     set("ouvindo");
     onLive("");
     engine.listen();
@@ -473,7 +622,7 @@ export function createVoiceMode({ lang = "pt-BR", sendText, stopReply, fetchJson
   function tickLevel() {
     if (!open) return;
     const value = engine?.level?.() || 0;
-    if (engine?.kind === "gateway") onLevel(value);
+    if (engine?.kind === "gateway" || engine?.kind === "cloud") onLevel(value);
     levelFrame = window.requestAnimationFrame(tickLevel);
   }
 
@@ -484,6 +633,13 @@ export function createVoiceMode({ lang = "pt-BR", sendText, stopReply, fetchJson
     get engineKind() {
       return engine?.kind || "";
     },
+    get cloudAvailable() {
+      return cloudAvailable;
+    },
+    // Escolha no seletor: voz realista do servidor ou uma voz do aparelho.
+    useCloudVoice(on) {
+      engine?.setCloud?.(on);
+    },
     async start({ conversationId } = {}) {
       open = true;
       set("conectando");
@@ -493,6 +649,7 @@ export function createVoiceMode({ lang = "pt-BR", sendText, stopReply, fetchJson
       } catch {
         /* sem config: navegador */
       }
+      cloudAvailable = Boolean(config.tts);
       if (config.engines?.[0] === "gateway") {
         try {
           const session = await fetchJson("/api/voice/session", { method: "POST", body: { conversation_id: conversationId || null } });
@@ -506,7 +663,22 @@ export function createVoiceMode({ lang = "pt-BR", sendText, stopReply, fetchJson
           set("erro", "unsupported");
           return;
         }
-        engine = browserEngine(handlers);
+        // Voz realista do servidor, a menos que a pessoa tenha escolhido uma voz do aparelho.
+        const saved = chosenVoice();
+        let cloud = null;
+        if (config.tts) {
+          let device = null;
+          cloud = createCloudVoice({
+            onSpeechState: (speaking) => handlers.onSpeechState(speaking),
+            fallback: (text) => device?.speakDevice(text),
+          });
+          await cloud.start();
+          engine = browserEngine({ ...handlers, cloud });
+          device = engine;
+          engine.setCloud(!saved || saved === CLOUD_VOICE);
+        } else {
+          engine = browserEngine(handlers);
+        }
         // Algumas vozes carregam depois: pede a lista cedo.
         synth.getVoices();
       }
@@ -538,6 +710,25 @@ export function createVoiceMode({ lang = "pt-BR", sendText, stopReply, fetchJson
       }
     },
     // Tocar no centro: interrompe a fala e volta a ouvir; ouvindo, fecha a fala.
+    // Botão do microfone (como no ChatGPT): desliga/religa a escuta.
+    mute(on) {
+      muted = Boolean(on);
+      if (!engine) return;
+      if (muted) {
+        engine.stopListening(false);
+        engine.mute?.(true);
+        if (state === "ouvindo" || state === "pausado") set("mudo");
+      } else {
+        engine.mute?.(false);
+        if (state === "mudo" || state === "pausado") {
+          idleTries = 0;
+          listen();
+        }
+      }
+    },
+    get muted() {
+      return muted;
+    },
     tap() {
       if (!engine) return;
       if (state === "falando" || state === "pensando") {
@@ -548,6 +739,8 @@ export function createVoiceMode({ lang = "pt-BR", sendText, stopReply, fetchJson
         listen();
       } else if (state === "ouvindo") {
         engine.stopListening(true);
+      } else if (state === "mudo") {
+        return;
       } else if (state === "pausado" || state === "erro") {
         idleTries = 0;
         listen();

@@ -479,3 +479,57 @@ def test_voice_conversation_prompt_asks_for_short_spoken_answers() -> None:
     written = context.system_prompt(**common)
     assert "Conversa por VOZ" in spoken and "Conversa por VOZ" not in written
     assert "markdown" in spoken.split("Conversa por VOZ", 1)[1]
+
+
+# ---------- Voz realista no servidor ----------
+
+
+def test_tts_endpoint_uses_provider_and_never_leaks_key(
+    web: TestClient, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    import httpx
+
+    from kazer.voice import tts
+
+    login(web)
+    assert web.get("/api/voice/config").json()["tts"] is None
+    assert web.post("/api/voice/tts", json={"text": "Oi"}).json()["error"] == "voice_unavailable"
+
+    monkeypatch.setenv("OPENAI_API_KEY", "sk-teste-nunca-sai")
+    seen: dict = {}
+
+    def fake_post(self, url, **kw):  # type: ignore[no-untyped-def]
+        seen.update(url=url, json=kw.get("json"), headers=kw.get("headers"))
+        return httpx.Response(200, content=b"ID3mp3")
+
+    monkeypatch.setattr(httpx.Client, "post", fake_post)
+    config = web.get("/api/voice/config").json()
+    assert config["tts"] == {"provider": "openai"} and "sk-teste" not in str(config)
+    response = web.post("/api/voice/tts", json={"text": "**Oi!** Veja [1] https://x.com agora."})
+    assert response.status_code == 200 and response.content == b"ID3mp3"
+    assert response.headers["content-type"] == "audio/mpeg"
+    assert seen["url"].endswith("/audio/speech") and seen["json"]["model"] == tts.OPENAI_MODEL
+    assert seen["json"]["input"] == "Oi! Veja agora."
+    assert web.post("/api/voice/tts", json={"text": "x" * 2000}).status_code == 400
+    evil = web.post(
+        "/api/voice/tts", json={"text": "oi"}, headers={"Origin": "https://evil.example"}
+    )
+    assert evil.status_code == 403
+
+
+def test_tts_prefers_elevenlabs_and_reports_failures(monkeypatch: pytest.MonkeyPatch) -> None:
+    import httpx
+
+    from kazer.voice import tts
+
+    monkeypatch.setenv("OPENAI_API_KEY", "sk-a")
+    monkeypatch.setenv("ELEVENLABS_API_KEY", "el-b")
+    config = tts.load_config()
+    assert config is not None and config.provider == "elevenlabs"
+    monkeypatch.setenv("KAZER_TTS_PROVIDER", "openai")
+    assert tts.load_config().provider == "openai"  # type: ignore[union-attr]
+    client = httpx.Client(transport=httpx.MockTransport(lambda request: httpx.Response(401)))
+    with pytest.raises(tts.TTSError):
+        tts.synthesize(config, "Olá, tudo bem?", client)
+    with pytest.raises(tts.TTSError):
+        tts.synthesize(config, "```python\n```", client)

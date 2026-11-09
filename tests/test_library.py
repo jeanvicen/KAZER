@@ -123,7 +123,8 @@ def test_the_library_mixes_what_was_sent_and_what_was_made(
             headers={"Content-Type": "image/png", "X-File-Name": "foto.png"},
         )
         assert upload.status_code == 201, upload.text
-        send(client, "olha essa foto", attachments=[upload.json()["attachment"]["id"]])
+        photo = [upload.json()["attachment"]["id"]]
+        send(client, "olha essa foto e faz uma página com ela", attachments=photo)
 
         tudo = client.get("/api/library").json()["items"]
         assert {row["source"] for row in tudo} == {"pessoa", "kazer"}

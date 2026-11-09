@@ -7591,7 +7591,8 @@ html.is-voice-mode body {
 .vmode[data-state="falando"] .vmode__rec,
 .vmode[data-state="pensando"] .vmode__rec,
 .vmode[data-state="pausado"] .vmode__rec,
-.vmode[data-state="erro"] .vmode__rec {
+.vmode[data-state="erro"] .vmode__rec,
+.vmode[data-state="mudo"] .vmode__rec {
   background: var(--c-text-3);
 }
 
@@ -7840,4 +7841,118 @@ html[data-motion="reduzido"] .composer__box .send {
   padding: 0.6rem;
   color: var(--c-text-2);
   font-size: 0.9rem;
+}
+
+/* ---------- Conversa por voz no jeito do ChatGPT ----------
+ * Esfera grande no centro, legenda logo abaixo, status discreto e uma barra de
+ * botões redondos: microfone, legenda, voz, digitar e o X vermelho. */
+
+.vmode__top {
+  justify-content: flex-start;
+}
+
+.vmode__stage {
+  gap: 1.75rem;
+}
+
+.vmode__orb {
+  width: min(78vw, 20rem);
+}
+
+.vmode__live {
+  min-height: 4.5em;
+  max-width: 30ch;
+  color: var(--c-text-2);
+  font-size: 1.0625rem;
+  line-height: 1.5;
+  text-wrap: balance;
+}
+
+.vmode.is-captionless .vmode__live {
+  visibility: hidden;
+}
+
+.vmode__bottom {
+  gap: 1rem;
+}
+
+.vmode__state {
+  margin: 0;
+  color: var(--c-text-2);
+  font-size: 0.875rem;
+  font-weight: 500;
+  letter-spacing: 0;
+}
+
+.vmode__bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(0.6rem, 3.5vw, 1rem);
+}
+
+.vmode__ctl {
+  display: grid;
+  place-items: center;
+  width: 3.5rem;
+  height: 3.5rem;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: rgb(var(--ov) / 0.09);
+  color: var(--c-text);
+  cursor: pointer;
+  transition: background-color 160ms linear, color 160ms linear, transform 140ms var(--spring);
+}
+
+.vmode__ctl:hover {
+  background: rgb(var(--ov) / 0.15);
+}
+
+.vmode__ctl:active {
+  transform: scale(0.94);
+}
+
+.vmode__ctl svg {
+  width: 1.4rem;
+  height: 1.4rem;
+}
+
+.vmode__ctl:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 3px;
+}
+
+/* Microfone desligado: botão claro com o ícone riscado, como no ChatGPT. */
+.vmode__mic[aria-pressed="true"] {
+  background: var(--c-text);
+  color: var(--c-bg);
+}
+
+.vmode__cc[aria-pressed="false"] {
+  color: var(--c-text-3);
+}
+
+.vmode__voicebtn[aria-expanded="true"] {
+  background: rgb(var(--ov) / 0.18);
+}
+
+.vmode__ctl.vmode__end {
+  background: #e5484d;
+  color: #fff;
+}
+
+.vmode__ctl.vmode__end:hover {
+  background: #f05a5f;
+}
+
+.vmode__voices {
+  bottom: calc(max(env(safe-area-inset-bottom), 1rem) + 6.5rem);
+}
+
+@media (max-width: 22rem) {
+  .vmode__ctl {
+    width: 3.1rem;
+    height: 3.1rem;
+  }
 }

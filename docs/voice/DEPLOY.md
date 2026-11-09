@@ -20,6 +20,19 @@ motor do navegador (funciona do jeito que está hoje).
 - `KAZER_VOICE_STT_MODEL` (padrão `small`), `KAZER_VOICE_TTS_VOICE` (padrão `pf_dora`)
 - `PORT` / `KAZER_VOICE_PORT`, `KAZER_VOICE_HOST`, `KAZER_LOG_LEVEL`
 
+### Voz realista sem servidor próprio (mais rápido de ligar)
+
+Basta **uma** destas chaves na Vercel (segredo, só no servidor):
+- `ELEVENLABS_API_KEY` — a voz mais natural em português (modelo
+  `eleven_flash_v2_5`); `KAZER_TTS_VOICE` escolhe o voice_id.
+- `OPENAI_API_KEY` — `gpt-4o-mini-tts`, a família de voz do ChatGPT, instruída a
+  falar em português do Brasil; `KAZER_TTS_VOICE` escolhe a voz (padrão `coral`).
+
+`KAZER_TTS_PROVIDER` (`elevenlabs` ou `openai`) força um dos dois. Com a chave, a
+conversa por voz passa a usar `/api/voice/tts` (frase a frase, sem guardar nada)
+e a esfera segue o volume real da voz. São serviços pagos por uso: confira o
+preço no painel do provedor. Sem chave, fica a voz do aparelho.
+
 ## 2. Local
 
 ```bash
