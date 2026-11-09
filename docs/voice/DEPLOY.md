@@ -20,9 +20,24 @@ motor do navegador (funciona do jeito que está hoje).
 - `KAZER_VOICE_STT_MODEL` (padrão `small`), `KAZER_VOICE_TTS_VOICE` (padrão `pf_dora`)
 - `PORT` / `KAZER_VOICE_PORT`, `KAZER_VOICE_HOST`, `KAZER_LOG_LEVEL`
 
-### Voz realista sem servidor próprio (mais rápido de ligar)
+### Voz do KAZER (padrão, sem chave): Piper open source
 
-Basta **uma** destas chaves na Vercel (segredo, só no servidor):
+Por padrão o próprio servidor do KAZER fala com o **Piper** (piper-tts, código
+GPL-3.0), voz masculina pt-BR **`pt_BR-cadu-medium`** (`KAZER_PIPER_VOICE` troca
+para `pt_BR-faber-medium`). Na primeira fala, o servidor baixa a voz (~63 MB) de
+`huggingface.co/rhasspy/piper-voices` (revisão fixa v1.0.0) para `/tmp` e reaproveita
+enquanto a instância estiver viva. `KAZER_PIPER_BASE_URL` aponta para um espelho
+próprio; `KAZER_PIPER_DIR` muda a pasta. Medido aqui (CPU): 5,9 s de fala gerados
+em 0,26 s; primeira fala 1,7 s (carrega o modelo). A voz do aparelho (Google etc.)
+não é usada na conversa por voz.
+
+Pendente: conferir a licença do conjunto de dados da voz "cadu" no model card do
+Hugging Face (rede bloqueada nesta sessão) antes de uso comercial.
+
+### Vozes pagas (opcional, só com escolha explícita)
+
+`KAZER_TTS_PROVIDER=elevenlabs` ou `openai`, com a chave correspondente na Vercel
+(segredo, só no servidor). `KAZER_TTS_PROVIDER=none` desliga a voz no servidor.
 - `ELEVENLABS_API_KEY` — a voz mais natural em português (modelo
   `eleven_flash_v2_5`); `KAZER_TTS_VOICE` escolhe o voice_id.
 - `OPENAI_API_KEY` — `gpt-4o-mini-tts`, a família de voz do ChatGPT, instruída a

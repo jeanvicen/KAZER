@@ -7956,3 +7956,7 @@ html[data-motion="reduzido"] .composer__box .send {
     height: 3.1rem;
   }
 }
+
+.vmode__live[data-speaker="kazer"] {
+  color: var(--c-text);
+}

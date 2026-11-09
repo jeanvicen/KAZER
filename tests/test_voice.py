@@ -481,35 +481,35 @@ def test_voice_conversation_prompt_asks_for_short_spoken_answers() -> None:
     assert "markdown" in spoken.split("Conversa por VOZ", 1)[1]
 
 
-# ---------- Voz realista no servidor ----------
+# ---------- Voz do KAZER no servidor ----------
 
 
-def test_tts_endpoint_uses_provider_and_never_leaks_key(
+def _wav() -> bytes:
+    import io
+    import wave
+
+    buffer = io.BytesIO()
+    with wave.open(buffer, "wb") as handle:
+        handle.setnchannels(1)
+        handle.setsampwidth(2)
+        handle.setframerate(22050)
+        handle.writeframes(tone(200))
+    return buffer.getvalue()
+
+
+def test_default_voice_is_open_source_piper(
     web: TestClient, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    import httpx
-
     from kazer.voice import tts
 
     login(web)
-    assert web.get("/api/voice/config").json()["tts"] is None
-    assert web.post("/api/voice/tts", json={"text": "Oi"}).json()["error"] == "voice_unavailable"
-
-    monkeypatch.setenv("OPENAI_API_KEY", "sk-teste-nunca-sai")
-    seen: dict = {}
-
-    def fake_post(self, url, **kw):  # type: ignore[no-untyped-def]
-        seen.update(url=url, json=kw.get("json"), headers=kw.get("headers"))
-        return httpx.Response(200, content=b"ID3mp3")
-
-    monkeypatch.setattr(httpx.Client, "post", fake_post)
-    config = web.get("/api/voice/config").json()
-    assert config["tts"] == {"provider": "openai"} and "sk-teste" not in str(config)
+    spoken: list[tuple[str, str]] = []
+    monkeypatch.setattr(tts, "_piper_wav", lambda name, text: spoken.append((name, text)) or _wav())
+    assert web.get("/api/voice/config").json()["tts"] == {"provider": "piper"}
     response = web.post("/api/voice/tts", json={"text": "**Oi!** Veja [1] https://x.com agora."})
-    assert response.status_code == 200 and response.content == b"ID3mp3"
-    assert response.headers["content-type"] == "audio/mpeg"
-    assert seen["url"].endswith("/audio/speech") and seen["json"]["model"] == tts.OPENAI_MODEL
-    assert seen["json"]["input"] == "Oi! Veja agora."
+    assert response.status_code == 200
+    assert response.headers["content-type"] == "audio/wav"
+    assert spoken == [("pt_BR-cadu-medium", "Oi! Veja agora.")]
     assert web.post("/api/voice/tts", json={"text": "x" * 2000}).status_code == 400
     evil = web.post(
         "/api/voice/tts", json={"text": "oi"}, headers={"Origin": "https://evil.example"}
@@ -517,19 +517,73 @@ def test_tts_endpoint_uses_provider_and_never_leaks_key(
     assert evil.status_code == 403
 
 
-def test_tts_prefers_elevenlabs_and_reports_failures(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_voice_can_be_turned_off_or_switched(monkeypatch: pytest.MonkeyPatch) -> None:
+    from kazer.voice import tts
+
+    monkeypatch.setenv("KAZER_TTS_PROVIDER", "none")
+    assert tts.load_config() is None
+    monkeypatch.setenv("KAZER_TTS_PROVIDER", "")
+    monkeypatch.setenv("KAZER_PIPER_VOICE", "pt_BR-faber-medium")
+    assert tts.load_config().voice == "pt_BR-faber-medium"  # type: ignore[union-attr]
+    monkeypatch.setenv("KAZER_PIPER_VOICE", "../../etc/passwd")
+    assert tts.load_config().voice == tts.PIPER_DEFAULT_VOICE  # type: ignore[union-attr]
+    # Pagos só com escolha explícita, mesmo que a chave exista.
+    monkeypatch.setenv("OPENAI_API_KEY", "sk-a")
+    assert tts.load_config().provider == "piper"  # type: ignore[union-attr]
+    monkeypatch.setenv("KAZER_TTS_PROVIDER", "openai")
+    assert tts.load_config().provider == "openai"  # type: ignore[union-attr]
+
+
+def test_paid_provider_never_leaks_key(web: TestClient, monkeypatch: pytest.MonkeyPatch) -> None:
     import httpx
 
     from kazer.voice import tts
 
-    monkeypatch.setenv("OPENAI_API_KEY", "sk-a")
-    monkeypatch.setenv("ELEVENLABS_API_KEY", "el-b")
-    config = tts.load_config()
-    assert config is not None and config.provider == "elevenlabs"
+    login(web)
     monkeypatch.setenv("KAZER_TTS_PROVIDER", "openai")
-    assert tts.load_config().provider == "openai"  # type: ignore[union-attr]
+    monkeypatch.setenv("OPENAI_API_KEY", "sk-teste-nunca-sai")
+    seen: dict = {}
+
+    def fake_post(self, url, **kw):  # type: ignore[no-untyped-def]
+        seen.update(url=url, json=kw.get("json"))
+        return httpx.Response(200, content=b"ID3mp3")
+
+    original = httpx.Client.post
+    monkeypatch.setattr(httpx.Client, "post", fake_post)
+    config = web.get("/api/voice/config").json()
+    assert config["tts"] == {"provider": "openai"} and "sk-teste" not in str(config)
+    response = web.post("/api/voice/tts", json={"text": "Olá"})
+    assert response.status_code == 200 and response.headers["content-type"] == "audio/mpeg"
+    assert seen["json"]["model"] == tts.OPENAI_MODEL
+    monkeypatch.setattr(httpx.Client, "post", original)
     client = httpx.Client(transport=httpx.MockTransport(lambda request: httpx.Response(401)))
     with pytest.raises(tts.TTSError):
-        tts.synthesize(config, "Olá, tudo bem?", client)
-    with pytest.raises(tts.TTSError):
-        tts.synthesize(config, "```python\n```", client)
+        tts.synthesize(tts.load_config(), "Olá, tudo bem?", client)  # type: ignore[arg-type]
+
+
+def test_piper_failure_is_reported(web: TestClient, monkeypatch: pytest.MonkeyPatch) -> None:
+    from kazer.voice import tts
+
+    login(web)
+
+    def broken(name: str, text: str) -> bytes:
+        raise tts.TTSError("download")
+
+    monkeypatch.setattr(tts, "_piper_wav", broken)
+    assert web.post("/api/voice/tts", json={"text": "Olá"}).json()["error"] == "voice_failed"
+
+
+def test_real_piper_voice_when_model_is_available() -> None:
+    """Roda a voz de verdade só se o modelo estiver no disco (não baixa nada no CI)."""
+    import io
+    import os
+    import wave
+
+    from kazer.voice import tts
+
+    folder = os.environ.get("KAZER_PIPER_DIR", "")
+    if not folder or not os.path.exists(os.path.join(folder, "pt_BR-cadu-medium.onnx")):
+        pytest.skip("modelo da voz não está no disco")
+    audio = tts.synthesize(tts.load_config({}), "Olá! Eu sou o KAZER.")  # type: ignore[arg-type]
+    with wave.open(io.BytesIO(audio)) as handle:
+        assert handle.getframerate() == 22050 and handle.getnframes() > 22050 // 2

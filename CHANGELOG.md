@@ -2,7 +2,15 @@
 
 Mudanças que importam para quem usa e para quem opera o KAZER.
 
-## 2026-11 — Voz realista, tela de voz estilo ChatGPT e artefatos só quando pedidos
+## 2026-11 — Voz masculina open source dentro do KAZER
+
+### Mudou
+- **A conversa por voz fala com a voz do próprio KAZER:** Piper (open source),
+  voz masculina em português do Brasil ("cadu"), gerada no servidor do KAZER, sem
+  chave e sem custo por uso. A voz do aparelho (Google) saiu da conversa por voz.
+- A legenda mostra o que você disse (cinza) e o que o KAZER está falando (branco).
+- Saiu o seletor de vozes do aparelho; vozes pagas só se configuradas de propósito.
+
 
 ### Novo
 - **Voz realista:** com `ELEVENLABS_API_KEY` ou `OPENAI_API_KEY` configurada, a

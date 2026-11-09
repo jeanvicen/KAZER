@@ -78,7 +78,9 @@ def voice_routes(ctx: WebContext, settings: Settings) -> list[Route]:
             audio = await run_in_threadpool(tts.synthesize, speech, text)
         except tts.TTSError:
             raise AuthError("voice_failed", 502) from None
-        return Response(audio, media_type="audio/mpeg", headers={"Cache-Control": "no-store"})
+        return Response(
+            audio, media_type=tts.media_type(speech), headers={"Cache-Control": "no-store"}
+        )
 
     @endpoint
     async def session(request: Request) -> Response:

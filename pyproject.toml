@@ -19,6 +19,8 @@ dependencies = [
     "pypdf>=4,<7",
     # SDK oficial da Anthropic: modelos Claude dos planos pagos.
     "anthropic>=2,<3",
+    # Voz do KAZER: Piper (open source, GPL-3.0), voz masculina pt-BR em CPU.
+    "piper-tts>=1.8,<2",
 ]
 
 [project.optional-dependencies]

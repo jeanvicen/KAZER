@@ -144,17 +144,6 @@ function pickVoice(lang) {
   return voices.find((voice) => voice.name === saved) || voices[0] || null;
 }
 
-// Fala um exemplo com a voz escolhida (para a pessoa comparar).
-export function previewVoice(lang, text = "Oi! Eu sou o KAZER. É assim que eu falo.") {
-  if (!synth) return;
-  synth.cancel();
-  const utterance = new SpeechSynthesisUtterance(text);
-  utterance.lang = lang;
-  const voice = pickVoice(lang);
-  setVoice(utterance, voice);
-  synth.speak(utterance);
-}
-
 // ---------- Voz realista do servidor (/api/voice/tts) ----------
 //
 // Cada frase vira MP3 no servidor (ElevenLabs ou OpenAI, conforme a chave
@@ -165,7 +154,7 @@ export function previewVoice(lang, text = "Oi! Eu sou o KAZER. É assim que eu f
 
 export const CLOUD_VOICE = "kazer-realista";
 
-function createCloudVoice({ onSpeechState, fallback }) {
+function createCloudVoice({ onSpeechState, onCaption }) {
   const context = new (window.AudioContext || window.webkitAudioContext)();
   const analyser = context.createAnalyser();
   analyser.fftSize = 512;
@@ -205,6 +194,7 @@ function createCloudVoice({ onSpeechState, fallback }) {
     onSpeechState(true);
     const audio = await item.audio;
     if (mine !== generation) return;
+    onCaption?.(item.text);
     if (audio) {
       await new Promise((resolve) => {
         const node = context.createBufferSource();
@@ -214,8 +204,9 @@ function createCloudVoice({ onSpeechState, fallback }) {
         item.node = node;
         node.start();
       });
-    } else if (failures) {
-      await fallback(item.text);
+    } else {
+      // Sem áudio desta frase: fica escrita na legenda pelo tempo de leitura.
+      await new Promise((done) => setTimeout(done, Math.min(9000, 900 + item.text.length * 55)));
     }
     if (mine !== generation) return;
     items.shift();
@@ -228,7 +219,7 @@ function createCloudVoice({ onSpeechState, fallback }) {
 
   return {
     get usable() {
-      return failures < 2;
+      return failures < 3;
     },
     get busy() {
       return Boolean(playing || items.length);
@@ -269,7 +260,7 @@ function createCloudVoice({ onSpeechState, fallback }) {
   };
 }
 
-function browserEngine({ lang, cloud, onLive, onFinal, onIdle, onError, onSpeechState, onBoundary }) {
+function browserEngine({ lang, cloud, onLive, onFinal, onIdle, onError, onSpeechState, onBoundary, onCaption }) {
   let recognition = null;
   let listening = false;
   let queue = 0;
@@ -322,46 +313,25 @@ function browserEngine({ lang, cloud, onLive, onFinal, onIdle, onError, onSpeech
     }
   }
 
-  function speakDevice(sentence) {
-    return new Promise((resolve) => {
-      if (!synth) {
-        resolve();
-        return;
-      }
-      const utterance = new SpeechSynthesisUtterance(sentence);
-      utterance.lang = lang;
-      setVoice(utterance, pickVoice(lang));
-      utterance.onend = resolve;
-      utterance.onerror = resolve;
-      synth.speak(utterance);
-    });
-  }
-
   let useCloud = true;
+  let captionTimer = 0;
 
+  // A voz é só a do KAZER (servidor). Sem ela, a frase aparece escrita na
+  // legenda pelo tempo de leitura — a voz do aparelho (Google etc.) não é usada.
   function speak(sentence) {
+    cancelled = false;
     if (cloud?.usable && useCloud) {
-      cancelled = false;
       cloud.enqueue(sentence);
       return;
     }
-    if (!synth) return;
-    cancelled = false;
-    const utterance = new SpeechSynthesisUtterance(sentence);
-    utterance.lang = lang;
-    const voice = pickVoice(lang);
-    setVoice(utterance, voice);
-    utterance.rate = 1.0;
+    onCaption?.(sentence);
     queue += 1;
     onSpeechState(true);
-    utterance.onboundary = () => onBoundary();
-    const done = () => {
-      queue = Math.max(0, queue - 1);
-      if (!queue && !cancelled) onSpeechState(false);
-    };
-    utterance.onend = done;
-    utterance.onerror = done;
-    synth.speak(utterance);
+    window.clearTimeout(captionTimer);
+    captionTimer = window.setTimeout(() => {
+      queue = 0;
+      if (!cancelled) onSpeechState(false);
+    }, Math.min(9000, 900 + sentence.length * 55));
   }
 
   function cancelSpeech() {
@@ -373,7 +343,6 @@ function browserEngine({ lang, cloud, onLive, onFinal, onIdle, onError, onSpeech
 
   return {
     kind: cloud ? "cloud" : "browser",
-    speakDevice,
     setCloud(on) {
       useCloud = Boolean(on);
     },
@@ -587,6 +556,7 @@ export function createVoiceMode({ lang = "pt-BR", sendText, stopReply, fetchJson
   const handlers = {
     lang,
     onLive: (text) => onLive(text),
+    onCaption: (text) => onLive(text, "kazer"),
     onFinal: (text) => {
       idleTries = 0;
       if (!open) return;
@@ -659,28 +629,20 @@ export function createVoiceMode({ lang = "pt-BR", sendText, stopReply, fetchJson
         }
       }
       if (!engine) {
-        if (!Recognition || !synth) {
+        if (!Recognition) {
           set("erro", "unsupported");
           return;
         }
-        // Voz realista do servidor, a menos que a pessoa tenha escolhido uma voz do aparelho.
-        const saved = chosenVoice();
+        // Voz do KAZER (Piper no servidor). Nunca a voz do aparelho.
         let cloud = null;
         if (config.tts) {
-          let device = null;
           cloud = createCloudVoice({
             onSpeechState: (speaking) => handlers.onSpeechState(speaking),
-            fallback: (text) => device?.speakDevice(text),
+            onCaption: handlers.onCaption,
           });
           await cloud.start();
-          engine = browserEngine({ ...handlers, cloud });
-          device = engine;
-          engine.setCloud(!saved || saved === CLOUD_VOICE);
-        } else {
-          engine = browserEngine(handlers);
         }
-        // Algumas vozes carregam depois: pede a lista cedo.
-        synth.getVoices();
+        engine = browserEngine({ ...handlers, cloud });
       }
       if (!open) {
         engine.close();

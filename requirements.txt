@@ -7,3 +7,5 @@ httpx>=0.27,<1
 fpdf2>=2.8,<3
 pypdf>=4,<7
 anthropic>=2,<3
+# Voz do KAZER: Piper (open source, GPL-3.0) com voz masculina pt-BR, em CPU.
+piper-tts>=1.8,<2
