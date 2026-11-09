@@ -2,6 +2,22 @@
 
 Mudanças que importam para quem usa e para quem opera o KAZER.
 
+## 2026-11 — Painel do dono: manutenção e aviso global
+
+### Novo
+- **`controle-de-notificacao/controle.yaml`:** um arquivo só para o dono ligar e
+  desligar o **modo manutenção** (tela cheia "Estamos em manutenção", com título,
+  texto, previsão e e-mails liberados) e um **aviso global** (cartão no topo com
+  tipo, botão opcional, janela de tempo e "pode fechar").
+- O bloqueio de manutenção é do **servidor**: conversar, entrar, criar conta e voz
+  respondem `503 maintenance`; só a sonda `/api/health` continua livre.
+- `GET /api/status` (público) entrega o estado; o app consulta ao abrir, a cada
+  90 s, ao voltar para a aba e na hora em que qualquer API responde `maintenance`.
+- Arquivo com erro nunca derruba o site: o KAZER ignora e avisa no log.
+  `python scripts/controle.py` confere antes de salvar (também roda no CI).
+- **README em cada pasta** do repositório, explicando o que tem ali, o que está
+  em uso e os cuidados — para o dono e para agentes.
+
 ## 2026-11 — Conversa por voz como com uma pessoa
 
 ### Novo

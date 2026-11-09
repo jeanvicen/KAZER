@@ -13,6 +13,7 @@ data/logs/
 data/memory/
 data/*
 !data/.gitkeep
+!data/README.md
 
 # Python e ambientes
 __pycache__/

@@ -159,6 +159,11 @@ export async function request(path, options = {}) {
       if (response.status === 401 && data.error === "unauthenticated") {
         window.dispatchEvent(new CustomEvent("kazer:unauthenticated"));
       }
+      // Modo manutenção ligado pelo dono: a tela de manutenção aparece na hora.
+      if (response.status === 503 && data.error === "maintenance") {
+        window.dispatchEvent(new CustomEvent("kazer:maintenance"));
+        return { ok: false, status: response.status, data };
+      }
       if (RETRYABLE.has(response.status) && tryNumber < retries) {
         await sleep(backoff(tryNumber, response.headers.get("retry-after")));
         continue;

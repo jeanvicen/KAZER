@@ -18,6 +18,7 @@ from kazer.auth.supabase_service import SupabaseAuthService, SupabaseSession
 from kazer.chat.identity import set_access_token
 from kazer.chat.service import ChatError
 from kazer.chat.supabase_store import StorageUnavailable
+from kazer.config import control
 
 MAX_BODY_BYTES = 4096
 FIELD_MAX_LENGTH = 1024
@@ -133,8 +134,22 @@ class WebContext:
         """Conta da sessão validada no servidor; base de toda autorização.
 
         Se o provedor renovou a sessão (access token vencido), o cookie novo é
-        gravado na própria resposta pelo `endpoint`.
+        gravado na própria resposta pelo `endpoint`. Com o modo manutenção
+        ligado (controle-de-notificacao/controle.yaml), só os e-mails liberados
+        passam; o resto recebe 503 `maintenance`.
         """
+        user, token = await self.resolve(request)
+        self.check_maintenance(user.email)
+        return user, token
+
+    @staticmethod
+    def check_maintenance(email: str | None) -> None:
+        """Recusa com 503 `maintenance` quando o KAZER está bloqueado para esta conta."""
+        if not control.current().maintenance.allows(email):
+            raise AuthError("maintenance", 503)
+
+    async def resolve(self, request: Request) -> tuple[User, str]:
+        """Conta da sessão, sem olhar o modo manutenção (usado por `/api/status`)."""
         auth = self.require_auth()
         token = request.cookies.get(self.cookie_name) or ""
         user, grant = await run_in_threadpool(auth.resolve_session, token)

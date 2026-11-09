@@ -1,0 +1,80 @@
+# =============================================================================
+#  PAINEL DE CONTROLE DO KAZER  —  manutenção e aviso global
+# =============================================================================
+#
+#  COMO USAR (passo a passo, dá pra fazer pelo celular no site do GitHub):
+#    1. Abra este arquivo no GitHub e toque no lápis (Edit).
+#    2. Troque  ativa: false  por  ativa: true  (ou o contrário) e mude os textos.
+#    3. Toque em "Commit changes" direto na branch main.
+#    4. Em ~1 a 2 minutos a Vercel publica e o KAZER inteiro obedece.
+#       Quem já estava com o KAZER aberto vê a mudança em até 1 minuto e meio.
+#
+#  REGRAS DE OURO:
+#    - Só mexa no que está depois dos dois-pontos ( : ).
+#    - Texto sempre entre aspas "assim". Para aspas dentro do texto, use ' simples.
+#    - Não apague as linhas: para "desligar", use  ativa: false.
+#    - Errou a escrita do arquivo? O KAZER não cai: ele ignora o arquivo inteiro
+#      (tudo desligado) e avisa no log. Para conferir antes de salvar:
+#        python scripts/controle.py
+#
+#  Explicação completa: controle-de-notificacao/README.md
+# =============================================================================
+
+
+# -----------------------------------------------------------------------------
+#  1) MANUTENÇÃO — bloqueia o KAZER para todo mundo
+# -----------------------------------------------------------------------------
+#  ativa: true  → aparece uma tela cheia de manutenção, ninguém conversa,
+#                 ninguém cria conta e ninguém entra (o servidor também recusa).
+#  ativa: false → KAZER normal.
+manutencao:
+  ativa: false
+
+  # Título grande da tela (até 80 caracteres).
+  titulo: "Estamos em manutenção"
+
+  # Texto embaixo do título (até 400 caracteres).
+  mensagem: "O KAZER está passando por uma melhoria rápida. Suas conversas estão guardadas e nada foi perdido."
+
+  # Quando volta (opcional, até 80 caracteres). Deixe "" para não mostrar.
+  previsao: "Voltamos em instantes"
+
+  # E-mails que continuam usando o KAZER durante a manutenção (você, para testar).
+  # Exemplo:  liberados: ["seu-email@exemplo.com"]
+  # Atenção: se o repositório for público, todo mundo vê os e-mails escritos aqui.
+  liberados: []
+
+
+# -----------------------------------------------------------------------------
+#  2) AVISO GLOBAL — um recado para todas as pessoas que abrirem o KAZER
+# -----------------------------------------------------------------------------
+#  Aparece como um cartão no topo da tela (no início e dentro do chat).
+notificacao:
+  ativa: false
+
+  # Nome único do aviso. TROQUE a cada aviso novo: quem fechou o aviso antigo
+  # volta a ver o aviso novo só porque o id mudou. Ex.: "novidade-voz-2026-11"
+  id: "aviso-1"
+
+  # Cor e ícone do cartão:  info (azul) | sucesso (verde) | aviso (amarelo) | urgente (vermelho)
+  tipo: info
+
+  # Título curto em negrito (até 80 caracteres).
+  titulo: "Novidade no KAZER"
+
+  # Texto do aviso (até 400 caracteres).
+  mensagem: "Agora dá para conversar com o KAZER por voz. Toque no botão do campo vazio para começar."
+
+  # Botão opcional. Deixe os dois "" para não ter botão.
+  # O link precisa começar com https://  ou com /  (página do próprio KAZER).
+  botao_texto: ""
+  botao_link: ""
+
+  # Janela de tempo opcional, no horário de Brasília, formato "AAAA-MM-DD HH:MM".
+  # Fora dessa janela o aviso fica escondido sozinho. Deixe "" para não limitar.
+  inicio: ""
+  fim: ""
+
+  # true → a pessoa pode fechar o aviso no X (fica fechado só para esse id).
+  # false → o aviso fica fixo enquanto estiver ativo (use para coisas sérias).
+  pode_fechar: true

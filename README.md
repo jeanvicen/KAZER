@@ -18,6 +18,7 @@ planos pagos.
 
 | Pasta | O que tem |
 |---|---|
+| `controle-de-notificacao/` | **Painel do dono**: liga/desliga o modo manutenção e o aviso global para todo mundo ([guia](controle-de-notificacao/README.md)) |
 | `kazer/interfaces/web/` | App web (Starlette) e a tela inteira em `static/` (HTML, CSS e JS sem build) |
 | `kazer/chat/` | Conversa: serviço, geração em streaming, pesquisa (`prefetch.py`, `web_tools.py`), arquivos, PDFs |
 | `kazer/brain/` | Provedores de modelo (Groq, Anthropic, OpenAI-compatível) e o governador de limites da Groq |
@@ -29,6 +30,15 @@ planos pagos.
 | `supabase/migrations/` | Esquema do banco, com RLS em todas as tabelas |
 | `tests/` | Testes automáticos (`make test`) |
 | `docs/` | Documentação: veja o índice abaixo |
+
+## Painel do dono: manutenção e aviso global
+
+Tudo num arquivo só: [`controle-de-notificacao/controle.yaml`](controle-de-notificacao/controle.yaml).
+Edite no GitHub (lápis → *Commit changes* na `main`); em ~2 minutos o KAZER inteiro
+obedece. `manutencao.ativa: true` bloqueia o site (tela de manutenção + servidor
+recusando as APIs); `notificacao.ativa: true` mostra um recado no topo para todos.
+Guia completo: [controle-de-notificacao/README.md](controle-de-notificacao/README.md).
+Cada pasta do repositório tem um `README.md` explicando o que tem nela.
 
 ## Documentação
 

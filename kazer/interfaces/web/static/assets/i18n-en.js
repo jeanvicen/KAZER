@@ -722,4 +722,10 @@ export const EN = {
   "Explique de um jeito simples:": "Explain it simply:",
   "Crie um site de uma página para": "Build a one-page website for",
   "Pesquise na web e me diga:": "Search the web and tell me:",
+  // ---------- Manutenção e aviso global (controle-de-notificacao) ----------
+  "Manutenção": "Maintenance",
+  "Estamos em manutenção": "We're under maintenance",
+  "Esta tela some sozinha quando o KAZER voltar.": "This screen goes away on its own when KAZER is back.",
+  "Aviso do KAZER": "KAZER notice",
+  "Fechar aviso": "Close notice",
 };

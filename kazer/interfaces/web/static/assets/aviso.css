@@ -1,0 +1,299 @@
+/* KAZER — tela de manutenção e aviso global (assets/aviso.js).
+ *
+ * Os textos vêm de controle-de-notificacao/controle.yaml. A tela de manutenção
+ * é sempre escura (marca obsidiana + ouro); o aviso é um cartão escuro no topo,
+ * com a cor do tipo só na borda e no ícone, para o texto manter contraste AA. */
+
+.kz-maint {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: grid;
+  place-items: center;
+  padding: max(env(safe-area-inset-top), 1.5rem) max(env(safe-area-inset-right), 1rem)
+    max(env(safe-area-inset-bottom), 1.5rem) max(env(safe-area-inset-left), 1rem);
+  overflow-y: auto;
+  background:
+    radial-gradient(60rem 36rem at 50% -10%, rgb(213 177 90 / 0.12), transparent 60%),
+    #070707;
+  color: #f4f1ea;
+  font-family: var(--font-ui, system-ui, sans-serif);
+  animation: kz-fade 260ms ease-out both;
+}
+
+html.kz-in-maint,
+html.kz-in-maint body {
+  overflow: hidden;
+}
+
+.kz-maint__card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  max-width: 30rem;
+  text-align: center;
+}
+
+.kz-maint__mark {
+  width: 3.5rem;
+  height: 3.5rem;
+  fill: var(--gold, #d5b15a);
+  animation: kz-breathe 3.2s ease-in-out infinite;
+}
+
+.kz-maint__badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 1.5rem 0 0;
+  padding: 0.3rem 0.75rem;
+  border: 1px solid rgb(213 177 90 / 0.38);
+  border-radius: 999px;
+  background: rgb(213 177 90 / 0.08);
+  color: #f1dfa5;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.kz-maint__dot {
+  width: 0.45rem;
+  height: 0.45rem;
+  border-radius: 50%;
+  background: var(--gold, #d5b15a);
+  animation: kz-pulse 1.6s ease-in-out infinite;
+}
+
+.kz-maint__title {
+  margin: 1rem 0 0;
+  font-size: clamp(1.6rem, 6vw, 2.25rem);
+  font-weight: 600;
+  line-height: 1.15;
+  letter-spacing: -0.025em;
+  outline: none;
+}
+
+.kz-maint__body {
+  margin: 0.85rem 0 0;
+  color: #c9c4b8;
+  font-size: 1rem;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+
+.kz-maint__body:empty {
+  display: none;
+}
+
+.kz-maint__eta {
+  margin: 1rem 0 0;
+  color: #f1dfa5;
+  font-size: 0.9375rem;
+  font-weight: 500;
+}
+
+.kz-maint__retry {
+  min-height: 2.75rem;
+  margin-top: 1.75rem;
+  padding: 0 1.4rem;
+  border: 1px solid rgb(255 255 255 / 0.16);
+  border-radius: 999px;
+  background: rgb(255 255 255 / 0.05);
+  color: #f4f1ea;
+  font: 500 0.9375rem / 1 var(--font-ui, system-ui, sans-serif);
+  cursor: pointer;
+  transition: background-color 160ms linear, border-color 160ms linear;
+}
+
+.kz-maint__retry:hover {
+  border-color: rgb(255 255 255 / 0.28);
+  background: rgb(255 255 255 / 0.09);
+}
+
+.kz-maint__retry:focus-visible,
+.kz-notice__close:focus-visible,
+.kz-notice__action:focus-visible {
+  outline: 2px solid rgb(213 177 90 / 0.72);
+  outline-offset: 2px;
+}
+
+.kz-maint__retry:disabled {
+  opacity: 0.6;
+  cursor: progress;
+}
+
+.kz-maint__note {
+  margin: 1rem 0 0;
+  color: #9a958b;
+  font-size: 0.8125rem;
+}
+
+/* ---------- Aviso global ---------- */
+
+.kz-notice {
+  --kz-tone: #8ab4ff;
+  position: fixed;
+  top: max(env(safe-area-inset-top), 0.75rem);
+  left: 50%;
+  z-index: 150;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  width: min(36rem, calc(100% - 1.5rem));
+  padding: 0.85rem 0.6rem 0.85rem 0.9rem;
+  border: 1px solid rgb(255 255 255 / 0.1);
+  border-left: 3px solid var(--kz-tone);
+  border-radius: 1rem;
+  background: rgb(20 20 20 / 0.96);
+  box-shadow: 0 18px 40px -18px rgb(0 0 0 / 0.9);
+  color: #f4f1ea;
+  font-family: var(--font-ui, system-ui, sans-serif);
+  transform: translateX(-50%);
+  animation: kz-drop 280ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+
+.kz-notice[data-kind="sucesso"] {
+  --kz-tone: #7ee2a8;
+}
+
+.kz-notice[data-kind="aviso"] {
+  --kz-tone: #f5c25a;
+}
+
+.kz-notice[data-kind="urgente"] {
+  --kz-tone: #ff8a80;
+}
+
+.kz-notice__icon {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 50%;
+  background: rgb(255 255 255 / 0.06);
+  color: var(--kz-tone);
+}
+
+.kz-notice__icon .icon {
+  width: 1rem;
+  height: 1rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.kz-notice__text {
+  flex: 1;
+  min-width: 0;
+  padding-top: 0.2rem;
+}
+
+.kz-notice__title {
+  display: block;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.kz-notice__body {
+  margin: 0.2rem 0 0;
+  color: #c9c4b8;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.kz-notice__action {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.25rem;
+  margin-top: 0.6rem;
+  padding: 0 0.9rem;
+  border-radius: 999px;
+  background: var(--gold, #d5b15a);
+  color: #17110a;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.kz-notice__close {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border: 0;
+  border-radius: 0.65rem;
+  background: transparent;
+  color: #9a958b;
+  cursor: pointer;
+}
+
+.kz-notice__close:hover {
+  background: rgb(255 255 255 / 0.06);
+  color: #f4f1ea;
+}
+
+.kz-notice__close .icon {
+  width: 1.1rem;
+  height: 1.1rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+
+@media (pointer: coarse) {
+  .kz-notice__close {
+    width: 2.75rem;
+    height: 2.75rem;
+  }
+}
+
+@keyframes kz-fade {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes kz-drop {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -0.75rem);
+  }
+}
+
+@keyframes kz-breathe {
+  50% {
+    opacity: 0.72;
+    transform: scale(0.97);
+  }
+}
+
+@keyframes kz-pulse {
+  50% {
+    opacity: 0.35;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html:not([data-motion="completo"]) .kz-maint,
+  html:not([data-motion="completo"]) .kz-notice,
+  html:not([data-motion="completo"]) .kz-maint__mark,
+  html:not([data-motion="completo"]) .kz-maint__dot {
+    animation: none;
+  }
+}
+
+html[data-motion="reduzido"] .kz-maint,
+html[data-motion="reduzido"] .kz-notice,
+html[data-motion="reduzido"] .kz-maint__mark,
+html[data-motion="reduzido"] .kz-maint__dot {
+  animation: none;
+}

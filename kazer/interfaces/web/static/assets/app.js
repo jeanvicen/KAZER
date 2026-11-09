@@ -3,6 +3,7 @@
 // decisão de autenticação acontece no servidor; o navegador nunca guarda senha
 // nem token (o cookie de sessão é HttpOnly). Com sessão válida, o chat abre direto.
 
+import { startControl } from "./aviso.js";
 import { session as tabStore } from "./dom.js";
 import { playIntro } from "./intro.js";
 import { net, registerServiceWorker, startNetworkUi } from "./net.js";
@@ -816,6 +817,7 @@ function withTimeout(promise, ms, fallback) {
 async function boot() {
   registerServiceWorker();
   startNetworkUi();
+  startControl();
   const linkAction = takeLinkAction();
   const after = tabStore.take("kazer:after");
   window.history.replaceState({ view: "home" }, "", window.location.pathname);

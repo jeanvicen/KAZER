@@ -32,6 +32,7 @@ from kazer.chat.store import ChatStore
 from kazer.chat.supabase_store import SupabaseChatStore, SupabaseUploadStorage
 from kazer.chat.uploads import UploadStorage
 from kazer.chat.web_tools import WebTools
+from kazer.config import control
 from kazer.config.settings import Settings, load_settings
 from kazer.integrations.email import build_mail_sender
 from kazer.integrations.payments import build_checkout
@@ -254,6 +255,21 @@ def create_app(
         return JSONResponse({"ok": True, "time": int(time.time())})
 
     @endpoint
+    async def status(request: Request) -> Response:
+        # Painel do dono (controle-de-notificacao/controle.yaml): manutenção e
+        # aviso global. Público e barato; só consulta a sessão quando a
+        # manutenção está ligada, para dizer se esta conta é liberada.
+        state = control.current()
+        allowed = False
+        if state.maintenance.active and ctx.auth is not None and request.cookies.get(cookie_name):
+            try:
+                user, _ = await ctx.resolve(request)
+                allowed = state.maintenance.allows(user.email)
+            except AuthError:
+                allowed = False
+        return JSONResponse(state.status(allowed=allowed))
+
+    @endpoint
     async def session(request: Request) -> Response:
         if auth is None:
             return JSONResponse({"authenticated": False, "available": False})
@@ -274,6 +290,7 @@ def create_app(
         auth = ctx.require_auth()
         data = await ctx.read_json(request)
         email, password = ctx.field(data, "email"), ctx.field(data, "password")
+        ctx.check_maintenance(email)
         grant = await run_in_threadpool(auth.register, email, password, client_of(request))
         if grant is None:
             # Sem sessão: e-mail que já tem conta (com outra senha) ou provedor que
@@ -322,6 +339,7 @@ def create_app(
         auth = ctx.require_auth()
         data = await ctx.read_json(request)
         email, password = ctx.field(data, "email"), ctx.field(data, "password")
+        ctx.check_maintenance(email)
         grant = await run_in_threadpool(auth.login, email, password, client_of(request))
         # Rotaciona: qualquer sessão anterior deste navegador é encerrada.
         await run_in_threadpool(auth.logout, request.cookies.get(cookie_name))
@@ -381,6 +399,7 @@ def create_app(
         Route("/manifest.webmanifest", page("manifest.webmanifest", "application/manifest+json")),
         Route("/sw.js", service_worker),
         Route("/api/health", health, methods=["GET"]),
+        Route("/api/status", status, methods=["GET"]),
         Route("/api/auth/session", session, methods=["GET"]),
         Route("/api/auth/register", register, methods=["POST"]),
         Route("/api/auth/verify-email", verify_email, methods=["POST"]),
