@@ -2,7 +2,7 @@
 # Os pesos dos modelos NÃO são baixados na instalação: veja docs/voice/DEPLOY.md.
 -r requirements.txt
 websockets>=13,<18        # WebSocket no uvicorn (BSD-3-Clause)
-numpy>=1.26               # áudio em array (BSD-3-Clause)
+numpy>=2.4.6               # áudio em array (BSD-3-Clause)
 faster-whisper>=1.1,<2    # STT, MIT; pesos Whisper MIT
 kokoro>=0.7,<1            # TTS, Apache-2.0; pesos Kokoro-82M Apache-2.0
 # kokoro precisa do espeak-ng no sistema (GPL-3.0, usado como programa externo
