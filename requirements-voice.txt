@@ -3,7 +3,7 @@
 -r requirements.txt
 websockets>=13,<18        # WebSocket no uvicorn (BSD-3-Clause)
 numpy>=1.26               # áudio em array (BSD-3-Clause)
-faster-whisper>=1.1,<2    # STT, MIT; pesos Whisper MIT
+faster-whisper>=1.2.1,<2    # STT, MIT; pesos Whisper MIT
 kokoro>=0.7,<1            # TTS, Apache-2.0; pesos Kokoro-82M Apache-2.0
 # kokoro precisa do espeak-ng no sistema (GPL-3.0, usado como programa externo
 # para fonemas): apt-get install -y espeak-ng
