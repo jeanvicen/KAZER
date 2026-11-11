@@ -44,6 +44,7 @@ const PERK_ICONS = ["sparkle", "bolt", "file", "research", "globe", "crown"];
 
 class PlansScreen {
   constructor({ plans, usage, checkout, opener, highlight }) {
+    this.catalog = plans;
     this.plans = plans.filter((plan) => plan.monthly_cents > 0);
     this.free = plans.find((plan) => plan.id === "free");
     this.usage = usage || {};
@@ -76,6 +77,7 @@ class PlansScreen {
       ),
     );
     this.perks = h("ul.plans__perks");
+    this.comparison = this.buildComparison();
     this.options = h("div.plans__options", { role: "radiogroup", "aria-label": "Cobrança" });
     this.cta = h("button.plans__cta", { type: "button", onclick: (event) => this.choose(this.selected, event.currentTarget) });
     this.ctaNote = h("p.plans__cta-note");
@@ -88,6 +90,7 @@ class PlansScreen {
       this.tagline,
       this.tabs,
       this.perks,
+      this.comparison,
       this.options,
     );
     this.panel = h(
@@ -116,6 +119,37 @@ class PlansScreen {
       this.heading.focus({ preventScroll: true });
     });
     announce("Planos do KAZER");
+  }
+
+  buildComparison() {
+    const shortName = (plan) => (plan.monthly_cents ? plan.name.replace(/^KAZER\s+/, "") : "Grátis");
+    const yes = (enabled) => (enabled ? "Incluído" : "—");
+    const rows = [
+      ["Uso", (plan) => `${plan.allowance} a cada ${plan.window_hours}h`],
+      ["KAZ 1.1", () => "Incluído"],
+      ["Imagens, arquivos e memória", () => "Incluído"],
+      ["Modelos premium", (plan) => yes(plan.features?.models)],
+      ["KZ Code e prévia", (plan) => yes(plan.features?.coder)],
+      ["PDFs e apresentações", (plan) => yes(plan.features?.artifacts)],
+      ["Pesquisa aprofundada", (plan) => yes(plan.features?.research)],
+      ["Extras", (plan) => plan.extras?.join(". ") || "—"],
+    ];
+    const cell = (tag, text) => h(tag, { text });
+    return h(
+      "section.plans__compare",
+      { "aria-labelledby": "plans-compare-title" },
+      h("div.plans__compare-head", {}, h("h3.plans__compare-title", { id: "plans-compare-title", text: "Compare os planos" }), h("p.plans__compare-note", { text: "Tudo o que muda em cada plano." })),
+      h(
+        "div.plans__table-scroll",
+        {},
+        h(
+          "table.plans__table",
+          {},
+          h("thead", {}, h("tr", {}, cell("th", "Recurso"), ...this.catalog.map((plan) => cell("th", shortName(plan))))),
+          h("tbody", {}, ...rows.map(([label, value]) => h("tr", {}, cell("th", label), ...this.catalog.map((plan) => cell("td", value(plan))))),
+        ),
+      ),
+    );
   }
 
   select(plan) {
