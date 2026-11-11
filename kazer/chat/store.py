@@ -17,6 +17,7 @@ from pathlib import Path
 from typing import Any
 
 from kazer.chat.skill_guard import slugify
+from kazer.chat.store_extras import SqliteExtras
 
 # Mesma tabela do AuthStore. Com o Supabase Auth, cada conta ganha aqui uma linha
 # "sombra" (sem senha) só para a posse e a exclusão em cascata do chat local.
@@ -234,15 +235,26 @@ class Message:
 
 @dataclass(frozen=True, slots=True)
 class Memory:
-    """Memória que a própria pessoa salvou."""
+    """Memória da conta: salva pela pessoa ("manual") ou pelo KAZER ("auto")."""
 
     id: str
     content: str
     created_at: int
+    source: str = "manual"
+    conversation_id: str | None = None
+    confidence: float = 1.0
+    updated_at: int | None = None
 
     def public(self) -> dict[str, Any]:
         """Formato enviado ao navegador."""
-        return {"id": self.id, "content": self.content, "created_at": self.created_at}
+        return {
+            "id": self.id,
+            "content": self.content,
+            "created_at": self.created_at,
+            "source": self.source,
+            "conversation_id": self.conversation_id,
+            "updated_at": self.updated_at,
+        }
 
 
 @dataclass(frozen=True, slots=True)
@@ -487,7 +499,19 @@ def _message(
     )
 
 
-class ChatStore:
+def _memory(row: sqlite3.Row) -> Memory:
+    return Memory(
+        row["id"],
+        row["content"],
+        row["created_at"],
+        row["source"] or "manual",
+        row["conversation_id"],
+        float(row["confidence"] if row["confidence"] is not None else 1.0),
+        row["updated_at"],
+    )
+
+
+class ChatStore(SqliteExtras):
     """Repositório síncrono; cada operação abre uma conexão curta e transacional."""
 
     def __init__(self, path: Path) -> None:
@@ -515,6 +539,7 @@ class ChatStore:
         conn = sqlite3.connect(self._path, isolation_level=None)
         try:
             conn.executescript(_SCHEMA)
+            self.init_extras(conn)
             self._allow_file_attachments(conn)
         finally:
             conn.close()
@@ -1448,11 +1473,21 @@ class ChatStore:
             rows = conn.execute(
                 "SELECT * FROM memories WHERE user_id = ? ORDER BY created_at, id", (user_id,)
             ).fetchall()
-        return [Memory(row["id"], row["content"], row["created_at"]) for row in rows]
+        return [_memory(row) for row in rows]
 
-    def add_memory(self, user_id: str, content: str, now: int, max_count: int) -> Memory | None:
+    def add_memory(
+        self,
+        user_id: str,
+        content: str,
+        now: int,
+        max_count: int,
+        *,
+        source: str = "manual",
+        conversation_id: str | None = None,
+        confidence: float = 1.0,
+    ) -> Memory | None:
         """Adiciona memória; None quando o limite por conta foi atingido."""
-        memory = Memory(new_id(), content, now)
+        memory = Memory(new_id(), content, now, source, conversation_id, confidence, now)
         with self._transaction() as conn:
             (count,) = conn.execute(
                 "SELECT COUNT(*) FROM memories WHERE user_id = ?", (user_id,)
@@ -1460,10 +1495,35 @@ class ChatStore:
             if count >= max_count:
                 return None
             conn.execute(
-                "INSERT INTO memories (id, user_id, content, created_at) VALUES (?, ?, ?, ?)",
-                (memory.id, user_id, content, now),
+                "INSERT INTO memories (id, user_id, content, created_at, source,"
+                " conversation_id, confidence, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+                (memory.id, user_id, content, now, source, conversation_id, confidence, now),
             )
         return memory
+
+    def update_memory(
+        self,
+        user_id: str,
+        memory_id: str,
+        content: str,
+        now: int,
+        *,
+        source: str | None = None,
+        conversation_id: str | None = None,
+        confidence: float | None = None,
+    ) -> Memory | None:
+        """Troca o texto de uma memória da própria conta; None se não existe."""
+        with self._transaction() as conn:
+            changed = conn.execute(
+                "UPDATE memories SET content = ?, updated_at = ?,"
+                " source = COALESCE(?, source), conversation_id = COALESCE(?, conversation_id),"
+                " confidence = COALESCE(?, confidence) WHERE id = ? AND user_id = ?",
+                (content, now, source, conversation_id, confidence, memory_id, user_id),
+            ).rowcount
+            if changed != 1:
+                return None
+            row = conn.execute("SELECT * FROM memories WHERE id = ?", (memory_id,)).fetchone()
+        return _memory(row)
 
     def delete_memory(self, user_id: str, memory_id: str) -> bool:
         """Remove uma memória da própria conta."""

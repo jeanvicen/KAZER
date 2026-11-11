@@ -464,8 +464,15 @@ def chat_routes(ctx: WebContext, chat: ChatService | None) -> list[Route]:
     @endpoint
     async def memory(request: Request) -> Response:
         user, _ = await account(request)
+        memory_id = request.path_params["memory_id"]
+        if request.method == "PATCH":
+            data = await ctx.read_json(request)
+            changed = await run_in_threadpool(
+                service().update_memory, user.id, memory_id, data.get("content")
+            )
+            return JSONResponse({"memory": changed.public()})
         ctx.check_origin(request)
-        await run_in_threadpool(service().delete_memory, user.id, request.path_params["memory_id"])
+        await run_in_threadpool(service().delete_memory, user.id, memory_id)
         return JSONResponse({"status": "deleted"})
 
     @endpoint
@@ -562,7 +569,7 @@ def chat_routes(ctx: WebContext, chat: ChatService | None) -> list[Route]:
         Route("/api/artifacts/{artifact_id}", artifact, methods=["GET", "DELETE"]),
         Route("/api/memories", memories, methods=["POST"]),
         Route("/api/memories/clear", clear_memories, methods=["POST"]),
-        Route("/api/memories/{memory_id}", memory, methods=["DELETE"]),
+        Route("/api/memories/{memory_id}", memory, methods=["DELETE", "PATCH"]),
         Route("/api/account/password", change_password, methods=["POST"]),
         Route("/api/account/sessions/revoke", revoke_sessions, methods=["POST"]),
         Route("/api/account/delete", delete_account, methods=["POST"]),

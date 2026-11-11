@@ -34,14 +34,18 @@ from kazer.chat.uploads import UploadStorage
 from kazer.chat.web_tools import WebTools
 from kazer.config import control
 from kazer.config.settings import Settings, load_settings
+from kazer.images import providers as image_providers
+from kazer.images.service import ImageService
 from kazer.integrations.email import build_mail_sender
 from kazer.integrations.payments import build_checkout
 from kazer.interfaces.web.chat_api import chat_routes
 from kazer.interfaces.web.common import TOKEN_MAX_LENGTH, WebContext, client_of, endpoint
+from kazer.interfaces.web.create_api import create_routes
 from kazer.interfaces.web.voice_api import voice_routes
 from kazer.security.passwords import PasswordHashing
 from kazer.security.rate_limiter import RateLimiter
 from kazer.security.secrets import get_secret
+from kazer.studio.service import StudioService
 
 logger = logging.getLogger("kazer.web")
 
@@ -217,6 +221,7 @@ def create_app(
     *,
     provider: ModelProvider | None = None,
     chat: ChatService | None = None,
+    image_provider: image_providers.ImageProvider | None = None,
 ) -> Starlette:
     """Monta a aplicação com dependências reais ou injetadas (testes)."""
     settings = settings or load_settings()
@@ -233,6 +238,21 @@ def create_app(
     chat_possible = settings.supabase_configured or not settings.serverless
     if chat is None and auth is not None and chat_possible:
         chat = _build_chat(settings, provider if provider is not None else build_provider(settings))
+
+    # Criação: imagens (cota diária por conta) e projetos do Studio usam o mesmo
+    # banco e o mesmo armazenamento privado do chat.
+    images: ImageService | None = None
+    studio: StudioService | None = None
+    if chat is not None:
+        images = ImageService(
+            chat.store,
+            chat.uploads,
+            image_provider
+            if image_provider is not None
+            else image_providers.load(production=settings.environment == "production"),
+            limit_of=lambda user_id: chat.plan(user_id).images_per_day,
+        )
+        studio = StudioService(chat.store, limit_of=lambda user_id: chat.plan(user_id).design_limit)
 
     def page(name: str, media_type: str = "text/html") -> Callable[[Request], Awaitable[Response]]:
         async def serve(request: Request) -> Response:
@@ -409,6 +429,7 @@ def create_app(
         Route("/api/auth/password-reset", request_reset, methods=["POST"]),
         Route("/api/auth/password-reset/confirm", confirm_reset, methods=["POST"]),
         *chat_routes(ctx, chat),
+        *create_routes(ctx, chat, images, studio),
         *voice_routes(ctx, settings),
         Mount("/assets", app=StaticFiles(directory=STATIC_DIR / "assets"), name="assets"),
     ]

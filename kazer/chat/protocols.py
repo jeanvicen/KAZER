@@ -194,7 +194,27 @@ class ChatStorage(Protocol):
     def list_memories(self, user_id: str) -> list[Memory]: ...
 
     def add_memory(
-        self, user_id: str, content: str, now: int, max_count: int
+        self,
+        user_id: str,
+        content: str,
+        now: int,
+        max_count: int,
+        *,
+        source: str = ...,
+        conversation_id: str | None = ...,
+        confidence: float = ...,
+    ) -> Memory | None: ...
+
+    def update_memory(
+        self,
+        user_id: str,
+        memory_id: str,
+        content: str,
+        now: int,
+        *,
+        source: str | None = ...,
+        conversation_id: str | None = ...,
+        confidence: float | None = ...,
     ) -> Memory | None: ...
 
     def delete_memory(self, user_id: str, memory_id: str) -> bool: ...

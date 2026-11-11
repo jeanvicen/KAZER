@@ -43,6 +43,7 @@ from kazer.chat import (
     skill_guard,
     web_tools,
 )
+from kazer.chat import memory as mem
 from kazer.chat import prefetch as pre
 from kazer.chat.generation import GenerationHub, LiveGeneration
 from kazer.chat.identity import current_access_token
@@ -130,6 +131,8 @@ PREFERENCE_DEFAULTS: dict[str, Any] = {
     "style": "equilibrado",
     "instructions": "",
     "memory_enabled": True,
+    # O KAZER guarda sozinho o que a pessoa conta de si (preferências, projeto…).
+    "memory_auto": True,
     "send_on_enter": True,
     "motion": "sistema",
     "text_size": "m",
@@ -155,7 +158,7 @@ _CHOICES = {
     "wants_plan": {"", "free", "pro", "ultra"},
 }
 _TEXT_LIMITS = {"nickname": 40, "instructions": 1500}
-_BOOLS = {"memory_enabled", "send_on_enter", "ambient"}
+_BOOLS = {"memory_enabled", "memory_auto", "send_on_enter", "ambient"}
 
 _CLIENT_ID = re.compile(r"^[A-Za-z0-9_-]{8,64}$")
 
@@ -1036,6 +1039,16 @@ class ChatService:
         if remover is None or not remover(user_id, artifact_id):
             raise ChatError("not_found", 404)
 
+    @property
+    def store(self) -> Any:
+        """Banco do chat (imagens e Studio guardam no mesmo lugar)."""
+        return self._store
+
+    @property
+    def uploads(self) -> AttachmentStorage:
+        """Armazenamento privado de arquivos, por conta."""
+        return self._uploads
+
     def memories(self, user_id: str) -> list[Memory]:
         """Memórias que a pessoa salvou."""
         return self._store.list_memories(user_id)
@@ -1053,6 +1066,75 @@ class ChatService:
         if memory is None:
             raise ChatError("memory_full", 409)
         return memory
+
+    def update_memory(self, user_id: str, memory_id: str, content: Any) -> Memory:
+        """Corrige o texto de uma memória; passa a valer como escrita pela pessoa."""
+        if not isinstance(content, str) or not valid_id(memory_id):
+            raise ChatError("invalid_request", 400)
+        text = " ".join(content.split())
+        if not text:
+            raise ChatError("empty_memory", 400)
+        if len(text) > MAX_MEMORY_CHARS:
+            raise ChatError("memory_too_long", 400)
+        updater = getattr(self._store, "update_memory", None)
+        memory = None if updater is None else updater(
+            user_id, memory_id, text, self._now(), source="manual", confidence=1.0
+        )
+        if memory is None:
+            raise ChatError("not_found", 404)
+        return memory
+
+    def remember_from(
+        self, user_id: str, conversation_id: str | None, message: str
+    ) -> list[Memory]:
+        """Guarda sozinho o que a pessoa contou de si nesta mensagem.
+
+        Só roda com a memória e o salvamento automático ligados. Nunca levanta
+        erro para quem chamou: memória é conforto, não pode quebrar a resposta.
+        """
+        try:
+            prefs = self.preferences(user_id)
+            if not (prefs["memory_enabled"] and prefs["memory_auto"]):
+                return []
+            candidates = mem.extract(message)
+            if not candidates:
+                return []
+            existing: list[Memory] = list(self._store.list_memories(user_id))
+            saved: list[Memory] = []
+            now = self._now()
+            for candidate in candidates:
+                decision = mem.merge(candidate, existing)
+                memory: Memory | None = None
+                if decision.action == "update":
+                    updater = getattr(self._store, "update_memory", None)
+                    if updater is not None:
+                        memory = updater(
+                            user_id,
+                            decision.target_id,
+                            candidate.content,
+                            now,
+                            source="auto",
+                            conversation_id=conversation_id,
+                            confidence=candidate.confidence,
+                        )
+                        existing = [m for m in existing if m.id != decision.target_id]
+                elif decision.action == "create":
+                    memory = self._store.add_memory(
+                        user_id,
+                        candidate.content,
+                        now,
+                        MAX_MEMORIES,
+                        source="auto",
+                        conversation_id=conversation_id,
+                        confidence=candidate.confidence,
+                    )
+                if memory is not None:
+                    saved.append(memory)
+                    existing.append(memory)
+            return saved
+        except Exception:  # noqa: BLE001 - nunca derruba a conversa
+            logger.warning("chat.memory_auto_failed")
+            return []
 
     def delete_memory(self, user_id: str, memory_id: str) -> None:
         """Remove uma memória; outra conta recebe o mesmo "não encontrado"."""
@@ -1451,7 +1533,11 @@ class ChatService:
         # acabou de nascer, o próprio modelo dá nome a ela.
         asked = content or (pending[0].name if pending else "")
         on_complete = partial(
-            self._finish_reply, question=asked, name_it=exchange.user_message.seq == 1
+            self._finish_reply,
+            question=asked,
+            name_it=exchange.user_message.seq == 1,
+            # Só o que a pessoa escreveu nesta mensagem (nunca anexo, site ou resposta).
+            said=content if options.memory else "",
         )
         live = self._hub.start(
             user_id,
@@ -1576,9 +1662,15 @@ class ChatService:
             title = " ".join(words[:TITLE_MAX_WORDS])
         return title[:MAX_TITLE_CHARS]
 
-    def _finish_reply(self, live: Any, answer: str, question: str, name_it: bool) -> None:
-        """Depois da resposta pronta: guarda os artefatos e dá nome à conversa."""
+    def _finish_reply(
+        self, live: Any, answer: str, question: str, name_it: bool, said: str = ""
+    ) -> None:
+        """Depois da resposta pronta: artefatos, memória automática e nome da conversa."""
         self._save_artifacts(live, answer, question)
+        if said:
+            saved = self.remember_from(live.user_id, live.conversation_id, said)
+            if saved:
+                live.push({"type": "memory", "memories": [m.public() for m in saved]})
         if name_it:
             self._name_conversation(live, answer, question)
 
@@ -1650,7 +1742,9 @@ class ChatService:
             style=str(prefs["style"]),
             language=str(prefs["language"]),
             instructions=str(prefs["instructions"]),
-            memories=self._store.list_memories(user_id) if options.memory else [],
+            memories=mem.relevant(self._store.list_memories(user_id), question.content)
+            if options.memory
+            else [],
             web_search=options.web_search,
             forja=options.forja,
             skills=uses,

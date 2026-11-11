@@ -38,6 +38,11 @@ class Plan:
     research: bool = False
     github_write: bool = False
     connector_limit: int = 0
+    # Imagens concluídas por dia (UTC). Uma por padrão em todo plano: gerar imagem
+    # custa GPU, então só o dono aumenta isto, aqui, quando souber o custo.
+    images_per_day: int = 1
+    # Projetos guardados no Studio.
+    design_limit: int = 30
     accent: str = "#8a8f98"
     featured: bool = False
     extras: list[str] = field(default_factory=list)
@@ -64,6 +69,8 @@ class Plan:
             "yearly_price": _brl(self.yearly_cents),
             "yearly_per_month": _brl(self.yearly_per_month),
             "allowance": self.allowance,
+            "images_per_day": self.images_per_day,
+            "design_limit": self.design_limit,
             "window_hours": WINDOW_HOURS,
             "highlights": list(self.highlights),
             "extras": list(self.extras),

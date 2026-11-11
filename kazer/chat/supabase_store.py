@@ -33,6 +33,7 @@ from kazer.chat.store import (
     Skill,
     UsageWindow,
 )
+from kazer.chat.supabase_extras import SupabaseExtras
 
 logger = logging.getLogger("kazer.chat.supabase")
 
@@ -84,6 +85,20 @@ def _artifact(row: dict[str, Any]) -> Artifact:
 BUCKET = "kazer-anexos"
 MAX_CONVERSATIONS = 100
 TIMEOUT = 15.0
+
+
+def _memory(row: dict[str, Any]) -> Memory:
+    updated = row.get("updated_at")
+    conversation = row.get("conversation_id")
+    return Memory(
+        str(row["id"]),
+        str(row["content"]),
+        int(row.get("created_at") or 0),
+        str(row.get("source") or "manual"),
+        None if conversation is None else str(conversation),
+        float(row.get("confidence") if row.get("confidence") is not None else 1.0),
+        None if updated is None else int(updated),
+    )
 
 
 class StorageUnavailable(RuntimeError):
@@ -142,7 +157,7 @@ def _message(data: dict[str, Any], user_id: str) -> Message:
     )
 
 
-class SupabaseChatStore:
+class SupabaseChatStore(SupabaseExtras):
     """Mesma interface do store local, falando com o Postgres do Supabase."""
 
     def __init__(
@@ -715,17 +730,62 @@ class SupabaseChatStore:
     def list_memories(self, user_id: str) -> list[Memory]:
         """Memórias da conta."""
         rows = self._rpc("kazer_list_memories") or []
-        return [
-            Memory(str(row["id"]), str(row["content"]), int(row.get("created_at") or 0))
-            for row in rows
-        ]
+        return [_memory(row) for row in rows]
 
-    def add_memory(self, user_id: str, content: str, now: int, max_count: int) -> Memory | None:
+    def add_memory(
+        self,
+        user_id: str,
+        content: str,
+        now: int,
+        max_count: int,
+        *,
+        source: str = "manual",
+        conversation_id: str | None = None,
+        confidence: float = 1.0,
+    ) -> Memory | None:
         """Salva uma memória; None quando o limite foi atingido."""
-        data = self._rpc("kazer_add_memory", {"p_content": content, "p_max": max_count})
-        if not data:
-            return None
-        return Memory(str(data["id"]), str(data["content"]), int(data.get("created_at") or 0))
+        try:
+            data = self._rpc(
+                "kazer_save_memory",
+                {
+                    "p_content": content,
+                    "p_max": max_count,
+                    "p_source": source,
+                    "p_conversation_id": conversation_id,
+                    "p_confidence": confidence,
+                },
+            )
+        except StorageUnavailable as exc:
+            # Banco sem a migração de procedência: memória manual segue funcionando
+            # pela função antiga; a automática fica desligada até migrar.
+            if not exc.not_migrated or source != "manual":
+                raise
+            data = self._rpc("kazer_add_memory", {"p_content": content, "p_max": max_count})
+        return _memory(data) if data else None
+
+    def update_memory(
+        self,
+        user_id: str,
+        memory_id: str,
+        content: str,
+        now: int,
+        *,
+        source: str | None = None,
+        conversation_id: str | None = None,
+        confidence: float | None = None,
+    ) -> Memory | None:
+        """Troca o texto de uma memória da própria conta."""
+        data = self._rpc(
+            "kazer_update_memory",
+            {
+                "p_memory_id": memory_id,
+                "p_content": content,
+                "p_source": source,
+                "p_conversation_id": conversation_id,
+                "p_confidence": confidence,
+            },
+        )
+        return _memory(data) if isinstance(data, dict) else None
 
     def delete_memory(self, user_id: str, memory_id: str) -> bool:
         """Remove uma memória."""
