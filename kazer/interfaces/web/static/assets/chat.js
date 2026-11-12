@@ -459,7 +459,7 @@ function newConversation({ push = true, focus = true } = {}) {
 
 // ---------- Abas da gaveta ----------
 
-const SCREENS = ["conversas", "forja", "artefatos", "biblioteca"];
+const SCREENS = ["conversas", "forja", "artefatos", "biblioteca", "studio", "imagens"];
 
 // Texto que cada sugestão da tela vazia coloca no campo (a pessoa completa).
 const STARTERS = {
@@ -474,6 +474,8 @@ const SCREEN_LABELS = {
   forja: "KZ Code",
   artefatos: "Artefatos",
   biblioteca: "Biblioteca",
+  studio: "Studio",
+  imagens: "Criar imagem",
 };
 
 const SCREEN_GLYPHS = {
@@ -481,6 +483,8 @@ const SCREEN_GLYPHS = {
   forja: "code",
   artefatos: "layers",
   biblioteca: "book",
+  studio: "layers",
+  imagens: "image",
 };
 
 async function showScreen(name) {
@@ -511,6 +515,7 @@ async function showScreen(name) {
         if (options.code) setForja(true);
       },
       onOpenSettings: (section) => openSettings(section),
+      onGo: (name) => showScreen(name),
       onStartForja: (prompt) => {
         showScreen("conversas");
         startForja(prompt);
@@ -1299,6 +1304,14 @@ function handleEvent(model, event) {
     queueRender(model);
   } else if (event.type === "title") {
     applyTitle(event.conversation_id, event.title);
+  } else if (event.type === "memory") {
+    // O KAZER guardou algo que a pessoa contou de si: avisa e mostra onde mexer.
+    const count = event.memories?.length || 0;
+    if (count) {
+      toast(count === 1 ? t("Memória atualizada.") : t("Memórias atualizadas."), {
+        action: { label: t("Ver"), run: () => openSettings("memoria") },
+      });
+    }
   } else if (event.type === "step") {
     // O KAZER conta o que está fazendo enquanto faz: o passo aparece ao começar
     // ("run") e é fechado com o que voltou ("done"). Nada é narrado sem acontecer.

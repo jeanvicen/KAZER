@@ -4,7 +4,7 @@
 
 import { announce, finePointer, formatDate, formatReset, h, icon, loadStyle, mark, reducedMotion, toDate, trapFocus } from "./dom.js";
 import { request } from "./net.js";
-import { confirmDialog, openSheet, toast } from "./sheets.js";
+import { confirmDialog, openSheet, promptDialog, toast } from "./sheets.js";
 
 const SECTIONS = [
   ["conta", "Conta", "user"],
@@ -745,7 +745,7 @@ class SettingsPanel {
       {},
       mark("memories__mark"),
       h("p", { text: "Nada guardado ainda." }),
-      h("span", { text: "O KAZER só lembra o que você salvar aqui. Nada é salvo automaticamente." }),
+      h("span", { text: "Aqui aparece o que você adicionar e, com o salvamento automático ligado, o que você contar de si nas conversas." }),
     );
     const input = h("input.set-field__input", { id: "memory-new", type: "text", maxlength: "500", placeholder: "Ex.: Uso Python e trabalho remoto", autocomplete: "off" });
     const add = h("button.pill-button.pill-button--solid", { type: "submit", text: "Salvar" });
@@ -759,7 +759,23 @@ class SettingsPanel {
     };
     const item = (memory) => {
       const remove = h("button.icon-button.memory__remove", { type: "button", "aria-label": `Esquecer: ${memory.content}` }, icon("close"));
-      const li = h("li.memory", {}, h("span.memory__dot", { "aria-hidden": "true" }), h("span.memory__text", { text: memory.content }), remove);
+      const text = h("span.memory__text", { text: memory.content });
+      const tag = memory.source === "auto" ? h("span.memory__tag", { text: "automática", title: "O KAZER guardou isto a partir de algo que você contou numa conversa." }) : null;
+      const edit = h("button.icon-button.memory__edit", { type: "button", "aria-label": `Editar: ${memory.content}` }, icon("edit"));
+      const li = h("li.memory", {}, h("span.memory__dot", { "aria-hidden": "true" }), text, tag, edit, remove);
+      edit.addEventListener("click", async () => {
+        const value = await promptDialog({ title: "Editar memória", label: "Memória", value: memory.content, maxLength: 500, opener: edit });
+        const content = value?.trim();
+        if (!content || content === memory.content) return;
+        const result = await request(`/api/memories/${memory.id}`, { method: "PATCH", body: { content } });
+        if (!result.ok) {
+          toast("Não deu para salvar a mudança agora.");
+          return;
+        }
+        this.memories = this.memories.map((other) => (other.id === memory.id ? result.data.memory : other));
+        paint();
+        this.flashSaved();
+      });
       remove.addEventListener("click", async () => {
         li.classList.add("is-leaving");
         const result = await request(`/api/memories/${memory.id}`, { method: "DELETE" });
@@ -836,8 +852,23 @@ class SettingsPanel {
           }),
         }),
       ),
+      this.group(
+        null,
+        this.row({
+          title: "Guardar sozinho o que eu contar",
+          description: "O KAZER pode guardar preferências e contexto que você conta de si (seu nome, como prefere as respostas, no que está trabalhando). Nunca guarda senhas, documentos, dados de pagamento, saúde ou endereço, nem texto que você só pediu para traduzir ou reescrever.",
+          id: "pref-memory-auto",
+          control: this.toggle({
+            id: "pref-memory-auto",
+            checked: this.prefs.memory_auto !== false,
+            label: "Guardar sozinho o que eu contar",
+            onChange: (on) => this.savePrefs({ memory_auto: on }, { immediate: true }),
+          }),
+        }),
+      ),
       this.group("Adicionar", form, status),
       this.group(h("span.memories__head", {}, h("span", { text: "Guardadas" }), count), list, empty, clearAll),
+      h("p.set-note", { text: "As memórias são só desta conta e não são usadas para treinar modelos. Apagar aqui apaga de verdade." }),
     );
     section.classList.toggle("is-muted", !enabled);
     return section;

@@ -14,6 +14,8 @@ const TITLES = {
   forja: "KZ Code",
   artefatos: "Artefatos",
   biblioteca: "Biblioteca",
+  studio: "Studio",
+  imagens: "Criar imagem",
 };
 
 export function createScreens({
@@ -23,6 +25,7 @@ export function createScreens({
   onStartForja,
   onOpenPlans,
   onOpenSettings,
+  onGo,
 }) {
   const current = { name: "", view: null };
   const cache = new Map();
@@ -75,6 +78,25 @@ export function createScreens({
     if (name === "artefatos") {
       const { createArtifacts } = await import("./artifacts-screen.js");
       return shell(name, await createArtifacts({ onOpenConversation }));
+    }
+    if (name === "studio") {
+      const { createStudio } = await import("./studio.js");
+      const studio = createStudio();
+      return shell(name, { body: studio.root });
+    }
+    if (name === "imagens") {
+      await loadStyle("/assets/studio.css");
+      const [{ createImageMaker }, { queueImage }] = await Promise.all([
+        import("./criar.js"),
+        import("./studio.js"),
+      ]);
+      const maker = createImageMaker({
+        onUseInStudio: (blob) => {
+          queueImage(blob);
+          onGo?.("studio");
+        },
+      });
+      return shell(name, { body: maker.root });
     }
     return shell(name, { body: h("p.sc__empty", { text: "Em breve." }) });
   }
