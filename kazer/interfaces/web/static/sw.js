@@ -3,7 +3,7 @@
 // Nunca guarda nada de /api/: conversas, anexos e sessão não ficam em cache.
 // Rede primeiro: com internet, cada deploy novo aparece na hora.
 
-const CACHE = "kazer-shell-v27";
+const CACHE = "kazer-shell-v29";
 const SHELL = [
   "/",
   "/manifest.webmanifest",
@@ -11,6 +11,7 @@ const SHELL = [
   "/assets/chat.css",
   "/assets/refine.css",
   "/assets/aviso.css",
+  "/assets/pplx.css",
   "/assets/app.js",
   "/assets/aviso.js",
   "/assets/dom.js",

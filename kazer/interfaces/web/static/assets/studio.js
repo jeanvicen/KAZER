@@ -266,8 +266,37 @@ export function createStudio() {
     const grid = h("div.st__grid");
     const status = h("p.st__status", { role: "status", text: t("Carregando…") });
     const create = h("button.st__new", { type: "button", onclick: (event) => chooseFormat(event.currentTarget) }, icon("plus"), h("span", { text: "Novo projeto" }));
+    // Atalhos de começo: um toque abre o editor no formato, em branco.
+    const quick = h(
+      "div.st__quick",
+      { role: "list", "aria-label": t("Começar por um formato") },
+      FORMATS.map((format) => {
+        const shape = h(`span.st__shape${format.w > format.h ? ".is-wide" : ""}`);
+        shape.style.setProperty("aspect-ratio", `${format.w} / ${format.h}`);
+        return h(
+          "button.st__quick-item",
+          {
+            type: "button",
+            role: "listitem",
+            onclick: () => openEditor({ id: null, title: t(format.name), width: format.w, height: format.h, template: "branco" }),
+          },
+          h("span.st__quick-art", {}, shape),
+          h("span.st__quick-name", { text: format.name }),
+          h("span.st__quick-meta", { text: `${format.w}×${format.h}` }),
+        );
+      }),
+    );
     root.replaceChildren(
-      h("div.st__home", {}, h("div.st__lead", {}, h("p.st__lede", { text: "Crie posts, capas, slides e cartazes. Tudo fica editável e guardado na sua conta." }), create), status, grid),
+      h(
+        "div.st__home",
+        {},
+        h("div.st__hero", {}, h("h3.st__hero-title", { text: "O que vamos criar hoje?" }), h("p.st__lede", { text: "Crie posts, capas, slides e cartazes. Tudo fica editável e guardado na sua conta." }), create),
+        h("p.st__section", { text: "Começar por um formato" }),
+        quick,
+        h("p.st__section", { text: "Seus projetos" }),
+        status,
+        grid,
+      ),
       refreshButton,
     );
     const result = await request("/api/designs");

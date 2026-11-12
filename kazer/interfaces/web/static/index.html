@@ -21,6 +21,7 @@
   <link rel="stylesheet" href="/assets/chat.css">
   <link rel="stylesheet" href="/assets/refine.css">
   <link rel="stylesheet" href="/assets/aviso.css">
+  <link rel="stylesheet" href="/assets/pplx.css">
   <script type="module" src="/assets/app.js"></script>
 </head>
 <body>
@@ -157,11 +158,11 @@
         <button class="icon-button drawer__close" type="button" id="drawer-close" aria-label="Fechar conversas"><span data-icon="close"></span></button>
       </div>
       <nav class="drawer__nav" id="drawer-nav" aria-label="Seções do KAZER">
-        <button class="drawer__item is-active" type="button" data-screen="conversas" id="nav-conversas"><span data-icon="chat"></span><span>Conversas</span></button>
-        <button class="drawer__item" type="button" data-screen="forja" id="nav-forja"><span data-icon="code"></span><span>KZ Code</span></button>
-        <button class="drawer__item" type="button" data-screen="artefatos" id="nav-artefatos"><span data-icon="layers"></span><span>Artefatos</span></button>
-        <button class="drawer__item" type="button" data-screen="studio" id="nav-studio"><span data-icon="edit"></span><span>Studio</span></button>
-        <button class="drawer__item" type="button" data-screen="imagens" id="nav-imagens"><span data-icon="image"></span><span>Criar imagem</span></button>
+        <button class="drawer__item is-active" type="button" data-screen="conversas" id="nav-conversas" title="Conversas"><span data-icon="chat"></span><span>Conversas</span></button>
+        <button class="drawer__item" type="button" data-screen="forja" id="nav-forja" title="KZ Code"><span data-icon="code"></span><span>KZ Code</span></button>
+        <button class="drawer__item" type="button" data-screen="artefatos" id="nav-artefatos" title="Artefatos"><span data-icon="layers"></span><span>Artefatos</span></button>
+        <button class="drawer__item" type="button" data-screen="studio" id="nav-studio" title="Studio"><span data-icon="edit"></span><span>Studio</span></button>
+        <button class="drawer__item" type="button" data-screen="imagens" id="nav-imagens" title="Criar imagem"><span data-icon="image"></span><span>Criar imagem</span></button>
       </nav>
       <div class="drawer__panel" id="panel-conversas">
         <p class="drawer__section">Recentes</p>
@@ -176,7 +177,7 @@
           <div class="history__more" id="history-more" aria-hidden="true"></div>
         </nav>
       </div>
-      <button class="drawer__new" type="button" id="new-chat"><span data-icon="plus"></span><span>Nova conversa</span></button>
+      <button class="drawer__new" type="button" id="new-chat" title="Nova conversa"><span data-icon="plus"></span><span>Nova conversa</span></button>
       <div class="drawer__foot">
         <button class="account" type="button" id="open-settings">
           <span class="account__avatar" id="account-avatar" aria-hidden="true"></span>

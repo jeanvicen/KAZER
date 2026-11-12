@@ -30,7 +30,7 @@ const GROUPS = [
     ["conta", "Conta", "user", "e-mail email senha sessões excluir"],
   ]],
   ["", [
-    ["interface", "Aparência", "sliders", "tema escuro claro idioma texto tamanho animação enviar enter"],
+    ["interface", "Aparência", "sliders", "tema escuro claro cor destaque dourado turquesa idioma texto tamanho animação enviar enter"],
   ]],
   ["", [
     ["dados", "Dados e privacidade", "shield", "exportar apagar histórico conversas"],
@@ -902,6 +902,16 @@ class SettingsPanel {
           onChange: (value) => this.savePrefs({ theme: value }, { immediate: true }),
         }),
         h("p.set-group__desc", { text: "Sistema acompanha o tema do aparelho." }),
+      ),
+      this.group(
+        "Cor de destaque",
+        this.segmented({
+          label: "Cor de destaque",
+          options: [["auto", "Automática"], ["dourado", "Dourado"], ["turquesa", "Turquesa"]],
+          value: this.prefs.accent || "auto",
+          onChange: (value) => this.savePrefs({ accent: value }, { immediate: true }),
+        }),
+        h("p.set-group__desc", { text: "Automática usa dourado no tema escuro e turquesa no claro." }),
       ),
       this.group(
         "Idioma",

@@ -4,7 +4,7 @@
 
 import { hydratePixelWords } from "./pixel.js";
 import { initLanguage, locale, t } from "./i18n.js";
-import { applyTheme } from "./theme.js";
+import { applyAccent, applyTheme } from "./theme.js";
 import {
   announce,
   byId,
@@ -167,6 +167,7 @@ export async function mountChat({ email, onSignedOut }) {
   // Idioma e tema primeiro, com a cópia do aparelho: a conta ainda não respondeu e
   // a tela não pode piscar em português (ou em escuro) antes de acertar.
   const local = store.get("kazer:ui", {});
+  applyAccent(local.accent);
   applyTheme(local.theme);
   await initLanguage(local.language);
   const root = document.getElementById("chat");
@@ -241,7 +242,7 @@ async function loadSettings() {
   S.account.created_at = result.data.account.created_at;
   S.account.verified_at = result.data.account.verified_at;
   S.options.memory = S.prefs.memory_enabled;
-  store.set("kazer:ui", { motion: S.prefs.motion, text_size: S.prefs.text_size, ambient: S.prefs.ambient, theme: S.prefs.theme, language: S.prefs.language });
+  store.set("kazer:ui", { motion: S.prefs.motion, text_size: S.prefs.text_size, ambient: S.prefs.ambient, theme: S.prefs.theme, accent: S.prefs.accent, language: S.prefs.language });
   applyLocalPrefs();
   applyModel();
   if (S.empty) setGreeting(true);
@@ -249,8 +250,9 @@ async function loadSettings() {
 
 // Preferências visuais aplicadas antes da resposta do servidor (sem "pulo").
 function applyLocalPrefs() {
-  const ui = { motion: "sistema", text_size: "m", ambient: true, theme: "escuro", language: "pt", ...store.get("kazer:ui", {}), ...pick(S.prefs, ["motion", "text_size", "ambient", "theme", "language"]) };
+  const ui = { motion: "sistema", text_size: "m", ambient: true, theme: "escuro", accent: "auto", language: "pt", ...store.get("kazer:ui", {}), ...pick(S.prefs, ["motion", "text_size", "ambient", "theme", "accent", "language"]) };
   setMotionPreference(ui.motion);
+  applyAccent(ui.accent);
   applyTheme(ui.theme);
   // Idioma trocado em outro aparelho: este recarrega para falar a mesma língua.
   if (document.documentElement.lang !== (ui.language === "en" ? "en" : "pt-BR") && S.prefs?.language) {
@@ -298,7 +300,7 @@ function applyModel() {
 export function onPreferencesChanged(prefs) {
   S.prefs = { ...S.prefs, ...prefs };
   S.options.memory = S.prefs.memory_enabled;
-  store.set("kazer:ui", { motion: S.prefs.motion, text_size: S.prefs.text_size, ambient: S.prefs.ambient, theme: S.prefs.theme, language: S.prefs.language });
+  store.set("kazer:ui", { motion: S.prefs.motion, text_size: S.prefs.text_size, ambient: S.prefs.ambient, theme: S.prefs.theme, accent: S.prefs.accent, language: S.prefs.language });
   applyLocalPrefs();
   if (S.empty) setGreeting(false);
 }
@@ -605,7 +607,18 @@ function applyTitle(conversationId, title) {
   }
 }
 
-function setTitle(title) {
+// Títulos antigos podem ter vindo com markdown cru ("## Resumo **KAZER**").
+function cleanTitle(title) {
+  return String(title || "")
+    .replace(/[#*_`>~]+/g, "")
+    .replace(/\[([^\]]*)\]\([^)]*\)/g, "$1")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, 120);
+}
+
+function setTitle(raw) {
+  const title = cleanTitle(raw);
   S.ui.topbarTitle.textContent = title || "";
   document.title = title ? `${title} · KAZER` : "KAZER";
 }
@@ -775,9 +788,16 @@ function attachmentList(attachments) {
   );
 }
 
+// Pergunta curta e de uma linha vira o título da resposta (como na Perplexity);
+// texto longo, colado ou com várias linhas continua num cartão legível.
+function isQuery(text) {
+  const value = String(text || "").trim();
+  return value.length > 0 && value.length <= 180 && !value.includes("\n");
+}
+
 function userElement(model) {
   return h(
-    "article.msg.msg--user",
+    `article.msg.msg--user${isQuery(model.content) && !model.attachments?.length ? ".msg--query" : ""}`,
     { dataset: { id: model.id } },
     model.attachments?.length ? attachmentList(model.attachments) : null,
     model.content ? h("div.msg__bubble", { text: model.content }) : null,
@@ -800,8 +820,105 @@ function actionButton(name, label, getText) {
   return button;
 }
 
+// Abas da resposta, como na Perplexity: Resposta (sempre), Fontes (quando a
+// resposta pesquisou) e Passos (quando houve pesquisa ou raciocínio).
+function answerTabs(model) {
+  const answer = h("span.msg__tab.is-active", {}, mark("msg__mark"), h("span", { text: t("Resposta") }));
+  const sources = h(
+    "button.msg__tab.msg__tab--sources",
+    { type: "button", hidden: true, onclick: () => openSourcesSheet(model.liveSources || readSources(model.content || "")) },
+    icon("globe"),
+    h("span", { text: t("Fontes") }),
+    h("span.msg__tab-count"),
+  );
+  const steps = h(
+    "button.msg__tab.msg__tab--steps",
+    { type: "button", hidden: true, onclick: () => revealProcess(model) },
+    icon("steps"),
+    h("span", { text: t("Passos") }),
+  );
+  return { answer, sources, steps };
+}
+
+// "Passos": abre o raciocínio (ou a linha da pesquisa) e leva até ele.
+function revealProcess(model) {
+  const { thinking, steps } = model.parts;
+  if (!thinking.hidden) {
+    thinking.open = true;
+    thinking.scrollIntoView({ behavior: reducedMotion() ? "auto" : "smooth", block: "nearest" });
+    return;
+  }
+  const first = steps.querySelector("button.act__line");
+  if (first && !first.closest(".is-open")) first.click();
+  steps.scrollIntoView({ behavior: reducedMotion() ? "auto" : "smooth", block: "nearest" });
+}
+
+function paintTabs(model) {
+  const tabs = model.parts?.tabs;
+  if (!tabs) return;
+  const sources = (model.liveSources || readSources(model.content || "")).filter((item) => item?.u && item.k !== "imagem");
+  tabs.sources.hidden = !sources.length;
+  tabs.sources.querySelector(".msg__tab-count").textContent = sources.length ? String(sources.length) : "";
+  tabs.steps.hidden = model.parts.steps.hidden && model.parts.thinking.hidden;
+}
+
+// Faixa de fontes acima da resposta: até 3 cartões e um "+N" que abre a lista.
+function paintSourceCards(model) {
+  const slot = model.parts?.cards;
+  if (!slot) return;
+  const sources = (model.liveSources || readSources(model.content || "")).filter((item) => item?.u && item.k !== "imagem");
+  const key = sources.map((item) => item.u).join("|");
+  if (slot.dataset.key === key) return;
+  slot.dataset.key = key;
+  slot.hidden = !sources.length;
+  if (!sources.length) {
+    slot.replaceChildren();
+    return;
+  }
+  const shown = sources.slice(0, sources.length > 4 ? 3 : 4);
+  const cards = shown.map((item, index) =>
+    h(
+      "a.src-card",
+      { href: item.u, target: "_blank", rel: "noopener noreferrer", title: item.t || siteHost(item.u) },
+      h("span.src-card__title", { text: item.t || siteHost(item.u) }),
+      h("span.src-card__foot", {}, sourceAvatar(item.u), h("span.src-card__host", { text: siteHost(item.u) }), h("span.src-card__n", { text: String(item.n || index + 1) })),
+    ),
+  );
+  if (sources.length > shown.length) {
+    const rest = sources.slice(shown.length);
+    cards.push(
+      h(
+        "button.src-card.src-card--more",
+        { type: "button", onclick: () => openSourcesSheet(sources) },
+        h("span.src-card__faces", {}, rest.slice(0, 4).map((item) => sourceAvatar(item.u))),
+        h("span.src-card__host", { text: t(`Ver mais ${rest.length}`) }),
+      ),
+    );
+  }
+  slot.replaceChildren(h("div.src-cards__row", {}, cards));
+}
+
+async function shareAnswer(model, button) {
+  const text = stripSources(model.content || "").trim();
+  const title = S.conversation?.title || "KAZER";
+  if (navigator.share) {
+    try {
+      await navigator.share({ title, text });
+      return;
+    } catch (error) {
+      if (error?.name === "AbortError") return;
+    }
+  }
+  const ok = await copyText(text);
+  button.classList.toggle("is-done", ok);
+  announce(ok ? t("Resposta copiada para compartilhar.") : t("Não foi possível copiar."));
+  toast(ok ? t("Resposta copiada para compartilhar.") : t("Não foi possível copiar."));
+  window.setTimeout(() => button.classList.remove("is-done"), 1500);
+}
+
 function assistantElement(model) {
-  const head = h("div.msg__head", {}, mark("msg__mark"), h("span.msg__state"));
+  const tabs = answerTabs(model);
+  const head = h("div.msg__head", { role: "group", "aria-label": t("Seções da resposta") }, tabs.answer, tabs.sources, tabs.steps, h("span.msg__state"));
   const thinking = h(
     "details.think",
     { hidden: true },
@@ -815,14 +932,17 @@ function assistantElement(model) {
   );
   const body = h("div.msg__body.md");
   const notice = h("div.msg__notice", { hidden: true });
-  const actions = h("div.msg__actions", {}, actionButton("copy", "Copiar resposta", () => stripSources(model.content)));
+  const share = h("button.msg__action.msg__action--share", { type: "button", "aria-label": t("Compartilhar resposta"), title: t("Compartilhar") }, icon("share"), h("span.msg__action-label", { text: t("Compartilhar") }));
+  share.addEventListener("click", () => shareAnswer(model, share));
+  const actions = h("div.msg__actions", {}, share, actionButton("copy", "Copiar resposta", () => stripSources(model.content)));
+  const cards = h("div.src-cards", { hidden: true, "aria-label": t("Fontes da resposta") });
   const made = h("div.msg__made", { hidden: true });
   const bundle = h("div.msg__bundle", { hidden: true });
   const steps = h("div.msg__steps.act", { hidden: true, role: "group", "aria-label": "O que o KAZER está fazendo" });
   const pics = h("div.msg__pics", { hidden: true });
-  const el = h("article.msg.msg--kazer", { dataset: { id: model.id } }, head, steps, pics, thinking, body, bundle, made, notice, actions);
+  const el = h("article.msg.msg--kazer", { dataset: { id: model.id } }, head, steps, cards, pics, thinking, body, bundle, made, notice, actions);
   model.el = el;
-  model.parts = { head, steps, pics, thinking, body, bundle, made, notice, actions, state: head.lastChild, thinkBody: thinking.lastChild };
+  model.parts = { head, tabs, cards, steps, pics, thinking, body, bundle, made, notice, actions, state: head.lastChild, thinkBody: thinking.lastChild };
   model.view = new MarkdownView(body);
   // [2] no texto vira selo da fonte 2 desta resposta (só fontes que existem).
   model.view.decorate = (fragment) => {
@@ -857,8 +977,26 @@ function paintBody(model) {
   paintBundle(model);
   if (model.thinking) {
     model.parts.thinking.hidden = false;
-    model.parts.thinkBody.replaceChildren(renderMarkdown(model.thinking));
+    model.parts.thinkBody.replaceChildren(thoughtSteps(model.thinking, model.status === "streaming" && !model.content));
   }
+  paintTabs(model);
+}
+
+// O raciocínio vira uma linha do tempo: cada parágrafo é um passo, com um ponto
+// na trilha. Enquanto pensa, o último passo pulsa na cor de destaque.
+function thoughtSteps(text, live, { plain = false } = {}) {
+  const blocks = String(text || "")
+    .split(/\n\s*\n/)
+    .map((block) => block.trim())
+    .filter(Boolean);
+  const list = h("ol.think__steps");
+  blocks.forEach((block, index) => {
+    const item = h(`li.think__step${live && index === blocks.length - 1 ? ".is-live" : ""}`, {}, h("span.think__dot", { "aria-hidden": "true" }), h("div.think__text.md"));
+    if (plain) item.lastChild.textContent = block;
+    else item.lastChild.append(renderMarkdown(block));
+    list.append(item);
+  });
+  return list;
 }
 
 const STEP_ICONS = [
@@ -1049,6 +1187,8 @@ function paintSteps(model) {
   }
   box.hidden = !lines.length;
   box.classList.toggle("is-live", streaming);
+  paintSourceCards(model);
+  paintTabs(model);
   box.replaceChildren(
     ...lines.map((line) => {
       if (line.kind === "web") return webLine(line, model);
@@ -1265,7 +1405,8 @@ function queueRender(model) {
       item.view.update(revealStep(item), { fade: true });
       if (item.thinking) {
         item.parts.thinking.hidden = false;
-        item.parts.thinkBody.textContent = item.thinking;
+        // Ao vivo: passos em texto puro (barato a cada quadro); o markdown entra no fim.
+        item.parts.thinkBody.replaceChildren(thoughtSteps(item.thinking, !item.content, { plain: true }));
       }
       applyStatus(item);
       if (item.shown < (item.content || "").length) queueRender(item);
@@ -1604,7 +1745,7 @@ function finish(model, reply) {
   model.liveImages = null;
   model.view.update(model.content || "");
   paintPics(model);
-  if (model.thinking) model.parts.thinkBody.replaceChildren(renderMarkdown(model.thinking));
+  if (model.thinking) model.parts.thinkBody.replaceChildren(thoughtSteps(model.thinking, false));
   paintBundle(model);
   applyStatus(model);
   // Sem isto o último passo continuava "ao vivo" (brilhando) depois da entrega.

@@ -21,6 +21,21 @@ paga a placa, a energia ou o aluguel da máquina.
 - A tela mostra o que o banco diz, com a hora da volta no fuso da pessoa.
 - Edição de imagem, quando existir, conta como imagem.
 
+## Ligar sem GPU: Pollinations
+
+`KAZER_IMAGE_PROVIDER=pollinations` liga a criação usando o serviço aberto da
+[Pollinations](https://pollinations.ai). O pedido (o texto da imagem) sai do KAZER
+para lá, por isso só liga quando você escolhe.
+
+| Variável | Para quê |
+|---|---|
+| `KAZER_POLLINATIONS_KEY` | (segredo, opcional) chave `sk_` de enter.pollinations.ai: sem selo, sem limite por IP, tamanho cheio |
+| `KAZER_POLLINATIONS_MODEL` | Modelo com chave (padrão `flux`) |
+
+Sem chave vale a API clássica gratuita: uma imagem por vez por IP (com intervalo de
+uns 45 s), no máximo ~768×768 e um selo pequeno no canto. Quando o limite bate, a
+tela diz que está ocupado e a imagem do dia não é gasta.
+
 ## Ligar com um servidor seu
 
 Variáveis na Vercel (só nomes):
@@ -30,7 +45,7 @@ Variáveis na Vercel (só nomes):
 | `KAZER_IMAGE_ENDPOINT_URL` | Endereço `https://` do seu servidor de inferência |
 | `KAZER_IMAGE_ENDPOINT_TOKEN` | (segredo, opcional) enviado como `Authorization: Bearer` |
 | `KAZER_IMAGE_TIMEOUT` | Prazo em segundos (padrão 90; mantenha abaixo do tempo máximo da função) |
-| `KAZER_IMAGE_PROVIDER` | `endpoint` (padrão quando há URL) ou `demo` (só fora de produção) |
+| `KAZER_IMAGE_PROVIDER` | `endpoint` (padrão quando há URL), `pollinations` ou `demo` (só fora de produção) |
 
 Contrato que o seu servidor precisa cumprir:
 

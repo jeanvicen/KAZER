@@ -139,6 +139,8 @@ PREFERENCE_DEFAULTS: dict[str, Any] = {
     "ambient": True,
     # Aparência e idioma da interface. O idioma também vai ao modelo.
     "theme": "escuro",
+    # Cor de destaque: automático = dourado no escuro e turquesa no claro.
+    "accent": "auto",
     "language": "pt",
     # Plano que a pessoa quis enquanto a cobrança não abre (não dá acesso a nada).
     "wants_plan": "",
@@ -154,6 +156,7 @@ _CHOICES = {
     "motion": {"sistema", "reduzido", "completo"},
     "text_size": {"p", "m", "g"},
     "theme": {"escuro", "claro", "sistema"},
+    "accent": {"auto", "dourado", "turquesa"},
     "language": {"pt", "en"},
     "wants_plan": {"", "free", "pro", "ultra"},
 }
@@ -274,6 +277,22 @@ class SendOptions:
 
 
 EFFORT_LABELS = {"baixo": "Baixo", "medio": "Médio", "alto": "Alto", "extra": "Extra", "max": "Máx"}
+
+
+_TITLE_MARKUP = re.compile(r"[*_`~#>|]+|\[([^\]]*)\]\([^)]*\)")
+_TITLE_LABEL = re.compile(r"^(t[íi]tulo|title)\s*:\s*", re.IGNORECASE)
+
+
+def clean_title(raw: str) -> str:
+    """Título sem marcação: modelos pequenos às vezes devolvem "## **Título**".
+
+    Fica só a primeira linha com texto, sem markdown, sem rótulo "Título:" e
+    sem aspas/pontuação nas pontas.
+    """
+    line = next((part for part in raw.splitlines() if part.strip(" #*_`>-")), "")
+    line = _TITLE_MARKUP.sub(lambda m: m.group(1) or "", line)
+    line = _TITLE_LABEL.sub("", " ".join(line.split()))
+    return line.strip(" \"'`.:-—“”‘’")
 
 
 def _title_from(content: str, attachments: list[Attachment]) -> str:
@@ -1654,7 +1673,7 @@ class ChatService:
                     break
         except ProviderError:
             return None
-        title = " ".join("".join(pieces).split()).strip(" \"'`.:-—")
+        title = clean_title("".join(pieces))
         if not title:
             return None
         words = title.split(" ")
