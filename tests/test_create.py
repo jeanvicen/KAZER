@@ -360,3 +360,86 @@ def test_design_validation_and_limit(world: World) -> None:
     with pytest.raises(ChatError) as full:
         limited.save(user_id, None, {"title": "mais um", "data": document()})
     assert full.value.code == "design_limit"
+
+
+def test_pollinations_provider_is_opt_in_and_respects_free_limits(monkeypatch) -> None:
+    monkeypatch.delenv("KAZER_POLLINATIONS_KEY", raising=False)
+    assert providers.load({}) is None
+    free = providers.load({"KAZER_IMAGE_PROVIDER": "pollinations"})
+    assert free is not None and free.name == "pollinations"
+    assert free.label == "Pollinations (gratuito)"
+    url, params, headers = free.request("um gato / dourado?", 1080, 1350, 7)
+    assert url.startswith("https://image.pollinations.ai/prompt/")
+    assert "/" not in url.removeprefix("https://image.pollinations.ai/prompt/")
+    assert params["width"] * params["height"] <= 768 * 768
+    assert params["safe"] == "true" and params["seed"] == 7
+    assert "Authorization" not in headers
+    assert free.request("x", 512, 512, 4_029_812_174)[1]["seed"] < 2**31
+    # Proporção mantida ao caber na área gratuita.
+    assert abs(params["width"] / params["height"] - 1080 / 1350) < 0.03
+
+
+def test_pollinations_with_key_uses_the_account_api(monkeypatch) -> None:
+    monkeypatch.setenv("KAZER_POLLINATIONS_KEY", "sk_teste")
+    keyed = providers.load({"KAZER_IMAGE_PROVIDER": "pollinations"})
+    url, params, headers = keyed.request("um gato", 1024, 1024, 3)
+    assert url.startswith("https://gen.pollinations.ai/image/")
+    assert headers["Authorization"] == "Bearer sk_teste"
+    assert "sk_teste" not in url and "sk_teste" not in str(params)
+    assert params["nologo"] == "true" and params["width"] == 1024
+
+
+def test_pollinations_busy_and_bad_bytes_map_to_stable_codes(monkeypatch) -> None:
+    import httpx
+
+    def fake(status: int, body: bytes):
+        transport = httpx.MockTransport(lambda request: httpx.Response(status, content=body))
+        real = httpx.stream
+
+        def stream(method, url, **kwargs):
+            kwargs.pop("follow_redirects", None)
+            client = httpx.Client(transport=transport)
+            return client.stream(method, url, **kwargs)
+
+        monkeypatch.setattr(httpx, "stream", stream)
+        return real
+
+    provider = providers.PollinationsProvider()
+    fake(402, b"")
+    with pytest.raises(providers.ImageError) as busy:
+        provider.generate("um gato", 512, 512, 1)
+    assert busy.value.code == "image_busy"
+    fake(200, b"<html>nope</html>")
+    with pytest.raises(providers.ImageError) as bad:
+        provider.generate("um gato", 512, 512, 1)
+    assert bad.value.code == "image_invalid"
+    fake(200, PNG)
+    assert provider.generate("um gato", 512, 512, 1).media_type == "image/png"
+
+
+def test_pollinations_retries_a_passing_503_once(monkeypatch) -> None:
+    import httpx
+
+    answers = iter([httpx.Response(503), httpx.Response(200, content=PNG)])
+    transport = httpx.MockTransport(lambda request: next(answers))
+
+    def stream(method, url, **kwargs):
+        kwargs.pop("follow_redirects", None)
+        return httpx.Client(transport=transport).stream(method, url, **kwargs)
+
+    monkeypatch.setattr(httpx, "stream", stream)
+    monkeypatch.setattr(providers.time, "sleep", lambda seconds: None)
+    provider = providers.PollinationsProvider()
+    assert provider.generate("um gato", 512, 512, 1).media_type == "image/png"
+
+    always = httpx.MockTransport(lambda request: httpx.Response(503))
+    monkeypatch.setattr(
+        httpx,
+        "stream",
+        lambda method, url, **kw: httpx.Client(transport=always).stream(
+            method, url, **{k: v for k, v in kw.items() if k != "follow_redirects"}
+        ),
+    )
+    with pytest.raises(providers.ImageError) as busy:
+        provider.generate("um gato", 512, 512, 1)
+    assert busy.value.code == "image_busy"

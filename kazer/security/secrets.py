@@ -16,7 +16,7 @@ _ALLOWED_SECRETS: Mapping[str, frozenset[str]] = {
     # Modo voz: segredo compartilhado que assina os tokens curtos do voice gateway.
     "voice": frozenset({"KAZER_VOICE_TOKEN_SECRET", "ELEVENLABS_API_KEY", "OPENAI_API_KEY"}),
     # Criação de imagens: token do servidor de inferência próprio (opcional).
-    "images": frozenset({"KAZER_IMAGE_ENDPOINT_TOKEN"}),
+    "images": frozenset({"KAZER_IMAGE_ENDPOINT_TOKEN", "KAZER_POLLINATIONS_KEY"}),
     # Chaves do provedor de modelo: lidas só pelo adaptador, nunca expostas ao navegador.
     "model": frozenset(
         {

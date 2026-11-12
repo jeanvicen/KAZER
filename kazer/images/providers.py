@@ -8,6 +8,10 @@ Aqui fica só a fronteira. Três estados possíveis:
 - **`endpoint`**: um servidor de inferência **seu** (Diffusers, ComfyUI atrás de um
   adaptador, stable-diffusion.cpp…), descrito em `docs/images/RUNTIME.md`.
   `KAZER_IMAGE_ENDPOINT_URL` (https) e, opcional, `KAZER_IMAGE_ENDPOINT_TOKEN`.
+- **`pollinations`**: o serviço aberto da Pollinations (https://pollinations.ai).
+  Sem chave usa a API clássica gratuita (limitada por IP, com um selo pequeno no
+  canto e no máximo ~768×768); com `KAZER_POLLINATIONS_KEY` usa a API com conta,
+  sem selo nem limite por IP. Só é ligado de propósito: o pedido sai do KAZER.
 - **`demo`**: desenha um degradê com o texto do pedido embutido nos metadados.
   Só fora de produção, para testar a cota e a tela sem GPU. Nunca é apresentado
   como imagem de IA.
@@ -23,11 +27,12 @@ from __future__ import annotations
 
 import os
 import struct
+import time
 import zlib
 from collections.abc import Mapping
 from dataclasses import dataclass
 from typing import Protocol
-from urllib.parse import urlsplit
+from urllib.parse import quote, urlsplit
 
 import httpx
 
@@ -89,35 +94,108 @@ class EndpointProvider:
         if self._token:
             headers["Authorization"] = f"Bearer {self._token}"
         body = {"prompt": prompt, "width": width, "height": height, "seed": seed}
+        return _download("POST", self._url, timeout=self._timeout, json=body, headers=headers)
+
+
+def _download(
+    method: str, url: str, *, timeout: float, retries: int = 0, **kwargs: object
+) -> Generated:
+    """Baixa a imagem com teto de tamanho e confere o tipo pelos bytes.
+
+    `retries` repete só a recusa passageira (503) do serviço, com pausa curta.
+    """
+    for attempt in range(retries + 1):
         try:
-            with httpx.stream(
-                "POST",
-                self._url,
-                json=body,
-                headers=headers,
-                timeout=self._timeout,
-                follow_redirects=False,
-            ) as response:
-                if response.status_code in (429, 503):
-                    raise ImageError("image_busy")
-                if response.status_code != 200:
-                    raise ImageError("image_failed")
-                chunks: list[bytes] = []
-                total = 0
-                for chunk in response.iter_bytes():
-                    total += len(chunk)
-                    if total > MAX_IMAGE_BYTES:
-                        raise ImageError("image_too_large")
-                    chunks.append(chunk)
-        except httpx.TimeoutException:
-            raise ImageError("image_timeout") from None
-        except httpx.HTTPError:
-            raise ImageError("image_failed") from None
-        data = b"".join(chunks)
-        media_type = sniff(data)
-        if media_type is None:
-            raise ImageError("image_invalid")
-        return Generated(data, media_type)
+            return _fetch(method, url, timeout=timeout, **kwargs)
+        except _Unavailable:
+            if attempt == retries:
+                raise ImageError("image_busy") from None
+            time.sleep(2.0 * (attempt + 1))
+    raise ImageError("image_busy")
+
+
+class _Unavailable(Exception):
+    """O serviço respondeu 503: vale tentar de novo em instantes."""
+
+
+def _fetch(method: str, url: str, *, timeout: float, **kwargs: object) -> Generated:
+    try:
+        with httpx.stream(
+            method, url, timeout=timeout, follow_redirects=False, **kwargs
+        ) as response:
+            if response.status_code == 503:
+                raise _Unavailable
+            if response.status_code in (402, 429):
+                raise ImageError("image_busy")
+            if response.status_code != 200:
+                raise ImageError("image_failed")
+            chunks: list[bytes] = []
+            total = 0
+            for chunk in response.iter_bytes():
+                total += len(chunk)
+                if total > MAX_IMAGE_BYTES:
+                    raise ImageError("image_too_large")
+                chunks.append(chunk)
+    except httpx.TimeoutException:
+        raise ImageError("image_timeout") from None
+    except httpx.HTTPError:
+        raise ImageError("image_failed") from None
+    data = b"".join(chunks)
+    media_type = sniff(data)
+    if media_type is None:
+        raise ImageError("image_invalid")
+    return Generated(data, media_type)
+
+
+def fit_area(width: int, height: int, max_area: int) -> tuple[int, int]:
+    """Reduz mantendo a proporção até caber na área (múltiplos de 8)."""
+    if width * height <= max_area:
+        return width, height
+    scale = (max_area / (width * height)) ** 0.5
+    return max(64, int(width * scale) // 8 * 8), max(64, int(height * scale) // 8 * 8)
+
+
+class PollinationsProvider:
+    """Pollinations: grátis sem chave (limitado) ou com chave da conta."""
+
+    name = "pollinations"
+    FREE_URL = "https://image.pollinations.ai/prompt/"
+    KEY_URL = "https://gen.pollinations.ai/image/"
+    FREE_AREA = 768 * 768
+
+    def __init__(
+        self, token: str = "", timeout: float = DEFAULT_TIMEOUT, model: str = "flux"
+    ) -> None:
+        self._token = token
+        self._timeout = timeout
+        self._model = model or "flux"
+        self.label = "Pollinations" if token else "Pollinations (gratuito)"
+
+    def request(self, prompt: str, width: int, height: int, seed: int) -> tuple[str, dict, dict]:
+        """URL, parâmetros e cabeçalhos do pedido (separado para testar sem rede)."""
+        text = quote(prompt.strip()[:1500], safe="")
+        # A Pollinations recusa (400) semente fora de um inteiro de 32 bits com sinal.
+        params: dict[str, str | int] = {
+            "seed": seed % 2_147_483_647,
+            "safe": "true",
+            "private": "true",
+        }
+        headers = {"Accept": "image/*"}
+        if self._token:
+            params.update(
+                {"width": width, "height": height, "model": self._model, "nologo": "true"}
+            )
+            headers["Authorization"] = f"Bearer {self._token}"
+            return self.KEY_URL + text, params, headers
+        w, h = fit_area(width, height, self.FREE_AREA)
+        params.update({"width": w, "height": h})
+        return self.FREE_URL + text, params, headers
+
+    def generate(self, prompt: str, width: int, height: int, seed: int) -> Generated:
+        url, params, headers = self.request(prompt, width, height, seed)
+        return _download(
+            "GET", url, timeout=self._timeout, retries=1, params=params, headers=headers
+        )
 
 
 def _png(width: int, height: int, rows: list[bytes], text: str) -> bytes:
@@ -166,8 +244,20 @@ def load(env: Mapping[str, str] | None = None, *, production: bool = False) -> I
     source = os.environ if env is None else env
     choice = source.get("KAZER_IMAGE_PROVIDER", "").strip().lower()
     url = source.get("KAZER_IMAGE_ENDPOINT_URL", "").strip()
+    try:
+        timeout = float(source.get("KAZER_IMAGE_TIMEOUT", DEFAULT_TIMEOUT))
+    except ValueError:
+        timeout = DEFAULT_TIMEOUT
+    timeout = min(max(timeout, 5.0), 280.0)
     if choice == "demo":
         return None if production else DemoProvider()
+    if choice == "pollinations":
+        try:
+            token = get_secret("KAZER_POLLINATIONS_KEY", scope="images")
+        except (SecretNotConfiguredError, LookupError, PermissionError):
+            token = ""
+        model = source.get("KAZER_POLLINATIONS_MODEL", "flux").strip()
+        return PollinationsProvider(token, timeout, model)
     if choice in ("", "endpoint") and url:
         parts = urlsplit(url)
         local = parts.hostname in ("localhost", "127.0.0.1")
@@ -177,9 +267,5 @@ def load(env: Mapping[str, str] | None = None, *, production: bool = False) -> I
             token = get_secret("KAZER_IMAGE_ENDPOINT_TOKEN", scope="images")
         except (SecretNotConfiguredError, LookupError, PermissionError):
             token = ""
-        try:
-            timeout = float(source.get("KAZER_IMAGE_TIMEOUT", DEFAULT_TIMEOUT))
-        except ValueError:
-            timeout = DEFAULT_TIMEOUT
-        return EndpointProvider(url, token, min(max(timeout, 5.0), 280.0))
+        return EndpointProvider(url, token, timeout)
     return None

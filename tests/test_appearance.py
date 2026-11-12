@@ -97,3 +97,15 @@ def test_english_dictionary_is_consistent() -> None:
         assert set(slot.findall(key)) == set(slot.findall(value)), key
         assert key == key.strip() and value == value.strip(), key
         assert value, key
+
+
+def test_accent_color_is_saved_and_validated(make_env: Callable[..., Env]) -> None:
+    env = make_env(FakeProvider())
+    with env.client() as client:
+        env.signed_in(client, "ana@example.com")
+        assert client.get("/api/settings").json()["preferences"]["accent"] == "auto"
+        saved = client.post("/api/settings", json={"preferences": {"accent": "turquesa"}})
+        assert saved.json()["preferences"]["accent"] == "turquesa"
+        for bad in ({"accent": "rosa"}, {"accent": 3}, {"accent": ""}):
+            response = client.post("/api/settings", json={"preferences": bad})
+            assert (response.status_code, response.json()["error"]) == (400, "invalid_request")

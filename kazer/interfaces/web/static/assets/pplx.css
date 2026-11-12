@@ -1,0 +1,1478 @@
+/* KAZER — camada de design "resposta" (2026-11), inspirada no app da Perplexity.
+ *
+ * Carregada por último. Só forma, nenhum comportamento:
+ * - superfícies: grafite quente no escuro, papel no claro (em vez de preto puro
+ *   e cinza frio);
+ * - cor de destaque escolhida em Configurações (data-accent): dourado ou
+ *   turquesa. "Automática" usa dourado no escuro e turquesa no claro;
+ * - gaveta como barra lateral, com trilho de ícones no computador quando
+ *   recolhida;
+ * - conversa como página de resposta: a pergunta vira título, abas
+ *   Resposta / Fontes / Passos, cartões de fontes e o raciocínio em passos;
+ * - campo de pergunta com moldura arredondada e botão de enviar quadrado.
+ *
+ * As telas baixadas depois (KZ Code, Artefatos…) entram depois deste
+ * arquivo, por isso as regras delas usam `html.in-chat` para ganhar a disputa. */
+
+/* ==========================================================================
+   Superfícies
+   ========================================================================== */
+
+html.in-chat {
+  --c-bg: #171615;
+  --c-bg-2: #1b1a19;
+  --c-surface: #242322;
+  --c-text: #e8e7e6;
+  --c-text-2: #acaaa8;
+  --c-text-3: #8c8a87;
+  --c-border: #2a2928;
+  --c-border-2: #383634;
+  --rail-w: 4.25rem;
+  --pp-raise: #1e1d1c;
+  --pp-raise-2: #242322;
+  --pp-line: rgb(214 213 212 / 0.08);
+  --pp-line-2: rgb(214 213 212 / 0.15);
+  --hairline: var(--pp-line);
+  --hairline-strong: var(--pp-line-2);
+  --wash: rgb(214 213 212 / 0.04);
+  --wash-strong: rgb(214 213 212 / 0.075);
+  --composer-bg: #1e1d1c;
+  --pp-shadow: 0 1px 0 rgb(255 255 255 / 0.03) inset, 0 18px 40px -26px rgb(0 0 0 / 0.9);
+  --link: #7fb9c1;
+  --n-030303: #141312;
+  --n-080808: #181716;
+  --n-0a0a0a: #1a1918;
+  --n-111111: #201f1e;
+  --n-121212: #21201f;
+  --n-141414: #232221;
+  --n-161616: #252423;
+  --n-171717: #252423;
+  --n-181818: #262524;
+  --n-1d1d1d: #2b2a29;
+  --n-222222: #2f2e2d;
+  --n-242424: #31302f;
+  --n-262626: #323130;
+  --n-2a2a2a: #363534;
+  --n-2c2c2c: #383736;
+  --n-2f2f2f: #3a3938;
+  --n-333333: #3e3d3c;
+  --n-3a3a3a: #444342;
+  --n-4a4a4a: #484746;
+  --n-5a5a5a: #585756;
+  --n-5c5c5c: #5a5958;
+  --n-5f5f5f: #5d5c5b;
+  --n-6a6a6a: #686766;
+  --n-6c6c6c: #6a6968;
+  --n-7a7a7a: #787776;
+  --n-8a8a8a: #888786;
+  --n-929292: #908f8e;
+  --n-9a9a9a: #989796;
+  --n-c4c4c4: #c2c1c0;
+  --n-c9c9c9: #c7c6c5;
+  --n-cfcfcf: #cdcccb;
+  --n-d0d0d0: #cecdcc;
+  --n-d4d4d4: #d2d1d0;
+  --n-d6d6d6: #d4d3d2;
+  --n-d9d9d9: #d7d6d5;
+  --n-f5f5f5: #eae9e8;
+  --n-ffffff: #f8f7f6;
+}
+
+html.in-chat[data-theme="light"] {
+  --c-bg: #fdfbfa;
+  --c-bg-2: #f7f5f1;
+  --c-surface: #efece6;
+  --c-text: #27251e;
+  --c-text-2: #5d5a52;
+  --c-text-3: #716d64;
+  --c-border: #e8e5df;
+  --c-border-2: #dedbd4;
+  --pp-raise: #ffffff;
+  --pp-raise-2: #f6f4f0;
+  --pp-line: rgb(39 26 0 / 0.08);
+  --pp-line-2: rgb(39 26 0 / 0.14);
+  --wash: rgb(39 26 0 / 0.035);
+  --wash-strong: rgb(39 26 0 / 0.065);
+  --composer-bg: #ffffff;
+  --pp-shadow: 0 1px 2px rgb(39 26 0 / 0.04), 0 14px 32px -22px rgb(39 26 0 / 0.22);
+  --link: #016a71;
+  --n-030303: #fcfaf7;
+  --n-080808: #f7f5f2;
+  --n-0a0a0a: #f5f3f0;
+  --n-111111: #eeece9;
+  --n-121212: #edebe8;
+  --n-141414: #ebe9e6;
+  --n-161616: #e9e7e4;
+  --n-171717: #e8e6e3;
+  --n-181818: #e7e5e2;
+  --n-1d1d1d: #e1dfdc;
+  --n-222222: #dcdad7;
+  --n-242424: #dad8d5;
+  --n-262626: #d8d6d3;
+  --n-2a2a2a: #d4d2cf;
+  --n-2c2c2c: #d2d0cd;
+  --n-2f2f2f: #cfcdca;
+  --n-333333: #cbc9c6;
+  --n-3a3a3a: #c4c2bf;
+  --n-4a4a4a: #b4b2af;
+  --n-5a5a5a: #9c9a97;
+  --n-5c5c5c: #9a9895;
+  --n-5f5f5f: #979592;
+  --n-6a6a6a: #8c8a87;
+  --n-6c6c6c: #8a8885;
+  --n-7a7a7a: #7c7a77;
+  --n-8a8a8a: #6d6b68;
+  --n-929292: #656360;
+  --n-9a9a9a: #5d5b58;
+  --n-c4c4c4: #34322f;
+  --n-c9c9c9: #2f2d2a;
+  --n-cfcfcf: #292724;
+  --n-d0d0d0: #282623;
+  --n-d4d4d4: #24221f;
+  --n-d6d6d6: #22201d;
+  --n-d9d9d9: #1f1d1a;
+  --n-f5f5f5: #100e0b;
+  --n-ffffff: #060401;
+}
+
+/* ==========================================================================
+   Cor de destaque
+   ========================================================================== */
+
+/* Dourado (padrão do escuro). No claro o texto dourado escurece para ler. */
+html[data-accent="dourado"] {
+  --gold: #d9b45e;
+  --gold-hi: #f1dfa5;
+  --gold-metal: #b88a3b;
+  --pp-accent: #d9b45e;
+  --pp-accent-hover: #e5c475;
+  --pp-accent-ink: #1a1408;
+  --pp-accent-soft: rgb(217 180 94 / 0.12);
+  --pp-accent-line: rgb(217 180 94 / 0.38);
+  --accent-text: #e0be6c;
+  --color-accent: #d9b45e;
+  --color-accent-hover: #e5c475;
+  --color-accent-subtle: rgb(217 180 94 / 0.1);
+  --color-accent-border: rgb(217 180 94 / 0.38);
+  --color-accent-foreground: #1a1408;
+  --color-accent-glow: rgb(217 180 94 / 0.18);
+  --color-focus-ring: rgb(217 180 94 / 0.72);
+}
+
+html.in-chat[data-theme="light"][data-accent="dourado"] {
+  --pp-accent: #b8913f;
+  --pp-accent-hover: #a7832f;
+  --pp-accent-ink: #ffffff;
+  --pp-accent-soft: rgb(184 145 63 / 0.12);
+  --pp-accent-line: rgb(150 112 40 / 0.4);
+  --accent-text: #85601c;
+  --color-accent: #b8913f;
+  --color-focus-ring: rgb(150 112 40 / 0.65);
+  --gradient-gold-button: linear-gradient(180deg, #d1ab58 0%, #b8913f 100%);
+}
+
+/* Turquesa (a cor âncora da Perplexity). */
+html[data-accent="turquesa"] {
+  --gold: #4e99a3;
+  --gold-hi: #9cc9cf;
+  --gold-metal: #22808c;
+  --gold-bronze: #1a636c;
+  --gold-shadow: #0b4a52;
+  --gradient-metallic-gold: linear-gradient(115deg, #0b4a52 0%, #1a636c 30%, #4e99a3 50%, #9cc9cf 58%, #22808c 80%, #0b4a52 100%);
+  --gradient-gold-button: linear-gradient(180deg, #6fb0b9 0%, #4e99a3 50%, #22808c 100%);
+  --pp-accent: #4e99a3;
+  --pp-accent-hover: #62a9b2;
+  --pp-accent-ink: #0b1d1f;
+  --pp-accent-soft: rgb(78 153 163 / 0.12);
+  --pp-accent-line: rgb(78 153 163 / 0.4);
+  --accent-text: #6fb0b9;
+  --color-accent: #4e99a3;
+  --color-accent-hover: #62a9b2;
+  --color-accent-active: #22808c;
+  --color-accent-subtle: rgb(78 153 163 / 0.1);
+  --color-accent-border: rgb(78 153 163 / 0.38);
+  --color-accent-foreground: #0b1d1f;
+  --color-accent-glow: rgb(78 153 163 / 0.18);
+  --color-focus-ring: rgb(78 153 163 / 0.7);
+}
+
+html.in-chat[data-theme="light"][data-accent="turquesa"] {
+  --gold: #016a71;
+  --gold-metal: #0f5a60;
+  --pp-accent: #016a71;
+  --pp-accent-hover: #0f5a60;
+  --pp-accent-ink: #ffffff;
+  --pp-accent-soft: rgb(1 106 113 / 0.1);
+  --pp-accent-line: rgb(1 106 113 / 0.38);
+  --accent-text: #0f5a60;
+  --color-accent: #016a71;
+  --color-accent-foreground: #ffffff;
+  --color-focus-ring: rgb(1 106 113 / 0.6);
+  --gradient-gold-button: linear-gradient(180deg, #01838c 0%, #016a71 100%);
+}
+
+html.in-chat ::selection {
+  background: var(--pp-accent-soft, rgb(213 177 90 / 0.28));
+  background: color-mix(in srgb, var(--pp-accent, #d5b15a) 30%, transparent);
+  color: inherit;
+}
+
+html.in-chat {
+  scrollbar-color: var(--c-border-2) transparent;
+}
+
+html.in-chat body,
+html.in-chat .chat,
+html.in-chat .pane {
+  background: var(--c-bg);
+}
+
+/* ==========================================================================
+   Barra lateral (gaveta)
+   ========================================================================== */
+
+html.in-chat .drawer {
+  background: var(--c-bg-2);
+  border-right: 1px solid var(--pp-line);
+}
+
+html.in-chat .drawer__head {
+  min-height: 3.5rem;
+  padding-left: 1rem;
+}
+
+html.in-chat .drawer__word {
+  letter-spacing: 0.04em;
+}
+
+/* "Nova conversa" sobe para o topo, logo abaixo da marca (como na Perplexity). */
+html.in-chat .drawer__head { order: 0; }
+html.in-chat .drawer__new { order: 1; }
+html.in-chat .drawer__nav { order: 2; }
+html.in-chat .drawer__panel { order: 3; }
+html.in-chat .drawer__foot { order: 4; }
+
+html.in-chat .drawer__new {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0.6rem;
+  width: auto;
+  min-height: 2.6rem;
+  margin: 0.25rem 0.75rem 0.6rem;
+  padding: 0 0.6rem 0 0.85rem;
+  border: 1px solid var(--pp-line-2);
+  border-radius: 999px;
+  background: var(--pp-raise);
+  color: var(--c-text);
+  font: 500 0.9rem / 1 var(--font-ui);
+  box-shadow: var(--pp-shadow);
+}
+
+html.in-chat .drawer__new:hover {
+  border-color: var(--pp-accent-line);
+  background: var(--pp-raise-2);
+}
+
+html.in-chat .drawer__new .icon {
+  color: var(--accent-text);
+}
+
+html.in-chat .drawer__nav {
+  gap: 0.1rem;
+  padding: 0 0.5rem;
+}
+
+html.in-chat .drawer__item {
+  position: relative;
+  min-height: 2.5rem;
+  padding: 0 0.75rem;
+  border-radius: 0.65rem;
+  color: var(--c-text-2);
+  font: 500 0.9rem / 1 var(--font-ui);
+  transition: background-color 140ms linear, color 140ms linear;
+}
+
+html.in-chat .drawer__item:hover {
+  background: var(--wash-strong);
+  color: var(--c-text);
+}
+
+html.in-chat .drawer__item.is-active {
+  background: var(--wash-strong);
+  color: var(--c-text);
+  box-shadow: none;
+}
+
+html.in-chat .drawer__item .icon {
+  width: 1.15rem;
+  height: 1.15rem;
+}
+
+html.in-chat .drawer__item.is-active .icon {
+  color: var(--accent-text);
+}
+
+/* Traço de destaque à esquerda do item ativo. */
+html.in-chat .drawer__item.is-active::before {
+  content: "";
+  position: absolute;
+  left: -0.5rem;
+  top: 0.6rem;
+  bottom: 0.6rem;
+  width: 3px;
+  border-radius: 0 3px 3px 0;
+  background: var(--pp-accent);
+}
+
+html.in-chat .drawer__section,
+html.in-chat .hist__group {
+  color: var(--c-text-3);
+  font: 500 0.75rem / 1.2 var(--font-ui);
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+html.in-chat .drawer__search {
+  border: 1px solid var(--pp-line);
+  border-radius: 0.65rem;
+  background: var(--wash);
+}
+
+html.in-chat .drawer__search:focus-within {
+  border-color: var(--pp-accent-line);
+}
+
+html.in-chat .drawer__foot {
+  border-top: 1px solid var(--pp-line);
+}
+
+html.in-chat .account__avatar {
+  background: var(--pp-accent-soft);
+  color: var(--accent-text);
+  box-shadow: inset 0 0 0 1px var(--pp-accent-line);
+}
+
+/* Computador: recolhida, a gaveta vira um trilho de ícones (nunca some). */
+@media (min-width: 60rem) {
+  html.in-chat .chat:not(.drawer-open) .drawer {
+    width: var(--rail-w);
+    margin-left: 0;
+    visibility: visible;
+    transition: width 260ms var(--ease-out);
+  }
+
+  html.in-chat .chat.drawer-open .drawer {
+    transition: width 260ms var(--ease-out);
+  }
+
+  html.in-chat .chat:not(.drawer-open) .drawer__word,
+  html.in-chat .chat:not(.drawer-open) .drawer__panel,
+  html.in-chat .chat:not(.drawer-open) .account__text,
+  html.in-chat .chat:not(.drawer-open) .account__icon {
+    display: none;
+  }
+
+  html.in-chat .chat:not(.drawer-open) .drawer__head {
+    justify-content: center;
+    padding: 0.5rem 0;
+  }
+
+  html.in-chat .chat:not(.drawer-open) .drawer__new {
+    justify-content: center;
+    width: 2.6rem;
+    margin: 0.25rem auto 0.75rem;
+    padding: 0;
+  }
+
+  html.in-chat .chat:not(.drawer-open) .drawer__nav {
+    align-items: center;
+    padding: 0;
+  }
+
+  html.in-chat .chat:not(.drawer-open) .drawer__item {
+    justify-content: center;
+    width: 2.75rem;
+    padding: 0;
+  }
+
+  html.in-chat .chat:not(.drawer-open) .drawer__item.is-active::before {
+    left: -0.75rem;
+  }
+
+  /* O rótulo fica para leitores de tela; o título (tooltip) mostra o nome. */
+  html.in-chat .chat:not(.drawer-open) .drawer__item > span:last-child,
+  html.in-chat .chat:not(.drawer-open) .drawer__new > span:last-child {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+
+  html.in-chat .chat:not(.drawer-open) .drawer__foot {
+    margin-top: auto;
+    display: flex;
+    justify-content: center;
+    padding: 0.6rem 0;
+    border-top: 0;
+  }
+
+  html.in-chat .chat:not(.drawer-open) .account {
+    justify-content: center;
+    width: 2.75rem;
+    padding: 0.3rem;
+  }
+}
+
+/* ==========================================================================
+   Tela inicial: marca grande e campo no centro
+   ========================================================================== */
+
+html.in-chat .pane.is-empty .empty__mark {
+  width: 3.25rem;
+  height: 3.25rem;
+  color: var(--c-text);
+}
+
+html.in-chat .pane.is-empty .greeting {
+  margin-top: 1rem;
+}
+
+html.in-chat .pane.is-empty .greeting__a {
+  font: 600 clamp(1.9rem, 7.6vw, 2.75rem) / 1.08 var(--font-ui);
+  letter-spacing: -0.035em;
+  color: var(--c-text);
+}
+
+html.in-chat .pane.is-empty .greeting__b {
+  color: var(--c-text-2);
+}
+
+html.in-chat .starter {
+  border-color: var(--pp-line);
+  background: transparent;
+  color: var(--c-text-2);
+  border-radius: 999px;
+}
+
+html.in-chat .starter:hover {
+  border-color: var(--pp-accent-line);
+  background: var(--pp-accent-soft);
+  color: var(--c-text);
+}
+
+html.in-chat .starter svg {
+  color: var(--accent-text);
+}
+
+/* ==========================================================================
+   Campo de pergunta
+   ========================================================================== */
+
+html.in-chat .composer__box {
+  border: 1px solid var(--pp-line-2);
+  border-radius: 1.25rem;
+  background: var(--composer-bg);
+  box-shadow: var(--pp-shadow);
+  transition: border-color 160ms linear, box-shadow 200ms linear;
+}
+
+html.in-chat .composer__box:focus-within,
+html.in-chat .composer__box:has(.composer__input:focus-visible) {
+  border-color: var(--pp-accent-line);
+  box-shadow: var(--pp-shadow), 0 0 0 4px var(--pp-accent-soft);
+}
+
+html.in-chat .composer__input::placeholder {
+  color: var(--c-text-3);
+}
+
+html.in-chat .chip {
+  border: 1px solid var(--pp-line);
+  background: var(--wash);
+  color: var(--c-text);
+}
+
+html.in-chat .chip:hover {
+  border-color: var(--pp-line-2);
+  background: var(--wash-strong);
+}
+
+html.in-chat .tool {
+  color: var(--c-text-2);
+}
+
+html.in-chat .tool:hover {
+  color: var(--c-text);
+}
+
+/* Enviar: quadrado arredondado na cor de destaque, sem vidro. */
+html.in-chat .composer .send {
+  border-radius: 0.8rem;
+  background: var(--pp-accent);
+  color: var(--pp-accent-ink);
+  box-shadow: none;
+  filter: none;
+}
+
+html.in-chat .composer .send::before,
+html.in-chat .composer .send::after {
+  display: none;
+}
+
+html.in-chat .composer .send:not(:disabled):not(.is-stop):hover {
+  background: var(--pp-accent-hover);
+  filter: none;
+}
+
+html.in-chat .composer .send:disabled {
+  background: var(--wash-strong);
+  color: var(--c-text-3);
+  box-shadow: none;
+}
+
+html.in-chat .composer .send.is-stop,
+html.in-chat .composer .send.is-stop:hover {
+  background: var(--c-text);
+  color: var(--c-bg);
+}
+
+html.in-chat .composer .send.talk:not(.is-stop) {
+  background: var(--pp-accent);
+  color: var(--pp-accent-ink);
+}
+
+/* ==========================================================================
+   Página de resposta
+   ========================================================================== */
+
+html.in-chat .thread__inner {
+  gap: 1.75rem;
+}
+
+/* Pergunta curta = título da resposta. */
+html.in-chat .msg--user.msg--query {
+  align-self: stretch;
+  align-items: stretch;
+  max-width: none;
+  gap: 0.25rem;
+  padding-top: 0.5rem;
+}
+
+html.in-chat .msg--user.msg--query:not(:first-of-type) {
+  margin-top: 0.75rem;
+  padding-top: 2rem;
+  border-top: 1px solid var(--pp-line);
+}
+
+html.in-chat .msg--user.msg--query .msg__bubble {
+  padding: 0;
+  border-radius: 0;
+  background: none;
+  color: var(--c-text);
+  font: 500 clamp(1.4rem, 5.2vw, 1.85rem) / 1.25 var(--font-ui);
+  letter-spacing: -0.025em;
+  text-wrap: balance;
+}
+
+html.in-chat .msg--user.msg--query .msg__actions {
+  justify-content: flex-start;
+}
+
+html.in-chat .msg--user:not(.msg--query) .msg__bubble {
+  border: 1px solid var(--pp-line);
+  background: var(--pp-raise);
+  border-radius: 1.1rem 1.1rem 0.35rem 1.1rem;
+}
+
+/* Abas: Resposta · Fontes · Passos */
+html.in-chat .msg__head {
+  gap: 0.25rem;
+  min-height: 2.5rem;
+  margin-bottom: 0.25rem;
+  border-bottom: 1px solid var(--pp-line);
+  font-size: 0.875rem;
+}
+
+html.in-chat .msg__tab {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  height: 2.5rem;
+  padding: 0 0.6rem;
+  border: 0;
+  background: none;
+  color: var(--c-text-2);
+  font: 500 0.875rem / 1 var(--font-ui);
+  cursor: pointer;
+}
+
+html.in-chat .msg__tab[hidden] {
+  display: none;
+}
+
+html.in-chat .msg__tab:first-child {
+  padding-left: 0.1rem;
+}
+
+html.in-chat .msg__tab.is-active {
+  color: var(--c-text);
+  cursor: default;
+}
+
+html.in-chat .msg__tab.is-active::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -1px;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--pp-accent);
+}
+
+html.in-chat button.msg__tab:hover {
+  color: var(--c-text);
+}
+
+html.in-chat button.msg__tab:focus-visible {
+  outline: 2px solid var(--color-focus-ring);
+  outline-offset: -2px;
+  border-radius: 0.5rem;
+}
+
+html.in-chat .msg__tab .icon {
+  width: 1rem;
+  height: 1rem;
+}
+
+html.in-chat .msg__tab .msg__mark {
+  width: 1.05rem;
+  height: 1.05rem;
+}
+
+html.in-chat .msg__tab-count {
+  min-width: 1.25rem;
+  padding: 0.15rem 0.35rem;
+  border-radius: 999px;
+  background: var(--wash-strong);
+  color: var(--c-text-2);
+  font-size: 0.75rem;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+
+html.in-chat .msg__tab-count:empty {
+  display: none;
+}
+
+html.in-chat .msg__state {
+  margin-left: auto;
+  color: var(--c-text-3);
+  font-size: 0.8125rem;
+}
+
+/* Cartões de fontes acima da resposta */
+html.in-chat .src-cards[hidden] {
+  display: none;
+}
+
+html.in-chat .src-cards {
+  margin: 0.35rem 0 0.25rem;
+}
+
+html.in-chat .src-cards__row {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.5rem;
+}
+
+@media (max-width: 40rem) {
+  html.in-chat .src-cards__row {
+    display: flex;
+    overflow-x: auto;
+    scrollbar-width: none;
+    margin: 0 -1rem;
+    padding: 0 1rem;
+  }
+
+  html.in-chat .src-cards__row::-webkit-scrollbar {
+    display: none;
+  }
+
+  html.in-chat .src-card {
+    flex: 0 0 9.5rem;
+  }
+}
+
+html.in-chat .src-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 0.55rem;
+  min-width: 0;
+  min-height: 4.6rem;
+  padding: 0.6rem 0.7rem;
+  border: 1px solid var(--pp-line);
+  border-radius: 0.8rem;
+  background: var(--pp-raise);
+  color: var(--c-text);
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+  transition: border-color 140ms linear, background-color 140ms linear;
+}
+
+html.in-chat .src-card:hover {
+  border-color: var(--pp-line-2);
+  background: var(--pp-raise-2);
+}
+
+html.in-chat .src-card:focus-visible {
+  outline: 2px solid var(--color-focus-ring);
+  outline-offset: 2px;
+}
+
+html.in-chat .src-card__title {
+  display: -webkit-box;
+  overflow: hidden;
+  color: var(--c-text);
+  font: 500 0.8125rem / 1.3 var(--font-ui);
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+html.in-chat .src-card__foot {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  min-width: 0;
+}
+
+html.in-chat .src-card .src-avatar {
+  width: 1rem;
+  height: 1rem;
+  flex: none;
+}
+
+html.in-chat .src-card__host {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--c-text-2);
+  font-size: 0.75rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+html.in-chat .src-card__n {
+  margin-left: auto;
+  color: var(--c-text-3);
+  font-size: 0.6875rem;
+  font-variant-numeric: tabular-nums;
+}
+
+html.in-chat .src-card--more {
+  font: inherit;
+}
+
+html.in-chat .src-card__faces {
+  display: flex;
+}
+
+html.in-chat .src-card__faces .src-avatar {
+  margin-right: -0.3rem;
+  box-shadow: 0 0 0 2px var(--pp-raise);
+  border-radius: 999px;
+}
+
+/* Raciocínio: uma linha do tempo de passos */
+html.in-chat .think {
+  margin: 0.15rem 0 0.35rem;
+  border: 1px solid var(--pp-line);
+  border-radius: 0.9rem;
+  background: var(--pp-raise);
+}
+
+html.in-chat .think[hidden] {
+  display: none;
+}
+
+html.in-chat .think__summary {
+  min-height: 2.6rem;
+  padding: 0.45rem 0.85rem;
+  font-size: 0.875rem;
+}
+
+html.in-chat .think__label {
+  font-weight: 500;
+}
+
+html.in-chat .think__row::before {
+  content: "";
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 999px;
+  background: var(--pp-accent);
+  box-shadow: 0 0 0 3px var(--pp-accent-soft);
+}
+
+html.in-chat .think.is-live .think__row::before {
+  animation: pp-pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes pp-pulse {
+  50% { box-shadow: 0 0 0 6px transparent; opacity: 0.55; }
+}
+
+html.in-chat .think__peek {
+  padding-left: 0.9rem;
+  font-style: normal;
+}
+
+html.in-chat .think__body {
+  max-height: 22rem;
+  margin: 0;
+  padding: 0.25rem 0.85rem 0.85rem;
+  border: 0;
+  border-top: 1px solid var(--pp-line);
+  white-space: normal;
+}
+
+html.in-chat .think__steps {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+html.in-chat .think__step {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1rem minmax(0, 1fr);
+  column-gap: 0.65rem;
+  padding: 0.6rem 0 0;
+}
+
+/* Trilho que liga os pontos. */
+html.in-chat .think__step:not(:last-child)::after {
+  content: "";
+  position: absolute;
+  left: calc(0.5rem - 0.5px);
+  top: 1.3rem;
+  bottom: -1.05rem;
+  width: 1px;
+  background: var(--pp-line-2);
+}
+
+html.in-chat .think__dot {
+  width: 0.55rem;
+  height: 0.55rem;
+  margin: 0.45rem auto 0;
+  border: 1.5px solid var(--c-text-3);
+  border-radius: 999px;
+  background: var(--pp-raise);
+}
+
+html.in-chat .think__step:not(.is-live) .think__dot {
+  border-color: var(--pp-accent);
+  background: var(--pp-accent);
+}
+
+html.in-chat .think__step.is-live .think__dot {
+  border-color: var(--pp-accent);
+  animation: pp-pulse 1.4s ease-in-out infinite;
+}
+
+html.in-chat .think__text {
+  min-width: 0;
+  color: var(--c-text-2);
+  font-size: 0.875rem;
+  line-height: 1.6;
+}
+
+html.in-chat .think__text > :first-child { margin-top: 0; }
+html.in-chat .think__text > :last-child { margin-bottom: 0; }
+
+/* Atividade da pesquisa (web) como linha do tempo com pontos. */
+html.in-chat .msg__steps.act {
+  position: relative;
+  gap: 0.15rem;
+  margin: 0.1rem 0 0.5rem;
+  padding: 0.35rem 0.85rem;
+  border: 1px solid var(--pp-line);
+  border-radius: 0.9rem;
+  background: var(--pp-raise);
+}
+
+html.in-chat .act__ico {
+  color: var(--accent-text);
+}
+
+html.in-chat .act__item.is-done .act__ico {
+  color: var(--c-text-3);
+}
+
+/* Corpo da resposta */
+html.in-chat .msg__body {
+  color: var(--c-text);
+  line-height: 1.72;
+}
+
+html.in-chat .md h1,
+html.in-chat .md h2,
+html.in-chat .md h3 {
+  color: var(--c-text);
+  letter-spacing: -0.02em;
+}
+
+html.in-chat .md h2 {
+  font-size: 1.25em;
+  margin: 1.4em 0 0.5em;
+}
+
+html.in-chat .md h3 {
+  font-size: 1.08em;
+  margin: 1.25em 0 0.4em;
+}
+
+html.in-chat .md a {
+  color: var(--link);
+  text-decoration-color: color-mix(in srgb, var(--link) 40%, transparent);
+  text-underline-offset: 0.18em;
+}
+
+html.in-chat .md blockquote {
+  border-left: 3px solid var(--pp-accent);
+  background: var(--pp-accent-soft);
+  border-radius: 0 0.6rem 0.6rem 0;
+  color: var(--c-text);
+}
+
+html.in-chat .md li::marker {
+  color: var(--accent-text);
+}
+
+html.in-chat .md code {
+  border: 1px solid var(--pp-line);
+  background: var(--wash-strong);
+  border-radius: 0.35rem;
+}
+
+html.in-chat .code {
+  border: 1px solid var(--pp-line);
+  border-radius: 0.9rem;
+  background: var(--pp-raise);
+}
+
+html.in-chat .code__bar {
+  border-bottom: 1px solid var(--pp-line);
+  background: var(--wash);
+}
+
+html.in-chat .table {
+  border: 1px solid var(--pp-line);
+  border-radius: 0.9rem;
+  background: var(--pp-raise);
+}
+
+html.in-chat .md th {
+  background: var(--wash);
+  color: var(--c-text);
+}
+
+html.in-chat .md tr:hover td {
+  background: var(--wash);
+}
+
+/* Citações [1] como pílulas na cor de destaque */
+html.in-chat .cite {
+  border-radius: 0.4rem;
+  background: var(--wash-strong);
+  color: var(--c-text-2);
+}
+
+html.in-chat .cite:hover {
+  background: var(--pp-accent-soft);
+  color: var(--accent-text);
+}
+
+/* Barra de ações da resposta */
+html.in-chat .msg--kazer .msg__actions {
+  gap: 0.15rem;
+  margin-top: 0.5rem;
+  padding-top: 0.4rem;
+  border-top: 1px solid var(--pp-line);
+}
+
+html.in-chat .msg__action {
+  color: var(--c-text-2);
+  border-radius: 0.6rem;
+}
+
+html.in-chat .msg__action:hover {
+  background: var(--wash-strong);
+  color: var(--c-text);
+}
+
+html.in-chat .msg__action--share {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  width: auto;
+  padding: 0 0.7rem 0 0.55rem;
+  font: 500 0.8125rem / 1 var(--font-ui);
+}
+
+html.in-chat .msg__action--share .icon {
+  width: 1rem;
+  height: 1rem;
+}
+
+html.in-chat .msg__action.is-done {
+  color: var(--accent-text);
+}
+
+/* Topo */
+html.in-chat .topbar {
+  border-bottom: 1px solid transparent;
+}
+
+html.in-chat .pane:not(.is-empty) .topbar {
+  border-bottom-color: var(--pp-line);
+  background: color-mix(in srgb, var(--c-bg) 92%, transparent);
+}
+
+html.in-chat .topbar__title {
+  color: var(--c-text);
+  font: 500 0.9rem / 1.2 var(--font-ui);
+}
+
+html.in-chat .sources-ball.has-sources {
+  color: var(--accent-text);
+}
+
+/* ==========================================================================
+   Telas (KZ Code, Artefatos)
+   ========================================================================== */
+
+html.in-chat .sc {
+  background: var(--c-bg);
+}
+
+html.in-chat .sc__head {
+  border-bottom: 1px solid var(--pp-line);
+}
+
+html.in-chat .sc__title:not(:has(.pixel-word, canvas, svg)) {
+  font: 600 1.05rem / 1.2 var(--font-ui);
+  letter-spacing: -0.015em;
+}
+
+html.in-chat .sc__body {
+  scrollbar-gutter: stable;
+}
+
+/* A grade da resposta não pode crescer além da coluna (a faixa de fontes rola
+   de lado sem empurrar o texto para fora da tela). */
+html.in-chat .msg--kazer {
+  grid-template-columns: minmax(0, 1fr);
+  width: 100%;
+}
+
+html.in-chat .src-cards {
+  min-width: 0;
+}
+
+/* Com os cartões no topo, a fileira de fontes do fim da resposta sobra. */
+html.in-chat .msg--kazer:has(.src-cards:not([hidden])) .md .src-strip {
+  display: none;
+}
+
+html.in-chat .md pre code,
+html.in-chat .code code {
+  border: 0;
+  background: none;
+  padding: 0;
+}
+
+/* Pergunta e resposta formam um bloco só. */
+html.in-chat .msg--query + .msg--kazer {
+  margin-top: -1.1rem;
+}
+
+html.in-chat .msg--user.msg--query .msg__actions {
+  margin: 0 0 0 -0.45rem;
+}
+
+/* A barra da resposta fica sempre à mostra (como na Perplexity). */
+html.in-chat .msg--kazer .msg__actions {
+  opacity: 1;
+}
+
+/* ==========================================================================
+   Perplexity 2026 — acabamento fiel
+   Medidas do app atual: menu lateral de 16rem com linhas de 36px e item ativo
+   só em tom (sem cor), logo em minúsculas no centro da tela inicial, campo
+   com brilho suave na cor de destaque, botões de ação redondos e peso de
+   fonte que não passa de 550.
+   ========================================================================== */
+
+html.in-chat {
+  --pp-radius-row: 0.5rem;
+  --pp-radius-card: 1rem;
+  --pp-row-h: 2.25rem;
+  --pp-weight-strong: 550;
+}
+
+/* ---------- Peso: nada de negrito pesado ---------- */
+
+html.in-chat .md strong,
+html.in-chat .md b,
+html.in-chat .md h1,
+html.in-chat .md h2,
+html.in-chat .md h3,
+html.in-chat .md h4,
+html.in-chat .md th {
+  font-weight: var(--pp-weight-strong);
+}
+
+html.in-chat .md h1,
+html.in-chat .md h2,
+html.in-chat .md h3 {
+  letter-spacing: -0.01em;
+}
+
+/* ---------- Menu lateral ---------- */
+
+html.in-chat .drawer {
+  background: var(--c-bg-2);
+  border-right: 1px solid var(--pp-line);
+}
+
+@media (min-width: 60rem) {
+  html.in-chat .chat.drawer-open .drawer {
+    width: 16rem;
+  }
+}
+
+html.in-chat .drawer__head {
+  min-height: 3.25rem;
+  padding: 0 0.5rem 0 0.9rem;
+}
+
+/* A marca do menu vira o logo em minúsculas, como "perplexity". */
+html.in-chat .drawer__word {
+  font: 500 1.2rem / 1 var(--font-ui);
+  letter-spacing: -0.02em;
+  text-transform: lowercase;
+  color: var(--c-text);
+}
+
+html.in-chat .drawer__mark {
+  color: var(--c-text);
+}
+
+/* "Nova conversa" é uma linha do menu com fundo em tom, sem moldura. */
+html.in-chat .drawer__new {
+  gap: 0.65rem;
+  min-height: var(--pp-row-h);
+  margin: 0.15rem 0.5rem 0.35rem;
+  padding: 0 0.6rem;
+  border: 0;
+  border-radius: var(--pp-radius-row);
+  background: var(--wash-strong);
+  box-shadow: none;
+  font: 500 0.875rem / 1 var(--font-ui);
+}
+
+html.in-chat .drawer__new:hover {
+  border: 0;
+  background: var(--c-surface);
+}
+
+html.in-chat .drawer__new .icon {
+  color: var(--c-text);
+}
+
+html.in-chat .drawer__nav {
+  gap: 0.0625rem;
+  padding: 0 0.5rem;
+}
+
+html.in-chat .drawer__item {
+  gap: 0.65rem;
+  min-height: var(--pp-row-h);
+  padding: 0 0.6rem;
+  border-radius: var(--pp-radius-row);
+  color: var(--c-text-2);
+  font: 500 0.875rem / 1 var(--font-ui);
+}
+
+html.in-chat .drawer__item .icon {
+  width: 1rem;
+  height: 1rem;
+}
+
+/* Ativo: só tom, nada de cor nem traço (é assim na Perplexity). */
+html.in-chat .drawer__item.is-active {
+  background: var(--wash-strong);
+  color: var(--c-text);
+}
+
+html.in-chat .drawer__item.is-active .icon {
+  color: var(--c-text);
+}
+
+html.in-chat .drawer__item.is-active::before {
+  display: none;
+}
+
+html.in-chat .drawer__section {
+  margin: 1rem 0.5rem 0.35rem 1.1rem;
+  color: var(--c-text-3);
+  font: 500 0.75rem / 1.2 var(--font-ui);
+}
+
+html.in-chat .drawer__search {
+  margin-inline: 0.5rem;
+  min-height: var(--pp-row-h);
+  border-color: transparent;
+  border-radius: var(--pp-radius-row);
+  background: var(--wash);
+}
+
+html.in-chat .drawer__search:focus-within {
+  border-color: var(--pp-line-2);
+  background: var(--c-bg);
+}
+
+html.in-chat .hist__row {
+  border-radius: var(--pp-radius-row);
+}
+
+html.in-chat .hist__row.is-active {
+  background: var(--wash-strong);
+}
+
+html.in-chat .hist__row.is-active::before {
+  display: none;
+}
+
+html.in-chat .hist__link {
+  font-size: 0.875rem;
+}
+
+html.in-chat .drawer__foot {
+  padding: 0.5rem;
+  border-top: 1px solid var(--pp-line);
+}
+
+html.in-chat .account {
+  border-radius: var(--pp-radius-row);
+}
+
+html.in-chat .account:hover {
+  background: var(--wash-strong);
+}
+
+html.in-chat .account__avatar {
+  background: var(--pp-accent);
+  color: var(--pp-accent-ink);
+  box-shadow: none;
+  font-weight: 550;
+}
+
+html.in-chat .account__label {
+  font-weight: 500;
+}
+
+/* Trilho recolhido no computador. */
+@media (min-width: 60rem) {
+  html.in-chat .chat:not(.drawer-open) .drawer__new {
+    width: 2.5rem;
+    min-height: 2.5rem;
+    border-radius: 999px;
+  }
+
+  html.in-chat .chat:not(.drawer-open) .drawer__item {
+    width: 2.5rem;
+    min-height: 2.5rem;
+  }
+}
+
+/* ---------- Tela inicial: o nome em minúsculas é o herói ---------- */
+
+/* Sem fundo animado: a Perplexity é uma tela calma. A pessoa ainda pode
+   ligar em Configurações. */
+html.in-chat .pane.is-empty .empty__mark {
+  display: none;
+}
+
+html.in-chat .empty__word {
+  display: none;
+  margin: 0;
+  color: var(--c-text);
+  font: 500 clamp(2.75rem, 11vw, 4rem) / 1 var(--font-ui);
+  letter-spacing: -0.045em;
+}
+
+html.in-chat .pane.is-empty .empty__word {
+  display: block;
+}
+
+html.in-chat .pane.is-empty .greeting {
+  margin-top: 0.85rem;
+}
+
+html.in-chat .pane.is-empty .greeting__a,
+html.in-chat .pane.is-empty .greeting__b {
+  color: var(--c-text-3);
+  font: 400 1rem / 1.4 var(--font-ui);
+  letter-spacing: 0;
+}
+
+/* Sugestões: pílulas em tom, sem moldura. */
+html.in-chat .starter {
+  min-height: 2rem;
+  padding: 0 0.8rem 0 0.65rem;
+  border: 0;
+  border-radius: 999px;
+  background: var(--wash-strong);
+  color: var(--c-text-2);
+  font: 500 0.8125rem / 1 var(--font-ui);
+}
+
+html.in-chat .starter:hover {
+  border: 0;
+  background: var(--c-surface);
+  color: var(--c-text);
+}
+
+html.in-chat .starter svg {
+  color: var(--c-text-3);
+}
+
+html.in-chat .starter:hover svg {
+  color: var(--accent-text);
+}
+
+/* ---------- Campo de pergunta ---------- */
+
+html.in-chat .composer__box {
+  border: 1px solid var(--pp-line-2);
+  border-radius: var(--pp-radius-card);
+  background: var(--composer-bg);
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.06);
+}
+
+/* Foco: brilho suave na cor de destaque, a marca do campo da Perplexity. */
+html.in-chat .composer__box:focus-within,
+html.in-chat .composer__box:has(.composer__input:focus-visible) {
+  border-color: var(--pp-accent-line);
+  box-shadow: 0 0 0 1px var(--pp-accent-soft), 0 0 28px -6px var(--pp-accent-soft);
+}
+
+html.in-chat .composer__input {
+  font-size: 1rem;
+}
+
+html.in-chat .composer .tool,
+html.in-chat .composer .chip {
+  border-radius: 999px;
+}
+
+html.in-chat .composer .tool:hover {
+  background: var(--wash-strong);
+}
+
+html.in-chat .composer .chip {
+  border: 0;
+  background: transparent;
+  color: var(--c-text-2);
+  font-weight: 500;
+}
+
+html.in-chat .composer .chip:hover {
+  border: 0;
+  background: var(--wash-strong);
+  color: var(--c-text);
+}
+
+html.in-chat .composer .chip__model {
+  font-weight: 500;
+}
+
+html.in-chat .composer .tool--mic {
+  border: 0;
+  background: transparent;
+}
+
+/* Botões de ação redondos. Conversa por voz: bola escura (clara no escuro),
+   como o botão de voz da Perplexity; enviar: bola na cor de destaque. */
+html.in-chat .composer .send {
+  border-radius: 999px;
+}
+
+html.in-chat .composer .send.talk:not(.is-stop) {
+  background: var(--c-text);
+  color: var(--c-bg);
+}
+
+html.in-chat .composer .send.talk:not(.is-stop):hover {
+  background: var(--c-text-2);
+}
+
+/* ---------- Página de resposta ---------- */
+
+html.in-chat .msg--query .msg__bubble,
+html.in-chat .msg--query .msg__text {
+  font-weight: 500;
+  letter-spacing: -0.015em;
+}
+
+html.in-chat .src-card {
+  border-radius: 0.75rem;
+}
+
+html.in-chat .msg__actions .act,
+html.in-chat .msg__actions button {
+  border-radius: 999px;
+}
+
+/* ---------- Telas internas ---------- */
+
+html.in-chat .sc__title {
+  font-weight: 500;
+  letter-spacing: -0.01em;
+}
+
+/* Sem efeito de vidro nos botões do campo: ícones limpos sobre o fundo. */
+html.in-chat .composer .tool,
+html.in-chat .composer .chip {
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+html.in-chat .composer .tool:hover,
+html.in-chat .composer .chip:hover {
+  background: var(--wash-strong);
+  box-shadow: none;
+}
+
+/* "Nova conversa" sem fundo fixo: o tom fica só no item ativo. */
+html.in-chat .drawer__new {
+  background: transparent;
+}
+
+html.in-chat .drawer__new:hover {
+  background: var(--wash-strong);
+}
+
+@media (min-width: 60rem) {
+  html.in-chat .chat.drawer-open .drawer {
+    width: 17rem;
+  }
+}
