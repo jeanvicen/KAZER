@@ -1,7 +1,7 @@
-"""Imagens, Studio e memória com procedência no Postgres do Supabase.
+"""Imagens e memória com procedência no Postgres do Supabase.
 
 Mixin do `SupabaseChatStore`: cada método chama uma função `kazer_*` da migração
-`20261110120000_kazer_images_studio_memory.sql` com o JWT da própria pessoa.
+`20261110120000_kazer_images_memory.sql` com o JWT da própria pessoa.
 Sem a migração aplicada, o PostgREST responde 404 e `_rpc` levanta
 `StorageUnavailable(not_migrated=True)` — a tela avisa em vez de fingir.
 """
@@ -10,7 +10,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from kazer.chat.store_extras import Design, ImageJob, Reservation, design, image_job
+from kazer.chat.store_extras import ImageJob, Reservation, image_job
 
 
 class SupabaseExtras:
@@ -93,42 +93,3 @@ class SupabaseExtras:
 
     def delete_image(self, user_id: str, job_id: str) -> bool:
         return bool(self._rpc("kazer_delete_image", {"p_id": job_id}))
-
-    # ---------- Studio ----------
-
-    def list_designs(self, user_id: str, limit: int = 60) -> list[Design]:
-        rows = self._rpc("kazer_designs", {"p_limit": limit}) or []
-        return [design(row, body=False) for row in rows]
-
-    def get_design(self, user_id: str, design_id: str) -> Design | None:
-        data = self._rpc("kazer_design", {"p_id": design_id})
-        return design(data) if isinstance(data, dict) else None
-
-    def save_design(
-        self,
-        user_id: str,
-        design_id: str | None,
-        title: str,
-        width: int,
-        height: int,
-        data: str,
-        thumb: str,
-        now: int,
-        max_count: int,
-    ) -> Design | None:
-        saved = self._rpc(
-            "kazer_save_design",
-            {
-                "p_id": design_id,
-                "p_title": title,
-                "p_width": width,
-                "p_height": height,
-                "p_data": data,
-                "p_thumb": thumb,
-                "p_max": max_count,
-            },
-        )
-        return design(saved) if isinstance(saved, dict) else None
-
-    def delete_design(self, user_id: str, design_id: str) -> bool:
-        return bool(self._rpc("kazer_delete_design", {"p_id": design_id}))

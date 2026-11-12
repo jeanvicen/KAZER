@@ -459,7 +459,7 @@ function newConversation({ push = true, focus = true } = {}) {
 
 // ---------- Abas da gaveta ----------
 
-const SCREENS = ["conversas", "forja", "artefatos", "biblioteca", "studio", "imagens"];
+const SCREENS = ["conversas", "forja", "artefatos", "biblioteca"];
 
 // Texto que cada sugestão da tela vazia coloca no campo (a pessoa completa).
 const STARTERS = {
@@ -474,8 +474,6 @@ const SCREEN_LABELS = {
   forja: "KZ Code",
   artefatos: "Artefatos",
   biblioteca: "Biblioteca",
-  studio: "Studio",
-  imagens: "Criar imagem",
 };
 
 const SCREEN_GLYPHS = {
@@ -483,8 +481,6 @@ const SCREEN_GLYPHS = {
   forja: "code",
   artefatos: "layers",
   biblioteca: "book",
-  studio: "layers",
-  imagens: "image",
 };
 
 async function showScreen(name) {
@@ -515,7 +511,6 @@ async function showScreen(name) {
         if (options.code) setForja(true);
       },
       onOpenSettings: (section) => openSettings(section),
-      onGo: (name) => showScreen(name),
       onStartForja: (prompt) => {
         showScreen("conversas");
         startForja(prompt);

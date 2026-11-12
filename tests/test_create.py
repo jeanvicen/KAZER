@@ -1,8 +1,7 @@
-"""Criação: imagens com cota diária, projetos do Studio e catálogo de capacidades."""
+"""Imagens: cota diária por conta, isolamento, validação e provedores."""
 
 from __future__ import annotations
 
-import json
 import threading
 from collections.abc import Iterator
 from concurrent.futures import ThreadPoolExecutor
@@ -291,72 +290,3 @@ def test_provider_loading_rules() -> None:
     )
     assert providers.sniff(PNG) == "image/png"
     assert providers.sniff(b"<html>nope</html>") is None
-
-
-# ---------- Studio ----------
-
-
-def document(width: int = 1080, height: int = 1080, **extra: object) -> str:
-    return json.dumps({"v": 1, "w": width, "h": height, "bg": "#0b0b0b", "canvas": {}, **extra})
-
-
-def test_design_create_edit_reopen_delete(world: World) -> None:
-    ana = world.client("ana@example.com")
-    assert ana.get("/api/designs").json() == {"designs": [], "limit": 30}
-
-    created = ana.post("/api/designs", json={"title": "  Post‮ de teste ", "data": document()})
-    assert created.status_code == 201
-    design = created.json()["design"]
-    assert design["title"] == "Post de teste" and design["width"] == 1080
-
-    changed = ana.put(
-        f"/api/designs/{design['id']}",
-        json={
-            "title": "Post final",
-            "data": document(1080, 1350, canvas={"objects": [{"type": "Textbox", "text": "Olá"}]}),
-            "thumb": "data:image/jpeg;base64,AAAA",
-        },
-    )
-    assert changed.status_code == 200 and changed.json()["design"]["height"] == 1350
-
-    reopened = ana.get(f"/api/designs/{design['id']}").json()["design"]
-    assert json.loads(reopened["data"])["canvas"]["objects"][0]["text"] == "Olá"
-    assert reopened["thumb"].startswith("data:image/jpeg")
-    listed = ana.get("/api/designs").json()["designs"]
-    assert [item["title"] for item in listed] == ["Post final"] and "data" not in listed[0]
-
-    assert ana.delete(f"/api/designs/{design['id']}").json() == {"status": "deleted"}
-    assert ana.get(f"/api/designs/{design['id']}").status_code == 404
-
-
-def test_design_is_private_to_its_account(world: World) -> None:
-    ana = world.client("ana@example.com")
-    bia = world.client("bia@example.com")
-    design = ana.post("/api/designs", json={"title": "Da Ana", "data": document()}).json()["design"]
-    url = f"/api/designs/{design['id']}"
-
-    assert bia.get(url).status_code == 404
-    assert bia.put(url, json={"title": "Roubado", "data": document()}).status_code == 404
-    assert bia.delete(url).status_code == 404
-    assert bia.get("/api/designs").json()["designs"] == []
-    assert ana.get(url).json()["design"]["title"] == "Da Ana"
-
-
-def test_design_validation_and_limit(world: World) -> None:
-    ana = world.client("ana@example.com")
-    post = lambda data, **more: ana.post("/api/designs", json={"title": "t", "data": data, **more})  # noqa: E731
-    assert post("não é json").status_code == 400
-    assert post(json.dumps({"v": 2, "w": 100, "h": 100, "canvas": {}})).status_code == 400
-    assert post(document(20000, 100)).status_code == 400
-    assert post(json.dumps({"v": 1, "w": 100, "h": 100})).status_code == 400
-    # Miniatura que não é imagem em base64 é descartada, não guardada.
-    odd = post(document(), thumb="javascript:alert(1)")
-    assert odd.status_code == 201 and odd.json()["design"]["thumb"] == ""
-    anonymous = TestClient(world.app, headers={"Origin": ORIGIN})
-    assert anonymous.get("/api/designs").status_code == 401
-
-    user_id = world.auth.session_user(ana.cookies.get("kazer_session")).id
-    limited = app_module.StudioService(world.chat.store, limit_of=lambda _: 1)
-    with pytest.raises(ChatError) as full:
-        limited.save(user_id, None, {"title": "mais um", "data": document()})
-    assert full.value.code == "design_limit"

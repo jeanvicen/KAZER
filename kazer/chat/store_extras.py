@@ -1,5 +1,5 @@
-"""Tabelas e operações novas do SQLite: imagens geradas, projetos do Studio e
-os campos extras da memória. Fica separado do `store.py` para o arquivo
+"""Tabelas e operações novas do SQLite: imagens geradas e os campos extras da
+memória. Fica separado do `store.py` para o arquivo
 principal não crescer; `ChatStore` herda este mixin.
 
 A cota de imagens é atômica: cada operação roda dentro de `BEGIN IMMEDIATE`
@@ -36,18 +36,6 @@ CREATE TABLE IF NOT EXISTS image_jobs (
 );
 CREATE INDEX IF NOT EXISTS image_jobs_user_day ON image_jobs(user_id, day, status);
 CREATE INDEX IF NOT EXISTS image_jobs_user_created ON image_jobs(user_id, created_at);
-CREATE TABLE IF NOT EXISTS designs (
-    id TEXT PRIMARY KEY,
-    user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    title TEXT NOT NULL,
-    width INTEGER NOT NULL,
-    height INTEGER NOT NULL,
-    data TEXT NOT NULL,
-    thumb TEXT NOT NULL DEFAULT '',
-    created_at INTEGER NOT NULL,
-    updated_at INTEGER NOT NULL
-);
-CREATE INDEX IF NOT EXISTS designs_user ON designs(user_id, updated_at);
 """
 
 _MEMORY_COLUMNS = (
@@ -108,34 +96,6 @@ class Reservation:
     reason: str = ""
 
 
-@dataclass(frozen=True, slots=True)
-class Design:
-    """Projeto editável do Studio."""
-
-    id: str
-    title: str
-    width: int
-    height: int
-    data: str
-    thumb: str
-    created_at: int
-    updated_at: int
-
-    def public(self, *, body: bool = True) -> dict[str, Any]:
-        item: dict[str, Any] = {
-            "id": self.id,
-            "title": self.title,
-            "width": self.width,
-            "height": self.height,
-            "thumb": self.thumb,
-            "created_at": self.created_at,
-            "updated_at": self.updated_at,
-        }
-        if body:
-            item["data"] = self.data
-        return item
-
-
 def image_job(row: Any) -> ImageJob:
     return ImageJob(
         id=str(row["id"]),
@@ -152,19 +112,6 @@ def image_job(row: Any) -> ImageJob:
         size=int(row["size"] or 0),
         created_at=int(row["created_at"]),
         finished_at=None if row["finished_at"] is None else int(row["finished_at"]),
-    )
-
-
-def design(row: Any, *, body: bool = True) -> Design:
-    return Design(
-        id=str(row["id"]),
-        title=row["title"],
-        width=int(row["width"]),
-        height=int(row["height"]),
-        data=(row["data"] or "") if body else "",
-        thumb=row["thumb"] or "",
-        created_at=int(row["created_at"]),
-        updated_at=int(row["updated_at"]),
     )
 
 
@@ -306,72 +253,3 @@ class SqliteExtras:
                 (job_id, user_id),
             ).rowcount
         return changed == 1
-
-    # ---------- Studio ----------
-
-    def list_designs(self, user_id: str, limit: int = 60) -> list[Design]:
-        with self._transaction() as conn:
-            rows = conn.execute(
-                "SELECT id, title, width, height, '' AS data, thumb, created_at, updated_at"
-                " FROM designs WHERE user_id = ? ORDER BY updated_at DESC, id LIMIT ?",
-                (user_id, limit),
-            ).fetchall()
-        return [design(row, body=False) for row in rows]
-
-    def get_design(self, user_id: str, design_id: str) -> Design | None:
-        with self._transaction() as conn:
-            row = conn.execute(
-                "SELECT * FROM designs WHERE id = ? AND user_id = ?", (design_id, user_id)
-            ).fetchone()
-        return None if row is None else design(row)
-
-    def save_design(
-        self,
-        user_id: str,
-        design_id: str | None,
-        title: str,
-        width: int,
-        height: int,
-        data: str,
-        thumb: str,
-        now: int,
-        max_count: int,
-    ) -> Design | None:
-        """Cria (sem id) ou atualiza. None: limite de projetos ou projeto de outra conta."""
-        with self._transaction() as conn:
-            if design_id is None:
-                (count,) = conn.execute(
-                    "SELECT COUNT(*) FROM designs WHERE user_id = ?", (user_id,)
-                ).fetchone()
-                if count >= max_count:
-                    return None
-                design_id = _new_id()
-                conn.execute(
-                    "INSERT INTO designs (id, user_id, title, width, height, data, thumb,"
-                    " created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                    (design_id, user_id, title, width, height, data, thumb, now, now),
-                )
-            else:
-                changed = conn.execute(
-                    "UPDATE designs SET title = ?, width = ?, height = ?, data = ?, thumb = ?,"
-                    " updated_at = ? WHERE id = ? AND user_id = ?",
-                    (title, width, height, data, thumb, now, design_id, user_id),
-                ).rowcount
-                if changed != 1:
-                    return None
-            row = conn.execute("SELECT * FROM designs WHERE id = ?", (design_id,)).fetchone()
-            return design(row)
-
-    def delete_design(self, user_id: str, design_id: str) -> bool:
-        with self._transaction() as conn:
-            changed = conn.execute(
-                "DELETE FROM designs WHERE id = ? AND user_id = ?", (design_id, user_id)
-            ).rowcount
-        return changed == 1
-
-    def count_designs(self, user_id: str) -> int:
-        with self._transaction() as conn:
-            (count,) = conn.execute(
-                "SELECT COUNT(*) FROM designs WHERE user_id = ?", (user_id,)
-            ).fetchone()
-        return int(count)

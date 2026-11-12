@@ -37,6 +37,7 @@ from kazer.chat import (
     artifacts,
     connectors,
     context,
+    imagine,
     mcp,
     official_skills,
     plans,
@@ -310,6 +311,8 @@ class ChatService:
         `web`: pesquisa em tempo real (busca, páginas e GitHub) oferecida ao modelo.
         """
         self._web = web
+        # Criação de imagens (ligada na composição da aplicação; None = sem imagens).
+        self._images: Any = None
         # Cobrança (Stripe) ligada no servidor, ou None.
         self._checkout = checkout
         self._store = store
@@ -1039,9 +1042,24 @@ class ChatService:
         if remover is None or not remover(user_id, artifact_id):
             raise ChatError("not_found", 404)
 
+    def attach_images(self, images: Any) -> None:
+        """Liga a criação de imagens à conversa (feito na composição da aplicação)."""
+        self._images = images
+
+    def _image_reply(
+        self, user_id: str, asked: str, key: str, timezone: str | None, request: Any, plain: bool
+    ) -> tuple[Any, Any] | None:
+        """(pedido, provedor) quando esta mensagem é um pedido de imagem atendível."""
+        images = self._images
+        if not plain or images is None or not images.available or not imagine.wants_image(asked):
+            return None
+        # Nada de pesquisa nem ferramenta: esta resposta é só a imagem.
+        bare = replace(request, prefetch=(), prefetch_check="", tools=())
+        return bare, imagine.ImageReplyProvider(images, user_id, asked, key, timezone)
+
     @property
     def store(self) -> Any:
-        """Banco do chat (imagens e Studio guardam no mesmo lugar)."""
+        """Banco do chat (as imagens geradas guardam no mesmo lugar)."""
         return self._store
 
     @property
@@ -1539,6 +1557,12 @@ class ChatService:
             # Só o que a pessoa escreveu nesta mensagem (nunca anexo, site ou resposta).
             said=content if options.memory else "",
         )
+        provider = self._metered(user_id, options.model)
+        # Pedido de imagem: a resposta é a imagem (com a cota do dia), não um texto do modelo.
+        plain = not pending and not options.forja
+        pictured = self._image_reply(user_id, content, exchange.reply.id, timezone, request, plain)
+        if pictured is not None:
+            request, provider = pictured
         live = self._hub.start(
             user_id,
             exchange.conversation.id,
@@ -1550,7 +1574,7 @@ class ChatService:
                 user_id, read_only=restricted, focus=asked
             ),
             describe=self._describe,
-            provider=self._metered(user_id, options.model),
+            provider=provider,
         )
         logger.info("chat.message_accepted", extra={"units": options.units})
         return exchange, live
@@ -1613,6 +1637,19 @@ class ChatService:
         prefs = self.preferences(user_id)
         options = replace(options, memory=options.memory and prefs["memory_enabled"])
         request, restricted = self._request(user_id, question, options, prefs, timezone)
+        provider = self._metered(user_id, options.model)
+        # Tentar de novo um pedido de imagem usa uma chave nova: a tentativa que
+        # falhou não gastou o dia, e a cota do banco barra qualquer excesso.
+        pictured = self._image_reply(
+            user_id,
+            question.content,
+            f"{reply.id}-r{self._now():x}"[:64],
+            timezone,
+            request,
+            not question.attachments and not options.forja,
+        )
+        if pictured is not None:
+            request, provider = pictured
         live = self._hub.start(
             user_id,
             reply.conversation_id,
@@ -1623,7 +1660,7 @@ class ChatService:
                 user_id, read_only=restricted, focus=question.content
             ),
             describe=self._describe,
-            provider=self._metered(user_id, options.model),
+            provider=provider,
         )
         return reply, live
 
@@ -1753,6 +1790,11 @@ class ChatService:
             voice=options.voice,
             question=question.content,
         )
+        if imagine.wants_image(question.content) and not (
+            self._images is not None and self._images.available
+        ):
+            # Pediram imagem e não há gerador ligado: o modelo diz a verdade.
+            system = f"{system}\n\n{imagine.UNAVAILABLE_NOTE}"
         specs = self._tools_for(user_id, read_only=restricted)
         # O KAZER pesquisa ANTES (prefetch) e o modelo só escreve, sem
         # ferramentas de busca — era onde os modelos da Groq mais erravam.

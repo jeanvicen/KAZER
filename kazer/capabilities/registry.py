@@ -24,7 +24,6 @@ Family = Literal[
     "escrita",
     "documentos",
     "apresentacoes",
-    "design",
     "imagens",
     "dados",
     "codigo",
@@ -230,27 +229,6 @@ CAPABILITIES: tuple[Capability, ...] = (
         tests=("tests/test_documents.py",),
     ),
     # ---------- Design e imagens ----------
-    _c(
-        "design.studio",
-        "KAZER Studio",
-        "Editor de design: texto, formas e fotos em camadas, com desfazer, projetos salvos na"
-        " conta e exportação em PNG, JPEG e PDF.",
-        "design",
-        permissions=("arquivos_da_conta",),
-        quota="projetos por plano",
-        cost="armazenamento",
-        idempotent=True,
-        confirmation=True,
-        entrypoints=(
-            "GET /api/designs",
-            "POST /api/designs",
-            "GET /api/designs/{design_id}",
-            "PUT /api/designs/{design_id}",
-            "DELETE /api/designs/{design_id}",
-        ),
-        modules=("kazer/studio/service.py", "kazer/interfaces/web/static/assets/studio.js"),
-        tests=("tests/test_create.py",),
-    ),
     _c(
         "imagens.criar",
         "Criar imagem",

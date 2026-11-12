@@ -1,4 +1,4 @@
--- Imagens (cota diária), Studio e memória com procedência:
+-- Imagens (cota diária) e memória com procedência:
 -- ciclo reservar → concluir, idempotência, isolamento entre contas e RLS.
 -- Rode com scripts/pg_test.sh (Postgres local). Tudo dentro de uma transação
 -- desfeita no fim: não deixa dado nenhum.
@@ -13,7 +13,6 @@ declare
   job uuid;
   job2 uuid;
   d jsonb;
-  design uuid;
   mem jsonb;
   n integer;
   denied boolean;
@@ -99,15 +98,7 @@ begin
   end;
   assert denied, 'conta não apaga pedidos pela tabela';
 
-  -- Studio e memória da Ana.
-  d := public.kazer_save_design(null, 'Post da Ana', 1080, 1080, '{"v":1}', '', 1);
-  design := (d->>'id')::uuid;
-  assert design is not null, 'projeto criado';
-  assert public.kazer_save_design(null, 'Segundo', 1080, 1080, '{"v":1}', '', 1) is null,
-    'limite de projetos respeitado';
-  d := public.kazer_save_design(design, 'Post editado', 1080, 1350, '{"v":1,"x":2}', '', 1);
-  assert d->>'title' = 'Post editado' and (d->>'height')::int = 1350, 'projeto atualizado';
-
+  -- Memória da Ana.
   mem := public.kazer_save_memory('Prefere respostas curtas', 100, 'auto', null, 0.7);
   assert mem->>'source' = 'auto', 'memória automática guarda a origem';
   reset role;
@@ -125,13 +116,6 @@ begin
   assert n = 0, 'RLS: Bia não vê o uso da Ana';
   assert jsonb_array_length(public.kazer_images(10)) = 0, 'galeria da Bia é vazia';
 
-  assert public.kazer_design(design) is null, 'Bia não abre projeto da Ana';
-  assert public.kazer_save_design(design, 'Roubado', 1080, 1080, '{"v":1}', '', 30) is null,
-    'Bia não sobrescreve projeto da Ana';
-  assert public.kazer_delete_design(design) = false, 'Bia não apaga projeto da Ana';
-  select count(*) into n from public.kazer_designs;
-  assert n = 0, 'RLS: Bia não vê projetos da Ana';
-  delete from public.kazer_designs where id = design;
   select count(*) into n from public.kazer_memories;
   assert n = 0, 'RLS: Bia não vê memória da Ana';
   assert public.kazer_update_memory((mem->>'id')::uuid, 'invadida') is null,
@@ -143,9 +127,7 @@ begin
   assert r->>'reason' = '', 'Bia tem a própria imagem do dia';
   reset role;
 
-  -- ---------- Ana continua com tudo no lugar ----------
-  select count(*) into n from public.kazer_designs where user_id = ana;
-  assert n = 1, 'projeto da Ana sobreviveu';
+  -- ---------- Ana continua com o que é dela ----------
   perform set_config('request.jwt.claim.sub', ana::text, true);
   set local role authenticated;
   mem := public.kazer_update_memory((mem->>'id')::uuid, 'Prefere respostas bem curtas');

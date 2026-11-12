@@ -1,8 +1,8 @@
-"""Rotas de criação: imagens (cota diária), projetos do Studio e o catálogo de capacidades.
+"""Rotas de criação: imagens (cota diária, arquivo privado) e o catálogo de capacidades.
 
 Todas autenticadas e, nas escritas, com a verificação de origem do `WebContext`.
-A cota de imagens e a posse dos projetos são decididas no servidor/banco; o
-navegador só mostra o que estas rotas respondem.
+A cota e a posse das imagens são decididas no servidor/banco; o navegador só
+mostra o que estas rotas respondem. A imagem nasce na conversa (`chat/imagine.py`).
 """
 
 from __future__ import annotations
@@ -21,19 +21,15 @@ from kazer.chat.uploads import valid_id
 from kazer.images.service import ImageService
 from kazer.interfaces.web.common import WebContext, endpoint
 from kazer.security.rate_limiter import RateLimit, RateLimiter
-from kazer.studio.service import MAX_DESIGN_BYTES, MAX_THUMB_CHARS, StudioService
 
 # Tentativas de gerar imagem por conta (a cota diária é outra coisa, e é do banco).
 IMAGE_ATTEMPTS = RateLimit(12, 3600)
-DESIGN_SAVES = RateLimit(240, 3600)
-DESIGN_BODY_LIMIT = MAX_DESIGN_BYTES + MAX_THUMB_CHARS + 4096
 
 
 def create_routes(
     ctx: WebContext,
     chat: ChatService | None,
     images: ImageService | None,
-    studio: StudioService | None,
     limiter: RateLimiter | None = None,
 ) -> list[Route]:
     limits = limiter or RateLimiter()
@@ -49,11 +45,6 @@ def create_routes(
         if images is None:
             raise ChatError("chat_unavailable", 503)
         return images
-
-    def studio_service() -> StudioService:
-        if studio is None:
-            raise ChatError("chat_unavailable", 503)
-        return studio
 
     def path_id(request: Request, name: str) -> str:
         value = request.path_params[name]
@@ -117,45 +108,9 @@ def create_routes(
         await run_in_threadpool(image_service().delete, user.id, path_id(request, "image_id"))
         return JSONResponse({"status": "deleted"})
 
-    # ---------- Studio ----------
-
-    @endpoint
-    async def design_list(request: Request) -> Response:
-        user = await account(request)
-        service = studio_service()
-        if request.method == "GET":
-            return JSONResponse(await run_in_threadpool(service.list, user.id))
-        data = await ctx.read_json(request, DESIGN_BODY_LIMIT)
-        wait = limits.hit(f"design:{user.id}", DESIGN_SAVES)
-        if wait:
-            raise ChatError("rate_limited", 429, retry_after=wait)
-        saved = await run_in_threadpool(service.save, user.id, None, data)
-        return JSONResponse({"design": saved.public()}, status_code=201)
-
-    @endpoint
-    async def design_item(request: Request) -> Response:
-        user = await account(request)
-        service = studio_service()
-        design_id = path_id(request, "design_id")
-        if request.method == "GET":
-            found = await run_in_threadpool(service.get, user.id, design_id)
-            return JSONResponse({"design": found.public()})
-        if request.method == "PUT":
-            data = await ctx.read_json(request, DESIGN_BODY_LIMIT)
-            wait = limits.hit(f"design:{user.id}", DESIGN_SAVES)
-            if wait:
-                raise ChatError("rate_limited", 429, retry_after=wait)
-            saved = await run_in_threadpool(service.save, user.id, design_id, data)
-            return JSONResponse({"design": saved.public(body=False)})
-        ctx.check_origin(request)
-        await run_in_threadpool(service.delete, user.id, design_id)
-        return JSONResponse({"status": "deleted"})
-
     return [
         Route("/api/capabilities", catalog, methods=["GET"]),
         Route("/api/images", image_list, methods=["GET", "POST"]),
         Route("/api/images/{image_id}/file", image_file, methods=["GET"]),
         Route("/api/images/{image_id}", image_item, methods=["DELETE"]),
-        Route("/api/designs", design_list, methods=["GET", "POST"]),
-        Route("/api/designs/{design_id}", design_item, methods=["GET", "PUT", "DELETE"]),
     ]

@@ -45,7 +45,6 @@ from kazer.interfaces.web.voice_api import voice_routes
 from kazer.security.passwords import PasswordHashing
 from kazer.security.rate_limiter import RateLimiter
 from kazer.security.secrets import get_secret
-from kazer.studio.service import StudioService
 
 logger = logging.getLogger("kazer.web")
 
@@ -239,10 +238,9 @@ def create_app(
     if chat is None and auth is not None and chat_possible:
         chat = _build_chat(settings, provider if provider is not None else build_provider(settings))
 
-    # Criação: imagens (cota diária por conta) e projetos do Studio usam o mesmo
-    # banco e o mesmo armazenamento privado do chat.
+    # Imagens (cota diária por conta) usam o mesmo banco e o mesmo armazenamento
+    # privado do chat; a geração acontece dentro da conversa.
     images: ImageService | None = None
-    studio: StudioService | None = None
     if chat is not None:
         images = ImageService(
             chat.store,
@@ -252,7 +250,7 @@ def create_app(
             else image_providers.load(production=settings.environment == "production"),
             limit_of=lambda user_id: chat.plan(user_id).images_per_day,
         )
-        studio = StudioService(chat.store, limit_of=lambda user_id: chat.plan(user_id).design_limit)
+        chat.attach_images(images)
 
     def page(name: str, media_type: str = "text/html") -> Callable[[Request], Awaitable[Response]]:
         async def serve(request: Request) -> Response:
@@ -429,7 +427,7 @@ def create_app(
         Route("/api/auth/password-reset", request_reset, methods=["POST"]),
         Route("/api/auth/password-reset/confirm", confirm_reset, methods=["POST"]),
         *chat_routes(ctx, chat),
-        *create_routes(ctx, chat, images, studio),
+        *create_routes(ctx, chat, images),
         *voice_routes(ctx, settings),
         Mount("/assets", app=StaticFiles(directory=STATIC_DIR / "assets"), name="assets"),
     ]

@@ -1,12 +1,16 @@
--- KAZER: criação de imagens (cota diária atômica), projetos do Studio e memória
--- com procedência. Migração ADITIVA: só cria tabelas/funções e acrescenta colunas.
+-- KAZER: criação de imagens (cota diária atômica) e memória com procedência.
+-- Migração ADITIVA: só cria tabelas/funções e acrescenta colunas.
 --
 -- 1. kazer_image_usage + kazer_image_jobs: reservar → gerar → concluir.
 --    A linha (conta, dia) é travada com FOR UPDATE: duas requisições simultâneas
 --    nunca reservam a mesma vaga. Chave de idempotência única por conta.
--- 2. kazer_designs: projetos editáveis do Studio, um dono por linha.
--- 3. kazer_memories: origem (manual/auto), conversa de origem, confiança e
+-- 2. kazer_memories: origem (manual/auto), conversa de origem, confiança e
 --    data de atualização; funções para salvar com procedência e editar.
+--
+-- Histórico: uma versão anterior deste arquivo também criava `kazer_designs`
+-- (projetos de um editor gráfico que saiu do produto). Se ela chegou a ser
+-- aplicada em algum banco, a tabela ficou sem uso e pode sair com o trecho
+-- "Limpeza opcional" no fim do arquivo.
 --
 -- Reversão (sem perda de dados anteriores): ver o fim do arquivo.
 
@@ -264,135 +268,7 @@ end;
 $$;
 
 -- ---------------------------------------------------------------------------
--- 2. Studio
--- ---------------------------------------------------------------------------
-
-create table if not exists public.kazer_designs (
-  id uuid primary key default gen_random_uuid(),
-  user_id uuid not null references auth.users(id) on delete cascade,
-  title text not null check (char_length(title) between 1 and 80),
-  width integer not null check (width between 64 and 4096),
-  height integer not null check (height between 64 and 4096),
-  data text not null check (octet_length(data) <= 3145728),
-  thumb text not null default '' check (char_length(thumb) <= 60000),
-  created_at timestamptz not null default now(),
-  updated_at timestamptz not null default now()
-);
-
-create index if not exists kazer_designs_user_idx on public.kazer_designs(user_id, updated_at desc);
-
-alter table public.kazer_designs enable row level security;
-revoke all on table public.kazer_designs from public, anon, authenticated;
-grant select, delete on table public.kazer_designs to authenticated;
-
-drop policy if exists kazer_designs_own on public.kazer_designs;
-create policy kazer_designs_own on public.kazer_designs
-  for all to authenticated
-  using (user_id = (select auth.uid()))
-  with check (user_id = (select auth.uid()));
-
-create or replace function public.kazer_design_json(d public.kazer_designs, p_body boolean)
-returns jsonb
-language sql
-immutable
-set search_path = ''
-as $$
-  select jsonb_build_object(
-    'id', d.id, 'title', d.title, 'width', d.width, 'height', d.height,
-    'data', case when p_body then d.data else '' end, 'thumb', d.thumb,
-    'created_at', extract(epoch from d.created_at)::bigint,
-    'updated_at', extract(epoch from d.updated_at)::bigint);
-$$;
-
-create or replace function public.kazer_designs(p_limit integer default 60)
-returns jsonb
-language plpgsql
-stable
-security definer
-set search_path = ''
-as $$
-declare uid uuid := auth.uid();
-begin
-  if uid is null then raise exception 'unauthenticated' using errcode = '28000'; end if;
-  return coalesce((
-    select jsonb_agg(public.kazer_design_json(d, false) order by d.updated_at desc, d.id)
-      from (select * from public.kazer_designs where user_id = uid
-             order by updated_at desc, id limit least(greatest(p_limit, 1), 200)) d
-  ), '[]'::jsonb);
-end;
-$$;
-
-create or replace function public.kazer_design(p_id uuid)
-returns jsonb
-language plpgsql
-stable
-security definer
-set search_path = ''
-as $$
-declare uid uuid := auth.uid(); d public.kazer_designs;
-begin
-  if uid is null then raise exception 'unauthenticated' using errcode = '28000'; end if;
-  select * into d from public.kazer_designs where id = p_id and user_id = uid;
-  if not found then return null; end if;
-  return public.kazer_design_json(d, true);
-end;
-$$;
-
--- p_id nulo cria (respeitando p_max); com p_id atualiza só se for da conta.
-create or replace function public.kazer_save_design(
-  p_id uuid,
-  p_title text,
-  p_width integer,
-  p_height integer,
-  p_data text,
-  p_thumb text default '',
-  p_max integer default 30
-)
-returns jsonb
-language plpgsql
-security definer
-set search_path = ''
-as $$
-declare uid uuid := auth.uid(); d public.kazer_designs; total integer;
-begin
-  if uid is null then raise exception 'unauthenticated' using errcode = '28000'; end if;
-  if p_id is null then
-    -- Trava por conta: criações simultâneas não passam do limite.
-    perform pg_advisory_xact_lock(hashtextextended('kazer_designs:' || uid::text, 0));
-    select count(*) into total from public.kazer_designs where user_id = uid;
-    if total >= least(greatest(coalesce(p_max, 0), 0), 500) then return null; end if;
-    insert into public.kazer_designs (user_id, title, width, height, data, thumb)
-    values (uid, p_title, p_width, p_height, p_data, coalesce(p_thumb, ''))
-    returning * into d;
-  else
-    update public.kazer_designs
-       set title = p_title, width = p_width, height = p_height, data = p_data,
-           thumb = coalesce(p_thumb, ''), updated_at = now()
-     where id = p_id and user_id = uid
-    returning * into d;
-    if not found then return null; end if;
-  end if;
-  return public.kazer_design_json(d, true);
-end;
-$$;
-
-create or replace function public.kazer_delete_design(p_id uuid)
-returns boolean
-language plpgsql
-security definer
-set search_path = ''
-as $$
-declare uid uuid := auth.uid(); gone integer;
-begin
-  if uid is null then raise exception 'unauthenticated' using errcode = '28000'; end if;
-  delete from public.kazer_designs where id = p_id and user_id = uid;
-  get diagnostics gone = row_count;
-  return gone = 1;
-end;
-$$;
-
--- ---------------------------------------------------------------------------
--- 3. Memória com procedência
+-- 2. Memória com procedência
 -- ---------------------------------------------------------------------------
 
 alter table public.kazer_memories
@@ -500,10 +376,6 @@ begin
     'kazer_images(integer)',
     'kazer_image(uuid)',
     'kazer_delete_image(uuid)',
-    'kazer_designs(integer)',
-    'kazer_design(uuid)',
-    'kazer_save_design(uuid, text, integer, integer, text, text, integer)',
-    'kazer_delete_design(uuid)',
     'kazer_list_memories()',
     'kazer_save_memory(text, integer, text, uuid, real)',
     'kazer_update_memory(uuid, text, text, uuid, real)'
@@ -516,7 +388,6 @@ begin
   foreach fn in array array[
     'kazer_image_expire(uuid, integer)',
     'kazer_image_job_json(public.kazer_image_jobs)',
-    'kazer_design_json(public.kazer_designs, boolean)',
     'kazer_memory_json(public.kazer_memories)'
   ] loop
     execute format('revoke all on function public.%s from public, anon, authenticated', fn);
@@ -529,9 +400,13 @@ commit;
 --   drop function if exists public.kazer_image_usage_today, public.kazer_image_reserve,
 --     public.kazer_image_finish, public.kazer_images, public.kazer_image,
 --     public.kazer_delete_image, public.kazer_image_expire, public.kazer_image_job_json,
---     public.kazer_designs, public.kazer_design, public.kazer_save_design,
---     public.kazer_delete_design, public.kazer_design_json,
 --     public.kazer_save_memory, public.kazer_update_memory;
---   drop table if exists public.kazer_image_jobs, public.kazer_image_usage, public.kazer_designs;
+--   drop table if exists public.kazer_image_jobs, public.kazer_image_usage;
 --   -- kazer_list_memories volta à versão de 20261029181000; as colunas novas de
 --   -- kazer_memories podem ficar (têm padrão) ou sair com `alter table ... drop column`.
+--
+-- Limpeza opcional (só se a versão antiga deste arquivo foi aplicada; confira antes
+-- que a tabela está vazia ou que ninguém precisa dos projetos):
+--   drop function if exists public.kazer_designs, public.kazer_design,
+--     public.kazer_save_design, public.kazer_delete_design, public.kazer_design_json;
+--   drop table if exists public.kazer_designs;

@@ -187,8 +187,33 @@ function table(lines) {
   );
 }
 
+// Imagem criada pelo KAZER nesta conta: só o caminho exato da própria API vira <img>.
+const GENERATED = /^!\[([^\]\n]{0,200})\]\((\/api\/images\/[A-Za-z0-9_-]{8,64}\/file)\)\s*$/;
+
+function generatedImage(alt, src) {
+  const picture = h("img.gen__img", { src, alt: alt || "Imagem criada pelo KAZER", loading: "lazy", decoding: "async" });
+  const figure = h(
+    "figure.gen",
+    {},
+    picture,
+    h(
+      "figcaption.gen__cap",
+      {},
+      h("span.gen__alt", { text: alt }),
+      h("a.gen__save", { href: src, download: "kazer-imagem", "aria-label": "Baixar imagem", title: "Baixar" }, icon("download")),
+    ),
+  );
+  // Apagada ou de outra conta: mostra o motivo no lugar de um ícone quebrado.
+  picture.addEventListener("error", () => {
+    figure.classList.add("is-gone");
+    figure.replaceChildren(h("p.gen__gone", { text: "Esta imagem não está mais disponível." }));
+  });
+  return figure;
+}
+
 function startsBlock(line, next) {
   return (
+    GENERATED.test(line) ||
     FENCE.test(line) ||
     HEADING.test(line) ||
     HR.test(line) ||
@@ -297,6 +322,12 @@ export function blocks(lines) {
         i += 1;
       }
       out.append(h("blockquote", {}, blocks(quoted)));
+      continue;
+    }
+    const generated = line.match(GENERATED);
+    if (generated) {
+      out.append(generatedImage(generated[1], generated[2]));
+      i += 1;
       continue;
     }
     if (ITEM.test(line)) {
