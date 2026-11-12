@@ -18,6 +18,8 @@ planos pagos.
 
 | Pasta | O que tem |
 |---|---|
+| `kazer/images/`, `kazer/studio/`, `kazer/capabilities/` | Criar imagem (cota diária), projetos do Studio e o registro do que o KAZER faz |
+| `.claude/skills/` | Skills do projeto para agentes (design, front, Studio, agente, banco, memória, escala, release) |
 | `controle-de-notificacao/` | **Painel do dono**: liga/desliga o modo manutenção e o aviso global para todo mundo ([guia](controle-de-notificacao/README.md)) |
 | `kazer/interfaces/web/` | App web (Starlette) e a tela inteira em `static/` (HTML, CSS e JS sem build) |
 | `kazer/chat/` | Conversa: serviço, geração em streaming, pesquisa (`prefetch.py`, `web_tools.py`), arquivos, PDFs |
@@ -47,6 +49,13 @@ Cada pasta do repositório tem um `README.md` explicando o que tem nela.
 | [ARCHITECTURE.md](ARCHITECTURE.md) | Princípios, fronteiras e fluxo do agente |
 | [SECURITY.md](SECURITY.md) | Riscos e controles |
 | [docs/NEGOCIO.md](docs/NEGOCIO.md) | Planos, margem, créditos, Stripe e chaves das IAs |
+| [docs/product-audit.md](docs/product-audit.md) | Auditoria do produto e o que mudou |
+| [docs/architecture/target-architecture.md](docs/architecture/target-architecture.md) | Arquitetura, medições de carga e degraus de crescimento |
+| [docs/architecture/open-source-evaluation.md](docs/architecture/open-source-evaluation.md) | Código aberto avaliado, com licenças |
+| [docs/security/threat-model.md](docs/security/threat-model.md) | Modelo de ameaças |
+| [docs/roadmap/capability-catalog.md](docs/roadmap/capability-catalog.md) | Catálogo de capacidades (backlog) |
+| [docs/images/RUNTIME.md](docs/images/RUNTIME.md) | Como ligar a criação de imagens |
+| [docs/qa/release-checklist.md](docs/qa/release-checklist.md) | Checklist de release |
 | [docs/ESCALA.md](docs/ESCALA.md) | Como o KAZER aguenta mais gente na Groq grátis |
 | [docs/supabase-chat-storage.md](docs/supabase-chat-storage.md) | Banco do chat no Supabase |
 | [CONTRIBUTING.md](CONTRIBUTING.md) | Como mexer no código sem quebrar nada |

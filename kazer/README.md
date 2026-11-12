@@ -13,6 +13,9 @@ roda na Vercel.
 | `billing/` | Planos, créditos premium, Stripe | em produção |
 | `brain/` | Provedores de modelo (Groq = "KAZ 1.1", etc.) | em produção |
 | `voice/` | Modo voz: voz Piper no servidor, tokens, gateway opcional | em produção |
+| `images/` | Criação de imagens: cota diária por conta e adaptador de provedor | pronto; a geração depende de um servidor com GPU |
+| `studio/` | Projetos do KAZER Studio (validação, limites, posse) | em produção |
+| `capabilities/` | Registro tipado do que o KAZER faz, servido em `/api/capabilities` | em produção |
 | `config/` | Configuração validada + **painel de manutenção/aviso** (`control.py`) | em produção |
 | `security/` | Senhas, segredos por escopo, limites de taxa, guardas | em produção |
 | `integrations/` | E-mail e pagamentos (outros são esqueleto) | parcial |

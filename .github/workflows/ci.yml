@@ -32,6 +32,23 @@ jobs:
       - name: Testes (pytest)
         run: pytest -q
 
+  sql:
+    name: Migrações e testes SQL (Postgres local)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Postgres descartável, migrações do zero, RLS e corrida da cota
+        run: |
+          set +e
+          bash scripts/pg_test.sh
+          code=$?
+          if [ "$code" = "77" ]; then
+            echo "::warning::Testes SQL NÃO RODARAM: este executor não tem Postgres instalado."
+            exit 0
+          fi
+          exit "$code"
+
   web:
     name: Sintaxe do front (JavaScript)
     runs-on: ubuntu-latest

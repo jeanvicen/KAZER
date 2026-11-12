@@ -19,6 +19,12 @@ algo grande.
 | `android-migration-audit.md` | Auditoria para um app Android |
 | `assets/` | Imagens usadas pelos documentos |
 | `voice/` | Tudo do modo voz (arquitetura, protocolo, deploy, segurança) |
+| `product-audit.md` | Auditoria: o que o produto é de fato, problemas encontrados e o que mudou |
+| `architecture/` | Arquitetura alvo com medições de carga; avaliação de código aberto com licenças |
+| `security/` | Modelo de ameaças (ataque → controle → teste) |
+| `roadmap/` | Catálogo de 112 capacidades candidatas |
+| `qa/` | Checklist de release e última execução |
+| `images/` | Como ligar a criação de imagens |
 
 O painel de manutenção e aviso global tem guia próprio em
 [`controle-de-notificacao/README.md`](../controle-de-notificacao/README.md).

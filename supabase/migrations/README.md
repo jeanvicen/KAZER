@@ -14,6 +14,10 @@
 | `…190000_kazer_connections` | Conectores |
 | `…031000_kazer_harden_rpc_permissions` / `…031200_kazer_revoke_public_rpc_execute` | Endurecimento de permissões |
 | `…120000_kazer_billing` (2026-11-06) | Cobrança e créditos |
+| `20261110120000_kazer_images_studio_memory` | Cota de imagens (reservar → concluir), projetos do Studio e memória com procedência. **Ainda não aplicada em produção** |
+
+Rodar tudo do zero num Postgres local: `bash scripts/pg_test.sh`. A primeira migração
+assume a tabela `public.profiles`, que já existia no projeto; o script a recria.
 
 **Regras**
 - **Nunca edite uma migração já aplicada**: crie uma nova.

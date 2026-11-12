@@ -2,6 +2,40 @@
 
 Mudanças que importam para quem usa e para quem opera o KAZER.
 
+## 2026-11 — Studio, criar imagem, memória automática e base de engenharia
+
+### Novo
+- **KAZER Studio** (menu › Studio): editor de design com formatos prontos (post, story,
+  capa, slide, cartaz), modelos editáveis, texto, formas, fotos suas, camadas (ordem,
+  esconder, travar), agrupar, desfazer/refazer, guia de centro, salvamento na conta e
+  exportação em PNG, JPEG e PDF no tamanho real. Motor: Fabric.js 7.4.0 (MIT), baixado
+  só quando o Studio abre. Sem banco para o Studio, o projeto fica guardado no aparelho
+  e a tela diz isso.
+- **Criar imagem** (menu › Criar imagem): pedido, formato e estilo, com **uma imagem
+  concluída por dia (UTC) por conta**. A cota é do banco: falha não gasta o dia, pedido
+  repetido não duplica, duas abas não furam o limite. A geração precisa de um servidor
+  com GPU seu (`docs/images/RUNTIME.md`); sem ele a tela diz que não está ligada.
+- **Memória automática**: o KAZER pode guardar o que você conta de si (nome, como
+  prefere as respostas, no que trabalha). Nunca guarda senha, documento, cartão, saúde,
+  endereço nem texto que você só pediu para traduzir. Dá para editar, apagar, limpar e
+  desligar em Configurações › Memória; cada memória mostra se foi automática.
+- **Registro de capacidades** (`/api/capabilities`): lista do que funciona de verdade,
+  por plano, conferida por teste.
+- **Skills do projeto** em `.claude/skills/` (9) para agentes trabalharem no padrão do KAZER.
+
+### Engenharia
+- `bash scripts/pg_test.sh`: Postgres local descartável aplica as 11 migrações do zero e
+  roda os testes SQL, incluindo uma corrida com 12 sessões na cota de imagens.
+- `python scripts/load_test.py`: carga HTTP com contas sintéticas; números em
+  `docs/architecture/target-architecture.md`.
+- Documentos novos: auditoria, arquitetura alvo, avaliação open source com licenças,
+  modelo de ameaças, catálogo de 112 capacidades e checklist de release.
+
+### Precisa do dono
+- Aplicar a migração `20261110120000_kazer_images_studio_memory.sql` no Supabase para
+  projetos do Studio, cota de imagens e memória automática valerem em produção. Até lá
+  o app segue funcionando e avisa o que falta.
+
 ## 2026-11 — Painel do dono: manutenção e aviso global
 
 ### Novo

@@ -10,6 +10,7 @@ arquivos estáticos e todas as rotas `/api/*`.
 | `app.py` | `create_app()`: cabeçalhos de segurança (CSP, etc.), páginas, rotas de conta, `/api/health`, **`/api/status`** (manutenção + aviso) |
 | `common.py` | `WebContext`: CSRF por `Origin`, leitura de JSON com limite, sessão (`user()`), **bloqueio de manutenção**, `endpoint` (erros em JSON) |
 | `chat_api.py` | Rotas do chat, anexos, memória, preferências, biblioteca, conta |
+| `create_api.py` | Rotas de criação: `/api/images` (cota diária), `/api/designs` (Studio) e `/api/capabilities` |
 | `voice_api.py` | Rotas do modo voz (`/api/voice/config`, `/session`, `/tts`) |
 | `static/` | Todo o front-end (HTML, CSS, JS sem build) |
 

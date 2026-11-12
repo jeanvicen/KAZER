@@ -23,6 +23,8 @@ streaming, salvar a resposta, artefatos, PDFs e Skills.
 | `protocols.py` | Contrato do armazenamento |
 | `store.py` | Armazenamento SQLite (desenvolvimento) |
 | `supabase_store.py` | Armazenamento no Postgres do Supabase (produção, com RLS) |
+| `memory.py` | Memória de longo prazo: o que entra sozinho, filtro de dado sensível, duplicatas e escolha por relevância (regras, sem modelo) |
+| `store_extras.py`, `supabase_extras.py` | Imagens geradas, projetos do Studio e campos de procedência da memória (SQLite e Supabase) |
 | `identity.py` | Token da sessão atual para o Supabase falar "como a pessoa" |
 | `.service_skills.patch` | Patch antigo da integração de Skills, já aplicado (histórico; não é carregado) |
 

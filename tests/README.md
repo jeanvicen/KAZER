@@ -12,6 +12,9 @@ pytest tests/test_control.py -q   # só um arquivo
 |---|---|
 | `conftest.py` | Zera limites/caches entre testes e **desliga o painel real** (`KAZER_CONTROL_FILE`) |
 | `test_control.py` | Painel do dono: manutenção, aviso global, validação do `controle.yaml` |
+| `test_create.py` | Imagens (cota diária, repetição, corrida, falha, isolamento), projetos do Studio |
+| `test_memory_auto.py` | Memória automática: o que entra, o que nunca entra, duplicatas, isolamento, edição |
+| `test_capabilities.py` | O registro de capacidades só aponta para rotas, módulos e testes que existem |
 | `test_web_auth.py`, `test_auth.py`, `test_supabase_auth.py` | Contas, sessão, defesas da borda |
 | `test_chat.py`, `test_chat_supabase.py`, `test_supabase_exchange_reservation.py` | Chat pela API, posse, cotas, anexos |
 | `test_research.py`, `test_web_tools.py` | Pesquisa, citações, leitura de páginas |
