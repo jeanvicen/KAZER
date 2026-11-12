@@ -324,7 +324,7 @@ export function createStudio() {
     const draw = () => {
       formats.replaceChildren(
         ...FORMATS.map((format) => {
-          const shape = h("span.st__shape");
+          const shape = h(`span.st__shape${format.w > format.h ? ".is-wide" : ""}`);
           shape.style.setProperty("aspect-ratio", `${format.w} / ${format.h}`);
           return h(
             "button.st__option",
@@ -622,9 +622,12 @@ export function createStudio() {
     }
 
     // ----- Adicionar -----
+    // Centro da PÁGINA (coordenadas do documento), não da tela com zoom.
+    const center = (object) => object.setPositionByOrigin(new fabric.Point(doc.w / 2, doc.h / 2), "center", "center");
+
     function place(object) {
       canvas.add(object);
-      canvas.centerObject(object);
+      center(object);
       object.setCoords();
       canvas.setActiveObject(object);
       canvas.requestRenderAll();
@@ -797,7 +800,7 @@ export function createStudio() {
       if (isMulti(object)) items.push(tool("Agrupar", glyphText("⧉"), () => group()));
       if (isGroup(object)) items.push(tool("Desagrupar", glyphText("⧈"), () => ungroup()));
       items.push(
-        tool("Centralizar", glyphText("⌖"), () => change((o) => canvas.centerObject(o))),
+        tool("Centralizar", glyphText("⌖"), () => change((o) => center(o))),
         tool("Frente", glyphText("⤒"), () => change((o) => canvas.bringObjectForward(o))),
         tool("Trás", glyphText("⤓"), () => change((o) => canvas.sendObjectBackwards(o))),
         tool("Duplicar", "copy", () => duplicate()),
@@ -944,7 +947,7 @@ export function createStudio() {
           {},
           h("p.st__sheet-note", { text: t("O arquivo sai no tamanho real do projeto: {w}×{h} px.", { w: doc.w, h: doc.h }) }),
           ...[
-            ["png", "PNG", "Melhor para arte com texto e transparência zero perda."],
+            ["png", "PNG", "Melhor para arte com texto: sai sem perda de qualidade."],
             ["jpg", "JPEG", "Arquivo menor, bom para fotos e redes sociais."],
             ["pdf", "PDF", "Uma página, pronto para enviar ou imprimir."],
           ].map(([kind, name, note]) =>

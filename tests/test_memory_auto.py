@@ -151,7 +151,8 @@ def test_auto_memory_saves_dedupes_and_updates(world: World) -> None:
     assert chat.remember_from(ana, None, "prefiro respostas curtas") == [], "sem cópia"
     renamed = chat.remember_from(ana, None, "Na verdade me chamo Ana Paula.")
     assert [m.content for m in renamed] == ["Nome: Ana Paula"]
-    contents = [m.content for m in chat.memories(ana)]
+    # Criadas no mesmo segundo: a ordem entre as duas não importa, a quantidade sim.
+    contents = sorted(m.content for m in chat.memories(ana))
     assert contents == ["Nome: Ana Paula", "Prefere respostas curtas"], (
         "atualiza em vez de acumular"
     )
