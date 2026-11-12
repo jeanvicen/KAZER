@@ -11,7 +11,7 @@
  *   Resposta / Fontes / Passos, cartões de fontes e o raciocínio em passos;
  * - campo de pergunta com moldura arredondada e botão de enviar quadrado.
  *
- * As telas baixadas depois (Studio, Criar imagem, KZ Code…) entram depois deste
+ * As telas baixadas depois (KZ Code, Artefatos…) entram depois deste
  * arquivo, por isso as regras delas usam `html.in-chat` para ganhar a disputa. */
 
 /* ==========================================================================
@@ -19,120 +19,120 @@
    ========================================================================== */
 
 html.in-chat {
-  --c-bg: #191a1a;
-  --c-bg-2: #1f2020;
-  --c-surface: #262727;
-  --c-text: #ececea;
-  --c-text-2: #a3a4a0;
-  --c-text-3: #878884;
-  --c-border: #2e3030;
-  --c-border-2: #3a3c3c;
+  --c-bg: #171615;
+  --c-bg-2: #1b1a19;
+  --c-surface: #242322;
+  --c-text: #e8e7e6;
+  --c-text-2: #acaaa8;
+  --c-text-3: #8c8a87;
+  --c-border: #2a2928;
+  --c-border-2: #383634;
   --rail-w: 4.25rem;
-  --pp-raise: #202121;
-  --pp-raise-2: #262727;
-  --pp-line: rgb(255 255 255 / 0.075);
-  --pp-line-2: rgb(255 255 255 / 0.13);
+  --pp-raise: #1e1d1c;
+  --pp-raise-2: #242322;
+  --pp-line: rgb(214 213 212 / 0.08);
+  --pp-line-2: rgb(214 213 212 / 0.15);
   --hairline: var(--pp-line);
   --hairline-strong: var(--pp-line-2);
-  --wash: rgb(255 255 255 / 0.035);
-  --wash-strong: rgb(255 255 255 / 0.065);
-  --composer-bg: #202121;
+  --wash: rgb(214 213 212 / 0.04);
+  --wash-strong: rgb(214 213 212 / 0.075);
+  --composer-bg: #1e1d1c;
   --pp-shadow: 0 1px 0 rgb(255 255 255 / 0.03) inset, 0 18px 40px -26px rgb(0 0 0 / 0.9);
-  --link: #8fc6d0;
-  --n-030303: #161717;
-  --n-080808: #1a1b1b;
-  --n-0a0a0a: #1c1d1d;
-  --n-111111: #222323;
-  --n-121212: #232424;
-  --n-141414: #252626;
-  --n-161616: #272828;
-  --n-171717: #272828;
-  --n-181818: #282929;
-  --n-1d1d1d: #2d2e2e;
-  --n-222222: #313232;
-  --n-242424: #333434;
-  --n-262626: #343535;
-  --n-2a2a2a: #383939;
-  --n-2c2c2c: #3a3b3b;
-  --n-2f2f2f: #3c3d3d;
-  --n-333333: #404141;
-  --n-3a3a3a: #464747;
-  --n-4a4a4a: #4a4b49;
-  --n-5a5a5a: #5a5b59;
-  --n-5c5c5c: #5c5d5b;
-  --n-5f5f5f: #5f605e;
-  --n-6a6a6a: #6a6b69;
-  --n-6c6c6c: #6c6d6b;
-  --n-7a7a7a: #7a7b79;
-  --n-8a8a8a: #8a8b89;
-  --n-929292: #929391;
-  --n-9a9a9a: #9a9b99;
-  --n-c4c4c4: #c4c5c3;
-  --n-c9c9c9: #c9cac8;
-  --n-cfcfcf: #cfd0ce;
-  --n-d0d0d0: #d0d1cf;
-  --n-d4d4d4: #d4d5d3;
-  --n-d6d6d6: #d6d7d5;
-  --n-d9d9d9: #d9dad8;
-  --n-f5f5f5: #ecece8;
-  --n-ffffff: #fafaf6;
+  --link: #7fb9c1;
+  --n-030303: #141312;
+  --n-080808: #181716;
+  --n-0a0a0a: #1a1918;
+  --n-111111: #201f1e;
+  --n-121212: #21201f;
+  --n-141414: #232221;
+  --n-161616: #252423;
+  --n-171717: #252423;
+  --n-181818: #262524;
+  --n-1d1d1d: #2b2a29;
+  --n-222222: #2f2e2d;
+  --n-242424: #31302f;
+  --n-262626: #323130;
+  --n-2a2a2a: #363534;
+  --n-2c2c2c: #383736;
+  --n-2f2f2f: #3a3938;
+  --n-333333: #3e3d3c;
+  --n-3a3a3a: #444342;
+  --n-4a4a4a: #484746;
+  --n-5a5a5a: #585756;
+  --n-5c5c5c: #5a5958;
+  --n-5f5f5f: #5d5c5b;
+  --n-6a6a6a: #686766;
+  --n-6c6c6c: #6a6968;
+  --n-7a7a7a: #787776;
+  --n-8a8a8a: #888786;
+  --n-929292: #908f8e;
+  --n-9a9a9a: #989796;
+  --n-c4c4c4: #c2c1c0;
+  --n-c9c9c9: #c7c6c5;
+  --n-cfcfcf: #cdcccb;
+  --n-d0d0d0: #cecdcc;
+  --n-d4d4d4: #d2d1d0;
+  --n-d6d6d6: #d4d3d2;
+  --n-d9d9d9: #d7d6d5;
+  --n-f5f5f5: #eae9e8;
+  --n-ffffff: #f8f7f6;
 }
 
 html.in-chat[data-theme="light"] {
-  --c-bg: #fcfcf9;
-  --c-bg-2: #f4f4ef;
-  --c-surface: #efefe9;
-  --c-text: #13201f;
-  --c-text-2: #545b5a;
-  --c-text-3: #687070;
-  --c-border: #e3e3dc;
-  --c-border-2: #d4d4cc;
+  --c-bg: #fdfbfa;
+  --c-bg-2: #f7f5f1;
+  --c-surface: #efece6;
+  --c-text: #27251e;
+  --c-text-2: #5d5a52;
+  --c-text-3: #716d64;
+  --c-border: #e8e5df;
+  --c-border-2: #dedbd4;
   --pp-raise: #ffffff;
-  --pp-raise-2: #f6f6f1;
-  --pp-line: rgb(19 32 31 / 0.09);
-  --pp-line-2: rgb(19 32 31 / 0.16);
-  --wash: rgb(19 32 31 / 0.035);
-  --wash-strong: rgb(19 32 31 / 0.065);
+  --pp-raise-2: #f6f4f0;
+  --pp-line: rgb(39 26 0 / 0.08);
+  --pp-line-2: rgb(39 26 0 / 0.14);
+  --wash: rgb(39 26 0 / 0.035);
+  --wash-strong: rgb(39 26 0 / 0.065);
   --composer-bg: #ffffff;
-  --pp-shadow: 0 1px 2px rgb(19 32 31 / 0.04), 0 14px 32px -22px rgb(19 32 31 / 0.28);
-  --link: #1a6f7a;
-  --n-030303: #fcfcf8;
-  --n-080808: #f7f7f3;
-  --n-0a0a0a: #f5f5f1;
-  --n-111111: #eeeeea;
-  --n-121212: #edede9;
-  --n-141414: #ebebe7;
-  --n-161616: #e9e9e5;
-  --n-171717: #e8e8e4;
-  --n-181818: #e7e7e3;
-  --n-1d1d1d: #e1e1dd;
-  --n-222222: #dcdcd8;
-  --n-242424: #dadad6;
-  --n-262626: #d8d8d4;
-  --n-2a2a2a: #d4d4d0;
-  --n-2c2c2c: #d2d2ce;
-  --n-2f2f2f: #cfcfcb;
-  --n-333333: #cbcbc7;
-  --n-3a3a3a: #c4c4c0;
-  --n-4a4a4a: #b4b4b0;
-  --n-5a5a5a: #9ca4a4;
-  --n-5c5c5c: #9aa2a2;
-  --n-5f5f5f: #979f9f;
-  --n-6a6a6a: #8c9494;
-  --n-6c6c6c: #8a9292;
-  --n-7a7a7a: #7c8484;
-  --n-8a8a8a: #6d7575;
-  --n-929292: #656d6d;
-  --n-9a9a9a: #5d6565;
-  --n-c4c4c4: #343c3c;
-  --n-c9c9c9: #2f3737;
-  --n-cfcfcf: #293131;
-  --n-d0d0d0: #283030;
-  --n-d4d4d4: #242c2c;
-  --n-d6d6d6: #222a2a;
-  --n-d9d9d9: #1f2727;
-  --n-f5f5f5: #101c1b;
-  --n-ffffff: #061211;
+  --pp-shadow: 0 1px 2px rgb(39 26 0 / 0.04), 0 14px 32px -22px rgb(39 26 0 / 0.22);
+  --link: #016a71;
+  --n-030303: #fcfaf7;
+  --n-080808: #f7f5f2;
+  --n-0a0a0a: #f5f3f0;
+  --n-111111: #eeece9;
+  --n-121212: #edebe8;
+  --n-141414: #ebe9e6;
+  --n-161616: #e9e7e4;
+  --n-171717: #e8e6e3;
+  --n-181818: #e7e5e2;
+  --n-1d1d1d: #e1dfdc;
+  --n-222222: #dcdad7;
+  --n-242424: #dad8d5;
+  --n-262626: #d8d6d3;
+  --n-2a2a2a: #d4d2cf;
+  --n-2c2c2c: #d2d0cd;
+  --n-2f2f2f: #cfcdca;
+  --n-333333: #cbc9c6;
+  --n-3a3a3a: #c4c2bf;
+  --n-4a4a4a: #b4b2af;
+  --n-5a5a5a: #9c9a97;
+  --n-5c5c5c: #9a9895;
+  --n-5f5f5f: #979592;
+  --n-6a6a6a: #8c8a87;
+  --n-6c6c6c: #8a8885;
+  --n-7a7a7a: #7c7a77;
+  --n-8a8a8a: #6d6b68;
+  --n-929292: #656360;
+  --n-9a9a9a: #5d5b58;
+  --n-c4c4c4: #34322f;
+  --n-c9c9c9: #2f2d2a;
+  --n-cfcfcf: #292724;
+  --n-d0d0d0: #282623;
+  --n-d4d4d4: #24221f;
+  --n-d6d6d6: #22201d;
+  --n-d9d9d9: #1f1d1a;
+  --n-f5f5f5: #100e0b;
+  --n-ffffff: #060401;
 }
 
 /* ==========================================================================
@@ -173,42 +173,42 @@ html.in-chat[data-theme="light"][data-accent="dourado"] {
 
 /* Turquesa (a cor âncora da Perplexity). */
 html[data-accent="turquesa"] {
-  --gold: #1fb8cd;
-  --gold-hi: #8fe3ee;
-  --gold-metal: #1796a8;
-  --gold-bronze: #137a88;
+  --gold: #4e99a3;
+  --gold-hi: #9cc9cf;
+  --gold-metal: #22808c;
+  --gold-bronze: #1a636c;
   --gold-shadow: #0b4a52;
-  --gradient-metallic-gold: linear-gradient(115deg, #0b4a52 0%, #137a88 30%, #1fb8cd 50%, #8fe3ee 58%, #1796a8 80%, #0b4a52 100%);
-  --gradient-gold-button: linear-gradient(180deg, #4fcadb 0%, #1fb8cd 50%, #1796a8 100%);
-  --pp-accent: #1fb8cd;
-  --pp-accent-hover: #3ccbdd;
-  --pp-accent-ink: #062226;
-  --pp-accent-soft: rgb(31 184 205 / 0.12);
-  --pp-accent-line: rgb(31 184 205 / 0.4);
-  --accent-text: #4fcadb;
-  --color-accent: #1fb8cd;
-  --color-accent-hover: #3ccbdd;
-  --color-accent-active: #1796a8;
-  --color-accent-subtle: rgb(31 184 205 / 0.1);
-  --color-accent-border: rgb(31 184 205 / 0.38);
-  --color-accent-foreground: #062226;
-  --color-accent-glow: rgb(31 184 205 / 0.18);
-  --color-focus-ring: rgb(31 184 205 / 0.7);
+  --gradient-metallic-gold: linear-gradient(115deg, #0b4a52 0%, #1a636c 30%, #4e99a3 50%, #9cc9cf 58%, #22808c 80%, #0b4a52 100%);
+  --gradient-gold-button: linear-gradient(180deg, #6fb0b9 0%, #4e99a3 50%, #22808c 100%);
+  --pp-accent: #4e99a3;
+  --pp-accent-hover: #62a9b2;
+  --pp-accent-ink: #0b1d1f;
+  --pp-accent-soft: rgb(78 153 163 / 0.12);
+  --pp-accent-line: rgb(78 153 163 / 0.4);
+  --accent-text: #6fb0b9;
+  --color-accent: #4e99a3;
+  --color-accent-hover: #62a9b2;
+  --color-accent-active: #22808c;
+  --color-accent-subtle: rgb(78 153 163 / 0.1);
+  --color-accent-border: rgb(78 153 163 / 0.38);
+  --color-accent-foreground: #0b1d1f;
+  --color-accent-glow: rgb(78 153 163 / 0.18);
+  --color-focus-ring: rgb(78 153 163 / 0.7);
 }
 
 html.in-chat[data-theme="light"][data-accent="turquesa"] {
-  --gold: #20808d;
-  --gold-metal: #1a6f7a;
-  --pp-accent: #20808d;
-  --pp-accent-hover: #1a6f7a;
+  --gold: #016a71;
+  --gold-metal: #0f5a60;
+  --pp-accent: #016a71;
+  --pp-accent-hover: #0f5a60;
   --pp-accent-ink: #ffffff;
-  --pp-accent-soft: rgb(32 128 141 / 0.1);
-  --pp-accent-line: rgb(32 128 141 / 0.38);
-  --accent-text: #1a6f7a;
-  --color-accent: #20808d;
+  --pp-accent-soft: rgb(1 106 113 / 0.1);
+  --pp-accent-line: rgb(1 106 113 / 0.38);
+  --accent-text: #0f5a60;
+  --color-accent: #016a71;
   --color-accent-foreground: #ffffff;
-  --color-focus-ring: rgb(32 128 141 / 0.6);
-  --gradient-gold-button: linear-gradient(180deg, #2a95a3 0%, #20808d 100%);
+  --color-focus-ring: rgb(1 106 113 / 0.6);
+  --gradient-gold-button: linear-gradient(180deg, #01838c 0%, #016a71 100%);
 }
 
 html.in-chat ::selection {
@@ -1054,7 +1054,7 @@ html.in-chat .sources-ball.has-sources {
 }
 
 /* ==========================================================================
-   Telas (Studio, Criar imagem, KZ Code, Artefatos)
+   Telas (KZ Code, Artefatos)
    ========================================================================== */
 
 html.in-chat .sc {
@@ -1111,246 +1111,368 @@ html.in-chat .msg--kazer .msg__actions {
   opacity: 1;
 }
 
-/* ---------- Studio ---------- */
+/* ==========================================================================
+   Perplexity 2026 — acabamento fiel
+   Medidas do app atual: menu lateral de 16rem com linhas de 36px e item ativo
+   só em tom (sem cor), logo em minúsculas no centro da tela inicial, campo
+   com brilho suave na cor de destaque, botões de ação redondos e peso de
+   fonte que não passa de 550.
+   ========================================================================== */
 
-html.in-chat .st__home {
-  max-width: 56rem;
-  padding: 1.5rem 1.15rem calc(2.5rem + env(safe-area-inset-bottom));
+html.in-chat {
+  --pp-radius-row: 0.5rem;
+  --pp-radius-card: 1rem;
+  --pp-row-h: 2.25rem;
+  --pp-weight-strong: 550;
 }
 
-html.in-chat .st__hero {
-  display: grid;
-  justify-items: start;
-  gap: 0.5rem;
-  margin-bottom: 1.75rem;
+/* ---------- Peso: nada de negrito pesado ---------- */
+
+html.in-chat .md strong,
+html.in-chat .md b,
+html.in-chat .md h1,
+html.in-chat .md h2,
+html.in-chat .md h3,
+html.in-chat .md h4,
+html.in-chat .md th {
+  font-weight: var(--pp-weight-strong);
 }
 
-html.in-chat .st__hero-title {
-  margin: 0;
-  color: var(--c-text);
-  font: 600 clamp(1.5rem, 5.5vw, 2rem) / 1.15 var(--font-ui);
-  letter-spacing: -0.03em;
-}
-
-html.in-chat .st__hero .st__lede {
-  flex: none;
-  max-width: 34rem;
-}
-
-html.in-chat .st__hero .st__new {
-  margin-top: 0.5rem;
-  min-height: 2.75rem;
-  border-radius: 0.8rem;
-  background: var(--pp-accent);
-  color: var(--pp-accent-ink);
-}
-
-html.in-chat .st__hero .st__new:hover {
-  background: var(--pp-accent-hover);
-}
-
-html.in-chat .st__section {
-  margin: 0 0 0.75rem;
-  color: var(--c-text);
-  font: 600 0.9375rem / 1.3 var(--font-ui);
+html.in-chat .md h1,
+html.in-chat .md h2,
+html.in-chat .md h3 {
   letter-spacing: -0.01em;
 }
 
-html.in-chat .st__quick {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 0.6rem;
-  margin-bottom: 2rem;
+/* ---------- Menu lateral ---------- */
+
+html.in-chat .drawer {
+  background: var(--c-bg-2);
+  border-right: 1px solid var(--pp-line);
 }
 
-@media (min-width: 56rem) {
-  html.in-chat .st__quick {
-    grid-template-columns: repeat(6, minmax(0, 1fr));
+@media (min-width: 60rem) {
+  html.in-chat .chat.drawer-open .drawer {
+    width: 16rem;
   }
 }
 
-html.in-chat .st__quick-item {
-  display: grid;
-  grid-template-rows: 5.5rem auto auto;
-  gap: 0.15rem;
-  min-width: 0;
-  padding: 0.7rem 0.75rem 0.75rem;
-  border: 1px solid var(--pp-line);
-  border-radius: 0.9rem;
-  background: var(--pp-raise);
+html.in-chat .drawer__head {
+  min-height: 3.25rem;
+  padding: 0 0.5rem 0 0.9rem;
+}
+
+/* A marca do menu vira o logo em minúsculas, como "perplexity". */
+html.in-chat .drawer__word {
+  font: 500 1.2rem / 1 var(--font-ui);
+  letter-spacing: -0.02em;
+  text-transform: lowercase;
   color: var(--c-text);
-  text-align: left;
-  cursor: pointer;
-  transition: border-color 140ms linear, background-color 140ms linear, transform 160ms var(--ease-out);
 }
 
-html.in-chat .st__quick-item:hover {
-  border-color: var(--pp-accent-line);
-  background: var(--pp-raise-2);
+html.in-chat .drawer__mark {
+  color: var(--c-text);
 }
 
-html.in-chat .st__quick-item:active {
-  transform: scale(0.98);
+/* "Nova conversa" é uma linha do menu com fundo em tom, sem moldura. */
+html.in-chat .drawer__new {
+  gap: 0.65rem;
+  min-height: var(--pp-row-h);
+  margin: 0.15rem 0.5rem 0.35rem;
+  padding: 0 0.6rem;
+  border: 0;
+  border-radius: var(--pp-radius-row);
+  background: var(--wash-strong);
+  box-shadow: none;
+  font: 500 0.875rem / 1 var(--font-ui);
 }
 
-html.in-chat .st__quick-item:focus-visible {
-  outline: 2px solid var(--color-focus-ring);
-  outline-offset: 2px;
+html.in-chat .drawer__new:hover {
+  border: 0;
+  background: var(--c-surface);
 }
 
-html.in-chat .st__quick-art {
-  display: grid;
-  place-items: center;
-  height: 5.5rem;
-  margin-bottom: 0.45rem;
-  border-radius: 0.6rem;
+html.in-chat .drawer__new .icon {
+  color: var(--c-text);
+}
+
+html.in-chat .drawer__nav {
+  gap: 0.0625rem;
+  padding: 0 0.5rem;
+}
+
+html.in-chat .drawer__item {
+  gap: 0.65rem;
+  min-height: var(--pp-row-h);
+  padding: 0 0.6rem;
+  border-radius: var(--pp-radius-row);
+  color: var(--c-text-2);
+  font: 500 0.875rem / 1 var(--font-ui);
+}
+
+html.in-chat .drawer__item .icon {
+  width: 1rem;
+  height: 1rem;
+}
+
+/* Ativo: só tom, nada de cor nem traço (é assim na Perplexity). */
+html.in-chat .drawer__item.is-active {
+  background: var(--wash-strong);
+  color: var(--c-text);
+}
+
+html.in-chat .drawer__item.is-active .icon {
+  color: var(--c-text);
+}
+
+html.in-chat .drawer__item.is-active::before {
+  display: none;
+}
+
+html.in-chat .drawer__section {
+  margin: 1rem 0.5rem 0.35rem 1.1rem;
+  color: var(--c-text-3);
+  font: 500 0.75rem / 1.2 var(--font-ui);
+}
+
+html.in-chat .drawer__search {
+  margin-inline: 0.5rem;
+  min-height: var(--pp-row-h);
+  border-color: transparent;
+  border-radius: var(--pp-radius-row);
   background: var(--wash);
 }
 
-html.in-chat .st__quick-art .st__shape {
-  display: block;
-  height: 4.2rem;
-  width: auto;
-  max-width: 85%;
-  border: 1.5px solid var(--c-text-3);
-  border-radius: 0.3rem;
-  background: var(--pp-accent-soft);
-}
-
-html.in-chat .st__quick-art .st__shape.is-wide {
-  width: 85%;
-  height: auto;
-}
-
-html.in-chat .st__quick-item:hover .st__shape {
-  border-color: var(--pp-accent);
-}
-
-html.in-chat .st__quick-name {
-  min-height: 2.5em;
-  font: 500 0.875rem / 1.25 var(--font-ui);
-  overflow-wrap: anywhere;
-  text-wrap: balance;
-}
-
-html.in-chat .st__quick-meta {
-  color: var(--c-text-3);
-  font-size: 0.75rem;
-  font-variant-numeric: tabular-nums;
-}
-
-html.in-chat .st__home .st__status {
-  margin: 0.25rem 0 1rem;
-  padding: 1.25rem;
-  border: 1px dashed var(--pp-line-2);
-  border-radius: 0.9rem;
-  text-align: left;
-}
-
-html.in-chat .st__thumb {
-  border-color: var(--pp-line);
-  background: var(--pp-raise);
-}
-
-/* ---------- Criar imagem ---------- */
-
-html.in-chat .mk {
-  max-width: 44rem;
-  margin: 0 auto;
-}
-
-html.in-chat .mk__form {
-  padding: 1.1rem;
-  border: 1px solid var(--pp-line);
-  border-radius: 1.1rem;
-  background: var(--pp-raise);
-  box-shadow: var(--pp-shadow);
-}
-
-html.in-chat .mk__label {
-  color: var(--c-text);
-  font: 600 0.875rem / 1.3 var(--font-ui);
-  letter-spacing: -0.005em;
-  text-transform: none;
-}
-
-html.in-chat .mk__prompt {
-  border: 1px solid var(--pp-line-2);
-  border-radius: 0.9rem;
-  background: var(--c-bg);
-  color: var(--c-text);
-}
-
-html.in-chat .mk__prompt:focus-visible {
-  border-color: var(--pp-accent-line);
-  box-shadow: 0 0 0 4px var(--pp-accent-soft);
-  outline: none;
-}
-
-html.in-chat .mk__chip {
-  border: 1px solid var(--pp-line);
-  border-radius: 999px;
-  background: transparent;
-  color: var(--c-text-2);
-}
-
-html.in-chat .mk__chip:hover {
+html.in-chat .drawer__search:focus-within {
   border-color: var(--pp-line-2);
-  color: var(--c-text);
+  background: var(--c-bg);
 }
 
-html.in-chat .mk__chip[aria-checked="true"] {
-  border-color: var(--pp-accent-line);
-  background: var(--pp-accent-soft);
-  color: var(--c-text);
+html.in-chat .hist__row {
+  border-radius: var(--pp-radius-row);
 }
 
-html.in-chat .mk__go {
-  border-radius: 0.8rem;
+html.in-chat .hist__row.is-active {
+  background: var(--wash-strong);
+}
+
+html.in-chat .hist__row.is-active::before {
+  display: none;
+}
+
+html.in-chat .hist__link {
+  font-size: 0.875rem;
+}
+
+html.in-chat .drawer__foot {
+  padding: 0.5rem;
+  border-top: 1px solid var(--pp-line);
+}
+
+html.in-chat .account {
+  border-radius: var(--pp-radius-row);
+}
+
+html.in-chat .account:hover {
+  background: var(--wash-strong);
+}
+
+html.in-chat .account__avatar {
   background: var(--pp-accent);
   color: var(--pp-accent-ink);
   box-shadow: none;
+  font-weight: 550;
 }
 
-html.in-chat .mk__go:hover {
-  background: var(--pp-accent-hover);
+html.in-chat .account__label {
+  font-weight: 500;
 }
 
-html.in-chat .mk__notice {
-  padding: 2rem 1.5rem;
-  border: 1px solid var(--pp-line);
-  border-radius: 1.1rem;
-  background: var(--pp-raise);
+/* Trilho recolhido no computador. */
+@media (min-width: 60rem) {
+  html.in-chat .chat:not(.drawer-open) .drawer__new {
+    width: 2.5rem;
+    min-height: 2.5rem;
+    border-radius: 999px;
+  }
+
+  html.in-chat .chat:not(.drawer-open) .drawer__item {
+    width: 2.5rem;
+    min-height: 2.5rem;
+  }
 }
 
-html.in-chat .mk__notice--inline {
-  padding: 0.75rem 1rem;
-  border-color: var(--pp-accent-line);
-  background: var(--pp-accent-soft);
+/* ---------- Tela inicial: o nome em minúsculas é o herói ---------- */
+
+/* Sem fundo animado: a Perplexity é uma tela calma. A pessoa ainda pode
+   ligar em Configurações. */
+html.in-chat .pane.is-empty .empty__mark {
+  display: none;
 }
 
-html.in-chat .mk__notice-icon {
-  border-radius: 0.9rem;
-  background: var(--pp-accent-soft);
+html.in-chat .empty__word {
+  display: none;
+  margin: 0;
+  color: var(--c-text);
+  font: 500 clamp(2.75rem, 11vw, 4rem) / 1 var(--font-ui);
+  letter-spacing: -0.045em;
+}
+
+html.in-chat .pane.is-empty .empty__word {
+  display: block;
+}
+
+html.in-chat .pane.is-empty .greeting {
+  margin-top: 0.85rem;
+}
+
+html.in-chat .pane.is-empty .greeting__a,
+html.in-chat .pane.is-empty .greeting__b {
+  color: var(--c-text-3);
+  font: 400 1rem / 1.4 var(--font-ui);
+  letter-spacing: 0;
+}
+
+/* Sugestões: pílulas em tom, sem moldura. */
+html.in-chat .starter {
+  min-height: 2rem;
+  padding: 0 0.8rem 0 0.65rem;
+  border: 0;
+  border-radius: 999px;
+  background: var(--wash-strong);
+  color: var(--c-text-2);
+  font: 500 0.8125rem / 1 var(--font-ui);
+}
+
+html.in-chat .starter:hover {
+  border: 0;
+  background: var(--c-surface);
+  color: var(--c-text);
+}
+
+html.in-chat .starter svg {
+  color: var(--c-text-3);
+}
+
+html.in-chat .starter:hover svg {
   color: var(--accent-text);
 }
 
-html.in-chat .mk__notice-title {
+/* ---------- Campo de pergunta ---------- */
+
+html.in-chat .composer__box {
+  border: 1px solid var(--pp-line-2);
+  border-radius: var(--pp-radius-card);
+  background: var(--composer-bg);
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.06);
+}
+
+/* Foco: brilho suave na cor de destaque, a marca do campo da Perplexity. */
+html.in-chat .composer__box:focus-within,
+html.in-chat .composer__box:has(.composer__input:focus-visible) {
+  border-color: var(--pp-accent-line);
+  box-shadow: 0 0 0 1px var(--pp-accent-soft), 0 0 28px -6px var(--pp-accent-soft);
+}
+
+html.in-chat .composer__input {
+  font-size: 1rem;
+}
+
+html.in-chat .composer .tool,
+html.in-chat .composer .chip {
+  border-radius: 999px;
+}
+
+html.in-chat .composer .tool:hover {
+  background: var(--wash-strong);
+}
+
+html.in-chat .composer .chip {
+  border: 0;
+  background: transparent;
+  color: var(--c-text-2);
+  font-weight: 500;
+}
+
+html.in-chat .composer .chip:hover {
+  border: 0;
+  background: var(--wash-strong);
   color: var(--c-text);
-  font: 600 1.125rem / 1.3 var(--font-ui);
+}
+
+html.in-chat .composer .chip__model {
+  font-weight: 500;
+}
+
+html.in-chat .composer .tool--mic {
+  border: 0;
+  background: transparent;
+}
+
+/* Botões de ação redondos. Conversa por voz: bola escura (clara no escuro),
+   como o botão de voz da Perplexity; enviar: bola na cor de destaque. */
+html.in-chat .composer .send {
+  border-radius: 999px;
+}
+
+html.in-chat .composer .send.talk:not(.is-stop) {
+  background: var(--c-text);
+  color: var(--c-bg);
+}
+
+html.in-chat .composer .send.talk:not(.is-stop):hover {
+  background: var(--c-text-2);
+}
+
+/* ---------- Página de resposta ---------- */
+
+html.in-chat .msg--query .msg__bubble,
+html.in-chat .msg--query .msg__text {
+  font-weight: 500;
   letter-spacing: -0.015em;
 }
 
-html.in-chat .mk__section {
-  color: var(--c-text);
-  font: 600 0.9375rem / 1.3 var(--font-ui);
-  text-transform: none;
+html.in-chat .src-card {
+  border-radius: 0.75rem;
+}
+
+html.in-chat .msg__actions .act,
+html.in-chat .msg__actions button {
+  border-radius: 999px;
+}
+
+/* ---------- Telas internas ---------- */
+
+html.in-chat .sc__title {
+  font-weight: 500;
   letter-spacing: -0.01em;
 }
 
-html.in-chat .mk__card {
-  overflow: hidden;
-  border: 1px solid var(--pp-line);
-  border-radius: 0.9rem;
-  background: var(--pp-raise);
+/* Sem efeito de vidro nos botões do campo: ícones limpos sobre o fundo. */
+html.in-chat .composer .tool,
+html.in-chat .composer .chip {
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+html.in-chat .composer .tool:hover,
+html.in-chat .composer .chip:hover {
+  background: var(--wash-strong);
+  box-shadow: none;
+}
+
+/* "Nova conversa" sem fundo fixo: o tom fica só no item ativo. */
+html.in-chat .drawer__new {
+  background: transparent;
+}
+
+html.in-chat .drawer__new:hover {
+  background: var(--wash-strong);
+}
+
+@media (min-width: 60rem) {
+  html.in-chat .chat.drawer-open .drawer {
+    width: 17rem;
+  }
 }

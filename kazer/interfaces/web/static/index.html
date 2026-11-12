@@ -161,8 +161,6 @@
         <button class="drawer__item is-active" type="button" data-screen="conversas" id="nav-conversas" title="Conversas"><span data-icon="chat"></span><span>Conversas</span></button>
         <button class="drawer__item" type="button" data-screen="forja" id="nav-forja" title="KZ Code"><span data-icon="code"></span><span>KZ Code</span></button>
         <button class="drawer__item" type="button" data-screen="artefatos" id="nav-artefatos" title="Artefatos"><span data-icon="layers"></span><span>Artefatos</span></button>
-        <button class="drawer__item" type="button" data-screen="studio" id="nav-studio" title="Studio"><span data-icon="edit"></span><span>Studio</span></button>
-        <button class="drawer__item" type="button" data-screen="imagens" id="nav-imagens" title="Criar imagem"><span data-icon="image"></span><span>Criar imagem</span></button>
       </nav>
       <div class="drawer__panel" id="panel-conversas">
         <p class="drawer__section">Recentes</p>
@@ -201,6 +199,7 @@
 
       <div class="empty" id="empty">
         <span data-mark class="empty__mark"></span>
+        <p class="empty__word" aria-hidden="true">kazer</p>
         <h1 class="greeting" id="greeting"><span class="greeting__a" id="greeting-a"></span> <span class="greeting__b" id="greeting-b"></span></h1>
         <p class="empty__note" id="empty-note" hidden></p>
       </div>
@@ -222,7 +221,7 @@
           <ul class="tray" id="tray" aria-label="Anexos" hidden></ul>
           <ul class="skill-chips" id="skill-chips" aria-label="Skills desta mensagem" hidden></ul>
           <label class="sr-only" for="prompt">Mensagem para o KAZER</label>
-          <textarea class="composer__input" id="prompt" rows="1" placeholder="Converse com o KAZER..." maxlength="32000" autocomplete="off" spellcheck="true" aria-autocomplete="list" aria-expanded="false"></textarea>
+          <textarea class="composer__input" id="prompt" rows="1" placeholder="Pergunte qualquer coisa..." maxlength="32000" autocomplete="off" spellcheck="true" aria-autocomplete="list" aria-expanded="false"></textarea>
           <div class="composer__bar">
             <button class="tool" type="button" id="plus" aria-label="Adicionar à conversa" aria-haspopup="dialog"><span data-icon="plus"></span></button>
             <button class="chip" type="button" id="model-chip" aria-haspopup="dialog" aria-label="Modelo KAZ 1.1, esforço Baixo"><span class="chip__model">KAZ 1.1</span><span class="chip__effort">Baixo</span></button>

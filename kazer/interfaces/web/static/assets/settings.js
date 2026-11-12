@@ -949,7 +949,7 @@ class SettingsPanel {
           title: "Fundo animado",
           description: "Animação de fundo na tela de nova conversa.",
           id: "pref-ambient",
-          control: this.toggle({ id: "pref-ambient", checked: this.prefs.ambient !== false, label: "Fundo animado", onChange: (on) => this.savePrefs({ ambient: on }, { immediate: true }) }),
+          control: this.toggle({ id: "pref-ambient", checked: this.prefs.ambient === true, label: "Fundo animado", onChange: (on) => this.savePrefs({ ambient: on }, { immediate: true }) }),
         }),
         this.row({
           title: "Enviar com Enter",

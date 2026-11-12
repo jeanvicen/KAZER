@@ -29,8 +29,6 @@ Servido em `/assets/…`. Módulos ES nativos, carregados sob demanda quando a t
 | `voice.js` | Ditado (reconhecimento do navegador) |
 | `voicemode.js`, `voiceorb.js`, `voice-worklet.js` | Conversa por voz (voz Piper do servidor, interrupção), esfera animada, motor gateway |
 | `offline.js`, `loader.js`, `mascot.js`, `pixel.js`, `squares.js` | Tela sem internet, carregador, mascote Kazinho, letreiro em pixel, fundo de quadradinhos |
-| `studio.js` + `studio.css` | **KAZER Studio**: editor de design (texto, formas, fotos, camadas, desfazer, salvar na conta, exportar PNG/JPEG/PDF) |
-| `criar.js` | **Criar imagem**: pedido, formato, estilo, cota real do servidor e galeria (usa `studio.css`) |
 | `vendor/` | Código de terceiros com licença (Fabric.js, MIT) |
 | `brand/`, `fonts/` | Ícones/logo e fontes da interface |
 

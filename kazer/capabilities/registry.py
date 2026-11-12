@@ -236,6 +236,7 @@ CAPABILITIES: tuple[Capability, ...] = (
         "Editor de design: texto, formas e fotos em camadas, com desfazer, projetos salvos na"
         " conta e exportação em PNG, JPEG e PDF.",
         "design",
+        status="paused",
         permissions=("arquivos_da_conta",),
         quota="projetos por plano",
         cost="armazenamento",
@@ -248,7 +249,7 @@ CAPABILITIES: tuple[Capability, ...] = (
             "PUT /api/designs/{design_id}",
             "DELETE /api/designs/{design_id}",
         ),
-        modules=("kazer/studio/service.py", "kazer/interfaces/web/static/assets/studio.js"),
+        modules=("kazer/studio/service.py",),
         tests=("tests/test_create.py",),
     ),
     _c(

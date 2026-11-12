@@ -250,7 +250,7 @@ async function loadSettings() {
 
 // Preferências visuais aplicadas antes da resposta do servidor (sem "pulo").
 function applyLocalPrefs() {
-  const ui = { motion: "sistema", text_size: "m", ambient: true, theme: "escuro", accent: "auto", language: "pt", ...store.get("kazer:ui", {}), ...pick(S.prefs, ["motion", "text_size", "ambient", "theme", "accent", "language"]) };
+  const ui = { motion: "sistema", text_size: "m", ambient: false, theme: "escuro", accent: "auto", language: "pt", ...store.get("kazer:ui", {}), ...pick(S.prefs, ["motion", "text_size", "ambient", "theme", "accent", "language"]) };
   setMotionPreference(ui.motion);
   applyAccent(ui.accent);
   applyTheme(ui.theme);
@@ -461,7 +461,7 @@ function newConversation({ push = true, focus = true } = {}) {
 
 // ---------- Abas da gaveta ----------
 
-const SCREENS = ["conversas", "forja", "artefatos", "biblioteca", "studio", "imagens"];
+const SCREENS = ["conversas", "forja", "artefatos", "biblioteca"];
 
 // Texto que cada sugestão da tela vazia coloca no campo (a pessoa completa).
 const STARTERS = {
@@ -476,8 +476,6 @@ const SCREEN_LABELS = {
   forja: "KZ Code",
   artefatos: "Artefatos",
   biblioteca: "Biblioteca",
-  studio: "Studio",
-  imagens: "Criar imagem",
 };
 
 const SCREEN_GLYPHS = {
@@ -485,8 +483,6 @@ const SCREEN_GLYPHS = {
   forja: "code",
   artefatos: "layers",
   biblioteca: "book",
-  studio: "layers",
-  imagens: "image",
 };
 
 async function showScreen(name) {
@@ -553,7 +549,7 @@ function setForja(on) {
   S.ui.forjaChip.classList.toggle("is-on", on);
   S.ui.forjaChip.setAttribute("aria-pressed", String(on));
   if (S.ui.prompt) {
-    S.ui.prompt.placeholder = on ? "O que vamos construir?" : "Converse com o KAZER...";
+    S.ui.prompt.placeholder = on ? "O que vamos construir?" : "Pergunte qualquer coisa...";
   }
 }
 

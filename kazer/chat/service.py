@@ -136,7 +136,7 @@ PREFERENCE_DEFAULTS: dict[str, Any] = {
     "send_on_enter": True,
     "motion": "sistema",
     "text_size": "m",
-    "ambient": True,
+    "ambient": False,
     # Aparência e idioma da interface. O idioma também vai ao modelo.
     "theme": "escuro",
     # Cor de destaque: automático = dourado no escuro e turquesa no claro.
