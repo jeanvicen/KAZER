@@ -6,11 +6,21 @@ desconta do crédito mensal da pessoa o custo real estimado (tokens × preço).
 
 Preços em dólar por 1 milhão de tokens (entrada, saída):
 - Claude: tabela oficial da Anthropic (out/2026).
-- GPT e Kimi: valores de referência — CONFIRA na página de preços de cada
-  empresa e ajuste por KAZER_MODEL_PRICES sem precisar de deploy de código:
-  KAZER_MODEL_PRICES='{"gpt": [5, 30], "kimi": [0.95, 4]}'
+- GPT e os modelos abertos: valores de referência — CONFIRA na página de preços
+  de cada empresa e ajuste por KAZER_MODEL_PRICES sem precisar de deploy de código:
+  KAZER_MODEL_PRICES='{"gpt": [5, 30], "kimi": [2, 10]}'
 O ID do modelo de cada empresa também muda com o tempo:
-  KAZER_OPENAI_MODEL=gpt-5.5   KAZER_KIMI_MODEL=kimi-k2.6
+  KAZER_OPENAI_MODEL=gpt-5.5   KAZER_KIMI_MODEL=...   KAZER_DEEPSEEK_MODEL=...
+  KAZER_GLM_MODEL=...
+
+Modelos abertos (pesquisa de nov/2026, docs/MODELOS-ABERTOS.md):
+- Kimi K3.1 Pro: o melhor aberto em código e jogos. Vai pelo OpenRouter
+  (OPENROUTER_API_KEY). Quem só tem MOONSHOT_API_KEY continua no Kimi direto da
+  Moonshot, como antes: nada muda para um servidor já configurado.
+- DeepSeek V4.1 Flash: o custo-benefício. API oficial (DEEPSEEK_API_KEY) ou, sem
+  ela, OpenRouter. Cobrado pelo preço de pico (o dobro do fora de pico), para o
+  crédito nunca sair menor que a conta.
+- GLM-5.3: tarefas longas de código. Só pelo OpenRouter.
 """
 
 from __future__ import annotations
@@ -26,9 +36,28 @@ logger = logging.getLogger("kazer.billing")
 ANTHROPIC = "anthropic"
 OPENAI = "openai"
 MOONSHOT = "moonshot"
+DEEPSEEK = "deepseek"
+OPENROUTER = "openrouter"
 
-KEYS = {ANTHROPIC: "ANTHROPIC_API_KEY", OPENAI: "OPENAI_API_KEY", MOONSHOT: "MOONSHOT_API_KEY"}
-BASE_URLS = {OPENAI: "https://api.openai.com/v1", MOONSHOT: "https://api.moonshot.ai/v1"}
+KEYS = {
+    ANTHROPIC: "ANTHROPIC_API_KEY",
+    OPENAI: "OPENAI_API_KEY",
+    MOONSHOT: "MOONSHOT_API_KEY",
+    DEEPSEEK: "DEEPSEEK_API_KEY",
+    OPENROUTER: "OPENROUTER_API_KEY",
+}
+BASE_URLS = {
+    OPENAI: "https://api.openai.com/v1",
+    MOONSHOT: "https://api.moonshot.ai/v1",
+    DEEPSEEK: "https://api.deepseek.com/v1",
+    OPENROUTER: "https://openrouter.ai/api/v1",
+}
+# Campo em que cada provedor aceita o raciocínio de volta nos turnos de
+# ferramenta. OpenAI e Moonshot direto ficam de fora (o Kimi antigo não pensa).
+REASONING_FIELDS = {DEEPSEEK: "reasoning_content", OPENROUTER: "reasoning"}
+# Modelos que pensam antes de responder gastam muita saída só no raciocínio
+# (o Kimi K3.1 Pro passa de 50 mil tokens numa tarefa grande): teto folgado.
+THINKER_MAX_OUTPUT = 32_768
 
 
 @dataclass(frozen=True, slots=True)
@@ -43,6 +72,8 @@ class PremiumModel:
     plans: tuple[str, ...]
     blurb: str
     images: bool = True
+    # Teto de saída pedido à API (raciocínio + resposta).
+    max_output: int = 16_384
 
     def cost_usd(self, input_tokens: int, output_tokens: int) -> float:
         return (input_tokens * self.input_per_m + output_tokens * self.output_per_m) / 1_000_000
@@ -61,7 +92,6 @@ class PremiumModel:
 def _models() -> tuple[PremiumModel, ...]:
     paid = ("pro", "ultra")
     openai_model = os.environ.get("KAZER_OPENAI_MODEL", "").strip() or "gpt-5.5"
-    kimi_model = os.environ.get("KAZER_KIMI_MODEL", "").strip() or "kimi-k2.6"
     return (
         PremiumModel("claude-haiku-5-5", "Claude Haiku 5.5", "Anthropic", ANTHROPIC,
                      "claude-haiku-5-5", 0.10, 0.50, paid, "Rápido e econômico."),
@@ -74,8 +104,43 @@ def _models() -> tuple[PremiumModel, ...]:
                      "O topo da Anthropic, para os problemas mais difíceis."),
         PremiumModel("gpt", "GPT", "OpenAI", OPENAI, openai_model, 5.00, 30.00, paid,
                      "O modelo mais recente da OpenAI."),
-        PremiumModel("kimi", "Kimi", "Moonshot AI", MOONSHOT, kimi_model, 0.95, 4.00, paid,
-                     "Bom em código e textos longos, barato.", images=False),
+        _kimi(paid),
+        _deepseek(paid),
+        PremiumModel("glm", "GLM-5.3", "Z.ai", OPENROUTER,
+                     os.environ.get("KAZER_GLM_MODEL", "").strip() or "z-ai/glm-5.3",
+                     1.40, 4.40, paid, "Aberto, firme em tarefas longas de código.",
+                     images=False, max_output=THINKER_MAX_OUTPUT),
+    )
+
+
+def _has(provider: str) -> bool:
+    return bool(os.environ.get(KEYS[provider], "").strip())
+
+
+def _kimi(paid: tuple[str, ...]) -> PremiumModel:
+    """Kimi K3.1 Pro pelo OpenRouter; só com a chave da Moonshot, o Kimi de antes."""
+    chosen = os.environ.get("KAZER_KIMI_MODEL", "").strip()
+    if _has(MOONSHOT) and not _has(OPENROUTER):
+        return PremiumModel("kimi", "Kimi", "Moonshot AI", MOONSHOT, chosen or "kimi-k2.6",
+                            0.95, 4.00, paid, "Bom em código e textos longos, barato.",
+                            images=False)
+    # ":floor" manda o OpenRouter escolher o provedor mais barato do momento;
+    # a cobrança usa o preço de tabela da Moonshot (o teto), nunca o piso.
+    return PremiumModel("kimi", "Kimi K3.1 Pro", "Moonshot AI", OPENROUTER,
+                        chosen or "moonshotai/kimi-k3.1-pro:floor", 2.00, 10.00, paid,
+                        "O melhor modelo aberto para código e jogos.",
+                        max_output=THINKER_MAX_OUTPUT)
+
+
+def _deepseek(paid: tuple[str, ...]) -> PremiumModel:
+    """DeepSeek V4.1 Flash: API oficial quando há chave; senão, OpenRouter."""
+    chosen = os.environ.get("KAZER_DEEPSEEK_MODEL", "").strip()
+    direct = _has(DEEPSEEK) or not _has(OPENROUTER)
+    return PremiumModel(
+        "deepseek", "DeepSeek V4.1 Flash", "DeepSeek", DEEPSEEK if direct else OPENROUTER,
+        chosen or ("deepseek-flash" if direct else "deepseek/deepseek-v4.1-flash"),
+        0.30, 1.20, paid, "Aberto, rápido e muito barato: rende o crédito.",
+        max_output=THINKER_MAX_OUTPUT,
     )
 
 
@@ -111,6 +176,7 @@ def catalog() -> tuple[PremiumModel, ...]:
             model = PremiumModel(
                 model.id, model.label, model.maker, model.provider, model.upstream,
                 inp, out, model.plans, model.blurb, model.images,
+                model.max_output,
             )
         models.append(model)
     return tuple(models)

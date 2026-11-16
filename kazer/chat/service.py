@@ -1942,8 +1942,9 @@ def _build_premium(model: premium.PremiumModel) -> ModelProvider | None:
         deep_model="",
         capabilities=Capabilities(images=model.images),
         send_effort=False,
-        max_tokens=16_384,
+        max_tokens=model.max_output,
         timeout=300.0,
+        reasoning_field=premium.REASONING_FIELDS.get(model.provider, ""),
     )
 
 

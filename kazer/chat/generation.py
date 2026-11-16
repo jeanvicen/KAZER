@@ -314,6 +314,7 @@ class GenerationHub:
         request: GenerationRequest,
         calls: list[ToolCall],
         round_text: list[str],
+        round_thinking: str = "",
     ) -> GenerationRequest:
         """Executa as ferramentas pedidas e devolve o pedido da rodada seguinte.
 
@@ -360,6 +361,7 @@ class GenerationHub:
                     role="assistant",
                     parts=(Part("text", "".join(round_text)),) if round_text else (),
                     calls=tuple(calls),
+                    reasoning=round_thinking,
                 ),
                 Turn(role="user", parts=(note,), results=tuple(results)),
             ),
@@ -674,6 +676,8 @@ class GenerationHub:
             while True:
                 calls: list[ToolCall] = []
                 round_text: list[str] = []
+                # Onde o raciocínio desta rodada começa (volta junto com as ferramentas).
+                thought_from = len(thinking)
                 for event in (live.provider or self._provider).stream(request, live.cancel):
                     if live.cancel.cancelled():
                         break
@@ -726,7 +730,9 @@ class GenerationHub:
                 if not calls or live.on_tool is None:
                     break
                 rounds += 1
-                request = self._after_tools(live, request, calls, round_text)
+                request = self._after_tools(
+                    live, request, calls, round_text, "".join(thinking[thought_from:])
+                )
                 if rounds >= (request.tool_rounds or MAX_TOOL_ROUNDS):
                     # Orçamento esgotado: uma última rodada sem ferramentas, para ele
                     # responder com o que achou (em vez de parar sem resposta).

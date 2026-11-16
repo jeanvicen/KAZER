@@ -2778,7 +2778,7 @@ async function openModelSheet() {
         credit
           ? h("p.sheet__note", { text: credit.exhausted ? "O crédito deste mês acabou. O KAZ 1.1 continua liberado." : `Crédito premium do mês: ${Math.round(credit.used_pct)}% usado.` })
           : premium.length
-            ? h("p.sheet__note", { text: "Claude, GPT e Kimi entram nos planos Pro e Ultra." })
+            ? h("p.sheet__note", { text: "Claude, GPT, Kimi, DeepSeek e GLM entram nos planos Pro e Ultra." })
             : null,
         effort,
       );

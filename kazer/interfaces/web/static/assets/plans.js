@@ -5,9 +5,9 @@
 // uso vêm do servidor — nada de preço ou franquia escrito aqui, para a tela não
 // contar uma história diferente da do banco.
 //
-// Honestidade: a cobrança ainda não está ligada. A tela mostra os preços
-// anunciados e diz que a assinatura abre em breve, em vez de simular uma compra
-// que não acontece.
+// Honestidade: com o Stripe ligado (`checkout` no /api/plans), o botão abre o
+// pagamento. Sem ele, a tela mostra os preços anunciados e registra interesse,
+// em vez de simular uma compra que não acontece.
 
 import { announce, formatReset, h, icon, loadStyle, mark, reducedMotion, trapFocus } from "./dom.js";
 import { request } from "./net.js";
@@ -125,7 +125,7 @@ class PlansScreen {
     const shortName = (plan) => (plan.monthly_cents ? plan.name.replace(/^KAZER\s+/, "") : "Grátis");
     const yes = (enabled) => (enabled ? "Incluído" : "—");
     const rows = [
-      ["Uso", (plan) => `${plan.allowance} a cada ${plan.window_hours}h`],
+      ["Uso", (plan) => `${plan.allowance} / ${plan.window_hours}h`],
       ["KAZ 1.1", () => "Incluído"],
       ["Imagens, arquivos e memória", () => "Incluído"],
       ["Modelos premium", (plan) => yes(plan.features?.models)],
@@ -135,6 +135,8 @@ class PlansScreen {
       ["Extras", (plan) => plan.extras?.join(". ") || "—"],
     ];
     const cell = (tag, text) => h(tag, { text });
+    // Cada coluna sabe de que plano é: a escolhida nas abas ganha destaque.
+    const planCell = (tag, text, plan) => h(tag, { text, dataset: { plan: plan.id } });
     return h(
       "section.plans__compare",
       { "aria-labelledby": "plans-compare-title" },
@@ -145,8 +147,8 @@ class PlansScreen {
         h(
           "table.plans__table",
           {},
-          h("thead", {}, h("tr", {}, cell("th", "Recurso"), ...this.catalog.map((plan) => cell("th", shortName(plan))))),
-          h("tbody", {}, ...rows.map(([label, value]) => h("tr", {}, cell("th", label), ...this.catalog.map((plan) => cell("td", value(plan))))),
+          h("thead", {}, h("tr", {}, cell("th", "Recurso"), ...this.catalog.map((plan) => planCell("th", shortName(plan), plan)))),
+          h("tbody", {}, ...rows.map(([label, value]) => h("tr", {}, cell("th", label), ...this.catalog.map((plan) => planCell("td", value(plan), plan))))),
         ),
       ),
     );
@@ -158,10 +160,15 @@ class PlansScreen {
     this.panel.style.setProperty("--accent", plan.accent || "#d5b15a");
     this.heading.textContent = plan.name;
     this.tagline.textContent = plan.tagline;
-    const times = this.free?.allowance ? Math.round(plan.allowance / this.free.allowance) : 0;
+    for (const item of this.comparison.querySelectorAll("[data-plan]")) item.classList.toggle("is-chosen", item.dataset.plan === plan.id);
+    // Mesma conta (e mesma vírgula) do aviso de limite, que vem do servidor:
+    // 800 ÷ 120 é "6,7×" nos dois lugares, nunca "7×" num e "6,7×" no outro.
+    const ratio = this.free?.allowance ? plan.allowance / this.free.allowance : 0;
+    const times = Number.isInteger(ratio) ? String(ratio) : ratio.toFixed(1).replace(".", ",");
     const perks = [
-      times > 1 ? `${times}× o uso do plano gratuito` : null,
-      ...plan.highlights.filter((text) => !/plano gratuito|vezes o uso|\d+ vezes|Tudo do/i.test(text)),
+      ratio > 1 ? `${times}× o uso do plano gratuito` : null,
+      // Some só o que a linha acima já diz; "Tudo do Pro" e o crédito ficam.
+      ...plan.highlights.filter((text) => !/plano gratuito|vezes o uso/i.test(text)),
       ...plan.extras,
     ].filter(Boolean);
     this.perks.replaceChildren(

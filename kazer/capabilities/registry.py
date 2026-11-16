@@ -102,7 +102,7 @@ CAPABILITIES: tuple[Capability, ...] = (
     _c(
         "chat.modelos_premium",
         "Modelos premium",
-        "Claude, GPT e Kimi com crédito mensal medido por resposta.",
+        "Claude, GPT, Kimi, DeepSeek e GLM com crédito mensal medido por resposta.",
         "conversa",
         plans=PAID_PLANS,
         quota="crédito mensal em reais",

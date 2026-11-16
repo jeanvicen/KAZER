@@ -64,12 +64,50 @@ def test_margins_follow_the_environment(monkeypatch: pytest.MonkeyPatch) -> None
 
 
 def test_prices_can_be_corrected_without_a_deploy(monkeypatch: pytest.MonkeyPatch) -> None:
+    standard = catalog.find("kimi").input_per_m  # type: ignore[union-attr]
     monkeypatch.setenv("KAZER_MODEL_PRICES", '{"gpt": [1, 2], "kimi": "lixo"}')
     gpt = catalog.find("gpt")
     assert gpt is not None and (gpt.input_per_m, gpt.output_per_m) == (1.0, 2.0)
-    assert catalog.find("kimi").input_per_m == 0.95  # type: ignore[union-attr]
+    # Valor quebrado é ignorado: fica o preço padrão.
+    assert catalog.find("kimi").input_per_m == standard  # type: ignore[union-attr]
     opus = catalog.find("claude-opus-5-5")
     assert opus is not None and opus.cost_usd(1_000_000, 1_000_000) == 24.0
+
+
+def _keys(monkeypatch: pytest.MonkeyPatch, **present: bool) -> None:
+    for name in ("MOONSHOT_API_KEY", "OPENROUTER_API_KEY", "DEEPSEEK_API_KEY"):
+        if present.get(name):
+            monkeypatch.setenv(name, "x")
+        else:
+            monkeypatch.delenv(name, raising=False)
+
+
+def test_open_models_go_through_openrouter(monkeypatch: pytest.MonkeyPatch) -> None:
+    _keys(monkeypatch, OPENROUTER_API_KEY=True)
+    kimi, deepseek, glm = (catalog.find(name) for name in ("kimi", "deepseek", "glm"))
+    assert kimi and kimi.provider == catalog.OPENROUTER and "kimi-k3.1-pro" in kimi.upstream
+    assert deepseek and deepseek.provider == catalog.OPENROUTER
+    assert glm and glm.provider == catalog.OPENROUTER and glm.max_output >= 32_768
+    # Kimi pelo OpenRouter é cobrado pelo preço de tabela da Moonshot, nunca o piso.
+    assert (kimi.input_per_m, kimi.output_per_m) == (2.0, 10.0)
+
+
+def test_a_server_with_only_the_moonshot_key_keeps_the_old_kimi(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    _keys(monkeypatch, MOONSHOT_API_KEY=True)
+    kimi = catalog.find("kimi")
+    assert kimi and kimi.provider == catalog.MOONSHOT and catalog.key_configured(kimi)
+
+
+def test_deepseek_prefers_its_own_api_and_bills_the_peak_price(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    _keys(monkeypatch, DEEPSEEK_API_KEY=True, OPENROUTER_API_KEY=True)
+    deepseek = catalog.find("deepseek")
+    assert deepseek and deepseek.provider == catalog.DEEPSEEK
+    assert deepseek.upstream == "deepseek-flash"
+    assert (deepseek.input_per_m, deepseek.output_per_m) == (0.30, 1.20)
 
 
 def test_credit_state_only_shows_percentages() -> None:

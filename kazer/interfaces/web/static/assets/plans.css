@@ -181,7 +181,8 @@
 
 .plans__table {
   width: 100%;
-  min-width: 29rem;
+  /* Colunas fixas: Grátis, Pro e Ultra sempre visíveis, mesmo em 360 px. */
+  table-layout: fixed;
   border-collapse: collapse;
   font-size: 0.76rem;
   line-height: 1.35;
@@ -202,13 +203,36 @@
 }
 
 .plans__table th:first-child {
-  width: 35%;
+  width: 34%;
   color: #a6a19a;
   font-weight: 600;
 }
 
 .plans__table td {
   color: #d7d3ce;
+  overflow-wrap: break-word;
+  hyphens: auto;
+}
+
+/* A coluna do plano escolhido nas abas fica em destaque. */
+.plans__table .is-chosen {
+  background: color-mix(in srgb, var(--accent) 9%, transparent);
+  color: #f4f2ee;
+}
+
+.plans__table thead .is-chosen {
+  color: var(--accent);
+}
+
+@media (max-width: 420px) {
+  .plans__table th,
+  .plans__table td {
+    padding: 0.6rem 0.4rem;
+  }
+
+  .plans__table {
+    font-size: 0.72rem;
+  }
 }
 
 .plans__table tr:last-child th,
@@ -299,8 +323,9 @@
 
 .plans__option-name {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.25rem 0.5rem;
   font-weight: 600;
 }
 
@@ -311,6 +336,7 @@
   color: var(--accent);
   font-size: 0.72rem;
   font-weight: 600;
+  white-space: nowrap;
 }
 
 .plans__option-sub {
@@ -440,8 +466,9 @@
   margin-top: 0.75rem;
   padding: 1rem;
   border-radius: 0.9rem;
-  border: 1px solid rgb(91 140 255 / 0.3);
-  background: linear-gradient(180deg, rgb(91 140 255 / 0.12), transparent);
+  /* Ouro do KAZER (era azul, resto da paleta antiga). */
+  border: 1px solid rgb(213 177 90 / 0.32);
+  background: linear-gradient(180deg, rgb(213 177 90 / 0.12), transparent);
   animation: plans-rise 0.45s 0.12s ease-out both;
 }
 
@@ -467,17 +494,18 @@
   padding: 0.7rem 1rem;
   border: 0;
   border-radius: 0.7rem;
-  background: #5b8cff;
-  color: var(--n-ffffff);
+  background: linear-gradient(180deg, #ecd394 0%, #d5b15a 46%, #b08d3f 100%);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.35), inset 0 -1px 0 rgb(0 0 0 / 0.18);
+  color: #141009;
   font: inherit;
   font-size: 0.9rem;
-  font-weight: 500;
+  font-weight: 700;
   cursor: pointer;
   transition: transform 0.16s ease, background 0.2s ease;
 }
 
 .limit__cta:hover {
-  background: #6f9bff;
+  filter: brightness(1.06);
 }
 
 .limit__cta:active {

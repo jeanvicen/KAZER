@@ -5682,7 +5682,8 @@ html[data-motion="reduzido"] .pxword__blink {
 .orb__liquid {
   position: absolute;
   inset: 0;
-  transform: translateY(calc((1 - var(--fill)) * 100%));
+  /* 130%: a onda gira e as pontas sobem; com 0% de uso nada pode aparecer. */
+  transform: translateY(calc((1 - var(--fill)) * 130%));
   transition: transform 1.6s cubic-bezier(0.22, 1, 0.36, 1);
 }
 

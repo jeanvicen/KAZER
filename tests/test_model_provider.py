@@ -172,3 +172,33 @@ def test_anthropic_adapter_uses_the_official_sdk() -> None:
     assert provider is not None
     assert provider.capabilities.deep is True and provider.capabilities.images is True
     assert "claude-opus-5-5" in repr(provider) and SECRET not in repr(provider)
+
+
+def _tool_request() -> GenerationRequest:
+    from kazer.brain.model_provider import ToolCall
+
+    call = ToolCall("c1", "buscar", {"q": "godot 4"})
+    turns = (
+        Turn("user", (Part("text", text="Pesquise"),)),
+        Turn("assistant", (), calls=(call,), reasoning="preciso buscar antes"),
+        Turn("user", (), results=(("c1", "resultado"),)),
+    )
+    return GenerationRequest(system="Você é o KAZER.", turns=turns)
+
+
+def test_thinking_models_get_their_reasoning_back_in_tool_turns() -> None:
+    from kazer.brain.model_provider import Capabilities
+
+    def build(field: str) -> OpenAICompatibleProvider:
+        return OpenAICompatibleProvider(
+            name="openrouter", base_url="http://127.0.0.1:9/v1", api_key="k",
+            model="m", deep_model="", capabilities=Capabilities(), send_effort=False,
+            max_tokens=0, timeout=5, reasoning_field=field,
+        )
+
+    sent = build("reasoning")._messages(_tool_request())
+    asked = next(m for m in sent if m.get("tool_calls"))
+    assert asked["reasoning"] == "preciso buscar antes"
+    # Sem o campo (OpenAI, Groq): o raciocínio nunca vai, eles recusariam a chave.
+    plain = next(m for m in build("")._messages(_tool_request()) if m.get("tool_calls"))
+    assert "reasoning" not in plain and "reasoning_content" not in plain

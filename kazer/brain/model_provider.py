@@ -97,6 +97,9 @@ class Turn:
     parts: tuple[Part, ...]
     calls: tuple[ToolCall, ...] = ()
     results: tuple[tuple[str, str], ...] = ()
+    # Raciocínio do modelo no turno que pediu ferramentas. Modelos que pensam
+    # (Kimi K3.1 Pro, DeepSeek, GLM) exigem ou rendem melhor com ele de volta.
+    reasoning: str = ""
 
 
 @dataclass(frozen=True, slots=True)
@@ -351,9 +354,16 @@ class OpenAICompatibleProvider:
         send_effort: bool,
         max_tokens: int,
         timeout: float,
+        reasoning_field: str = "",
     ) -> None:
-        """Recebe a chave já resolvida pelo módulo de segredos."""
+        """Recebe a chave já resolvida pelo módulo de segredos.
+
+        `reasoning_field`: nome do campo em que o provedor aceita o raciocínio de
+        volta nos turnos de ferramenta ("reasoning_content" na DeepSeek,
+        "reasoning" no OpenRouter). Vazio: nunca envia (OpenAI e Groq recusam).
+        """
         self._name = name
+        self._reasoning_field = reasoning_field
         self._url = base_url.rstrip("/") + "/chat/completions"
         self._key = api_key
         self._model = model
@@ -373,7 +383,10 @@ class OpenAICompatibleProvider:
         messages: list[dict[str, Any]] = [{"role": "system", "content": request.system}]
         for turn in request.turns:
             if turn.calls or turn.results:
-                messages.extend(self._tool_messages(turn))
+                tool_turn = self._tool_messages(turn)
+                if self._reasoning_field and turn.calls and turn.reasoning:
+                    tool_turn[0][self._reasoning_field] = turn.reasoning
+                messages.extend(tool_turn)
                 continue
             images = [part for part in turn.parts if part.kind == "image"]
             text = _text_of(turn)
@@ -729,7 +742,7 @@ GROQ_DEFAULT_TIERS = {
     # longa a cadeia, mais difícil o KAZER ficar sem resposta.
     "baixo": "openai/gpt-oss-120b:auto,moonshotai/kimi-k2-instruct-0905,"
     "meta-llama/llama-4-scout-17b-16e-instruct,llama-3.3-70b-versatile,"
-    "openai/gpt-oss-20b:auto,qwen/qwen3-32b,llama-3.1-8b-instant",
+    "openai/gpt-oss-20b:auto,qwen/qwen3.8-27b,qwen/qwen3-32b,llama-3.1-8b-instant",
     "medio": "openai/gpt-oss-120b:medium,moonshotai/kimi-k2-instruct-0905",
     "alto": "openai/gpt-oss-120b:high,moonshotai/kimi-k2-instruct-0905",
     "extra": "openai/gpt-oss-120b:high,llama-3.3-70b-versatile",

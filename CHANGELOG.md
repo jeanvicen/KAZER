@@ -2,6 +2,27 @@
 
 Mudanças que importam para quem usa e para quem opera o KAZER.
 
+## 2026-11 — Modelos abertos, telas de plano e limite de uso
+
+### Corrigido
+- **Tela de planos (Pro/Ultra) e aviso de limite não abriam**: um parêntese a menos
+  em `plans.js` (desde a comparação de planos) quebrava o arquivo inteiro. "Ver planos"
+  não fazia nada e, ao estourar o limite, só aparecia a faixa de texto. Novo teste
+  `tests/test_frontend_syntax.py` compila todo `.js` do app com Node.
+- **Uso e plano**: o orbe mostrava líquido com 0% usado (a onda girando vazava).
+- **Telas de compra**: a tabela de comparação cabe em 360 px com as três colunas
+  (antes o Ultra sumia na rolagem lateral), coluna do plano escolhido em destaque,
+  "6,7×" igual no aviso e na vitrine, o Ultra volta a mostrar "Tudo do Pro" e o
+  crédito 6× maior, botão do aviso de limite no ouro do KAZER (era azul), e textos
+  da comparação em inglês.
+
+### Novo
+- **Modelos abertos nos planos pagos**: Kimi K3.1 Pro (o melhor aberto em código e
+  jogos), DeepSeek V4.1 Flash (o mais barato) e GLM-5.3, pelo OpenRouter ou pela API
+  da DeepSeek. Cobrados do crédito pelo preço de tabela/pico, nunca abaixo da conta.
+  Um servidor só com `MOONSHOT_API_KEY` continua no Kimi de antes.
+- KAZ 1.1 (Groq): Qwen3.8-27B entra como reserva na cadeia do nível baixo.
+
 ## 2026-11 — Studio, criar imagem, memória automática e base de engenharia
 
 ### Novo

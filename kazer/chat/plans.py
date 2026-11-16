@@ -94,7 +94,8 @@ def _brl(cents: int) -> str:
 
 
 # Pro e Ultra são planos de "todos os modelos": além do KAZ 1.1, a pessoa usa
-# Claude, GPT e Kimi pela API de cada empresa, com um crédito mensal que sai do
+# Claude, GPT e os melhores modelos abertos (Kimi, DeepSeek, GLM) pela API de
+# cada empresa, com um crédito mensal que sai do
 # próprio preço do plano (ver kazer/billing/economics.py: taxa, imposto,
 # reserva e margem saem antes; o resto vira crédito). O anual equivale a dez
 # meses (dois de graça), e o crédito é calculado pelo valor mensal do anual,
@@ -133,7 +134,7 @@ PLANS: tuple[Plan, ...] = (
         connector_limit=0,
         highlights=[
             "Tudo do plano gratuito",
-            "Claude Opus, Sonnet e Haiku, GPT e Kimi",
+            "Claude, GPT, Kimi K3.1 Pro, DeepSeek e GLM",
             "Crédito mensal nos modelos premium",
             "Mais de 6 vezes o uso do KAZ 1.1",
             "KZ Code com projetos em .zip e prévia",
